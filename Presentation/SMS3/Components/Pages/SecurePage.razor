@@ -1,0 +1,173 @@
+@page "/s/{*encryptedUrl}"
+@using SMS3.Security
+@using global::System.Reflection
+@using Microsoft.AspNetCore.Components
+@inject ISecureRoutingService SecureRoutingService
+@inject NavigationManager Navigation
+
+@if (ComponentToRender != null)
+{
+    <DynamicComponent Type="@ComponentToRender" Parameters="@ComponentParameters" />
+}
+else if (IsLoading)
+{
+    <div class="text-center py-5">
+        <div class="spinner-border" role="status">
+            <span class="visually-hidden">Loading secure content...</span>
+        </div>
+    </div>
+}
+else
+{
+    <div class="text-center py-5">
+        <h3>Secure Route Not Found</h3>
+        <p>The requested secure route could not be resolved.</p>
+        <button class="btn btn-primary" @onclick="GoHome">Go Home</button>
+    </div>
+}
+
+@code {
+    [Parameter] public string EncryptedUrl { get; set; } = "";
+    
+    private Type? ComponentToRender;
+    private Dictionary<string, object>? ComponentParameters;
+    private bool IsLoading = true;
+    private string _lastEncryptedUrl = "";
+    
+    protected override void OnParametersSet()
+    {
+        if (EncryptedUrl != _lastEncryptedUrl)
+        {
+            _lastEncryptedUrl = EncryptedUrl;
+            ResolveComponent();
+            IsLoading = false;
+            StateHasChanged();
+        }
+    }
+    
+    private void ResolveComponent()
+    {
+        try
+        {
+            // Decrypt the complete URL
+            var decryptedUrl = SecureRoutingService.DecryptRouteParameter(EncryptedUrl);
+            
+            if (string.IsNullOrEmpty(decryptedUrl) || decryptedUrl == EncryptedUrl)
+                return;
+                
+            // Parse the decrypted URL
+            var uri = new Uri($"https://localhost{decryptedUrl}");
+            var path = uri.AbsolutePath;
+            
+            // ?? DYNAMIC COMPONENT DISCOVERY - No hardcoded mappings!
+            ComponentToRender = FindComponentByPageAttribute(path);
+            
+            // Extract parameters from query string
+            if (!string.IsNullOrEmpty(uri.Query))
+            {
+                var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
+                ComponentParameters = new Dictionary<string, object>();
+                
+                foreach (var param in queryParams)
+                {
+                    var value = param.Value.FirstOrDefault();
+                    if (!string.IsNullOrEmpty(value))
+                    {
+                        ComponentParameters[param.Key] = value;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            ComponentToRender = null;
+        }
+    }
+    
+    /// <summary>
+    /// Dynamically find component by reading @page attributes - NO HARDCODED MAPPINGS!
+    /// </summary>
+    private Type? FindComponentByPageAttribute(string requestedPath)
+    {
+        try
+        {
+            // Get all component types that inherit from ComponentBase
+            var assembly = Assembly.GetExecutingAssembly();
+            var componentTypes = assembly.GetTypes()
+                .Where(t => typeof(ComponentBase).IsAssignableFrom(t) && 
+                           !t.IsAbstract && 
+                           t.Namespace?.Contains("Components.Pages") == true)
+                .ToList();
+            
+            // Check each component for matching @page attributes
+            foreach (var componentType in componentTypes)
+            {
+                var routeAttributes = componentType.GetCustomAttributes<RouteAttribute>(false);
+                
+                foreach (var routeAttribute in routeAttributes)
+                {
+                    var routeTemplate = routeAttribute.Template;
+                    
+                    // Simple exact match first
+                    if (string.Equals(routeTemplate, requestedPath, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return componentType;
+                    }
+                    
+                    // Handle parameterized routes (e.g., "/System/UserManagement/{userId}")
+                    if (IsRouteMatch(routeTemplate, requestedPath))
+                    {
+                        return componentType;
+                    }
+                }
+            }
+            
+            return null;
+        }
+        catch (Exception ex)
+        {
+            // Log error but don't crash
+            return null;
+        }
+    }
+    
+    /// <summary>
+    /// Check if a route template matches the requested path (handles parameters)
+    /// </summary>
+    private bool IsRouteMatch(string routeTemplate, string requestedPath)
+    {
+        try
+        {
+            var templateParts = routeTemplate.Split('/', StringSplitOptions.RemoveEmptyEntries);
+            var pathParts = requestedPath.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
+            
+            if (templateParts.Length != pathParts.Length)
+                return false;
+                
+            for (int i = 0; i < templateParts.Length; i++)
+            {
+                var templatePart = templateParts[i];
+                var pathPart = pathParts[i];
+                
+                // If template part is a parameter (starts with {), it matches any value
+                if (templatePart.StartsWith("{") && templatePart.EndsWith("}"))
+                    continue;
+                    
+                // Otherwise, must be exact match
+                if (!string.Equals(templatePart, pathPart, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+            
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+    
+    private void GoHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

@@ -6,14 +6,14 @@
 <div class="user-profile-modal">
     <div class="user-header">
         <div class="user-avatar">
-            @if (!string.IsNullOrEmpty(CurrentUserService?.Email))
+            @* @if (!string.IsNullOrEmpty(CurrentUserService?.Email))
             {
                 <RadzenGravatar Email="@CurrentUserService.Email" Size="80" />
             }
             else
             {
                 <RadzenIcon Icon="account_circle" Style="font-size: 5rem; color: #212e61;" />
-            }
+            } *@
         </div>
         <div class="user-info">
             <h3>@CurrentUserService?.UserDisplayName</h3>
@@ -34,7 +34,6 @@
                         <tr><td><strong>Email:</strong></td><td>@CurrentUserService?.Email</td></tr>
                         <tr><td><strong>User Type:</strong></td><td>@CurrentUserService?.UserType</td></tr>
                         <tr><td><strong>Login Time:</strong></td><td>@CurrentUserService?.LoginTime?.ToString("yyyy-MM-dd HH:mm:ss")</td></tr>
-                        <tr><td><strong>Session Duration:</strong></td><td>@SessionDuration</td></tr>
                         <tr>
                             <td><strong>Authentication Status:</strong></td>
                             <td>
@@ -241,41 +240,27 @@
                             <h6><RadzenIcon Icon="schedule" /> Session Details</h6>
                             <table class="details-table">
                                 <tr><td><strong>Login Time:</strong></td><td>@CurrentUserService?.LoginTime?.ToString("dddd, MMMM dd, yyyy 'at' h:mm:ss tt")</td></tr>
-                                <tr><td><strong>Session Duration:</strong></td><td>@SessionDuration</td></tr>
                                 <tr><td><strong>User Agent:</strong></td><td>Browser Information</td></tr>
                                 <tr><td><strong>IP Address:</strong></td><td>Current Session IP</td></tr>
                             </table>
                         </RadzenCard>
 
-                        <RadzenCard Class="mt-3">
-                            <h6><RadzenIcon Icon="timeline" /> Session Activity</h6>
-                            <div class="session-timeline">
-                                <div class="timeline-item">
-                                    <RadzenIcon Icon="login" />
-                                    <span>Logged in at @CurrentUserService?.LoginTime?.ToString("HH:mm:ss")</span>
-                                </div>
-                                <div class="timeline-item">
-                                    <RadzenIcon Icon="refresh" />
-                                    <span>Session active for @SessionDuration</span>
-                                </div>
-                            </div>
-                        </RadzenCard>
+                        
                     </div>
                 </div>
             </RadzenTabsItem>
         </Tabs>
     </RadzenTabs>
 
-    <div class="modal-actions">
+    @* <div class="modal-actions">
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-            <RadzenButton Text="Close" Icon="close" ButtonStyle="ButtonStyle.Secondary" Click="@CloseModal" />
+            <RadzenButton Text="Close" Icon="close" ButtonStyle="ButtonStyle.Danger" Click="@CloseModal" />
         </RadzenStack>
-    </div>
+    </div> *@
 </div>
 
 @code {
     [Parameter] public ICurrentUserService? CurrentUserService { get; set; }
-    [Parameter] public string SessionDuration { get; set; } = "00:00";
     [Parameter] public EventCallback OnClose { get; set; }
 
     private string _moduleToCheck = "";

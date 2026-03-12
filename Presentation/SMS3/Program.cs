@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.OpenApi.Models;
 
 using SMS_Application.Configuration;
@@ -11,9 +11,15 @@ using SMS_Infrastructure.Security;
 
 using SMS_Shared.Configuration;
 
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Domain.Enums;
+
 using SMS3.Components;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration;
+using SMS3.Security;
+using SMS3.Extensions;
 
 namespace SMS3;
 public class Program
@@ -32,6 +38,8 @@ public class Program
 
         builder.Services.AddScoped<ApiKeyAuthenticationFilter>();
 
+        // **?? SYSTEM-WIDE SECURE ROUTING SERVICES**
+        builder.Services.AddSingleton<ISecureRoutingService, SecureRoutingService>();
                 
         // Register SMS Services
         builder.Services.AddSharedServices(builder.Configuration);
@@ -93,8 +101,8 @@ public class Program
 
         var app = builder.Build();
         
-        // Set up service locator for static access
-        ServiceLocator.Current = app.Services;
+        // **?? SET UP SERVICE LOCATOR FOR SECURE NAVIGATION - Using existing ServiceLocator**
+        SMS3.Components.Shared.UIHelpers.ServiceLocator.Current = app.Services;
 
         // Configure the HTTP request pipeline.
         if (!app.Environment.IsDevelopment())
@@ -115,9 +123,13 @@ public class Program
             });
         }
 
+        // **🔐 SECURE ROUTING SERVICE - No middleware needed for Blazor Server**
+       
+
         app.UseHttpsRedirection();
         app.UseStaticFiles();
 
+        app.UseRouting();
         app.UseAntiforgery();
 
 
@@ -315,9 +327,7 @@ public class Program
                 {
                     HazardCode = createdHazard.Code,
                     ReportCode = createdHazard.ReportCode,
-                    TrackingCode = "HT-0000", // Database will generate actual tracking code
-                    CreatedBy = "EXTERNAL_SYSTEM",
-                    CreatedDate = DateTime.UtcNow
+                    TrackingCode = "HT-0000" // Database will generate actual tracking code
                 };
 
                 var trackingCommand = new CreateHazardReportTrackingCommand(hazardReportTracking);

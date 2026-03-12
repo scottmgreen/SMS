@@ -3,6 +3,7 @@
 @using Radzen.Blazor
 @using SMS3.Components.Shared
 @using SMS_Domain.Entities
+@using SMS3.Extensions
 
 <PageTitle>Audit Workflow Demo - SMS3</PageTitle>
 
@@ -219,12 +220,12 @@
             <RadzenButton Text="View Audit Management" 
                         Icon="assignment" 
                         ButtonStyle="ButtonStyle.Primary"
-                        Click="@(() => Navigation.NavigateTo("/SMSAssurance/AuditManagement"))"
+                        Click="@(() => Navigation.NavigateToSecure("/SMSAssurance/AuditManagement"))"
                         Size="ButtonSize.Medium" />
             <RadzenButton Text="View Audit Calendar" 
                         Icon="calendar_today" 
                         ButtonStyle="ButtonStyle.Success"
-                        Click="@(() => Navigation.NavigateTo("/SMSAssurance/AuditCalendar"))"
+                        Click="@(() => Navigation.NavigateToSecure("/SMSAssurance/AuditCalendar"))"
                         Size="ButtonSize.Medium" />
         </RadzenStack>
     </RadzenStack>

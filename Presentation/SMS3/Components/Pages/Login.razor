@@ -1,85 +1,59 @@
 @page "/login"
 @layout SMS3.Components.Layout.LoginLayout
 
-<div class="login-background">
-    <div class="sms-login-card">
-        <!-- Login Card Header -->
-        <div class="sms-login-header">
-            <i class="fas fa-shield-alt sms-login-icon"></i>
-            <h2 class="sms-login-title">SMS3 Portal</h2>
-            <p class="sms-login-subtitle-text">Portland International Airport</p>
+<div class="home-background">
+<div class="sms-login-card">
+    <!-- Login Card Header -->
+    <div class="sms-login-header">
+        <i class="fas fa-shield-alt sms-login-icon"></i>
+        <h2 class="sms-login-title">SMS3 Portal</h2>
+        <p class="sms-login-subtitle-text">Portland International Airport</p>
+    </div>
+    
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <div class="alert alert-danger sms-login-error">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            <strong>Login Failed:</strong> @ErrorMessage
+        </div>
+    }
+
+    <RadzenTemplateForm TItem="LoginFormModel" Data="@LoginModel" Submit="@HandleLoginAsync">
+        <div class="mb-3">
+            <label class="form-label sms-form-label">
+                <i class="fas fa-envelope me-2"></i> Email Address
+            </label>
+            <RadzenTextBox @bind-Value="@LoginModel.Username" 
+                           Name="Username" 
+                           Placeholder="Enter your email address"
+                           Class="sms-form-input" />
+            <RadzenRequiredValidator Component="Username" Text="Email is required" Class="sms-validation-error" />
         </div>
         
-        @if (!string.IsNullOrEmpty(ErrorMessage))
-        {
-            <div class="alert alert-danger sms-login-error">
-                <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong>Login Failed:</strong> @ErrorMessage
-            </div>
-        }
-
-        <RadzenTemplateForm TItem="LoginFormModel" Data="@LoginModel" Submit="@HandleLoginAsync">
-            <div class="mb-3">
-                <label class="form-label sms-form-label">
-                    <i class="fas fa-envelope me-2"></i> Email Address
-                </label>
-                <RadzenTextBox @bind-Value="@LoginModel.Username" 
-                               Name="Username" 
-                               Placeholder="Enter your email address"
-                               Class="sms-form-input" />
-                <RadzenRequiredValidator Component="Username" Text="Email is required" Class="sms-validation-error" />
-            </div>
-            
-            <div class="mb-3">
-                <label class="form-label sms-form-label">
-                    <i class="fas fa-lock me-2"></i> Password
-                </label>
-                <RadzenPassword @bind-Value="@LoginModel.Password" 
-                                Name="Password" 
-                                Placeholder="Enter your password"
-                                Class="sms-form-input" />
-                <RadzenRequiredValidator Component="Password" Text="Password is required" Class="sms-validation-error" />
-            </div>
-            
-            <div class="d-grid mb-3">
-                <RadzenButton ButtonType="ButtonType.Submit" 
-                              ButtonStyle="ButtonStyle.Dark" 
-                              Text="@(IsLoading ? "Signing in..." : "Access SMS Portal")"
-                              Disabled="@IsLoading" 
-                              Size="ButtonSize.Large"
-                              Class="sms-login-button" />
-            </div>
-        </RadzenTemplateForm>
-    </div>
+        <div class="mb-3">
+            <label class="form-label sms-form-label">
+                <i class="fas fa-lock me-2"></i> Password
+            </label>
+            <RadzenPassword @bind-Value="@LoginModel.Password" 
+                            Name="Password" 
+                            Placeholder="Enter your password"
+                            Class="sms-form-input" />
+            <RadzenRequiredValidator Component="Password" Text="Password is required" Class="sms-validation-error" />
+        </div>
+        
+        <div class="d-grid mb-3">
+            <RadzenButton ButtonType="ButtonType.Submit" 
+                          ButtonStyle="ButtonStyle.Dark" 
+                          Text="@(IsLoading ? "Signing in..." : "Access SMS Portal")"
+                          Disabled="@IsLoading" 
+                          Size="ButtonSize.Large"
+                          Class="sms-login-button" />
+        </div>
+    </RadzenTemplateForm>
+</div>
 </div>
 
 <style>
-/* =============================================================================
-   LOGIN BACKGROUND - WORKS WITH UNIFIED LAYOUT SYSTEM
-   ============================================================================= */
-
-
-
-    .login-background {
-        background-image: url('images/background_opening.jpg');
-        background-size: cover;
-        background-position: center;
-        background-repeat: no-repeat;
-        background-attachment: fixed;
-        position: absolute;
-        top: 0;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        width: 100%;
-        height: 100%;
-        padding: 2rem;
-        overflow: hidden;
-        box-sizing: border-box;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
 /* =============================================================================
    SMS LOGIN PAGE - EXACT COLOR COMPLIANCE
    ============================================================================= */
@@ -92,6 +66,12 @@
     width: 100%;
     max-width: 450px;
     border: 1px solid var(--sms-blue-light);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    pointer-events: auto;
 }
 
 /* Login Header */

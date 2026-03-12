@@ -1,4 +1,5 @@
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Extensions;
 
 namespace SMS3.Components.Pages.Dashboard;
 
@@ -223,29 +224,34 @@ public partial class Dashboard : ComponentBase
 
     private void NavigateToReports()
     {
-        Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+        // ?? SECURE NAVIGATION - Navigate to Report Processing with encrypted URL
+        Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
     }
 
     private void NavigateToHazards()
     {
-        Navigation.NavigateTo("/SMSRiskManagement/HazardReporting");
+        // ?? SECURE NAVIGATION - Navigate to Hazard Reporting with encrypted URL
+        Navigation.NavigateToSecure("/SMSRiskManagement/HazardReporting");
     }
 
     private void NavigateToInvestigations()
     {
-        Navigation.NavigateTo("/SMSRiskManagement/Investigations");
+        // ?? SECURE NAVIGATION - Navigate to Investigations with encrypted URL
+        Navigation.NavigateToSecure("/SMSRiskManagement/Investigations");
     }
 
     private void NavigateToRiskAssessments()
     {
-        Navigation.NavigateTo("/SMSRiskManagement/RiskAssessment");
+        // ?? SECURE NAVIGATION - Navigate to Risk Assessment with encrypted URL
+        Navigation.NavigateToSecure("/SMSRiskManagement/RiskAssessment");
     }
 
     private void NavigateToActivity(DashboardActivityItem activity)
     {
         if (!string.IsNullOrEmpty(activity.NavigationUrl))
         {
-            Navigation.NavigateTo(activity.NavigationUrl);
+            // ?? SECURE NAVIGATION - Navigate to activity with encrypted URL
+            Navigation.NavigateToSecure(activity.NavigationUrl);
         }
     }
     #endregion

@@ -25,7 +25,7 @@
     font-weight: 600;
     font-size: 1.5rem;
     text-decoration: none;
-    order: 1; /* Brand stays on the left */
+    flex-shrink: 0; /* Prevent brand from shrinking */
 }
 
 .sms-brand:hover {
@@ -52,17 +52,54 @@
     color: #fa9a46;
 }
 
-/* Navigation collapse content - push to the right */
+/* Navigation collapse content - ensure proper right alignment */
 .navbar-collapse {
-    order: 3; /* Collapse content goes to the right */
+    flex-grow: 1;
+    display: flex !important;
     justify-content: flex-end !important;
 }
 
 /* Mobile toggle button */
 .navbar-toggler {
-    order: 2; /* Toggle button between brand and content */
+    order: 999; /* Keep toggle on far right */
 }
 
+/* Force all navigation content to the right */
+.navbar-nav {
+    margin-left: auto !important;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+/* Ensure ms-auto works properly for anonymous menus */
+.navbar-nav.ms-auto {
+    margin-left: auto !important;
+}
+
+/* Guest navigation specifically (ul elements) */
+ul.navbar-nav {
+    margin-left: auto !important;
+    display: flex !important;
+    flex-direction: row !important;
+    list-style: none;
+    padding-left: 0;
+}
+
+/* Anonymous menu specific fix */
+.sms-nav .navbar-nav.ms-auto {
+    margin-left: auto !important;
+    justify-self: flex-end !important;
+}
+
+/* SMS Navigation - Height adjustment for proper alignment */
+.sms-nav .container-fluid > * {
+    height: 65px; /* Match the nav height */
+    display: flex;
+    align-items: center;
+}
+
+/* SMS Navigation - Ensuring proper padding and alignment for links */
 .sms-nav-link {
     color: white !important;
     font-weight: 500;
@@ -70,6 +107,8 @@
     border-radius: 0.25rem;
     transition: background-color 0.2s;
     text-decoration: none;
+    display: flex;
+    align-items: center;
 }
 
 .sms-nav-link:hover {
@@ -95,6 +134,34 @@
 }
 
 /* =============================================================================
+   RADZEN MENU COMPONENT STYLES
+   Shared across NavMenu and AnonymousMenu
+   ============================================================================= */
+
+.sms-radzen-menu {
+    background: transparent !important;
+}
+
+.sms-menu-item {
+    color: white !important;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+}
+
+.user-profile-template:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-radius: 0.25rem;
+}
+
+.text-white {
+    color: white !important;
+}
+
+.opacity-75 {
+    opacity: 0.75;
+}
+
+/* =============================================================================
    SMS SHARED LAYOUT STYLES
    Used by MainLayout, AnonymousLayout, and LoginLayout
    ============================================================================= */
@@ -104,6 +171,14 @@
 .sms-anonymous-layout,
 .sms-login-layout {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    min-height: 100vh;
+}
+
+/* Background Colors */
+.sms-anonymous-layout,
+.sms-login-layout {
+    background: #212e61 !important;
+    color: white !important;
 }
 
 /* Header - Fixed height and position */
@@ -119,6 +194,32 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+/* Override all container-fluid behavior inside header */
+.sms-main-header .container-fluid {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding-left: 1.5rem !important;
+    padding-right: 1.5rem !important;
+    margin: 0 !important;
+}
+
+/* Force navigation to take full width and justify content properly */
+.sms-main-header .sms-nav {
+    width: 100% !important;
+    height: 65px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.sms-main-header .sms-nav .container-fluid {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+}
+
 /* Main Content Areas - Exact height calculations */
 .sms-main-content,
 .sms-anonymous-container,
@@ -132,7 +233,103 @@
     flex-grow: 1;
 }
 
-/* Error UI Styling */
+/* Anonymous Layout Specific Container */
+.sms-anonymous-container {
+    position: absolute;
+    top: 65px; /* Match the fixed header height */
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: calc(100vh - 65px); /* Match the remaining viewport height */
+    overflow-y: auto;
+    background: white !important;
+    color: #212e61 !important;
+    padding: 2rem 1rem;
+    margin: 0; /* Remove any default margins */
+}
+
+/* Login Layout Container */
+.sms-login-container {
+    flex: 1;
+    padding: 2rem 1rem;
+}
+
+/* Anonymous Layout Content Targeting */
+.sms-anonymous-container .rz-card,
+.sms-anonymous-container .rz-alert {
+    color: #212e61 !important;
+}
+
+.sms-anonymous-container .container-fluid {
+    max-width: 1400px;
+    background: white !important;
+}
+
+/* Page Header Adjustments for Anonymous Layout */
+.sms-anonymous-layout .sms-page-header {
+    background: #212e61 !important;
+    border: 2px solid white !important;
+    border-radius: 0.5rem !important;
+    padding: 1.5rem !important;
+    margin-bottom: 2rem !important;
+    color: white !important;
+}
+
+.sms-anonymous-layout .sms-page-header h1,
+.sms-anonymous-layout .sms-page-header h2,
+.sms-anonymous-layout .sms-page-header h3,
+.sms-anonymous-layout .sms-page-header h4,
+.sms-anonymous-layout .sms-page-header h5,
+.sms-anonymous-layout .sms-page-header h6 {
+    color: white !important;
+}
+
+.sms-anonymous-layout .sms-page-header .text-white-50 {
+    color: white !important;
+}
+
+.sms-anonymous-layout .sms-page-header i {
+    color: white !important;
+}
+
+/* =============================================================================
+   HOME PAGE BACKGROUND STYLES
+   ============================================================================= */
+
+.home-background {
+    background-image: url('/images/background_opening.jpg');
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 0; /* Above base but below navigation */
+    margin: 0;
+    pointer-events: none; /* Allow clicks to pass through */
+}
+
+/* Make main content area transparent only on home page */
+.sms-main-layout .sms-main-content {
+    background: transparent !important;
+}
+
+.sms-main-layout .sms-main-content .content {
+    background: transparent !important;
+    position: relative;
+    z-index: 1; /* Above background but below navigation */
+}
+
+/* =============================================================================
+   SHARED ERROR UI STYLING
+   ============================================================================= */
+
 .sms-error-ui {
     background: #212e61 !important;
     color: white !important;
@@ -180,6 +377,10 @@
 .sms-error-dismiss:hover {
     background-color: rgba(255, 255, 255, 0.1);
 }
+
+/* =============================================================================
+   SHARED SPACING AND UTILITIES
+   ============================================================================= */
 
 /* Ensure consistent spacing */
 .container-fluid {

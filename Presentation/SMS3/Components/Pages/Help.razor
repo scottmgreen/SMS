@@ -1,5 +1,11 @@
 @page "/Help"
 @using SMS3.Components.Shared.UIHelpers
+@using SMS3.Extensions
+@using SMS3.Components.Shared
+@using Radzen
+@using Radzen.Blazor
+@layout SMS3.Components.Layout.MainLayout
+@inherits ComponentBase
 
 <PageTitle>Help - SMS3</PageTitle>
 
@@ -146,11 +152,11 @@
                 </RadzenColumn>
                 <RadzenColumn Size="6" SizeMD="3">
                     <RadzenButton Text="View Dashboard" Icon="dashboard" ButtonStyle="ButtonStyle.Info" 
-                                Style="width: 100%;" Click="@(() => Navigation.NavigateTo("/dashboard"))" />
+                                Style="width: 100%;" Click="@(() => Navigation.NavigateToSecure("/dashboard"))" />
                 </RadzenColumn>
                 <RadzenColumn Size="6" SizeMD="3">
                     <RadzenButton Text="Search Reports" Icon="search" ButtonStyle="ButtonStyle.Success" 
-                                Style="width: 100%;" Click="@(() => Navigation.NavigateTo("/Listings/Reports"))" />
+                                Style="width: 100%;" Click="@(() => Navigation.NavigateToSecure("/Listings/Reports"))" />
                 </RadzenColumn>
                 <RadzenColumn Size="6" SizeMD="3">
                     <RadzenButton Text="Contact Support" Icon="support" ButtonStyle="ButtonStyle.Warning" 

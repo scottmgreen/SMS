@@ -1,66 +1,50 @@
 @using Radzen
 @using Radzen.Blazor
+@using SMS3.Extensions
 @inject NavigationManager Navigation
 @inject IWebHostEnvironment Environment
 
-<!-- Anonymous Navigation Component - Uses Radzen like NavMenu -->
-<nav class="navbar navbar-expand-lg sms-nav">
-    <div class="container-fluid">
-        <!-- Brand Logo with Environment Detection -->
-        <a class="navbar-brand sms-brand @BrandCssClass" href="/">
-            <i class="fas fa-plane-departure me-2"></i>
-            PDX SMS@EnvironmentSuffix
-        </a>
-        
-        <!-- Mobile Toggle -->
-        <button class="navbar-toggler sms-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+<!-- RADZEN MENU NAVIGATION - MATCHING NavMenu STYLE -->
+<div style="width: 100%; height: 65px; display: flex; justify-content: space-between; align-items: center; padding: 0 1.5rem; background-color: #212e61;">
+    
+    <!-- Brand Logo with Environment Detection -->
+    <a class="navbar-brand sms-brand @BrandCssClass" href="/">
+        <i class="fas fa-plane-departure me-2"></i>
+        PDX SMS @(EnvironmentSuffix)
+    </a>
 
-        <!-- Anonymous Navigation Links using Radzen Menu -->
-        <div class="collapse navbar-collapse" id="navbarNav">
-            <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
-                <!-- Anonymous Menu Items using Radzen -->
-                <div class="nav-item me-3">
-                    <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                        <RadzenMenuItem Text="PDX SMS Reporting" Icon="shield" class="sms-menu-item">
-                            <RadzenMenuItem Text="Submit Report" Path="/SMSRiskManagement/ConfidentialReporting" Icon="add_circle"></RadzenMenuItem>
-                            <RadzenMenuItem Text="Track Report Status" Path="/ConfidentialReporting/TrackStatus" Icon="search"></RadzenMenuItem>
-                        </RadzenMenuItem>
-                    </RadzenMenu>
-                </div>
-                
-                <!-- Login Link -->
-                <div class="nav-item">
-                    <a class="nav-link sms-nav-link" href="/login">
-                        <i class="fas fa-sign-in-alt me-1"></i>
-                        Login
-                    </a>
-                </div>
-            </div>
-            
-            @if (!string.IsNullOrEmpty(Subtitle))
-            {
-                <div class="navbar-text sms-anonymous-subtitle">
-                    <small>@Subtitle</small>
-                </div>
-            }
+    <!-- RIGHT SIDE RADZEN MENU -->
+    <div style="display: flex; gap: 1rem; align-items: center;">
+        <!-- Confidential Reporting Menu -->
+        <div class="nav-item">
+            <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                <RadzenMenuItem Text="Submit Report" Value='"/SMSRiskManagement/ConfidentialReporting"' Icon="security"></RadzenMenuItem>
+            </RadzenMenu>
+        </div>
+        <div class="nav-item">
+            <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                <RadzenMenuItem Text="Track Report Status" Value='"/ConfidentialReporting/TrackStatus"' Icon="search"></RadzenMenuItem>
+            </RadzenMenu>
+        </div>
+        <!-- Login Link -->
+        <div class="nav-item">
+            <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                <RadzenMenuItem Text="Login" Icon="login" Value='"/login"' class="sms-menu-item"></RadzenMenuItem>
+            </RadzenMenu>
         </div>
     </div>
-</nav>
+    
+   
+</div>
 
 @code {
-    /// <summary>
-    /// Optional subtitle for specific anonymous sections
-    /// </summary>
-    [Parameter] public string? Subtitle { get; set; }
-
-    // Environment Detection
+   
+    // Environment Detection - WITH PROPER SPACING
     private string BrandCssClass => Environment.IsDevelopment() ? "development" : "";
-    private string EnvironmentSuffix => Environment.IsDevelopment() ? " [DEV]" : "";
+    private string EnvironmentSuffix => Environment.IsDevelopment() ? "[Development]" : "";
 
     /// <summary>
-    /// Handle menu clicks for navigation
+    /// Handle menu clicks for SECURE navigation - all URLs automatically encrypted
     /// </summary>
     private void OnMenuClick(MenuItemEventArgs args)
     {
@@ -69,7 +53,8 @@
             var value = args.Value.ToString();
             if (value.StartsWith("/"))
             {
-                Navigation.NavigateTo(value);
+                // ?? SECURE NAVIGATION - All anonymous menu URLs automatically encrypted
+                Navigation.NavigateToSecure(value);
             }
         }
     }

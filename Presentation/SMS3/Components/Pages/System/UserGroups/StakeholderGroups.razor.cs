@@ -1,4 +1,11 @@
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Messaging.Queries;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Interfaces;
+using SMS_Shared.Common;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Extensions;
 
 namespace SMS3.Components.Pages.System.UserGroups;
 
@@ -159,7 +166,9 @@ public partial class StakeholderGroups : ComponentBase
         EditGroupName = string.Empty;
         EditDescription = string.Empty;
         EditIsActive = true;
-        Navigation.NavigateTo("/System/UserGroups/StakeholderGroups");
+        Logger.LogInformation("Group edit cancelled");
+        NotificationHelper.ShowInfo(NotificationService, "Edit cancelled", 3000);
+        Navigation.NavigateToSecure("/System/UserGroups/StakeholderGroups");
     }
 
     private void CloseEditModal()
@@ -462,13 +471,17 @@ public partial class StakeholderGroups : ComponentBase
 
     private void ExitMemberManagement()
     {
+        // Reset member management state
         IsManagingMembers = false;
         CurrentGroupCode = null;
         CurrentGroup = null;
         GroupMembers.Clear();
         AvailableUsers.Clear();
         SelectedUsers.Clear();
-        Navigation.NavigateTo("/System/UserGroups/StakeholderGroups");
+        Logger.LogInformation("Exited member management view");
+        NotificationHelper.ShowInfo(NotificationService, "Returned to group management", 3000);
+        
+        Navigation.NavigateToSecure("/System/UserGroups/StakeholderGroups");
     }
 
     private void CloseMembersModal()

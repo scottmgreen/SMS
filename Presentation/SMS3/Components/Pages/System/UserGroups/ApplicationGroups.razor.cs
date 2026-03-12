@@ -1,4 +1,11 @@
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Messaging.Queries;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Interfaces;
+using SMS_Shared.Common;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Extensions;
 
 namespace SMS3.Components.Pages.System.UserGroups;
 
@@ -160,7 +167,7 @@ public partial class ApplicationGroups : ComponentBase
         EditGroupName = string.Empty;
         EditDescription = string.Empty;
         EditIsActive = true;
-        Navigation.NavigateTo("/System/UserGroups/ApplicationGroups");
+        Navigation.NavigateToSecure("/System/UserGroups/ApplicationGroups");
     }
 
     private void CloseEditModal()
@@ -444,7 +451,7 @@ public partial class ApplicationGroups : ComponentBase
         GroupMembers.Clear();
         AvailableUsers.Clear();
         SelectedUsers.Clear();
-        Navigation.NavigateTo("/System/UserGroups/ApplicationGroups");
+        Navigation.NavigateToSecure("/System/UserGroups/ApplicationGroups");
     }
 
     private void CloseMembersModal()

@@ -1,6 +1,6 @@
 using Domain.Entities;
-
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Extensions;
 
 namespace SMS3.Components.Pages.System.UserGroups;
 
@@ -179,7 +179,7 @@ public partial class OrganizationalGroups : ComponentBase
         EditGroupType = string.Empty;
         EditAuthorityLevel = string.Empty;
         EditIsActive = true;
-        Navigation.NavigateTo("/System/UserGroups/OrganizationalGroups");
+        Navigation.NavigateToSecure("/System/UserGroups/OrganizationalGroups");
     }
 
     private void CloseEditModal()
@@ -477,13 +477,15 @@ public partial class OrganizationalGroups : ComponentBase
 
     private void ExitMemberManagement()
     {
+        // Reset member management state
         IsManagingMembers = false;
         CurrentGroupCode = null;
         CurrentGroup = null;
-        GroupMembers.Clear();
-        AvailableUsers.Clear();
-        SelectedUsers.Clear();
-        Navigation.NavigateTo("/System/UserGroups/OrganizationalGroups");
+        
+        Logger.LogInformation("Exited member management view");
+        NotificationHelper.ShowInfo(NotificationService, "Returned to group management", 3000);
+        
+        Navigation.NavigateToSecure("/System/UserGroups/OrganizationalGroups");
     }
 
     private void CloseMembersModal()

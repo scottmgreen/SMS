@@ -1,10 +1,10 @@
 @inherits LayoutComponentBase
 @using SMS3.Components.Layout
 
-<div class="sms-anonymous-layout">
+<div class="d-flex flex-column min-vh-100 sms-main-layout">
     <!-- SMS Header - Uses AnonymousMenu component -->
     <header class="sms-main-header">
-        <AnonymousMenu Subtitle="Anonymous Confidential Reporting" />
+        <AnonymousMenu />
     </header>
 
     <!-- Main Content -->
@@ -13,132 +13,4 @@
     </main>
 </div>
 
-<!-- Anonymous Session Security Script -->
-<script type="text/javascript">
-    // Anonymous session security and form protection - only initialize once
-    (function() {
-        'use strict';
-        
-        // Check if already initialized to prevent double initialization
-        if (window.anonymousSessionInitialized) {
-            return;
-        }
-        
-        // Mark as initialized immediately
-        window.anonymousSessionInitialized = true;
-        
-        // Wait for DOM to be fully loaded
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', initializeAnonymousSession);
-        } else {
-            // DOM already loaded
-            initializeAnonymousSession();
-        }
-        
-        function initializeAnonymousSession() {
-            console.log('Anonymous confidential reporting session started');
-            
-            // Form change tracking for navigation warnings
-            let formChanged = false;
-            
-            // Monitor form changes
-            document.addEventListener('change', function(e) {
-                if (e.target && e.target.matches && e.target.matches('input, textarea, select')) {
-                    formChanged = true;
-                }
-            }, true);
-            
-            document.addEventListener('input', function(e) {
-                if (e.target && e.target.matches && e.target.matches('input, textarea')) {
-                    formChanged = true;
-                }
-            }, true);
-            
-            // Show warning when leaving page if form has been modified
-            window.addEventListener('beforeunload', function(e) {
-                if (formChanged) {
-                    const message = 'You have unsaved changes in your confidential report. Are you sure you want to leave?';
-                    e.preventDefault();
-                    e.returnValue = message;
-                    return message;
-                }
-            });
-            
-            // Global function to clear form changed flag when form is submitted successfully
-            window.clearFormChanged = function() {
-                formChanged = false;
-            };
-            
-            // Initialize complete
-            console.log('Anonymous session security initialized');
-        }
-    })();
-</script>
-
-<style>
-/* =============================================================================
-   ANONYMOUS LAYOUT SPECIFIC STYLING ONLY
-   Shared navigation and layout styles are in shared-layouts.css
-   ============================================================================= */
-
-.sms-anonymous-layout {
-    min-height: 100vh;
-    background: #212e61 !important;
-    color: white !important;
-}
-
-/* Main Content Container - Fixed positioning for consistent header height */
-.sms-anonymous-container {
-    position: absolute;
-    top: 65px; /* Updated to match the new fixed header height */
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: calc(100vh - 65px); /* Updated to match the new remaining viewport height */
-    overflow-y: auto;
-    background: white !important;
-    color: #212e61 !important;
-    padding: 2rem 1rem;
-    margin: 0; /* Remove any default margins */
-}
-
-/* ONLY target the specific content areas that need dark text */
-.sms-anonymous-container .rz-card,
-.sms-anonymous-container .rz-alert {
-    color: #212e61 !important;
-}
-
-/* Page Header Adjustments for Anonymous Layout */
-::deep .sms-page-header {
-    background: #212e61 !important;
-    border: 2px solid white !important;
-    border-radius: 0.5rem !important;
-    padding: 1.5rem !important;
-    margin-bottom: 2rem !important;
-    color: white !important;
-}
-
-::deep .sms-page-header h1,
-::deep .sms-page-header h2,
-::deep .sms-page-header h3,
-::deep .sms-page-header h4,
-::deep .sms-page-header h5,
-::deep .sms-page-header h6 {
-    color: white !important;
-}
-
-::deep .sms-page-header .text-white-50 {
-    color: white !important;
-}
-
-::deep .sms-page-header i {
-    color: white !important;
-}
-
-/* Content Area Styling */
-.sms-anonymous-container .container-fluid {
-    max-width: 1400px;
-    background: white !important;
-}
-</style>
+<!-- All styles moved to shared-layouts.css -->

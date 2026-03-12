@@ -5,29 +5,13 @@
 
 <PageTitle>PDX SMS </PageTitle>
 
+<!-- Home background - positioned to cover entire viewport -->
 <div class="home-background"></div>
 
-<style>
-.home-background {
-    background-image: url('images/background_opening.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-attachment: fixed;
-    position: absolute;
-    top: 65px; /* Updated to match the new fixed header height */
-    left: 0;
-    right: 0;
-    bottom: 0;
-    width: 100%;
-    height: calc(100vh - 65px); /* Updated to match the new remaining viewport height */
-    padding: 2rem;
-    overflow: hidden;
-    box-sizing: border-box;
-    z-index: 1;
-    margin: 0; /* Remove any default margins */
-}
-</style>
+<!-- Transparent content area -->
+<div style="position: relative; z-index: 1; background: transparent;">
+    @* Home content can go here if needed *@
+</div>
 
 @code {
     private bool IsAuthenticated => CurrentUserService.IsAuthenticated;

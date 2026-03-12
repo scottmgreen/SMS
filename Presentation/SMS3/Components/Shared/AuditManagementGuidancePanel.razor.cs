@@ -1,3 +1,5 @@
+using SMS3.Extensions;
+
 namespace SMS3.Components.Shared;
 
 public partial class AuditManagementGuidancePanel : ComponentBase
@@ -6,23 +8,25 @@ public partial class AuditManagementGuidancePanel : ComponentBase
 
     private void CreateAnnualAuditPlan()
     {
-        // Navigate to create audit plan page with annual plan template
-        Navigation.NavigateTo("/SMSAssurance/AuditPlans/CreateAnnual");
+        // ?? SECURE NAVIGATION - Navigate to create audit plan page with encrypted URL
+        Navigation.NavigateToSecure("/SMSAssurance/AuditPlans/CreateAnnual");
     }
 
     private void CreateInternalAudit()
     {
-        // Navigate to create internal audit page
-        Navigation.NavigateTo("/SMSAssurance/AuditPlans/CreateInternal");
+        // ?? SECURE NAVIGATION - Navigate to create internal audit page with encrypted URL
+        Navigation.NavigateToSecure("/SMSAssurance/AuditPlans/CreateInternal");
     }
 
     private void NavigateToEvidence()
     {
-        Navigation.NavigateTo("/SMSAssurance/AuditEvidence");
+        // ?? SECURE NAVIGATION - Navigate to audit evidence with encrypted URL
+        Navigation.NavigateToSecure("/SMSAssurance/AuditEvidence");
     }
 
     private void NavigateToAuditReports()
     {
-        Navigation.NavigateTo("/SMSAssurance/AuditReports");
+        // ?? SECURE NAVIGATION - Navigate to audit reports with encrypted URL
+        Navigation.NavigateToSecure("/SMSAssurance/AuditReports");
     }
 }

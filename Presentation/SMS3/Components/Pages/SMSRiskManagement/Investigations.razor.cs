@@ -3,6 +3,7 @@ using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -92,7 +93,7 @@ public partial class Investigations : ComponentBase
             {
                 ShowErrorNotification("Investigation ID is required");
                 Logger.LogError("Investigation ID is null or empty");
-                Navigation.NavigateTo("/Listings/Investigations");
+                Navigation.NavigateToSecure("/Listings/Investigations");
                 return;
             }
 
@@ -124,7 +125,7 @@ public partial class Investigations : ComponentBase
             {
                 Logger.LogError("Investigation {InvestigationId} not found: {Error}",InvestigationId, investigationResult.Error?.Message);
                 ShowErrorNotification($"Investigation not found: {investigationResult.Error?.Message}");
-                Navigation.NavigateTo("/Listings/Investigations");
+                Navigation.NavigateToSecure("/Listings/Investigations");
             }
         }
         catch (Exception ex)
@@ -346,7 +347,8 @@ public partial class Investigations : ComponentBase
                 // Navigate back to validation workflow
                 if (!string.IsNullOrEmpty(InvestigationEntity.HazardCode))
                 {
-                    Navigation.NavigateTo($"/SMSRiskManagement/ReportValidation/{InvestigationEntity.ReportCode}");
+                    // 🔐 SECURE NAVIGATION - Navigate to Report Validation with encrypted URL
+                    Navigation.NavigateToSecure($"/SMSRiskManagement/ReportValidation/{InvestigationEntity.ReportCode}");
                 }
                 break;
         }
@@ -498,7 +500,8 @@ public partial class Investigations : ComponentBase
             await DialogService.Alert(message, "Returned to Validation", new AlertOptions() { OkButtonText = "OK" });
 
             // Navigate to validations listing to show where the report went
-            Navigation.NavigateTo($"/SMSRiskManagement/ReportValidation/{InvestigationEntity.ReportCode}");
+            // 🔐 SECURE NAVIGATION - Navigate to Report Validation with encrypted URL
+            Navigation.NavigateToSecure($"/SMSRiskManagement/ReportValidation/{InvestigationEntity.ReportCode}");
         }
         catch (Exception ex)
         {
@@ -900,7 +903,8 @@ public partial class Investigations : ComponentBase
     /// </summary>
     private void NavigateToListings()
     {
-        Navigation.NavigateTo("/Listings/Investigations");
+        // 🔐 SECURE NAVIGATION - Navigate to Investigations listing with encrypted URL
+        Navigation.NavigateToSecure("/Listings/Investigations");
     }
     #endregion
 }

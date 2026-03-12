@@ -1,3 +1,5 @@
+using SMS3.Extensions;
+
 namespace SMS3.Components.Shared;
 
 public partial class InvestigationsGuidance : ComponentBase
@@ -6,31 +8,31 @@ public partial class InvestigationsGuidance : ComponentBase
 
     private void CreateNewInvestigation()
     {
-        // Navigate to new investigation creation page or form
-        Navigation.NavigateTo("/SMSRiskManagement/Investigations/Create");
+        // ?? SECURE NAVIGATION - Navigate to new investigation creation with encrypted URL
+        Navigation.NavigateToSecure("/SMSRiskManagement/Investigations/Create");
     }
 
     private void NavigateToMyInterviews()
     {
-        // Navigate to the user's assigned interviews
-        Navigation.NavigateTo("/SMSRiskManagement/MyInterviews");
+        // ?? SECURE NAVIGATION - Navigate to user's assigned interviews with encrypted URL
+        Navigation.NavigateToSecure("/SMSRiskManagement/MyInterviews");
     }
 
     private void NavigateToInvestigationList()
     {
-        // Navigate to investigations listing page
-        Navigation.NavigateTo("/Listings/Investigations");
+        // ?? SECURE NAVIGATION - Navigate to investigations listing with encrypted URL
+        Navigation.NavigateToSecure("/Listings/Investigations");
     }
 
     private void NavigateToInvestigationReports()
     {
-        // Navigate to investigation reports and analytics
-        Navigation.NavigateTo("/SMSReporting/InvestigationReports");
+        // ?? SECURE NAVIGATION - Navigate to investigation reports with encrypted URL
+        Navigation.NavigateToSecure("/SMSReporting/InvestigationReports");
     }
 
     private void ContactSupport()
     {
-        // Could open a modal, navigate to support page, or trigger email
-        Navigation.NavigateTo("/Support/Contact?topic=investigations");
+        // ?? SECURE NAVIGATION - Navigate to support page with encrypted URL
+        Navigation.NavigateToSecure("/Support/Contact", "topic", "investigations");
     }
 }

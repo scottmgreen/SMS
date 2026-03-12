@@ -1,4 +1,5 @@
 using Microsoft.JSInterop;
+using SMS3.Extensions;
 
 namespace SMS3.Components.Pages.SMSPolicy;
 
@@ -31,7 +32,8 @@ public partial class SafetyPolicy : ComponentBase
             Logger.LogInformation("Document viewer opened: {Filename} in category {Category}", filename, category);
 
             // Navigate to document viewer
-            Navigation.NavigateTo(documentUrl);
+            // ?? SECURE NAVIGATION - Navigate to document viewer with encrypted URL
+            Navigation.NavigateToSecure(documentUrl);
         }
         catch (Exception ex)
         {
@@ -63,7 +65,8 @@ public partial class SafetyPolicy : ComponentBase
 
     private void NavigateToPage(string url)
     {
-        Navigation.NavigateTo(url);
+        // ?? SECURE NAVIGATION - Navigate with encrypted URL
+        Navigation.NavigateToSecure(url);
     }
 
     #endregion

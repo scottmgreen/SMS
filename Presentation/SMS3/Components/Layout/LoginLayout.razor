@@ -1,7 +1,7 @@
 @inherits LayoutComponentBase
 @using SMS3.Components.Layout
 
-<div class="sms-login-layout">
+<div class="d-flex flex-column min-vh-100 sms-main-layout">
     <!-- SMS Header - Uses AnonymousMenu component -->
     <header class="sms-main-header">
         <AnonymousMenu />
@@ -13,20 +13,4 @@
     </main>
 </div>
 
-<style>
-/* =============================================================================
-   LOGIN LAYOUT SPECIFIC STYLING ONLY
-   Shared navigation and layout styles are in shared-layouts.css
-   ============================================================================= */
-
-.sms-login-layout {
-    min-height: 100vh;
-    background: #212e61 !important;
-    color: white !important;
-}
-
-.sms-login-container {
-    flex: 1;
-    padding: 2rem 1rem;
-}
-</style>
+<!-- All styles moved to shared-layouts.css -->

@@ -1,6 +1,8 @@
 using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -47,7 +49,7 @@ public partial class ReportValidation : ComponentBase
     // State Properties
     private bool IsUpdate => ExistingValidation != null;
     private string ValidationCode => ExistingValidation?.Code ?? "New";
-    //private string CurrentStatus { get; set; }= string.Empty; // ExistingValidation?.Status ?? "New";
+    //private string CurrentStatus { get; set;}= string.Empty; // ExistingValidation?.Status ?? "New";
     private bool IsProcessing { get; set; } = false;
 
     
@@ -74,7 +76,7 @@ public partial class ReportValidation : ComponentBase
             if (string.IsNullOrWhiteSpace(ReportId))
             {
                 ShowErrorNotification("Report ID is required for SMS report validation");
-                Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+                Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
                 return;
             }
 
@@ -139,7 +141,7 @@ public partial class ReportValidation : ComponentBase
         {
             Logger.LogError(ex, "Error loading report for SMS validation: {ReportId}", ReportId);
             ShowErrorNotification("An error occurred while loading the report for validation");
-            Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+            Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
         }
     }
 
@@ -428,14 +430,16 @@ public partial class ReportValidation : ComponentBase
                 datasetUrl += $"/{ReportHazard.Code}";
             }
 
-            Navigation.NavigateTo(datasetUrl);
+            // ?? SECURE NAVIGATION - Navigate to dataset creation page
+            Navigation.NavigateToSecure(datasetUrl);
         }
         else
         {
             string navigationUrl;
             navigationUrl = $"/SMSAssurance/RiskRegistry";
             await Task.Delay(1500);
-            Navigation.NavigateTo(navigationUrl);
+            // ?? SECURE NAVIGATION - Navigate to Risk Registry
+            Navigation.NavigateToSecure(navigationUrl);
         }
     }
 
@@ -470,14 +474,15 @@ public partial class ReportValidation : ComponentBase
                 datasetUrl += $"/{ReportHazard.Code}";
             }
 
-            Navigation.NavigateTo(datasetUrl);
+            // ?? SECURE NAVIGATION - Navigate to dataset creation page
+            Navigation.NavigateToSecure(datasetUrl);
         }
         else
         {
             // User skipped dataset creation - proceed directly to assessment
             Logger.LogInformation("User skipped Airport Shared Dataset creation for Report: {ReportId}", ReportId);
 
-            //Check for existing RiskAssessment
+            //Check for existing RiskAssessments
             // Check for existing investigation first
             var existingRiskAssessmentsQuery = new GetAllRiskAssessmentsQuery();
             var existingResult = await Mediator.SendAsync(existingRiskAssessmentsQuery, CancellationToken.None);
@@ -507,7 +512,8 @@ public partial class ReportValidation : ComponentBase
                 }
 
                 await Task.Delay(1500);
-                Navigation.NavigateTo(navigationUrl);
+                // ?? SECURE NAVIGATION - Navigate to existing Risk Assessment
+                Navigation.NavigateToSecure(navigationUrl);
             }
             else
             {
@@ -549,7 +555,8 @@ public partial class ReportValidation : ComponentBase
                     }
 
                     await Task.Delay(1500);
-                    Navigation.NavigateTo(navigationUrl);
+                    // ?? SECURE NAVIGATION - Navigate to new risk assessment
+                    Navigation.NavigateToSecure(navigationUrl);
                 }
                 else
                 {
@@ -577,7 +584,8 @@ public partial class ReportValidation : ComponentBase
 
             
             await Task.Delay(1500);
-            Navigation.NavigateTo(navigationUrl);
+            // ?? SECURE NAVIGATION - Navigate to Technical Assessment
+            Navigation.NavigateToSecure(navigationUrl);
         }
     }
 
@@ -601,8 +609,8 @@ public partial class ReportValidation : ComponentBase
             }
 
             // Check for existing investigation first
-            var existingInvestigationQuery = new GetAllInvestigationsQuery();
-            var existingResult = await Mediator.SendAsync(existingInvestigationQuery, CancellationToken.None);
+            var existingInvestigationsQuery = new GetAllInvestigationsQuery();
+            var existingResult = await Mediator.SendAsync(existingInvestigationsQuery, CancellationToken.None);
 
             Investigation? existingInvestigation = null;
             if (existingResult.IsSuccess && existingResult.Value != null)
@@ -624,7 +632,8 @@ public partial class ReportValidation : ComponentBase
                     throw new Exception($"Failed to Update Report Status during exsiting investigation: {DomainErrors.ReportValidationError.CreateFailed.Message}");
                 }
                 await Task.Delay(1500);
-                Navigation.NavigateTo(navigationUrl);
+                // ?? SECURE NAVIGATION - Navigate to existing investigation
+                Navigation.NavigateToSecure(navigationUrl);
             }
             else
             {
@@ -656,7 +665,8 @@ public partial class ReportValidation : ComponentBase
                         throw new Exception($"Failed to Update Report Status during Create new Investigation: {DomainErrors.ReportValidationError.CreateFailed.Message}");
                     }
                     await Task.Delay(1500);
-                    Navigation.NavigateTo(navigationUrl);
+                    // ?? SECURE NAVIGATION - Navigate to new investigation
+                    Navigation.NavigateToSecure(navigationUrl);
                 }
                 else
                 {
@@ -721,7 +731,8 @@ public partial class ReportValidation : ComponentBase
                 ShowSuccessNotification("Report has been closed successfully");
                 Logger.LogInformation("Report {ReportId} closed due to NOT_SMS_RISK validation", ReportId);
                 await Task.Delay(1500);
-                Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+                // ?? SECURE NAVIGATION - Navigate to Report Processing
+                Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
             }
 
         }

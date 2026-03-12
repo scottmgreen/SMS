@@ -5,6 +5,7 @@ using SMS_Domain.Errors;
 
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -647,8 +648,8 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
         StateHasChanged();
 
-        // Navigate to home page for anonymous users (not ReportProcessing)
-        Navigation.NavigateTo("/", forceLoad: true);
+        // 🔐 SECURE NAVIGATION - Navigate to home page for anonymous users
+        Navigation.NavigateToSecure("/", forceLoad: true);
     }
 
     #endregion
@@ -1217,7 +1218,14 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             return string.Empty;
 
         var baseUri = Navigation.BaseUri.TrimEnd('/');
-        return $"{baseUri}/ConfidentialReporting/TrackStatus/{GeneratedTrackingId}";
+        
+        // 🔐 SECURE URL GENERATION - Generate encrypted tracking URL
+        var secureTrackingUrl = Navigation.GenerateSecureUrl(
+            "/ConfidentialReporting/TrackStatus", 
+            "TrackingCode", 
+            GeneratedTrackingId);
+            
+        return $"{baseUri}{secureTrackingUrl}";
     }
 
     /// <summary>

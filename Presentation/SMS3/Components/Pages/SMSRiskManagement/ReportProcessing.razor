@@ -52,120 +52,6 @@
     </RadzenRow>
 </div>
 
-<!-- 🚀 NEW: Bulk Mitigation Approval Confirmation Dialog -->
-@* @if (ShowBulkApprovalDialog && SelectedReportForApproval != null)
-{
-    <div class="modal-overlay">
-        <div class="sms-modal-dialog sms-modal-lg">
-            <div class="sms-modal-content">
-                <div class="sms-modal-header sms-header-warning">
-                    <div class="d-flex justify-content-between align-items-center w-100">
-                        <h5 class="sms-modal-title mb-0">
-                            <i class="fas fa-check-double"></i> Bulk Mitigation Approval
-                        </h5>
-                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                                    Variant="Variant.Text"
-                                    Icon="close" it..
-                                    Size="ButtonSize.Small"
-                                    
-                            />
-                    </div>
-                </div>
-                <div class="sms-modal-body">
-                    
-                    <!-- Confirmation Information -->
-                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
-                        <div class="p-3">
-                            <h6 class="text-primary mb-3">
-                                <i class="fas fa-exclamation-triangle text-warning"></i> Confirmation Required
-                            </h6>
-                            <p class="mb-3">
-                                You are about to <strong>approve ALL mitigations</strong> for the following report:
-                            </p>
-                            <div class="row mb-3">
-                                <div class="col-sm-6">
-                                    <strong>Report ID:</strong> @SelectedReportForApproval.ReportId<br>
-                                    <strong>Hazard ID:</strong> @SelectedReportForApproval.HazardId<br>
-                                </div>
-                                <div class="col-sm-6">
-                                    <strong>Total Mitigations:</strong> @SelectedReportForApproval.MitigationCount<br>
-                                </div>
-                            </div>
-                            <div class="bg-light p-2 rounded mb-3">
-                                <strong>Description:</strong> @SelectedReportForApproval.HazardDescription
-                            </div>
-                        </div>
-                    </RadzenCard>
-
-                    <!-- Mitigation List Preview -->
-                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
-                        <div class="p-3">
-                            <h6 class="text-primary mb-3">
-                                <i class="fas fa-list"></i> Mitigations to be Approved
-                            </h6>
-                            @if (SelectedReportForApproval.HasMitigations)
-                            {
-                                <div class="table-responsive">
-                                    <table class="table table-sm table-striped">
-                                        <thead>
-                                            <tr>
-                                                <th>Mitigation ID</th>
-                                                <th>Name</th>
-                                                <th>Current Status</th>
-                                                <th>Hazard ID</th>
-                                                <th>Risk Level</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            @foreach (var mitigation in SelectedReportForApproval.AllMitigations)
-                                            {
-                                                <tr>
-                                                    <td>@mitigation.MitigationCode</td>
-                                                    <td>@mitigation.MitigationName</td>
-                                                    <td>@mitigation.Status</td>
-                                                    <td>@mitigation.HazardCode</td>
-                                                    <td>@mitigation.HazardRiskLevel</td>
-                                                </tr>
-                                            }
-                                        </tbody>
-                                    </table>
-                                </div>
-                            }
-                            else
-                            {
-                                <p class="text-muted">No mitigations found for this report.</p>
-                            }
-                        </div>
-                    </RadzenCard>
-
-                    <!-- Warning Message -->
-                    <RadzenAlert AlertStyle="AlertStyle.Light" Icon="warning" ShowIcon="true" Class="mb-3">
-                        <strong>Important:</strong> This action will set the status of ALL listed mitigations to "Approved".
-                        This action cannot be undone. Please review the mitigations carefully before proceeding.
-                    </RadzenAlert>
-                    
-                </div>
-                <div class="sms-modal-footer">
-                    <div class="d-flex justify-content-end gap-2">
-                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
-                                    Text="Cancel" 
-                                    Icon="close"
-                                      Click="@CloseBulkApprovalConfirmation"  
-                                    Size="ButtonSize.Medium"
-                                    Disabled="@IsProcessingApproval" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Success" 
-                                    Text="@(IsProcessingApproval ? "Processing..." : $"Approve All {SelectedReportForApproval.MitigationCount} Mitigations")" 
-                                    Icon="@(IsProcessingApproval ? "hourglass_empty" : "verified")"
-                                       Click="@ProcessBulkApprovalConfirmation"  
-                                    Size="ButtonSize.Medium"
-                                    Disabled="@IsProcessingApproval" />
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-}
- *@
 
 <!-- 🚀 ENHANCED: Bulk Mitigation Approval Confirmation Dialog with Risk-Based Approver Selection -->
 @if (ShowBulkApprovalDialog && SelectedReportForApproval != null)
@@ -259,38 +145,6 @@
                         </div>
                     </RadzenCard>
 
-                    <!-- 🚀 ENHANCED: Risk Level Breakdown Table -->
-                    @* <RadzenCard Variant="Variant.Outlined" Class="mb-3">
-                        <div class="p-3">
-                            <h6 class="text-primary mb-3">
-                                <i class="fas fa-analytics"></i> Risk Level Breakdown
-                            </h6>
-                            <div class="table-responsive">
-                                <table class="table table-sm">
-                                    <thead>
-                                        <tr>
-                                            <th>Risk Level</th>
-                                            <th>Hazard Count</th>
-                                            <th>Mitigation Count</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        @foreach (var riskBreakdown in GetRiskLevelBreakdown(SelectedReportForApproval))
-                                        {
-                                            <tr>
-                                                <td>
-                                                    <RadzenBadge Text="@riskBreakdown.RiskLevel"
-                                                                 BadgeStyle="@GetRiskLevelBadgeStyle(riskBreakdown.RiskLevel)" />
-                                                </td>
-                                                <td>@riskBreakdown.HazardCount</td>
-                                                <td>@riskBreakdown.MitigationCount</td>
-                                            </tr>
-                                        }
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </RadzenCard> *@
 
                     <!-- Mitigation List Preview -->
                     <RadzenCard Variant="Variant.Outlined" Class="mb-3">
@@ -336,11 +190,7 @@
                         </div>
                     </RadzenCard>
 
-                    <!-- Warning Message -->
-                    @* <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" ShowIcon="true" Class="mb-3">
-                        <strong>Important:</strong> This action will set the status of ALL listed mitigations to "Approved".
-                        This action cannot be undone. Please review the mitigations carefully before proceeding.
-                    </RadzenAlert> *@
+                    
 
                 </div>
                 <div class="sms-modal-footer">

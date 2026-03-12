@@ -7,6 +7,7 @@ using Radzen.Blazor;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
+using SMS3.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -542,7 +543,8 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     /// </summary>
     public void BackToSearch()
     {
-        Navigation.NavigateTo("/ConfidentialReporting/TrackStatus");
+        // ?? SECURE NAVIGATION - Navigate back to confidential search with encrypted URL
+        Navigation.NavigateToSecure("/ConfidentialReporting/TrackStatus");
     }
 
     #endregion
@@ -552,7 +554,7 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     /// <summary>
     /// Show error notification
     /// </summary>
-    private void ShowErrorNotification(string message)
+    private void ShowErrorNotification(String message)
     {
         NotificationService.Notify(new NotificationMessage
         {

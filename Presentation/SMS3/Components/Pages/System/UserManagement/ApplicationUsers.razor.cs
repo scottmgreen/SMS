@@ -1,4 +1,11 @@
+using SMS_Domain.Entities;
+using SMS_Domain.ValueObjects;
+using SMS_Application.Messaging.Queries;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Interfaces;
+using SMS_Shared.Common;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Extensions;
 
 namespace SMS3.Components.Pages.System.UserManagement;
 
@@ -157,7 +164,10 @@ public partial class ApplicationUsers : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading user for edit: {UserId}", id);
-            ShowErrorNotification("Error loading user. Please try again.");
+            ShowErrorNotification("An error occurred while loading the user for editing.");
+            
+            // Navigate back to main list on error
+            Navigation.NavigateToSecure("/System/UserManagement/ApplicationUsers");
         }
     }
 
@@ -413,7 +423,18 @@ public partial class ApplicationUsers : ComponentBase
 
     private async Task EditUser(string userId)
     {
-        Navigation.NavigateTo($"/System/UserManagement/ApplicationUsers/Edit/{userId}");
+        try
+        {
+            Logger.LogInformation("Editing user: {UserId}", userId);
+            
+            // Navigate to edit page with user ID parameter
+            Navigation.NavigateToSecure($"/System/UserManagement/ApplicationUsers/Edit/{userId}");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error navigating to edit user: {UserId}", userId);
+            ShowErrorNotification("Error opening user editor");
+        }
     }
 
     private async Task UpdateUser(EditUserModel model)
@@ -449,9 +470,14 @@ public partial class ApplicationUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                await LoadDataAsync();
-                ShowSuccessNotification($"Application user '{model.FirstName} {model.LastName}' updated successfully.");
-                Navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
+                ShowSuccessNotification($"User '{CurrentUser.UserName.Value}' has been updated successfully!");
+                
+                // Reset form state
+                IsEditMode = false;
+                CurrentUser = null;
+                
+                // Navigate back to main list with success
+                Navigation.NavigateToSecure("/System/UserManagement/ApplicationUsers");
             }
             else
             {
@@ -549,12 +575,12 @@ public partial class ApplicationUsers : ComponentBase
         CurrentUser = null;
         EditUserRoleCode = null;
         editUser = new EditUserModel();
-        Navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
+        Navigation.NavigateToSecure("/System/UserManagement/ApplicationUsers");
     }
 
     private void NavigateToUserManagement()
     {
-        Navigation.NavigateTo("/System/UserManagement");
+        Navigation.NavigateToSecure("/System/UserManagement");
     }
 
     private async Task ExportUsers()

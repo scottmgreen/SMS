@@ -8,6 +8,7 @@ using Radzen.Blazor;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
+using SMS3.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -627,7 +628,8 @@ public partial class HazardReportSearchResult : ComponentBase
     /// </summary>
     public void BackToSearch()
     {
-        Navigation.NavigateTo("/SMSRiskManagement/HazardReportSearch");
+        // ?? SECURE NAVIGATION - Navigate back to hazard report search with encrypted URL
+        Navigation.NavigateToSecure("/SMSRiskManagement/HazardReportSearch");
     }
 
     #endregion

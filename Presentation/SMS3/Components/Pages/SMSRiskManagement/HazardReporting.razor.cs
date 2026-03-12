@@ -1436,12 +1436,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     private void InitializeFormDefaults()
     {
-        var currentUser = CurrentUserService.UserCode;
+        //var currentUser = CurrentUserService.UserCode;
         var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
         
         HazardReport = new HazardReportForm
         {
-            SubmittedBy = CurrentUserService.UserCode ?? "Unknown",
+            SubmittedBy = CurrentUserService.UserDisplayName ?? "Unknown",
             SubmittedDate = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
             IncidentDateTime = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day, tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
         };

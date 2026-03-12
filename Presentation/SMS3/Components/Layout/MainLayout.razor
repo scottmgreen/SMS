@@ -3,6 +3,7 @@
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @using SMS_Application.Services
+@using SMS3.Extensions
 
 
 <div class="d-flex flex-column min-vh-100 sms-main-layout">
@@ -122,8 +123,8 @@
             
             Logger.LogInformation("✅ Static authentication cleared for user: {UserName}", currentUserName);
             
-            // Navigate to HOME PAGE, not login - let them see the guest view
-            Navigation.NavigateTo("/", forceLoad: true);
+            // 🔐 SECURE NAVIGATION - Navigate to HOME PAGE with encrypted URL
+            Navigation.NavigateToSecure("/", forceLoad: true);
         }
         catch (Exception ex)
         {
@@ -133,12 +134,14 @@
             try
             {
                 StaticCurrentUserService.ClearAuthenticationState();
-                Navigation.NavigateTo("/", forceLoad: true);
+                // 🔐 SECURE NAVIGATION - Force navigation to home page
+                Navigation.NavigateToSecure("/", forceLoad: true);
             }
             catch (Exception clearEx)
             {
                 Logger.LogError(clearEx, "❌ Critical: Failed to clear static authentication during logout");
-                Navigation.NavigateTo("/", forceLoad: true);
+                // 🔐 SECURE NAVIGATION - Force navigation even on clear error
+                Navigation.NavigateToSecure("/", forceLoad: true);
             }
         }
     }

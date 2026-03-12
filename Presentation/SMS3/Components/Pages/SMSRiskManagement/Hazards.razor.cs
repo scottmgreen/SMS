@@ -1,4 +1,5 @@
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -161,7 +162,8 @@ public partial class Hazards : ComponentBase
     private async Task OnEditHazardAsync(Hazard hazard)
     {
         Logger.LogInformation("Edit hazard: {HazardCode}", hazard.Code);
-        Navigation.NavigateTo($"/SMSRiskManagement/HazardEdit/{hazard.Code}");
+        // ?? SECURE NAVIGATION - Navigate to Hazard Edit with encrypted URL
+        Navigation.NavigateToSecure($"/SMSRiskManagement/HazardEdit/{hazard.Code}");
     }
 
     private async Task OnDeleteHazardAsync(Hazard hazard)
