@@ -1,3 +1,5 @@
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Pages.SMSAssurance.Components;
 using SMS3.Components.Shared.UIHelpers;
 
@@ -12,7 +14,8 @@ public partial class SPIDetail : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<SPIDetail> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     #endregion
@@ -96,7 +99,7 @@ public partial class SPIDetail : ComponentBase
     private async Task RefreshDataAsync()
     {
         await LoadSPIDataAsync();
-        ShowSuccessNotification("SPI data refreshed successfully");
+        await NotificationHelper.ShowSuccessAsync("SPI data refreshed successfully");
     }
     #endregion
 
@@ -220,18 +223,18 @@ public partial class SPIDetail : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    ShowSuccessNotification("Data point deleted successfully");
+                    await NotificationHelper.ShowSuccessAsync("Data point deleted successfully");
                     await RefreshDataAsync();
                 }
                 else
                 {
-                    ShowErrorNotification(result.Error?.Message ?? "Failed to delete data point");
+                    await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to delete data point");
                 }
             }
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error deleting data point");
-                ShowErrorNotification("Failed to delete data point");
+                await NotificationHelper.ShowErrorAsync("Failed to delete data point");
             }
         }
     }
@@ -254,12 +257,12 @@ public partial class SPIDetail : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    ShowSuccessNotification("Data point updated successfully");
+                    await NotificationHelper.ShowSuccessAsync("Data point updated successfully");
                     await RefreshDataAsync();
                 }
                 else
                 {
-                    ShowErrorNotification(result.Error?.Message ?? "Failed to update data point");
+                    await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to update data point");
                 }
             }
             else
@@ -278,19 +281,19 @@ public partial class SPIDetail : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    ShowSuccessNotification("Data point added successfully");
+                    await NotificationHelper.ShowSuccessAsync("Data point added successfully");
                     await RefreshDataAsync();
                 }
                 else
                 {
-                    ShowErrorNotification(result.Error?.Message ?? "Failed to save data point");
+                    await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to save data point");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error saving data point");
-            ShowErrorNotification("An error occurred while saving the data point");
+            await NotificationHelper.ShowErrorAsync("An error occurred while saving the data point");
         }
     }
 
@@ -381,28 +384,6 @@ public partial class SPIDetail : ComponentBase
     {
         if (difference >= 0) return "color: #198754;";
         return "color: #dc3545;";
-    }
-    #endregion
-
-    #region Notification Methods
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationHelper.ShowSuccess(NotificationService, message);
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message);
-    }
-
-    private void ShowWarningNotification(string message)
-    {
-        NotificationHelper.ShowWarning(NotificationService, message);
-    }
-
-    private void ShowInfoNotification(string message)
-    {
-        NotificationHelper.ShowInfo(NotificationService, message);
     }
     #endregion
 }

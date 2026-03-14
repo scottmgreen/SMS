@@ -6,7 +6,7 @@ public partial class InterviewsManager : ComponentBase
 {
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<InterviewsManager> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     #endregion
@@ -86,7 +86,7 @@ public partial class InterviewsManager : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading interviews for investigation: {Code}", InvestigationCode);
-            ShowErrorNotification("Error loading interviews");
+            ShowErrorAsyncNotification("Error loading interviews");
         }
         finally
         {
@@ -125,7 +125,7 @@ public partial class InterviewsManager : ComponentBase
         if (result == true)
         {
             await RefreshInterviews();
-            ShowSuccessNotification("Interview scheduled successfully");
+            ShowSuccessAsyncNotification("Interview scheduled successfully");
         }
     }
 
@@ -183,7 +183,7 @@ public partial class InterviewsManager : ComponentBase
         if (result == true)
         {
             await RefreshInterviews();
-            ShowSuccessNotification("Interview updated successfully");
+            ShowSuccessAsyncNotification("Interview updated successfully");
         }
     }
 
@@ -207,26 +207,26 @@ public partial class InterviewsManager : ComponentBase
                     if (result.IsSuccess)
                     {
                         await RefreshInterviews();
-                        ShowSuccessNotification("Interview started - Opening interview dialog for conducting");
+                        ShowSuccessAsyncNotification("Interview started - Opening interview dialog for conducting");
 
                         // Immediately open the EditInterviewDialog to conduct the interview
                         await OpenConductInterviewDialog(interview);
                     }
                     else
                     {
-                        ShowErrorNotification($"Failed to start interview: {result.Error?.Message}");
+                        ShowErrorAsyncNotification($"Failed to start interview: {result.Error?.Message}");
                     }
                 }
                 else
                 {
-                    ShowErrorNotification($"Cannot start interview: {startResult.Error?.Message}");
+                    ShowErrorAsyncNotification($"Cannot start interview: {startResult.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error starting interview: {Code}", interview.Code);
-            ShowErrorNotification("Error starting interview");
+            ShowErrorAsyncNotification("Error starting interview");
         }
     }
 
@@ -258,7 +258,7 @@ public partial class InterviewsManager : ComponentBase
         if (result == true)
         {
             await RefreshInterviews();
-            ShowSuccessNotification("Interview session completed");
+            ShowSuccessAsyncNotification("Interview session completed");
         }
     }
 
@@ -290,7 +290,7 @@ public partial class InterviewsManager : ComponentBase
         if (result == true)
         {
             await RefreshInterviews();
-            ShowSuccessNotification("Interview completed successfully");
+            ShowSuccessAsyncNotification("Interview completed successfully");
         }
     }
 
@@ -317,23 +317,23 @@ public partial class InterviewsManager : ComponentBase
                     if (result.IsSuccess)
                     {
                         await RefreshInterviews();
-                        ShowSuccessNotification("Interview cancelled");
+                        ShowSuccessAsyncNotification("Interview cancelled");
                     }
                     else
                     {
-                        ShowErrorNotification($"Failed to cancel interview: {result.Error?.Message}");
+                        ShowErrorAsyncNotification($"Failed to cancel interview: {result.Error?.Message}");
                     }
                 }
                 else
                 {
-                    ShowErrorNotification($"Cannot cancel interview: {cancelResult.Error?.Message}");
+                    ShowErrorAsyncNotification($"Cannot cancel interview: {cancelResult.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error cancelling interview: {Code}", interview.Code);
-            ShowErrorNotification("Error cancelling interview");
+            ShowErrorAsyncNotification("Error cancelling interview");
         }
     }
     #endregion
@@ -371,14 +371,14 @@ public partial class InterviewsManager : ComponentBase
     #endregion
 
     #region Notifications
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message);
+        NotificationHelper.ShowSuccessAsync( message);
     }
 
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message);
+        NotificationHelper.ShowErrorAsync( message);
     }
     #endregion
 }

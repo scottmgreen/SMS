@@ -1,4 +1,4 @@
-using SMS3.Extensions;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Shared;
 

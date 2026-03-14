@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Components.Web;
 
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
@@ -13,7 +15,8 @@ public partial class HazardReportSearch : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<HazardReportSearch> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
@@ -228,7 +231,7 @@ public partial class HazardReportSearch : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(TrackingIdSearch))
         {
-            ShowWarningNotification("Please enter a tracking ID to search");
+            await NotificationHelper.ShowWarningAsync("Please enter a tracking ID to search");
             return;
         }
 
@@ -281,14 +284,14 @@ public partial class HazardReportSearch : ComponentBase
                 var message = SearchResults.Count == 1
                     ? $"Found hazard report for tracking ID: {TrackingIdSearch}"
                     : $"Found {SearchResults.Count} similar tracking IDs for: {TrackingIdSearch}";
-                ShowSuccessNotification(message);
+                await NotificationHelper.ShowSuccessAsync(message);
                 Logger.LogInformation("Found {Count} result(s) for tracking ID: {TrackingId}", SearchResults.Count, TrackingIdSearch);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error searching by tracking ID: {TrackingId}", TrackingIdSearch);
-            ShowErrorNotification("Error occurred while searching. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Error occurred while searching. Please try again.");
         }
         finally
         {
@@ -499,7 +502,7 @@ public partial class HazardReportSearch : ComponentBase
                       "• Contact support if you need assistance";
         }
 
-        ShowInfoNotification(message);
+        await NotificationHelper.ShowInfoAsync(message);
     }
 
     /// <summary>
@@ -544,7 +547,7 @@ public partial class HazardReportSearch : ComponentBase
     {
         if (!HasAdvancedSearchCriteria)
         {
-            ShowWarningNotification("Please enter at least one search criteria");
+            await NotificationHelper.ShowWarningAsync("Please enter at least one search criteria");
             return;
         }
 
@@ -579,21 +582,19 @@ public partial class HazardReportSearch : ComponentBase
 
             HasSearched = true;
 
-            if (!SearchResults.Any())
+            if (SearchResults?.Any() == true)
             {
-                ShowInfoNotification("No hazard reports found matching your search criteria");
-                Logger.LogInformation("No results found for advanced search criteria");
+                await NotificationHelper.ShowInfoAsync("No hazard reports found matching your search criteria");
             }
             else
             {
-                ShowSuccessNotification($"Found {SearchResults.Count} hazard report(s) matching your criteria");
-                Logger.LogInformation("Found {Count} result(s) for advanced search", SearchResults.Count);
+                await NotificationHelper.ShowSuccessAsync($"Found {SearchResults.Count} hazard report(s) matching your criteria");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error performing advanced search");
-            ShowErrorNotification("Error occurred while searching. Please try again.");
+            Logger.LogError(ex, "Error in advanced search");
+            await NotificationHelper.ShowErrorAsync("Error occurred while searching. Please try again.");
         }
         finally
         {
@@ -689,46 +690,6 @@ public partial class HazardReportSearch : ComponentBase
             LastUpdated = tracking.UpdatedDate ?? tracking.CreatedDate,
             ProcessingNotes = new List<string>()
         };
-    }
-
-    #endregion
-
-    #region Notification Methods
-
-    /// <summary>
-    /// Show a success notification
-    /// </summary>
-    /// <param name="message">Message to display</param>
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationHelper.ShowSuccess(NotificationService, message);
-    }
-
-    /// <summary>
-    /// Show an error notification
-    /// </summary>
-    /// <param name="message">Message to display</param>
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message, 5000);
-    }
-
-    /// <summary>
-    /// Show a warning notification
-    /// </summary>
-    /// <param name="message">Message to display</param>
-    private void ShowWarningNotification(string message)
-    {
-        NotificationHelper.ShowWarning(NotificationService, message, 5000);
-    }
-
-    /// <summary>
-    /// Show an info notification
-    /// </summary>
-    /// <param name="message">Message to display</param>
-    private void ShowInfoNotification(string message)
-    {
-        NotificationHelper.ShowInfo(NotificationService, message);
     }
 
     #endregion

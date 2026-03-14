@@ -1,13 +1,19 @@
+using System.Linq.Expressions;
+
+using Radzen;
+
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Messaging.Queries;
+
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS3.Components.Shared.UIHelpers;
-using SMS3.Components.Shared;
 using SMS_Domain.Errors;
-using System.Linq.Expressions;
-using Radzen;
+using SMS_Domain.ValueObjects;
+
+using SMS_Shared.Configuration;
+
+using SMS3.Components.Shared;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -22,7 +28,8 @@ public partial class InvestigationListing : ComponentBase
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<InvestigationListing> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     #endregion
 
@@ -61,36 +68,32 @@ public partial class InvestigationListing : ComponentBase
                 totalCount = allInvestigations.Count();
                 Logger.LogInformation("Loaded {Count} investigations for listing", totalCount);
 
-                // Show success notification if we have data
+                // Only show success notification if we have data
                 if (totalCount > 0)
                 {
-                    ShowSuccessNotification($"Successfully loaded {totalCount} investigations");
+                    await NotificationHelper.ShowSuccessAsync($"Successfully loaded {totalCount} investigations");
+
+                    if (totalCount == 0)
+                    {
+                        await NotificationHelper.ShowInfoAsync("No investigations found");
+                    }
                 }
                 else
                 {
-                    ShowInfoNotification("No investigations found");
+                    await NotificationHelper.ShowErrorAsync("Failed to load investigations");
+                    Logger.LogError("Failed to load investigations: {Error}", result.Error?.Message);
                 }
             }
             else
             {
-                // Initialize with empty lists to prevent null reference issues
-                allInvestigations = new List<Investigation>();
-                investigations = allInvestigations;
-                totalCount = 0;
-                
-                ShowErrorNotification("Failed to load investigations");
+                await NotificationHelper.ShowErrorAsync("Failed to load investigations");
                 Logger.LogError("Failed to load investigations: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            // Ensure we always have valid collections even if an error occurs
-            allInvestigations = new List<Investigation>();
-            investigations = allInvestigations;
-            totalCount = 0;
-            
             Logger.LogError(ex, "Error loading investigations");
-            ShowErrorNotification($"Error loading investigations: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"Error loading investigations: {ex.Message}");
         }
         finally
         {
@@ -168,7 +171,7 @@ public partial class InvestigationListing : ComponentBase
         {
             Logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
-            ShowErrorNotification($"Error loading data: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
             try
@@ -394,47 +397,13 @@ public partial class InvestigationListing : ComponentBase
     }
     #endregion
 
-    #region Helper Methods - Keep existing functionality but improved
-    private static Expression<Func<Investigation, object>> GetPropertyExpression(string propertyName)
-    {
-        var parameter = Expression.Parameter(typeof(Investigation), "x");
-        var property = Expression.Property(parameter, propertyName);
-        var conversion = Expression.Convert(property, typeof(object));
-        return Expression.Lambda<Func<Investigation, object>>(conversion, parameter);
-    }
-
-    /// <summary>
-    /// Shows error notification to user
-    /// </summary>
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message, 7000);
-    }
-
-    /// <summary>
-    /// Shows success notification to user
-    /// </summary>
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationHelper.ShowSuccess(NotificationService, message, 5000);
-    }
-
-    /// <summary>
-    /// Shows info notification to user
-    /// </summary>
-    private void ShowInfoNotification(string message)
-    {
-        NotificationHelper.ShowInfo(NotificationService, message, 5000);
-    }
-    #endregion
-
     #region Action Methods - Enhanced with better error handling
     private void ShowActions(Investigation investigation)
     {
         Logger.LogInformation("Actions requested for investigation: {Code}", investigation.Code);
     }
 
-    private void ViewInvestigation(Investigation investigation)
+    private async Task ViewInvestigation(Investigation investigation)
     {
         try
         {
@@ -447,16 +416,16 @@ public partial class InvestigationListing : ComponentBase
 
             Logger.LogInformation("Navigating to investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
             Navigation.NavigateTo(navigationUrl);
-            ShowInfoNotification($"Opening investigation {investigation.Code}");
+            await NotificationHelper.ShowInfoAsync($"Opening investigation {investigation.Code}");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error viewing investigation {Code}", investigation?.Code);
-            ShowErrorNotification("Error opening investigation");
+            await NotificationHelper.ShowErrorAsync("Error opening investigation");
         }
     }
 
-    private void EditInvestigation(Investigation investigation)
+    private async Task EditInvestigation(Investigation investigation)
     {
         try
         {
@@ -469,12 +438,12 @@ public partial class InvestigationListing : ComponentBase
 
             Logger.LogInformation("Navigating to edit investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
             Navigation.NavigateTo(navigationUrl);
-            ShowInfoNotification($"Opening investigation editor for {investigation.Code}");
+            await NotificationHelper.ShowInfoAsync($"Opening investigation editor for {investigation.Code}");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error editing investigation {Code}", investigation?.Code);
-            ShowErrorNotification("Error opening investigation editor");
+            await NotificationHelper.ShowErrorAsync("Error opening investigation editor");
         }
     }
     #endregion

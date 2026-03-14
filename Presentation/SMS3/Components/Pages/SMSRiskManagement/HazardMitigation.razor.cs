@@ -1,4 +1,6 @@
-﻿namespace SMS3.Components.Pages.SMSRiskManagement;
+﻿using SMS3.Components.Shared.UIHelpers;
+
+namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
 /// Code-behind for HazardMitigation creation/editing page
@@ -9,7 +11,7 @@ public partial class HazardMitigation : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<HazardMitigation> Logger { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
@@ -91,7 +93,7 @@ public partial class HazardMitigation : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading hazard mitigation page for Code: {Code}", MitigationCode);
-            ShowErrorNotification("Error loading hazard mitigation page");
+            await NotificationHelper.ShowErrorAsync("Error loading hazard mitigation page");
         }
         finally
         {
@@ -119,7 +121,7 @@ public partial class HazardMitigation : ComponentBase
             }
             else
             {
-                ShowErrorNotification($"Hazard mitigation '{MitigationCode}' not found");
+                await NotificationHelper.ShowErrorAsync($"Hazard mitigation '{MitigationCode}' not found");
                 Logger.LogError("Failed to load hazard mitigation {Code}: {Error}", MitigationCode, mitigationResult.Error?.Message);
                 Navigation.NavigateTo("/Listings/Mitigations");
                 return;
@@ -128,7 +130,7 @@ public partial class HazardMitigation : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading existing hazard mitigation: {Code}", MitigationCode);
-            ShowErrorNotification("Error loading existing hazard mitigation");
+            await NotificationHelper.ShowErrorAsync("Error loading existing hazard mitigation");
             Navigation.NavigateTo("/Listings/Mitigations");
         }
     }
@@ -148,7 +150,7 @@ public partial class HazardMitigation : ComponentBase
             StateHasChanged();
 
             // Validate required fields
-            if (!ValidateForm())
+            if (!await ValidateForm())
             {
                 return;
             }
@@ -168,7 +170,7 @@ public partial class HazardMitigation : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error saving hazard mitigation for Code: {Code}", MitigationCode);
-            ShowErrorNotification("Error saving hazard mitigation");
+            await NotificationHelper.ShowErrorAsync("Error saving hazard mitigation");
         }
         finally
         {
@@ -193,13 +195,13 @@ public partial class HazardMitigation : ComponentBase
 
         if (result.IsSuccess)
         {
-            ShowSuccessNotification($"Hazard mitigation {CurrentMitigation.Code} created successfully!");
+            await NotificationHelper.ShowSuccessAsync($"Hazard mitigation {CurrentMitigation.Code} created successfully!");
             Logger.LogInformation("Created hazard mitigation: {Code} by user: {UserId}",
                 CurrentMitigation.Code, GetCurrentUserId());
         }
         else
         {
-            ShowErrorNotification($"Failed to create hazard mitigation: {result.Error?.Message}");
+            await NotificationHelper.ShowErrorAsync($"Failed to create hazard mitigation: {result.Error?.Message}");
             Logger.LogError("Failed to create hazard mitigation: {Error} by user: {UserId}",
                 result.Error?.Message, GetCurrentUserId());
         }
@@ -217,13 +219,13 @@ public partial class HazardMitigation : ComponentBase
 
         if (result.IsSuccess)
         {
-            ShowSuccessNotification($"Hazard mitigation {CurrentMitigation.Code} updated successfully!");
+            await NotificationHelper.ShowSuccessAsync($"Hazard mitigation {CurrentMitigation.Code} updated successfully!");
             Logger.LogInformation("Updated hazard mitigation: {Code} by user: {UserId}",
                 CurrentMitigation.Code, GetCurrentUserId());
         }
         else
         {
-            ShowErrorNotification($"Failed to update hazard mitigation: {result.Error?.Message}");
+            await NotificationHelper.ShowErrorAsync($"Failed to update hazard mitigation: {result.Error?.Message}");
             Logger.LogError("Failed to update hazard mitigation {Code}: {Error} by user: {UserId}",
                 CurrentMitigation.Code, result.Error?.Message, GetCurrentUserId());
         }
@@ -236,17 +238,17 @@ public partial class HazardMitigation : ComponentBase
     #endregion
 
     #region Validation
-    private bool ValidateForm()
+    private async Task<bool> ValidateForm()
     {
         if (string.IsNullOrWhiteSpace(CurrentMitigation.Name))
         {
-            ShowErrorNotification("Hazard mitigation name is required");
+            await NotificationHelper.ShowErrorAsync("Hazard mitigation name is required");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(CurrentMitigation.Description))
         {
-            ShowErrorNotification("Description is required");
+            await NotificationHelper.ShowErrorAsync("Description is required");
             return false;
         }
 
@@ -265,30 +267,6 @@ public partial class HazardMitigation : ComponentBase
     public string GetSaveButtonIcon()
     {
         return IsEditMode ? "save" : "add";
-    }
-    #endregion
-
-    #region Notifications
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
     }
     #endregion
 

@@ -1,4 +1,5 @@
 using System.Security;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.System.UserRoles;
 
@@ -8,7 +9,8 @@ public partial class UserRoles : ComponentBase
     [Inject] private ILogger<UserRoles> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    
 
     // Data Properties
     private List<SMSUserRole> UserRolesList { get; set; } = new();
@@ -84,7 +86,7 @@ public partial class UserRoles : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading user roles data");
-            ShowErrorNotification("Error loading data. Please refresh the page.");
+            await NotificationHelper.ShowErrorAsync("Error loading data. Please refresh the page.");
         }
     }
 
@@ -109,7 +111,7 @@ public partial class UserRoles : ComponentBase
     {
         if (!IsCreateFormValid)
         {
-            ShowErrorNotification("Please fill in all required fields.");
+            await NotificationHelper.ShowErrorAsync("Please fill in all required fields.");
             return;
         }
 
@@ -151,19 +153,19 @@ public partial class UserRoles : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"User role '{NewRole.RoleName}' created successfully.");
+                await NotificationHelper.ShowSuccessAsync($"User role '{NewRole.RoleName}' created successfully.");
                 CloseCreateModal();
                 await LoadUserRolesAsync();
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to create user role.");
+                await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to create user role.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error creating user role");
-            ShowErrorNotification("Error creating user role. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Error creating user role. Please try again.");
         }
         finally
         {
@@ -232,7 +234,7 @@ public partial class UserRoles : ComponentBase
 
             if (roleResult.IsFailure)
             {
-                ShowErrorNotification("Role not found.");
+                await NotificationHelper.ShowErrorAsync("Role not found.");
                 return;
             }
 
@@ -254,7 +256,7 @@ public partial class UserRoles : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading role for edit: {RoleCode}", roleCode);
-            ShowErrorNotification("Error loading role. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Error loading role. Please try again.");
         }
     }
 
@@ -262,7 +264,7 @@ public partial class UserRoles : ComponentBase
     {
         if (!IsEditFormValid)
         {
-            ShowErrorNotification("Please fill in all required fields.");
+            await NotificationHelper.ShowErrorAsync("Please fill in all required fields.");
             return;
         }
 
@@ -270,7 +272,7 @@ public partial class UserRoles : ComponentBase
         {
             if (CurrentEditRole == null)
             {
-                ShowErrorNotification("No role selected for update.");
+                await NotificationHelper.ShowErrorAsync("No role selected for update.");
                 return;
             }
 
@@ -317,19 +319,19 @@ public partial class UserRoles : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"User role '{editRole.RoleName}' updated successfully.");
+                await NotificationHelper.ShowSuccessAsync($"User role '{editRole.RoleName}' updated successfully.");
                 CloseEditModal();
                 await LoadUserRolesAsync();
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to update user role.");
+                await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to update user role.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating user role: {RoleCode}", CurrentEditRole?.Code);
-            ShowErrorNotification("Error updating user role. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Error updating user role. Please try again.");
         }
         finally
         {
@@ -396,18 +398,18 @@ public partial class UserRoles : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("User role deleted successfully.");
+                await NotificationHelper.ShowSuccessAsync("User role deleted successfully.");
                 await LoadUserRolesAsync();
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to delete user role.");
+                await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to delete user role.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting user role: {RoleCode}", roleCode);
-            ShowErrorNotification("Error deleting user role. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Error deleting user role. Please try again.");
         }
     }
 
@@ -453,22 +455,6 @@ public partial class UserRoles : ComponentBase
     {
         return SMSModules.Length * 4;
     }
-
-    #endregion
-
-    #region UI Helper Methods
-
-    private async Task ExportRoles()
-    {
-        ShowInfoNotification("Export functionality will be implemented soon.");
-    }
-
-    private int GetTotalPermissions(SMSUserRole role)
-    {
-        return role.Permissions?.Sum(p => (p.Create ? 1 : 0) + (p.Read ? 1 : 0) + (p.Update ? 1 : 0) + (p.Delete ? 1 : 0)) ?? 0;
-    }
-
-    // Helper method to get permission value for a module (used by edit modal)
     private bool GetPermissionValue(string module, string permissionType)
     {
         if (CurrentEditRole?.Permissions == null) return false;
@@ -485,44 +471,15 @@ public partial class UserRoles : ComponentBase
             _ => false
         };
     }
-
-    #endregion
-
-    #region Notifications
-
-    private void ShowSuccessNotification(string message)
+    private async Task ExportRoles()
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
+        await NotificationHelper.ShowInfoAsync("Export functionality will be implemented soon.");
     }
 
-    private void ShowErrorNotification(string message)
+    private int GetTotalPermissions(SMSUserRole role)
     {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
+        return role.Permissions?.Sum(p => (p.Create ? 1 : 0) + (p.Read ? 1 : 0) + (p.Update ? 1 : 0) + (p.Delete ? 1 : 0)) ?? 0;
     }
-
-    private void ShowInfoNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Info,
-            Summary = "Information",
-            Detail = message,
-            Duration = 4000
-        });
-    }
-
     #endregion
 
     #region Models

@@ -6,6 +6,9 @@ using SMS_Application.Messaging.Queries;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Interfaces;
+
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
@@ -194,7 +197,8 @@ public partial class ReportProcessing : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ReportProcessing> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
@@ -1239,7 +1243,7 @@ public partial class ReportProcessing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error navigating to mitigation edit for {Code}", mitigation.MitigationCode);
-            ShowErrorNotification("Error navigating to mitigation editor");
+            ShowErrorAsyncNotification("Error navigating to mitigation editor");
         }
     }
 
@@ -1269,7 +1273,7 @@ public partial class ReportProcessing : ComponentBase
 
                 if (updateResult.IsSuccess)
                 {
-                    ShowSuccessNotification($"Mitigation {mitigation.MitigationCode} approved successfully");
+                    ShowSuccessAsyncNotification($"Mitigation {mitigation.MitigationCode} approved successfully");
 
                     // Update the local summary
                     mitigation.Status = MitigationStatus.Approved;
@@ -1279,18 +1283,18 @@ public partial class ReportProcessing : ComponentBase
                 }
                 else
                 {
-                    ShowErrorNotification($"Failed to approve mitigation: {updateResult.Error?.Message}");
+                    ShowErrorAsyncNotification($"Failed to approve mitigation: {updateResult.Error?.Message}");
                 }
             }
             else
             {
-                ShowErrorNotification($"Failed to load mitigation details: {mitigationResult.Error?.Message}");
+                ShowErrorAsyncNotification($"Failed to load mitigation details: {mitigationResult.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.MitigationCode);
-            ShowErrorNotification("Error approving mitigation");
+            ShowErrorAsyncNotification("Error approving mitigation");
         }
         finally
         {
@@ -1305,12 +1309,12 @@ public partial class ReportProcessing : ComponentBase
         {
             Logger.LogInformation("Viewing mitigation details: {Code}", mitigation.MitigationCode);
             // You might want to show a details dialog or navigate to a details page
-            ShowInfoNotification($"Details for mitigation {mitigation.MitigationCode} - Feature to be implemented");
+            ShowInfoAsyncNotification($"Details for mitigation {mitigation.MitigationCode} - Feature to be implemented");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error viewing mitigation details for {Code}", mitigation.MitigationCode);
-            ShowErrorNotification("Error viewing mitigation details");
+            ShowErrorAsyncNotification("Error viewing mitigation details");
         }
     }
 
@@ -1363,19 +1367,19 @@ public partial class ReportProcessing : ComponentBase
         };
     }
     // Notification helper methods
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message);
+        NotificationHelper.ShowSuccessAsync( message);
     }
 
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message);
+        NotificationHelper.ShowErrorAsync( message);
     }
 
-    private void ShowInfoNotification(string message)
+    private void ShowInfoAsyncNotification(string message)
     {
-        NotificationHelper.ShowInfo(NotificationService, message, 5000);
+        NotificationHelper.ShowInfoAsync( message, 5000);
     }
 
     private void RenderEmptyState(RenderTreeBuilder builder, string icon, string title, string description)
@@ -1714,7 +1718,7 @@ public partial class ReportProcessing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error showing bulk approval confirmation for report {ReportId}", report.ReportId);
-            ShowErrorNotification("Error showing approval confirmation dialog");
+            ShowErrorAsyncNotification("Error showing approval confirmation dialog");
         }
     }
 
@@ -1790,7 +1794,7 @@ public partial class ReportProcessing : ComponentBase
 
             if (!hazardsResult.IsSuccess || hazardsResult.Value == null)
             {
-                ShowErrorNotification("Failed to load hazard data");
+                ShowErrorAsyncNotification("Failed to load hazard data");
                 return;
             }
 
@@ -1798,7 +1802,7 @@ public partial class ReportProcessing : ComponentBase
 
             if (!reportHazards.Any())
             {
-                ShowErrorNotification($"No hazards found for report {reportId}");
+                ShowErrorAsyncNotification($"No hazards found for report {reportId}");
                 return;
             }
 
@@ -1880,23 +1884,23 @@ public partial class ReportProcessing : ComponentBase
 
             if (successCount > 0)
             {
-                ShowSuccessNotification($"Successfully approved {successCount} mitigation(s) across {reportHazards.Count} hazard(s) for report {reportId}");
+                ShowSuccessAsyncNotification($"Successfully approved {successCount} mitigation(s) across {reportHazards.Count} hazard(s) for report {reportId}");
                 await LoadDataAsync();
             }
             else if (errorCount == 0)
             {
-                ShowInfoNotification($"No pending mitigations found for report {reportId}");
+                ShowInfoAsyncNotification($"No pending mitigations found for report {reportId}");
             }
 
             if (errorCount > 0)
             {
-                ShowErrorNotification($"Failed to approve {errorCount} mitigation(s). Please check logs for details.");
+                ShowErrorAsyncNotification($"Failed to approve {errorCount} mitigation(s). Please check logs for details.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error during bulk approval for report {ReportId}", reportId);
-            ShowErrorNotification($"Error during bulk approval for report {reportId}: {ex.Message}");
+            ShowErrorAsyncNotification($"Error during bulk approval for report {reportId}: {ex.Message}");
         }
         finally
         {
@@ -1913,12 +1917,12 @@ public partial class ReportProcessing : ComponentBase
             var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
             if (!cmdResult.IsSuccess)
             {
-                ShowErrorNotification($"Report{reportId} Status Was not Updated");
+                ShowErrorAsyncNotification($"Report{reportId} Status Was not Updated");
                 return false;
             }
             else
             {
-                ShowSuccessNotification($"Report{reportId} Status Was Updated");
+                ShowSuccessAsyncNotification($"Report{reportId} Status Was Updated");
                 return true;
             }
 
@@ -2045,13 +2049,13 @@ public partial class ReportProcessing : ComponentBase
     {
         if (SelectedReportForApproval == null)
         {
-            ShowErrorNotification("No report selected for approval.");
+            ShowErrorAsyncNotification("No report selected for approval.");
             return;
         }
 
         if (string.IsNullOrEmpty(SelectedApprover))
         {
-            ShowErrorNotification("Please select an authorized approver before proceeding.");
+            ShowErrorAsyncNotification("Please select an authorized approver before proceeding.");
             return;
         }
 
@@ -2070,7 +2074,7 @@ public partial class ReportProcessing : ComponentBase
                 _ => "Unknown"
             };
 
-            ShowErrorNotification($"Selected approver does not have sufficient authority to approve {riskLevelDisplay} risk level mitigations.");
+            ShowErrorAsyncNotification($"Selected approver does not have sufficient authority to approve {riskLevelDisplay} risk level mitigations.");
             return;
         }
 

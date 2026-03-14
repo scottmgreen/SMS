@@ -1,4 +1,5 @@
 using SMS3.Components.Pages.SMSAssurance.Components;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSAssurance;
 
@@ -7,7 +8,7 @@ public partial class AuditCalendar : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AuditCalendar> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     #endregion
@@ -57,7 +58,7 @@ public partial class AuditCalendar : ComponentBase
             else
             {
                 Logger.LogError("Failed to load audit plans: {Error}", result.Error?.Message);
-                ShowErrorNotification("Failed to load audit plans for calendar");
+                await NotificationHelper.ShowErrorAsync("Failed to load audit plans for calendar");
                 AuditPlans = new List<SMSAuditPlan>();
                 SchedulerData = new List<AuditSchedulerItem>();
             }
@@ -65,7 +66,7 @@ public partial class AuditCalendar : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading audit plans for calendar");
-            ShowErrorNotification("Error loading audit plans");
+            await NotificationHelper.ShowErrorAsync("Error loading audit plans");
         }
         finally
         {
@@ -85,7 +86,7 @@ public partial class AuditCalendar : ComponentBase
             await scheduler.Reload();
         }
 
-        ShowSuccessNotification("Calendar data refreshed");
+        await NotificationHelper.ShowSuccessAsync("Calendar data refreshed");
         console?.Log("Calendar refresh completed");
     }
     #endregion
@@ -191,7 +192,7 @@ public partial class AuditCalendar : ComponentBase
                     await LoadAuditPlansAsync();
                     // Either call the Reload method or reassign the Data property of the Scheduler
                     await scheduler.Reload();
-                    ShowSuccessNotification("Audit plan created successfully");
+                    await NotificationHelper.ShowSuccessAsync("Audit plan created successfully");
                     console?.Log("New audit plan created successfully");
                 }
             }
@@ -249,7 +250,7 @@ public partial class AuditCalendar : ComponentBase
                     // Reload the data and scheduler
                     await LoadAuditPlansAsync();
                     await scheduler.Reload();
-                    ShowSuccessNotification("Audit plan updated successfully");
+                    await NotificationHelper.ShowSuccessAsync("Audit plan updated successfully");
                     console?.Log($"Audit plan {auditPlan.Code} updated successfully");
                 }
             }
@@ -257,7 +258,7 @@ public partial class AuditCalendar : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error handling appointment selection");
-            ShowErrorNotification("Error opening audit plan details");
+            await NotificationHelper.ShowErrorAsync("Error opening audit plan details");
             console?.Log($"Error in AppointmentSelect: {ex.Message}");
         }
     }
@@ -327,7 +328,7 @@ public partial class AuditCalendar : ComponentBase
                 await UpdateAuditPlanDateTime(draggedAppointment);
 
                 await scheduler.Reload();
-                ShowSuccessNotification($"Audit plan {draggedAppointment.AuditPlanCode} rescheduled successfully");
+                await NotificationHelper.ShowSuccessAsync($"Audit plan {draggedAppointment.AuditPlanCode} rescheduled successfully");
                 console?.Log($"Audit plan {draggedAppointment.AuditPlanCode} rescheduled successfully");
             }
         }
@@ -335,7 +336,7 @@ public partial class AuditCalendar : ComponentBase
         {
             Logger.LogError(ex, "Error moving appointment");
             console?.Log($"Error in AppointmentMove: {ex.Message}");
-            ShowErrorNotification("Error rescheduling audit plan");
+            await NotificationHelper.ShowErrorAsync("Error rescheduling audit plan");
         }
     }
 
@@ -368,7 +369,7 @@ public partial class AuditCalendar : ComponentBase
                 {
                     Logger.LogError("Failed to update audit plan datetime: {Error}", result.Error?.Message);
                     console?.Log($"Error updating audit plan: {result.Error?.Message}");
-                    ShowErrorNotification("Failed to save audit plan changes");
+                    await NotificationHelper.ShowErrorAsync("Failed to save audit plan changes");
                 }
             }
         }
@@ -427,14 +428,14 @@ public partial class AuditCalendar : ComponentBase
             {
                 await LoadAuditPlansAsync();
                 await scheduler.Reload();
-                ShowSuccessNotification("Audit plan created successfully");
+                await NotificationHelper.ShowSuccessAsync("Audit plan created successfully");
                 console?.Log("New audit plan created successfully");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error showing create audit plan dialog");
-            ShowErrorNotification("Error opening create audit plan dialog");
+            await NotificationHelper.ShowErrorAsync("Error opening create audit plan dialog");
             console?.Log($"Error in create dialog: {ex.Message}");
         }
     }
@@ -469,30 +470,6 @@ public partial class AuditCalendar : ComponentBase
         return AuditPlans.Count(a =>
             (a.PlannedStartDate.Date <= today && a.PlannedEndDate.Date >= today) ||
             (a.PlannedStartDate >= today && a.PlannedStartDate < tomorrow));
-    }
-    #endregion
-
-    #region Notification Methods
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
     }
     #endregion
 }

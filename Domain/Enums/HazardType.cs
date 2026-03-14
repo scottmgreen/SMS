@@ -771,35 +771,11 @@ public abstract class HazardType : BaseEnum<HazardType>
         return GetByCategory(category.Value);
     }
 
-    /// <summary>
-    /// Gets hazard types that require regulatory reporting
-    /// </summary>
-    public static IEnumerable<HazardType> GetRegulatoryReportingTypes()
-    {
-        return GetAllValues().Where(ht => ht.RequiresRegulatoryReporting);
-    }
+    
 
-    /// <summary>
-    /// Gets incident-related hazard types
-    /// </summary>
-    public static IEnumerable<HazardType> GetIncidentTypes()
-    {
-        return GetByCategory("INCIDENT");
-    }
+    
 
-    /// <summary>
-    /// Gets FOD-related hazard types
-    /// </summary>
-    public static IEnumerable<HazardType> GetFODTypes()
-    {
-        return GetByCategory("FOD");
-    }
+    
 
-    /// <summary>
-    /// Gets wildlife-related hazard types
-    /// </summary>
-    public static IEnumerable<HazardType> GetWildlifeTypes()
-    {
-        return GetByCategory("WILDLIFE");
-    }
+   
 }

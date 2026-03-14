@@ -1,9 +1,10 @@
 @page "/Help"
-@using SMS3.Components.Shared.UIHelpers
-@using SMS3.Extensions
-@using SMS3.Components.Shared
 @using Radzen
 @using Radzen.Blazor
+@using SMS3.Components.Shared
+@using SMS3.Components.Shared.UIHelpers
+@using SMS3.Configuration.Extensions
+
 @layout SMS3.Components.Layout.MainLayout
 @inherits ComponentBase
 
@@ -202,12 +203,12 @@
 
 @code {
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
     
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+
     private void ContactSupport()
     {
-        NotificationHelper.ShowInfo(NotificationService, 
-            "Support Contact: sms-support@pdx.com or call (503) 555-SMS3 (7673)", 8000);
+            NotificationHelper.ShowInfoAsync("Support Contact: sms-support@pdx.com or call (503) 555-SMS3 (7673)", 8000);
     }
 }
 

@@ -1,6 +1,6 @@
 using System.Globalization;
-
 using SMS_Application.Common;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSAssurance.Components;
 
@@ -16,7 +16,7 @@ public partial class SPIDataPointDialog : ComponentBase
 
     #region Injected Services
     [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -155,13 +155,7 @@ public partial class SPIDataPointDialog : ComponentBase
         catch (Exception)
         {
             // Simple error notification without excessive details
-            NotificationService.Notify(new NotificationMessage
-            {
-                Severity = NotificationSeverity.Error,
-                Summary = "Error",
-                Detail = "Failed to save data point",
-                Duration = 3000
-            });
+            await NotificationHelper.ShowErrorAsync("Failed to save data point");
         }
     }
 

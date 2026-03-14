@@ -14,9 +14,9 @@ using System.Net.Sockets;
 
 using Microsoft.AspNetCore.Http;
 
-namespace SMS_Infrastructure.Configuration
+namespace Infrastructure.Configuration.Middleware
 {
-    public class CircuitUserTrackingMiddleware
+    public class CircuitMiddleware
     {
         private readonly RequestDelegate _next;
 
@@ -24,7 +24,7 @@ namespace SMS_Infrastructure.Configuration
         private static readonly ConcurrentDictionary<string, string> CircuitToConnectionMap = new();
         private static readonly ConcurrentBag<string> ConnectionIds = new();
 
-        public CircuitUserTrackingMiddleware(RequestDelegate next)
+        public CircuitMiddleware(RequestDelegate next)
         {
             _next = next;
         }

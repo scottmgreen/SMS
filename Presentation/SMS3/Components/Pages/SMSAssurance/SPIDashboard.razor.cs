@@ -1,3 +1,5 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.SMSAssurance;
 
 public partial class SPIDashboard : ComponentBase
@@ -5,7 +7,7 @@ public partial class SPIDashboard : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<SPIDashboard> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     #endregion
 
@@ -90,14 +92,14 @@ public partial class SPIDashboard : ComponentBase
             else
             {
                 Logger.LogError("Failed to load SPI Dashboard data: {Error}", result.Error?.Message);
-                ShowErrorNotification("Failed to load SPI dashboard data");
+                await NotificationHelper.ShowErrorAsync("Failed to load SPI dashboard data");
                 DashboardData = new SPIDashboardData(); // Initialize empty
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading SPI Dashboard data");
-            ShowErrorNotification("Error loading SPI dashboard data");
+            await NotificationHelper.ShowErrorAsync("Error loading SPI dashboard data");
             DashboardData = new SPIDashboardData();
         }
         finally
@@ -218,7 +220,7 @@ public partial class SPIDashboard : ComponentBase
     private async Task RefreshDashboard()
     {
         await LoadDashboardDataAsync();
-        ShowSuccessNotification("SPI Dashboard refreshed successfully");
+        await NotificationHelper.ShowSuccessAsync("SPI Dashboard refreshed successfully");
     }
     #endregion
 
@@ -451,30 +453,6 @@ public partial class SPIDashboard : ComponentBase
             return $"{(int)(timeAgo.TotalDays / 7)}w ago";
         else
             return spiCard.LastMeasurementDate.Value.ToString("MMM dd");
-    }
-    #endregion
-
-    #region Notification Methods
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
     }
     #endregion
 

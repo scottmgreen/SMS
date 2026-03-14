@@ -7,7 +7,7 @@ public partial class CreateInterviewDialog : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<CreateInterviewDialog> Logger { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
     #endregion
@@ -84,13 +84,13 @@ public partial class CreateInterviewDialog : ComponentBase
         {
             if (string.IsNullOrWhiteSpace(model.PersonInterviewed))
             {
-                ShowErrorNotification("Person to interview is required");
+                await NotificationHelper.ShowErrorAsync("Person to interview is required");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(model.InvestigationCode))
             {
-                ShowErrorNotification("Investigation code is required");
+                await NotificationHelper.ShowErrorAsync("Investigation code is required");
                 return;
             }
 
@@ -107,7 +107,7 @@ public partial class CreateInterviewDialog : ComponentBase
 
             if (interviewResult.IsFailure)
             {
-                ShowErrorNotification($"Failed to create interview: {interviewResult.Error?.Message}");
+                await NotificationHelper.ShowErrorAsync($"Failed to create interview: {interviewResult.Error?.Message}");
                 return;
             }
 
@@ -130,7 +130,7 @@ public partial class CreateInterviewDialog : ComponentBase
 
                 if (scheduleResult.IsFailure)
                 {
-                    ShowErrorNotification($"Failed to schedule interview: {scheduleResult.Error?.Message}");
+                    await NotificationHelper.ShowErrorAsync($"Failed to schedule interview: {scheduleResult.Error?.Message}");
                     return;
                 }
             }
@@ -144,12 +144,12 @@ public partial class CreateInterviewDialog : ComponentBase
                 Logger.LogInformation("Interview created successfully: {Code} by user {UserId}",
                     interview.Code, currentUserId);
 
-                ShowSuccessNotification("Interview scheduled successfully");
+                await NotificationHelper.ShowSuccessAsync("Interview scheduled successfully");
                 DialogService.Close(true);
             }
             else
             {
-                ShowErrorNotification($"Failed to save interview: {result.Error?.Message}");
+                await NotificationHelper.ShowErrorAsync($"Failed to save interview: {result.Error?.Message}");
                 Logger.LogError("Failed to save interview {Code}: {Error}",
                     interview.Code, result.Error?.Message);
             }
@@ -157,35 +157,13 @@ public partial class CreateInterviewDialog : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error creating interview for investigation {InvestigationCode}", model.InvestigationCode);
-            ShowErrorNotification("Error creating interview");
+            await NotificationHelper.ShowErrorAsync("Error creating interview");
         }
         finally
         {
             IsSaving = false;
             StateHasChanged();
         }
-    }
-
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
     }
     #endregion
 

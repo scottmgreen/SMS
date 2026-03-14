@@ -1,15 +1,22 @@
-﻿using Microsoft.AspNetCore.Components;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Interfaces;
-using SMS3.Components.Shared.UIHelpers;
-using SMS3.Components.Shared;
-using SMS_Domain.Errors;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
+
+using Microsoft.AspNetCore.Components;
+
 using Radzen;
 using Radzen.Blazor;
+
+using SMS_Application.Interfaces;
+using SMS_Application.Messaging.Queries;
+
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Domain.Errors;
+using SMS_Domain.ValueObjects;
+
+using SMS_Shared.Configuration;
+
+using SMS3.Components.Shared;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -24,7 +31,9 @@ public partial class HazardLocationListing : ComponentBase
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<HazardLocationListing> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    
     [Inject] private DialogService DialogService { get; set; } = default!;
     #endregion
 
@@ -66,11 +75,11 @@ public partial class HazardLocationListing : ComponentBase
                 // Show success notification if we have data
                 if (totalCount > 0)
                 {
-                    ShowSuccessNotification($"Successfully loaded {totalCount} hazard locations");
+                    ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazard locations");
                 }
                 else
                 {
-                    ShowInfoNotification("No hazard locations found");
+                    ShowInfoAsyncNotification("No hazard locations found");
                 }
             }
             else
@@ -80,7 +89,7 @@ public partial class HazardLocationListing : ComponentBase
                 locations = allLocations;
                 totalCount = 0;
                 
-                ShowErrorNotification("Failed to load hazard locations");
+                ShowErrorAsyncNotification("Failed to load hazard locations");
                 Logger.LogError("Failed to load hazard locations: {Error}", result.Error?.Message);
             }
         }
@@ -92,7 +101,7 @@ public partial class HazardLocationListing : ComponentBase
             totalCount = 0;
             
             Logger.LogError(ex, "Error loading hazard locations");
-            ShowErrorNotification($"Error loading hazard locations: {ex.Message}");
+            ShowErrorAsyncNotification($"Error loading hazard locations: {ex.Message}");
         }
         finally
         {
@@ -170,7 +179,7 @@ public partial class HazardLocationListing : ComponentBase
         {
             Logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
-            ShowErrorNotification($"Error loading data: {ex.Message}");
+            ShowErrorAsyncNotification($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
             try
@@ -432,25 +441,25 @@ public partial class HazardLocationListing : ComponentBase
     /// <summary>
     /// Shows error notification to user
     /// </summary>
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message, 7000);
+        NotificationHelper.ShowErrorAsync( message, 7000);
     }
 
     /// <summary>
     /// Shows success notification to user
     /// </summary>
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message, 5000);
+        NotificationHelper.ShowSuccessAsync( message, 5000);
     }
 
     /// <summary>
     /// Shows info notification to user
     /// </summary>
-    private void ShowInfoNotification(string message)
+    private void ShowInfoAsyncNotification(string message)
     {
-        NotificationHelper.ShowInfo(NotificationService, message, 5000);
+        NotificationHelper.ShowInfoAsync( message, 5000);
     }
     #endregion
 
@@ -466,7 +475,7 @@ public partial class HazardLocationListing : ComponentBase
 
             if (!HasValidCoordinates(location))
             {
-                ShowErrorNotification("This location does not have valid coordinates to display on the map.");
+                ShowErrorAsyncNotification("This location does not have valid coordinates to display on the map.");
                 return;
             }
 
@@ -475,7 +484,7 @@ public partial class HazardLocationListing : ComponentBase
             
             if (hazard == null)
             {
-                ShowErrorNotification($"Could not find associated hazard for location {location.Code}");
+                ShowErrorAsyncNotification($"Could not find associated hazard for location {location.Code}");
                 return;
             }
 
@@ -565,12 +574,12 @@ public partial class HazardLocationListing : ComponentBase
                     CloseDialogOnOverlayClick = false
                 });
 
-            ShowInfoNotification($"Opened location map for {location.Code}");
+            ShowInfoAsyncNotification($"Opened location map for {location.Code}");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error opening location map for {LocationCode}", location.Code);
-            ShowErrorNotification("Error opening location map");
+            ShowErrorAsyncNotification("Error opening location map");
         }
     }
 

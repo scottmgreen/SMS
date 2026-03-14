@@ -1,10 +1,12 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.Listings;
 
 public partial class RiskAnalysisListing : ComponentBase
 {
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<RiskAnalysisListing> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
 
     private RadzenDataGrid<RiskAnalysis>? analysisGrid;
     private IEnumerable<RiskAnalysis> analysisResults = new List<RiskAnalysis>();
@@ -31,14 +33,14 @@ public partial class RiskAnalysisListing : ComponentBase
             }
             else
             {
-                ShowErrorNotification("Failed to load risk analysis results");
+                await NotificationHelper.ShowErrorAsync("Failed to load risk analysis results");
                 Logger.LogError("Failed to load risk analysis: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading risk analysis");
-            ShowErrorNotification("Error loading risk analysis");
+            await NotificationHelper.ShowErrorAsync("Error loading risk analysis");
         }
     }
 
@@ -76,7 +78,7 @@ public partial class RiskAnalysisListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in LoadData");
-            ShowErrorNotification("Error loading data");
+            await NotificationHelper.ShowErrorAsync("Error loading data");
         }
         finally
         {
@@ -96,16 +98,5 @@ public partial class RiskAnalysisListing : ComponentBase
     private void ShowActions(RiskAnalysis analysis)
     {
         Logger.LogInformation("Actions requested for risk analysis: {Code}", analysis.Code);
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
     }
 }

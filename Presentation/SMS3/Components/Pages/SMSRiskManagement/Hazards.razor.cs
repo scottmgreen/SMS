@@ -1,5 +1,7 @@
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
-using SMS3.Extensions;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -8,7 +10,8 @@ public partial class Hazards : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<Hazards> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
@@ -86,29 +89,21 @@ public partial class Hazards : ComponentBase
             if (result.IsSuccess && result.Value != null)
             {
                 AllHazards = result.Value.ToList();
+                await NotificationHelper.ShowSuccessAsync($"Successfully loaded {AllHazards.Count} hazards");
                 Logger.LogInformation("Successfully loaded {Count} hazards", AllHazards.Count);
-
-                // Show success notification
-                ShowSuccessNotification($"Successfully loaded {AllHazards.Count} hazards");
             }
             else
             {
-                AllHazards = new List<Hazard>();
                 ErrorMessage = result.Error?.Message ?? "Failed to load hazards";
-                Logger.LogWarning("Failed to load hazards: {Error}", ErrorMessage);
-
-                // Show error notification
-                ShowErrorNotification(ErrorMessage);
+                await NotificationHelper.ShowErrorAsync(ErrorMessage);
+                Logger.LogError("Failed to load hazards: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Exception occurred while loading hazards");
-            AllHazards = new List<Hazard>();
             ErrorMessage = "An unexpected error occurred while loading hazards.";
-
-            // Show error notification
-            ShowErrorNotification("An unexpected error occurred while loading hazards.");
+            Logger.LogError(ex, "Exception loading hazards for user: {UserName}", CurrentUserName);
+            await NotificationHelper.ShowErrorAsync("An unexpected error occurred while loading hazards.");
         }
         finally
         {
@@ -154,8 +149,8 @@ public partial class Hazards : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error showing hazard details for {HazardCode}", hazard.Code);
-            ShowErrorNotification("Failed to display hazard details.");
+            Logger.LogError(ex, "Error opening hazard details for: {HazardCode}", hazard.Code);
+            await NotificationHelper.ShowErrorAsync("Failed to display hazard details.");
         }
     }
 
@@ -187,7 +182,7 @@ public partial class Hazards : ComponentBase
                 // TODO: Implement delete via CQRS command when available
                 Logger.LogInformation("Delete confirmed for hazard: {HazardCode}", hazard.Code);
 
-                ShowInfoNotification($"Hazard deletion for {hazard.Code} will be implemented in a future update.");
+                await NotificationHelper.ShowInfoAsync($"Hazard deletion for {hazard.Code} will be implemented in a future update.");
 
                 // await RefreshAsync(); // Uncomment when delete is implemented
             }
@@ -195,7 +190,7 @@ public partial class Hazards : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting hazard: {HazardCode}", hazard.Code);
-            ShowErrorNotification("Failed to delete the hazard. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Failed to delete the hazard. Please try again.");
         }
     }
 
@@ -219,7 +214,7 @@ public partial class Hazards : ComponentBase
             StateHasChanged();
 
             // Show notification
-            ShowInfoNotification($"Now showing {PageSize} hazards per page");
+            await NotificationHelper.ShowInfoAsync($"Now showing {PageSize} hazards per page");
         }
     }
 
@@ -270,21 +265,5 @@ public partial class Hazards : ComponentBase
             "VERYLOW" => BadgeStyle.Light,
             _ => BadgeStyle.Secondary
         };
-    }
-
-    // Notification helper methods
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationHelper.ShowSuccess(NotificationService, message, 3000);
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message, 5000);
-    }
-
-    private void ShowInfoNotification(string message)
-    {
-        NotificationHelper.ShowInfo(NotificationService, message, 5000);
     }
 }

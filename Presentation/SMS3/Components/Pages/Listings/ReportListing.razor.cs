@@ -1,11 +1,17 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Application.Messaging.Queries;
-using SMS3.Components.Shared.UIHelpers;
-using SMS3.Components.Shared;
-using SMS_Domain.Errors;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
+
 using Radzen;
+
+using SMS_Application.Messaging.Queries;
+
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Domain.Errors;
+
+using SMS_Shared.Configuration;
+
+using SMS3.Components.Shared;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -20,7 +26,8 @@ public partial class ReportListing : ComponentBase
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ReportListing> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
@@ -95,19 +102,19 @@ public partial class ReportListing : ComponentBase
                 totalCount = allReports.Count();
                 Logger.LogInformation("Loaded {Count} reports for listing", totalCount);
 
-                ShowSuccessNotification($"Successfully loaded {totalCount} reports");
+                await NotificationHelper.ShowSuccessAsync($"Successfully loaded {totalCount} reports");
                
             }
             else
             {
-                ShowErrorNotification("Failed to load reports");
+                await NotificationHelper.ShowErrorAsync("Failed to load reports");
                 Logger.LogError("Failed to load reports: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading reports");
-            ShowErrorNotification("Error loading reports");
+            await NotificationHelper.ShowErrorAsync("Error loading reports");
         }
         finally
         {
@@ -175,7 +182,7 @@ public partial class ReportListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in LoadData");
-            ShowErrorNotification("Error loading data");
+            await NotificationHelper.ShowErrorAsync("Error loading data");
         }
         finally
         {
@@ -376,14 +383,14 @@ public partial class ReportListing : ComponentBase
 
             Logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards",
                 report.Code, AssociatedHazards.Count);
-            NotificationHelper.ShowInfo(NotificationService, $"Displaying comprehensive details for {report.Code}", 4000);
+            await NotificationHelper.ShowInfoAsync($"Displaying comprehensive details for {report.Code}", 4000);
             
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading report details for {ReportCode}", report.Code);
 
-            ShowErrorNotification("Failed to load report details");
+            await NotificationHelper.ShowErrorAsync("Failed to load report details");
         }
         finally
         {
@@ -416,14 +423,14 @@ public partial class ReportListing : ComponentBase
                 Navigation.NavigateTo($"/SMSRiskManagement/HazardReporting?mode=edit&reportCode={report.Code}");
 
                 Logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
-                NotificationHelper.ShowInfo(NotificationService, $"Opening {report.Code} for editing...", 4000);
+                await NotificationHelper.ShowInfoAsync($"Opening {report.Code} for editing...", 4000);
                 
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error navigating to edit report {ReportCode}", report.Code);
-            ShowErrorNotification("Failed to navigate to edit form");
+            await NotificationHelper.ShowErrorAsync("Failed to navigate to edit form");
         }
     }
 
@@ -471,7 +478,7 @@ public partial class ReportListing : ComponentBase
 
                     // Reload the grid data
                     await LoadInitialData();
-                    ShowSuccessNotification($"Report {report.Code} has been successfully deleted.");
+                    await NotificationHelper.ShowSuccessAsync($"Report {report.Code} has been successfully deleted.");
                     
                 }
                 else
@@ -483,7 +490,7 @@ public partial class ReportListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting report: {ReportCode}", report.Code);
-            ShowErrorNotification("Failed to delete the report");
+            await NotificationHelper.ShowErrorAsync("Failed to delete the report");
         }
     }
     #endregion
@@ -729,7 +736,7 @@ public partial class ReportListing : ComponentBase
         var getupdateResult = await Mediator.SendAsync(updatestatuscmd, CancellationToken.None);
         if (!getupdateResult.IsSuccess)
         {
-            ShowErrorNotification($"Report{reportcode} Status Was not Updated");
+            await NotificationHelper.ShowErrorAsync($"Report{reportcode} Status Was not Updated");
             return false;
         }
         return true;
@@ -745,7 +752,7 @@ public partial class ReportListing : ComponentBase
         if (report == null)
         {
             Logger.LogWarning("OnResetReportAsync called with null report");
-            ShowErrorNotification("Invalid report selected");
+            await NotificationHelper.ShowErrorAsync("Invalid report selected");
             return;
         }
 
@@ -769,7 +776,7 @@ public partial class ReportListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error preparing reset confirmation for report {ReportCode}", report.Code);
-            ShowErrorNotification($"Error preparing reset confirmation: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"Error preparing reset confirmation: {ex.Message}");
         }
         finally
         {
@@ -801,7 +808,7 @@ public partial class ReportListing : ComponentBase
                 Logger.LogInformation("Successfully reset report validation for {ReportCode}", reportToReset.Code);
 
                 // Show success notification
-                ShowSuccessNotification($"Report '{reportToReset.Code}' validation has been successfully reset");
+                await NotificationHelper.ShowSuccessAsync($"Report '{reportToReset.Code}' validation has been successfully reset");
 
                 // Refresh the data grid to reflect changes
                 await LoadInitialData();
@@ -814,13 +821,13 @@ public partial class ReportListing : ComponentBase
                 var errorMessage = result.Error?.Message ?? "Unknown error occurred during reset";
                 Logger.LogError("Failed to reset report validation for {ReportCode}: {Error}", reportToReset.Code, errorMessage);
 
-                ShowErrorNotification($"Failed to reset report validation: {errorMessage}");
+                await NotificationHelper.ShowErrorAsync($"Failed to reset report validation: {errorMessage}");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Unexpected error during reset operation for report {ReportCode}", reportToReset?.Code);
-            ShowErrorNotification($"An unexpected error occurred while resetting the report: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"An unexpected error occurred while resetting the report: {ex.Message}");
         }
         finally
         {
@@ -878,21 +885,5 @@ public partial class ReportListing : ComponentBase
     private string GetResetFinalWarning()
     {
         return "THIS ACTION CANNOT BE UNDONE!";
-    }
-    
-    /// <summary>
-    /// Shows error notification to user
-    /// </summary>
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message, 7000);
-    }
-
-    /// <summary>
-    /// Shows success notification to user
-    /// </summary>
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationHelper.ShowSuccess(NotificationService, message, 5000);
     }
 }

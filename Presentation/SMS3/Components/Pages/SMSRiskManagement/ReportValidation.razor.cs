@@ -1,8 +1,11 @@
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
+
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
-using SMS3.Extensions;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -14,7 +17,8 @@ public partial class ReportValidation : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ReportValidation> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
 
     // Form Data Properties - Using Smart Enum
@@ -75,7 +79,7 @@ public partial class ReportValidation : ComponentBase
 
             if (string.IsNullOrWhiteSpace(ReportId))
             {
-                ShowErrorNotification("Report ID is required for SMS report validation");
+                await NotificationHelper.ShowErrorAsync("Report ID is required for SMS report validation");
                 Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
                 return;
             }
@@ -140,7 +144,7 @@ public partial class ReportValidation : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading report for SMS validation: {ReportId}", ReportId);
-            ShowErrorNotification("An error occurred while loading the report for validation");
+            await NotificationHelper.ShowErrorAsync("An error occurred while loading the report for validation");
             Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
         }
     }
@@ -257,13 +261,13 @@ public partial class ReportValidation : ComponentBase
             // Manual validation
             if (SelectedValidationDecision == null)
             {
-                ShowErrorNotification("Please select a validation decision");
+                await NotificationHelper.ShowErrorAsync("Please select a validation decision");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(ValidationComments))
             {
-                ShowErrorNotification("Validation comments are required");
+                await NotificationHelper.ShowErrorAsync("Validation comments are required");
                 return;
             }
 
@@ -291,7 +295,7 @@ public partial class ReportValidation : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in HandleSubmit for ReportId: {ReportId}", ReportId);
-            ShowErrorNotification("Error processing validation. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Error processing validation. Please try again.");
         }
         finally
         {
@@ -308,7 +312,7 @@ public partial class ReportValidation : ComponentBase
         var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
         if (!cmdResult.IsSuccess)
         {
-            ShowErrorNotification($"Report{reportId} Status Was not Updated");
+            await NotificationHelper.ShowErrorAsync($"Report{reportId} Status Was not Updated");
             return false;
         }
         return true;
@@ -353,7 +357,7 @@ public partial class ReportValidation : ComponentBase
                 }
 
                 Logger.LogInformation("Successfully updated existing ReportValidation: {ValidationCode}", ExistingValidation.Code);
-                ShowSuccessNotification($"Validation updated successfully. Decision: {SelectedValidationDecision?.Name}");
+                await NotificationHelper.ShowSuccessAsync($"Validation updated successfully. Decision: {SelectedValidationDecision?.Name}");
             }
             else
             {
@@ -389,7 +393,7 @@ public partial class ReportValidation : ComponentBase
                     throw new Exception($"Failed to Update Report Status during Create new validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.CreateFailed.Message}");
                 }
                 Logger.LogInformation("Successfully created new ReportValidation: {ValidationCode}", result.Value.Code);
-                ShowSuccessNotification($"Validation recorded successfully. Decision: {SelectedValidationDecision?.Name}");
+                await NotificationHelper.ShowSuccessAsync($"Validation recorded successfully. Decision: {SelectedValidationDecision?.Name}");
             }
 
             
@@ -502,7 +506,7 @@ public partial class ReportValidation : ComponentBase
             if (existingRiskAssessment != null)
             {
                 // Navigate to existing investigation
-                ShowSuccessNotification($"Loading existing RiskAssessment {existingRiskAssessment.Code}");
+                await NotificationHelper.ShowSuccessAsync($"Loading existing RiskAssessment {existingRiskAssessment.Code}");
                 navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
                 Logger.LogInformation("Navigating to existing Risk Assessment: {Url}", navigationUrl);
                 bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.RiskAssessmentInProgress);
@@ -544,7 +548,7 @@ public partial class ReportValidation : ComponentBase
                 if (createResult.IsSuccess)
                 {
                     var newRiskAssessment = createResult.Value;
-                    ShowSuccessNotification($"Investigation {newRiskAssessment.Code} created successfully");
+                    await NotificationHelper.ShowSuccessAsync($"Investigation {newRiskAssessment.Code} created successfully");
                     navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
                     Logger.LogInformation("Navigating to new risk assessment: {Url}", navigationUrl);
 
@@ -598,13 +602,13 @@ public partial class ReportValidation : ComponentBase
         {
             if (ReportHazard == null)
             {
-                ShowErrorNotification("Cannot create investigation - hazard information not found");
+                await NotificationHelper.ShowErrorAsync("Cannot create investigation - hazard information not found");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(ReportHazard.Code))
             {
-                ShowErrorNotification("Cannot create investigation - invalid hazard code");
+                await NotificationHelper.ShowErrorAsync("Cannot create investigation - invalid hazard code");
                 return;
             }
 
@@ -623,7 +627,7 @@ public partial class ReportValidation : ComponentBase
             if (existingInvestigation != null)
             {
                 // Navigate to existing investigation
-                ShowSuccessNotification($"Loading existing investigation {existingInvestigation.Code}");
+                await NotificationHelper.ShowSuccessAsync($"Loading existing investigation {existingInvestigation.Code}");
                 var navigationUrl = $"/SMSRiskManagement/Investigations/{existingInvestigation.Code}/{ReportHazard.Code}";
                 Logger.LogInformation("Navigating to existing investigation: {Url}", navigationUrl);
                 bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.UnderInvestigation);
@@ -655,7 +659,7 @@ public partial class ReportValidation : ComponentBase
                 if (createResult.IsSuccess)
                 {
                     var newInvestigation = createResult.Value;
-                    ShowSuccessNotification($"Investigation {newInvestigation.Code} created successfully");
+                    await NotificationHelper.ShowSuccessAsync($"Investigation {newInvestigation.Code} created successfully");
                     var navigationUrl = $"/SMSRiskManagement/Investigations/{newInvestigation.Code}/{ReportHazard.Code}";
                     Logger.LogInformation("Navigating to new investigation: {Url}", navigationUrl);
 
@@ -677,7 +681,7 @@ public partial class ReportValidation : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error handling investigation for ReportId: {ReportId}", ReportId);
-            ShowErrorNotification("Error handling investigation. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Error handling investigation. Please try again.");
         }
     }
 
@@ -702,7 +706,7 @@ public partial class ReportValidation : ComponentBase
         }
         else
         {
-            ShowSuccessNotification("Validation completed. Report remains open for further review.");
+            await NotificationHelper.ShowSuccessAsync("Validation completed. Report remains open for further review.");
             await Task.Delay(1500);
            // Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
         }
@@ -728,7 +732,7 @@ public partial class ReportValidation : ComponentBase
             }
             else
             {
-                ShowSuccessNotification("Report has been closed successfully");
+                await NotificationHelper.ShowSuccessAsync("Report has been closed successfully");
                 Logger.LogInformation("Report {ReportId} closed due to NOT_SMS_RISK validation", ReportId);
                 await Task.Delay(1500);
                 // ?? SECURE NAVIGATION - Navigate to Report Processing
@@ -739,7 +743,7 @@ public partial class ReportValidation : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error closing report {ReportId}", ReportId);
-            ShowErrorNotification($"Error closing report: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"Error closing report: {ex.Message}");
         }
     }
 
@@ -770,22 +774,7 @@ public partial class ReportValidation : ComponentBase
     
     #endregion
 
-    #region Notifications
-
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationHelper.ShowSuccess(NotificationService, message);
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message);
-    }
-
-    #endregion
-
     #region Models
-
     
 
     #endregion

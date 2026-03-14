@@ -23,6 +23,8 @@
     <Compile Remove="Components\Pages\SMSRiskManagement\MyInterviewsSimple.razor.cs" />
     <Compile Remove="Components\Pages\SMSRiskManagement\PreliminaryRiskAssessment.razor.cs" />
     <Compile Remove="Components\Pages\System\UserRoles\UserRoleManagement.cshtml.cs" />
+    <Compile Remove="Components\Shared\UIHelpers.cs" />
+    <Compile Remove="Configuration\SwaggerConfiguration.cs" />
   </ItemGroup>
 
   <ItemGroup>

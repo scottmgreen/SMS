@@ -1,6 +1,9 @@
 using Domain.Entities;
+
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
-using SMS3.Extensions;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.System.UserGroups;
 
@@ -11,7 +14,9 @@ public partial class OrganizationalGroups : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<OrganizationalGroups> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
@@ -124,7 +129,7 @@ public partial class OrganizationalGroups : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading data");
-            ShowErrorNotification("Error loading data. Please try again.");
+            ShowErrorAsyncNotification("Error loading data. Please try again.");
         }
     }
 
@@ -136,7 +141,7 @@ public partial class OrganizationalGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(groupCode))
         {
-            ShowErrorNotification("Group code is required.");
+            ShowErrorAsyncNotification("Group code is required.");
             return;
         }
 
@@ -147,7 +152,7 @@ public partial class OrganizationalGroups : ComponentBase
 
             if (groupResult.IsFailure)
             {
-                ShowErrorNotification("Group not found.");
+                ShowErrorAsyncNotification("Group not found.");
                 return;
             }
 
@@ -166,7 +171,7 @@ public partial class OrganizationalGroups : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading group for edit: {GroupCode}", groupCode);
-            ShowErrorNotification("Error loading group. Please try again.");
+            ShowErrorAsyncNotification("Error loading group. Please try again.");
         }
     }
 
@@ -201,7 +206,7 @@ public partial class OrganizationalGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(NewGroupName))
         {
-            ShowErrorNotification("Group name is required.");
+            ShowErrorAsyncNotification("Group name is required.");
             return;
         }
 
@@ -228,20 +233,20 @@ public partial class OrganizationalGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Organizational group '{NewGroupName}' created successfully.");
+                ShowSuccessAsyncNotification($"Organizational group '{NewGroupName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
                 await groupsGrid?.Reload();
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to create organizational group.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to create organizational group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error creating organizational group");
-            ShowErrorNotification("Error creating organizational group. Please try again.");
+            ShowErrorAsyncNotification("Error creating organizational group. Please try again.");
         }
         finally
         {
@@ -254,7 +259,7 @@ public partial class OrganizationalGroups : ComponentBase
     {
         if (CurrentGroup == null || string.IsNullOrWhiteSpace(EditGroupName))
         {
-            ShowErrorNotification("Group name is required.");
+            ShowErrorAsyncNotification("Group name is required.");
             return;
         }
 
@@ -275,20 +280,20 @@ public partial class OrganizationalGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Organizational group '{EditGroupName}' updated successfully.");
+                ShowSuccessAsyncNotification($"Organizational group '{EditGroupName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
                 await groupsGrid?.Reload();
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to update organizational group.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to update organizational group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating organizational group: {GroupCode}", CurrentGroup.Code);
-            ShowErrorNotification("Error updating organizational group. Please try again.");
+            ShowErrorAsyncNotification("Error updating organizational group. Please try again.");
         }
         finally
         {
@@ -301,7 +306,7 @@ public partial class OrganizationalGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(DeleteGroupCode))
         {
-            ShowErrorNotification("Group code is required for deletion.");
+            ShowErrorAsyncNotification("Group code is required for deletion.");
             return;
         }
 
@@ -316,7 +321,7 @@ public partial class OrganizationalGroups : ComponentBase
 
             if (groupResult.IsFailure)
             {
-                ShowErrorNotification("Group not found.");
+                ShowErrorAsyncNotification("Group not found.");
                 return;
             }
 
@@ -325,7 +330,7 @@ public partial class OrganizationalGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("Organizational group deleted successfully.");
+                ShowSuccessAsyncNotification("Organizational group deleted successfully.");
                 CloseDeleteModal();
                 await LoadDataAsync();
                 await groupsGrid?.Reload();
@@ -338,13 +343,13 @@ public partial class OrganizationalGroups : ComponentBase
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to delete organizational group.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to delete organizational group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting organizational group: {GroupCode}", DeleteGroupCode);
-            ShowErrorNotification("Error deleting organizational group. Please try again.");
+            ShowErrorAsyncNotification("Error deleting organizational group. Please try again.");
         }
         finally
         {
@@ -393,14 +398,14 @@ public partial class OrganizationalGroups : ComponentBase
 
     #region Notification Methods
 
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message);
+        NotificationHelper.ShowErrorAsync( message);
     }
 
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message);
+        NotificationHelper.ShowSuccessAsync( message);
     }
 
     #endregion
@@ -411,7 +416,7 @@ public partial class OrganizationalGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(groupCode))
         {
-            ShowErrorNotification("Group code is required to manage members.");
+            ShowErrorAsyncNotification("Group code is required to manage members.");
             return;
         }
 
@@ -431,7 +436,7 @@ public partial class OrganizationalGroups : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error entering manage members mode for group: {GroupCode}", groupCode);
-            ShowErrorNotification("Error entering manage members mode. Please try again.");
+            ShowErrorAsyncNotification("Error entering manage members mode. Please try again.");
         }
     }
 
@@ -483,7 +488,7 @@ public partial class OrganizationalGroups : ComponentBase
         CurrentGroup = null;
         
         Logger.LogInformation("Exited member management view");
-        NotificationHelper.ShowInfo(NotificationService, "Returned to group management", 3000);
+        NotificationHelper.ShowInfoAsync( "Returned to group management", 3000);
         
         Navigation.NavigateToSecure("/System/UserGroups/OrganizationalGroups");
     }
@@ -503,7 +508,7 @@ public partial class OrganizationalGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(CurrentGroupCode))
         {
-            ShowErrorNotification("User code and group code are required.");
+            ShowErrorAsyncNotification("User code and group code are required.");
             return;
         }
 
@@ -515,19 +520,19 @@ public partial class OrganizationalGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("User removed from group successfully.");
+                ShowSuccessAsyncNotification("User removed from group successfully.");
                 await LoadGroupMembersAsync(CurrentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to remove user from group.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to remove user from group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, CurrentGroupCode);
-            ShowErrorNotification("Error removing user from group. Please try again.");
+            ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
 
@@ -535,7 +540,7 @@ public partial class OrganizationalGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(CurrentGroupCode) || !SelectedUsers.Any(s => s.Value))
         {
-            ShowErrorNotification("Group code and at least one user must be selected.");
+            ShowErrorAsyncNotification("Group code and at least one user must be selected.");
             return;
         }
 
@@ -570,20 +575,20 @@ public partial class OrganizationalGroups : ComponentBase
                 var message = $"Successfully assigned {successCount} user(s) to group.";
                 if (failureCount > 0)
                     message += $" {failureCount} assignment(s) failed.";
-                ShowSuccessNotification(message);
+                ShowSuccessAsyncNotification(message);
 
                 await LoadGroupMembersAsync(CurrentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
             {
-                ShowErrorNotification("Failed to assign users to group.");
+                ShowErrorAsyncNotification("Failed to assign users to group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error assigning multiple users to group {GroupCode}", CurrentGroupCode);
-            ShowErrorNotification("Error assigning users to group. Please try again.");
+            ShowErrorAsyncNotification("Error assigning users to group. Please try again.");
         }
     }
 
@@ -591,7 +596,7 @@ public partial class OrganizationalGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(CurrentGroupCode))
         {
-            ShowErrorNotification("User code and group code are required.");
+            ShowErrorAsyncNotification("User code and group code are required.");
             return;
         }
 
@@ -603,19 +608,19 @@ public partial class OrganizationalGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("User assigned to group successfully.");
+                ShowSuccessAsyncNotification("User assigned to group successfully.");
                 await LoadGroupMembersAsync(CurrentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to assign user to group.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to assign user to group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
-            ShowErrorNotification("Error assigning user to group. Please try again.");
+            ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }
 

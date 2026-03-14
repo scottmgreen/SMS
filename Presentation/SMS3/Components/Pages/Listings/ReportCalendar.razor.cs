@@ -1,3 +1,5 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.Listings;
 
 public partial class ReportCalendar : ComponentBase
@@ -5,7 +7,7 @@ public partial class ReportCalendar : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ReportCalendar> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     #endregion
@@ -58,7 +60,7 @@ public partial class ReportCalendar : ComponentBase
             else
             {
                 Logger.LogError("Failed to load reports: {Error}", result.Error?.Message);
-                ShowErrorNotification("Failed to load reports for calendar");
+                await NotificationHelper.ShowErrorAsync("Failed to load reports for calendar");
                 Reports = new List<Report>();
                 SchedulerData = new List<ReportSchedulerItem>();
             }
@@ -66,7 +68,7 @@ public partial class ReportCalendar : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading reports for calendar");
-            ShowErrorNotification("Error loading reports");
+            await NotificationHelper.ShowErrorAsync("Error loading reports");
         }
         finally
         {
@@ -78,7 +80,7 @@ public partial class ReportCalendar : ComponentBase
     private async Task RefreshData()
     {
         await LoadReportsAsync();
-        ShowSuccessNotification("Calendar data refreshed");
+        await NotificationHelper.ShowSuccessAsync("Calendar data refreshed");
     }
     #endregion
 
@@ -251,7 +253,7 @@ public partial class ReportCalendar : ComponentBase
                 SelectedReport = Reports.FirstOrDefault(r => r.Code == reportItem.ReportCode);
                 if (SelectedReport == null)
                 {
-                    ShowErrorNotification($"Report {reportItem.ReportCode} not found");
+                    await NotificationHelper.ShowErrorAsync($"Report {reportItem.ReportCode} not found");
                     return;
                 }
             }
@@ -265,12 +267,12 @@ public partial class ReportCalendar : ComponentBase
             Logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards",
                 reportItem.ReportCode, AssociatedHazards.Count);
 
-            ShowSuccessNotification($"Report details loaded for {reportItem.ReportCode}");
+            await NotificationHelper.ShowSuccessAsync($"Report details loaded for {reportItem.ReportCode}");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error showing report details for {ReportCode}", reportItem.ReportCode);
-            ShowErrorNotification("Error opening report details");
+            await NotificationHelper.ShowErrorAsync("Error opening report details");
         }
         finally
         {
@@ -300,30 +302,6 @@ public partial class ReportCalendar : ComponentBase
     {
         var today = DateTime.Today;
         return Reports.Count(r => r.CreatedDate?.Date == today);
-    }
-    #endregion
-
-    #region Notification Methods
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
     }
     #endregion
 
@@ -375,13 +353,13 @@ public partial class ReportCalendar : ComponentBase
 
                 Logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
 
-                ShowSuccessNotification($"Opening {report.Code} for editing...");
+                await NotificationHelper.ShowSuccessAsync($"Opening {report.Code} for editing...");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error navigating to edit report {ReportCode}", report.Code);
-            ShowErrorNotification("Failed to navigate to edit form");
+            await NotificationHelper.ShowErrorAsync("Failed to navigate to edit form");
         }
     }
 

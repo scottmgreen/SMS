@@ -1,10 +1,13 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.Listings;
 
 public partial class ScoringPanelListing : ComponentBase
 {
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ScoringPanelListing> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    
 
     private RadzenDataGrid<ScoringPanel>? panelsGrid;
     private IEnumerable<ScoringPanel> panels = new List<ScoringPanel>();
@@ -31,14 +34,14 @@ public partial class ScoringPanelListing : ComponentBase
             }
             else
             {
-                ShowErrorNotification("Failed to load scoring panels");
+                await NotificationHelper.ShowErrorAsync("Failed to load scoring panels");
                 Logger.LogError("Failed to load scoring panels: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading scoring panels");
-            ShowErrorNotification("Error loading scoring panels");
+            await NotificationHelper.ShowErrorAsync("Error loading scoring panels");
         }
     }
 
@@ -76,7 +79,7 @@ public partial class ScoringPanelListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in LoadData");
-            ShowErrorNotification("Error loading data");
+            await NotificationHelper.ShowErrorAsync("Error loading data");
         }
         finally
         {
@@ -96,16 +99,5 @@ public partial class ScoringPanelListing : ComponentBase
     private void ShowActions(ScoringPanel panel)
     {
         Logger.LogInformation("Actions requested for scoring panel: {Code}", panel.Code);
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
     }
 }

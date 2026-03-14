@@ -1,4 +1,6 @@
-﻿using SMS3.Components.Pages.SMSAssurance.Components;
+﻿using SMS_Shared.Configuration;
+
+using SMS3.Components.Pages.SMSAssurance.Components;
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
@@ -8,7 +10,8 @@ public partial class InterviewCalendar : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<InterviewCalendar> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
@@ -68,7 +71,7 @@ public partial class InterviewCalendar : ComponentBase
             else
             {
                 Logger.LogError("Failed to load interviews: {Error}", result.Error?.Message);
-                ShowErrorNotification("Failed to load interviews for calendar");
+                ShowErrorAsyncNotification("Failed to load interviews for calendar");
                 Interviews = new List<Interview>();
                 SchedulerData = new List<InterviewSchedulerItem>();
             }
@@ -76,7 +79,7 @@ public partial class InterviewCalendar : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading interviews for calendar");
-            ShowErrorNotification("Error loading interviews");
+            ShowErrorAsyncNotification("Error loading interviews");
         }
         finally
         {
@@ -97,7 +100,7 @@ public partial class InterviewCalendar : ComponentBase
             await scheduler.Reload();
         }
 
-        ShowSuccessNotification("Calendar data refreshed");
+        ShowSuccessAsyncNotification("Calendar data refreshed");
         LogEvent("Calendar refresh completed");
     }
     #endregion
@@ -193,7 +196,7 @@ public partial class InterviewCalendar : ComponentBase
                     Logger.LogError(ex, "Error in background appointment handling");
                     await InvokeAsync(() =>
                     {
-                        ShowErrorNotification("Error opening interview details");
+                        ShowErrorAsyncNotification("Error opening interview details");
                     });
                 }
                 finally
@@ -205,7 +208,7 @@ public partial class InterviewCalendar : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error handling appointment selection");
-            ShowErrorNotification("Error opening interview details");
+            ShowErrorAsyncNotification("Error opening interview details");
             _handlingAppointmentClick = false;
         }
     }
@@ -346,13 +349,13 @@ public partial class InterviewCalendar : ComponentBase
                 await UpdateInterviewDateTime(draggedAppointment);
 
                 await scheduler.Reload();
-                ShowSuccessNotification($"Interview {draggedAppointment.InterviewCode} rescheduled successfully");
+                ShowSuccessAsyncNotification($"Interview {draggedAppointment.InterviewCode} rescheduled successfully");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error moving appointment");
-            ShowErrorNotification("Error rescheduling interview");
+            ShowErrorAsyncNotification("Error rescheduling interview");
         }
     }
 
@@ -373,7 +376,7 @@ public partial class InterviewCalendar : ComponentBase
                 if (updateResult.IsFailure)
                 {
                     Logger.LogError("Domain validation failed for interview datetime update: {Error}", updateResult.Error?.Message);
-                    ShowErrorNotification($"Cannot reschedule interview: {updateResult.Error?.Message}");
+                    ShowErrorAsyncNotification($"Cannot reschedule interview: {updateResult.Error?.Message}");
                     return;
                 }
 
@@ -389,7 +392,7 @@ public partial class InterviewCalendar : ComponentBase
                 else
                 {
                     Logger.LogError("Failed to update interview datetime: {Error}", result.Error?.Message);
-                    ShowErrorNotification("Failed to save interview changes");
+                    ShowErrorAsyncNotification("Failed to save interview changes");
                 }
             }
         }
@@ -457,14 +460,14 @@ public partial class InterviewCalendar : ComponentBase
             if (result == true)
             {
                 await RefreshData();
-                ShowSuccessNotification("Interview scheduled successfully");
+                ShowSuccessAsyncNotification("Interview scheduled successfully");
                 LogEvent("New interview created successfully");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error showing create interview dialog");
-            ShowErrorNotification("Error opening create interview dialog");
+            ShowErrorAsyncNotification("Error opening create interview dialog");
             LogEvent($"Error in create dialog: {ex.Message}");
         }
     }
@@ -501,7 +504,7 @@ public partial class InterviewCalendar : ComponentBase
                 SelectedInterview = Interviews.FirstOrDefault(i => i.Code == interviewItem.InterviewCode);
                 if (SelectedInterview == null)
                 {
-                    ShowErrorNotification($"Interview {interviewItem.InterviewCode} not found");
+                    ShowErrorAsyncNotification($"Interview {interviewItem.InterviewCode} not found");
                     return;
                 }
             }
@@ -514,7 +517,7 @@ public partial class InterviewCalendar : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error showing interview details for {InterviewCode}", interviewItem.InterviewCode);
-            ShowErrorNotification("Error opening interview details");
+            ShowErrorAsyncNotification("Error opening interview details");
         }
         finally
         {
@@ -548,14 +551,14 @@ public partial class InterviewCalendar : ComponentBase
     #endregion
 
     #region Notification Methods
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message);
+        NotificationHelper.ShowSuccessAsync( message);
     }
 
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message);
+        NotificationHelper.ShowErrorAsync( message);
     }
     #endregion
 
@@ -613,7 +616,7 @@ public partial class InterviewCalendar : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error editing from details modal");
-            ShowErrorNotification("Error opening edit dialog");
+            ShowErrorAsyncNotification("Error opening edit dialog");
             LogEvent($"Error opening edit dialog: {ex.Message}");
         }
     }
@@ -655,14 +658,14 @@ public partial class InterviewCalendar : ComponentBase
             if (result == true)
             {
                 await RefreshData();
-                ShowSuccessNotification("Interview updated successfully");
+                ShowSuccessAsyncNotification("Interview updated successfully");
                 LogEvent($"Interview {interview.Code} updated successfully");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error opening edit dialog for interview {InterviewCode}", interview.Code);
-            ShowErrorNotification("Failed to open edit dialog");
+            ShowErrorAsyncNotification("Failed to open edit dialog");
             LogEvent($"Error opening edit dialog: {ex.Message}");
         }
     }

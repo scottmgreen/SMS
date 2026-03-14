@@ -1,10 +1,9 @@
 ﻿using System.Runtime.Intrinsics.X86;
-
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
-
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -22,11 +21,11 @@ public partial class TechnicalAssessment : ComponentBase
     // Keep query parameters for backward compatibility
     // [SupplyParameterFromQuery(Name = "reportId")] public string? ReportId { get; set; }
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<TechnicalAssessment> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    
 
 
     #endregion
@@ -214,7 +213,7 @@ public partial class TechnicalAssessment : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading Technical Assessment data");
-            ShowErrorNotification("Failed to load assessment data. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Failed to load assessment data. Please try again.");
         }
         finally
         {
@@ -335,7 +334,7 @@ public partial class TechnicalAssessment : ComponentBase
 
         try
         {
-            // Generate Placeholder ID - WILL BE GENERATED IN THE DATABASE 
+            // Generate Placeholder ID - WILL BEGENERATED IN THE DATABASE 
             var assessmentId = $"RS-0000";
 
             // Create Technical assessment using the public constructor
@@ -619,7 +618,7 @@ public partial class TechnicalAssessment : ComponentBase
             var validationResult = ValidateCurrentStep();
             if (!validationResult.isValid)
             {
-                ShowErrorNotification($"Please complete Step {CurrentStep} before proceeding to Step {targetStep}");
+                await NotificationHelper.ShowErrorAsync($"Please complete Step {CurrentStep} before proceeding to Step {targetStep}");
                 return;
             }
 
@@ -627,7 +626,7 @@ public partial class TechnicalAssessment : ComponentBase
             var saveResult = await SaveCurrentStepAsync();
             if (!saveResult.success)
             {
-                ShowErrorNotification($"Please save Step {CurrentStep} before proceeding to Step {targetStep}");
+                await NotificationHelper.ShowErrorAsync($"Please save Step {CurrentStep} before proceeding to Step {targetStep}");
                 return;
             }
             
@@ -679,7 +678,7 @@ public partial class TechnicalAssessment : ComponentBase
             var validationResult = ValidateCurrentStep();
             if (!validationResult.isValid)
             {
-                ShowErrorNotification($"Step {CurrentStep} validation failed: {validationResult.message}");
+                await NotificationHelper.ShowErrorAsync($"Step {CurrentStep} validation failed: {validationResult.message}");
                 return;
             }
 
@@ -688,7 +687,7 @@ public partial class TechnicalAssessment : ComponentBase
             IsSaving = !saveResult.success;
             if (!saveResult.success)
             {
-                ShowErrorNotification($"Failed to save Step {CurrentStep}: {saveResult.message}");
+                await NotificationHelper.ShowErrorAsync($"Failed to save Step {CurrentStep}: {saveResult.message}");
                 return;
             }
 
@@ -696,13 +695,13 @@ public partial class TechnicalAssessment : ComponentBase
             if (CurrentStep < 5)
             {
                 await NavigateToStep(CurrentStep + 1);
-                ShowSuccessNotification("Step saved successfully");
+                await NotificationHelper.ShowSuccessAsync("Step saved successfully");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in NextStep");
-            ShowErrorNotification("Error proceeding to next step");
+            await NotificationHelper.ShowErrorAsync("Error proceeding to next step");
         }
         finally
         {
@@ -722,7 +721,7 @@ public partial class TechnicalAssessment : ComponentBase
             var allStepsValid = ValidateAllSteps();
             if (!allStepsValid.isValid)
             {
-                ShowErrorNotification($"Assessment cannot be completed: {allStepsValid.message}");
+                await NotificationHelper.ShowErrorAsync($"Assessment cannot be completed: {allStepsValid.message}");
                 return;
             }
 
@@ -730,14 +729,14 @@ public partial class TechnicalAssessment : ComponentBase
             var saveResult = await SaveCurrentStepAsync();
             if (!saveResult.success)
             {
-                ShowErrorNotification($"Failed to save final step: {saveResult.message}");
+                await NotificationHelper.ShowErrorAsync($"Failed to save final step: {saveResult.message}");
                 return;
             }
 
             // Mark assessment as complete and save
             await CompleteAssessmentProcess();
 
-            ShowSuccessNotification("Technical Assessment completed successfully!");
+            await NotificationHelper.ShowSuccessAsync("Technical Assessment completed successfully!");
 
             // Navigate back to report processing
             Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
@@ -745,7 +744,7 @@ public partial class TechnicalAssessment : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error completing assessment");
-            ShowErrorNotification("Error completing assessment");
+            await NotificationHelper.ShowErrorAsync("Error completing assessment");
         }
         finally
         {
@@ -792,7 +791,7 @@ public partial class TechnicalAssessment : ComponentBase
             var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
             var initalresult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
             
-            //This may change but atleaset it's a start//
+            //This may change but atleast it's a start//
             ReportStatus status = CurrentStep switch
             {
                 1 => ReportStatus.RiskAssessmentInProgress,
@@ -1225,30 +1224,6 @@ public partial class TechnicalAssessment : ComponentBase
 
     #endregion
 
-    #region Notification Methods
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message
-        });
-    }
-
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message
-        });
-    }
-
-    #endregion
-
     private async Task CompleteAssessmentProcess()
     {
         if (TechRiskAssessment == null) return;
@@ -1342,7 +1317,7 @@ public partial class TechnicalAssessment : ComponentBase
             if (ReportHazards.Any(h => h.Description?.Trim().Equals(newHazard.Description?.Trim(), StringComparison.OrdinalIgnoreCase) == true))
             {
                 Logger.LogWarning("Hazard with description '{Description}' already exists in ReportHazards collection, skipping duplication", newHazard.Description);
-                ShowErrorNotification("A hazard with this description already exists.");
+                await NotificationHelper.ShowErrorAsync("A hazard with this description already exists.");
                 return;
             }
 
@@ -1380,13 +1355,13 @@ public partial class TechnicalAssessment : ComponentBase
                 StateHasChanged();
             });
 
-            ShowSuccessNotification($"Hazard {newHazard.Code} added successfully");
+            await NotificationHelper.ShowSuccessAsync($"Hazard {newHazard.Code} added successfully");
             Logger.LogInformation("Successfully added hazard to collections: {HazardCode} - Total hazards: {Count}",newHazard.Code, ReportedHazards.Count);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in AddHazard method for hazard: {Description}", newHazard.Description);
-            ShowErrorNotification("Error adding hazard");
+            await NotificationHelper.ShowErrorAsync("Error adding hazard");
         }
     }
 
@@ -1409,19 +1384,19 @@ public partial class TechnicalAssessment : ComponentBase
                     ReportHazards[existingIndex] = result.Value;
                 }
 
-                ShowSuccessNotification($"Hazard {updatedHazard.Code} updated successfully");
+                await NotificationHelper.ShowSuccessAsync($"Hazard {updatedHazard.Code} updated successfully");
                 Logger.LogInformation("Successfully updated hazard via CQRS: {HazardCode}", updatedHazard.Code);
             }
             else
             {
-                ShowErrorNotification($"Failed to update hazard: {result.Error?.Message}");
+                await NotificationHelper.ShowErrorAsync($"Failed to update hazard: {result.Error?.Message}");
                 Logger.LogError("CQRS UpdateHazardCommand failed: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating hazard via CQRS");
-            ShowErrorNotification("Error updating hazard");
+            await NotificationHelper.ShowErrorAsync("Error updating hazard");
         }
     }
 
@@ -1434,7 +1409,7 @@ public partial class TechnicalAssessment : ComponentBase
             // Check if this is the initial hazard - should not be deleted
             if (hazardToDelete.Code == HazardId)
             {
-                ShowErrorNotification("Cannot delete the initial hazard from the report");
+                await NotificationHelper.ShowErrorAsync("Cannot delete the initial hazard from the report");
                 return;
             }
 
@@ -1478,19 +1453,19 @@ public partial class TechnicalAssessment : ComponentBase
                 // Force UI refresh
                 await InvokeAsync(StateHasChanged);
 
-                ShowSuccessNotification($"Hazard {hazardToDelete.Code} deleted successfully");
+                await NotificationHelper.ShowSuccessAsync($"Hazard {hazardToDelete.Code} deleted successfully");
                 Logger.LogInformation("Successfully deleted hazard: {HazardCode} - Remaining hazards: {Count}",hazardToDelete.Code, ReportedHazards.Count);
             }
             else
             {
-                ShowErrorNotification($"Failed to delete hazard: {result.Error?.Message}");
+                await NotificationHelper.ShowErrorAsync($"Failed to delete hazard: {result.Error?.Message}");
                 Logger.LogError("DeleteHazardCommand failed: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting hazard");
-            ShowErrorNotification("Error deleting hazard");
+            await NotificationHelper.ShowErrorAsync("Error deleting hazard");
         }
     }
 

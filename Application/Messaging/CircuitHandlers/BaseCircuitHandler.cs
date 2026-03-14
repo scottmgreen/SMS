@@ -8,11 +8,12 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using Infrastructure.Configuration.Middleware;
+
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
-using SMS_Infrastructure.Configuration;
 using SMS_Infrastructure.Interfaces;
 namespace SMS_Application.Messaging.CircuitHandlers;
 
@@ -79,17 +80,17 @@ public abstract class BaseCircuitHandler : CircuitHandler
         string connectionId = "Unknown", ip = "Unknown IP", host = "Unknown Host";
 
         // Retrieve the latest ConnectionId from Middleware
-        string? latestConnectionId = CircuitUserTrackingMiddleware.GetConnectionId();
+        string? latestConnectionId = CircuitMiddleware.GetConnectionId();
 
         if (!string.IsNullOrEmpty(latestConnectionId))
         {
-            CircuitUserTrackingMiddleware.RegisterCircuit(circuit.Id, latestConnectionId);
+            CircuitMiddleware.RegisterCircuit(circuit.Id, latestConnectionId);
         }
 
         // Retry loop to allow CircuitUserTrackingMiddleware time to register the circuit
         for (int i = 0; i < 10; i++) // Max wait time: 1 second (10 x 100ms)
         {
-            var (connId, ipAddress, hostName) = CircuitUserTrackingMiddleware.GetUserInfoFromCircuitId(circuit.Id);
+            var (connId, ipAddress, hostName) = CircuitMiddleware.GetUserInfoFromCircuitId(circuit.Id);
 
             if (connId != "Unknown")
             {
@@ -114,7 +115,7 @@ public abstract class BaseCircuitHandler : CircuitHandler
     {
 
         _activeCircuits.TryRemove(circuit.Id, out _);
-        CircuitUserTrackingMiddleware.UnregisterCircuit(circuit.Id);
+        CircuitMiddleware.UnregisterCircuit(circuit.Id);
 
         return HandleConnectionDownAsync(circuit, cancellationToken);
     }

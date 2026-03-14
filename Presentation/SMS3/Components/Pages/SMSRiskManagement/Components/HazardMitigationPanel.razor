@@ -357,6 +357,7 @@
     [Parameter] public EventCallback<string> OnResidualHazardScored { get; set; } // ✅ NEW: For residual scoring callbacks
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
 
     // State properties
     private bool IsLoading { get; set; } = true;
@@ -440,7 +441,7 @@
         {
             Logger.LogError(ex, "Error loading mitigations for hazard {HazardCode}", Hazard.Code);
             LoadedMitigations = new List<Mitigation>();
-            ShowErrorNotification("Failed to load existing mitigations");
+            ShowErrorAsyncNotification("Failed to load existing mitigations");
         }
         finally
         {
@@ -482,7 +483,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error creating new mitigation");
-            ShowErrorNotification("Error creating new mitigation");
+            ShowErrorAsyncNotification("Error creating new mitigation");
         }
     }
 
@@ -510,13 +511,13 @@
             // Validate required fields
             if (string.IsNullOrWhiteSpace(CurrentMitigation.Name))
             {
-                ShowErrorNotification("Mitigation name is required");
+                ShowErrorAsyncNotification("Mitigation name is required");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(CurrentMitigation.Description))
             {
-                ShowErrorNotification("Mitigation description is required");
+                ShowErrorAsyncNotification("Mitigation description is required");
                 return;
             }
 
@@ -541,7 +542,7 @@
                         LoadedMitigations[index] = result.Value;
                     }
                     
-                    ShowSuccessNotification("Mitigation updated successfully");
+                    ShowSuccessAsyncNotification("Mitigation updated successfully");
                     Logger.LogInformation("Updated mitigation {MitigationCode} for hazard {HazardCode}", CurrentMitigation.Code, Hazard.Code);
                 }
             }
@@ -555,7 +556,7 @@
                 {
                     // Add to local collection
                     LoadedMitigations.Add(result.Value);
-                    ShowSuccessNotification("Mitigation created successfully");
+                    ShowSuccessAsyncNotification("Mitigation created successfully");
                     Logger.LogInformation("Created mitigation {MitigationCode} for hazard {HazardCode}", CurrentMitigation.Code, Hazard.Code);
                 }
             }
@@ -571,14 +572,14 @@
             }
             else
             {
-                ShowErrorNotification($"Failed to save mitigation: {result.Error?.Message}");
+                ShowErrorAsyncNotification($"Failed to save mitigation: {result.Error?.Message}");
                 Logger.LogError("Failed to save mitigation: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error saving mitigation");
-            ShowErrorNotification("Error saving mitigation");
+            ShowErrorAsyncNotification("Error saving mitigation");
         }
         finally
         {
@@ -601,7 +602,7 @@
             {
                 // Remove from local collection
                 LoadedMitigations.RemoveAll(m => m.Id.Value == mitigation.Id.Value);
-                ShowSuccessNotification("Mitigation deleted successfully");
+                ShowSuccessAsyncNotification("Mitigation deleted successfully");
                 Logger.LogInformation("Deleted mitigation {MitigationCode} for hazard {HazardCode}", mitigation.Code, Hazard.Code);
                 
                 await OnMitigationUpdated.InvokeAsync(Hazard.Code);
@@ -609,14 +610,14 @@
             }
             else
             {
-                ShowErrorNotification($"Failed to delete mitigation: {result.Error?.Message}");
+                ShowErrorAsyncNotification($"Failed to delete mitigation: {result.Error?.Message}");
                 Logger.LogError("Failed to delete mitigation: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting mitigation");
-            ShowErrorNotification("Error deleting mitigation");
+            ShowErrorAsyncNotification("Error deleting mitigation");
         }
     }
 
@@ -807,7 +808,7 @@
             
             if (!selectedMembers.Any())
             {
-                ShowErrorNotification("At least one stakeholder must be selected for the residual risk panel");
+                ShowErrorAsyncNotification("At least one stakeholder must be selected for the residual risk panel");
                 return;
             }
 
@@ -815,7 +816,7 @@
             Step5.ResidualRiskPanels[Hazard.Code] = selectedMembers;
             
             ShowResidualPanelDialog = false;
-            ShowSuccessNotification($"Updated residual risk panel for {Hazard.Code} with {selectedMembers.Count} members");
+            ShowSuccessAsyncNotification($"Updated residual risk panel for {Hazard.Code} with {selectedMembers.Count} members");
             
             // Notify parent component
             await OnMitigationUpdated.InvokeAsync(Hazard.Code);
@@ -826,7 +827,7 @@
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating residual risk panel for hazard {HazardCode}", Hazard.Code);
-            ShowErrorNotification("Error updating residual risk panel");
+            ShowErrorAsyncNotification("Error updating residual risk panel");
         }
     }
 
@@ -892,17 +893,17 @@
     /// <summary>
     /// Show error notification to user
     /// </summary>
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message, 5000);
+        NotificationHelper.ShowErrorAsync( message, 5000);
     }
 
     /// <summary>
     /// Show success notification to user
     /// </summary>
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message, 3000);
+        NotificationHelper.ShowSuccessAsync( message, 3000);
     }
 
     /// <summary>

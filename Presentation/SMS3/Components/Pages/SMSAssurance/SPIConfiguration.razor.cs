@@ -1,3 +1,5 @@
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSAssurance;
@@ -7,7 +9,8 @@ public partial class SPIConfiguration
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     #endregion
 
@@ -56,7 +59,7 @@ public partial class SPIConfiguration
         }
         catch (Exception ex)
         {
-            ShowErrorNotification($"Failed to load SPI configuration: {ex.Message}");
+            ShowErrorAsyncNotification($"Failed to load SPI configuration: {ex.Message}");
         }
         finally
         {
@@ -109,12 +112,12 @@ public partial class SPIConfiguration
             }
             else
             {
-                ShowErrorNotification("Failed to load SPIs from database.");
+                ShowErrorAsyncNotification("Failed to load SPIs from database.");
             }
         }
         catch (Exception ex)
         {
-            ShowErrorNotification($"Error loading SPIs: {ex.Message}");
+            ShowErrorAsyncNotification($"Error loading SPIs: {ex.Message}");
         }
     }
 
@@ -266,17 +269,17 @@ public partial class SPIConfiguration
 
                 if (result.IsSuccess)
                 {
-                    ShowSuccessNotification($"SPI '{spi.Code}' has been deleted successfully.");
+                    ShowSuccessAsyncNotification($"SPI '{spi.Code}' has been deleted successfully.");
                     await LoadSPIs();
                 }
                 else
                 {
-                    ShowErrorNotification($"Failed to delete SPI: {result.Error?.Message ?? "Unknown error"}");
+                    ShowErrorAsyncNotification($"Failed to delete SPI: {result.Error?.Message ?? "Unknown error"}");
                 }
             }
             catch (Exception ex)
             {
-                ShowErrorNotification($"Error deleting SPI: {ex.Message}");
+                ShowErrorAsyncNotification($"Error deleting SPI: {ex.Message}");
             }
         }
     }
@@ -351,7 +354,7 @@ public partial class SPIConfiguration
 
                 if (result.IsSuccess)
                 {
-                    ShowSuccessNotification("SPI created successfully.");
+                    ShowSuccessAsyncNotification("SPI created successfully.");
                 }
             }
             else
@@ -388,7 +391,7 @@ public partial class SPIConfiguration
 
                 if (result.IsSuccess)
                 {
-                    ShowSuccessNotification("SPI updated successfully.");
+                    ShowSuccessAsyncNotification("SPI updated successfully.");
                 }
             }
 
@@ -398,12 +401,12 @@ public partial class SPIConfiguration
             }
             else
             {
-                ShowErrorNotification($"Failed to save SPI: {result.Error?.Message ?? "Unknown error"}");
+                ShowErrorAsyncNotification($"Failed to save SPI: {result.Error?.Message ?? "Unknown error"}");
             }
         }
         catch (Exception ex)
         {
-            ShowErrorNotification($"Error saving SPI: {ex.Message}");
+            ShowErrorAsyncNotification($"Error saving SPI: {ex.Message}");
         }
     }
 
@@ -411,7 +414,7 @@ public partial class SPIConfiguration
     {
         // Navigate to data points page or show data points dialog
         // For now, show a placeholder notification
-        ShowInfoNotification("Data points management will be available in the next release.");
+        ShowInfoAsyncNotification("Data points management will be available in the next release.");
     }
     #endregion
 
@@ -480,19 +483,19 @@ public partial class SPIConfiguration
     #endregion
 
     #region Notification Methods
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message);
+        NotificationHelper.ShowSuccessAsync( message);
     }
 
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message);
+        NotificationHelper.ShowErrorAsync( message);
     }
 
-    private void ShowInfoNotification(string message)
+    private void ShowInfoAsyncNotification(string message)
     {
-        NotificationHelper.ShowInfo(NotificationService, message);
+        NotificationHelper.ShowInfoAsync( message);
     }
     #endregion
 

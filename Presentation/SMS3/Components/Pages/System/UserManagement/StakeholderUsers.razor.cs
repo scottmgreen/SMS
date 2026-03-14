@@ -1,3 +1,5 @@
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.System.UserManagement;
@@ -12,7 +14,9 @@ public partial class StakeholderUsers : ComponentBase
     [Inject] private ILogger<StakeholderUsers> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
@@ -94,7 +98,7 @@ public partial class StakeholderUsers : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading stakeholder users data");
-            ShowErrorNotification("Error loading data. Please refresh the page.");
+            ShowErrorAsyncNotification("Error loading data. Please refresh the page.");
         }
     }
 
@@ -113,7 +117,7 @@ public partial class StakeholderUsers : ComponentBase
     {
         if (!IsCreateFormValid)
         {
-            ShowErrorNotification("Please fill in all required fields.");
+            ShowErrorAsyncNotification("Please fill in all required fields.");
             return;
         }
 
@@ -154,19 +158,19 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Stakeholder user '{NewUser.FirstName} {NewUser.LastName}' created successfully.");
+                ShowSuccessAsyncNotification($"Stakeholder user '{NewUser.FirstName} {NewUser.LastName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to create stakeholder user.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to create stakeholder user.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error creating stakeholder user");
-            ShowErrorNotification("Error creating stakeholder user. Please try again.");
+            ShowErrorAsyncNotification("Error creating stakeholder user. Please try again.");
         }
         finally
         {
@@ -219,7 +223,7 @@ public partial class StakeholderUsers : ComponentBase
     {
         if (!IsEditFormValid)
         {
-            ShowErrorNotification("Please fill in all required fields.");
+            ShowErrorAsyncNotification("Please fill in all required fields.");
             return;
         }
 
@@ -230,7 +234,7 @@ public partial class StakeholderUsers : ComponentBase
 
             if (CurrentEditUser == null)
             {
-                ShowErrorNotification("No user selected for update.");
+                ShowErrorAsyncNotification("No user selected for update.");
                 return;
             }
 
@@ -262,19 +266,19 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Stakeholder user '{editUser.FirstName} {editUser.LastName}' updated successfully.");
+                ShowSuccessAsyncNotification($"Stakeholder user '{editUser.FirstName} {editUser.LastName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to update stakeholder user.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to update stakeholder user.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating stakeholder user: {UserId}", editUser.UserId);
-            ShowErrorNotification("Error updating stakeholder user. Please try again.");
+            ShowErrorAsyncNotification("Error updating stakeholder user. Please try again.");
         }
         finally
         {
@@ -338,18 +342,18 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("Stakeholder user deleted successfully.");
+                ShowSuccessAsyncNotification("Stakeholder user deleted successfully.");
                 await LoadDataAsync();
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to delete stakeholder user.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to delete stakeholder user.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting stakeholder user: {UserId}", userId);
-            ShowErrorNotification("Error deleting stakeholder user. Please try again.");
+            ShowErrorAsyncNotification("Error deleting stakeholder user. Please try again.");
         }
     }
 
@@ -390,7 +394,7 @@ public partial class StakeholderUsers : ComponentBase
     private async Task OnPasswordChangedSuccess()
     {
         // Password was changed successfully by the modal
-        ShowSuccessNotification($"Password updated successfully for {PasswordUserDisplayName}.");
+        ShowSuccessAsyncNotification($"Password updated successfully for {PasswordUserDisplayName}.");
     }
 
     // Legacy password methods - kept for compatibility
@@ -402,7 +406,7 @@ public partial class StakeholderUsers : ComponentBase
     private async Task UpdatePassword(string userId, string newPassword)
     {
         // Legacy method - now handled by shared component
-        ShowInfoNotification("Please use the password change modal to update passwords.");
+        ShowInfoAsyncNotification("Please use the password change modal to update passwords.");
     }
 
     #endregion
@@ -442,7 +446,7 @@ public partial class StakeholderUsers : ComponentBase
 
             if (userResult.IsFailure)
             {
-                ShowErrorNotification("User not found.");
+                ShowErrorAsyncNotification("User not found.");
                 return;
             }
 
@@ -456,11 +460,11 @@ public partial class StakeholderUsers : ComponentBase
                 if (roleResult.IsSuccess && roleResult.Value != null)
                 {
                     user.UserRole = roleResult.Value;
-                    ShowSuccessNotification($"Role '{roleResult.Value.Name}' assigned to {displayName} successfully.");
+                    ShowSuccessAsyncNotification($"Role '{roleResult.Value.Name}' assigned to {displayName} successfully.");
                 }
                 else
                 {
-                    ShowErrorNotification("Selected role not found.");
+                    ShowErrorAsyncNotification("Selected role not found.");
                     return;
                 }
             }
@@ -468,7 +472,7 @@ public partial class StakeholderUsers : ComponentBase
             {
                 // Clear role
                 user.UserRole = null;
-                ShowSuccessNotification($"Role removed from {displayName} successfully.");
+                ShowSuccessAsyncNotification($"Role removed from {displayName} successfully.");
             }
             user.UpdatedBy = CurrentUserService?.UserDisplayName;
             var updateCommand = new UpdateSMSStakeholderUserCommand(user);
@@ -480,13 +484,13 @@ public partial class StakeholderUsers : ComponentBase
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to update user role.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to update user role.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error assigning role to user: {UserId}", userId);
-            ShowErrorNotification("Error assigning role. Please try again.");
+            ShowErrorAsyncNotification("Error assigning role. Please try again.");
         }
     }
     private readonly List<StatusOption> IsActiveOptions = StatusOptions.ActiveInactiveOptions;
@@ -510,7 +514,7 @@ public partial class StakeholderUsers : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error opening group management for user: {UserId}", userId);
-            ShowErrorNotification("Error loading user groups. Please try again.");
+            ShowErrorAsyncNotification("Error loading user groups. Please try again.");
         }
     }
 
@@ -571,7 +575,7 @@ public partial class StakeholderUsers : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(GroupManagementUserCode))
         {
-            ShowErrorNotification("Group code and user code are required.");
+            ShowErrorAsyncNotification("Group code and user code are required.");
             return;
         }
 
@@ -583,19 +587,19 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("User removed from group successfully.");
+                ShowSuccessAsyncNotification("User removed from group successfully.");
                 await LoadUserGroups(GroupManagementUserCode);
                 StateHasChanged();
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to remove user from group.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to remove user from group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", GroupManagementUserCode, groupCode);
-            ShowErrorNotification("Error removing user from group. Please try again.");
+            ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
 
@@ -603,7 +607,7 @@ public partial class StakeholderUsers : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(GroupManagementUserCode))
         {
-            ShowErrorNotification("Group code and user code are required.");
+            ShowErrorAsyncNotification("Group code and user code are required.");
             return;
         }
 
@@ -615,19 +619,19 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("User assigned to group successfully.");
+                ShowSuccessAsyncNotification("User assigned to group successfully.");
                 await LoadUserGroups(GroupManagementUserCode);
                 StateHasChanged();
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to assign user to group.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to assign user to group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
-            ShowErrorNotification("Error assigning user to group. Please try again.");
+            ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }
 
@@ -635,7 +639,7 @@ public partial class StakeholderUsers : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(GroupManagementUserCode) || !SelectedGroups.Any(s => s.Value))
         {
-            ShowErrorNotification("User code and at least one group must be selected.");
+            ShowErrorAsyncNotification("User code and at least one group must be selected.");
             return;
         }
 
@@ -670,20 +674,20 @@ public partial class StakeholderUsers : ComponentBase
                 var message = $"Successfully assigned user to {successCount} group(s).";
                 if (failureCount > 0)
                     message += $" {failureCount} assignment(s) failed.";
-                ShowSuccessNotification(message);
+                ShowSuccessAsyncNotification(message);
 
                 await LoadUserGroups(GroupManagementUserCode);
                 StateHasChanged();
             }
             else
             {
-                ShowErrorNotification("Failed to assign user to groups.");
+                ShowErrorAsyncNotification("Failed to assign user to groups.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", GroupManagementUserCode);
-            ShowErrorNotification("Error assigning user to groups. Please try again.");
+            ShowErrorAsyncNotification("Error assigning user to groups. Please try again.");
         }
     }
 
@@ -693,7 +697,7 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task ExportUsers()
     {
-        ShowInfoNotification("Export functionality will be implemented soon.");
+        ShowInfoAsyncNotification("Export functionality will be implemented soon.");
     }
 
     private BadgeStyle GetStakeholderTypeBadgeStyle(string stakeholderType)
@@ -718,19 +722,19 @@ public partial class StakeholderUsers : ComponentBase
 
     #region Notification Methods
 
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message);
+        NotificationHelper.ShowErrorAsync( message);
     }
 
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message);
+        NotificationHelper.ShowSuccessAsync( message);
     }
 
-    private void ShowInfoNotification(string message)
+    private void ShowInfoAsyncNotification(string message)
     {
-        NotificationHelper.ShowInfo(NotificationService, message);
+        NotificationHelper.ShowInfoAsync( message);
     }
 
     #endregion

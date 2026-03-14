@@ -1,10 +1,12 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class CompleteInterviewDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<CompleteInterviewDialog> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     #endregion
@@ -51,7 +53,7 @@ public partial class CompleteInterviewDialog : ComponentBase
         {
             if (string.IsNullOrWhiteSpace(model.InvestigatorNotes))
             {
-                ShowErrorNotification("Investigator notes are required to complete the interview");
+                await NotificationHelper.ShowErrorAsync("Investigator notes are required to complete the interview");
                 return;
             }
 
@@ -68,7 +70,7 @@ public partial class CompleteInterviewDialog : ComponentBase
 
             if (completeResult.IsFailure)
             {
-                ShowErrorNotification($"Failed to complete interview: {completeResult.Error?.Message}");
+                await NotificationHelper.ShowErrorAsync($"Failed to complete interview: {completeResult.Error?.Message}");
                 return;
             }
 
@@ -86,18 +88,18 @@ public partial class CompleteInterviewDialog : ComponentBase
             if (result.IsSuccess)
             {
                 Logger.LogInformation("Interview completed successfully: {Code}", Interview.Code);
-                ShowSuccessNotification("Interview completed successfully");
+                await NotificationHelper.ShowSuccessAsync("Interview completed successfully");
                 DialogService.Close(true);
             }
             else
             {
-                ShowErrorNotification($"Failed to save completed interview: {result.Error?.Message}");
+                await NotificationHelper.ShowErrorAsync($"Failed to save completed interview: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error completing interview");
-            ShowErrorNotification("Error completing interview");
+            await NotificationHelper.ShowErrorAsync("Error completing interview");
         }
         finally
         {
@@ -118,33 +120,12 @@ public partial class CompleteInterviewDialog : ComponentBase
 
         return string.Join("\n", notes);
     }
-
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
-    }
     #endregion
 
     #region Models
     public class CompleteInterviewModel
     {
+        public int Id { get; set; }
         public string? PersonInterviewedNotes { get; set; }
         public string? InvestigatorNotes { get; set; }
         public string? KeyFindings { get; set; }

@@ -3,9 +3,11 @@
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
-using SMS3.Extensions;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -21,7 +23,8 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private ILogger<ConfidentialReporting> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     #endregion
@@ -256,7 +259,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
             if (!IsFormValidForSubmission())
             {
-                NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before submitting.", 4000);
+                await NotificationHelper.ShowWarningAsync("Please complete all required fields before submitting.", 4000);
                 return;
             }
 
@@ -266,7 +269,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         {
             Logger.LogError(ex, "Error during confidential form submission");
 
-            NotificationHelper.ShowError(NotificationService, "An error occurred while submitting your report. Please try again.", 5000);
+            await NotificationHelper.ShowErrorAsync("An error occurred while submitting your report. Please try again.", 5000);
         }
     }
 
@@ -344,7 +347,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             // Show notification about results
             if (successfullyProcessedFiles.Any())
             {
-                NotificationHelper.ShowSuccess(NotificationService, $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 3000);
+                await NotificationHelper.ShowSuccessAsync($"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 3000);
             }
         }
         else
@@ -430,15 +433,15 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             // Show notification about results
             if (successfullyProcessedFiles.Any() && failedFiles.Any())
             {
-                NotificationHelper.ShowWarning(NotificationService, $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 4000);
+                await NotificationHelper.ShowWarningAsync( $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 4000);
             }
             else if (successfullyProcessedFiles.Any())
             {
-                NotificationHelper.ShowSuccess(NotificationService, $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 3000);
+                await NotificationHelper.ShowSuccessAsync( $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 3000);
             }
             else if (failedFiles.Any())
             {
-                NotificationHelper.ShowError(NotificationService, $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
+                NotificationHelper.ShowErrorAsync( $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
             }
 
             Logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
@@ -498,11 +501,11 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             {
                 Logger.LogError(ex, "Error initializing map in confidential reporting OpenMapSelector");
 
-                NotificationHelper.ShowWarning(NotificationService, "Could not initialize map. Please try refreshing the page.", 5000);
+                NotificationHelper.ShowWarningAsync( "Could not initialize map. Please try refreshing the page.", 5000);
             }
         }
 
-        NotificationHelper.ShowInfo(NotificationService, "Click on the map to select the incident location.", 3000);
+        NotificationHelper.ShowInfoAsync( "Click on the map to select the incident location.", 3000);
     }
 
     /// <summary>
@@ -521,7 +524,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         if (!HasValidCoordinates)
         {
-            NotificationHelper.ShowWarning(NotificationService, "Please click on the map to select a location first.", 3000);
+            NotificationHelper.ShowWarningAsync( "Please click on the map to select a location first.", 3000);
             return;
         }
 
@@ -538,7 +541,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         ShowMapModal = false;
         StateHasChanged();
 
-        NotificationHelper.ShowSuccess(NotificationService, $"Location selected: {GeoLocationDisplay}", 3000);
+        NotificationHelper.ShowSuccessAsync( $"Location selected: {GeoLocationDisplay}", 3000);
     }
 
     /// <summary>
@@ -566,7 +569,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
         StateHasChanged();
 
-        NotificationHelper.ShowInfo(NotificationService, "Map selection has been cleared.", 2000);
+        NotificationHelper.ShowInfoAsync( "Map selection has been cleared.", 2000);
     }
 
     /// <summary>
@@ -595,7 +598,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         if (!IsFormValidForPreview)
         {
-            NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before previewing.", 3000);
+            NotificationHelper.ShowWarningAsync( "Please complete all required fields before previewing.", 3000);
             return;
         }
 
@@ -619,7 +622,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     {
         if (!IsFormValidForSubmission())
         {
-            NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before submitting.", 4000);
+            NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 4000);
             return;
         }
 
@@ -669,7 +672,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 ShowSubmissionConfirmation = true;
                 StateHasChanged();
 
-                NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before submitting.", 4000);
+                NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 4000);
                 return;
             }
 
@@ -772,7 +775,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             Logger.LogInformation("? Confidential report submission completed - Report: {ReportCode}, Hazard: {HazardCode}, Tracking: {TrackingCode}",
                 createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
-            NotificationHelper.ShowSuccess(NotificationService, $"Your confidential report has been securely submitted with tracking ID: {createdTracking.TrackingCode}", 5000);
+            NotificationHelper.ShowSuccessAsync( $"Your confidential report has been securely submitted with tracking ID: {createdTracking.TrackingCode}", 5000);
         }
         catch (Exception ex)
         {
@@ -780,7 +783,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
 
             ShowSubmissionConfirmation = false;
 
-            NotificationHelper.ShowError(NotificationService, "An error occurred while submitting your confidential report. Please try again.", 5000);
+            NotificationHelper.ShowErrorAsync( "An error occurred while submitting your confidential report. Please try again.", 5000);
         }
         finally
         {
@@ -1087,7 +1090,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
                 // Could show regulatory notification if required
                 if (RequiresRegulatoryReporting(hazardTypeValue))
                 {
-                    NotificationHelper.ShowInfo(NotificationService, $"This hazard type may require regulatory reporting to appropriate authorities.", 5000);
+                    NotificationHelper.ShowInfoAsync( $"This hazard type may require regulatory reporting to appropriate authorities.", 5000);
                 }
             }
         }
@@ -1201,7 +1204,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         ShowSubmissionConfirmation = false;
         StateHasChanged();
 
-        NotificationHelper.ShowInfo(NotificationService, "You can continue editing your confidential report.", 3000);
+        NotificationHelper.ShowInfoAsync( "You can continue editing your confidential report.", 3000);
     }
 
     #endregion
@@ -1237,7 +1240,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         {
             if (string.IsNullOrEmpty(GeneratedTrackingId) || string.IsNullOrEmpty(GeneratedReportId))
             {
-                NotificationHelper.ShowWarning(NotificationService, "No report information available to print.", 3000);
+                NotificationHelper.ShowWarningAsync( "No report information available to print.", 3000);
                 return;
             }
 
@@ -1258,7 +1261,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         {
             Logger?.LogError(ex, "Error printing confirmation");
 
-            NotificationHelper.ShowError(NotificationService, "Failed to print confirmation. Please try again or save the page.", 5000);
+            NotificationHelper.ShowErrorAsync("Failed to print confirmation. Please try again or save the page.", 5000);
         }
     }
 

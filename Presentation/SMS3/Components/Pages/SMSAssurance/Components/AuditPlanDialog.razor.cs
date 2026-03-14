@@ -1,5 +1,8 @@
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
+
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSAssurance.Components;
@@ -15,7 +18,8 @@ public partial class AuditPlanDialog : ComponentBase
 
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AuditPlanDialog> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    
     [Inject] private DialogService DialogService { get; set; } = default!;
     #endregion
 
@@ -280,13 +284,13 @@ public partial class AuditPlanDialog : ComponentBase
                 if (result.IsSuccess)
                 {
                     Logger.LogInformation("Audit plan created successfully: {Code}", Code);
-                    ShowSuccessNotification("Audit plan created successfully");
+                    ShowSuccessAsyncNotification("Audit plan created successfully");
                     DialogService.Close(true);
                 }
                 else
                 {
                     Logger.LogError("Failed to create audit plan: {Error}", result.Error?.Message);
-                    ShowErrorNotification($"Failed to create audit plan: {result.Error?.Message}");
+                    ShowErrorAsyncNotification($"Failed to create audit plan: {result.Error?.Message}");
                 }
             }
             else
@@ -297,20 +301,20 @@ public partial class AuditPlanDialog : ComponentBase
                 if (result.IsSuccess)
                 {
                     Logger.LogInformation("Audit plan updated successfully: {Code}", Code);
-                    ShowSuccessNotification("Audit plan updated successfully");
+                    ShowSuccessAsyncNotification("Audit plan updated successfully");
                     DialogService.Close(true);
                 }
                 else
                 {
                     Logger.LogError("Failed to update audit plan: {Error}", result.Error?.Message);
-                    ShowErrorNotification($"Failed to update audit plan: {result.Error?.Message}");
+                    ShowErrorAsyncNotification($"Failed to update audit plan: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error saving audit plan");
-            ShowErrorNotification("Error saving audit plan");
+            ShowErrorAsyncNotification("Error saving audit plan");
         }
         finally
         {
@@ -476,14 +480,14 @@ public partial class AuditPlanDialog : ComponentBase
     #endregion
 
     #region Notification Methods
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message);
+        NotificationHelper.ShowSuccessAsync( message);
     }
 
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message);
+        NotificationHelper.ShowErrorAsync( message);
     }
     #endregion
 }

@@ -16,7 +16,7 @@ public partial class AuditFindingDialog : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AuditFindingDialog> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     #endregion
 
@@ -84,7 +84,7 @@ public partial class AuditFindingDialog : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error submitting finding");
-            ShowErrorNotification("Error saving finding");
+            await NotificationHelper.ShowErrorAsync("Error saving finding");
         }
         finally
         {
@@ -102,7 +102,7 @@ public partial class AuditFindingDialog : ComponentBase
     #region CRUD Operations
     private async Task CreateFinding()
     {
-        if (!ValidateForm()) return;
+        if (!await ValidateForm()) return;
 
         try
         {
@@ -122,24 +122,24 @@ public partial class AuditFindingDialog : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("Finding created successfully");
+                await NotificationHelper.ShowSuccessAsync("Finding created successfully");
                 DialogService.Close(result.Value);
             }
             else
             {
-                ShowErrorNotification($"Failed to create finding: {result.Error?.Message}");
+                await NotificationHelper.ShowErrorAsync($"Failed to create finding: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error creating finding");
-            ShowErrorNotification("Error creating finding");
+            await NotificationHelper.ShowErrorAsync("Error creating finding");
         }
     }
 
     private async Task UpdateFinding()
     {
-        if (!ValidateForm()) return;
+        if (!await ValidateForm()) return;
 
         try
         {
@@ -160,57 +160,45 @@ public partial class AuditFindingDialog : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("Finding updated successfully");
+                await NotificationHelper.ShowSuccessAsync("Finding updated successfully");
                 DialogService.Close(result.Value);
             }
             else
             {
-                ShowErrorNotification($"Failed to update finding: {result.Error?.Message}");
+                await NotificationHelper.ShowErrorAsync($"Failed to update finding: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating finding");
-            ShowErrorNotification("Error updating finding");
+            await NotificationHelper.ShowErrorAsync("Error updating finding");
         }
     }
     #endregion
 
     #region Validation
-    private bool ValidateForm()
+    private async Task<bool> ValidateForm()
     {
         if (string.IsNullOrWhiteSpace(ViewModel.Title))
         {
-            ShowErrorNotification("Finding title is required");
+            await NotificationHelper.ShowErrorAsync("Finding title is required");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(ViewModel.Description))
         {
-            ShowErrorNotification("Finding description is required");
+            await NotificationHelper.ShowErrorAsync("Finding description is required");
             return false;
         }
 
         if (ViewModel.TargetResolutionDate.HasValue &&
             ViewModel.TargetResolutionDate.Value < ViewModel.DiscoveredDate)
         {
-            ShowErrorNotification("Target resolution date cannot be before discovered date");
+            await NotificationHelper.ShowErrorAsync("Target resolution date cannot be before discovered date");
             return false;
         }
 
         return true;
-    }
-    #endregion
-
-    #region Notification Methods
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationHelper.ShowSuccess(NotificationService, message);
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message);
     }
     #endregion
 }

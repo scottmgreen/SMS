@@ -7,7 +7,8 @@ using Radzen.Blazor;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
-using SMS3.Extensions;
+using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -22,7 +23,7 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ConfidentialHazardReportSearchResult> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     #endregion
 
     #region Parameters
@@ -180,7 +181,7 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading report details for tracking code: {TrackingCode}", TrackingCode);
-            ShowErrorNotification("Error loading report details. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Error loading report details. Please try again.");
         }
         finally
         {
@@ -545,24 +546,6 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     {
         // ?? SECURE NAVIGATION - Navigate back to confidential search with encrypted URL
         Navigation.NavigateToSecure("/ConfidentialReporting/TrackStatus");
-    }
-
-    #endregion
-
-    #region Notification Methods
-
-    /// <summary>
-    /// Show error notification
-    /// </summary>
-    private void ShowErrorNotification(String message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
     }
 
     #endregion

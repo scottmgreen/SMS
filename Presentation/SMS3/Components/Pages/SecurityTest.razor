@@ -1,0 +1,162 @@
+@page "/security-test"
+@using Microsoft.AspNetCore.Components
+@using Microsoft.JSInterop
+
+<PageTitle>Security Headers Test - SMS3</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">?? Security Headers Test Page</h4>
+                    <small>This page helps verify that security headers are being applied correctly</small>
+                </div>
+                <div class="card-body">
+                    
+                    <div class="alert alert-info">
+                        <h5>?? How to Test Security Headers:</h5>
+                        <ol>
+                            <li><strong>Browser Developer Tools:</strong> Open F12 ? Network tab ? Reload page ? Check Response Headers</li>
+                            <li><strong>cURL Command:</strong> <code>curl -I https://localhost:7178/security-test</code></li>
+                            <li><strong>Online Tools:</strong> Use <a href="https://securityheaders.com" target="_blank">SecurityHeaders.com</a></li>
+                        </ol>
+                        
+                        <div class="alert alert-success mt-2">
+                            <strong>? Fixed Issues:</strong><br/>
+                            • CDN resources (Bootstrap, Font Awesome) now allowed<br/>
+                            • Browser Link (development tool) now permitted in dev mode<br/>
+                            • Invalid CSP directives removed<br/>
+                            • Permissions-Policy uses valid feature names<br/>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>??? Expected Security Headers:</h5>
+                            <ul class="list-group">
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><strong>X-Frame-Options:</strong> DENY</span>
+                                    <span class="badge bg-success">Clickjacking Protection</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><strong>X-Content-Type-Options:</strong> nosniff</span>
+                                    <span class="badge bg-success">MIME Sniffing Protection</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><strong>X-XSS-Protection:</strong> 1; mode=block</span>
+                                    <span class="badge bg-success">XSS Protection</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><strong>Referrer-Policy:</strong> strict-origin-when-cross-origin</span>
+                                    <span class="badge bg-info">Privacy Protection</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><strong>Content-Security-Policy:</strong> Blazor-optimized CSP</span>
+                                    <span class="badge bg-warning">Content Injection Protection</span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center">
+                                    <span><strong>Permissions-Policy:</strong> Feature restrictions</span>
+                                    <span class="badge bg-secondary">API Access Control</span>
+                                </li>
+                                @if (IsHttps)
+                                {
+                                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                                        <span><strong>Strict-Transport-Security:</strong> max-age=31536000</span>
+                                        <span class="badge bg-success">HTTPS Enforcement</span>
+                                    </li>
+                                }
+                            </ul>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <h5>?? Browser Header Check:</h5>
+                            <div class="card">
+                                <div class="card-body">
+                                    <button class="btn btn-primary mb-3" @onclick="CheckHeaders">
+                                        ?? Check Current Headers
+                                    </button>
+                                    
+                                    @if (!string.IsNullOrEmpty(HeaderCheckResult))
+                                    {
+                                        <div class="alert alert-secondary">
+                                            <small>
+                                                <strong>Current Page Info:</strong><br/>
+                                                Protocol: @Protocol<br/>
+                                                Host: @Host<br/>
+                                                Time: @DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                                            </small>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+
+                            <h5 class="mt-4">?? Test Security Features:</h5>
+                            <div class="list-group">
+                                <div class="list-group-item">
+                                    <strong>Frame Embedding Test:</strong><br/>
+                                    <small>Try embedding this page in an iframe - should be blocked</small>
+                                </div>
+                                <div class="list-group-item">
+                                    <strong>Content Type Test:</strong><br/>
+                                    <small>Browser should not sniff MIME types</small>
+                                </div>
+                                <div class="list-group-item">
+                                    <strong>Script Injection Test:</strong><br/>
+                                    <small>CSP should prevent unauthorized script execution</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4">
+                        <div class="alert alert-warning">
+                            <h5>?? Security Notes:</h5>
+                            <ul class="mb-0">
+                                <li><strong>CSP allows 'unsafe-inline':</strong> Required for Blazor Server to function properly</li>
+                                <li><strong>WebSocket connections:</strong> 'ws:' and 'wss:' allowed for SignalR</li>
+                                <li><strong>Development mode:</strong> Additional sources may be allowed for localhost</li>
+                                <li><strong>Production deployment:</strong> Consider stricter policies for production environment</li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    
+    private string HeaderCheckResult = "";
+    private string Protocol => Navigation.ToAbsoluteUri("/").Scheme;
+    private string Host => Navigation.ToAbsoluteUri("/").Host;
+    private bool IsHttps => Protocol == "https";
+
+    private async Task CheckHeaders()
+    {
+        try
+        {
+            HeaderCheckResult = $"Checked at {DateTime.Now:HH:mm:ss}";
+            StateHasChanged();
+            
+            // Show instructions for manual header checking
+            await JSRuntime.InvokeVoidAsync("alert", 
+                "To check headers:\n\n" +
+                "1. Open Developer Tools (F12)\n" +
+                "2. Go to Network tab\n" +
+                "3. Refresh this page\n" +
+                "4. Click on the page request\n" +
+                "5. Check Response Headers section\n\n" +
+                "You should see the security headers listed on the left.");
+        }
+        catch (Exception ex)
+        {
+            HeaderCheckResult = $"Error: {ex.Message}";
+            StateHasChanged();
+        }
+    }
+}

@@ -1,5 +1,7 @@
 using Microsoft.JSInterop;
 
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
@@ -8,7 +10,9 @@ public partial class EvidenceFilesManager : ComponentBase
 {
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<EvidenceFilesManager> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
@@ -113,7 +117,7 @@ public partial class EvidenceFilesManager : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "? Exception loading evidence files for hazard: {HazardCode}", HazardCode);
-            ShowErrorNotification("Error loading evidence files");
+            await NotificationHelper.ShowErrorAsync("Error loading evidence files");
             EvidenceFiles = new List<HazardFile>();
         }
         finally
@@ -152,7 +156,7 @@ public partial class EvidenceFilesManager : ComponentBase
         if (result == true)
         {
             await RefreshFiles();
-            ShowSuccessNotification("Evidence file uploaded successfully");
+            await NotificationHelper.ShowSuccessAsync("Evidence file uploaded successfully");
         }
     }
 
@@ -169,7 +173,7 @@ public partial class EvidenceFilesManager : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error opening file viewer for: {FileName}", file.FileName);
-            ShowErrorNotification($"Error opening file: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"Error opening file: {ex.Message}");
         }
     }
 
@@ -186,7 +190,7 @@ public partial class EvidenceFilesManager : ComponentBase
         {
             if (file.FileData == null || file.FileData.Length == 0)
             {
-                ShowErrorNotification("File data is not available for download");
+                await NotificationHelper.ShowErrorAsync("File data is not available for download");
                 return;
             }
 
@@ -198,7 +202,7 @@ public partial class EvidenceFilesManager : ComponentBase
 
             await JSRuntime.InvokeVoidAsync("downloadFile", fileName, mimeType, base64);
 
-            ShowInfoNotification($"Download started for '{fileName}'");
+            await NotificationHelper.ShowInfoAsync($"Download started for '{fileName}'");
 
             Logger.LogInformation("Download initiated for file: {FileName} (Code: {Code})",
                 file.FileName, file.Code);
@@ -206,7 +210,7 @@ public partial class EvidenceFilesManager : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error downloading file: {Code}", file.Code);
-            ShowErrorNotification("Error downloading file");
+            await NotificationHelper.ShowErrorAsync("Error downloading file");
         }
     }
 
@@ -231,18 +235,18 @@ public partial class EvidenceFilesManager : ComponentBase
                 if (result.IsSuccess)
                 {
                     await RefreshFiles();
-                    ShowSuccessNotification($"File '{file.FileName}' removed successfully");
+                    await NotificationHelper.ShowSuccessAsync($"File '{file.FileName}' removed successfully");
                 }
                 else
                 {
-                    ShowErrorNotification($"Failed to remove file: {result.Error?.Message}");
+                    await NotificationHelper.ShowErrorAsync($"Failed to remove file: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error removing file: {Code}", file.Code);
-            ShowErrorNotification("Error removing file");
+            await NotificationHelper.ShowErrorAsync("Error removing file");
         }
     }
     #endregion
@@ -345,23 +349,6 @@ public partial class EvidenceFilesManager : ComponentBase
             ".js" => "text/javascript",
             _ => "application/octet-stream"
         };
-    }
-    #endregion
-
-    #region Notifications
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationHelper.ShowSuccess(NotificationService, message);
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message);
-    }
-
-    private void ShowInfoNotification(string message)
-    {
-        NotificationHelper.ShowInfo(NotificationService, message);
     }
     #endregion
 }

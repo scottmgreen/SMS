@@ -1,18 +1,21 @@
 ﻿@using Microsoft.AspNetCore.Components.Authorization
 @using Microsoft.AspNetCore.Components.Web
-@using SMS_Application.Interfaces
-@using SMS_Domain.Enums
-@using SMS_Domain.Entities
-@using SMS3.Components.Layout
-@using SMS3.Components.Shared
-@using SMS3.Extensions
 @using Radzen
 @using Radzen.Blazor
+@using SMS3.Components.Layout
+@using SMS3.Components.Shared
+@using SMS3.Configuration.Extensions
+@using SMS3.Security
+
+@using SMS_Application.Interfaces
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
 @inject IJSRuntime JSRuntime
 @inject ILogger<NavMenu> Logger
 @inject NavigationManager Navigation
 @inject Radzen.DialogService DialogService
 @inject IWebHostEnvironment Environment
+@inject ISecureRoutingService SecureRoutingService
 
 <!-- SMS Navigation with FULL Original Menu Structure -->
 <nav class="navbar navbar-expand-lg sms-nav">
@@ -186,26 +189,24 @@
             }
             else
             {
-                <!-- RIGHT SIDE RADZEN MENU -->
-                <div style="display: flex; gap: 1rem; align-items: center;">
-                    <!-- Confidential Reporting Menu -->
-                    <div class="nav-item">
-                        <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                            <RadzenMenuItem Text="Submit Report" Value='"/SMSRiskManagement/ConfidentialReporting"' Icon="security"></RadzenMenuItem>
-                        </RadzenMenu>
+                <!-- Only show menu items if NOT on PDX or Login pages -->
+                @if (!IsOnRestrictedPage)
+                {
+                    <!-- RIGHT SIDE RADZEN MENU -->
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <!-- Confidential Reporting Menu -->
+                        <div class="nav-item">
+                            <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                                <RadzenMenuItem Text="Submit Report" Value='"/SMSRiskManagement/ConfidentialReporting"' Icon="security"></RadzenMenuItem>
+                            </RadzenMenu>
+                        </div>
+                        <div class="nav-item">
+                            <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                                <RadzenMenuItem Text="Track Report Status" Value='"/ConfidentialReporting/TrackStatus"' Icon="search"></RadzenMenuItem>
+                            </RadzenMenu>
+                        </div>
                     </div>
-                    <div class="nav-item">
-                        <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                            <RadzenMenuItem Text="Track Report Status" Value='"/ConfidentialReporting/TrackStatus"' Icon="search"></RadzenMenuItem>
-                        </RadzenMenu>
-                    </div>
-                    <!-- Login Link -->
-                    <div class="nav-item">
-                        <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                            <RadzenMenuItem Text="Login" Icon="login" Value='"/login"' class="sms-menu-item"></RadzenMenuItem>
-                        </RadzenMenu>
-                    </div>
-                </div>
+                }
             }
         
         </div>
@@ -226,13 +227,34 @@
     private string BrandCssClass => Environment.IsDevelopment() ? "development" : "";
     private string EnvironmentSuffix => Environment.IsDevelopment() ? "[Development]" : "";
 
-    protected override async Task OnInitializedAsync()
+    // URL-based login visibility - show login only on specific paths or encrypted login
+    private bool ShouldShowLoginToAnonymous => Navigation.Uri.Contains("/pdx") || 
+                                              Navigation.Uri.Contains("/admin") ||
+                                              Navigation.Uri.Contains("/login") ||
+                                              IsObfuscatedLogin();
+
+    /// <summary>
+    /// Check if current URL is an obfuscated login page
+    /// </summary>
+    private bool IsObfuscatedLogin()
     {
+        try
+        {
+            var currentPath = Navigation.ToBaseRelativePath(Navigation.Uri);
+            if (currentPath.StartsWith("s/"))
+            {
+                var encryptedPart = currentPath.Substring(2);
+                var decrypted = SecureRoutingService.DecryptRouteParameter(encryptedPart);
+                return decrypted.Contains("/login");
+            }
+        }
+        catch { /* Ignore decrypt errors */ }
+        
+        return false;
     }
 
-    protected override async Task OnParametersSetAsync()
+    protected override async Task OnInitializedAsync()
     {
-        // Parameters updated
     }
 
     
@@ -305,6 +327,16 @@
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
     }
-}
 
-<!-- All common styles moved to shared-layouts.css -->
+    // Hide all menu items on PDX and Login pages
+    private bool IsOnRestrictedPage => Navigation.Uri.Contains("/pdx") || 
+                                      Navigation.Uri.Contains("/login") ||
+                                      IsObfuscatedLogin();
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Parameters updated
+    }
+
+    
+}

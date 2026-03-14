@@ -1,5 +1,9 @@
 ﻿using Microsoft.JSInterop;
+
 using SMS_Domain.Errors;
+
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
 
@@ -16,7 +20,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<HazardReporting> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     #endregion
@@ -272,7 +277,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             Logger.LogError(ex, "Error checking for edit mode");
             IsEditMode = false;
-            NotificationHelper.ShowError(NotificationService, "Unable to determine edit mode. Defaulting to create mode.", 5000);
+            NotificationHelper.ShowErrorAsync( "Unable to determine edit mode. Defaulting to create mode.", 5000);
             
         }
     }
@@ -414,13 +419,13 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 DepartmentOptions.Clear();
                 SelectedDepartment =null;
             }
-            NotificationHelper.ShowInfo(NotificationService, $"Loaded report {reportCode} for editing.", 5000);
+            NotificationHelper.ShowInfoAsync( $"Loaded report {reportCode} for editing.", 5000);
             
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading report for editing: {ReportCode}", reportCode);
-            NotificationHelper.ShowError(NotificationService, "Failed to load report for editing. Redirecting to Reports page.", 5000);
+            NotificationHelper.ShowErrorAsync( "Failed to load report for editing. Redirecting to Reports page.", 5000);
             
             // Redirect back to reports on failure
             Navigation.NavigateTo("/SMSRiskManagement/Reports");
@@ -501,7 +506,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
             if (!IsFormValidForSubmission())
             {
-                NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before submitting.", 5000);
+                NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 5000);
                 return;
             }
 
@@ -510,7 +515,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error during form submission");
-            NotificationHelper.ShowError(NotificationService, "An error occurred while submitting your report. Please try again.", 5000);
+            NotificationHelper.ShowErrorAsync( "An error occurred while submitting your report. Please try again.", 5000);
             
         }
     }
@@ -591,14 +596,14 @@ public partial class HazardReporting : ComponentBase, IDisposable
             // Show notification about results
             if (successfullyProcessedFiles.Any() && failedFiles.Any())
             {
-                NotificationHelper.ShowWarning(NotificationService, $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 5000);
+                NotificationHelper.ShowWarningAsync( $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 5000);
             } else if (successfullyProcessedFiles.Any())
             {
-                NotificationHelper.ShowSuccess(NotificationService, $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 5000);
+                NotificationHelper.ShowSuccessAsync( $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 5000);
             }
             else if (failedFiles.Any())
             {
-                NotificationHelper.ShowError(NotificationService, $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
+                NotificationHelper.ShowErrorAsync( $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
             }
 
             Logger.LogInformation("📁 File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
@@ -656,10 +661,10 @@ public partial class HazardReporting : ComponentBase, IDisposable
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error initializing map in OpenMapSelector");
-                NotificationHelper.ShowWarning(NotificationService, "Could not initialize map. Please try refreshing the page.", 5000);
+                NotificationHelper.ShowWarningAsync( "Could not initialize map. Please try refreshing the page.", 5000);
             }
         }
-        NotificationHelper.ShowInfo(NotificationService, "Click on the map to select the hazard location.", 3000);
+        NotificationHelper.ShowInfoAsync( "Click on the map to select the hazard location.", 3000);
     }
 
     /// <summary>
@@ -680,7 +685,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         if (!HasValidCoordinates)
         {
 
-            NotificationHelper.ShowWarning(NotificationService, "Please click on the map to select a location first.", 5000);
+            NotificationHelper.ShowWarningAsync( "Please click on the map to select a location first.", 5000);
             return;
         }
 
@@ -700,7 +705,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         ShowMapModal = false;
         StateHasChanged();
 
-        NotificationHelper.ShowSuccess(NotificationService, $"Location selected: {GeoLocationDisplay}", 5000);
+        NotificationHelper.ShowSuccessAsync( $"Location selected: {GeoLocationDisplay}", 5000);
         
     }
 
@@ -728,7 +733,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         StateHasChanged();
-        NotificationHelper.ShowInfo(NotificationService, "Map selection has been cleared.", 5000);
+        NotificationHelper.ShowInfoAsync( "Map selection has been cleared.", 5000);
         
     }
 
@@ -764,7 +769,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     {
         if (!IsFormValidForSubmission())
         {
-            NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before submitting.", 5000);
+            NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 5000);
             return;
         }
 
@@ -788,7 +793,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     {
         ShowSubmissionConfirmation = false;
         StateHasChanged(); // Force UI update to show buttons again
-        NotificationHelper.ShowInfo(NotificationService, "You can continue editing your report.", 5000);
+        NotificationHelper.ShowInfoAsync( "You can continue editing your report.", 5000);
     }
 
     /// <summary>
@@ -869,7 +874,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             if (string.IsNullOrEmpty(GeneratedTrackingId) || string.IsNullOrEmpty(GeneratedReportId))
             {
-                NotificationHelper.ShowWarning(NotificationService, "No report information available to print.", 5000);
+                NotificationHelper.ShowWarningAsync( "No report information available to print.", 5000);
                 return;
             }
 
@@ -890,7 +895,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             Logger?.LogError(ex, "Error printing confirmation");
 
-            NotificationHelper.ShowError(NotificationService, "Failed to print confirmation. Please try again or save the page.", 5000);
+            NotificationHelper.ShowErrorAsync( "Failed to print confirmation. Please try again or save the page.", 5000);
         }
     }
 
@@ -912,7 +917,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             {
                 ShowSubmissionConfirmation = true;
                 StateHasChanged();
-                NotificationHelper.ShowWarning(NotificationService, "Please complete all required fields before submitting.", 5000);
+                NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 5000);
                 return;
             }
 
@@ -946,7 +951,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 IsEditMode ? "EDIT" : "CREATE");
 
             ShowSubmissionConfirmation = false;
-            NotificationHelper.ShowError(NotificationService, $"An error occurred while {(IsEditMode ? "updating" : "saving")} your report. Please try again.", 5000);
+            NotificationHelper.ShowErrorAsync( $"An error occurred while {(IsEditMode ? "updating" : "saving")} your report. Please try again.", 5000);
             
         }
         finally
@@ -1032,7 +1037,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         Logger.LogInformation("✅ EDIT mode completed - Report: {ReportCode}, Hazard: {HazardCode}",
             updatedHazard.ReportCode, updatedHazard.Code);
 
-        NotificationHelper.ShowSuccess(NotificationService, $"Report {updatedHazard.ReportCode} and hazard {updatedHazard.Code} have been updated.", 5000);
+        NotificationHelper.ShowSuccessAsync( $"Report {updatedHazard.ReportCode} and hazard {updatedHazard.Code} have been updated.", 5000);
 
         
     }
@@ -1131,7 +1136,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
         Logger.LogInformation("✅ CREATE mode completed - Report: {ReportCode}, Hazard: {HazardCode} Tracking: { TrackingCode} ", createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
-        NotificationHelper.ShowSuccess(NotificationService, $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}.", 5000);
+        NotificationHelper.ShowSuccessAsync( $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}.", 5000);
 
     }
 
@@ -1389,7 +1394,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 // Could show regulatory warning if required
                 if (hazardType.RequiresRegulatoryReporting)
                 {
-                    NotificationHelper.ShowInfo(NotificationService, $"This hazard type ({hazardType.Name}) requires regulatory reporting to appropriate authorities.", 5000);
+                    NotificationHelper.ShowInfoAsync( $"This hazard type ({hazardType.Name}) requires regulatory reporting to appropriate authorities.", 5000);
                 }
             }
         }
@@ -1608,7 +1613,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             InitializeFormDefaults();
             StateHasChanged();
 
-            NotificationHelper.ShowInfo(NotificationService, "All form data has been cleared.", 5000);
+            NotificationHelper.ShowInfoAsync( "All form data has been cleared.", 5000);
 
         }
     }

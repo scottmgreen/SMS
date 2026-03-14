@@ -1,11 +1,17 @@
+using System.Linq.Expressions;
+
+using Radzen;
+
+using SMS_Application.Messaging.Queries;
+
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
-using SMS_Application.Messaging.Queries;
-using SMS3.Components.Shared.UIHelpers;
-using SMS3.Components.Shared;
 using SMS_Domain.Errors;
-using System.Linq.Expressions;
-using Radzen;
+
+using SMS_Shared.Configuration;
+
+using SMS3.Components.Shared;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -20,7 +26,8 @@ public partial class HazardListing : ComponentBase
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<HazardListing> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
@@ -62,19 +69,19 @@ public partial class HazardListing : ComponentBase
                 totalCount = allHazards.Count();
                 Logger.LogInformation("Loaded {Count} hazards for listing", totalCount);
 
-                ShowSuccessNotification($"Successfully loaded {totalCount} hazards");
+                ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazards");
                
             }
             else
             {
-                ShowErrorNotification("Failed to load hazards");
+                ShowErrorAsyncNotification("Failed to load hazards");
                 Logger.LogError("Failed to load hazards: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading hazards");
-            ShowErrorNotification("Error loading hazards");
+            ShowErrorAsyncNotification("Error loading hazards");
         }
         finally
         {
@@ -142,7 +149,7 @@ public partial class HazardListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in LoadData");
-            ShowErrorNotification("Error loading data");
+            ShowErrorAsyncNotification("Error loading data");
         }
         finally
         {
@@ -342,17 +349,17 @@ public partial class HazardListing : ComponentBase
     /// <summary>
     /// Shows error notification to user
     /// </summary>
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message, 7000);
+        NotificationHelper.ShowErrorAsync( message, 7000);
     }
 
     /// <summary>
     /// Shows success notification to user
     /// </summary>
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message, 5000);
+        NotificationHelper.ShowSuccessAsync( message, 5000);
     }
     #endregion
 
@@ -372,13 +379,13 @@ public partial class HazardListing : ComponentBase
             StateHasChanged();
 
             // TODO: Implement hazard details modal when ready
-            ShowSuccessNotification($"View details for hazard {hazard.Code} - Feature coming soon!");
+            ShowSuccessAsyncNotification($"View details for hazard {hazard.Code} - Feature coming soon!");
             
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading hazard details for {HazardCode}", hazard.Code);
-            ShowErrorNotification("Failed to load hazard details");
+            ShowErrorAsyncNotification("Failed to load hazard details");
         }
         finally
         {
@@ -409,14 +416,14 @@ public partial class HazardListing : ComponentBase
             if (confirmed == true)
             {
                 // TODO: Implement navigation to hazard edit form
-                ShowSuccessNotification($"Edit hazard {hazard.Code} - Navigation coming soon!");
+                ShowSuccessAsyncNotification($"Edit hazard {hazard.Code} - Navigation coming soon!");
                 Logger.LogInformation("Edit confirmed for hazard: {HazardCode}", hazard.Code);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error navigating to edit hazard {HazardCode}", hazard.Code);
-            ShowErrorNotification("Failed to navigate to edit form");
+            ShowErrorAsyncNotification("Failed to navigate to edit form");
         }
     }
 
@@ -451,14 +458,14 @@ public partial class HazardListing : ComponentBase
             if (confirmed == true)
             {
                 // TODO: Implement delete command when ready
-                ShowSuccessNotification($"Delete hazard {hazard.Code} - Command coming soon!");
+                ShowSuccessAsyncNotification($"Delete hazard {hazard.Code} - Command coming soon!");
                 Logger.LogInformation("Delete confirmed for hazard: {HazardCode}", hazard.Code);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting hazard: {HazardCode}", hazard.Code);
-            ShowErrorNotification("Failed to delete the hazard");
+            ShowErrorAsyncNotification("Failed to delete the hazard");
         }
     }
     #endregion

@@ -1,11 +1,15 @@
+using SMS_Application.Interfaces;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Messaging.Queries;
+
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
+
 using SMS_Shared.Common;
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
-using SMS3.Extensions;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.System.UserGroups;
 
@@ -16,7 +20,9 @@ public partial class StakeholderGroups : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<StakeholderGroups> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
@@ -115,7 +121,7 @@ public partial class StakeholderGroups : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading data");
-            ShowErrorNotification("Error loading data. Please try again.");
+            ShowErrorAsyncNotification("Error loading data. Please try again.");
         }
     }
 
@@ -127,7 +133,7 @@ public partial class StakeholderGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(groupCode))
         {
-            ShowErrorNotification("Group code is required.");
+            ShowErrorAsyncNotification("Group code is required.");
             return;
         }
 
@@ -138,7 +144,7 @@ public partial class StakeholderGroups : ComponentBase
 
             if (groupResult.IsFailure)
             {
-                ShowErrorNotification("Group not found.");
+                ShowErrorAsyncNotification("Group not found.");
                 return;
             }
 
@@ -155,7 +161,7 @@ public partial class StakeholderGroups : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading group for edit: {GroupCode}", groupCode);
-            ShowErrorNotification("Error loading group. Please try again.");
+            ShowErrorAsyncNotification("Error loading group. Please try again.");
         }
     }
 
@@ -167,7 +173,7 @@ public partial class StakeholderGroups : ComponentBase
         EditDescription = string.Empty;
         EditIsActive = true;
         Logger.LogInformation("Group edit cancelled");
-        NotificationHelper.ShowInfo(NotificationService, "Edit cancelled", 3000);
+        NotificationHelper.ShowInfoAsync( "Edit cancelled", 3000);
         Navigation.NavigateToSecure("/System/UserGroups/StakeholderGroups");
     }
 
@@ -188,7 +194,7 @@ public partial class StakeholderGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(NewGroupName))
         {
-            ShowErrorNotification("Group name is required.");
+            ShowErrorAsyncNotification("Group name is required.");
             return;
         }
 
@@ -213,20 +219,20 @@ public partial class StakeholderGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Stakeholder group '{NewGroupName}' created successfully.");
+                ShowSuccessAsyncNotification($"Stakeholder group '{NewGroupName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
                 await groupsGrid?.Reload();
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to create stakeholder group.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to create stakeholder group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error creating stakeholder group");
-            ShowErrorNotification("Error creating stakeholder group. Please try again.");
+            ShowErrorAsyncNotification("Error creating stakeholder group. Please try again.");
         }
         finally
         {
@@ -239,7 +245,7 @@ public partial class StakeholderGroups : ComponentBase
     {
         if (CurrentGroup == null || string.IsNullOrWhiteSpace(EditGroupName))
         {
-            ShowErrorNotification("Group name is required.");
+            ShowErrorAsyncNotification("Group name is required.");
             return;
         }
 
@@ -258,20 +264,20 @@ public partial class StakeholderGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Stakeholder group '{EditGroupName}' updated successfully.");
+                ShowSuccessAsyncNotification($"Stakeholder group '{EditGroupName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
                 await groupsGrid?.Reload();
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to update stakeholder group.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to update stakeholder group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating stakeholder group: {GroupCode}", CurrentGroup.Code);
-            ShowErrorNotification("Error updating stakeholder group. Please try again.");
+            ShowErrorAsyncNotification("Error updating stakeholder group. Please try again.");
         }
         finally
         {
@@ -284,7 +290,7 @@ public partial class StakeholderGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(DeleteGroupCode))
         {
-            ShowErrorNotification("Group code is required for deletion.");
+            ShowErrorAsyncNotification("Group code is required for deletion.");
             return;
         }
 
@@ -299,7 +305,7 @@ public partial class StakeholderGroups : ComponentBase
 
             if (groupResult.IsFailure)
             {
-                ShowErrorNotification("Group not found.");
+                ShowErrorAsyncNotification("Group not found.");
                 return;
             }
 
@@ -308,7 +314,7 @@ public partial class StakeholderGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("Stakeholder group deleted successfully.");
+                ShowSuccessAsyncNotification("Stakeholder group deleted successfully.");
                 CloseDeleteModal();
                 await LoadDataAsync();
                 await groupsGrid?.Reload();
@@ -321,13 +327,13 @@ public partial class StakeholderGroups : ComponentBase
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to delete stakeholder group.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to delete stakeholder group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting stakeholder group: {GroupCode}", DeleteGroupCode);
-            ShowErrorNotification("Error deleting stakeholder group. Please try again.");
+            ShowErrorAsyncNotification("Error deleting stakeholder group. Please try again.");
         }
         finally
         {
@@ -387,14 +393,14 @@ public partial class StakeholderGroups : ComponentBase
 
     #region Notification Methods
 
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message);
+        NotificationHelper.ShowErrorAsync( message);
     }
 
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message);
+        NotificationHelper.ShowSuccessAsync( message);
     }
 
     #endregion
@@ -405,7 +411,7 @@ public partial class StakeholderGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(groupCode))
         {
-            ShowErrorNotification("Group code is required to manage members.");
+            ShowErrorAsyncNotification("Group code is required to manage members.");
             return;
         }
 
@@ -425,7 +431,7 @@ public partial class StakeholderGroups : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error entering manage members mode for group: {GroupCode}", groupCode);
-            ShowErrorNotification("Error entering manage members mode. Please try again.");
+            ShowErrorAsyncNotification("Error entering manage members mode. Please try again.");
         }
     }
 
@@ -479,7 +485,7 @@ public partial class StakeholderGroups : ComponentBase
         AvailableUsers.Clear();
         SelectedUsers.Clear();
         Logger.LogInformation("Exited member management view");
-        NotificationHelper.ShowInfo(NotificationService, "Returned to group management", 3000);
+        NotificationHelper.ShowInfoAsync( "Returned to group management", 3000);
         
         Navigation.NavigateToSecure("/System/UserGroups/StakeholderGroups");
     }
@@ -499,7 +505,7 @@ public partial class StakeholderGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(CurrentGroupCode))
         {
-            ShowErrorNotification("User code and group code are required.");
+            ShowErrorAsyncNotification("User code and group code are required.");
             return;
         }
 
@@ -511,19 +517,19 @@ public partial class StakeholderGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("User removed from group successfully.");
+                ShowSuccessAsyncNotification("User removed from group successfully.");
                 await LoadGroupMembersAsync(CurrentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to remove user from group.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to remove user from group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, CurrentGroupCode);
-            ShowErrorNotification("Error removing user from group. Please try again.");
+            ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
 
@@ -531,7 +537,7 @@ public partial class StakeholderGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(CurrentGroupCode) || !SelectedUsers.Any(s => s.Value))
         {
-            ShowErrorNotification("Group code and at least one user must be selected.");
+            ShowErrorAsyncNotification("Group code and at least one user must be selected.");
             return;
         }
 
@@ -566,20 +572,20 @@ public partial class StakeholderGroups : ComponentBase
                 var message = $"Successfully assigned {successCount} user(s) to group.";
                 if (failureCount > 0)
                     message += $" {failureCount} assignment(s) failed.";
-                ShowSuccessNotification(message);
+                ShowSuccessAsyncNotification(message);
 
                 await LoadGroupMembersAsync(CurrentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
             {
-                ShowErrorNotification("Failed to assign users to group.");
+                ShowErrorAsyncNotification("Failed to assign users to group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error assigning multiple users to group {GroupCode}", CurrentGroupCode);
-            ShowErrorNotification("Error assigning users to group. Please try again.");
+            ShowErrorAsyncNotification("Error assigning users to group. Please try again.");
         }
     }
 
@@ -587,7 +593,7 @@ public partial class StakeholderGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(CurrentGroupCode))
         {
-            ShowErrorNotification("User code and group code are required.");
+            ShowErrorAsyncNotification("User code and group code are required.");
             return;
         }
 
@@ -599,19 +605,19 @@ public partial class StakeholderGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("User assigned to group successfully.");
+                ShowSuccessAsyncNotification("User assigned to group successfully.");
                 await LoadGroupMembersAsync(CurrentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to assign user to group.");
+                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to assign user to group.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
-            ShowErrorNotification("Error assigning user to group. Please try again.");
+            ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }
 

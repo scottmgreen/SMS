@@ -1,7 +1,11 @@
 using System.Text;
-using SMS3.Components.Shared.UIHelpers;
+
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
+
+using SMS_Shared.Configuration;
+
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
@@ -10,7 +14,9 @@ public partial class FileViewerDialog : ComponentBase
     #region Injected Services
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     [Inject] private ILogger<FileViewerDialog> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     #endregion
 
     #region Parameters
@@ -40,7 +46,7 @@ public partial class FileViewerDialog : ComponentBase
         if (ViewingFile?.FileData == null || ViewingFile.FileData.Length == 0)
         {
             Logger.LogWarning("File data is null or empty for file: {FileName}", ViewingFile?.FileName);
-            ShowErrorNotification("File data is not available for viewing");
+            ShowErrorAsyncNotification("File data is not available for viewing");
             return;
         }
 
@@ -81,7 +87,7 @@ public partial class FileViewerDialog : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading file for viewing: {FileName}", ViewingFile.FileName);
-            ShowErrorNotification($"Error loading file for viewing: {ex.Message}");
+            ShowErrorAsyncNotification($"Error loading file for viewing: {ex.Message}");
         }
         finally
         {
@@ -238,7 +244,7 @@ public partial class FileViewerDialog : ComponentBase
     {
         if (ViewingFile == null || string.IsNullOrEmpty(FileDataUrl))
         {
-            ShowErrorNotification("File is not ready for viewing");
+            ShowErrorAsyncNotification("File is not ready for viewing");
             return;
         }
 
@@ -248,12 +254,12 @@ public partial class FileViewerDialog : ComponentBase
 
             await JSRuntime.InvokeVoidAsync("open", FileDataUrl, "_blank");
 
-            ShowSuccessNotification($"Opened '{ViewingFile.FileName}' in new tab");
+            ShowSuccessAsyncNotification($"Opened '{ViewingFile.FileName}' in new tab");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error opening file in new tab: {FileName}", ViewingFile.FileName);
-            ShowErrorNotification("Unable to open file in new tab");
+            ShowErrorAsyncNotification("Unable to open file in new tab");
         }
     }
 
@@ -261,7 +267,7 @@ public partial class FileViewerDialog : ComponentBase
     {
         if (ViewingFile == null || ViewingFile.FileData == null)
         {
-            ShowErrorNotification("File is not available for download");
+            ShowErrorAsyncNotification("File is not available for download");
             return;
         }
 
@@ -276,25 +282,25 @@ public partial class FileViewerDialog : ComponentBase
 
             await JSRuntime.InvokeVoidAsync("downloadFile", fileName, mimeType, base64);
 
-            ShowSuccessNotification($"Download started for '{fileName}'");
+            ShowSuccessAsyncNotification($"Download started for '{fileName}'");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error downloading file: {FileName}", ViewingFile?.FileName);
-            ShowErrorNotification("Unable to download file");
+            ShowErrorAsyncNotification("Unable to download file");
         }
     }
     #endregion
 
     #region Notification Methods
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message, 3000);
+        NotificationHelper.ShowSuccessAsync( message, 3000);
     }
 
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message, 5000);
+        NotificationHelper.ShowErrorAsync( message, 5000);
     }
     #endregion
 }

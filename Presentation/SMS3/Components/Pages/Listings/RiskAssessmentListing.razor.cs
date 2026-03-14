@@ -1,13 +1,19 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS3.Components.Shared.UIHelpers;
-using SMS3.Components.Shared;
-using SMS_Domain.Errors;
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
+
 using Radzen;
+
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Messaging.Queries;
+
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Domain.Errors;
+using SMS_Domain.ValueObjects;
+
+using SMS_Shared.Configuration;
+
+using SMS3.Components.Shared;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -22,7 +28,9 @@ public partial class RiskAssessmentListing : ComponentBase
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<RiskAssessmentListing> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     #endregion
@@ -67,11 +75,11 @@ public partial class RiskAssessmentListing : ComponentBase
                 // Only show success notification if we have data
                 if (totalCount > 0)
                 {
-                    ShowSuccessNotification($"Successfully loaded {totalCount} risk assessments");
+                    await NotificationHelper.ShowSuccessAsync($"Successfully loaded {totalCount} risk assessments");
                 }
                 else
                 {
-                    ShowInfoNotification("No risk assessments found");
+                    await NotificationHelper.ShowInfoAsync("No risk assessments found");
                 }
             }
             else
@@ -81,7 +89,7 @@ public partial class RiskAssessmentListing : ComponentBase
                 assessments = allAssessments;
                 totalCount = 0;
                 
-                ShowErrorNotification("Failed to load risk assessments");
+                await NotificationHelper.ShowErrorAsync("Failed to load risk assessments");
                 Logger.LogError("Failed to load risk assessments: {Error}", result.Error?.Message);
             }
         }
@@ -93,7 +101,7 @@ public partial class RiskAssessmentListing : ComponentBase
             totalCount = 0;
             
             Logger.LogError(ex, "Error loading risk assessments");
-            ShowErrorNotification($"Error loading risk assessments: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"Error loading risk assessments: {ex.Message}");
         }
         finally
         {
@@ -171,7 +179,7 @@ public partial class RiskAssessmentListing : ComponentBase
         {
             Logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
-            ShowErrorNotification($"Error loading data: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
             try
@@ -447,30 +455,6 @@ public partial class RiskAssessmentListing : ComponentBase
             _ => BadgeStyle.Secondary
         };
     }
-
-    /// <summary>
-    /// Shows error notification to user
-    /// </summary>
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message, 7000);
-    }
-
-    /// <summary>
-    /// Shows success notification to user
-    /// </summary>
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationHelper.ShowSuccess(NotificationService, message, 5000);
-    }
-
-    /// <summary>
-    /// Shows info notification to user
-    /// </summary>
-    private void ShowInfoNotification(string message)
-    {
-        NotificationHelper.ShowInfo(NotificationService, message, 5000);
-    }
     #endregion
 
     #region CRUD Action Methods - Enhanced with better error handling
@@ -483,12 +467,12 @@ public partial class RiskAssessmentListing : ComponentBase
             SelectedAssessment = assessment;
             ShowViewDialog = true;
             StateHasChanged();
-            ShowInfoNotification($"Viewing details for assessment {assessment.Code}");
+            await NotificationHelper.ShowInfoAsync($"Viewing details for assessment {assessment.Code}");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error viewing risk assessment {Code}", assessment.Code);
-            ShowErrorNotification("Error viewing risk assessment");
+            await NotificationHelper.ShowErrorAsync("Error viewing risk assessment");
         }
     }
 
@@ -502,7 +486,7 @@ public partial class RiskAssessmentListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error editing risk assessment {Code}", assessment.Code);
-            ShowErrorNotification("Error opening risk assessment editor");
+            await NotificationHelper.ShowErrorAsync("Error opening risk assessment editor");
         }
     }
     
@@ -516,7 +500,7 @@ public partial class RiskAssessmentListing : ComponentBase
             if (string.IsNullOrEmpty(reportCode))
             {
                 Logger.LogWarning("Could not determine ReportCode for assessment {AssessmentCode}", assessment.Code);
-                ShowErrorNotification("Could not determine report code for this assessment");
+                await NotificationHelper.ShowErrorAsync("Could not determine report code for this assessment");
                 return;
             }
 
@@ -524,12 +508,12 @@ public partial class RiskAssessmentListing : ComponentBase
 
             Logger.LogInformation("Navigating to Technical Assessment: {Url}", navigationUrl);
             Navigation.NavigateTo(navigationUrl);
-            ShowInfoNotification($"Opening technical assessment for {assessment.Code}");
+            await NotificationHelper.ShowInfoAsync($"Opening technical assessment for {assessment.Code}");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error navigating to Technical Assessment for {AssessmentCode}", assessment.Code);
-            ShowErrorNotification("Failed to navigate to Technical Assessment");
+            await NotificationHelper.ShowErrorAsync("Failed to navigate to Technical Assessment");
         }
     }
     
@@ -595,7 +579,7 @@ public partial class RiskAssessmentListing : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    ShowSuccessNotification($"Risk assessment '{assessment.Name}' deleted successfully");
+                    await NotificationHelper.ShowSuccessAsync($"Risk assessment '{assessment.Name}' deleted successfully");
                     Logger.LogInformation("Successfully deleted risk assessment: {Code}", assessment.Code);
 
                     // Refresh the data grid by reloading initial data
@@ -604,7 +588,7 @@ public partial class RiskAssessmentListing : ComponentBase
                 }
                 else
                 {
-                    ShowErrorNotification($"Failed to delete risk assessment: {result.Error?.Message}");
+                    await NotificationHelper.ShowErrorAsync($"Failed to delete risk assessment: {result.Error?.Message}");
                     Logger.LogError("Failed to delete risk assessment {Code}: {Error}", assessment.Code, result.Error?.Message);
                 }
             }
@@ -612,7 +596,7 @@ public partial class RiskAssessmentListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting risk assessment {Code}", assessment.Code);
-            ShowErrorNotification("Error deleting risk assessment");
+            await NotificationHelper.ShowErrorAsync("Error deleting risk assessment");
         }
     }
     #endregion

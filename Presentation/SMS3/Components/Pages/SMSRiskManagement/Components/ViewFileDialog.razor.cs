@@ -11,7 +11,7 @@ public partial class ViewFileDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<ViewFileDialog> Logger { get; set; } = default!;
     #endregion
 
@@ -44,13 +44,13 @@ public partial class ViewFileDialog : ComponentBase
     #endregion
 
     #region Actions
-    private void DownloadFile()
+    private async Task DownloadFile()
     {
         try
         {
             // TODO: Implement actual file download
             // This would typically trigger a download from the server
-            ShowInfoNotification($"Download functionality for '{HazardFile.FileName}' would be implemented here");
+            await NotificationHelper.ShowInfoAsync($"Download functionality for '{HazardFile.FileName}' would be implemented here");
 
             Logger.LogInformation("File download requested: {FileName} (Code: {Code})",
                 HazardFile.FileName, HazardFile.Code);
@@ -58,20 +58,8 @@ public partial class ViewFileDialog : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error downloading file: {Code}", HazardFile?.Code);
-            ShowErrorNotification("Error downloading file");
+            await NotificationHelper.ShowErrorAsync("Error downloading file");
         }
-    }
-    #endregion
-
-    #region Notifications
-    private void ShowInfoNotification(string message)
-    {
-        NotificationHelper.ShowInfo(NotificationService, message);
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message);
     }
     #endregion
 }

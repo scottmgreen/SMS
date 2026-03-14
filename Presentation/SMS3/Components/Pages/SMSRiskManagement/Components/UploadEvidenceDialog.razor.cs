@@ -6,7 +6,7 @@ public partial class UploadEvidenceDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<UploadEvidenceDialog> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
@@ -127,7 +127,7 @@ public partial class UploadEvidenceDialog : ComponentBase
                     if (newFile.Size > 52428800)
                     {
                         Logger.LogWarning("? File {FileName} exceeds 50MB limit", newFile.Name);
-                        ShowWarningNotification($"File '{newFile.Name}' exceeds 50MB limit and will be skipped");
+                        await NotificationHelper.ShowWarningAsync($"File '{newFile.Name}' exceeds 50MB limit and will be skipped");
                         failedFiles.Add(newFile.Name);
                         continue;
                     }
@@ -158,7 +158,7 @@ public partial class UploadEvidenceDialog : ComponentBase
                 {
                     Logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
                     failedFiles.Add(newFile.Name);
-                    ShowErrorNotification($"Error processing file '{newFile.Name}': {ex.Message}");
+                    await NotificationHelper.ShowErrorAsync($"Error processing file '{newFile.Name}': {ex.Message}");
                 }
             }
 
@@ -171,15 +171,15 @@ public partial class UploadEvidenceDialog : ComponentBase
             // Show notification about results
             if (successfullyProcessedFiles.Any() && failedFiles.Any())
             {
-                ShowWarningNotification($"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.");
+                await NotificationHelper.ShowWarningAsync($"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.");
             }
             else if (successfullyProcessedFiles.Any())
             {
-                ShowSuccessNotification($"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files ready for upload.");
+                await NotificationHelper.ShowSuccessAsync($"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files ready for upload.");
             }
             else if (failedFiles.Any())
             {
-                ShowErrorNotification($"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.");
+                await NotificationHelper.ShowErrorAsync($"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.");
             }
 
             Logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
@@ -247,7 +247,7 @@ public partial class UploadEvidenceDialog : ComponentBase
         {
             if (!CanUpload())
             {
-                ShowErrorNotification(GetValidationMessage());
+                await NotificationHelper.ShowErrorAsync(GetValidationMessage());
                 return;
             }
 
@@ -327,13 +327,13 @@ public partial class UploadEvidenceDialog : ComponentBase
                         Logger.LogError("? Failed to create evidence file: {FileName}. Error: {Error}",
                             file.FileName, result.Error?.Message);
 
-                        ShowErrorNotification($"Failed to upload '{file.FileName}': {result.Error?.Message}");
+                        await NotificationHelper.ShowErrorAsync($"Failed to upload '{file.FileName}': {result.Error?.Message}");
                     }
                 }
                 catch (Exception fileEx)
                 {
                     Logger.LogError(fileEx, "? Exception uploading evidence file: {FileName}", file.FileName);
-                    ShowErrorNotification($"Error uploading '{file.FileName}': {fileEx.Message}");
+                    await NotificationHelper.ShowErrorAsync($"Error uploading '{file.FileName}': {fileEx.Message}");
                 }
 
                 // Update overall progress
@@ -353,7 +353,7 @@ public partial class UploadEvidenceDialog : ComponentBase
                 Logger.LogInformation("? All evidence files uploaded successfully: {SuccessCount}/{TotalCount} files",
                     uploadedFileIds.Count, totalFiles);
 
-                ShowSuccessNotification($"Successfully uploaded {uploadedFileIds.Count} evidence file(s)");
+                await NotificationHelper.ShowSuccessAsync($"Successfully uploaded {uploadedFileIds.Count} evidence file(s)");
 
                 // Close dialog with success
                 await Task.Delay(1000); // Brief delay to show completion
@@ -365,7 +365,7 @@ public partial class UploadEvidenceDialog : ComponentBase
                 Logger.LogWarning("?? Partial upload success: {SuccessCount}/{TotalCount} files uploaded, {FailedCount} failed",
                     uploadedFileIds.Count, totalFiles, failedCount);
 
-                ShowWarningNotification($"Uploaded {uploadedFileIds.Count} of {totalFiles} files. {failedCount} file(s) failed.");
+                await NotificationHelper.ShowWarningAsync($"Uploaded {uploadedFileIds.Count} of {totalFiles} files. {failedCount} file(s) failed.");
 
                 if (uploadedFileIds.Any())
                 {
@@ -378,7 +378,7 @@ public partial class UploadEvidenceDialog : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "? Critical error during evidence upload process");
-            ShowErrorNotification("Critical error during upload process. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Critical error during upload process. Please try again.");
         }
         finally
         {
@@ -504,41 +504,6 @@ public partial class UploadEvidenceDialog : ComponentBase
             max /= scale;
         }
         return "0 Bytes";
-    }
-    #endregion
-
-    #region Notification Methods
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "File Processing",
-            Detail = message,
-            Duration = 3000
-        });
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Upload Error",
-            Detail = message,
-            Duration = 8000
-        });
-    }
-
-    private void ShowWarningNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Warning,
-            Summary = "File Processing Warning",
-            Detail = message,
-            Duration = 6000
-        });
     }
     #endregion
 

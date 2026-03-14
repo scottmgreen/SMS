@@ -1,3 +1,5 @@
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
@@ -7,7 +9,8 @@ public partial class EditInterviewDialog : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<EditInterviewDialog> Logger { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
     #endregion
@@ -169,18 +172,18 @@ public partial class EditInterviewDialog : ComponentBase
                 Model.Status = InterviewStatus.InterviewInProgress;
                 selectedTabIndex = 2; // Switch to conducting tab
                 await UpdateInterview();
-                ShowSuccessNotification("Interview started successfully. You can now begin recording notes and findings.");
+                ShowSuccessAsyncNotification("Interview started successfully. You can now begin recording notes and findings.");
                 StateHasChanged();
             }
             else
             {
-                ShowErrorNotification($"Cannot start interview: {result.Error?.Message}");
+                ShowErrorAsyncNotification($"Cannot start interview: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error starting interview {Code}", Interview.Code);
-            ShowErrorNotification("Error starting interview");
+            ShowErrorAsyncNotification("Error starting interview");
         }
     }
 
@@ -190,7 +193,7 @@ public partial class EditInterviewDialog : ComponentBase
         {
             //if (string.IsNullOrWhiteSpace(Model.KeyFindings))
             //{
-            //    ShowErrorNotification("Key findings are required to complete the interview");
+            //    ShowErrorAsyncNotification("Key findings are required to complete the interview");
             //    return;
             //}
 
@@ -206,18 +209,18 @@ public partial class EditInterviewDialog : ComponentBase
                 Model.Status = InterviewStatus.InterviewComplete;
                 Model.CompletedDate = DateTime.UtcNow;
                 await UpdateInterview();
-                ShowSuccessNotification("Interview completed successfully!");
+                ShowSuccessAsyncNotification("Interview completed successfully!");
                 StateHasChanged();
             }
             else
             {
-                ShowErrorNotification($"Cannot complete interview: {result.Error?.Message}");
+                ShowErrorAsyncNotification($"Cannot complete interview: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error completing interview {Code}", Interview.Code);
-            ShowErrorNotification("Error completing interview");
+            ShowErrorAsyncNotification("Error completing interview");
         }
     }
 
@@ -242,19 +245,19 @@ public partial class EditInterviewDialog : ComponentBase
                 {
                     Model.Status = InterviewStatus.InterviewCanceled;
                     await UpdateInterview();
-                    ShowSuccessNotification("Interview cancelled successfully");
+                    ShowSuccessAsyncNotification("Interview cancelled successfully");
                     StateHasChanged();
                 }
                 else
                 {
-                    ShowErrorNotification($"Cannot cancel interview: {result.Error?.Message}");
+                    ShowErrorAsyncNotification($"Cannot cancel interview: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error cancelling interview {Code}", Interview.Code);
-            ShowErrorNotification("Error cancelling interview");
+            ShowErrorAsyncNotification("Error cancelling interview");
         }
     }
     #endregion
@@ -271,7 +274,7 @@ public partial class EditInterviewDialog : ComponentBase
         {
             if (string.IsNullOrWhiteSpace(model.PersonInterviewed))
             {
-                ShowErrorNotification("Person interviewed is required");
+                ShowErrorAsyncNotification("Person interviewed is required");
                 return;
             }
 
@@ -316,7 +319,7 @@ public partial class EditInterviewDialog : ComponentBase
 
                     if (updateResult.IsFailure)
                     {
-                        ShowErrorNotification($"Failed to update interview: {updateResult.Error?.Message}");
+                        ShowErrorAsyncNotification($"Failed to update interview: {updateResult.Error?.Message}");
                         return;
                     }
 
@@ -344,7 +347,7 @@ public partial class EditInterviewDialog : ComponentBase
                 Logger.LogInformation("Interview updated successfully: {Code} by user {UserId}",
                     Interview.Code, CurrentUserService.UserCode);
 
-                ShowSuccessNotification("Interview updated successfully");
+                ShowSuccessAsyncNotification("Interview updated successfully");
 
                 // Close the dialog and return true to indicate success
                 // This will trigger the calendar to refresh
@@ -352,7 +355,7 @@ public partial class EditInterviewDialog : ComponentBase
             }
             else
             {
-                ShowErrorNotification($"Failed to update interview: {result.Error?.Message}");
+                ShowErrorAsyncNotification($"Failed to update interview: {result.Error?.Message}");
                 Logger.LogError("Failed to update interview {Code}: {Error}",
                     Interview.Code, result.Error?.Message);
             }
@@ -360,7 +363,7 @@ public partial class EditInterviewDialog : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating interview {Code}", Interview.Code);
-            ShowErrorNotification("Error updating interview");
+            ShowErrorAsyncNotification("Error updating interview");
         }
         finally
         {
@@ -371,14 +374,14 @@ public partial class EditInterviewDialog : ComponentBase
     #endregion
 
     #region Notification Methods
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message);
+        NotificationHelper.ShowSuccessAsync( message);
     }
 
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message);
+        NotificationHelper.ShowErrorAsync( message);
     }
     #endregion
 

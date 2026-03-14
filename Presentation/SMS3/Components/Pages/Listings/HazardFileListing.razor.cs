@@ -1,15 +1,22 @@
+using System.Linq.Expressions;
 using System.Text;
+
+using Microsoft.JSInterop;
+
+using Radzen;
+
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Messaging.Queries;
+
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
-using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Messaging.Commands;
-using SMS3.Components.Shared.UIHelpers;
-using SMS3.Components.Shared;
 using SMS_Domain.Errors;
-using System.Linq.Expressions;
-using Radzen;
-using Microsoft.JSInterop;
+using SMS_Domain.ValueObjects;
+
+using SMS_Shared.Configuration;
+
+using SMS3.Components.Shared;
+using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -24,7 +31,8 @@ public partial class HazardFileListing : ComponentBase
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<HazardFileListing> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     #endregion
@@ -75,11 +83,11 @@ public partial class HazardFileListing : ComponentBase
                 // Show success notification if we have data
                 if (totalCount > 0)
                 {
-                    ShowSuccessNotification($"Successfully loaded {totalCount} hazard files");
+                    ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazard files");
                 }
                 else
                 {
-                    ShowInfoNotification("No hazard files found");
+                    ShowInfoAsyncNotification("No hazard files found");
                 }
             }
             else
@@ -89,7 +97,7 @@ public partial class HazardFileListing : ComponentBase
                 files = allFiles;
                 totalCount = 0;
                 
-                ShowErrorNotification("Failed to load hazard files");
+                ShowErrorAsyncNotification("Failed to load hazard files");
                 Logger.LogError("Failed to load hazard files: {Error}", result.Error?.Message);
             }
         }
@@ -101,7 +109,7 @@ public partial class HazardFileListing : ComponentBase
             totalCount = 0;
             
             Logger.LogError(ex, "Error loading hazard files");
-            ShowErrorNotification($"Error loading hazard files: {ex.Message}");
+            ShowErrorAsyncNotification($"Error loading hazard files: {ex.Message}");
         }
         finally
         {
@@ -179,7 +187,7 @@ public partial class HazardFileListing : ComponentBase
         {
             Logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
-            ShowErrorNotification($"Error loading data: {ex.Message}");
+            ShowErrorAsyncNotification($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
             try
@@ -488,25 +496,25 @@ public partial class HazardFileListing : ComponentBase
     /// <summary>
     /// Shows error notification to user
     /// </summary>
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message, 7000);
+        NotificationHelper.ShowErrorAsync( message, 7000);
     }
 
     /// <summary>
     /// Shows success notification to user
     /// </summary>
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message, 5000);
+        NotificationHelper.ShowSuccessAsync( message, 5000);
     }
 
     /// <summary>
     /// Shows info notification to user
     /// </summary>
-    private void ShowInfoNotification(string message)
+    private void ShowInfoAsyncNotification(string message)
     {
-        NotificationHelper.ShowInfo(NotificationService, message, 5000);
+        NotificationHelper.ShowInfoAsync( message, 5000);
     }
     #endregion
 
@@ -564,13 +572,13 @@ public partial class HazardFileListing : ComponentBase
             }
 
             Logger.LogInformation("Successfully loaded file data for viewing: {Code}", file.Code);
-            ShowInfoNotification($"Opened file viewer for {file.FileName}");
+            ShowInfoAsyncNotification($"Opened file viewer for {file.FileName}");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error reading file: {Code}", file.Code);
             fileViewError = "An error occurred while loading the file.";
-            ShowErrorNotification("Error reading file");
+            ShowErrorAsyncNotification("Error reading file");
         }
         finally
         {
@@ -609,7 +617,7 @@ public partial class HazardFileListing : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    ShowSuccessNotification($"File '{file.FileName}' has been deleted successfully.");
+                    ShowSuccessAsyncNotification($"File '{file.FileName}' has been deleted successfully.");
 
                     // Reload the data to reflect changes
                     await LoadInitialData();
@@ -619,7 +627,7 @@ public partial class HazardFileListing : ComponentBase
                 }
                 else
                 {
-                    ShowErrorNotification($"Failed to delete file: {result.Error?.Message}");
+                    ShowErrorAsyncNotification($"Failed to delete file: {result.Error?.Message}");
                     Logger.LogError("Failed to delete file {Code}: {Error}", file.Code, result.Error?.Message);
                 }
             }
@@ -627,7 +635,7 @@ public partial class HazardFileListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting file: {Code}", file.Code);
-            ShowErrorNotification("An error occurred while deleting the file.");
+            ShowErrorAsyncNotification("An error occurred while deleting the file.");
         }
     }
 
@@ -660,7 +668,7 @@ public partial class HazardFileListing : ComponentBase
 
                 if (result.IsFailure || result.Value?.FileData == null)
                 {
-                    ShowErrorNotification("Could not download file - file data not available.");
+                    ShowErrorAsyncNotification("Could not download file - file data not available.");
                     return;
                 }
 
@@ -680,12 +688,12 @@ public partial class HazardFileListing : ComponentBase
                 await JSRuntime.InvokeVoidAsync("downloadFileFromBase64", selectedFile.FileName, base64Data, "text/plain");
             }
 
-            ShowSuccessNotification($"Downloaded '{selectedFile.FileName}' successfully.");
+            ShowSuccessAsyncNotification($"Downloaded '{selectedFile.FileName}' successfully.");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error downloading file: {Code}", selectedFile.Code);
-            ShowErrorNotification("An error occurred while downloading the file.");
+            ShowErrorAsyncNotification("An error occurred while downloading the file.");
         }
     }
 

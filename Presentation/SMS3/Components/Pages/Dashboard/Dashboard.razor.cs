@@ -1,5 +1,7 @@
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
-using SMS3.Extensions;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.Dashboard;
 
@@ -8,7 +10,8 @@ public partial class Dashboard : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<Dashboard> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     #endregion
 
@@ -92,14 +95,14 @@ public partial class Dashboard : ComponentBase
             else
             {
                 Logger.LogError("Failed to load dashboard statistics: {Error}", result.Error?.Message);
-                ShowErrorNotification("Failed to load dashboard data");
+                await NotificationHelper.ShowErrorAsync("Failed to load dashboard data");
                 Statistics = new DashboardStatisticsResponse(); // Initialize empty
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading dashboard data");
-            ShowErrorNotification("Error loading dashboard data");
+            await NotificationHelper.ShowErrorAsync("Error loading dashboard data");
             Statistics = new DashboardStatisticsResponse();
         }
         finally
@@ -112,7 +115,7 @@ public partial class Dashboard : ComponentBase
     private async Task RefreshDashboardData()
     {
         await LoadDashboardDataAsync();
-        ShowSuccessNotification("Dashboard data refreshed");
+        await NotificationHelper.ShowSuccessAsync("Dashboard data refreshed");
     }
     #endregion
 
@@ -253,18 +256,6 @@ public partial class Dashboard : ComponentBase
             // ?? SECURE NAVIGATION - Navigate to activity with encrypted URL
             Navigation.NavigateToSecure(activity.NavigationUrl);
         }
-    }
-    #endregion
-
-    #region Notification Methods
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationHelper.ShowSuccess(NotificationService, message);
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message);
     }
     #endregion
 

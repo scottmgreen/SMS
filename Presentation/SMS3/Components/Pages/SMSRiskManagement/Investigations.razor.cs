@@ -2,8 +2,10 @@
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
-using SMS3.Extensions;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -17,7 +19,8 @@ public partial class Investigations : ComponentBase
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<Investigations> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     #endregion
@@ -91,7 +94,7 @@ public partial class Investigations : ComponentBase
 
             if (string.IsNullOrWhiteSpace(InvestigationId))
             {
-                ShowErrorNotification("Investigation ID is required");
+                await NotificationHelper.ShowErrorAsync("Investigation ID is required");
                 Logger.LogError("Investigation ID is null or empty");
                 Navigation.NavigateToSecure("/Listings/Investigations");
                 return;
@@ -124,14 +127,14 @@ public partial class Investigations : ComponentBase
             else
             {
                 Logger.LogError("Investigation {InvestigationId} not found: {Error}",InvestigationId, investigationResult.Error?.Message);
-                ShowErrorNotification($"Investigation not found: {investigationResult.Error?.Message}");
+                await NotificationHelper.ShowErrorAsync($"Investigation not found: {investigationResult.Error?.Message}");
                 Navigation.NavigateToSecure("/Listings/Investigations");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading investigation data");
-            ShowErrorNotification("Error loading investigation data");
+            await NotificationHelper.ShowErrorAsync("Error loading investigation data");
         }
         finally
         {
@@ -257,7 +260,7 @@ public partial class Investigations : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("Investigation updated successfully");
+                await NotificationHelper.ShowSuccessAsync("Investigation updated successfully");
                 Logger.LogInformation("Investigation {Code} updated successfully", InvestigationEntity.Code);
 
                 // Refresh the investigation data
@@ -265,7 +268,7 @@ public partial class Investigations : ComponentBase
             }
             else
             {
-                ShowErrorNotification($"Failed to update investigation: {result.Error?.Message}");
+                await NotificationHelper.ShowErrorAsync($"Failed to update investigation: {result.Error?.Message}");
                 Logger.LogError("Failed to update investigation {Code}: {Error}",
                     InvestigationEntity.Code, result.Error?.Message);
             }
@@ -273,7 +276,7 @@ public partial class Investigations : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error saving investigation");
-            ShowErrorNotification("Error saving investigation");
+            await NotificationHelper.ShowErrorAsync("Error saving investigation");
         }
         finally
         {
@@ -291,7 +294,7 @@ public partial class Investigations : ComponentBase
             // Validate that decision is recorded
             if (!InvestigationEntity.HasDecision)
             {
-                ShowErrorNotification("Investigation decision must be recorded before completion");
+                await NotificationHelper.ShowErrorAsync("Investigation decision must be recorded before completion");
                 return;
             }
 
@@ -302,7 +305,7 @@ public partial class Investigations : ComponentBase
                 var incompleteCount = incompleteInterviews.Count;
                 var incompleteList = string.Join(", ", incompleteInterviews.Select(i => $"{i.Code} ({i.Status.Name})"));
                 
-                ShowErrorNotification($"Cannot complete investigation. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first.");
+                await NotificationHelper.ShowErrorAsync($"Cannot complete investigation. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first.");
                 
                 // Switch to interviews tab to show the incomplete interviews
                 selectedTabIndex = 1; // Assuming interviews tab is index 1
@@ -319,7 +322,7 @@ public partial class Investigations : ComponentBase
             {
                 InvestigationEntity.Status = InvestigationStatus.InvestigationComplete;
                 await SaveInvestigation();
-                ShowSuccessNotification("Investigation completed successfully");
+                await NotificationHelper.ShowSuccessAsync("Investigation completed successfully");
 
                 // Navigate based on decision type
                 await HandleInvestigationCompletion();
@@ -328,7 +331,7 @@ public partial class Investigations : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error completing investigation");
-            ShowErrorNotification($"Error completing investigation: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"Error completing investigation: {ex.Message}");
         }
     }
 
@@ -364,7 +367,7 @@ public partial class Investigations : ComponentBase
             InvestigationEntity.DecisionDate = DateTime.UtcNow;
             if (string.IsNullOrWhiteSpace(InvestigationEntity.DecisionType) )
             {
-                ShowErrorNotification("Decision type, rationale, and decision maker are required");
+                await NotificationHelper.ShowErrorAsync("Decision type, rationale, and decision maker are required");
                 return;
             }
                         
@@ -381,7 +384,7 @@ public partial class Investigations : ComponentBase
                     var incompleteCount = incompleteInterviews.Count;
                     var incompleteList = string.Join(", ", incompleteInterviews.Select(i => $"{i.Code} ({i.Status.Name})"));
                     
-                    ShowErrorNotification($"Cannot set investigation status to Complete. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first.");
+                    await NotificationHelper.ShowErrorAsync($"Cannot set investigation status to Complete. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first.");
                     
                     // Reset the status back to previous value
                     InvestigationStatusId = InvestigationEntity.Status.Value;
@@ -412,13 +415,13 @@ public partial class Investigations : ComponentBase
                 // For other decisions, just save normally
                 await SaveInvestigation();
                 showDecisionForm = false;
-                ShowSuccessNotification("Investigation decision recorded");
+                await NotificationHelper.ShowSuccessAsync("Investigation decision recorded");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error recording investigation decision");
-            ShowErrorNotification($"Error recording decision: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"Error recording decision: {ex.Message}");
         }
     }
 
@@ -435,7 +438,7 @@ public partial class Investigations : ComponentBase
                 var incompleteCount = incompleteInterviews.Count;
                 var incompleteList = string.Join(", ", incompleteInterviews.Select(i => $"{i.Code} ({i.Status.Name})"));
                 
-                ShowErrorNotification($"Cannot complete investigation and return to validation. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first.");
+                await NotificationHelper.ShowErrorAsync($"Cannot complete investigation and return to validation. {incompleteCount} interview(s) are still incomplete: {incompleteList}. Please complete or close all interviews first.");
                 
                 // Switch to interviews tab to show the incomplete interviews
                 selectedTabIndex = 1; // Assuming interviews tab is index 1
@@ -473,7 +476,7 @@ public partial class Investigations : ComponentBase
                     {
                         Logger.LogError("Could not find ReportCode for Investigation {Code} with HazardCode {HazardCode}",
                             InvestigationEntity.Code, InvestigationEntity.HazardCode);
-                        ShowErrorNotification("Error: Could not find associated report for validation reset. Please contact administrator.");
+                        await NotificationHelper.ShowErrorAsync("Error: Could not find associated report for validation reset. Please contact administrator.");
                         return;
                     }
                 }
@@ -481,18 +484,18 @@ public partial class Investigations : ComponentBase
                 {
                     Logger.LogError("Could not load hazards for Investigation {Code} with HazardCode {HazardCode}",
                         InvestigationEntity.Code, InvestigationEntity.HazardCode);
-                    ShowErrorNotification("Error: Could not find associated report for validation reset. Please contact administrator.");
+                    await NotificationHelper.ShowErrorAsync("Error: Could not find associated report for validation reset. Please contact administrator.");
                     return;
                 }
             }
             else
             {
                 Logger.LogError("Cannot reset ReportValidation: Investigation {Code} has no ReportCode or HazardCode", InvestigationEntity.Code);
-                ShowErrorNotification("Warning: Investigation has no associated report code or hazard code. Manual validation reset may be required.");
+                await NotificationHelper.ShowErrorAsync("Warning: Investigation has no associated report code or hazard code. Manual validation reset may be required.");
             }
 
             showDecisionForm = false;
-            ShowSuccessNotification("Investigation completed and returned to validation workflow");
+            await NotificationHelper.ShowSuccessAsync("Investigation completed and returned to validation workflow");
 
             // Show completion dialog with next steps
             var message = "Investigation has been completed and the report has been returned to the validation workflow.\n\n";
@@ -506,7 +509,7 @@ public partial class Investigations : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in Return to Validation workflow for Investigation: {Code}", InvestigationEntity.Code);
-            ShowErrorNotification($"Error processing return to validation: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"Error processing return to validation: {ex.Message}");
         }
     }
     private async Task ResetReportValidation(string reportCode)
@@ -634,28 +637,11 @@ public partial class Investigations : ComponentBase
         var getupdateResult = await Mediator.SendAsync(updatestatuscmd, CancellationToken.None);
         if (!getupdateResult.IsSuccess)
         {
-            ShowErrorNotification($"Report{reportcode} Status Was not Updated");
+            await NotificationHelper.ShowErrorAsync($"Report{reportcode} Status Was not Updated");
             return false;
         }
         return true;
     }
-
-    #region Notification Methods
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message, 7000);
-    }
-
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationHelper.ShowSuccess(NotificationService, message, 5000);
-    }
-
-    private void ShowInfoNotification(string message)
-    {
-        NotificationHelper.ShowInfo(NotificationService, message, 5000);
-    }
-    #endregion
 
     #region Tab Handling
     private void OnTabSelect(int index)
@@ -715,7 +701,7 @@ public partial class Investigations : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Unexpected error during return to validation for investigation {Code}", InvestigationEntity?.Code);
-            ShowErrorNotification($"An unexpected error occurred: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"An unexpected error occurred: {ex.Message}");
         }
         finally
         {
@@ -764,7 +750,7 @@ public partial class Investigations : ComponentBase
         InvestigationEntity.DecisionDate = null;
         StateHasChanged();
 
-        ShowSuccessNotification("Decision opened for editing. Make your changes and click 'Record Decision' to save.");
+        NotificationHelper.ShowSuccessAsync("Decision opened for editing. Make your changes and click 'Record Decision' to save.");
     }
     #endregion
 
@@ -802,7 +788,7 @@ public partial class Investigations : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error validating interview completeness for investigation {Code}", InvestigationEntity?.Code);
-            ShowErrorNotification("Error checking interview status. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Error checking interview status. Please try again.");
             return new List<Interview>(); // Return empty list to allow operation but log the error
         }
     }

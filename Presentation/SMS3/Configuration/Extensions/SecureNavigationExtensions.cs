@@ -1,7 +1,7 @@
 using SMS3.Security;
 using SMS3.Components.Shared.UIHelpers;
 
-namespace SMS3.Extensions;
+namespace SMS3.Configuration.Extensions;
 
 /// <summary>
 /// Simple URL encryption extensions - encrypt any URL, decrypt it back

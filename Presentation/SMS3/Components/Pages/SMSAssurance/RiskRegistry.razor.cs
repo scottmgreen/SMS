@@ -20,7 +20,8 @@ public partial class RiskRegistry : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<RiskRegistry> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
 
     #endregion
 
@@ -140,7 +141,8 @@ public partial class RiskRegistry : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "❌ Error loading Risk Registry data");
-            ShowNotification(NotificationSeverity.Error, "Error loading Risk Registry data");
+            await NotificationHelper.ShowErrorAsync("Error loading Risk Registry data");
+
         }
         finally
         {
@@ -562,21 +564,7 @@ public partial class RiskRegistry : ComponentBase
 
     #endregion
 
-    #region Notification Helper
-
-    private void ShowNotification(NotificationSeverity severity, string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = severity,
-            Summary = severity.ToString(),
-            Detail = message,
-            Duration = 4000
-        });
-    }
-
-    #endregion
-
+  
     #region Data Models
 
     /// <summary>

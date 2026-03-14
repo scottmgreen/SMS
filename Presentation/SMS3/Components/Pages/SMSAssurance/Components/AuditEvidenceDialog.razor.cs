@@ -1,7 +1,11 @@
+using Radzen;
+
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
+
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
-using Radzen;
 
 namespace SMS3.Components.Pages.SMSAssurance.Components;
 
@@ -17,7 +21,8 @@ public partial class AuditEvidenceDialog : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AuditEvidenceDialog> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    
     [Inject] private DialogService DialogService { get; set; } = default!;
     #endregion
 
@@ -96,7 +101,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error submitting evidence");
-            ShowErrorNotification("Error saving evidence");
+            ShowErrorAsyncNotification("Error saving evidence");
         }
         finally
         {
@@ -127,19 +132,19 @@ public partial class AuditEvidenceDialog : ComponentBase
             ViewModel.FileSize = 1024000; // 1MB simulation
             ViewModel.ContentType = "application/pdf";
 
-            ShowSuccessNotification("File uploaded successfully");
+            ShowSuccessAsyncNotification("File uploaded successfully");
             StateHasChanged();
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error processing uploaded file");
-            ShowErrorNotification("Error processing uploaded file");
+            ShowErrorAsyncNotification("Error processing uploaded file");
         }
     }
 
     private void OnFileUploadError(UploadErrorEventArgs args)
     {
-        ShowErrorNotification($"File upload failed: {args.Message}");
+        ShowErrorAsyncNotification($"File upload failed: {args.Message}");
     }
 
     private async Task OnDownloadFile()
@@ -148,12 +153,12 @@ public partial class AuditEvidenceDialog : ComponentBase
         {
             // In a real implementation, you would trigger the file download
             // For now, just show a notification
-            ShowSuccessNotification("File download would start here");
+            ShowSuccessAsyncNotification("File download would start here");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error downloading file");
-            ShowErrorNotification("Error downloading file");
+            ShowErrorAsyncNotification("Error downloading file");
         }
     }
     #endregion
@@ -164,7 +169,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         try
         {
             // For now, just show success since the commands don't exist yet
-            ShowSuccessNotification("Evidence creation feature will be implemented when command handlers are ready");
+            ShowSuccessAsyncNotification("Evidence creation feature will be implemented when command handlers are ready");
 
             // TODO: Implement when CreateSMSAuditEvidenceCommand is available
             /*
@@ -183,12 +188,12 @@ public partial class AuditEvidenceDialog : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("Evidence uploaded successfully");
+                ShowSuccessAsyncNotification("Evidence uploaded successfully");
                 DialogService.Close(result.Value);
             }
             else
             {
-                ShowErrorNotification($"Failed to upload evidence: {result.Error?.Message}");
+                ShowErrorAsyncNotification($"Failed to upload evidence: {result.Error?.Message}");
             }
             */
 
@@ -197,7 +202,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error creating evidence");
-            ShowErrorNotification("Error uploading evidence");
+            ShowErrorAsyncNotification("Error uploading evidence");
         }
     }
 
@@ -206,7 +211,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         try
         {
             // For now, just show success since the commands don't exist yet
-            ShowSuccessNotification("Evidence update feature will be implemented when command handlers are ready");
+            ShowSuccessAsyncNotification("Evidence update feature will be implemented when command handlers are ready");
 
             // TODO: Implement when UpdateSMSAuditEvidenceCommand is available
             /*
@@ -226,12 +231,12 @@ public partial class AuditEvidenceDialog : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification("Evidence updated successfully");
+                ShowSuccessAsyncNotification("Evidence updated successfully");
                 DialogService.Close(result.Value);
             }
             else
             {
-                ShowErrorNotification($"Failed to update evidence: {result.Error?.Message}");
+                ShowErrorAsyncNotification($"Failed to update evidence: {result.Error?.Message}");
             }
             */
 
@@ -240,7 +245,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating evidence");
-            ShowErrorNotification("Error updating evidence");
+            ShowErrorAsyncNotification("Error updating evidence");
         }
     }
     #endregion
@@ -321,31 +326,31 @@ public partial class AuditEvidenceDialog : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(ViewModel.Title))
         {
-            ShowErrorNotification("Evidence title is required");
+            ShowErrorAsyncNotification("Evidence title is required");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(ViewModel.Description))
         {
-            ShowErrorNotification("Evidence description is required");
+            ShowErrorAsyncNotification("Evidence description is required");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(ViewModel.Source))
         {
-            ShowErrorNotification("Evidence source is required");
+            ShowErrorAsyncNotification("Evidence source is required");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(ViewModel.CollectedBy))
         {
-            ShowErrorNotification("Collector information is required");
+            ShowErrorAsyncNotification("Collector information is required");
             return false;
         }
 
         if (IsNew && string.IsNullOrEmpty(ViewModel.FilePath))
         {
-            ShowErrorNotification("Please upload a file");
+            ShowErrorAsyncNotification("Please upload a file");
             return false;
         }
 
@@ -354,14 +359,14 @@ public partial class AuditEvidenceDialog : ComponentBase
     #endregion
 
     #region Notification Methods
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message);
+        NotificationHelper.ShowSuccessAsync( message);
     }
 
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message);
+        NotificationHelper.ShowErrorAsync( message);
     }
     #endregion
 }

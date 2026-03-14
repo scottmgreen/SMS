@@ -1,6 +1,6 @@
 ﻿using SMS_Domain.Enums;
 using Radzen;
-using SMS_Shared.Configuration;
+using Microsoft.FeatureManagement;
 
 namespace SMS3.Components.Shared.UIHelpers;
 
@@ -356,64 +356,93 @@ public static class DropdownHelper
 }
 
 /// <summary>
-/// Centralized notification helper methods - simplified approach
+/// Interface for notification helper service
 /// </summary>
-public static class NotificationHelper
+public interface INotificationHelper
 {
-    /// <summary>
-    /// Show success notification
-    /// </summary>
-    public static void ShowSuccess(NotificationService notificationService, string message, int duration = 4000)
+    Task ShowSuccessAsync(string message, int duration = 4000);
+    Task ShowErrorAsync(string message, int duration = 6000);
+    Task ShowInfoAsync(string message, int duration = 4000);
+    Task ShowWarningAsync(string message, int duration = 5000);
+}
+
+/// <summary>
+/// Notification helper service with FeatureManagement integration
+/// </summary>
+public sealed class NotificationHelper : INotificationHelper
+{
+    private readonly IFeatureManager _featureManager;
+    private readonly NotificationService _notificationService;
+
+    // Feature flag names
+    private static class NotificationFeatures
     {
-        notificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = duration
-        });
+        public const string ErrorNotifications = "ErrorNotifications";
+        public const string SuccessNotifications = "SuccessNotifications";
+        public const string WarningNotifications = "WarningNotifications";
+        public const string InfoNotifications = "InfoNotifications";
     }
 
-    /// <summary>
-    /// Show error notification
-    /// </summary>
-    public static void ShowError(NotificationService notificationService, string message, int duration = 6000)
+    public NotificationHelper(IFeatureManager featureManager, NotificationService notificationService)
     {
-        notificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = duration
-        });
+        _featureManager = featureManager ?? throw new ArgumentNullException(nameof(featureManager));
+        _notificationService = notificationService ?? throw new ArgumentNullException(nameof(notificationService));
     }
 
-    /// <summary>
-    /// Show info notification
-    /// </summary>
-    public static void ShowInfo(NotificationService notificationService, string message, int duration = 4000)
+    public async Task ShowSuccessAsync(string message, int duration = 4000)
     {
-        notificationService.Notify(new NotificationMessage
+        if (await _featureManager.IsEnabledAsync(NotificationFeatures.SuccessNotifications))
         {
-            Severity = NotificationSeverity.Info,
-            Summary = "Information",
-            Detail = message,
-            Duration = duration
-        });
+            _notificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Success",
+                Detail = message,
+                Duration = duration
+            });
+        }
     }
 
-    /// <summary>
-    /// Show warning notification
-    /// </summary>
-    public static void ShowWarning(NotificationService notificationService, string message, int duration = 5000)
+    public async Task ShowErrorAsync(string message, int duration = 6000)
     {
-        notificationService.Notify(new NotificationMessage
+        if (await _featureManager.IsEnabledAsync(NotificationFeatures.ErrorNotifications))
         {
-            Severity = NotificationSeverity.Warning,
-            Summary = "Warning",
-            Detail = message,
-            Duration = duration
-        });
+            _notificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Error",
+                Detail = message,
+                Duration = duration
+            });
+        }
+    }
+
+    public async Task ShowInfoAsync(string message, int duration = 4000)
+    {
+        if (await _featureManager.IsEnabledAsync(NotificationFeatures.InfoNotifications))
+        {
+            _notificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Info,
+                Summary = "Information",
+                Detail = message,
+                Duration = duration
+            });
+        }
+    }
+
+    public async Task ShowWarningAsync(string message, int duration = 5000)
+    {
+        if (await _featureManager.IsEnabledAsync(NotificationFeatures.WarningNotifications))
+        {
+            _notificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Warning,
+                Summary = "Warning",
+                Detail = message,
+                Duration = duration
+            });
+        }
     }
 }
 

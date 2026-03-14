@@ -15,7 +15,7 @@ public partial class AuditDialog : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AuditDialog> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     #endregion
 
@@ -209,13 +209,13 @@ public partial class AuditDialog : ComponentBase
                 if (result.IsSuccess)
                 {
                     Logger.LogInformation("Audit created successfully: {Code}", Code);
-                    ShowSuccessNotification("Audit created successfully");
+                    NotificationHelper.ShowSuccessAsync("Audit created successfully");
                     DialogService.Close(true);
                 }
                 else
                 {
                     Logger.LogError("Failed to create audit: {Error}", result.Error?.Message);
-                    ShowErrorNotification($"Failed to create audit: {result.Error?.Message}");
+                    NotificationHelper.ShowErrorAsync($"Failed to create audit: {result.Error?.Message}");
                 }
             }
             else
@@ -250,20 +250,20 @@ public partial class AuditDialog : ComponentBase
                 if (result.IsSuccess)
                 {
                     Logger.LogInformation("Audit updated successfully: {Code}", Code);
-                    ShowSuccessNotification("Audit updated successfully");
+                    await NotificationHelper.ShowSuccessAsync("Audit updated successfully");
                     DialogService.Close(true);
                 }
                 else
                 {
                     Logger.LogError("Failed to update audit: {Error}", result.Error?.Message);
-                    ShowErrorNotification($"Failed to update audit: {result.Error?.Message}");
+                    await NotificationHelper.ShowErrorAsync($"Failed to update audit: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error saving audit");
-            ShowErrorNotification("Error saving audit");
+            await NotificationHelper.ShowErrorAsync("Error saving audit");
         }
         finally
         {
@@ -353,17 +353,5 @@ public partial class AuditDialog : ComponentBase
     }
 
     private bool ShowActualDates => Status == "In Progress" || Status == "Completed";
-    #endregion
-
-    #region Notification Methods
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationHelper.ShowSuccess(NotificationService, message);
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationHelper.ShowError(NotificationService, message);
-    }
     #endregion
 }

@@ -14,7 +14,7 @@ using System.Net.Sockets;
 
 using Microsoft.AspNetCore.Http;
 
-namespace SMS_Infrastructure.Configuration;
+namespace Infrastructure.Configuration.Middleware;
 public class ConnectionInfoMiddleware
 {
     private static readonly ConcurrentDictionary<string, (string connectionid, string ip, string host)> ConnectionInfoMap = new();

@@ -1,18 +1,25 @@
-using Microsoft.AspNetCore.Components;
-using System.Reflection;
 using System.Diagnostics;
-using SMS3.Components.Shared.UIHelpers;
+using System.Reflection;
+
+using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
+
 using Radzen;
-using SysIO = System.IO;
+
+using SMS_Shared.Configuration;
+
+using SMS3.Components.Shared.UIHelpers;
+
 using SysEnv = System.Environment;
+using SysIO = System.IO;
 using SysText = System.Text;
 
 namespace SMS3.Components.Pages;
 
 public partial class About : ComponentBase
 {
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
 
     // Page Header Properties
@@ -306,14 +313,12 @@ public partial class About : ComponentBase
             var memoryUsage = GC.GetTotalMemory(false) / (1024 * 1024); // MB
             
             healthStatus += $" | Memory: {memoryUsage:F0} MB";
-            
-            NotificationHelper.ShowSuccess(NotificationService, 
-                $"System Health Check Complete: {healthStatus}", 5000);
+
+            await NotificationHelper.ShowSuccessAsync($"System Health Check Complete: {healthStatus}", 5000);
         }
         catch (Exception ex)
         {
-            NotificationHelper.ShowError(NotificationService, 
-                $"Health check failed: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"Health check failed: {ex.Message}");
         }
     }
 
@@ -323,14 +328,12 @@ public partial class About : ComponentBase
         {
             var versionInfo = BuildVersionInfoText();
             await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", versionInfo);
-            
-            NotificationHelper.ShowSuccess(NotificationService, 
-                "Version information copied to clipboard", 3000);
+
+            await NotificationHelper.ShowSuccessAsync("Version information copied to clipboard", 3000);
         }
         catch (Exception ex)
         {
-            NotificationHelper.ShowError(NotificationService, 
-                $"Failed to copy version info: {ex.Message}");
+            await NotificationHelper.ShowErrorAsync($"Failed to copy version info: {ex.Message}");
         }
     }
 

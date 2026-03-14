@@ -1,3 +1,5 @@
+using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
@@ -12,7 +14,8 @@ public partial class AirportSharedDataset : ComponentBase
     #region Injected Services
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    
     [Inject] private ILogger<AirportSharedDataset> Logger { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
@@ -71,7 +74,7 @@ public partial class AirportSharedDataset : ComponentBase
 
             if (string.IsNullOrWhiteSpace(ReportId))
             {
-                ShowErrorNotification("Report ID is required for dataset creation");
+                ShowErrorAsyncNotification("Report ID is required for dataset creation");
                 Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
                 return;
             }
@@ -114,7 +117,7 @@ public partial class AirportSharedDataset : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading dataset page for Report: {ReportId}", ReportId);
-            ShowErrorNotification("Error loading dataset page");
+            ShowErrorAsyncNotification("Error loading dataset page");
         }
         finally
         {
@@ -290,13 +293,13 @@ public partial class AirportSharedDataset : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Airport Shared Dataset {dataset.Code} created successfully!");
+                ShowSuccessAsyncNotification($"Airport Shared Dataset {dataset.Code} created successfully!");
                 Logger.LogInformation("Created Airport Shared Dataset: {DatasetId} for Report: {ReportId}",
                     dataset.Code, ReportId);
             }
             else
             {
-                ShowErrorNotification($"Failed to create dataset: {result.Error?.Message}");
+                ShowErrorAsyncNotification($"Failed to create dataset: {result.Error?.Message}");
                 Logger.LogError("Failed to create Airport Shared Dataset for Report: {ReportId}, Error: {Error}",
                     ReportId, result.Error?.Message);
             }
@@ -304,7 +307,7 @@ public partial class AirportSharedDataset : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error saving Airport Shared Dataset for Report: {ReportId}", ReportId);
-            ShowErrorNotification("Error saving dataset");
+            ShowErrorAsyncNotification("Error saving dataset");
         }
         finally
         {
@@ -364,19 +367,19 @@ public partial class AirportSharedDataset : ComponentBase
     {
         if (Model.DateTime == default)
         {
-            ShowErrorNotification("Date and Time is required");
+            ShowErrorAsyncNotification("Date and Time is required");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(Model.Location))
         {
-            ShowErrorNotification("Location is required");
+            ShowErrorAsyncNotification("Location is required");
             return false;
         }
 
         if (Model.Location == "Other" && string.IsNullOrWhiteSpace(Model.LocationOther))
         {
-            ShowErrorNotification("Please specify the other location");
+            ShowErrorAsyncNotification("Please specify the other location");
             return false;
         }
 
@@ -407,14 +410,14 @@ public partial class AirportSharedDataset : ComponentBase
     #endregion
 
     #region Notifications
-    private void ShowSuccessNotification(string message)
+    private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccess(NotificationService, message);
+        NotificationHelper.ShowSuccessAsync( message);
     }
 
-    private void ShowErrorNotification(string message)
+    private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowError(NotificationService, message);
+        NotificationHelper.ShowErrorAsync( message);
     }
     #endregion
 

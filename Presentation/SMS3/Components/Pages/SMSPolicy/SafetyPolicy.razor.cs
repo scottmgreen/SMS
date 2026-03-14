@@ -1,5 +1,6 @@
 using Microsoft.JSInterop;
-using SMS3.Extensions;
+
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSPolicy;
 

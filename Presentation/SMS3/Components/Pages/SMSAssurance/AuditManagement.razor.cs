@@ -1,3 +1,5 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.SMSAssurance;
 
 public partial class AuditManagement : ComponentBase
@@ -6,7 +8,7 @@ public partial class AuditManagement : ComponentBase
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AuditManagement> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     #endregion
@@ -77,7 +79,7 @@ public partial class AuditManagement : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading Audit Management dashboard data");
-            ShowErrorNotification("Error loading audit management data");
+            await NotificationHelper.ShowErrorAsync("Error loading audit management data");
         }
         finally
         {
@@ -246,7 +248,7 @@ public partial class AuditManagement : ComponentBase
     private async Task RefreshDashboard()
     {
         await LoadDashboardDataAsync();
-        ShowSuccessNotification("Audit Management dashboard refreshed successfully");
+        await NotificationHelper.ShowSuccessAsync("Audit Management dashboard refreshed successfully");
     }
     #endregion
 
@@ -303,13 +305,13 @@ public partial class AuditManagement : ComponentBase
             {
                 // Refresh ALL dashboard data after creating a plan
                 await LoadDashboardDataAsync();
-                ShowSuccessNotification("Audit plan created successfully");
+                await NotificationHelper.ShowSuccessAsync("Audit plan created successfully");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error creating audit plan");
-            ShowErrorNotification("Error creating audit plan");
+            await NotificationHelper.ShowErrorAsync("Error creating audit plan");
         }
     }
 
@@ -329,13 +331,13 @@ public partial class AuditManagement : ComponentBase
             {
                 // Refresh ALL dashboard data after editing a plan
                 await LoadDashboardDataAsync();
-                ShowSuccessNotification("Audit plan updated successfully");
+                await NotificationHelper.ShowSuccessAsync("Audit plan updated successfully");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error editing audit plan");
-            ShowErrorNotification("Error updating audit plan");
+            await NotificationHelper.ShowErrorAsync("Error updating audit plan");
         }
     }
 
@@ -368,7 +370,7 @@ public partial class AuditManagement : ComponentBase
 
                 if (updateResult.IsFailure)
                 {
-                    ShowErrorNotification($"Failed to update audit plan status: {updateResult.Error?.Message}");
+                    await NotificationHelper.ShowErrorAsync($"Failed to update audit plan status: {updateResult.Error?.Message}");
                     return;
                 }
 
@@ -391,18 +393,18 @@ public partial class AuditManagement : ComponentBase
                 {
                     // Refresh ALL dashboard data after scheduling
                     await LoadDashboardDataAsync();
-                    ShowSuccessNotification($"Audit '{plan.Name}' has been scheduled successfully and audit record created!");
+                    await NotificationHelper.ShowSuccessAsync($"Audit '{plan.Name}' has been scheduled successfully and audit record created!");
                 }
                 else
                 {
-                    ShowErrorNotification($"Failed to create audit record: {createAuditResult.Error?.Message}");
+                    await NotificationHelper.ShowErrorAsync($"Failed to create audit record: {createAuditResult.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error scheduling audit from plan: {PlanCode}", plan.Code);
-            ShowErrorNotification("Error scheduling audit");
+            await NotificationHelper.ShowErrorAsync("Error scheduling audit");
         }
     }
 
@@ -424,18 +426,18 @@ public partial class AuditManagement : ComponentBase
                 {
                     // Refresh ALL dashboard data after deleting a plan
                     await LoadDashboardDataAsync();
-                    ShowSuccessNotification("Audit plan deleted successfully");
+                    await NotificationHelper.ShowSuccessAsync("Audit plan deleted successfully");
                 }
                 else
                 {
-                    ShowErrorNotification($"Failed to delete audit plan: {result.Error?.Message}");
+                    await NotificationHelper.ShowErrorAsync($"Failed to delete audit plan: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error deleting audit plan");
-            ShowErrorNotification("Error deleting audit plan");
+            await NotificationHelper.ShowErrorAsync("Error deleting audit plan");
         }
     }
 
@@ -455,17 +457,17 @@ public partial class AuditManagement : ComponentBase
             {
                 // Refresh ALL dashboard data after starting an audit
                 await LoadDashboardDataAsync();
-                ShowSuccessNotification("Audit started successfully");
+                await NotificationHelper.ShowSuccessAsync("Audit started successfully");
             }
             else
             {
-                ShowErrorNotification($"Failed to start audit: {result.Error?.Message}");
+                await NotificationHelper.ShowErrorAsync($"Failed to start audit: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error starting audit");
-            ShowErrorNotification("Error starting audit");
+            await NotificationHelper.ShowErrorAsync("Error starting audit");
         }
     }
     #endregion
@@ -606,30 +608,6 @@ public partial class AuditManagement : ComponentBase
         if (timeSpan.TotalDays < 1) return "Due today";
         if (timeSpan.TotalDays < 7) return $"{Math.Ceiling(timeSpan.TotalDays)} days";
         return $"{Math.Ceiling(timeSpan.TotalDays / 7)} weeks";
-    }
-    #endregion
-
-    #region Notification Methods
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
     }
     #endregion
 
@@ -798,7 +776,7 @@ public partial class AuditManagement : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error applying filters");
-            ShowErrorNotification("Error applying filters");
+            NotificationHelper.ShowErrorAsync("Error applying filters");
         }
     }
     #endregion

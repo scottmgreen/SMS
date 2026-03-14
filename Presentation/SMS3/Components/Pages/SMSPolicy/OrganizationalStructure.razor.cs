@@ -1,3 +1,5 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.SMSPolicy;
 
 public partial class OrganizationalStructure : ComponentBase
@@ -5,7 +7,7 @@ public partial class OrganizationalStructure : ComponentBase
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<OrganizationalStructure> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
 
     // Data Properties
@@ -59,7 +61,7 @@ public partial class OrganizationalStructure : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading organizational structure data");
-            ShowErrorNotification("Error loading organizational structure data. Please refresh the page.");
+            await NotificationHelper.ShowErrorAsync("Error loading organizational structure data. Please refresh the page.");
         }
         finally
         {
@@ -139,7 +141,7 @@ public partial class OrganizationalStructure : ComponentBase
     {
         if (SelectedLevelForAssignment == null || string.IsNullOrEmpty(SelectedUserForAssignment))
         {
-            ShowErrorNotification("Please select a user to assign.");
+            await NotificationHelper.ShowErrorAsync("Please select a user to assign.");
             return;
         }
 
@@ -152,7 +154,7 @@ public partial class OrganizationalStructure : ComponentBase
             var user = UnassignedUsers.FirstOrDefault(u => u.Code == SelectedUserForAssignment);
             if (user == null)
             {
-                ShowErrorNotification("Selected user not found.");
+                await NotificationHelper.ShowErrorAsync("Selected user not found.");
                 return;
             }
 
@@ -165,19 +167,19 @@ public partial class OrganizationalStructure : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessNotification($"Successfully assigned {user.DisplayName} to {SelectedLevelForAssignment.Name}.");
+                await NotificationHelper.ShowSuccessAsync($"Successfully assigned {user.DisplayName} to {SelectedLevelForAssignment.Name}.");
                 CloseAssignmentModal();
                 await LoadDataAsync(); // Refresh the data
             }
             else
             {
-                ShowErrorNotification(result.Error?.Message ?? "Failed to assign user to organizational level.");
+                await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to assign user to organizational level.");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error assigning user to organizational level");
-            ShowErrorNotification("Error assigning user. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Error assigning user. Please try again.");
         }
         finally
         {
@@ -210,19 +212,19 @@ public partial class OrganizationalStructure : ComponentBase
 
                 if (updateResult.IsSuccess)
                 {
-                    ShowSuccessNotification($"Successfully removed {user.DisplayName} from organizational level.");
+                    await NotificationHelper.ShowSuccessAsync($"Successfully removed {user.DisplayName} from organizational level.");
                     await LoadDataAsync(); // Refresh the data
                 }
                 else
                 {
-                    ShowErrorNotification(updateResult.Error?.Message ?? "Failed to remove user from organizational level.");
+                    await NotificationHelper.ShowErrorAsync(updateResult.Error?.Message ?? "Failed to remove user from organizational level.");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error removing user from organizational level");
-            ShowErrorNotification("Error removing user. Please try again.");
+            await NotificationHelper.ShowErrorAsync("Error removing user. Please try again.");
         }
         finally
         {
@@ -495,32 +497,7 @@ public partial class OrganizationalStructure : ComponentBase
 
     #endregion
 
-    #region Notification Methods
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
-    }
-
-    private void ShowSuccessNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Success,
-            Summary = "Success",
-            Detail = message,
-            Duration = 4000
-        });
-    }
-
-    #endregion
-
+   
     #region Enhanced Models
 
     public class SMSOrganizationalLevelInfo

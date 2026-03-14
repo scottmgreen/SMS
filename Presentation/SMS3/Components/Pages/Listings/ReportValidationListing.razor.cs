@@ -1,10 +1,13 @@
+using SMS3.Components.Shared.UIHelpers;
+
 namespace SMS3.Components.Pages.Listings;
 
 public partial class ReportValidationListing : ComponentBase
 {
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<ReportValidationListing> Logger { get; set; } = default!;
-    [Inject] private NotificationService NotificationService { get; set; } = default!;
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    
 
     private RadzenDataGrid<ReportValidation>? validationsGrid;
     private IEnumerable<ReportValidation> validations = new List<ReportValidation>();
@@ -31,14 +34,14 @@ public partial class ReportValidationListing : ComponentBase
             }
             else
             {
-                ShowErrorNotification("Failed to load report validations");
+                await NotificationHelper.ShowErrorAsync("Failed to load report validations");
                 Logger.LogError("Failed to load report validations: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading report validations");
-            ShowErrorNotification("Error loading report validations");
+            await NotificationHelper.ShowErrorAsync("Error loading report validations");
         }
     }
 
@@ -76,7 +79,7 @@ public partial class ReportValidationListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in LoadData");
-            ShowErrorNotification("Error loading data");
+            await NotificationHelper.ShowErrorAsync("Error loading data");
         }
         finally
         {
@@ -96,16 +99,5 @@ public partial class ReportValidationListing : ComponentBase
     private void ShowActions(ReportValidation validation)
     {
         Logger.LogInformation("Actions requested for report validation: {Code}", validation.Code);
-    }
-
-    private void ShowErrorNotification(string message)
-    {
-        NotificationService.Notify(new NotificationMessage
-        {
-            Severity = NotificationSeverity.Error,
-            Summary = "Error",
-            Detail = message,
-            Duration = 6000
-        });
     }
 }
