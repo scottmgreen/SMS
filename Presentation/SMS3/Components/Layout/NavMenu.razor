@@ -142,48 +142,16 @@
                         </div>
                     }
 
-                    <!-- Session Timer -->
-                    @* <div class="nav-item me-3">
-                        <span class="text-white small">Session: @SessionDurationDisplay</span>
-                    </div> *@
-
+                   
                     <!-- User Profile Menu -->
                     <div class="nav-item">
-                        <RadzenProfileMenu class="sms-profile-menu">
-                            <Template>
-                                <div class="d-flex align-items-center p-2 user-profile-template" style="cursor: pointer;">
-                                    <div class="d-flex flex-column align-items-start">
-                                        <small class="mb-0 fw-bold text-white">@CurrentUserService?.UserDisplayName</small>
-                                        <small class="text-white opacity-75">@CurrentUserService?.UserType User</small>
-                                    </div>
-                                </div>
-                            </Template>
-                            <ChildContent>
-                                <!-- CUSTOM USER PROFILE MODAL TRIGGER -->
-                                <div class="rz-menuitem">
-                                    <RadzenButton Text="My Profile & Permissions"
-                                                  Icon="account_circle"
-                                                  ButtonStyle="ButtonStyle.Success"
-                                                  Variant="Variant.Text"
-                                                  Click="@ShowUserProfileModal"
-                                                  Style="width: 100%; justify-content: flex-start;" />
-                                </div>
-                                <div class="rz-separator"></div>
-                                <RadzenProfileMenuItem Text="My Dashboard" Value='"/dashboard"' Icon="dashboard" />
-                                <RadzenProfileMenuItem Text="Help" Value='"/Help"' Icon="help" />
-                                <RadzenProfileMenuItem Text="About" Value='"/About"' Icon="info" />
-                                <div class="rz-separator"></div>
-                                <!-- Custom Logout -->
-                                <div class="rz-menuitem">
-                                    <RadzenButton Text="Logout"
-                                                  Icon="logout"
-                                                  ButtonStyle="ButtonStyle.Primary"
-                                                  Variant="Variant.Text"
-                                                  Click="@OnLogoutClick"
-                                                  Style="width: 100%; justify-content: flex-start;" />
-                                </div>
-                            </ChildContent>
-                        </RadzenProfileMenu>
+                        <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                            <RadzenMenuItem Text="@CurrentUserService?.UserDisplayName" Icon="person" class="sms-menu-item">
+                                <RadzenMenuItem Text="Role & Permissions" Icon="account_circle" Click="@ShowUserProfileModal" />
+                                <RadzenMenuItem Text="About" Icon="info" Value='"/About"' />
+                                <RadzenMenuItem Text="Logout" Icon="logout" Click="@OnLogoutClick" />
+                            </RadzenMenuItem>
+                        </RadzenMenu>
                     </div>
                 </div>
             }
@@ -296,6 +264,15 @@
     {
         await OnLogoutRequested.InvokeAsync();
         _cancellationTokenSource?.Cancel();
+    }
+
+    /// <summary>
+    /// Navigate to About page using secure navigation
+    /// </summary>
+    private void NavigateToAbout()
+    {
+        Logger.LogInformation("Navigating to About page via secure navigation");
+        Navigation.NavigateToSecure("/About");
     }
 
     // **🔥 USER PROFILE MODAL - USING COMPONENT**

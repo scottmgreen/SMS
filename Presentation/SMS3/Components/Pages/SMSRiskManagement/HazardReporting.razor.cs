@@ -6,6 +6,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -428,7 +429,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             NotificationHelper.ShowErrorAsync( "Failed to load report for editing. Redirecting to Reports page.", 5000);
             
             // Redirect back to reports on failure
-            Navigation.NavigateTo("/SMSRiskManagement/Reports");
+            Navigation.NavigateToSecure("/SMSRiskManagement/Reports");
         }
         finally
         {
@@ -822,7 +823,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         if (IsEditMode)
         {
             // In edit mode, redirect back to Reports page
-            Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+            Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
         }
         else
         {
@@ -861,7 +862,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             ShowSubmissionConfirmation = false;
             ShowFinalSuccessConfirmation = false;
 
-            Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+            Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
         }
     }
     

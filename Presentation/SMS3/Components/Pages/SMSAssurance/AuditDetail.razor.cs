@@ -6,6 +6,7 @@ using SMS_Domain.Enums;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSAssurance;
 
@@ -46,7 +47,7 @@ public partial class AuditDetail : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(AuditCode))
         {
-            Navigation.NavigateTo("/SMSAssurance/AuditManagement");
+            Navigation.NavigateToSecure("/SMSAssurance/AuditManagement");
             return;
         }
 
@@ -102,7 +103,7 @@ public partial class AuditDetail : ComponentBase
             {
                 Logger.LogWarning("Audit not found: {AuditCode}", AuditCode);
                 ShowErrorAsyncNotification("Audit not found");
-                Navigation.NavigateTo("/SMSAssurance/AuditManagement");
+                Navigation.NavigateToSecure("/SMSAssurance/AuditManagement");
             }
         }
         catch (Exception ex)
@@ -674,17 +675,17 @@ public partial class AuditDetail : ComponentBase
     #region Navigation Methods
     private void NavigateToAuditManagement()
     {
-        Navigation.NavigateTo("/SMSAssurance/AuditManagement");
+        Navigation.NavigateToSecure("/SMSAssurance/AuditManagement");
     }
 
     private void NavigateToFindings()
     {
-        Navigation.NavigateTo("/SMSAssurance/AuditFindings");
+        Navigation.NavigateToSecure("/SMSAssurance/AuditFindings");
     }
 
     private void NavigateToEvidence()
     {
-        Navigation.NavigateTo("/SMSAssurance/AuditEvidence");
+        Navigation.NavigateToSecure("/SMSAssurance/AuditEvidence");
     }
 
     private async Task GenerateReport()

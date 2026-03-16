@@ -3,10 +3,6 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 /// <summary>
 /// Shared data models for SMS Risk Management pages
 /// </summary>
-public static class SMSRiskManagementModels
-{
-    // This file contains shared model classes used by HazardReporting and ConfidentialReporting pages
-}
 
 #region Core Shared Models
 
@@ -64,10 +60,3 @@ public class AttachedFile
 
 #endregion
 
-#region Confidential Reporting Specific Models
-
-
-
-
-
-#endregion

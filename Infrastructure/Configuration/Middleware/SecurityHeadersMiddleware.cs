@@ -140,40 +140,40 @@ namespace Infrastructure.Configuration.Middleware
             // Script sources - Blazor Server needs inline scripts and eval for SignalR
             if (isDevMode)
             {
-                // More permissive for development (includes CDNs and Browser Link)
-                cspBuilder.Add("script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com localhost:* 127.0.0.1:* *.visualstudio.com");
+                // More permissive for development (includes CDNs, Browser Link, and Map services)
+                cspBuilder.Add("script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com localhost:* 127.0.0.1:* *.visualstudio.com");
             }
             else
             {
-                // Production - allow common CDNs but be more restrictive
-                cspBuilder.Add("script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com");
+                // Production - allow common CDNs and Map services but be more restrictive
+                cspBuilder.Add("script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://unpkg.com");
             }
 
-            // Style sources - Blazor and Radzen need inline styles, plus CDNs
+            // Style sources - Blazor and Radzen need inline styles, plus CDNs and Map services
             if (isDevMode)
             {
-                cspBuilder.Add("style-src 'self' 'unsafe-inline' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com");
+                cspBuilder.Add("style-src 'self' 'unsafe-inline' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://unpkg.com");
             }
             else
             {
-                cspBuilder.Add("style-src 'self' 'unsafe-inline' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com");
+                cspBuilder.Add("style-src 'self' 'unsafe-inline' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com https://fonts.googleapis.com https://unpkg.com");
             }
 
             // Font sources - support web fonts and data URIs
             cspBuilder.Add("font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com");
 
-            // Image sources - support data URIs and blob for dynamic images
-            cspBuilder.Add("img-src 'self' data: blob:");
+            // Image sources - support data URIs and blob for dynamic images + map tiles
+            cspBuilder.Add("img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://server.arcgisonline.com https://*.arcgisonline.com");
 
-            // Connect sources - WebSocket connections for Blazor SignalR
+            // Connect sources - WebSocket connections for Blazor SignalR + Map services
             if (isDevMode)
             {
-                // Include Browser Link for development
-                cspBuilder.Add("connect-src 'self' ws: wss: http://localhost:* https://localhost:* *.visualstudio.com");
+                // Include Browser Link for development + Map services + Source maps
+                cspBuilder.Add("connect-src 'self' ws: wss: http://localhost:* https://localhost:* *.visualstudio.com https://cdn.jsdelivr.net https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://unpkg.com");
             }
             else
             {
-                cspBuilder.Add("connect-src 'self' ws: wss:");
+                cspBuilder.Add("connect-src 'self' ws: wss: https://cdn.jsdelivr.net https://nominatim.openstreetmap.org https://server.arcgisonline.com https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://unpkg.com");
             }
 
             // Media sources

@@ -30,68 +30,6 @@
 else if (ShowFinalSuccessConfirmation)
 {
     <!-- Final Success Modal -->
-    @* <div class="modal-overlay">
-        <div class="sms-modal-dialog sms-modal-submission">
-            <div class="sms-modal-content">
-                <div class="sms-modal-header sms-header-success">
-                    <h5 class="sms-modal-title">
-                        <i class="fas fa-check-circle"></i> Port of Portland Hazard Report Successfully Submitted!
-                    </h5>
-                </div>
-                <div class="sms-modal-body">
-
-                    <!-- Report Details -->
-                    <RadzenCard Variant="Variant.Outlined" Class="mb-3">
-                        <div class="p-3">
-                            <h6 class="text-primary mb-2">
-                                <i class="fas fa-info-circle"></i> Report Summary
-                            </h6>
-                            <div class="row">
-                                <div class="col-sm-4">
-                                    <strong>Tracking ID:</strong> @GeneratedTrackingId<br>
-                                    <strong>Hazard ID:</strong> @GeneratedHazardId<br>
-                                    <strong>Status:</strong> <RadzenBadge Text="Submitted" BadgeStyle="BadgeStyle.Success" />
-                                </div>
-                                <div class="col-sm-4">
-                                    <div class="text-center">
-                                        <RadzenFieldset Text="Track Report URL">
-                                            <RadzenQRCode Value="@GetTrackingUrl()" Size="120" />
-                                            <div class="small text-muted mt-2">
-                                                Scan to track your report
-                                            </div>
-                                        </RadzenFieldset>
-                                    </div>
-                                </div>
-                                <div class="col-sm-4">
-                                    <strong>Submitted:</strong> @SubmissionDateTime?.ToString("MM/dd/yyyy HH:mm")<br>
-                                    <strong>Anonymous:</strong> Yes<br>
-                                    <strong>Tracking URL:</strong><br>
-                                    <small class="text-break">@GetTrackingUrl()</small>
-                                </div>
-                            </div>
-                        </div>
-                    </RadzenCard>
-
-                    <!-- Action Buttons -->
-                    <div class="text-center">
-                        <div class="d-flex justify-content-center gap-3 flex-wrap">
-                            <RadzenButton ButtonStyle="ButtonStyle.Warning"
-                                          Click="PrintConfirmation"
-                                          Text="Print Details"
-                                          Icon="print"
-                                          Size="ButtonSize.Medium" />
-
-                            <RadzenButton ButtonStyle="ButtonStyle.Primary"
-                                          Click="CloseFinalConfirmation"
-                                          Text="Continue & Clear Form"
-                                          Icon="check"
-                                          Size="ButtonSize.Medium" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div> *@
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-submission">
             <div class="sms-modal-content">
@@ -165,12 +103,7 @@ else
             <RadzenCard>
                 <RadzenStack Gap="1rem" Class="rz-p-3">
                     <!-- Confidentiality Notice -->
-                    @* <RadzenAlert Size="AlertSize.Small" Variant="Variant.Flat">
-                        <strong>Confidential Protection:</strong> Your identity will be protected and access to this report will be restricted to authorized SMS personnel only.
-                        <br><strong>Benefits:</strong> Enhanced protection from retaliation, restricted access, anonymous follow-up options.
-                        <br><strong>Note:</strong> Confidential reports may take longer to process due to additional security measures.
-                    </RadzenAlert> *@
-
+                   
                     <RadzenTemplateForm Data="@HazardReport" Submit="@HandleFormSubmit" TItem="HazardReportForm">
                         <RadzenRow>
                             <RadzenColumn Size="3">
@@ -191,7 +124,7 @@ else
 
                             @if (!HazardReport.IsAnonymous)
                             {
-                                <RadzenCard>
+                                <RadzenCard Style="height:182px;">
                                     <RadzenColumn Size="3">
                                         <RadzenFormField AllowFloatingLabel="false" Text="Contact Name *" Variant="Variant.Outlined" Style="width: 100%;">
                                             <RadzenTextBox @bind-Value="@HazardReport.ReportContactName"
@@ -234,7 +167,7 @@ else
                                 HazardReport.ReportContactEmail = string.Empty;
                             }
 
-                            <RadzenCard>
+                            <RadzenCard Style="height:182px;">
                                 <RadzenColumn Size="2">
                                     <RadzenFormField Text="Submitted On *" Variant="Variant.Outlined">
                                         <RadzenDatePicker @bind-Value="@HazardReport.SubmittedDate"

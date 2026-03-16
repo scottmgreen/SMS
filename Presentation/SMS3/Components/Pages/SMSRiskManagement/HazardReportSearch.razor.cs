@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Components.Web;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -703,7 +704,7 @@ public partial class HazardReportSearch : ComponentBase
     public void ViewDetails(string trackingCode)
     {
         Logger.LogInformation("Navigating to details view for tracking code: {TrackingCode}", trackingCode);
-        Navigation.NavigateTo($"/SMSRiskManagement/HazardReportSearchResult/{trackingCode}");
+        Navigation.NavigateToSecure($"/SMSRiskManagement/HazardReportSearchResult/{trackingCode}");
     }
 
     #endregion

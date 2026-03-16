@@ -100,7 +100,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-text-disabled-color);" />
+                                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-danger);" />
                                                     <div><small class="text-muted">Denied</small></div>
                                                 }
                                             </div>
@@ -116,7 +116,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-text-disabled-color);" />
+                                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-danger);" />
                                                     <div><small class="text-muted">Denied</small></div>
                                                 }
                                             </div>
@@ -132,7 +132,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-text-disabled-color);" />
+                                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-danger);" />
                                                     <div><small class="text-muted">Denied</small></div>
                                                 }
                                             </div>
@@ -148,7 +148,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-text-disabled-color);" />
+                                                    <RadzenIcon Icon="cancel" Style="color: var(--rz-danger);" />
                                                     <div><small class="text-muted">Denied</small></div>
                                                 }
                                             </div>
@@ -223,8 +223,82 @@
                             </div>
                             @if (!string.IsNullOrEmpty(_permissionCheckResult))
                             {
-                                <div class="mt-2">
-                                    <RadzenText TextStyle="TextStyle.Body2">@_permissionCheckResult</RadzenText>
+                                <div class="mt-3 p-3 border rounded" style="background-color: var(--rz-base-50);">
+                                    <h6 class="mb-3"><i class="fas fa-shield-alt me-2"></i>Permission Check Results</h6>
+                                    @if (_checkedModulePermissions?.Any() == true)
+                                    {
+                                        @foreach (var perm in _checkedModulePermissions)
+                                        {
+                                            <div class="mb-3">
+                                                <strong>@perm.SMSModule</strong>
+                                                <div class="row mt-2">
+                                                    <div class="col-3">
+                                                        <div class="d-flex align-items-center">
+                                                            @if (perm.Create)
+                                                            {
+                                                                <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); margin-right: 8px;" />
+                                                                <small class="text-success">Create: Granted</small>
+                                                            }
+                                                            else
+                                                            {
+                                                                <RadzenIcon Icon="cancel" Style="color: var(--rz-danger); margin-right: 8px;" />
+                                                                <small class="text-muted">Create: Denied</small>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-3">
+                                                        <div class="d-flex align-items-center">
+                                                            @if (perm.Read)
+                                                            {
+                                                                <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); margin-right: 8px;" />
+                                                                <small class="text-success">Read: Granted</small>
+                                                            }
+                                                            else
+                                                            {
+                                                                <RadzenIcon Icon="cancel" Style="color: var(--rz-danger); margin-right: 8px;" />
+                                                                <small class="text-muted">Read: Denied</small>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-3">
+                                                        <div class="d-flex align-items-center">
+                                                            @if (perm.Update)
+                                                            {
+                                                                <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); margin-right: 8px;" />
+                                                                <small class="text-success">Update: Granted</small>
+                                                            }
+                                                            else
+                                                            {
+                                                                <RadzenIcon Icon="cancel" Style="color: var(--rz-danger); margin-right: 8px;" />
+                                                                <small class="text-muted">Update: Denied</small>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                    <div class="col-3">
+                                                        <div class="d-flex align-items-center">
+                                                            @if (perm.Delete)
+                                                            {
+                                                                <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); margin-right: 8px;" />
+                                                                <small class="text-success">Delete: Granted</small>
+                                                            }
+                                                            else
+                                                            {
+                                                                <RadzenIcon Icon="cancel" Style="color: var(--rz-danger); margin-right: 8px;" />
+                                                                <small class="text-muted">Delete: Denied</small>
+                                                            }
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        }
+                                    }
+                                    else
+                                    {
+                                        <div class="text-muted">
+                                            <RadzenIcon Icon="info" Style="margin-right: 8px;" />
+                                            @_permissionCheckResult
+                                        </div>
+                                    }
                                 </div>
                             }
                         </RadzenCard>
@@ -265,6 +339,7 @@
 
     private string _moduleToCheck = "";
     private string _permissionCheckResult = "";
+    private List<SMSUserRolePermission> _checkedModulePermissions = new();
 
     // Get unique modules from user permissions
     private string[] SMSModules
@@ -322,26 +397,19 @@
         if (string.IsNullOrEmpty(_moduleToCheck) || CurrentUserService?.Permissions == null)
         {
             _permissionCheckResult = "Please enter a module name.";
+            _checkedModulePermissions = new();
             return;
         }
 
-        var modulePermissions = CurrentUserService.Permissions.Where(p =>
-            p.SMSModule?.Contains(_moduleToCheck, StringComparison.OrdinalIgnoreCase) == true).ToList();
+        _checkedModulePermissions = CurrentUserService.Permissions
+            .Where(p => p.SMSModule?.Contains(_moduleToCheck, StringComparison.OrdinalIgnoreCase) == true)
+            .GroupBy(p => p.SMSModule) // Group by module name to eliminate duplicates
+            .Select(g => g.First()) // Take the first permission from each group
+            .ToList();
 
-        if (modulePermissions.Any())
+        if (_checkedModulePermissions.Any())
         {
-            var permissions = new List<string>();
-            foreach (var perm in modulePermissions)
-            {
-                var permList = new List<string>();
-                if (perm.Create) permList.Add("Create");
-                if (perm.Read) permList.Add("Read");
-                if (perm.Update) permList.Add("Update");
-                if (perm.Delete) permList.Add("Delete");
-
-                permissions.Add($"{perm.SMSModule}: {string.Join(", ", permList)}");
-            }
-            _permissionCheckResult = $"Found permissions: {string.Join("; ", permissions)}";
+            _permissionCheckResult = $"Found {_checkedModulePermissions.Count} module(s) matching '{_moduleToCheck}'";
         }
         else
         {

@@ -1,4 +1,5 @@
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSAssurance;
 
@@ -443,7 +444,7 @@ public partial class AuditManagement : ComponentBase
 
     private async Task ViewAudit(SMSAudit audit)
     {
-        Navigation.NavigateTo($"/SMSAssurance/AuditDetail/{audit.Code}");
+        Navigation.NavigateToSecure($"/SMSAssurance/AuditDetail/{audit.Code}");
     }
 
     private async Task StartAudit(SMSAudit audit)
@@ -476,36 +477,36 @@ public partial class AuditManagement : ComponentBase
     private void NavigateToAuditPlans()
     {
         // Navigate to the main audit management page with Audit Plans tab selected
-        Navigation.NavigateTo("/SMSAssurance/AuditManagement#audit-plans");
+        Navigation.NavigateToSecure("/SMSAssurance/AuditManagement#audit-plans");
     }
 
     private void NavigateToActiveAudits()
     {
         // Navigate to the main audit management page with Active Audits tab selected
-        Navigation.NavigateTo("/SMSAssurance/AuditManagement#active-audits");
+        Navigation.NavigateToSecure("/SMSAssurance/AuditManagement#active-audits");
     }
 
     private void NavigateToFindings()
     {
         // Navigate to audit finding management page (when implemented)
-        Navigation.NavigateTo("/SMSAssurance/AuditFindings");
+        Navigation.NavigateToSecure("/SMSAssurance/AuditFindings");
     }
 
     private void NavigateToEvidence()
     {
         // Navigate to audit evidence management page (when implemented)
-        Navigation.NavigateTo("/SMSAssurance/AuditEvidence");
+        Navigation.NavigateToSecure("/SMSAssurance/AuditEvidence");
     }
 
     private void NavigateToAuditReports()
     {
         // Navigate to audit reporting page (when implemented)
-        Navigation.NavigateTo("/SMSAssurance/AuditReports");
+        Navigation.NavigateToSecure("/SMSAssurance/AuditReports");
     }
 
     private void NavigateToFindingDetail(string findingCode)
     {
-        Navigation.NavigateTo($"/SMSAssurance/FindingDetail/{findingCode}");
+        Navigation.NavigateToSecure($"/SMSAssurance/FindingDetail/{findingCode}");
     }
     #endregion
 
@@ -732,7 +733,7 @@ public partial class AuditManagement : ComponentBase
     private void NavigateToOverdueAudits()
     {
         // Navigate to filtered audit view showing only overdue audits
-        Navigation.NavigateTo("/SMSAssurance/AuditManagement?status=Overdue");
+        Navigation.NavigateToSecure("/SMSAssurance/AuditManagement?status=Overdue");
     }
     #endregion
 

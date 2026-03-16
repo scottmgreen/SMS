@@ -122,7 +122,7 @@ public partial class Hazards : ComponentBase
     private void ShowCreateHazardDialog()
     {
         Logger.LogInformation("Navigate to create new hazard");
-        Navigation.NavigateTo("/SMSRiskManagement/HazardCreate");
+        Navigation.NavigateToSecure("/SMSRiskManagement/HazardCreate");
     }
 
     private async Task OnViewHazardAsync(Hazard hazard)

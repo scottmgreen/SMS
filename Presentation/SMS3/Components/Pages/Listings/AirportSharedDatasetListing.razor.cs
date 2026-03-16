@@ -16,6 +16,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -135,7 +136,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
             Logger.LogInformation("Viewing dataset: {Code}", dataset.Code);
 
             // Navigate to dataset details page
-            Navigation.NavigateTo($"/DatasetDetails/{dataset.Code}");
+            Navigation.NavigateToSecure($"/DatasetDetails/{dataset.Code}");
         }
         catch (Exception ex)
         {
@@ -176,7 +177,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
                 var editUrl = $"/SMSRiskManagement/AirportSharedDataset/{reportCode}/{dataset.HazardCode}";
                 Logger.LogInformation("Navigating to edit dataset: {Url}", editUrl);
 
-                Navigation.NavigateTo(editUrl);
+                Navigation.NavigateToSecure(editUrl);
             }
             else
             {

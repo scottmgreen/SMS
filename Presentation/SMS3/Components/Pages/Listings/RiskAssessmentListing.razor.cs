@@ -14,6 +14,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -507,7 +508,7 @@ public partial class RiskAssessmentListing : ComponentBase
             var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{reportCode}/{assessment.HazardCode}/{assessment.CurrentStep}";
 
             Logger.LogInformation("Navigating to Technical Assessment: {Url}", navigationUrl);
-            Navigation.NavigateTo(navigationUrl);
+            Navigation.NavigateToSecure(navigationUrl);
             await NotificationHelper.ShowInfoAsync($"Opening technical assessment for {assessment.Code}");
         }
         catch (Exception ex)

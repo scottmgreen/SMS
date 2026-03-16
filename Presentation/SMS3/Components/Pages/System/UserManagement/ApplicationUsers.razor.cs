@@ -148,7 +148,7 @@ public partial class ApplicationUsers : ComponentBase
             if (userResult.IsFailure)
             {
                 ShowErrorAsyncNotification("User not found.");
-                Navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
+                Navigation.NavigateToSecure("/System/UserManagement/ApplicationUsers");
                 return;
             }
 

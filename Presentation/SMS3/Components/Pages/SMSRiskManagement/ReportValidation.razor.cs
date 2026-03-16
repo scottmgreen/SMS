@@ -408,190 +408,62 @@ public partial class ReportValidation : ComponentBase
 
 
     /// <summary>
-    /// Navigate to Risk Assessment (Preliminary or Technical)
-    /// </summary>
-    private async Task NavigateToRiskRegistry()
-    {
-        // Show Airport Shared Dataset dialog before proceeding to assessment
-        var result = await DialogService.Confirm(
-            message: "Do you want to create an Airport Shared Dataset for this SMS Risk assessment?",
-            title: "Airport Shared Dataset",
-            options: new ConfirmOptions()
-            {
-                OkButtonText = "Yes, Create Dataset",
-                CancelButtonText = "No, Skip",
-                Width = "500px"
-            });
-
-        if (result == true)
-        {
-            // User wants to create dataset - navigate to dataset creation page
-            Logger.LogInformation("User chose to create Airport Shared Dataset for Report: {ReportId}", ReportId);
-            var datasetUrl = $"/SMSRiskManagement/AirportSharedDataset/{ReportId}";
-
-            if (!string.IsNullOrEmpty(ReportHazard?.Code))
-            {
-                datasetUrl += $"/{ReportHazard.Code}";
-            }
-
-            // ?? SECURE NAVIGATION - Navigate to dataset creation page
-            Navigation.NavigateToSecure(datasetUrl);
-        }
-        else
-        {
-            string navigationUrl;
-            navigationUrl = $"/SMSAssurance/RiskRegistry";
-            await Task.Delay(1500);
-            // ?? SECURE NAVIGATION - Navigate to Risk Registry
-            Navigation.NavigateToSecure(navigationUrl);
-        }
-    }
-
-
-
-
-
-    /// <summary>
-    /// Navigate to Risk Assessment (Preliminary or Technical)
+    /// Navigate to Risk Assessment with optimized flow control
     /// </summary>
     private async Task NavigateToRiskAssessment()
     {
-        // Show Airport Shared Dataset dialog before proceeding to assessment
-        var result = await DialogService.Confirm(
-            message: "Do you want to create an Airport Shared Dataset for this SMS Risk assessment?",
-            title: "Airport Shared Dataset",
-            options: new ConfirmOptions()
-            {
-                OkButtonText = "Yes, Create Dataset",
-                CancelButtonText = "No, Skip",
-                Width = "500px"
-            });
-
-        if (result == true)
+        try
         {
-            // User wants to create dataset - navigate to dataset creation page
-            Logger.LogInformation("User chose to create Airport Shared Dataset for Report: {ReportId}", ReportId);
-            var datasetUrl = $"/SMSRiskManagement/AirportSharedDataset/{ReportId}";
-
-            if (!string.IsNullOrEmpty(ReportHazard?.Code))
-            {
-                datasetUrl += $"/{ReportHazard.Code}";
-            }
-
-            // ?? SECURE NAVIGATION - Navigate to dataset creation page
-            Navigation.NavigateToSecure(datasetUrl);
-        }
-        else
-        {
-            // User skipped dataset creation - proceed directly to assessment
-            Logger.LogInformation("User skipped Airport Shared Dataset creation for Report: {ReportId}", ReportId);
-
-            //Check for existing RiskAssessments
-            // Check for existing investigation first
-            var existingRiskAssessmentsQuery = new GetAllRiskAssessmentsQuery();
-            var existingResult = await Mediator.SendAsync(existingRiskAssessmentsQuery, CancellationToken.None);
-
-
-            RiskAssessment? existingRiskAssessment = null;
-            if (existingResult.IsSuccess && existingResult.Value.Count >0)
-            {
-                existingRiskAssessment = existingResult.Value.FirstOrDefault(inv => !string.IsNullOrWhiteSpace(inv.HazardCode) && inv.HazardCode.Equals(ReportHazard.Code, StringComparison.OrdinalIgnoreCase) );
-                existingRiskAssessment.LeadAssessorId = LeadAssessor;
-
-                var cmd = new UpdateRiskAssessmentCommand(existingRiskAssessment);
-                var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
-            }
-
-            string navigationUrl;
-            if (existingRiskAssessment != null)
-            {
-                // Navigate to existing investigation
-                await NotificationHelper.ShowSuccessAsync($"Loading existing RiskAssessment {existingRiskAssessment.Code}");
-                navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
-                Logger.LogInformation("Navigating to existing Risk Assessment: {Url}", navigationUrl);
-                bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.RiskAssessmentInProgress);
-                if (!flowControl)
-                {
-                    throw new Exception($"Failed to Update Report Status during Create new Risk Assessment: {DomainErrors.ReportValidationError.CreateFailed.Message}");
-                }
-
-                await Task.Delay(1500);
-                // ?? SECURE NAVIGATION - Navigate to existing Risk Assessment
-                Navigation.NavigateToSecure(navigationUrl);
-            }
-            else
-            {
-                // Generate Placeholder ID - WILL BE GENERATED IN THE DATABASE 
-                var assessmentId = $"RS-0000";
-
-                // Create Technical assessment using the public constructor
-                var riskAssessment = new RiskAssessment(new RiskAssessmentID(assessmentId))
-                {
-                    Name = $"Technical Risk Assessment for Report {ReportId}",
-                    LeadAssessorId = LeadAssessor,
-                    AssessmentType = RiskAssessmentType.Initial, // Start with Initial, Step 5 will use Residual stage
-                    RiskAssessmentCategory = RiskAssessmentCategory.Technical,
-                    HazardCode = ReportHazard.Code,
-                    PrimaryHazardId = ReportHazard.Code,
-                    Description = $"Created from Report {ReportId}",
-                    Stage = RiskAssessmentStage.DescribingSystem,
-                    Code = assessmentId,
-                    Status = RiskAssessmentStatus.AssessmentCreate,
-                    CurrentStep = 1,
-                    UpdatedDate = DateTime.UtcNow,
-                    UpdatedBy = CurrentUserService?.UserDisplayName
-                };
-
-                CreateRiskAssessmentCommand command = new CreateRiskAssessmentCommand(riskAssessment);
-                var createResult = await Mediator.SendAsync(command, CancellationToken.None);
-
-                if (createResult.IsSuccess)
-                {
-                    var newRiskAssessment = createResult.Value;
-                    await NotificationHelper.ShowSuccessAsync($"Investigation {newRiskAssessment.Code} created successfully");
-                    navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
-                    Logger.LogInformation("Navigating to new risk assessment: {Url}", navigationUrl);
-
-                    bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.RiskAssessmentInProgress);
-                    if (!flowControl)
-                    {
-                        throw new Exception($"Failed to Update Report Status during Create new Risk Assessment: {DomainErrors.ReportValidationError.CreateFailed.Message}");
-                    }
-
-                    await Task.Delay(1500);
-                    // ?? SECURE NAVIGATION - Navigate to new risk assessment
-                    Navigation.NavigateToSecure(navigationUrl);
-                }
-                else
-                {
-                    throw new Exception($"Failed to create investigation: {createResult.Error?.Message ?? DomainErrors.InvestigationError.CreateFailed.Message}");
-                }
-            }
-
-
-
-
-
-
-
-
-
-
-            if (ReportHazard != null)
-            {
-                navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
-            }
-            else
-            {
-                navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/1";
-            }
-
+            // Step 1: Check if user wants to create Airport Shared Dataset
+            bool createDataset = await ShowAirportDatasetDialog();
             
-            await Task.Delay(1500);
-            // ?? SECURE NAVIGATION - Navigate to Technical Assessment
-            Navigation.NavigateToSecure(navigationUrl);
+            if (createDataset)
+            {
+                await NavigateToDatasetCreation();
+                return;
+            }
+
+            // Step 2: Handle existing or create new risk assessment
+            await HandleRiskAssessmentNavigation();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in NavigateToRiskAssessment for Report: {ReportId}", ReportId);
+            await NotificationHelper.ShowErrorAsync("Error navigating to risk assessment. Please try again.");
         }
     }
+
+    /// <summary>
+    /// Navigate to Risk Registry with optimized flow control
+    /// </summary>
+    private async Task NavigateToRiskRegistry()
+    {
+        try
+        {
+            // Step 1: Check if user wants to create Airport Shared Dataset
+            bool createDataset = await ShowAirportDatasetDialog();
+            
+            if (createDataset)
+            {
+                await NavigateToDatasetCreation();
+                return;
+            }
+
+            // Step 2: Navigate directly to Risk Registry
+            Logger.LogInformation("User skipped Airport Shared Dataset creation, navigating to Risk Registry for Report: {ReportId}", ReportId);
+            
+            string navigationUrl = "/SMSAssurance/RiskRegistry";
+            await DelayAndNavigate(navigationUrl);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error in NavigateToRiskRegistry for Report: {ReportId}", ReportId);
+            await NotificationHelper.ShowErrorAsync("Error navigating to risk registry. Please try again.");
+        }
+    }
+
+
+
 
     /// <summary>
     /// Navigate to Investigation (create investigation first if needed)
@@ -778,4 +650,187 @@ public partial class ReportValidation : ComponentBase
     
 
     #endregion
+
+    /// <summary>
+    /// Shows Airport Shared Dataset confirmation dialog
+    /// Returns true if user wants to create dataset, false to skip
+    /// </summary>
+    private async Task<bool> ShowAirportDatasetDialog()
+    {
+        return await DialogService.Confirm(
+            message: "Do you want to create an Airport Shared Dataset for this SMS Risk assessment?",
+            title: "Airport Shared Dataset",
+            options: new ConfirmOptions()
+            {
+                OkButtonText = "Yes, Create Dataset",
+                CancelButtonText = "No, Skip",
+                Width = "500px"
+            }) ?? false; // Handle null case
+    }
+
+    /// <summary>
+    /// Navigate to Airport Shared Dataset creation page
+    /// </summary>
+    private async Task NavigateToDatasetCreation()
+    {
+        Logger.LogInformation("User chose to create Airport Shared Dataset for Report: {ReportId}", ReportId);
+        
+        var datasetUrl = $"/SMSRiskManagement/AirportSharedDataset/{ReportId}";
+        if (!string.IsNullOrEmpty(ReportHazard?.Code))
+        {
+            datasetUrl += $"/{ReportHazard.Code}";
+        }
+
+        // Use secure navigation for consistency
+        Navigation.NavigateToSecure(datasetUrl);
+    }
+
+    /// <summary>
+    /// Handle existing risk assessment or create new one and navigate
+    /// </summary>
+    private async Task HandleRiskAssessmentNavigation()
+    {
+        Logger.LogInformation("User skipped Airport Shared Dataset creation for Report: {ReportId}", ReportId);
+
+        // Find existing risk assessment for this hazard
+        var existingRiskAssessment = await FindExistingRiskAssessment();
+
+        if (existingRiskAssessment != null)
+        {
+            await NavigateToExistingRiskAssessment(existingRiskAssessment);
+        }
+        else
+        {
+            await CreateAndNavigateToNewRiskAssessment();
+        }
+    }
+
+    /// <summary>
+    /// Find existing risk assessment for the current hazard
+    /// Returns null if none found
+    /// </summary>
+    private async Task<RiskAssessment?> FindExistingRiskAssessment()
+    {
+        if (string.IsNullOrEmpty(ReportHazard?.Code))
+            return null;
+
+        var query = new GetAllRiskAssessmentsQuery();
+        var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+        if (!result.IsSuccess || result.Value?.Count == 0)
+            return null;
+
+        return result.Value.FirstOrDefault(ra => 
+            !string.IsNullOrWhiteSpace(ra.HazardCode) && 
+            ra.HazardCode.Equals(ReportHazard.Code, StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>
+    /// Update existing risk assessment with lead assessor and navigate
+    /// </summary>
+    private async Task NavigateToExistingRiskAssessment(RiskAssessment existingRiskAssessment)
+    {
+        // Update lead assessor if provided
+        if (!string.IsNullOrEmpty(LeadAssessor))
+        {
+            existingRiskAssessment.LeadAssessorId = LeadAssessor;
+            
+            var updateCmd = new UpdateRiskAssessmentCommand(existingRiskAssessment);
+            await Mediator.SendAsync(updateCmd, CancellationToken.None);
+        }
+
+        // Update report status
+        await UpdateReportStatusWithValidation(ReportStatus.RiskAssessmentInProgress, 
+            "Failed to update report status for existing risk assessment");
+
+        await NotificationHelper.ShowSuccessAsync($"Loading existing Risk Assessment {existingRiskAssessment.Code}");
+        
+        // Fix: Use the hazard code from the existing risk assessment if ReportHazard is null
+        var hazardCode = ReportHazard?.Code ?? existingRiskAssessment.HazardCode ?? existingRiskAssessment.PrimaryHazardId;
+        var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{hazardCode}/1";
+        Logger.LogInformation("Navigating to existing Risk Assessment: {Url}", navigationUrl);
+
+        await DelayAndNavigate(navigationUrl);
+    }
+
+    /// <summary>
+    /// Create new risk assessment and navigate to it
+    /// </summary>
+    private async Task CreateAndNavigateToNewRiskAssessment()
+    {
+        if (ReportHazard == null)
+        {
+            throw new InvalidOperationException("Cannot create risk assessment - hazard information not found");
+        }
+
+        // Create new risk assessment
+        var riskAssessment = CreateRiskAssessmentEntity();
+        
+        var command = new CreateRiskAssessmentCommand(riskAssessment);
+        var createResult = await Mediator.SendAsync(command, CancellationToken.None);
+
+        if (!createResult.IsSuccess)
+        {
+            throw new Exception($"Failed to create risk assessment: {createResult.Error?.Message ?? "Unknown error"}");
+        }
+
+        // Update report status
+        await UpdateReportStatusWithValidation(ReportStatus.RiskAssessmentInProgress,
+            "Failed to update report status for new risk assessment");
+
+        var newRiskAssessment = createResult.Value;
+        await NotificationHelper.ShowSuccessAsync($"Risk Assessment {newRiskAssessment.Code} created successfully");
+
+        // Fix: Ensure hazard code is properly passed - use the ReportHazard.Code which we validated exists above
+        var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
+        Logger.LogInformation("Navigating to new risk assessment: {Url}", navigationUrl);
+
+        await DelayAndNavigate(navigationUrl);
+    }
+
+    /// <summary>
+    /// Create risk assessment entity with proper initialization
+    /// </summary>
+    private RiskAssessment CreateRiskAssessmentEntity()
+    {
+        var assessmentId = new RiskAssessmentID("RS-0000"); // Database will generate actual ID
+
+        return new RiskAssessment(assessmentId)
+        {
+            Name = $"Technical Risk Assessment for Report {ReportId}",
+            LeadAssessorId = LeadAssessor,
+            AssessmentType = RiskAssessmentType.Initial,
+            RiskAssessmentCategory = RiskAssessmentCategory.Technical,
+            HazardCode = ReportHazard!.Code,
+            PrimaryHazardId = ReportHazard.Code,
+            Description = $"Created from Report {ReportId}",
+            Stage = RiskAssessmentStage.DescribingSystem,
+            Code = assessmentId.Value,
+            Status = RiskAssessmentStatus.AssessmentCreate,
+            CurrentStep = 1,
+            UpdatedDate = DateTime.UtcNow,
+            UpdatedBy = CurrentUserService?.UserDisplayName
+        };
+    }
+
+    /// <summary>
+    /// Update report status with proper error handling
+    /// </summary>
+    private async Task UpdateReportStatusWithValidation(ReportStatus status, string errorMessage)
+    {
+        bool success = await UpdateReportStatus(ReportId, status);
+        if (!success)
+        {
+            throw new Exception($"{errorMessage}: {DomainErrors.ReportValidationError.CreateFailed.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Consistent delay and navigation with secure routing
+    /// </summary>
+    private async Task DelayAndNavigate(string url)
+    {
+        await Task.Delay(1000);
+        Navigation.NavigateToSecure(url); // Use secure navigation consistently
+    }
 }

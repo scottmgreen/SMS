@@ -10,6 +10,7 @@ using SMS_Domain.Interfaces;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -1238,7 +1239,7 @@ public partial class ReportProcessing : ComponentBase
         try
         {
             Logger.LogInformation("Navigating to edit mitigation: {Code}", mitigation.MitigationCode);
-            Navigation.NavigateTo($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.MitigationCode}");
+            Navigation.NavigateToSecure($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.MitigationCode}");
         }
         catch (Exception ex)
         {
@@ -1614,7 +1615,7 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.AddAttribute(3, "ButtonStyle", GetAssessmentButtonStyle(report));
                 templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
                 templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                    (args) => Navigation.NavigateTo(report.SmartUrl)));
+                    (args) => Navigation.NavigateToSecure(report.SmartUrl)));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();

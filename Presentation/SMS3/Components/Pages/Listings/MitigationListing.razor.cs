@@ -14,6 +14,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -586,7 +587,7 @@ public partial class MitigationListing : ComponentBase
         try
         {
             Logger.LogInformation("Editing mitigation: {Code}", mitigation.Code);
-            Navigation.NavigateTo($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.Code}");
+            Navigation.NavigateToSecure($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.Code}");
             await NotificationHelper.ShowInfoAsync($"Opening mitigation editor for {mitigation.Code}");
         }
         catch (Exception ex)

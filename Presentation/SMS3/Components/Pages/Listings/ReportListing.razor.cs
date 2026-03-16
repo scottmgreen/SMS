@@ -12,6 +12,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -420,7 +421,7 @@ public partial class ReportListing : ComponentBase
 
             if (confirmed == true)
             {
-                Navigation.NavigateTo($"/SMSRiskManagement/HazardReporting?mode=edit&reportCode={report.Code}");
+                Navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting?mode=edit&reportCode={report.Code}");
 
                 Logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
                 await NotificationHelper.ShowInfoAsync($"Opening {report.Code} for editing...", 4000);

@@ -1,9 +1,12 @@
 ﻿using System.Runtime.Intrinsics.X86;
+
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
+
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -652,7 +655,7 @@ public partial class TechnicalAssessment : ComponentBase
         var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/{targetStep}";
 
         Logger.LogInformation("Navigating to: {Url}", navigationUrl);
-        Navigation.NavigateTo(navigationUrl);
+        Navigation.NavigateToSecure(navigationUrl);
     }
 
     private async Task PreviousStep()
@@ -739,7 +742,7 @@ public partial class TechnicalAssessment : ComponentBase
             await NotificationHelper.ShowSuccessAsync("Technical Assessment completed successfully!");
 
             // Navigate back to report processing
-            Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+            Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
         }
         catch (Exception ex)
         {

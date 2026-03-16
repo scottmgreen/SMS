@@ -2,6 +2,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Pages.SMSAssurance.Components;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSAssurance;
 
@@ -106,7 +107,7 @@ public partial class SPIDetail : ComponentBase
     #region Navigation Methods
     private void NavigateToConfiguration()
     {
-        Navigation.NavigateTo("/SMSAssurance/SPIConfiguration");
+        Navigation.NavigateToSecure("/SMSAssurance/SPIConfiguration");
     }
 
     private async Task EditSPI()

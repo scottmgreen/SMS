@@ -14,6 +14,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -415,7 +416,7 @@ public partial class InvestigationListing : ComponentBase
                 : $"/SMSRiskManagement/Investigations/{investigation.Code}/{investigation.HazardCode}";
 
             Logger.LogInformation("Navigating to investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
-            Navigation.NavigateTo(navigationUrl);
+            Navigation.NavigateToSecure(navigationUrl);
             await NotificationHelper.ShowInfoAsync($"Opening investigation {investigation.Code}");
         }
         catch (Exception ex)
@@ -437,7 +438,7 @@ public partial class InvestigationListing : ComponentBase
                 : $"/SMSRiskManagement/Investigations/{investigation.Code}/{investigation.HazardCode}";
 
             Logger.LogInformation("Navigating to edit investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
-            Navigation.NavigateTo(navigationUrl);
+            Navigation.NavigateToSecure(navigationUrl);
             await NotificationHelper.ShowInfoAsync($"Opening investigation editor for {investigation.Code}");
         }
         catch (Exception ex)

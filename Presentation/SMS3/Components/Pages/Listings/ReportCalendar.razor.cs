@@ -1,4 +1,5 @@
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -349,7 +350,7 @@ public partial class ReportCalendar : ComponentBase
 
             if (confirmed == true)
             {
-                Navigation.NavigateTo($"/SMSRiskManagement/HazardReporting?mode=edit&reportCode={report.Code}");
+                Navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting?mode=edit&reportCode={report.Code}");
 
                 Logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
 

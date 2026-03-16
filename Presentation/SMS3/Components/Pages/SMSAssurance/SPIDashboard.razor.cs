@@ -1,4 +1,5 @@
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSAssurance;
 
@@ -302,17 +303,17 @@ public partial class SPIDashboard : ComponentBase
     #region Navigation Methods
     private void NavigateToConfiguration()
     {
-        Navigation.NavigateTo("/SMSAssurance/SPIConfiguration");
+        Navigation.NavigateToSecure("/SMSAssurance/SPIConfiguration");
     }
 
     private void NavigateToSPIDetail(string spiId)
     {
-        Navigation.NavigateTo($"/SMSAssurance/SPIDetail/{spiId}");
+        Navigation.NavigateToSecure($"/SMSAssurance/SPIDetail/{spiId}");
     }
 
     private void ShowAllAlerts()
     {
-        Navigation.NavigateTo("/SMSAssurance/SPIAlerts");
+        Navigation.NavigateToSecure("/SMSAssurance/SPIAlerts");
     }
     #endregion
 

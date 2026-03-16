@@ -1,6 +1,7 @@
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -75,7 +76,7 @@ public partial class AirportSharedDataset : ComponentBase
             if (string.IsNullOrWhiteSpace(ReportId))
             {
                 ShowErrorAsyncNotification("Report ID is required for dataset creation");
-                Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
+                Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
                 return;
             }
 
@@ -358,7 +359,7 @@ public partial class AirportSharedDataset : ComponentBase
         }
 
         Logger.LogInformation("Navigating to assessment: {Url}", navigationUrl);
-        Navigation.NavigateTo(navigationUrl);
+        Navigation.NavigateToSecure(navigationUrl);
     }
     #endregion
 

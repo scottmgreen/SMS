@@ -60,13 +60,22 @@ else
             var path = uri.AbsolutePath;
             
             // ?? DYNAMIC COMPONENT DISCOVERY - No hardcoded mappings!
-            ComponentToRender = FindComponentByPageAttribute(path);
+            var componentInfo = FindComponentByPageAttributeWithParameters(path);
+            ComponentToRender = componentInfo.ComponentType;
             
-            // Extract parameters from query string
+            if (componentInfo.RouteParameters?.Any() == true)
+            {
+                ComponentParameters = new Dictionary<string, object>(componentInfo.RouteParameters);
+            }
+            else
+            {
+                ComponentParameters = new Dictionary<string, object>();
+            }
+            
+            // Extract parameters from query string and add to existing parameters
             if (!string.IsNullOrEmpty(uri.Query))
             {
                 var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
-                ComponentParameters = new Dictionary<string, object>();
                 
                 foreach (var param in queryParams)
                 {
@@ -78,16 +87,17 @@ else
                 }
             }
         }
-        catch
+        catch (Exception ex)
         {
             ComponentToRender = null;
+            ComponentParameters = null;
         }
     }
     
     /// <summary>
-    /// Dynamically find component by reading @page attributes - NO HARDCODED MAPPINGS!
+    /// Dynamically find component by reading @page attributes and extract route parameters
     /// </summary>
-    private Type? FindComponentByPageAttribute(string requestedPath)
+    private (Type? ComponentType, Dictionary<string, object>? RouteParameters) FindComponentByPageAttributeWithParameters(string requestedPath)
     {
         try
         {
@@ -111,30 +121,30 @@ else
                     // Simple exact match first
                     if (string.Equals(routeTemplate, requestedPath, StringComparison.OrdinalIgnoreCase))
                     {
-                        return componentType;
+                        return (componentType, null);
                     }
                     
-                    // Handle parameterized routes (e.g., "/System/UserManagement/{userId}")
-                    if (IsRouteMatch(routeTemplate, requestedPath))
+                    // Handle parameterized routes and extract parameters
+                    var routeParams = ExtractRouteParameters(routeTemplate, requestedPath);
+                    if (routeParams != null)
                     {
-                        return componentType;
+                        return (componentType, routeParams);
                     }
                 }
             }
             
-            return null;
+            return (null, null);
         }
         catch (Exception ex)
         {
-            // Log error but don't crash
-            return null;
+            return (null, null);
         }
     }
     
     /// <summary>
-    /// Check if a route template matches the requested path (handles parameters)
+    /// Extract route parameters from a parameterized route
     /// </summary>
-    private bool IsRouteMatch(string routeTemplate, string requestedPath)
+    private Dictionary<string, object>? ExtractRouteParameters(string routeTemplate, string requestedPath)
     {
         try
         {
@@ -142,27 +152,35 @@ else
             var pathParts = requestedPath.Trim('/').Split('/', StringSplitOptions.RemoveEmptyEntries);
             
             if (templateParts.Length != pathParts.Length)
-                return false;
+                return null;
                 
+            var parameters = new Dictionary<string, object>();
+            bool hasParameters = false;
+            
             for (int i = 0; i < templateParts.Length; i++)
             {
                 var templatePart = templateParts[i];
                 var pathPart = pathParts[i];
                 
-                // If template part is a parameter (starts with {), it matches any value
+                // If template part is a parameter (starts with {), extract the value
                 if (templatePart.StartsWith("{") && templatePart.EndsWith("}"))
-                    continue;
-                    
+                {
+                    var paramName = templatePart.Trim('{', '}');
+                    parameters[paramName] = pathPart;
+                    hasParameters = true;
+                }
                 // Otherwise, must be exact match
-                if (!string.Equals(templatePart, pathPart, StringComparison.OrdinalIgnoreCase))
-                    return false;
+                else if (!string.Equals(templatePart, pathPart, StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
             }
             
-            return true;
+            return hasParameters ? parameters : null;
         }
         catch
         {
-            return false;
+            return null;
         }
     }
     

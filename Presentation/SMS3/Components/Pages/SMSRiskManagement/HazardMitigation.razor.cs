@@ -1,4 +1,5 @@
 ﻿using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -123,7 +124,7 @@ public partial class HazardMitigation : ComponentBase
             {
                 await NotificationHelper.ShowErrorAsync($"Hazard mitigation '{MitigationCode}' not found");
                 Logger.LogError("Failed to load hazard mitigation {Code}: {Error}", MitigationCode, mitigationResult.Error?.Message);
-                Navigation.NavigateTo("/Listings/Mitigations");
+                Navigation.NavigateToSecure("/Listings/Mitigations");
                 return;
             }
         }
@@ -131,7 +132,7 @@ public partial class HazardMitigation : ComponentBase
         {
             Logger.LogError(ex, "Error loading existing hazard mitigation: {Code}", MitigationCode);
             await NotificationHelper.ShowErrorAsync("Error loading existing hazard mitigation");
-            Navigation.NavigateTo("/Listings/Mitigations");
+            Navigation.NavigateToSecure("/Listings/Mitigations");
         }
     }
     #endregion
@@ -165,7 +166,7 @@ public partial class HazardMitigation : ComponentBase
             }
 
             // Navigate back to listings
-            Navigation.NavigateTo("/Listings/Mitigations");
+            Navigation.NavigateToSecure("/Listings/Mitigations");
         }
         catch (Exception ex)
         {
@@ -233,7 +234,7 @@ public partial class HazardMitigation : ComponentBase
 
     private async Task CancelAndReturn()
     {
-        Navigation.NavigateTo("/Listings/Mitigations");
+        Navigation.NavigateToSecure("/Listings/Mitigations");
     }
     #endregion
 

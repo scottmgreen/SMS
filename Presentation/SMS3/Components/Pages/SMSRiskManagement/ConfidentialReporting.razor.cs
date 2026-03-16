@@ -1035,7 +1035,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             SubmittedBy = "Anonymous Reporter",
             SubmittedDate = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
                 tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
-            IsAnonymous = true // Always true for confidential reporting
+            IsAnonymous = false // Always true for confidential reporting
         };
 
         SelectedGeoLocation = new GeoLocationData

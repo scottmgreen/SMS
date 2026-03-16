@@ -1,5 +1,6 @@
 using SMS3.Components.Pages.SMSAssurance.Components;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -411,7 +412,7 @@ public partial class MitigationCalendar : ComponentBase
 
             // For now, navigate to mitigation creation page
             // TODO: Implement CreateMitigationDialog similar to CreateInterviewDialog
-            Navigation.NavigateTo("/Listings/Mitigations");
+            Navigation.NavigateToSecure("/Listings/Mitigations");
             await NotificationHelper.ShowSuccessAsync("Navigate to Mitigations page to create new mitigation");
         }
         catch (Exception ex)
@@ -548,7 +549,7 @@ public partial class MitigationCalendar : ComponentBase
 
             // For now, navigate to mitigations listing
             // TODO: Implement EditMitigationDialog similar to EditInterviewDialog
-            Navigation.NavigateTo("/Listings/Mitigations");
+            Navigation.NavigateToSecure("/Listings/Mitigations");
         }
         catch (Exception ex)
         {

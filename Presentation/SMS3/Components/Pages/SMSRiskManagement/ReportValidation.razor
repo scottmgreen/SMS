@@ -1,5 +1,6 @@
 @page "/SMSRiskManagement/ReportValidation"
 @page "/SMSRiskManagement/ReportValidation/{ReportId}"
+@using SMS3.Configuration.Extensions
 @using SMS_Application.Messaging.Commands
 @using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
@@ -196,7 +197,7 @@ else
                             <!-- Action Buttons -->
                             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" class="rz-mt-4">
                                 <RadzenButton Text="Back to Processing Queue" Icon="arrow_back" ButtonStyle="ButtonStyle.Light"
-                                              Click="@(() => Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing"))" />
+                                              Click="@(() => Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing"))" />
 
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
                                     @if (SelectedValidationDecision == ValidationDecision.SmsRisk)
