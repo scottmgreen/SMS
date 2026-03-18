@@ -5,6 +5,7 @@
 @layout MainLayout
 @inject NavigationManager Navigation
 @inject ISecureRoutingService SecureRoutingService
+@inject ILogger<PDX> Logger
 
 <PageTitle>PDX SMS - Internal Access</PageTitle>
 
@@ -21,11 +22,9 @@
         <!-- Disclaimer Content -->
         <div class="sms-disclaimer-content">
             <div class="alert alert-info sms-info-alert">
-                <h5 class="alert-heading">
-                    <i class="fas fa-info-circle me-2"></i>Internal Staff Access
-                </h5>
-                <p class="mb-0"><strong>This system is restricted to authorized Port of Portland personnel only.</strong>
-                </p>
+                <h6 class="alert-heading">
+                    <i class="fas fa-info-circle me-2"></i><strong>This system is restricted to authorized Port of Portland personnel only.</strong>
+                </h6>
             </div>
 
             <div class="sms-terms-section">
@@ -40,25 +39,21 @@
                     <li><strong>Confidential safety information</strong> must be handled according to established security
                         protocols.</li>
                 </ul>
-
-                @* <div class="sms-requirements-box">
-                    <h6 class="sms-requirements-title">
-                        <i class="fas fa-check-circle me-2"></i>Access Requirements:
-                    </h6>
-                    <ul class="sms-requirements-list">
-                        <li>Valid Port of Portland employee credentials</li>
-                        <li>Authorized SMS system account</li>
-                        <li>Current safety training certification</li>
-                        <li>Supervisor approval for system access</li>
-                    </ul>
-                </div> *@
             </div>
 
             <!-- Proceed Button -->
             <div class="d-grid mt-4">
-                <button type="button" class="btn btn-lg sms-login-button sms-proceed-button" @onclick="ProceedToLogin">
-                    <i class="fas fa-check-circle me-2"></i>
-                    I Have Read and Understand These Terms
+                <button type="button" class="btn btn-lg sms-login-button sms-proceed-button" @onclick="ProceedToLogin" disabled="@IsProcessing">
+                    @if (IsProcessing)
+                    {
+                        <i class="fas fa-spinner fa-spin me-2"></i>
+                        <text>Processing...</text>
+                    }
+                    else
+                    {
+                        <i class="fas fa-check-circle me-2"></i>
+                        <text>I Have Read and Understand These Terms</text>
+                    }
                 </button>
             </div>
         </div>
@@ -77,17 +72,16 @@
 
 <style>
     /* =============================================================================
-       SMS PDX DISCLAIMER PAGE - MATCHING LOGIN STYLING
+       SMS PDX DISCLAIMER PAGE - CLEAN TERMS ACCEPTANCE
        ============================================================================= */
 
-    /* Copy Login Card Styling for Consistency */
     .sms-pdx-card {
         background: white;
         border-radius: 1rem;
         box-shadow: 0 1rem 3rem rgba(33, 46, 97, 0.15);
         padding: 2.5rem;
         width: 100%;
-        max-width: 800px !important;;
+        max-width: 800px;
         border: 1px solid var(--sms-blue-light);
         position: absolute;
         top: 50%;
@@ -96,8 +90,6 @@
         z-index: 10000;
         pointer-events: auto;
     }
-
-    
 
     /* Login Header Styling */
     .sms-login-header {
@@ -129,6 +121,7 @@
         margin-bottom: 0;
     }
 
+    /* Terms Page Styling */
     .sms-disclaimer-content {
         margin-bottom: 2rem;
     }
@@ -152,7 +145,7 @@
     }
 
     .sms-terms-list {
-        color: var(--sms-blue-dark-bold);
+        color: var(--sms-blue-dark);
         margin-bottom: 1.5rem;
         padding-left: 1.5rem;
     }
@@ -162,31 +155,8 @@
         line-height: 1.4;
     }
 
-    .sms-requirements-box {
-        background-color: rgba(108, 117, 125, 0.1);
-        border: 1px solid rgba(108, 117, 125, 0.2);
-        border-radius: 0.5rem;
-        padding: 1.25rem;
-        margin-top: 1.5rem;
-    }
-
-    .sms-requirements-title {
-        color: var(--sms-blue-dark-bold);
-        font-weight: 600;
-        margin-bottom: 0.75rem;
-    }
-
-    .sms-requirements-list {
-        margin-bottom: 0;
-        padding-left: 1.5rem;
-        color: var(--sms-blue-dark-bold);
-    }
-
-    .sms-requirements-list li {
-        margin-bottom: 0.5rem;
-    }
-
-    .sms-proceed-button {
+    /* Button Styling */
+    .sms-proceed-button, .sms-login-button {
         min-width: 100% !important;
         padding: 1rem 1.5rem !important;
         font-weight: 600 !important;
@@ -199,13 +169,20 @@
         transition: all 0.2s ease-in-out !important;
     }
 
-    .sms-proceed-button:hover {
+    .sms-proceed-button:hover, .sms-login-button:hover {
         background-color: var(--sms-btn-primary-hover) !important;
         border-color: var(--sms-btn-primary-hover) !important;
         transform: translateY(-1px) !important;
         box-shadow: 0 0.375rem 0.75rem rgba(0, 0, 0, 0.15) !important;
     }
 
+    .sms-proceed-button:disabled, .sms-login-button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    /* Footer */
     .sms-disclaimer-footer {
         text-align: center;
         padding-top: 1.5rem;
@@ -222,18 +199,60 @@
         text-decoration: underline;
     }
 
+    /* Responsive Design */
+    @@media (max-width: 768px) {
+        .sms-pdx-card {
+            max-width: 90% !important;
+            padding: 2rem;
+        }
+
+        .sms-login-icon {
+            font-size: 2.5rem;
+        }
+
+        .sms-login-title {
+            font-size: 1.5rem;
+        }
+    }
+
     /* =============================================================================
        END SMS PDX DISCLAIMER STYLING
        ============================================================================= */
 </style>
 
 @code {
-    /// <summary>
-    /// Navigate to login using secure navigation when user accepts terms
-    /// </summary>
-    private void ProceedToLogin()
+    private bool IsProcessing { get; set; } = false;
+    
+    protected override void OnInitialized()
     {
-        // Use NavigateToSecure to encrypt the /login URL
-        Navigation.NavigateToSecure("/login");
+        Logger.LogInformation("PDX disclaimer page initialized");
+    }
+
+    /// <summary>
+    /// Handle terms acceptance and proceed to login
+    /// </summary>
+    private async Task ProceedToLogin()
+    {
+        try
+        {
+            IsProcessing = true;
+            
+            Logger.LogInformation("✅ User accepted PDX terms, proceeding to login");
+            
+            // Simulate processing delay for better UX
+            await Task.Delay(500);
+            
+            // Navigate directly to login page - 2FA will be handled there if enabled
+            Navigation.NavigateToSecure("/login");
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error proceeding to login from PDX terms");
+        }
+        finally
+        {
+            IsProcessing = false;
+            StateHasChanged();
+        }
     }
 }

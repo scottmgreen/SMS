@@ -173,7 +173,7 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
             }
 
             // Business validation - check if user exists
-            var existingUserResult = await _dataService.GetSMSApplicationUserByIdAsync(user.UserId.Value, ct).ConfigureAwait(false);
+            var existingUserResult = await _dataService.GetSMSApplicationUserByIdAsync(user.Code, ct).ConfigureAwait(false);
             if (existingUserResult.IsFailure)
             {
                 _logger.LogWarning("Cannot update non-existent SMS Application User with ID: {Id}", user.UserId);

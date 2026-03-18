@@ -84,6 +84,15 @@ public static partial class Mappers
             applicationUser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetString(FieldNames.fSMSUserRoleCode)));
             applicationUser.IsActive = reader.GetBoolean(FieldNames.fSMSApplicationUserIsActive);
             applicationUser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSApplicationUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSApplicationUserLastLoginDate);
+            
+            // 🔐 Two-Factor Authentication Properties
+            applicationUser.TwoFactorSecretKey = reader.GetValue<string>(FieldNames.fSMSApplicationUserTwoFactorSecretKey);
+            applicationUser.TwoFactorEnabled = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorEnabled) ? false : reader.GetBoolean(FieldNames.fSMSApplicationUserTwoFactorEnabled);
+            applicationUser.BackupCodes = reader.GetValue<string>(FieldNames.fSMSApplicationUserBackupCodes);
+            applicationUser.TwoFactorSetupDate = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorSetupDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSApplicationUserTwoFactorSetupDate);
+            applicationUser.FailedTwoFactorAttempts = reader.IsDBNull(FieldNames.fSMSApplicationUserFailedTwoFactorAttempts) ? 0 : reader.GetInt32(FieldNames.fSMSApplicationUserFailedTwoFactorAttempts);
+            applicationUser.TwoFactorLockedUntil = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorLockedUntil) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSApplicationUserTwoFactorLockedUntil);
+            
             applicationUser.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
             applicationUser.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
             applicationUser.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
@@ -137,8 +146,19 @@ public static partial class Mappers
 
             orgUser.IsActive = reader.GetBoolean(FieldNames.fSMSOrganizationalUserIsActive);
             orgUser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSOrganizationalUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSOrganizationalUserLastLoginDate);
+            
+            // 🔐 Two-Factor Authentication Properties
+            orgUser.TwoFactorSecretKey = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserTwoFactorSecretKey);
+            orgUser.TwoFactorEnabled = reader.IsDBNull(FieldNames.fSMSOrganizationalUserTwoFactorEnabled) ? false : reader.GetBoolean(FieldNames.fSMSOrganizationalUserTwoFactorEnabled);
+            orgUser.BackupCodes = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserBackupCodes);
+            orgUser.TwoFactorSetupDate = reader.IsDBNull(FieldNames.fSMSOrganizationalUserTwoFactorSetupDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSOrganizationalUserTwoFactorSetupDate);
+            orgUser.FailedTwoFactorAttempts = reader.IsDBNull(FieldNames.fSMSOrganizationalUserFailedTwoFactorAttempts) ? 0 : reader.GetInt32(FieldNames.fSMSOrganizationalUserFailedTwoFactorAttempts);
+            orgUser.TwoFactorLockedUntil = reader.IsDBNull(FieldNames.fSMSOrganizationalUserTwoFactorLockedUntil) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSOrganizationalUserTwoFactorLockedUntil);
+            
             orgUser.CreatedBy = reader.GetString(FieldNames.fCreatedBy);
             orgUser.CreatedDate = createdDate;
+            orgUser.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
+            orgUser.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fUpdatedDate);
 
             return orgUser;
         }
@@ -207,6 +227,15 @@ public static partial class Mappers
             stakeholderuser.IsActive = reader.GetBoolean(FieldNames.fSMSStakeholderUserIsActive);
             stakeholderuser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSStakeholderUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSStakeholderUserLastLoginDate);
             stakeholderuser.IsPOPEmployee = reader.GetBoolean(FieldNames.fSMSStakeholderIsPOPEmployee);
+            
+            // 🔐 Two-Factor Authentication Properties
+            stakeholderuser.TwoFactorSecretKey = reader.GetValue<string>(FieldNames.fSMSStakeholderUserTwoFactorSecretKey);
+            stakeholderuser.TwoFactorEnabled = reader.IsDBNull(FieldNames.fSMSStakeholderUserTwoFactorEnabled) ? false : reader.GetBoolean(FieldNames.fSMSStakeholderUserTwoFactorEnabled);
+            stakeholderuser.BackupCodes = reader.GetValue<string>(FieldNames.fSMSStakeholderUserBackupCodes);
+            stakeholderuser.TwoFactorSetupDate = reader.IsDBNull(FieldNames.fSMSStakeholderUserTwoFactorSetupDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSStakeholderUserTwoFactorSetupDate);
+            stakeholderuser.FailedTwoFactorAttempts = reader.IsDBNull(FieldNames.fSMSStakeholderUserFailedTwoFactorAttempts) ? 0 : reader.GetInt32(FieldNames.fSMSStakeholderUserFailedTwoFactorAttempts);
+            stakeholderuser.TwoFactorLockedUntil = reader.IsDBNull(FieldNames.fSMSStakeholderUserTwoFactorLockedUntil) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSStakeholderUserTwoFactorLockedUntil);
+            
             stakeholderuser.CreatedBy = reader.GetString(FieldNames.fCreatedBy);
             stakeholderuser.CreatedDate = reader.GetDateTime(FieldNames.fCreatedDate);
 

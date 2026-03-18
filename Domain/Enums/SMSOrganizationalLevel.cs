@@ -80,7 +80,7 @@ public abstract class SMSOrganizationalLevel : BaseEnum<SMSOrganizationalLevel>
 
     private sealed class ResponsibleManagerLevel : SMSOrganizationalLevel
     {
-        public ResponsibleManagerLevel() : base("RESPONSIBLE_MANAGER", "Responsible Manager", "Executive",
+        public ResponsibleManagerLevel() : base("RESPONSIBLE_MANAGER", "Responsible Manager", "Management",
             "Oversees daily SMS operations at operational level, ensuring hazard reports, risk assessments, and corrective actions are executed effectively. Reviews medium and low risks.", 8)
         {
         }
@@ -259,7 +259,8 @@ public abstract class SMSOrganizationalLevel : BaseEnum<SMSOrganizationalLevel>
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
             .Where(f => f.FieldType == typeof(SMSOrganizationalLevel))
             .Select(f => (SMSOrganizationalLevel)f.GetValue(null)!)
-            .Where(role => role != null);
+            .Where(role => role != null)
+            .Where(role => role.AuthorityLevel >0);
     }
 
     /// <summary>

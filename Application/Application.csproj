@@ -45,6 +45,7 @@
   </ItemGroup>
 
   <ItemGroup>
+	<Using Include="SMS_Shared.Common" />
     <Using Include="SMS_Application.Common" />
     <Using Include="SMS_Application.Interfaces" />
     <Using Include="SMS_Application.Messaging" />
@@ -56,8 +57,6 @@
     <Using Include="SMS_Domain.Enums" />
     <Using Include="SMS_Domain.Enums" />
     <Using Include="SMS_Domain.Errors" />
-    <!--<Using Include="SMS_Domain.Events.DomainEvents" />
-    <Using Include="SMS_Domain.Events.SystemEvents" />-->
     <Using Include="SMS_Domain.Interfaces" />
     <Using Include="SMS_Domain.ValueObjects" />
     <Using Include="SMS_Infrastructure.Services" />
@@ -66,6 +65,12 @@
     <Using Include="System.Collections.Concurrent" />
     <Using Include="System.Diagnostics" />
     <Using Include="System.Reflection" />
-  </ItemGroup>
+	  <!-- Add these to Application.csproj -->
+	<Using Include="Microsoft.Extensions.Logging" />
+	<Using Include="Microsoft.Extensions.Logging.Abstractions" />
+	<Using Include="System.ComponentModel.DataAnnotations" />
+	<Using Include="System.Text.Json" />
+    
+</ItemGroup>
 
 </Project>

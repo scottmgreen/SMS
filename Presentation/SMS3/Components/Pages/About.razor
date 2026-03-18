@@ -78,7 +78,7 @@
                                         <div><strong>Version:</strong> @assembly.Version</div>
                                         <div><strong>File Version:</strong> @assembly.FileVersion</div>
                                         
-                                        @if (assembly.Dependencies.Any())
+                                        @* @if (assembly.Dependencies.Any())
                                         {
                                             <div class="dependencies-section">
                                                 <strong>Dependencies:</strong>
@@ -95,7 +95,7 @@
                                             </div>
                                         }
                                         
-                                        <div><strong>Location:</strong> <small>@assembly.Location</small></div>
+                                        <div><strong>Location:</strong> <small>@assembly.Location</small></div> *@
                                     </div>
                                 </div>
                             }
@@ -107,7 +107,7 @@
     </RadzenRow>
 
     <!-- Features and Description -->
-    <RadzenRow Gap="1.5rem">
+    @* <RadzenRow Gap="1.5rem">
         <RadzenColumn Size="12">
             <RadzenCard>
                 <RadzenStack Gap="1rem">
@@ -151,7 +151,7 @@
                 </RadzenStack>
             </RadzenCard>
         </RadzenColumn>
-    </RadzenRow>
+    </RadzenRow> *@
 
     <!-- Support and Contact -->
     <RadzenRow Gap="1.5rem">
@@ -174,10 +174,10 @@
                             <RadzenIcon Icon="phone" Style="color: var(--sms-green-primary); margin-right: 0.5rem;" />
                             <strong>Help Desk:</strong> (503) 555-SMS3 (7673)
                         </div>
-                        <div class="support-item">
+                        @* <div class="support-item">
                             <RadzenIcon Icon="schedule" Style="color: var(--sms-green-primary); margin-right: 0.5rem;" />
                             <strong>Business Hours:</strong> Monday - Friday, 7:00 AM - 6:00 PM PST
-                        </div>
+                        </div> *@
                     </div>
                 </RadzenStack>
             </RadzenCard>
@@ -194,24 +194,24 @@
                     </div>
 
                     <div class="status-info">
-                        <div class="status-item">
+                        @* <div class="status-item">
                             <RadzenBadge Text="System Operational" BadgeStyle="BadgeStyle.Success" />
                             <span>All services running normally</span>
-                        </div>
+                        </div> *@
                         <div class="status-item">
                             <RadzenIcon Icon="update" Style="color: var(--sms-blue-primary); margin-right: 0.5rem;" />
-                            <strong>Last Updated:</strong> @LastUpdateTime
+                            <strong>Last Updated:</strong>&nbsp; @LastUpdateTime
                         </div>
                         <div class="status-item">
                             <RadzenIcon Icon="schedule" Style="color: var(--sms-blue-primary); margin-right: 0.5rem;" />
-                            <strong>Uptime:</strong> @SystemUptime
+                            <strong>Uptime:</strong>&nbsp;@SystemUptime
                         </div>
                     </div>
 
                     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" Style="margin-top: 1rem;">
-                        <RadzenButton Text="System Health" Icon="health_and_safety" ButtonStyle="ButtonStyle.Info" 
+                        <RadzenButton Text="System Health" Icon="health_and_safety" ButtonStyle="ButtonStyle.Base" 
                                     Size="ButtonSize.Small" Click="CheckSystemHealth" />
-                        <RadzenButton Text="Copy Version Info" Icon="content_copy" ButtonStyle="ButtonStyle.Secondary" 
+                        <RadzenButton Text="Copy Version Info" Icon="content_copy" ButtonStyle="ButtonStyle.Danger" 
                                     Size="ButtonSize.Small" Click="CopyVersionInfo" />
                     </RadzenStack>
                 </RadzenStack>
@@ -224,7 +224,7 @@
         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
             <div>
                 <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--sms-blue-primary);">
-                    © 2024 Portland International Airport - Safety Management System
+                    © 2026 Port of Portland - Safety Management System
                 </RadzenText>
             </div>
             <div>

@@ -8,9 +8,6 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Microsoft.Extensions.Logging;
-
-using SMS_Shared.Common;
 
 
 namespace SMS_Application.Common;

@@ -1,0 +1,194 @@
+@page "/System/Security/SecurityDashboard"
+@using SMS_Application.Services
+@inject SecurityMonitoringService SecurityMonitoring
+@inject ILogger<SecurityDashboard> Logger
+
+<PageTitle>Security Dashboard - SMS3</PageTitle>
+
+<PageHeader Title="Security Monitoring Dashboard" 
+            Subtitle="SQL Injection & XSS Attack Detection"
+            Icon="fas fa-shield-alt">
+</PageHeader>
+
+<div class="container-fluid">
+    <RadzenRow Gap="1rem">
+        <!-- Attack Statistics Cards -->
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard class="security-card sql-injection">
+                <div class="security-stat">
+                    <div class="stat-icon">
+                        <i class="fas fa-database"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">@_securityStats?.SqlInjectionAttempts24h</div>
+                        <div class="stat-label">SQL Injection Attempts (24h)</div>
+                    </div>
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard class="security-card xss-attempts">
+                <div class="security-stat">
+                    <div class="stat-icon">
+                        <i class="fas fa-code"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">@_securityStats?.XssAttempts24h</div>
+                        <div class="stat-label">XSS Attempts (24h)</div>
+                    </div>
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard class="security-card high-severity">
+                <div class="security-stat">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">@_securityStats?.HighSeverityAttacks24h</div>
+                        <div class="stat-label">High Severity (24h)</div>
+                    </div>
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard class="security-card unique-attackers">
+                <div class="security-stat">
+                    <div class="stat-icon">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">@_securityStats?.UniqueAttackersWeek</div>
+                        <div class="stat-label">Unique Attackers (7d)</div>
+                    </div>
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Top Attack Patterns -->
+    <RadzenRow Gap="1rem" class="mt-4">
+        <RadzenColumn Size="12">
+            <RadzenCard>
+                <RadzenText TextStyle="TextStyle.H5" class="mb-3">
+                    <i class="fas fa-chart-bar me-2"></i>Top Attack Patterns (Last 24 Hours)
+                </RadzenText>
+                
+                @if (_securityStats?.TopAttackPatterns?.Any() == true)
+                {
+                    <RadzenDataGrid Data="_securityStats.TopAttackPatterns" TItem="KeyValuePair<string, int>" 
+                                    AllowPaging="true" PageSize="10">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="KeyValuePair<string, int>" Property="Key" Title="Attack Pattern" Width="70%">
+                                <Template Context="item">
+                                    <code class="attack-pattern">@item.Key</code>
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="KeyValuePair<string, int>" Property="Value" Title="Attempts" Width="30%">
+                                <Template Context="item">
+                                    <RadzenBadge BadgeStyle="BadgeStyle.Danger" Text="@item.Value.ToString()" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat">
+                        <i class="fas fa-shield-alt me-2"></i>
+                        No attack attempts detected in the last 24 hours. Your security measures are working!
+                    </RadzenAlert>
+                }
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</div>
+
+<style>
+.security-card {
+    border-left: 4px solid;
+    transition: transform 0.2s ease;
+}
+
+.security-card:hover {
+    transform: translateY(-2px);
+}
+
+.security-card.sql-injection {
+    border-left-color: #dc3545;
+}
+
+.security-card.xss-attempts {
+    border-left-color: #fd7e14;
+}
+
+.security-card.high-severity {
+    border-left-color: #6f42c1;
+}
+
+.security-card.unique-attackers {
+    border-left-color: #20c997;
+}
+
+.security-stat {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+}
+
+.stat-icon {
+    font-size: 2.5rem;
+    margin-right: 1rem;
+    color: var(--rz-primary);
+    opacity: 0.8;
+}
+
+.stat-content {
+    flex: 1;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--rz-text-color);
+    line-height: 1;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--rz-text-secondary-color);
+    margin-top: 0.25rem;
+}
+
+.attack-pattern {
+    background-color: #f8f9fa;
+    color: #dc3545;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+</style>
+
+@code {
+    private SecurityStats? _securityStats;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            _securityStats = SecurityMonitoring.GetSecurityStats();
+            Logger.LogInformation("Security dashboard loaded - SQL: {SqlAttempts}, XSS: {XssAttempts}", 
+                _securityStats.SqlInjectionAttempts24h, _securityStats.XssAttempts24h);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error loading security dashboard");
+            _securityStats = new SecurityStats(); // Empty stats
+        }
+    }
+}

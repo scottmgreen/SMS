@@ -13,6 +13,8 @@ public partial class Login : ComponentBase
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private IHttpContextAccessor HttpContextAccessor { get; set; } = default!;
     [Inject] private IAuthenticationService AuthenticationService { get; set; } = default!;
+    [Inject] private SessionTimerService SessionTimerService { get; set; } = default!;
+    [Inject] private TwoFactorAuthService TwoFactorAuthService { get; set; } = default!;
 
     private LoginFormModel LoginModel { get; set; } = new();
     private string ErrorMessage { get; set; } = string.Empty;
@@ -26,13 +28,14 @@ public partial class Login : ComponentBase
             ErrorMessage = string.Empty;
             StateHasChanged();
 
-            Logger.LogInformation("Attempting Smart Login for user: {Username}", model.Username);
+            Logger.LogInformation("🔐 Starting Smart Login for user: {Username}", model.Username);
 
             var authResult = await AuthenticationService.AuthenticateAsync(model.Username, model.Password, CancellationToken.None);
 
             if (authResult.IsSuccess && authResult.User != null)
             {
-                Logger.LogInformation("Authentication successful for user: {Username}, Type: {UserType}", model.Username, authResult.UserType.Value);
+                Logger.LogInformation("✅ Authentication successful for user: {Username}, Type: {UserType}", model.Username, authResult.UserType.Value);
+                Logger.LogInformation("🔐 2FA Enabled: {TwoFactorEnabled}", authResult.User.TwoFactorEnabled);
 
                 // 🔐 Record successful authentication audit with simplified data
                 try
@@ -55,44 +58,70 @@ public partial class Login : ComponentBase
                     // Continue with login even if audit fails
                 }
 
-                // Use static authentication service - NO HttpContext dependency
-                StaticCurrentUserService.SetAuthenticationState(authResult.User, authResult.UserType);
-                Logger.LogInformation("✅ Authentication state stored statically for user: {Username}", model.Username);
-                
-                // Navigate to home page
-                Logger.LogInformation("Navigating to home page after successful authentication");
-                Navigation.NavigateTo("/", forceLoad: false);
-                return;
+                // 🔐 CHECK FOR TWO-FACTOR AUTHENTICATION
+                if (authResult.User.TwoFactorEnabled)
+                {
+                    // User has 2FA enabled - redirect to 2FA verification
+                    Logger.LogInformation("🔐 User {Username} has 2FA enabled, initiating 2FA flow", model.Username);
+                    
+                    try
+                    {
+                        // Store user temporarily for 2FA verification with explicit wait
+                        Logger.LogInformation("🔐 Storing pending 2FA user data for {Username}...", model.Username);
+                        await SessionService.StorePending2FAUserAsync(authResult.User, authResult.UserType);
+                        
+                        // Wait longer to ensure session is committed
+                        Logger.LogInformation("🔐 Waiting for session commit...");
+                        await Task.Delay(300);
+                        
+                        // Verify the user was stored before navigation
+                        Logger.LogInformation("🔐 Verifying pending 2FA user was stored...");
+                        var storedUser = SessionService.GetPending2FAUser();
+                        if (storedUser == null)
+                        {
+                            Logger.LogError("❌ FAILED to store pending 2FA user - session storage verification failed");
+                            ErrorMessage = "Failed to initiate 2FA process. Please try again.";
+                            return;
+                        }
+                        
+                        Logger.LogInformation("✅ Pending 2FA user stored and verified successfully: {UserCode}", storedUser?.User.Code);
+                        Logger.LogInformation("🔐 Navigating to /verify-2fa...");
+                        
+                        // Clear any existing error messages
+                        ErrorMessage = string.Empty;
+                        StateHasChanged();
+                        
+                        // Navigate to 2FA verification page
+                        Navigation.NavigateTo("/verify-2fa", forceLoad: false);
+                        
+                        // Add additional logging after navigation
+                        Logger.LogInformation("✅ Navigation to /verify-2fa initiated successfully");
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.LogError(ex, "❌ Exception during 2FA flow setup for {Username}", model.Username);
+                        ErrorMessage = "Failed to initiate 2FA process. Please try again.";
+                        return;
+                    }
+                }
+                else
+                {
+                    // No 2FA required - proceed with normal login
+                    Logger.LogInformation("🔐 User {Username} does not have 2FA enabled, proceeding with normal login", model.Username);
+                    await CompleteLoginAsync(authResult.User, authResult.UserType);
+                    return;
+                }
             }
             else
             {
-                // 🔐 Record failed authentication audit with simplified data
-                try
-                {
-                    var authFailureCommand = new RecordAuthenticationFailureCommand(
-                        model.Username,
-                        "Invalid username or password",
-                        "Server", // Simplified IP address
-                        "Blazor", // Simplified user agent
-                        1
-                    );
-                    var auditResult = await Mediator.SendAsync(authFailureCommand, CancellationToken.None);
-                    Logger.LogInformation("✅ Authentication failure audit recorded for user: {Username}, Result: {IsSuccess}", 
-                        model.Username, auditResult.IsSuccess);
-                }
-                catch (Exception auditEx)
-                {
-                    Logger.LogError(auditEx, "❌ Failed to record authentication failure audit for {Username}", model.Username);
-                    // Continue - don't block user from seeing error message
-                }
-
-                ErrorMessage = authResult.ErrorMessage ?? "Invalid username or password";
-                Logger.LogWarning("Authentication failed for user: {Username}", model.Username);
+                Logger.LogWarning("❌ Authentication failed for user: {Username}", model.Username);
+                await HandleLoginFailureAsync(model.Username, authResult.ErrorMessage ?? "Invalid username or password");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error during Smart Login for user: {Username}", model.Username);
+            Logger.LogError(ex, "❌ Exception during Smart Login for user: {Username}", model.Username);
             ErrorMessage = "An error occurred during login. Please try again.";
         }
         finally
@@ -100,6 +129,47 @@ public partial class Login : ComponentBase
             IsLoading = false;
             StateHasChanged();
         }
+    }
+
+    private async Task CompleteLoginAsync(BaseUser user, SMSUserType userType)
+    {
+        // 🔐 CREATE SESSION-BASED AUTHENTICATION - Replaces static authentication
+        await SessionService.CreateSMSSessionAsync(user, userType);
+        Logger.LogInformation("✅ Session-based authentication created for user: {Username}", user.UserName.Value);
+        
+        // 🔐 START SESSION TIMER - Begin countdown for automatic logout
+        SessionTimerService.StartTimer();
+        Logger.LogInformation("✅ Session timer started for user: {Username}", user.UserName.Value);
+        
+        // Navigate to home page
+        Logger.LogInformation("Navigating to home page after successful authentication");
+        Navigation.NavigateTo("/", forceLoad: false);
+    }
+
+    private async Task HandleLoginFailureAsync(string username, string errorMessage)
+    {
+        // 🔐 Record failed authentication audit with simplified data
+        try
+        {
+            var authFailureCommand = new RecordAuthenticationFailureCommand(
+                username,
+                errorMessage,
+                "Server", // Simplified IP address
+                "Blazor", // Simplified user agent
+                1
+            );
+            var auditResult = await Mediator.SendAsync(authFailureCommand, CancellationToken.None);
+            Logger.LogInformation("✅ Authentication failure audit recorded for user: {Username}, Result: {IsSuccess}", 
+                username, auditResult.IsSuccess);
+        }
+        catch (Exception auditEx)
+        {
+            Logger.LogError(auditEx, "❌ Failed to record authentication failure audit for {Username}", username);
+            // Continue - don't block user from seeing error message
+        }
+
+        ErrorMessage = errorMessage;
+        Logger.LogWarning("Authentication failed for user: {Username}", username);
     }
 
     public class LoginFormModel

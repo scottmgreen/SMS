@@ -477,9 +477,18 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserUserName, user.UserName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserPassword, user.Password.HashedValue));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserType, user.SMSUserType.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserRole, user.UserRole.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserRole, user.UserRole?.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastLoginDate, user.LastLoginDate));
+            // 🔐 NEW: Add 2FA parameters to AddAsync  
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSecretKey, user.TwoFactorSecretKey));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorEnabled, user.TwoFactorEnabled));
+            
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserBackupCodes, user.BackupCodes));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSetupDate , user.TwoFactorSetupDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserFailedTwoFactorAttempts, user.FailedTwoFactorAttempts));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorLockedUntil, user.TwoFactorLockedUntil));
+                        
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, user.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
@@ -527,9 +536,20 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastName, user.LastName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserUserName, user.UserName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserType, user.SMSUserType.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserRole, user.UserRole.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserRole, user.UserRole?.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastLoginDate, user.LastLoginDate));
+            // 🔐 NEW: Add 2FA parameters to UpdateAsync
+            // 🔐 NEW: Add 2FA parameters to AddAsync  
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSecretKey, user.TwoFactorSecretKey));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorEnabled, user.TwoFactorEnabled));
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserBackupCodes, user.BackupCodes));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSetupDate, user.TwoFactorSetupDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserFailedTwoFactorAttempts, user.FailedTwoFactorAttempts));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorLockedUntil, user.TwoFactorLockedUntil));
+
+            
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, user.UpdatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
@@ -600,6 +620,156 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, userId.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLoginDate, loginDate));
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
+        }
+    }
+
+    // 🔐 Two-Factor Authentication Repository Methods
+
+    /// <summary>
+    /// Setup 2FA for a user (first-time setup)
+    /// </summary>
+    public async Task<Result<bool>> Setup2FAAsync(string userCode, string secretKey, string? backupCodes = null, string updatedBy = "SYSTEM-2FA")
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(secretKey))
+            {
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructurePutItem($"{_logHeader} Setup2FA for user: {userCode}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("pr_SMSApplicationUser_Setup2FA", sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter("@pUserCode", userCode));
+            cmd.Parameters.Add(DataAccess.Parameter("@pSecretKey", secretKey));
+            cmd.Parameters.Add(DataAccess.Parameter("@pBackupCodes", backupCodes));
+            cmd.Parameters.Add(DataAccess.Parameter("@pUpdatedBy", updatedBy));
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Update failed 2FA attempts and optionally set lockout
+    /// </summary>
+    public async Task<Result<bool>> Update2FAFailedAttemptsAsync(string userCode, int failedAttempts, DateTime? lockoutUntil = null, string updatedBy = "SYSTEM-2FA")
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructurePutItem($"{_logHeader} Update2FAFailedAttempts for user: {userCode}, Attempts: {failedAttempts}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("pr_SMSApplicationUser_Update2FAFailedAttempts", sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter("@pUserCode", userCode));
+            cmd.Parameters.Add(DataAccess.Parameter("@pFailedAttempts", failedAttempts));
+            cmd.Parameters.Add(DataAccess.Parameter("@pLockoutUntil", lockoutUntil));
+            cmd.Parameters.Add(DataAccess.Parameter("@pUpdatedBy", updatedBy));
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Reset failed 2FA attempts (called on successful 2FA verification)
+    /// </summary>
+    public async Task<Result<bool>> Reset2FAFailedAttemptsAsync(string userCode, string updatedBy = "SYSTEM-2FA")
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructurePutItem($"{_logHeader} Reset2FAFailedAttempts for user: {userCode}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("pr_SMSApplicationUser_Reset2FAFailedAttempts", sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter("@pUserCode", userCode));
+            cmd.Parameters.Add(DataAccess.Parameter("@pUpdatedBy", updatedBy));
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Disable 2FA for a user
+    /// </summary>
+    public async Task<Result<bool>> Disable2FAAsync(string userCode, string updatedBy = "SYSTEM-2FA")
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructurePutItem($"{_logHeader} Disable2FA for user: {userCode}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand("pr_SMSApplicationUser_Disable2FA", sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter("@pUserCode", userCode));
+            cmd.Parameters.Add(DataAccess.Parameter("@pUpdatedBy", updatedBy));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -716,7 +886,6 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
                 users.Add(user);
             }
 
-
             // Dataset 2: SMSUserRole data for users that have roles
             var rolesDictionary = new Dictionary<string, SMSUserRole>();
             if (await reader.NextResultAsync().ConfigureAwait(false))
@@ -774,7 +943,6 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
                         }
                     }
                 }
-
             }
             return Result<IEnumerable<SMSApplicationUser>>.Success(users.AsEnumerable());
         }
@@ -785,94 +953,9 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
         }
     }
 
-    //public async Task<Result<IEnumerable<SMSApplicationUser>>> GetSMSApplicationUserByPermissionLevelAsync(string permissionLevel)
-    //{
-    //    try
-    //    {
-    //        var allUsersResult = await GetAllAsync();
-    //        if (allUsersResult.IsFailure)
-    //        {
-    //            return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(allUsersResult.Error);
-    //        }
-
-    //        var filteredUsers = allUsersResult.Value.Where(u => u.PermissionLevel.Equals(permissionLevel, StringComparison.OrdinalIgnoreCase));
-    //        return Result<IEnumerable<SMSApplicationUser>>.Success(filteredUsers);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
-    //        return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
-    //    }
-    //}
-
-    //public async Task<Result<IEnumerable<SMSApplicationUser>>> GetSMSApplicationUsersWithMinimumPermissionAsync(string minimumPermissionLevel)
-    //{
-    //    try
-    //    {
-    //        var allUsersResult = await GetAllAsync();
-    //        if (allUsersResult.IsFailure)
-    //        {
-    //            return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(allUsersResult.Error);
-    //        }
-
-    //        var levels = new[] { "Read", "Write", "Admin", "SuperAdmin" };
-    //        var requiredLevelIndex = Array.IndexOf(levels, minimumPermissionLevel);
-
-    //        var filteredUsers = allUsersResult.Value.Where(u => 
-    //        {
-    //            var userLevelIndex = Array.IndexOf(levels, u.PermissionLevel);
-    //            return userLevelIndex >= requiredLevelIndex;
-    //        });
-
-    //        return Result<IEnumerable<SMSApplicationUser>>.Success(filteredUsers);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
-    //        return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
-    //    }
-    //}
-
-    //public async Task<Result<bool>> UpdateSMSApplicationUserInfoAsync(SMSApplicationUserID userId, string applicationRole, string permissionLevel)
-    //{
-    //    try
-    //    {
-    //        var userResult = await GetByCodeAsync(userId);
-    //        if (userResult.IsFailure)
-    //        {
-    //            return Result<bool>.Failure<bool>(userResult.Error);
-    //        }
-
-    //        var user = userResult.Value;
-    //        user.Update(applicationRole, permissionLevel);
-
-    //        return await UpdateAsync(user);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
-    //        return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
-    //    }
-    //}
-
     // Legacy method implementations for backward compatibility
     public async Task<Result<IEnumerable<SMSApplicationUser>>> GetByApplicationRoleAsync(string applicationRole)
     {
         return await GetBySMSApplicationUserRoleAsync(applicationRole);
     }
-
-    //public async Task<Result<IEnumerable<SMSApplicationUser>>> GetByPermissionLevelAsync(string permissionLevel)
-    //{
-    //    return await GetSMSApplicationUserByPermissionLevelAsync(permissionLevel);
-    //}
-
-    //public async Task<Result<IEnumerable<SMSApplicationUser>>> GetUsersWithMinimumPermissionAsync(string minimumPermissionLevel)
-    //{
-    //    return await GetSMSApplicationUsersWithMinimumPermissionAsync(minimumPermissionLevel);
-    //}
-
-    //public async Task<Result<bool>> UpdateApplicationInfoAsync(SMSApplicationUserID userId, string applicationRole, string permissionLevel)
-    //{
-    //    return await UpdateSMSApplicationUserInfoAsync(userId, applicationRole, permissionLevel);
-    //}
 }

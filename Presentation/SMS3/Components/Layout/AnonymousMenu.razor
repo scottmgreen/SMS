@@ -44,9 +44,7 @@
     private string EnvironmentSuffix => Environment.IsDevelopment() ? "[Development]" : "";
 
     // Hide all menu items on PDX and Login pages  
-    private bool IsOnRestrictedPage => Navigation.Uri.Contains("/pdx") || 
-                                      Navigation.Uri.Contains("/login") ||
-                                      IsObfuscatedLogin();
+    private bool IsOnRestrictedPage => Navigation.Uri.Contains("/pdx") || IsObfuscatedLogin();
 
     /// <summary>
     /// Handle menu clicks for SECURE navigation - all URLs automatically encrypted

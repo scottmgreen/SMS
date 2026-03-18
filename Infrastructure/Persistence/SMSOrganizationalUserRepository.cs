@@ -596,8 +596,6 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
     //    }
     //}
 
-    
-
     public async Task<Result<Dictionary<string, int>>> GetDepartmentStatisticsAsync()
     {
         try
@@ -622,4 +620,153 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
     }
 
 
+    // 🔐 Two-Factor Authentication Repository Methods
+
+    /// <summary>
+    /// Setup 2FA for an organizational user (first-time setup)
+    /// </summary>
+    public async Task<Result<bool>> Setup2FAAsync(string userCode, string secretKey, string? backupCodes = null, string updatedBy = "SYSTEM-2FA")
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(secretKey))
+            {
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructurePutItem($"{_logHeader} Setup2FA for user: {userCode}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalUser_Setup2FA, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserCode, userCode));
+            cmd.Parameters.Add(DataAccess.Parameter("@pSecretKey", secretKey));
+            cmd.Parameters.Add(DataAccess.Parameter("@pBackupCodes", backupCodes));
+            cmd.Parameters.Add(DataAccess.Parameter("@pUpdatedBy", updatedBy));
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Update failed 2FA attempts and optionally set lockout
+    /// </summary>
+    public async Task<Result<bool>> Update2FAFailedAttemptsAsync(string userCode, int failedAttempts, DateTime? lockoutUntil = null, string updatedBy = "SYSTEM-2FA")
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructurePutItem($"{_logHeader} Update2FAFailedAttempts for user: {userCode}, Attempts: {failedAttempts}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalUser_Update2FAFailedAttempts, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserCode, userCode));
+            cmd.Parameters.Add(DataAccess.Parameter("@pFailedAttempts", failedAttempts));
+            cmd.Parameters.Add(DataAccess.Parameter("@pLockoutUntil", lockoutUntil));
+            cmd.Parameters.Add(DataAccess.Parameter("@pUpdatedBy", updatedBy));
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Reset failed 2FA attempts (called on successful 2FA verification)
+    /// </summary>
+    public async Task<Result<bool>> Reset2FAFailedAttemptsAsync(string userCode, string updatedBy = "SYSTEM-2FA")
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructurePutItem($"{_logHeader} Reset2FAFailedAttempts for user: {userCode}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalUser_Reset2FAFailedAttempts, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserCode, userCode));
+            cmd.Parameters.Add(DataAccess.Parameter("@pUpdatedBy", updatedBy));
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.UpdateFailed);
+        }
+    }
+
+    /// <summary>
+    /// Disable 2FA for an organizational user
+    /// </summary>
+    public async Task<Result<bool>> Disable2FAAsync(string userCode, string updatedBy = "SYSTEM-2FA")
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructurePutItem($"{_logHeader} Disable2FA for user: {userCode}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalUser_Disable2FA, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserCode, userCode));
+            cmd.Parameters.Add(DataAccess.Parameter("@pUpdatedBy", updatedBy));
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.UpdateFailed);
+        }
+    }
 }

@@ -10,7 +10,8 @@ public partial class SafetyPolicy : ComponentBase
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     [Inject] private ILogger<SafetyPolicy> Logger { get; set; } = default!;
 
-    // Policy document management properties
+    // Document management properties
+    private List<PolicyDocument> PolicyDocuments { get; set; } = new();
     private SafetyPolicyDocument CurrentPolicy { get; set; } = new();
     private List<PolicyRevision> PolicyHistory { get; set; } = new();
     private PolicyMetrics Metrics { get; set; } = new();
@@ -18,8 +19,68 @@ public partial class SafetyPolicy : ComponentBase
     protected override async Task OnInitializedAsync()
     {
         LoadPolicyData();
+        LoadPolicyDocuments();
         await base.OnInitializedAsync();
     }
+
+    #region Document Management
+
+    private void LoadPolicyDocuments()
+    {
+        PolicyDocuments = new List<PolicyDocument>
+        {
+            new()
+            {
+                Name = "SMS Policy Overview",
+                Description = "14 CFR Part 139 - Comprehensive safety management system overview",
+                FileName = "14 CFR Part 139.pdf",
+                Category = "policies",
+                Type = "Policy",
+                Size = "2.1 MB",
+                LastModified = DateTime.Now.AddDays(-15),
+                Icon = "picture_as_pdf",
+                Color = "var(--rz-primary)"
+            },
+            new()
+            {
+                Name = "Regulatory Compliance",
+                Description = "FAA Final Rule - Regulatory compliance requirements and procedures",
+                FileName = "FAA Final Rule.pdf",
+                Category = "policies",
+                Type = "Regulation",
+                Size = "1.8 MB",
+                LastModified = DateTime.Now.AddDays(-30),
+                Icon = "picture_as_pdf",
+                Color = "var(--rz-info)"
+            },
+            new()
+            {
+                Name = "Emergency Procedures",
+                Description = "Emergency response procedures and crisis management protocols",
+                FileName = "part-139-cert-alert-23-02-SMS-rule.pdf",
+                Category = "policies",
+                Type = "Procedure",
+                Size = "3.2 MB",
+                LastModified = DateTime.Now.AddDays(-7),
+                Icon = "picture_as_pdf",
+                Color = "var(--rz-warning)"
+            },
+            new()
+            {
+                Name = "Safety Training Manual",
+                Description = "Safety training procedures and educational materials for staff",
+                FileName = "safety-training-manual.pdf",
+                Category = "manuals",
+                Type = "Manual",
+                Size = "4.5 MB",
+                LastModified = DateTime.Now.AddDays(-45),
+                Icon = "picture_as_pdf",
+                Color = "var(--rz-success)"
+            }
+        };
+    }
+
+    #endregion
 
     #region Document Actions
 
@@ -27,18 +88,20 @@ public partial class SafetyPolicy : ComponentBase
     {
         try
         {
-            var documentUrl = $"/Documents/Viewer?file={Uri.EscapeDataString(filename)}&category={Uri.EscapeDataString(category)}";
+            // Construct the direct path to the PDF file in wwwroot
+            var documentUrl = $"/documents/{category}/{filename}";
 
             // Log document access for analytics
-            Logger.LogInformation("Document viewer opened: {Filename} in category {Category}", filename, category);
+            Logger.LogInformation("Opening PDF document in new tab: {Filename} from category {Category}", filename, category);
 
-            // Navigate to document viewer
-            // ?? SECURE NAVIGATION - Navigate to document viewer with encrypted URL
-            Navigation.NavigateToSecure(documentUrl);
+            // Open PDF in new tab using JavaScript
+            await JSRuntime.InvokeVoidAsync("window.open", documentUrl, "_blank");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error opening document viewer for {Filename}", filename);
+            Logger.LogError(ex, "Error opening PDF document {Filename} in new tab", filename);
+            // Optionally show a user-friendly error message
+            await JSRuntime.InvokeVoidAsync("alert", $"Error opening document: {filename}");
         }
     }
 
@@ -52,7 +115,7 @@ public partial class SafetyPolicy : ComponentBase
             Logger.LogInformation("Document download initiated: {DocumentPath}", documentPath);
 
             // Trigger download using JavaScript
-            await JSRuntime.InvokeVoidAsync("open", downloadUrl, "_blank");
+            await JSRuntime.InvokeVoidAsync("window.open", downloadUrl, "_blank");
         }
         catch (Exception ex)
         {
@@ -120,6 +183,19 @@ public partial class SafetyPolicy : ComponentBase
     #endregion
 
     #region Models
+
+    public class PolicyDocument
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public string FileName { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Type { get; set; } = string.Empty;
+        public string Size { get; set; } = string.Empty;
+        public DateTime LastModified { get; set; }
+        public string Icon { get; set; } = "picture_as_pdf";
+        public string Color { get; set; } = "var(--rz-primary)";
+    }
 
     public class SafetyPolicyDocument
     {

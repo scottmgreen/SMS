@@ -104,4 +104,28 @@ public static class SecureNavigationExtensions
         var url = $"{path}?{parameterName}={Uri.EscapeDataString(parameterValue)}";
         return navigationManager.GenerateSecureUrl(url);
     }
+    
+    /// <summary>
+    /// Navigate to URL with route parameters (special handling for routes like /page/{id})
+    /// </summary>
+    public static void NavigateToSecureWithRouteParam(this NavigationManager navigationManager,
+        string baseRoute,
+        string parameterValue,
+        bool forceLoad = false)
+    {
+        // For route parameters like /Users/Edit/{id}, we need to handle them specially
+        var url = $"{baseRoute}/{parameterValue}";
+        
+        var secureRoutingService = ServiceLocator.Current?.GetService<ISecureRoutingService>();
+        if (secureRoutingService != null)
+        {
+            var encryptedUrl = secureRoutingService.EncryptUrl(url);
+            navigationManager.NavigateTo(encryptedUrl, forceLoad);
+        }
+        else
+        {
+            // Fallback to regular navigation
+            navigationManager.NavigateTo(url, forceLoad);
+        }
+    }
 }

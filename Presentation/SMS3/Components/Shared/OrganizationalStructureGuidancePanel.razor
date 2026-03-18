@@ -39,26 +39,43 @@
                         <li>Maintain competency requirements</li>
                     </ul>
                 </div>
-
+                <!-- Role Categories -->
+                <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
+                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="SMS Role Categories:" Style="margin-bottom: 0.5rem;" />
+                    <RadzenStack Gap="0.25rem">
+                        <div style="font-size: 0.875rem;">
+                            <RadzenBadge Text="Executive" BadgeStyle="BadgeStyle.Danger" Variant="Variant.Filled" Style="margin-right: 0.5rem;" />
+                            Accountable Executive, Responsible Executive
+                        </div>
+                        <div style="font-size: 0.875rem;">
+                            <RadzenBadge Text="Management" BadgeStyle="BadgeStyle.Primary" Variant="Variant.Filled" Style="margin-right: 0.5rem;" />
+                            SMS Manager, SMS Coordinator
+                        </div>
+                        <div style="font-size: 0.875rem;">
+                            <RadzenBadge Text="Operational" BadgeStyle="BadgeStyle.Success" Variant="Variant.Filled" Style="margin-right: 0.5rem;" />
+                            SMS Team Members, Subject Matter Experts
+                        </div>
+                    </RadzenStack>
+                </RadzenCard>
                 <!-- Authority Levels Quick Reference -->
                 <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
                     <RadzenText TextStyle="TextStyle.Subtitle2" Text="Authority Level Structure:" Style="margin-bottom: 0.5rem;" />
                     <RadzenStack Gap="0.25rem">
-                        <div style="font-size: 0.75rem;">
-                            <RadzenBadge Text="Executive (10-9)" BadgeStyle="BadgeStyle.Danger" Variant="Variant.Text" Style="margin-right: 0.5rem;" />
+                        <div style="font-size: 0.875rem;">
+                            <RadzenBadge Text="Executive (10-9)" BadgeStyle="BadgeStyle.Danger" Variant="Variant.Filled" Style="margin-right: 0.5rem;" />
                             Strategic decision making, ultimate accountability
                         </div>
-                        <div style="font-size: 0.75rem;">
-                            <RadzenBadge Text="Management (8-7)" BadgeStyle="BadgeStyle.Warning" Variant="Variant.Text" Style="margin-right: 0.5rem;" />
+                        <div style="font-size: 0.875rem;">
+                            <RadzenBadge Text="Management (8-7)" BadgeStyle="BadgeStyle.Primary" Variant="Variant.Filled" Style="margin-right: 0.5rem;" />
                             Operational oversight, resource allocation
                         </div>
-                        <div style="font-size: 0.75rem;">
-                            <RadzenBadge Text="Operational (6-5)" BadgeStyle="BadgeStyle.Info" Variant="Variant.Text" Style="margin-right: 0.5rem;" />
+                        <div style="font-size: 0.875rem;">
+                            <RadzenBadge Text="Operational (6-5)" BadgeStyle="BadgeStyle.Success" Variant="Variant.Filled" Style="margin-right: 0.5rem;" />
                             Subject matter expertise, implementation
                         </div>
                     </RadzenStack>
                 </RadzenCard>
-
+               
                 <!-- Assignment Best Practices -->
                 <div>
                     <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">Assignment Best Practices:</RadzenText>
@@ -71,24 +88,7 @@
                     </ul>
                 </div>
 
-                <!-- Role Categories -->
-                <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Text="SMS Role Categories:" Style="margin-bottom: 0.5rem;" />
-                    <RadzenStack Gap="0.25rem">
-                        <div style="font-size: 0.75rem;">
-                            <RadzenBadge Text="Executive" BadgeStyle="BadgeStyle.Danger" Variant="Variant.Filled" Style="margin-right: 0.5rem;" />
-                            Accountable Executive, Responsible Executive
-                        </div>
-                        <div style="font-size: 0.75rem;">
-                            <RadzenBadge Text="Management" BadgeStyle="BadgeStyle.Warning" Variant="Variant.Filled" Style="margin-right: 0.5rem;" />
-                            SMS Manager, SMS Coordinator
-                        </div>
-                        <div style="font-size: 0.75rem;">
-                            <RadzenBadge Text="Operational" BadgeStyle="BadgeStyle.Info" Variant="Variant.Filled" Style="margin-right: 0.5rem;" />
-                            SMS Team Members, Subject Matter Experts
-                        </div>
-                    </RadzenStack>
-                </RadzenCard>
+                
 
                 <!-- Compliance Monitoring -->
                 <div>
@@ -101,15 +101,6 @@
                         <li>Assess organizational effectiveness</li>
                     </ul>
                 </div>
-
-                <!-- Tips Section -->
-                <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-success-lighter);">
-                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-success-darker);">
-                        <RadzenIcon Icon="lightbulb_outline" Style="margin-right: 0.25rem;" />
-                        <strong>Tip:</strong> Use the "Assign User" button on role cards to quickly assign personnel. 
-                        Only active users are available for assignment.
-                    </RadzenText>
-                </RadzenCard>
 
                 <!-- Regulatory Reference -->
                 <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-info-lighter);">

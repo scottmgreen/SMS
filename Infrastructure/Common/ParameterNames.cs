@@ -130,6 +130,25 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmSMSApplicationUserLoginDate = new Lazy<string>(() => "@pLoginDate");
     public static string pmSMSApplicationUserLoginDate => _pmSMSApplicationUserLoginDate.Value;
 
+    // 🔐 Two-Factor Authentication Parameters for SMS Application Users
+    private static readonly Lazy<string> _pmSMSUserTwoFactorSecretKey = new Lazy<string>(() => "@pTwoFactorSecretKey");
+    public static string pmSMSUserTwoFactorSecretKey => _pmSMSUserTwoFactorSecretKey.Value;
+
+    private static readonly Lazy<string> _pmSMSUserTwoFactorEnabled = new Lazy<string>(() => "@pTwoFactorEnabled");
+    public static string pmSMSUserTwoFactorEnabled => _pmSMSUserTwoFactorEnabled.Value;
+
+    private static readonly Lazy<string> _pmSMSUserBackupCodes = new Lazy<string>(() => "@pBackupCodes");
+    public static string pmSMSUserBackupCodes => _pmSMSUserBackupCodes.Value;
+
+    private static readonly Lazy<string> _pmSMSUserTwoFactorSetupDate = new Lazy<string>(() => "@pTwoFactorSetupDate");
+    public static string pmSMSUserTwoFactorSetupDate => _pmSMSUserTwoFactorSetupDate.Value;
+
+    private static readonly Lazy<string> _pmSMSUserFailedTwoFactorAttempts = new Lazy<string>(() => "@pFailedTwoFactorAttempts");
+    public static string pmSMSUserFailedTwoFactorAttempts => _pmSMSUserFailedTwoFactorAttempts.Value;
+
+    private static readonly Lazy<string> _pmSMSUserTwoFactorLockedUntil = new Lazy<string>(() => "@pTwoFactorLockedUntil");
+    public static string pmSMSUserTwoFactorLockedUntil => _pmSMSUserTwoFactorLockedUntil.Value;
+
     /// <summary>
     /// SMS Organizational User parameters
     /// </summary>

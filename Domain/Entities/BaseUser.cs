@@ -31,7 +31,13 @@ public abstract class BaseUser : BaseAuditableEntity
 
     public SMSUserRole UserRole { get; set; }
 
-
+    // 🔐 Two-Factor Authentication Properties
+    public string? TwoFactorSecretKey { get; set; }
+    public bool TwoFactorEnabled { get; set; } = false;
+    public string? BackupCodes { get; set; } // JSON array of backup codes
+    public DateTime? TwoFactorSetupDate { get; set; }
+    public int FailedTwoFactorAttempts { get; set; } = 0;
+    public DateTime? TwoFactorLockedUntil { get; set; }
 
     /// <summary>
     /// Gets the user's full display name

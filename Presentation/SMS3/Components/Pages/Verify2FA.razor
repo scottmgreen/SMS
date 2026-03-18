@@ -1,0 +1,470 @@
+@page "/verify-2fa"
+@layout SMS3.Components.Layout.LoginLayout
+@using SMS_Application.Services
+@using SMS3.Components.Shared
+
+<div class="home-background">
+    <div class="sms-2fa-card">
+        <!-- 2FA Header -->
+        <div class="sms-login-header">
+            @if (ShowSetupPage)
+            {
+                <i class="fas fa-qrcode sms-login-icon"></i>
+                <h2 class="sms-login-title">Setup Two-Factor Authentication</h2>
+                <p class="sms-login-subtitle-text">Scan QR Code with Microsoft Authenticator</p>
+            }
+            else
+            {
+                <i class="fas fa-mobile-alt sms-login-icon"></i>
+                <h2 class="sms-login-title">Two-Factor Authentication</h2>
+                <p class="sms-login-subtitle-text">Enter your 6-digit verification code</p>
+            }
+        </div>
+
+        @if (!string.IsNullOrEmpty(ErrorMessage))
+        {
+            <div class="alert alert-danger sms-login-error">
+                <i class="fas fa-exclamation-triangle me-2"></i>
+                <strong>Verification Failed:</strong> @ErrorMessage
+            </div>
+        }
+
+        <!-- Debug Information (remove in production) -->
+        @if (!string.IsNullOrEmpty(User))
+        {
+            <div class="alert alert-info">
+                <small><strong>Debug:</strong> Query User Parameter: @User</small>
+            </div>
+        }
+        
+       
+        @if (ShowSetupPage)
+        {
+            <!-- QR Code Setup Page -->
+            <div class="sms-2fa-setup">
+                <div class="alert alert-info sms-info-alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-mobile-alt me-2"></i>Setup Your Authenticator
+                    </h6>
+                    <ol class="mb-0">
+                        <li>Download <strong>Microsoft Authenticator</strong> from your app store</li>
+                        <li>Open the app and tap <strong>"Add account"</strong></li>
+                        <li>Select <strong>"Work or school account"</strong></li>
+                        <li>Scan the QR code below</li>
+                    </ol>
+                </div>
+
+                <!-- QR Code Display using Radzen -->
+                <div class="sms-qr-container">
+                    <div class="sms-qr-code">
+                        @if (!string.IsNullOrEmpty(QRCodeUrl))
+                        {
+                            <RadzenQRCode Value="@QRCodeUrl" 
+                                          Size="200" 
+                                          ErrorCorrectionLevel="QRCodeErrorCorrectionLevel.M"
+                                          Style="border: 2px solid var(--sms-blue-light); border-radius: 8px; padding: 10px; background: white;" />
+                        }
+                        else
+                        {
+                            <div class="sms-qr-loading">
+                                <i class="fas fa-spinner fa-spin fa-2x"></i>
+                                <p>Generating QR Code...</p>
+                            </div>
+                        }
+                    </div>
+                    
+                    @if (!string.IsNullOrEmpty(ManualEntryCode))
+                    {
+                        <div class="sms-manual-entry">
+                            <p><strong>Can't scan?</strong> Enter this code manually:</p>
+                            <code class="sms-manual-code">@ManualEntryCode</code>
+                            <RadzenButton Text="Copy Code" 
+                                          Icon="content_copy" 
+                                          ButtonStyle="ButtonStyle.Light" 
+                                          Size="ButtonSize.Small"
+                                          Click="@CopyToClipboard" />
+                        </div>
+                    }
+                </div>
+
+                <!-- Test Code Input -->
+                <div class="sms-setup-verify">
+                    <h6>Verify Setup:</h6>
+                    <p class="text-muted">Enter a code from your authenticator app to confirm setup:</p>
+                    
+                    <RadzenTemplateForm TItem="SetupFormModel" Data="@SetupModel" Submit="@CompleteSetupAsync">
+                        <div class="mb-3">
+                            <RadzenTextBox @bind-Value="@SetupModel.Code" 
+                                           Name="SetupCode" 
+                                           Placeholder="000000"
+                                           MaxLength="6"
+                                           Class="sms-2fa-input" 
+                                           autocomplete="off"
+                                           Disabled="@IsLoading" />
+                            <RadzenRequiredValidator Component="SetupCode" Text="Verification code is required" Class="sms-validation-error" />
+                            <RadzenRegexValidator Component="SetupCode" Pattern="^\d{6}$" Text="Code must be 6 digits" Class="sms-validation-error" />
+                        </div>
+                        
+                        <div class="d-grid">
+                            <RadzenButton ButtonType="ButtonType.Submit" 
+                                          ButtonStyle="ButtonStyle.Dark" 
+                                          Text="@(IsLoading ? "Verifying..." : "Complete Setup")"
+                                          Disabled="@IsLoading" 
+                                          Size="ButtonSize.Large"
+                                          Class="sms-login-button" 
+                                          Icon="@(IsLoading ? "hourglass_empty" : "check_circle")" />
+                        </div>
+                    </RadzenTemplateForm>
+                </div>
+            </div>
+        }
+        else
+        {
+            <!-- Verification Page -->
+            <div class="sms-2fa-verification">
+                <div class="alert alert-info sms-info-alert">
+                    <h6 class="alert-heading">
+                        <i class="fas fa-shield-alt me-2"></i>Security Verification
+                    </h6>
+                    <p class="mb-2">Open your <strong>Microsoft Authenticator</strong> app and enter the 6-digit code for <strong>@UserDisplayName</strong>.</p>
+                    <p class="mb-0"><small>Code refreshes every 30 seconds • Time remaining: <strong>@GetTimeRemaining()</strong></small></p>
+                </div>
+
+                <!-- 2FA Code Input -->
+                <RadzenTemplateForm TItem="TwoFactorFormModel" Data="@TwoFactorModel" Submit="@HandleVerificationAsync">
+                    <div class="mb-3">
+                        <label class="form-label sms-form-label">
+                            <i class="fas fa-key me-2"></i>Authentication Code
+                        </label>
+                        <RadzenTextBox @bind-Value="@TwoFactorModel.Code" 
+                                       Name="Code" 
+                                       Placeholder="000000"
+                                       MaxLength="6"
+                                       Class="sms-2fa-input" 
+                                       autocomplete="off"
+                                       Disabled="@IsLoading" />
+                        <RadzenRequiredValidator Component="Code" Text="Verification code is required" Class="sms-validation-error" />
+                        <RadzenRegexValidator Component="Code" Pattern="^\d{6}$" Text="Code must be 6 digits" Class="sms-validation-error" />
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <RadzenButton ButtonType="ButtonType.Submit" 
+                                      ButtonStyle="ButtonStyle.Dark" 
+                                      Text="@(IsLoading ? "Verifying..." : "Verify Code")"
+                                      Disabled="@IsLoading" 
+                                      Size="ButtonSize.Large"
+                                      Class="sms-login-button" 
+                                      Icon="@(IsLoading ? "hourglass_empty" : "verified_user")" />
+                    </div>
+                </RadzenTemplateForm>
+
+                <!-- Backup Options -->
+                <div class="sms-2fa-backup">
+                    <div class="text-center">
+                        <RadzenButton Text="Having trouble? Use backup method" 
+                                      ButtonStyle="ButtonStyle.Base" 
+                                      Icon="help_outline"
+                                      Click="@ShowBackupOptions"
+                                      Class="sms-backup-link" />
+                    </div>
+
+                    @if (ShowBackupMethods)
+                    {
+                        <div class="sms-backup-methods mt-3">
+                            <h6>Alternative Methods:</h6>
+                            <RadzenButton Text="Use Backup Code" 
+                                          ButtonStyle="ButtonStyle.Light" 
+                                          Icon="vpn_key" 
+                                          Size="ButtonSize.Small"
+                                          Click="@ShowBackupCodeInput"
+                                          Class="me-2 mb-2" />
+                            <RadzenButton Text="Contact IT Support" 
+                                          ButtonStyle="ButtonStyle.Danger" 
+                                          Icon="phone" 
+                                          Size="ButtonSize.Small"
+                                          Click="@ContactSupport"
+                                          Class="mb-2" />
+                        </div>
+
+                        @if (ShowBackupCodeEntry)
+                        {
+                            <div class="sms-backup-code-entry mt-3">
+                                <RadzenFormField Text="Backup Recovery Code:" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@BackupCode" 
+                                                   Placeholder="XXXX-XXXX" 
+                                                   MaxLength="9" 
+                                                   autocomplete="off" 
+                                                   Class="mb-2" />
+                                </RadzenFormField>
+                                <RadzenButton Text="Verify Backup Code" 
+                                              ButtonStyle="ButtonStyle.Warning" 
+                                              Icon="lock_open"
+                                              Disabled="@IsLoading"
+                                              Click="@VerifyBackupCode" />
+                            </div>
+                        }
+                    }
+                </div>
+            </div>
+        }
+
+        <!-- Footer -->
+        <div class="sms-disclaimer-footer">
+            <small class="text-muted">
+                <i class="fas fa-phone me-1"></i> IT Support:
+                <a href="mailto:it-support@flypdx.com">it-support@flypdx.com</a> |
+                <i class="fas fa-shield-alt me-1"></i> Security Code: @GetCurrentTotpCode()
+            </small>
+        </div>
+    </div>
+</div>
+
+<!-- ?? 2FA Timeout Warning Modal -->
+<TwoFactorTimeoutModal OnStartOver="@HandleStartOver" 
+                      OnDismiss="@HandleDismissWarning" />
+
+@* CSS Styling for 2FA Page *@
+<style>
+/* =============================================================================
+   SMS 2FA VERIFICATION PAGE - MATCHING LOGIN STYLING
+   ============================================================================= */
+
+.sms-2fa-card {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 1rem 3rem rgba(33, 46, 97, 0.15);
+    padding: 2.5rem;
+    width: 100%;
+    max-width: 600px;
+    border: 1px solid var(--sms-blue-light);
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+    pointer-events: auto;
+}
+
+/* Login Header */
+.sms-login-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--sms-blue-light);
+}
+
+.sms-login-icon {
+    font-size: 3.5rem;
+    color: var(--sms-blue-dark-bold);
+    margin-bottom: 1rem;
+    display: block;
+    text-shadow: 0 0.125rem 0.25rem black;
+}
+
+.sms-login-title {
+    color: var(--sms-blue-dark-bold);
+    font-weight: 700;
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.sms-login-subtitle-text {
+    color: var(--sms-blue-dark-bold);
+    font-weight: 500;
+    font-size: 1rem;
+    margin-bottom: 0;
+}
+
+/* Alert Styling */
+.sms-info-alert {
+    background-color: rgba(13, 110, 253, 0.1) !important;
+    border: 1px solid rgba(13, 110, 253, 0.2) !important;
+    color: var(--sms-blue-dark-bold) !important;
+    border-radius: 0.5rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+.sms-login-error {
+    background-color: var(--sms-alert-danger-bg) !important;
+    color: var(--sms-alert-danger-text) !important;
+    border: 1px solid var(--sms-alert-danger-border) !important;
+    border-radius: 0.5rem !important;
+    margin-bottom: 1.5rem !important;
+}
+
+/* Form Styling */
+.sms-form-label {
+    color: var(--sms-blue-dark-bold);
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.sms-2fa-input {
+    text-align: center !important;
+    font-size: 1.5rem !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.3em !important;
+    padding: 0.875rem 1rem !important;
+    border: 2px solid var(--sms-blue-light) !important;
+    border-radius: 0.5rem !important;
+    width: 100% !important;
+}
+
+.sms-2fa-input:focus {
+    border-color: var(--sms-blue-dark-bold) !important;
+    box-shadow: 0 0 0 0.2rem rgba(33, 46, 97, 0.25) !important;
+    outline: none !important;
+}
+
+/* Button Styling */
+.sms-login-button {
+    padding: 0.875rem 1.5rem !important;
+    font-weight: 600 !important;
+    border-radius: 0.5rem !important;
+    font-size: 1.1rem !important;
+    background-color: var(--sms-blue-dark-bold) !important;
+    border-color: var(--sms-btn-primary-bg) !important;
+    box-shadow: 0 0.25rem 0.5rem black !important;
+    color: white !important;
+}
+
+.sms-login-button:hover {
+    background-color: var(--sms-btn-primary-hover) !important;
+    border-color: var(--sms-btn-primary-hover) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 0.375rem 0.75rem black !important;
+}
+
+.sms-login-button:disabled {
+    opacity: 0.6 !important;
+    transform: none !important;
+}
+
+/* QR Code Styling */
+.sms-qr-container {
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.sms-qr-code {
+    display: inline-block;
+    padding: 1rem;
+    background: white;
+    border: 2px solid var(--sms-blue-light);
+    border-radius: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.sms-qr-loading {
+    padding: 2rem;
+    color: var(--sms-blue-dark-bold);
+}
+
+.sms-manual-entry {
+    background-color: rgba(108, 117, 125, 0.1);
+    border: 1px solid rgba(108, 117, 125, 0.2);
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.sms-manual-code {
+    background-color: #f8f9fa;
+    color: #495057;
+    padding: 0.5rem 1rem;
+    border-radius: 0.25rem;
+    font-family: 'Courier New', monospace;
+    font-size: 1.1rem;
+    letter-spacing: 0.1em;
+    border: 1px solid #dee2e6;
+    display: block;
+    margin: 0.5rem 0;
+}
+
+/* Setup Verification */
+.sms-setup-verify {
+    border-top: 1px solid var(--sms-blue-light);
+    padding-top: 1.5rem;
+    margin-top: 2rem;
+}
+
+/* Backup Options */
+.sms-2fa-backup {
+    border-top: 1px solid var(--sms-blue-light);
+    padding-top: 1.5rem;
+    margin-top: 1.5rem;
+}
+
+.sms-backup-link {
+    color: var(--sms-blue-dark-bold);
+    text-decoration: none;
+    font-size: 0.9rem;
+}
+
+.sms-backup-link:hover {
+    color: var(--sms-blue-dark-bold);
+    text-decoration: underline;
+}
+
+.sms-backup-methods {
+    background-color: rgba(108, 117, 125, 0.1);
+    border: 1px solid rgba(108, 117, 125, 0.2);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+.sms-backup-code-entry {
+    background-color: rgba(255, 193, 7, 0.1);
+    border: 1px solid rgba(255, 193, 7, 0.2);
+    border-radius: 0.5rem;
+    padding: 1rem;
+}
+
+/* Validation Error */
+.sms-validation-error {
+    color: var(--sms-red-primary) !important;
+    font-size: 0.875rem !important;
+    margin-top: 0.25rem !important;
+}
+
+/* Footer */
+.sms-disclaimer-footer {
+    text-align: center;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--sms-blue-light);
+    margin-top: 2rem;
+}
+
+.sms-disclaimer-footer a {
+    color: var(--sms-blue-dark-bold);
+    text-decoration: none;
+}
+
+.sms-disclaimer-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Responsive Design - Mobile devices */
+@@media (max-width: 768px) {
+    .sms-2fa-card {
+        max-width: 90%;
+        padding: 2rem;
+    }
+
+    .sms-login-icon {
+        font-size: 2.5rem;
+    }
+
+    .sms-login-title {
+        font-size: 1.5rem;
+    }
+
+    .sms-2fa-input {
+        font-size: 1.25rem !important;
+    }
+}
+
+/* =============================================================================
+   END SMS 2FA VERIFICATION STYLING
+   ============================================================================= */
+</style>

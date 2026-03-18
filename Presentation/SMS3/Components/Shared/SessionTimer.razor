@@ -1,0 +1,220 @@
+@using SMS_Application.Services
+@using SMS_Application.Configuration
+@using SMS_Application.Interfaces
+@implements IDisposable
+@inject SessionTimerService SessionTimerSvc
+@inject ICurrentUserService CurrentUserService  
+@inject NavigationManager Navigation
+@inject ILogger<SessionTimer> Logger
+
+@if (CurrentUserService.IsAuthenticated && ShowTimer)
+{
+    <div class="session-timer-container d-flex align-items-center me-3">
+        <i class="fas fa-clock me-1 @GetIconClass()"></i>
+        <span class="session-timer @SessionTimerSvc.GetTimerCssClass()" title="@GetTooltipText()">
+            @SessionTimerSvc.FormatRemainingTime()
+        </span>
+        @if (IsNearExpiry())
+        {
+            <i class="fas fa-exclamation-triangle ms-1 text-warning"></i>
+        }
+    </div>
+}
+
+<style>
+.session-timer-container {
+    font-size: 0.875rem;
+    font-weight: 500;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.25rem;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.session-timer {
+    font-family: 'Courier New', monospace;
+    letter-spacing: 0.5px;
+    font-size: 0.9rem;
+}
+
+.session-normal {
+    color: #28a745;
+}
+
+.session-warning {
+    color: #ffc107;
+}
+
+.session-critical {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.session-expired {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.timer-icon-normal {
+    color: #28a745;
+}
+
+.timer-icon-warning {
+    color: #ffc107;
+}
+
+.timer-icon-critical {
+    color: #dc3545;
+}
+</style>
+
+@code {
+    [Parameter] public bool ShowTimer { get; set; } = true;
+    [Parameter] public EventCallback OnSessionExpired { get; set; }
+    [Parameter] public EventCallback OnSessionWarning { get; set; }
+    
+    private System.Threading.Timer? _updateTimer;
+    private bool _warningShown = false;
+    private DateTime _lastWarningCheck = DateTime.MinValue;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        if (CurrentUserService.IsAuthenticated)
+        {
+            // Subscribe to session timer events
+            SessionTimerSvc.OnTimeRemaining += HandleTimeRemaining;
+            SessionTimerSvc.OnSessionExpired += HandleSessionExpired;
+            SessionTimerSvc.OnWarningThreshold += HandleWarningThreshold;
+            
+            // Start the session timer
+            SessionTimerSvc.StartTimer();
+            
+            // Create UI update timer (updates every second for smooth countdown)
+            _updateTimer = new System.Threading.Timer(async _ => 
+            {
+                await InvokeAsync(() =>
+                {
+                    CheckForWarnings();
+                    StateHasChanged();
+                });
+            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+                
+            Logger.LogDebug("Session timer component initialized");
+        }
+    }
+
+    private void CheckForWarnings()
+    {
+        var remaining = SessionTimerSvc.GetRemainingTime();
+        var now = DateTime.UtcNow;
+        
+        // Show warning every 30 seconds when < 5 minutes remaining
+        if (remaining <= TimeSpan.FromMinutes(5) && remaining > TimeSpan.Zero)
+        {
+            if (now - _lastWarningCheck > TimeSpan.FromSeconds(30))
+            {
+                _lastWarningCheck = now;
+                if (OnSessionWarning.HasDelegate)
+                {
+                    _ = Task.Run(async () => await OnSessionWarning.InvokeAsync());
+                }
+            }
+        }
+    }
+
+    private async void HandleTimeRemaining(TimeSpan remaining)
+    {
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async void HandleSessionExpired()
+    {
+        try
+        {
+            Logger.LogWarning("Session expired - redirecting to login");
+            
+            // Trigger callback if provided
+            if (OnSessionExpired.HasDelegate)
+            {
+                await OnSessionExpired.InvokeAsync();
+            }
+            else
+            {
+                // Default action - redirect to login
+                Navigation.NavigateTo("/login", forceLoad: true);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling session expiry");
+        }
+    }
+
+    private async void HandleWarningThreshold()
+    {
+        if (_warningShown) return;
+        
+        try
+        {
+            _warningShown = true;
+            Logger.LogInformation("Session warning threshold reached for user");
+            
+            if (OnSessionWarning.HasDelegate)
+            {
+                await OnSessionWarning.InvokeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling session warning");
+        }
+    }
+
+    private string GetIconClass()
+    {
+        var remaining = SessionTimerSvc.GetRemainingTime();
+        
+        if (remaining <= TimeSpan.Zero)
+            return "timer-icon-critical";
+        else if (remaining <= TimeSpan.FromMinutes(2))
+            return "timer-icon-critical";
+        else if (remaining <= TimeSpan.FromMinutes(5))
+            return "timer-icon-warning";
+        else
+            return "timer-icon-normal";
+    }
+
+    private string GetTooltipText()
+    {
+        var remaining = SessionTimerSvc.GetRemainingTime();
+        
+        if (remaining <= TimeSpan.Zero)
+            return "Session expired - please login again";
+        else if (remaining <= TimeSpan.FromMinutes(2))
+            return "Session expires very soon! Save your work immediately.";
+        else if (remaining <= TimeSpan.FromMinutes(5))
+            return "Session will expire soon - save your work";
+        else
+            return $"Session expires in {SessionTimerSvc.FormatRemainingTime()}";
+    }
+
+    private bool IsNearExpiry()
+    {
+        var remaining = SessionTimerSvc.GetRemainingTime();
+        return remaining <= TimeSpan.FromMinutes(5) && remaining > TimeSpan.Zero;
+    }
+
+    public void Dispose()
+    {
+        // Unsubscribe from events
+        if (SessionTimerSvc != null)
+        {
+            SessionTimerSvc.OnTimeRemaining -= HandleTimeRemaining;
+            SessionTimerSvc.OnSessionExpired -= HandleSessionExpired;
+            SessionTimerSvc.OnWarningThreshold -= HandleWarningThreshold;
+        }
+        
+        // Dispose update timer
+        _updateTimer?.Dispose();
+    }
+}

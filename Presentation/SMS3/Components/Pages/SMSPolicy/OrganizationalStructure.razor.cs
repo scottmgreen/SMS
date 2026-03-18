@@ -248,7 +248,7 @@ public partial class OrganizationalStructure : ComponentBase
     private int GetVacantRoles()
     {
         return SMSOrganizationalLevel.GetAllValues()
-            .Count(level => !GetUsersForLevel(level).Any());
+            .Count(level => !GetUsersForLevel(level).Where(x => x.OrganizationLevel != SMSOrganizationalLevel.UnassignedLevel).Any());
     }
 
     private int GetCompliancePercentage()
@@ -300,19 +300,36 @@ public partial class OrganizationalStructure : ComponentBase
             builder.AddContent(14, roleInfo.Level.Name);
             builder.CloseElement();
 
-            builder.OpenComponent<RadzenBadge>(15);
-            builder.AddAttribute(16, "Text", $"Authority {roleInfo.Level.AuthorityLevel}");
-            builder.AddAttribute(17, "BadgeStyle", BadgeStyle.Info);
-            builder.AddAttribute(18, "Variant", Variant.Text);
-            builder.AddAttribute(19, "Style", "font-size: 0.75em;");
-            builder.CloseComponent();
-
             builder.OpenComponent<RadzenBadge>(20);
-            builder.AddAttribute(21, "Text", roleInfo.Level.Category);
-            builder.AddAttribute(22, "BadgeStyle", BadgeStyle.Secondary);
+            builder.AddAttribute(21, "Text", $"{roleInfo.Level.Category} Authority {roleInfo.Level.AuthorityLevel}");
+            builder.AddAttribute(22, "BadgeStyle", GetCategoryBadgeStyle(roleInfo.Level.Category));
             builder.AddAttribute(23, "Variant", Variant.Text);
             builder.AddAttribute(24, "Style", "font-size: 0.75em;");
             builder.CloseComponent();
+
+            //builder.OpenComponent<RadzenBadge>(20);
+            //builder.AddAttribute(21, "Text", roleInfo.Level.Name);
+            //builder.AddAttribute(22, "BadgeStyle", GetCategoryBadgeStyle(roleInfo.Level.Category));
+            //builder.AddAttribute(23, "Variant", Variant.Text);
+            //builder.AddAttribute(24, "Style", $"font-size: 0.75em; margin-right: 0.5rem;");
+            //builder.CloseComponent();
+
+            //builder.OpenComponent<RadzenBadge>(25);
+            //builder.AddAttribute(26, "Text", $"Authority {roleInfo.Level.AuthorityLevel}");
+            //builder.AddAttribute(27, "BadgeStyle", BadgeStyle.Info);
+            //builder.AddAttribute(28, "Variant", Variant.Outlined);
+            //builder.AddAttribute(29, "Style", $"font-size: 0.75em; {GetAuthorityLevelCustomStyle(roleInfo.Level.AuthorityLevel)}");
+            //builder.CloseComponent();
+
+
+            //builder.OpenComponent<RadzenBadge>(15);
+            //builder.AddAttribute(16, "Text", $"Authority {roleInfo.Level.AuthorityLevel}");
+            //builder.AddAttribute(17, "BadgeStyle", @GetAuthorityLevelBadgeStyle(roleInfo.Level.AuthorityLevel));
+            //builder.AddAttribute(18, "Variant", Variant.Outlined);
+            //builder.AddAttribute(19, "Style", "font-size: 0.75em;");
+            //builder.CloseComponent();
+
+           
 
             builder.CloseElement(); // Title row
 
@@ -375,12 +392,12 @@ public partial class OrganizationalStructure : ComponentBase
 
                     builder.CloseElement(); // User info
 
-                    builder.OpenComponent<RadzenBadge>(55);
-                    builder.AddAttribute(56, "Text", "Assigned");
-                    builder.AddAttribute(57, "BadgeStyle", BadgeStyle.Success);
-                    builder.AddAttribute(58, "Variant", Variant.Filled);
-                    builder.AddAttribute(59, "Style", "font-size: 0.75em;");
-                    builder.CloseComponent();
+                    //builder.OpenComponent<RadzenBadge>(55);
+                    //builder.AddAttribute(56, "Text", "Assigned");
+                    //builder.AddAttribute(57, "BadgeStyle", BadgeStyle.Success);
+                    //builder.AddAttribute(58, "Variant", Variant.Filled);
+                    //builder.AddAttribute(59, "Style", "font-size: 0.75em;");
+                    //builder.CloseComponent();
 
                     builder.OpenComponent<RadzenButton>(60);
                     builder.AddAttribute(61, "Icon", "close");
@@ -427,14 +444,29 @@ public partial class OrganizationalStructure : ComponentBase
         };
     }
 
-
-    private BadgeStyle GetAuthorityLevelBadgeStyle(int authorityLevel)
+    /// <summary>
+    /// Gets authority level badge style using SMS color system instead of limited BadgeStyle
+    /// Maps to 5 distinct colors from SMS color palette for better visual distinction
+    /// </summary>
+    private string GetAuthorityLevelCustomStyle(int authorityLevel)
     {
         return authorityLevel switch
         {
+            >= 9 => "background-color: var(--sms-red-primary) !important; color: white !important;",    // Executive levels
+            >= 7 => "background-color: var(--sms-blue-primary) !important; color: white !important;",  // Management levels  
+            >= 5 => "background-color: var(--sms-green-primary) !important; color: white !important;",    // Operational levels
+            _ => "background-color: var(--sms-blue-light) !important; color: var(--sms-blue-dark-bold) !important;"     // Other levels
+        };
+    }
+
+    private BadgeStyle GetAuthorityLevelBadgeStyle(int authorityLevel)
+    {
+        // Keeping for backward compatibility, but preferring custom styles above
+        return authorityLevel switch
+        {
             >= 9 => BadgeStyle.Danger,    // Executive levels
-            >= 7 => BadgeStyle.Warning,   // Management levels
-            >= 5 => BadgeStyle.Info,      // Operational levels
+            >= 7 => BadgeStyle.Primary,   // Management levels  
+            >= 5 => BadgeStyle.Success,   // Operational levels
             _ => BadgeStyle.Secondary     // Other levels
         };
     }
@@ -448,29 +480,64 @@ public partial class OrganizationalStructure : ComponentBase
 
     #endregion
 
-    #region Additional Helper Methods
+    #region Domain-Aligned Helper Methods
 
+    /// <summary>
+    /// Gets category description directly from Domain enum - SINGLE SOURCE OF TRUTH
+    /// Dynamically builds description from actual SMSOrganizationalLevel instances in each category
+    /// </summary>
     private string GetCategoryDescription(string category)
     {
-        return category switch
+        // Get all levels in this category from the Domain enum
+        var levelsInCategory = SMSOrganizationalLevel.GetLevelsByCategory(category).ToList();
+        
+        if (!levelsInCategory.Any())
         {
-            "Executive" => "Strategic leadership and ultimate accountability for SMS performance",
-            "Management" => "Operational oversight and day-to-day SMS management",
-            "Operational" => "Subject matter expertise and operational SMS activities",
-            "Committee" => "Collaborative decision-making and governance activities",
-            "External" => "External stakeholder representation and consultation",
-            _ => "SMS organizational role"
-        };
+            return $"SMS organizational category: {category}";
+        }
+
+        // Get authority level range from actual domain data
+        var minAuthority = levelsInCategory.Min(l => l.AuthorityLevel);
+        var maxAuthority = levelsInCategory.Max(l => l.AuthorityLevel);
+        var authorityRange = minAuthority == maxAuthority ? $"{minAuthority}" : $"{minAuthority}-{maxAuthority}";
+
+        // Build description using domain helper properties
+        var firstLevel = levelsInCategory.First();
+        
+        if (firstLevel.IsExecutiveRole)
+        {
+            return $"Strategic leadership roles with ultimate accountability for SMS performance and compliance. Authority levels {authorityRange}.";
+        }
+        else if (firstLevel.IsManagementRole)
+        {
+            return $"Operational oversight roles managing day-to-day SMS activities and coordination. Authority levels {authorityRange}.";
+        }
+        else if (firstLevel.IsOperationalRole)
+        {
+            return $"Subject matter expertise and operational SMS implementation roles. Authority levels {authorityRange}.";
+        }
+        else if (firstLevel.IsCommitteeRole)
+        {
+            return $"Collaborative decision-making and governance roles for SMS committees. Authority levels {authorityRange}.";
+        }
+        else if (firstLevel.IsExternalRole)
+        {
+            return $"External stakeholder representation and consultation roles. Authority levels {authorityRange}.";
+        }
+        
+        // Fallback using the actual category from domain
+        return $"SMS organizational roles in {category} category. Authority levels {authorityRange}.";
     }
 
     private List<CategorySummary> GetCategorySummary()
     {
+        // Get ONLY categories that exist in the Domain enum - NO HARDCODING
         var categories = SMSOrganizationalLevel.GetAllValues()
             .GroupBy(level => level.Category)
             .Select(group => new CategorySummary
             {
                 CategoryName = group.Key,
-                Description = GetCategoryDescription(group.Key),
+                Description = GetCategoryDescription(group.Key), // Uses Domain-driven method above
                 TotalRoles = group.Count(),
                 AssignedPersonnel = group.Sum(level => GetUsersForLevel(level).Count),
                 FilledRoles = group.Count(level => GetUsersForLevel(level).Any()),
@@ -482,22 +549,48 @@ public partial class OrganizationalStructure : ComponentBase
         return categories;
     }
 
+    /// <summary>
+    /// Gets category badge style using ONLY categories from Domain enum
+    /// Maps to BadgeStyle based on category helper properties from SMSOrganizationalLevel
+    /// MATCHES the colors shown in OrganizationalStructureGuidancePanel.razor
+    /// </summary>
     private BadgeStyle GetCategoryBadgeStyle(string category)
     {
-        return category switch
+        // Get a representative level from this category from the Domain enum
+        var levelInCategory = SMSOrganizationalLevel.GetLevelsByCategory(category).FirstOrDefault();
+        
+        if (levelInCategory == null)
         {
-            "Executive" => BadgeStyle.Danger,
-            "Management" => BadgeStyle.Warning,
-            "Operational" => BadgeStyle.Info,
-            "Committee" => BadgeStyle.Success,
-            "External" => BadgeStyle.Secondary,
-            _ => BadgeStyle.Light
-        };
+            return BadgeStyle.Light; // Fallback for unknown categories
+        }
+
+        // Use Domain enum helper properties - MATCHES GUIDANCE PANEL COLORS
+        if (levelInCategory.IsExecutiveRole)
+        {
+            return BadgeStyle.Danger;    // Red for executive (matches guidance panel)
+        }
+        else if (levelInCategory.IsManagementRole)
+        {
+            return BadgeStyle.Primary;   // Blue for management (matches guidance panel)
+        }
+        else if (levelInCategory.IsOperationalRole)
+        {
+            return BadgeStyle.Success;   // Green for operational (matches guidance panel)
+        }
+        else if (levelInCategory.IsCommitteeRole)
+        {
+            return BadgeStyle.Info;      // Teal for collaborative
+        }
+        else if (levelInCategory.IsExternalRole)
+        {
+            return BadgeStyle.Secondary; // Gray for external
+        }
+        
+        return BadgeStyle.Light; // Default fallback
     }
 
     #endregion
 
-   
     #region Enhanced Models
 
     public class SMSOrganizationalLevelInfo

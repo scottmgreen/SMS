@@ -14,6 +14,9 @@ using SMS_Application.Interfaces;
 
 namespace SMS_Application.Configuration;
 
+/// <summary>
+/// Extension methods for configuring Application layer services
+/// </summary>
 internal static class ServiceCollectionExtensions
 {
     /// <summary>
@@ -67,29 +70,4 @@ internal static class ServiceCollectionExtensions
         Scoped
     }
 }
-//// Register Application Services
-//services.AddScoped<IAirportSharedDatasetService, AirportSharedDatasetService>();
-//services.AddScoped<IHazardService, HazardService>();
-//services.AddScoped<IInterviewService, InterviewService>();
-//services.AddScoped<IInvestigationService, InvestigationService>();
-//services.AddScoped<IMitigationAssignmentService, MitigationAssignmentService>();
-//services.AddScoped<IMitigationService, MitigationService>();
-//services.AddScoped<IReportService, ReportService>();
-//services.AddScoped<IReportValidationService, ReportValidationService>();
-//services.AddScoped<IRiskAnalysisService, RiskAnalysisService>();
-//services.AddScoped<IRiskAssessmentService, RiskAssessmentService>();
-//services.AddScoped<IScoringPanelService, ScoringPanelService>();
-//services.AddScoped<ISystemService, SystemService>();
-
-//// Register SMS User Management Services
-//services.AddScoped<ISMSApplicationUserService, SMSApplicationUserService>();
-//services.AddScoped<ISMSOrganizationalUserService, SMSOrganizationalUserService>();
-//services.AddScoped<ISMSStakeholderUserService, SMSStakeholderUserService>();
-//services.AddScoped<ISMSRoleService, SMSRoleService>();
-//services.AddScoped<ISMSWorkflowService, SMSWorkflowService>();
-//services.AddScoped<ISMSAuthorizationService, SMSAuthorizationService>();
-
-//// Register Messaging Services
-//services.AddScoped<MediatorService>();
-//services.AddScoped<MessengerService>();
 

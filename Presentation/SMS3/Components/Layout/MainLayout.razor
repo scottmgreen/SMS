@@ -58,7 +58,7 @@
     }
 
     /// <summary>
-    /// Handle logout request from NavMenu - STATIC AUTHENTICATION APPROACH
+    /// Handle logout request from NavMenu - SESSION-BASED AUTHENTICATION APPROACH
     /// </summary>
     private async Task OnLogoutRequested()
     {
@@ -70,7 +70,7 @@
 
         try
         {
-            // Get current user info BEFORE clearing static authentication
+            // Get current user info BEFORE clearing session authentication
             if (CurrentUserService.IsAuthenticated)
             {
                 currentUserName = CurrentUserService.UserDisplayName ?? CurrentUserService.UserCode ?? "Unknown";
@@ -83,7 +83,7 @@
                 }
                 
                 // Generate a session ID for audit purposes
-                sessionId = $"STATIC_SESSION_{DateTime.UtcNow:yyyyMMddHHmmss}";
+                sessionId = $"SESSION_{DateTime.UtcNow:yyyyMMddHHmmss}";
                 
                 // Calculate session duration based on login time
                 if (CurrentUserService.LoginTime.HasValue)
@@ -119,10 +119,11 @@
                 // Continue with logout even if audit fails
             }
 
-            // **CLEAR STATIC AUTHENTICATION - No session clearing needed**
-            StaticCurrentUserService.ClearAuthenticationState();
+            // **🔐 CLEAR SESSION-BASED AUTHENTICATION - Replaces static authentication**
+            await CurrentUserService.ClearAuthentication();
+            await SessionService.ClearSMSSessionAsync();
             
-            Logger.LogInformation("✅ Static authentication cleared for user: {UserName}", currentUserName);
+            Logger.LogInformation("✅ Session authentication cleared for user: {UserName}", currentUserName);
             
             // 🔐 SECURE NAVIGATION - Navigate to HOME PAGE with encrypted URL
             Navigation.NavigateToSecure("/", forceLoad: true);
@@ -134,13 +135,14 @@
             // Still try to clear authentication and redirect even if audit fails
             try
             {
-                StaticCurrentUserService.ClearAuthenticationState();
+                await CurrentUserService.ClearAuthentication();
+                await SessionService.ClearSMSSessionAsync();
                 // 🔐 SECURE NAVIGATION - Force navigation to home page
                 Navigation.NavigateToSecure("/", forceLoad: true);
             }
             catch (Exception clearEx)
             {
-                Logger.LogError(clearEx, "❌ Critical: Failed to clear static authentication during logout");
+                Logger.LogError(clearEx, "❌ Critical: Failed to clear session authentication during logout");
                 // 🔐 SECURE NAVIGATION - Force navigation even on clear error
                 Navigation.NavigateToSecure("/", forceLoad: true);
             }

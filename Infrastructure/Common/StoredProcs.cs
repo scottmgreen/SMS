@@ -68,6 +68,19 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_SMSApplicationUser_RecordFailedLogin = new(() => "pr_SMSApplicationUser_RecordFailedLogin");
         public static string pr_SMSApplicationUser_RecordFailedLogin => _pr_SMSApplicationUser_RecordFailedLogin.Value;
 
+        // 🔐 Two-Factor Authentication Procedures for SMS Application Users
+        private static readonly Lazy<string> _pr_SMSApplicationUser_Setup2FA = new(() => "pr_SMSApplicationUser_Setup2FA");
+        public static string pr_SMSApplicationUser_Setup2FA => _pr_SMSApplicationUser_Setup2FA.Value;
+
+        private static readonly Lazy<string> _pr_SMSApplicationUser_Update2FAFailedAttempts = new(() => "pr_SMSApplicationUser_Update2FAFailedAttempts");
+        public static string pr_SMSApplicationUser_Update2FAFailedAttempts => _pr_SMSApplicationUser_Update2FAFailedAttempts.Value;
+
+        private static readonly Lazy<string> _pr_SMSApplicationUser_Reset2FAFailedAttempts = new(() => "pr_SMSApplicationUser_Reset2FAFailedAttempts");
+        public static string pr_SMSApplicationUser_Reset2FAFailedAttempts => _pr_SMSApplicationUser_Reset2FAFailedAttempts.Value;
+
+        private static readonly Lazy<string> _pr_SMSApplicationUser_Disable2FA = new(() => "pr_SMSApplicationUser_Disable2FA");
+        public static string pr_SMSApplicationUser_Disable2FA => _pr_SMSApplicationUser_Disable2FA.Value;
+
         #endregion
 
         #region SMS Organizational User Stored Procedures
@@ -113,6 +126,19 @@ namespace SMS_Infrastructure.Common
 
         private static readonly Lazy<string> _pr_SMSOrganizationalUser_UpdateLoginInfo = new(() => "pr_SMSOrganizationalUser_UpdateLoginInfo");
         public static string pr_SMSOrganizationalUser_UpdateLoginInfo => _pr_SMSOrganizationalUser_UpdateLoginInfo.Value;
+
+        // 🔐 Two-Factor Authentication Procedures for SMS Organizational Users
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_Setup2FA = new(() => "pr_SMSOrganizationalUser_Setup2FA");
+        public static string pr_SMSOrganizationalUser_Setup2FA => _pr_SMSOrganizationalUser_Setup2FA.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_Update2FAFailedAttempts = new(() => "pr_SMSOrganizationalUser_Update2FAFailedAttempts");
+        public static string pr_SMSOrganizationalUser_Update2FAFailedAttempts => _pr_SMSOrganizationalUser_Update2FAFailedAttempts.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_Reset2FAFailedAttempts = new(() => "pr_SMSOrganizationalUser_Reset2FAFailedAttempts");
+        public static string pr_SMSOrganizationalUser_Reset2FAFailedAttempts => _pr_SMSOrganizationalUser_Reset2FAFailedAttempts.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrganizationalUser_Disable2FA = new(() => "pr_SMSOrganizationalUser_Disable2FA");
+        public static string pr_SMSOrganizationalUser_Disable2FA => _pr_SMSOrganizationalUser_Disable2FA.Value;
 
         #endregion
 
@@ -162,6 +188,19 @@ namespace SMS_Infrastructure.Common
 
         private static readonly Lazy<string> _pr_SMSStakeholderUser_GetByGroupCode = new(() => "pr_SMSStakeholderUser_GetByGroupCode");
         public static string pr_SMSStakeholderUser_GetByGroupCode => _pr_SMSStakeholderUser_GetByGroupCode.Value;
+
+        // 🔐 Two-Factor Authentication Procedures for SMS Stakeholder Users
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_Setup2FA = new(() => "pr_SMSStakeholderUser_Setup2FA");
+        public static string pr_SMSStakeholderUser_Setup2FA => _pr_SMSStakeholderUser_Setup2FA.Value;
+
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_Update2FAFailedAttempts = new(() => "pr_SMSStakeholderUser_Update2FAFailedAttempts");
+        public static string pr_SMSStakeholderUser_Update2FAFailedAttempts => _pr_SMSStakeholderUser_Update2FAFailedAttempts.Value;
+
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_Reset2FAFailedAttempts = new(() => "pr_SMSStakeholderUser_Reset2FAFailedAttempts");
+        public static string pr_SMSStakeholderUser_Reset2FAFailedAttempts => _pr_SMSStakeholderUser_Reset2FAFailedAttempts.Value;
+
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_Disable2FA = new(() => "pr_SMSStakeholderUser_Disable2FA");
+        public static string pr_SMSStakeholderUser_Disable2FA => _pr_SMSStakeholderUser_Disable2FA.Value;
 
         #endregion
 

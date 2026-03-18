@@ -8,6 +8,7 @@
 @using SMS3.Security
 
 @using SMS_Application.Interfaces
+@using SMS_Application.Services
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @inject IJSRuntime JSRuntime
@@ -16,6 +17,8 @@
 @inject Radzen.DialogService DialogService
 @inject IWebHostEnvironment Environment
 @inject ISecureRoutingService SecureRoutingService
+
+@using SMS3.Components.Shared
 
 <!-- SMS Navigation with FULL Original Menu Structure -->
 <nav class="navbar navbar-expand-lg sms-nav">
@@ -32,12 +35,18 @@
             {
                 <!-- All menu items should be right-justified for authenticated users -->
                 <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                    
+                    <!-- 🔐 SESSION TIMER - Hidden but still functional for modal trigger -->
+                    <SessionTimer OnSessionExpired="@OnSessionTimerExpired" 
+                                         OnSessionWarning="@OnSessionWarning" 
+                                         ShowTimer="false" />
+                    
                     <!-- SMS Risk Management Menu -->
                     @if (CurrentUserService.CanRead("SMS_RiskManagement"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                                <RadzenMenuItem Text="SMS Risk Management" Icon="shield" class="sms-menu-item">
+                                <RadzenMenuItem Text="Risk Management" Icon="shield" class="sms-menu-item">
                                     <RadzenMenuItem Text="Create Hazard Report" Value='"/SMSRiskManagement/HazardReporting"' Icon="add_circle"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Report Processing" Value='"/SMSRiskManagement/ReportProcessing"' Icon="settings"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Search Reports" Value='"/SMSRiskManagement/HazardReportSearch"' Icon="search"></RadzenMenuItem>
@@ -76,7 +85,7 @@
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                                <RadzenMenuItem Text="SMS Assurance" Icon="verified_user" class="sms-menu-item">
+                                <RadzenMenuItem Text="Assurance" Icon="verified_user" class="sms-menu-item">
                                     <RadzenMenuItem Text="Risk Registry" Value='"/SMSAssurance/RiskRegistry"' Icon="assignment"></RadzenMenuItem>
                                     <RadzenMenuItem Text="SPI Dashboard" Value='"/SMSAssurance/SPIDashboard"' Icon="dashboard"></RadzenMenuItem>
                                     <RadzenMenuItem Text="SPI Configuration" Value='"/SMSAssurance/SPIConfiguration"' Icon="settings"></RadzenMenuItem>
@@ -93,7 +102,7 @@
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                                <RadzenMenuItem Text="SMS Policy" Icon="policy" class="sms-menu-item">
+                                <RadzenMenuItem Text="Policy" Icon="policy" class="sms-menu-item">
                                     <RadzenMenuItem Text="Safety Policy" Value='"/SMSPolicy/SafetyPolicy"' Icon="description"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Organizational Structure" Value='"/SMSPolicy/OrganizationalStructure"' Icon="account_tree"></RadzenMenuItem>
                                 </RadzenMenuItem>
@@ -106,7 +115,7 @@
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                                <RadzenMenuItem Text="SMS Promotion" Icon="trending_up" class="sms-menu-item">
+                                <RadzenMenuItem Text="Promotion" Icon="trending_up" class="sms-menu-item">
                                     <!-- Add pages when they exist -->
                                 </RadzenMenuItem>
                             </RadzenMenu>
@@ -147,8 +156,8 @@
                     <div class="nav-item">
                         <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                             <RadzenMenuItem Text="@CurrentUserService?.UserDisplayName" Icon="person" class="sms-menu-item">
-                                <RadzenMenuItem Text="Role & Permissions" Icon="account_circle" Click="@ShowUserProfileModal" />
-                                <RadzenMenuItem Text="About" Icon="info" Value='"/About"' />
+                                @* <RadzenMenuItem Text="Role & Permissions" Icon="account_circle" Click="@ShowUserProfileModal" />
+                                <RadzenMenuItem Text="About" Icon="info" Value='"/About"' /> *@
                                 <RadzenMenuItem Text="Logout" Icon="logout" Click="@OnLogoutClick" />
                             </RadzenMenuItem>
                         </RadzenMenu>
@@ -181,14 +190,18 @@
     </div>
 </nav>
 
+<!-- Session Timeout Modal -->
+<SessionTimeoutModal OnLogout="@OnLogoutRequested" 
+                    OnContinue="@OnSessionContinued" />
+
 @code {
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private SessionTimerService SessionTimerService { get; set; } = default!;
 
     [Parameter]
     public EventCallback OnLogoutRequested { get; set; }
 
     // Session Timer
-    
     private CancellationTokenSource _cancellationTokenSource = new();
 
     // Environment Detection
@@ -223,16 +236,92 @@
 
     protected override async Task OnInitializedAsync()
     {
+        // Initialize session timer if user is authenticated
+        if (CurrentUserService.IsAuthenticated)
+        {
+            SessionTimerService.StartTimer();
+            Logger.LogDebug("NavMenu initialized with session timer for authenticated user");
+        }
     }
 
-    
+    /// <summary>
+    /// Handle session timer expiry - automatic logout
+    /// </summary>
+    private async Task OnSessionTimerExpired()
+    {
+        try
+        {
+            Logger.LogWarning("🔐 Session timer expired - initiating automatic logout");
+            
+            // Stop the session timer
+            SessionTimerService.StopTimer();
+            
+            // Trigger the logout process
+            await OnLogoutRequested.InvokeAsync();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling session timer expiry");
+            
+            // Force navigation to login as fallback
+            Navigation.NavigateTo("/login", forceLoad: true);
+        }
+    }
+
+    /// <summary>
+    /// Handle session warning - user notification
+    /// </summary>
+    private async Task OnSessionWarning()
+    {
+        try
+        {
+            var remaining = SessionTimerService.GetRemainingTime();
+            Logger.LogInformation("🔐 Session warning: {RemainingTime} remaining for user {UserId}", 
+                remaining, CurrentUserService.UserCode);
+            
+            // The modal warning is handled by the SessionTimeoutModal component
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling session warning");
+        }
+    }
+
+    /// <summary>
+    /// Handle session continuation from modal
+    /// </summary>
+    private async Task OnSessionContinued()
+    {
+        try
+        {
+            Logger.LogInformation("🔐 Session continued by user {UserId}", CurrentUserService.UserCode);
+            
+            // Update session activity (already done in modal, but ensure it's logged)
+            SessionTimerService.UpdateActivity();
+            
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error handling session continuation");
+        }
+    }
+
     /// <summary>
     /// Handle menu clicks for SECURE navigation - all URLs automatically encrypted
+    /// Also updates session activity
     /// </summary>
     private async Task OnMenuClick(MenuItemEventArgs args)
     {
         try
         {
+            // Update session activity on menu interaction
+            if (CurrentUserService.IsAuthenticated)
+            {
+                SessionTimerService.UpdateActivity();
+            }
+
             Logger.LogInformation("OnMenuClick called with value: {Value}", args.Value?.ToString());
             
             if (!string.IsNullOrEmpty(args.Value?.ToString()))
@@ -262,6 +351,9 @@
 
     private async Task OnLogoutClick()
     {
+        // Stop session timer before logout
+        SessionTimerService.StopTimer();
+        
         await OnLogoutRequested.InvokeAsync();
         _cancellationTokenSource?.Cancel();
     }
@@ -271,6 +363,12 @@
     /// </summary>
     private void NavigateToAbout()
     {
+        // Update session activity
+        if (CurrentUserService.IsAuthenticated)
+        {
+            SessionTimerService.UpdateActivity();
+        }
+
         Logger.LogInformation("Navigating to About page via secure navigation");
         Navigation.NavigateToSecure("/About");
     }
@@ -279,6 +377,9 @@
     private async Task ShowUserProfileModal()
     {
         if (CurrentUserService?.IsAuthenticated != true) return;
+
+        // Update session activity
+        SessionTimerService.UpdateActivity();
 
         var options = new DialogOptions()
         {
@@ -301,6 +402,7 @@
 
     public void Dispose()
     {
+        SessionTimerService?.StopTimer();
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
     }
@@ -312,8 +414,10 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        // Parameters updated
+        // Update session activity when parameters change
+        if (CurrentUserService.IsAuthenticated)
+        {
+            SessionTimerService.UpdateActivity();
+        }
     }
-
-    
 }

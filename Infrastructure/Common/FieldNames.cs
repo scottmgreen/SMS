@@ -103,6 +103,25 @@ public static class FieldNames
     private static readonly Lazy<string> _fSMSApplicationUserLastLoginDate = new Lazy<string>(() => "fldd_LastLoginDate");
     public static string fSMSApplicationUserLastLoginDate => _fSMSApplicationUserLastLoginDate.Value;
 
+    // 🔐 Two-Factor Authentication Fields for SMS Application Users
+    private static readonly Lazy<string> _fSMSApplicationUserTwoFactorSecretKey = new Lazy<string>(() => "fldv_TwoFactorSecretKey");
+    public static string fSMSApplicationUserTwoFactorSecretKey => _fSMSApplicationUserTwoFactorSecretKey.Value;
+
+    private static readonly Lazy<string> _fSMSApplicationUserTwoFactorEnabled = new Lazy<string>(() => "fldb_TwoFactorEnabled");
+    public static string fSMSApplicationUserTwoFactorEnabled => _fSMSApplicationUserTwoFactorEnabled.Value;
+
+    private static readonly Lazy<string> _fSMSApplicationUserBackupCodes = new Lazy<string>(() => "fldv_BackupCodes");
+    public static string fSMSApplicationUserBackupCodes => _fSMSApplicationUserBackupCodes.Value;
+
+    private static readonly Lazy<string> _fSMSApplicationUserTwoFactorSetupDate = new Lazy<string>(() => "fldd_TwoFactorSetupDate");
+    public static string fSMSApplicationUserTwoFactorSetupDate => _fSMSApplicationUserTwoFactorSetupDate.Value;
+
+    private static readonly Lazy<string> _fSMSApplicationUserFailedTwoFactorAttempts = new Lazy<string>(() => "fldi_FailedTwoFactorAttempts");
+    public static string fSMSApplicationUserFailedTwoFactorAttempts => _fSMSApplicationUserFailedTwoFactorAttempts.Value;
+
+    private static readonly Lazy<string> _fSMSApplicationUserTwoFactorLockedUntil = new Lazy<string>(() => "fldd_TwoFactorLockedUntil");
+    public static string fSMSApplicationUserTwoFactorLockedUntil => _fSMSApplicationUserTwoFactorLockedUntil.Value;
+
     /// <summary>
     /// SMS Organizational Users table (tbld_SMSOrganizationalUsers)
     /// </summary>
@@ -145,6 +164,25 @@ public static class FieldNames
     private static readonly Lazy<string> _fSMSOrganizationalUserLastLoginDate = new Lazy<string>(() => "fldd_LastLoginDate");
     public static string fSMSOrganizationalUserLastLoginDate => _fSMSOrganizationalUserLastLoginDate.Value;
 
+    // 🔐 Two-Factor Authentication Fields for SMS Organizational Users
+    private static readonly Lazy<string> _fSMSOrganizationalUserTwoFactorSecretKey = new Lazy<string>(() => "fldv_TwoFactorSecretKey");
+    public static string fSMSOrganizationalUserTwoFactorSecretKey => _fSMSOrganizationalUserTwoFactorSecretKey.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalUserTwoFactorEnabled = new Lazy<string>(() => "fldb_TwoFactorEnabled");
+    public static string fSMSOrganizationalUserTwoFactorEnabled => _fSMSOrganizationalUserTwoFactorEnabled.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalUserBackupCodes = new Lazy<string>(() => "fldv_BackupCodes");
+    public static string fSMSOrganizationalUserBackupCodes => _fSMSOrganizationalUserBackupCodes.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalUserTwoFactorSetupDate = new Lazy<string>(() => "fldd_TwoFactorSetupDate");
+    public static string fSMSOrganizationalUserTwoFactorSetupDate => _fSMSOrganizationalUserTwoFactorSetupDate.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalUserFailedTwoFactorAttempts = new Lazy<string>(() => "fldi_FailedTwoFactorAttempts");
+    public static string fSMSOrganizationalUserFailedTwoFactorAttempts => _fSMSOrganizationalUserFailedTwoFactorAttempts.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalUserTwoFactorLockedUntil = new Lazy<string>(() => "fldd_TwoFactorLockedUntil");
+    public static string fSMSOrganizationalUserTwoFactorLockedUntil => _fSMSOrganizationalUserTwoFactorLockedUntil.Value;
+
     /// <summary>
     /// SMS Stakeholder Users table (tbld_SMSStakeholderUsers)
     /// </summary>
@@ -178,9 +216,24 @@ public static class FieldNames
     private static readonly Lazy<string> _fSMSStakeholderIsPOPEmployee = new Lazy<string>(() => "fldb_IsPOPEmployee");
     public static string fSMSStakeholderIsPOPEmployee => _fSMSStakeholderIsPOPEmployee.Value;
 
-    //fldb_IsPOPEmployee
+    // 🔐 Two-Factor Authentication Fields for SMS Stakeholder Users
+    private static readonly Lazy<string> _fSMSStakeholderUserTwoFactorSecretKey = new Lazy<string>(() => "fldv_TwoFactorSecretKey");
+    public static string fSMSStakeholderUserTwoFactorSecretKey => _fSMSStakeholderUserTwoFactorSecretKey.Value;
 
+    private static readonly Lazy<string> _fSMSStakeholderUserTwoFactorEnabled = new Lazy<string>(() => "fldb_TwoFactorEnabled");
+    public static string fSMSStakeholderUserTwoFactorEnabled => _fSMSStakeholderUserTwoFactorEnabled.Value;
 
+    private static readonly Lazy<string> _fSMSStakeholderUserBackupCodes = new Lazy<string>(() => "fldv_BackupCodes");
+    public static string fSMSStakeholderUserBackupCodes => _fSMSStakeholderUserBackupCodes.Value;
+
+    private static readonly Lazy<string> _fSMSStakeholderUserTwoFactorSetupDate = new Lazy<string>(() => "fldd_TwoFactorSetupDate");
+    public static string fSMSStakeholderUserTwoFactorSetupDate => _fSMSStakeholderUserTwoFactorSetupDate.Value;
+
+    private static readonly Lazy<string> _fSMSStakeholderUserFailedTwoFactorAttempts = new Lazy<string>(() => "fldi_FailedTwoFactorAttempts");
+    public static string fSMSStakeholderUserFailedTwoFactorAttempts => _fSMSStakeholderUserFailedTwoFactorAttempts.Value;
+
+    private static readonly Lazy<string> _fSMSStakeholderUserTwoFactorLockedUntil = new Lazy<string>(() => "fldd_TwoFactorLockedUntil");
+    public static string fSMSStakeholderUserTwoFactorLockedUntil => _fSMSStakeholderUserTwoFactorLockedUntil.Value;
 
     /// <summary>
     /// SMS Stakeholder Groups table (tbld_SMSStakeholderGroups)

@@ -24,10 +24,9 @@ public partial class ApplicationUsers : ComponentBase
     [Inject] private ILogger<ApplicationUsers> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
-    
+    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
 
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-
+    // Route parameter for edit mode
     [Parameter] public string? Id { get; set; }
 
     // Data Properties - renamed to avoid conflict
@@ -79,23 +78,35 @@ public partial class ApplicationUsers : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        Logger.LogInformation("OnInitializedAsync called with Id: {Id}", Id ?? "NULL");
+        
         await LoadDataAsync();
 
         // Check if we're in edit mode
         if (!string.IsNullOrWhiteSpace(Id))
         {
+            Logger.LogInformation("Calling LoadUserForEdit from OnInitializedAsync with Id: {Id}", Id);
             await LoadUserForEdit(Id);
+        }
+        else
+        {
+            Logger.LogInformation("No Id parameter, staying in list mode");
         }
     }
 
     protected override async Task OnParametersSetAsync()
     {
+        Logger.LogInformation("OnParametersSetAsync called with Id: {Id}, IsEditMode: {IsEditMode}", 
+            Id ?? "NULL", IsEditMode);
+            
         if (!string.IsNullOrWhiteSpace(Id) && !IsEditMode)
         {
+            Logger.LogInformation("Calling LoadUserForEdit from OnParametersSetAsync with Id: {Id}", Id);
             await LoadUserForEdit(Id);
         }
         else if (string.IsNullOrWhiteSpace(Id) && IsEditMode)
         {
+            Logger.LogInformation("Cancelling edit mode from OnParametersSetAsync");
             CancelEdit();
         }
     }
@@ -142,18 +153,27 @@ public partial class ApplicationUsers : ComponentBase
     {
         try
         {
+            Logger.LogInformation("LoadUserForEdit called with ID: {Id}", id);
+            
             var getUserQuery = new GetSMSApplicationUserByCodeQuery(id);
             var userResult = await Mediator.SendAsync(getUserQuery, CancellationToken.None);
 
-            if (userResult.IsFailure)
+            Logger.LogInformation("Query result - Success: {IsSuccess}, User found: {UserFound}", 
+                userResult.IsSuccess, userResult.Value != null);
+
+            if (userResult.IsFailure || userResult.Value == null)
             {
-                ShowErrorAsyncNotification("User not found.");
-                Navigation.NavigateToSecure("/System/UserManagement/ApplicationUsers");
+                Logger.LogWarning("User not found for ID: {Id}", id);
+                ShowErrorAsyncNotification($"User not found: {id}");
+                Navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
                 return;
             }
 
             CurrentUser = userResult.Value;
             IsEditMode = true;
+
+            Logger.LogInformation("Edit mode set - CurrentUser: {UserCode}, IsEditMode: {IsEditMode}", 
+                CurrentUser?.Code, IsEditMode);
 
             // Populate edit form
             editUser = new EditUserModel
@@ -165,6 +185,9 @@ public partial class ApplicationUsers : ComponentBase
             // Set the role code for dropdown binding
             EditUserRoleCode = CurrentUser.UserRole?.Code;
 
+            Logger.LogInformation("Edit form populated - FirstName: {FirstName}, LastName: {LastName}, RoleCode: {RoleCode}", 
+                editUser.FirstName, editUser.LastName, EditUserRoleCode);
+
             StateHasChanged();
         }
         catch (Exception ex)
@@ -173,7 +196,7 @@ public partial class ApplicationUsers : ComponentBase
             ShowErrorAsyncNotification("An error occurred while loading the user for editing.");
             
             // Navigate back to main list on error
-            Navigation.NavigateToSecure("/System/UserManagement/ApplicationUsers");
+            Navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
         }
     }
 
@@ -381,6 +404,7 @@ public partial class ApplicationUsers : ComponentBase
                 UserName = UserName.Create(NewUser.UserName).Value,
                 Password = Password.Create(NewUser.Password).Value,
                 UserRole = selectedRole, // ?? NEW: Assign role during creation
+                TwoFactorEnabled = NewUser.TwoFactorEnabled, // ?? NEW: Set 2FA requirement
                 IsActive = true,
                 SMSUserType = SMSUserType.Application,
                 CreatedBy = CurrentUserService?.UserDisplayName,
@@ -427,14 +451,15 @@ public partial class ApplicationUsers : ComponentBase
         !string.IsNullOrWhiteSpace(NewUser.UserName) &&
         !string.IsNullOrWhiteSpace(NewUser.Password);
 
-    private async Task EditUser(string userId)
+    private void EditUser(string userId)
     {
         try
         {
             Logger.LogInformation("Editing user: {UserId}", userId);
             
-            // Navigate to edit page with user ID parameter
-            Navigation.NavigateToSecure($"/System/UserManagement/ApplicationUsers/Edit/{userId}");
+            // Use regular navigation for edit routes since secure navigation has issues with route parameters
+            // TODO: Fix SecureNavigation to properly handle route parameters
+            Navigation.NavigateTo($"/System/UserManagement/ApplicationUsers/Edit/{userId}");
         }
         catch (Exception ex)
         {
@@ -609,7 +634,7 @@ public partial class ApplicationUsers : ComponentBase
         NotificationHelper.ShowErrorAsync( message);
     }
 
-    private void ShowInfoAsyncNotification(string message)
+    private void ShowInfoAsyncNotification(String message)
     {
         NotificationHelper.ShowInfoAsync( message);
     }
@@ -632,6 +657,7 @@ public partial class ApplicationUsers : ComponentBase
         public string UserName { get; set; } = "";
         public string Password { get; set; } = "";
         public string? UserRoleCode { get; set; } // NEW: Role assignment during creation
+        public bool TwoFactorEnabled { get; set; } = false; // NEW: 2FA requirement during creation
     }
 
     #endregion

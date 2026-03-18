@@ -1,0 +1,421 @@
+@using SMS_Application.Services
+@using SMS_Application.Interfaces
+@implements IDisposable
+@inject SessionTimerService SessionTimerService
+@inject ICurrentUserService CurrentUserService  
+@inject NavigationManager Navigation
+@inject ILogger<SessionTimeoutModal> Logger
+@inject IJSRuntime JSRuntime
+
+@if (IsVisible)
+{
+    <div class="session-timeout-modal-overlay">
+        <div class="modal-backdrop-custom"></div>
+        <div class="modal-dialog-custom">
+            <div class="modal-content-custom">
+                <div class="modal-header-custom">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle text-warning me-2 fa-2x"></i>
+                        <h4 class="modal-title text-warning mb-0">Session Expiring Soon</h4>
+                    </div>
+                </div>
+                
+                <div class="modal-body-custom">
+                    <div class="alert alert-warning d-flex align-items-center mb-3">
+                        <i class="fas fa-clock me-2"></i>
+                        <span>Your session will expire in <strong class="countdown-text">@FormatRemainingTime()</strong></span>
+                    </div>
+                    
+                    <p class="mb-3">
+                        Your session is about to expire due to inactivity. Any unsaved changes will be lost.
+                    </p>
+                    
+                    <div class="session-progress mb-3">
+                        <div class="progress" style="height: 8px;">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated bg-warning" 
+                                 style="width: @GetProgressPercentage()%" 
+                                 role="progressbar">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <p class="text-muted small mb-0">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Click "Continue Session" to extend your session, or "Logout" to securely end your session.
+                    </p>
+                </div>
+                
+                <div class="modal-footer-custom">
+                    <button type="button" class="btn btn-danger me-2 modal-btn" @onclick="OnLogoutClick">
+                        <i class="fas fa-sign-out-alt me-1"></i>
+                        Logout
+                    </button>
+                    <button type="button" class="btn btn-success modal-btn" @onclick="OnContinueSession">
+                        <i class="fas fa-refresh me-1"></i>
+                        Continue Session
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+/* Modal overlay - highest priority */
+.session-timeout-modal-overlay {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    z-index: 2147483647 !important; /* Maximum z-index value */
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: auto !important;
+}
+
+/* Modal backdrop */
+.modal-backdrop-custom {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background-color: rgba(0, 0, 0, 0.7) !important;
+    z-index: 2147483646 !important;
+}
+
+/* Modal dialog container */
+.modal-dialog-custom {
+    position: relative !important;
+    z-index: 2147483647 !important;
+    max-width: 500px !important;
+    width: 90% !important;
+    margin: 0 !important;
+    pointer-events: auto !important;
+}
+
+/* Modal content */
+.modal-content-custom {
+    background: white !important;
+    border-radius: 12px !important;
+    border: none !important;
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5) !important;
+    position: relative !important;
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+}
+
+/* Modal header */
+.modal-header-custom {
+    height:70px;
+    background: #212e61;
+    border-radius: 12px 12px 0 0 !important;
+    padding: 1.5rem !important;
+    border-bottom: none !important;
+}
+
+/* Modal body */
+.modal-body-custom {
+    padding: 1.5rem !important;
+    background: white !important;
+}
+
+/* Modal footer */
+.modal-footer-custom {
+    padding: 0 1.5rem 1.5rem 1.5rem !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 0.5rem !important;
+    border-top: none !important;
+    background: white !important;
+    border-radius: 0 0 12px 12px !important;
+}
+
+/* Modal buttons */
+.modal-btn {
+    min-width: 120px !important;
+    font-weight: 500 !important;
+    border-radius: 6px !important;
+    padding: 0.5rem 1rem !important;
+    z-index: 2147483647 !important;
+    position: relative !important;
+    pointer-events: auto !important;
+    cursor: pointer !important;
+    border: none !important;
+}
+
+/* Countdown text */
+.countdown-text {
+    font-family: 'Courier New', monospace !important;
+    font-size: 1.2em !important;
+    color: #dc3545 !important;
+    font-weight: bold !important;
+}
+
+/* Progress bar */
+.session-progress .progress {
+    border-radius: 4px !important;
+    background-color: #f8f9fa !important;
+    height: 8px !important;
+}
+
+/* Alert styling */
+.modal-body-custom .alert {
+    border-radius: 8px !important;
+    border: none !important;
+    background-color: #fff3cd !important;
+    border-left: 4px solid #ffc107 !important;
+}
+
+/* Modal title */
+.modal-header-custom .modal-title {
+    font-weight: 600 !important;
+    font-size: 1.3rem !important;
+}
+
+/* Prevent scrolling when modal is open */
+body.modal-open {
+    overflow: hidden !important;
+}
+
+/* Ensure everything in modal is clickable */
+.session-timeout-modal-overlay,
+.session-timeout-modal-overlay * {
+    pointer-events: auto !important;
+}
+
+/* Make sure buttons have proper styling */
+.modal-btn:hover {
+    opacity: 0.9 !important;
+    transform: translateY(-1px) !important;
+}
+
+.modal-btn:active {
+    transform: translateY(0) !important;
+}
+</style>
+
+@code {
+    [Parameter] public EventCallback OnLogout { get; set; }
+    [Parameter] public EventCallback OnContinue { get; set; }
+    
+    private bool IsVisible { get; set; } = false;
+    private Timer? _countdownTimer;
+    private TimeSpan _warningTriggeredAt = TimeSpan.Zero;
+
+    protected override void OnInitialized()
+    {
+        // Subscribe to session timer service events
+        SessionTimerService.OnWarningThreshold += HandleWarningThreshold;
+        SessionTimerService.OnSessionExpired += HandleSessionExpired;
+    }
+
+    private async void HandleWarningThreshold()
+    {
+        var remaining = SessionTimerService.GetRemainingTime();
+        
+        // Show modal when 2 minutes or less remaining
+        if (remaining <= TimeSpan.FromMinutes(2) && remaining > TimeSpan.Zero)
+        {
+            _warningTriggeredAt = remaining;
+            ShowModal();
+        }
+    }
+
+    private async void HandleSessionExpired()
+    {
+        // If modal is showing and session expires, force logout
+        if (IsVisible)
+        {
+            Logger.LogWarning("Session expired while timeout modal was displayed");
+            await InvokeAsync(async () => await ForceLogout());
+        }
+    }
+
+    private async void ShowModal()
+    {
+        if (!IsVisible)
+        {
+            await InvokeAsync(async () =>
+            {
+                IsVisible = true;
+                Logger.LogInformation("Session timeout modal displayed - {RemainingTime} remaining", 
+                    SessionTimerService.GetRemainingTime());
+                
+                // Add modal-open class to body to prevent scrolling
+                try
+                {
+                    await JSRuntime.InvokeVoidAsync("document.body.classList.add", "modal-open");
+                }
+                catch { /* Ignore JS errors */ }
+                
+                StateHasChanged();
+            });
+            
+            // Start countdown timer for real-time updates
+            _countdownTimer = new Timer(async _ => 
+            {
+                await InvokeAsync(() =>
+                {
+                    var remaining = SessionTimerService.GetRemainingTime();
+                    
+                    // Auto-logout if time runs out
+                    if (remaining <= TimeSpan.Zero)
+                    {
+                        _ = Task.Run(async () => await ForceLogout());
+                        return;
+                    }
+                    
+                    StateHasChanged();
+                });
+            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
+        }
+    }
+
+    private async void HideModal()
+    {
+        await InvokeAsync(async () =>
+        {
+            await HideModalInternal();
+        });
+    }
+
+    private async Task OnContinueSession()
+    {
+        try
+        {
+            Logger.LogInformation("User chose to continue session");
+            
+            // Update activity to extend session
+            SessionTimerService.UpdateActivity();
+            
+            // Hide modal
+            await InvokeAsync(async () =>
+            {
+                await HideModalInternal();
+            });
+            
+            // Trigger continue callback if provided
+            if (OnContinue.HasDelegate)
+            {
+                await OnContinue.InvokeAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error continuing session");
+        }
+    }
+
+    private async Task OnLogoutClick()
+    {
+        try
+        {
+            Logger.LogInformation("User chose to logout from session timeout modal");
+            await PerformLogout();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error during logout from modal");
+            await ForceLogout();
+        }
+    }
+
+    private async Task PerformLogout()
+    {
+        // Hide modal first
+        await InvokeAsync(async () =>
+        {
+            await HideModalInternal();
+            SessionTimerService.StopTimer();
+        });
+        
+        // Trigger logout callback if provided
+        if (OnLogout.HasDelegate)
+        {
+            await OnLogout.InvokeAsync();
+        }
+        else
+        {
+            // Default action - navigate to root
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+    }
+
+    private async Task ForceLogout()
+    {
+        try
+        {
+            Logger.LogWarning("Force logout due to session expiry");
+            
+            await InvokeAsync(async () =>
+            {
+                await HideModalInternal();
+                SessionTimerService.StopTimer();
+            });
+            
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Error during force logout");
+            // Last resort - reload page
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+    }
+
+    private async Task HideModalInternal()
+    {
+        IsVisible = false;
+        _countdownTimer?.Dispose();
+        _countdownTimer = null;
+        
+        // Remove modal-open class from body
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("document.body.classList.remove", "modal-open");
+        }
+        catch { /* Ignore JS errors */ }
+        
+        StateHasChanged();
+    }
+
+    private string FormatRemainingTime()
+    {
+        var remaining = SessionTimerService.GetRemainingTime();
+        
+        if (remaining <= TimeSpan.Zero)
+            return "00:00";
+
+        return $"{remaining.Minutes:D2}:{remaining.Seconds:D2}";
+    }
+
+    private string GetProgressPercentage()
+    {
+        var remaining = SessionTimerService.GetRemainingTime();
+        
+        if (_warningTriggeredAt <= TimeSpan.Zero || remaining <= TimeSpan.Zero)
+            return "0";
+        
+        // Calculate percentage based on time elapsed since warning
+        var totalWarningTime = _warningTriggeredAt.TotalSeconds;
+        var remainingTime = remaining.TotalSeconds;
+        var elapsed = totalWarningTime - remainingTime;
+        var percentage = (elapsed / totalWarningTime) * 100;
+        
+        return Math.Max(0, Math.Min(100, percentage)).ToString("F0");
+    }
+
+    public void Dispose()
+    {
+        _countdownTimer?.Dispose();
+        
+        if (SessionTimerService != null)
+        {
+            SessionTimerService.OnWarningThreshold -= HandleWarningThreshold;
+            SessionTimerService.OnSessionExpired -= HandleSessionExpired;
+        }
+    }
+}

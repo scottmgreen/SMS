@@ -28,4 +28,10 @@ public interface ISMSApplicationUserRepository
     Task<Result<bool>> UpdateAsync(SMSApplicationUser user);
     Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword);
     Task<Result<bool>> UserNameExistsAsync(string userName);
+
+    // 🔐 Two-Factor Authentication Methods
+    Task<Result<bool>> Setup2FAAsync(string userCode, string secretKey, string? backupCodes = null, string updatedBy = "SYSTEM-2FA");
+    Task<Result<bool>> Update2FAFailedAttemptsAsync(string userCode, int failedAttempts, DateTime? lockoutUntil = null, string updatedBy = "SYSTEM-2FA");
+    Task<Result<bool>> Reset2FAFailedAttemptsAsync(string userCode, string updatedBy = "SYSTEM-2FA");
+    Task<Result<bool>> Disable2FAAsync(string userCode, string updatedBy = "SYSTEM-2FA");
 }

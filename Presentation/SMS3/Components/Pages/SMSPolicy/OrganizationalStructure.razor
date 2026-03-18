@@ -13,11 +13,6 @@
 <PageHeader Title="Organizational Structure"
            Subtitle="SMS organizational framework, roles, responsibilities and accountabilities"
            Icon="fas fa-sitemap">
-    <AdditionalContent>
-        <RadzenButton Text="Manage Users" Icon="people" ButtonStyle="ButtonStyle.Light"
-                      Click="@(() => Navigation.NavigateToSecure("/System/UserManagement/OrganizationalUsers"))"
-                      Size="ButtonSize.Medium" />
-    </AdditionalContent>
 </PageHeader>
 
 <div class="container-fluid">
@@ -64,7 +59,7 @@
                             <RadzenColumn Size="12" SizeMD="3">
                                 <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
                                     <RadzenCard>
-                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-success);">@GetTotalAssignedUsers()</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">@GetTotalAssignedUsers()</RadzenText>
                                         <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Assigned Personnel</RadzenText>
                                     </RadzenCard>
                                 </RadzenCard>
@@ -72,7 +67,7 @@
                             <RadzenColumn Size="12" SizeMD="3">
                                 <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
                                     <RadzenCard>
-                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-warning);">@GetVacantRoles()</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">@GetVacantRoles()</RadzenText>
                                         <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Vacant Role Types</RadzenText>
                                     </RadzenCard>
                                 </RadzenCard>
@@ -80,7 +75,7 @@
                             <RadzenColumn Size="12" SizeMD="3">
                                 <RadzenCard Variant="Variant.Outlined" Style="text-align: center;">
                                     <RadzenCard>
-                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-info);">@GetCompliancePercentage()%</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">@GetCompliancePercentage()%</RadzenText>
                                         <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Role Coverage</RadzenText>
                                     </RadzenCard>
                                 </RadzenCard>
