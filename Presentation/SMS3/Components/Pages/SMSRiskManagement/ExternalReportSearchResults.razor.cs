@@ -13,15 +13,15 @@ using SMS3.Configuration.Extensions;
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
-/// Anonymous/Confidential Hazard Report Search Result Details page
+/// External Report Search Result Details page
 /// Shows detailed status information for a specific tracking ID without requiring login
-/// Designed for users who submitted confidential reports to check status anonymously
+/// Designed for users who submitted external reports to check status anonymously
 /// </summary>
-public partial class ConfidentialHazardReportSearchResult : ComponentBase
+public partial class ExternalReportSearchResults : ComponentBase
 {
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<ConfidentialHazardReportSearchResult> Logger { get; set; } = default!;
+    [Inject] private ILogger<ExternalReportSearchResults> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     #endregion
@@ -79,7 +79,7 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     /// <summary>
     /// Page title for header component
     /// </summary>
-    public string PageTitle => "Confidential Report Details";
+    public string PageTitle => "External Report Details";
 
     /// <summary>
     /// Page subtitle for header component
@@ -109,7 +109,7 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     /// </summary>
     protected override async Task OnInitializedAsync()
     {
-        Logger.LogInformation("Anonymous report details view initialized for tracking code: {TrackingCode}", TrackingCode);
+        Logger.LogInformation("Initialized report details view for tracking code: {TrackingCode}", TrackingCode);
         await LoadReportDetails();
     }
 
@@ -544,8 +544,8 @@ public partial class ConfidentialHazardReportSearchResult : ComponentBase
     /// </summary>
     public void BackToSearch()
     {
-        // ?? SECURE NAVIGATION - Navigate back to confidential search with encrypted URL
-        Navigation.NavigateToSecure("/ConfidentialReporting/TrackStatus");
+        // ?? SECURE NAVIGATION - Navigate back to external search with encrypted URL
+        Navigation.NavigateToSecure("/ExternalReporting/TrackStatus");
     }
 
     #endregion

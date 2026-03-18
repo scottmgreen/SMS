@@ -1,11 +1,11 @@
-@page "/ConfidentialReporting/TrackStatus"
+@page "/ExternalReporting/TrackStatus"
 @using SMS_Domain.Entities
 @using SMS_Domain.ValueObjects
 @using SMS_Application.Messaging.Queries
 @using SMS3.Components.Shared
 @inherits ComponentBase
 
-<PageTitle>Hazard Report Search</PageTitle>
+<PageTitle>External Report Search</PageTitle>
 
 <!-- SMS Page Header using standard component -->
 <PageHeader Title="@PageTitle"
@@ -23,9 +23,6 @@
                     <RadzenIcon Icon="track_changes" class="me-2" />
                     Search by Tracking ID
                 </h5>
-                @* <p class="text-muted mb-0">
-                    Enter your tracking ID to get comprehensive report details and processing status.
-                </p> *@
             </div>
         </div>
         
@@ -64,96 +61,6 @@
 
         <!-- Divider -->
         <hr class="my-4" />
-
-        <!-- Advanced Search Section -->
-        @* <div class="row">
-            <div class="col-12">
-                <div class="d-flex align-items-center mb-3">
-                    <h5 class="mb-0 me-3">
-                        <RadzenIcon Icon="manage_search" class="me-2" />
-                        Advanced Search
-                    </h5>
-                    <RadzenButton ButtonType="ButtonType.Button"
-                                  Click="@ToggleAdvancedSearch"
-                                  Text="@(ShowAdvancedSearch ? "Hide Advanced" : "Show Advanced")"
-                                  Variant="Variant.Text"
-                                  Size="ButtonSize.Small" />
-                </div>
-            </div>
-        </div>
-
-        @if (ShowAdvancedSearch)
-        {
-            <div class="advanced-search-section" @key="@("advanced-search")">
-                <div class="row g-3">
-                    <!-- Report Code -->
-                    <div class="col-lg-2 col-md-4">
-                        <RadzenLabel Text="Report Code" Component="ReportCodeSearch" class="fw-semibold" />
-                        <RadzenTextBox @bind-Value="@ReportCodeSearch" 
-                                       Name="ReportCodeSearch"
-                                       Placeholder="RP-YYYY-XXXX" 
-                                       class="w-100" />
-                    </div>
-
-                    <!-- Hazard Code -->
-                    <div class="col-lg-2 col-md-4">
-                        <RadzenLabel Text="Hazard Code" Component="HazardCodeSearch" class="fw-semibold" />
-                        <RadzenTextBox @bind-Value="@HazardCodeSearch" 
-                                       Name="HazardCodeSearch"
-                                       Placeholder="HZ-YYYY-XXXX" 
-                                       class="w-100" />
-                    </div>
-
-                    <!-- Reported By -->
-                    <div class="col-lg-3 col-md-6">
-                        <RadzenLabel Text="Reported By" Component="SubmittedBySearch" class="fw-semibold" />
-                        <RadzenTextBox @bind-Value="@SubmittedBySearch" 
-                                       Name="SubmittedBySearch"
-                                       Placeholder="Reporter name" 
-                                       class="w-100" />
-                    </div>
-
-                    <!-- Date Range -->
-                    <div class="col-lg-3 col-md-6">
-                        <RadzenLabel Text="Date Range" Component="DateFromSearch" class="fw-semibold" />
-                        <div class="d-flex gap-2">
-                            <RadzenDatePicker @bind-Value="@DateFromSearch" 
-                                              Name="DateFromSearch"
-                                              Placeholder="From"
-                                              class="flex-fill" 
-                                              ShowTime="false"
-                                              DateFormat="MM/dd/yyyy" />
-                            <RadzenDatePicker @bind-Value="@DateToSearch" 
-                                              Name="DateToSearch"
-                                              Placeholder="To"
-                                              class="flex-fill" 
-                                              ShowTime="false"
-                                              DateFormat="MM/dd/yyyy" />
-                        </div>
-                    </div>
-                </div>
-
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <div class="d-flex gap-2">
-                            <RadzenButton ButtonType="ButtonType.Button"
-                                          Click="@SearchAdvanced"
-                                          Text="Search"
-                                          Icon="search"
-                                          BusyText="Searching..."
-                                          IsBusy="@IsSearching"
-                                          ButtonStyle="ButtonStyle.Primary"
-                                          Disabled="@(!HasAdvancedSearchCriteria)" />
-                            <RadzenButton ButtonType="ButtonType.Button"
-                                          Click="@ClearAdvancedSearch"
-                                          Text="Clear"
-                                          Icon="clear"
-                                          ButtonStyle="ButtonStyle.Light" />
-                        </div>
-                    </div>
-                </div>
-            </div>
-        } *@
     </div>
 </RadzenCard>
 
@@ -259,7 +166,6 @@
                             <span class="fw-bold text-primary">
                                 @result.SubmittedBy
                             </span>
-                            
                         </Template>
                     </RadzenDataGridColumn>
 
@@ -273,7 +179,6 @@
                             <span class="fw-bold text-primary">
                                 @result.SubmittedDate.ToString("MM/dd/yyyy")
                             </span>
-
                         </Template>
                     </RadzenDataGridColumn>
 
@@ -286,7 +191,6 @@
                             <span class="fw-bold text-primary">
                                 @result.CurrentStatus
                             </span>
-                                                           
                         </Template>
                     </RadzenDataGridColumn>
 
@@ -301,7 +205,6 @@
                                 <span class="fw-bold text-primary">
                                     @result.ValidationDecision
                                 </span>
-                                
                             }
                             else
                             {
@@ -354,14 +257,6 @@
         position: relative;
     }
 
-    .advanced-search-section {
-        background-color: var(--rz-background-color);
-        border: 1px solid var(--rz-border-color);
-        border-radius: var(--rz-border-radius);
-        padding: 1.5rem;
-        margin-top: 1rem;
-    }
-
     .search-results-grid {
         --rz-grid-cell-padding: 0.75rem;
     }
@@ -381,11 +276,5 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-    }
-
-    @@media (max-width: 768px) {
-        .search-results-grid .rz-datatable-scrollable-wrapper {
-            overflow-x: auto;
-        }
     }
 </style>

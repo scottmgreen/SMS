@@ -1,4 +1,4 @@
-﻿@page "/SMSRiskManagement/ConfidentialReporting"
+﻿@page "/ExternalReporting"
 @layout SMS3.Components.Layout.AnonymousLayout
 
 @using SMS3.Components.Shared
@@ -12,7 +12,7 @@
 @using Radzen.Blazor
 @using SMS_Domain.Enums
 
-<PageTitle>Submit Confidential Report - SMS3</PageTitle>
+<PageTitle>Submit External Report - SMS3</PageTitle>
 
 <!-- SMS Page Header using reusable component -->
 <PageHeader Title="@PageTitle"
@@ -453,7 +453,7 @@ else
                                 @if (!ShowSubmissionConfirmation && !ShowFinalSuccessConfirmation)
                                 {
                                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
-                                        
+                                         
                                         <RadzenButton ButtonStyle="ButtonStyle.Warning" 
                                                     Icon="clear"
                                                     Text="Clear Form"
@@ -487,7 +487,7 @@ else
                 <RadzenStack Gap="1rem" Class="rz-p-3">
                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Class="rz-mb-3 rz-pb-2 rz-border-bottom-1" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 0.5rem; background: var(--rz-warning-lighter); margin: -1rem -1rem 1rem -1rem; padding: 1rem;">
                         <RadzenIcon Icon="help" Style="color: var(--rz-primary);" />
-                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Confidential Reporting Guidelines</RadzenText>
+                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">External Reporting Guidelines</RadzenText>
                     </RadzenStack>
 
                     <RadzenStack Gap="1rem">
@@ -653,7 +653,7 @@ else
             <div class="sms-modal-content">
                 <div class="sms-modal-header sms-header-warning">
                     <h5 class="sms-modal-title">
-                        <i class="fas fa-exclamation-triangle"></i> Confirm Confidential Report Submission
+                        <i class="fas fa-exclamation-triangle"></i> Confirm External Report Submission
                     </h5>
                 </div>
                 <div class="sms-modal-body">

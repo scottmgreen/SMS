@@ -8,13 +8,13 @@ using SMS3.Configuration.Extensions;
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
-/// Hazard Report Search page - allows users to search for reports using tracking ID or advanced criteria
+/// External Report Search page - allows users to search for reports using tracking ID or advanced criteria
 /// </summary>
-public partial class ConfidentialHazardReportSearch : ComponentBase
+public partial class ExternalReportSearch : ComponentBase
 {
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<ConfidentialHazardReportSearch> Logger { get; set; } = default!;
+    [Inject] private ILogger<ExternalReportSearch> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     
     [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
@@ -126,12 +126,12 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     /// <summary>
     /// Page title for header component
     /// </summary>
-    public string PageTitle => "Hazard Report Search";
+    public string PageTitle => "External Report Search";
 
     /// <summary>
     /// Page subtitle for header component
     /// </summary>
-    public string PageSubtitle => "Search for hazard reports using tracking ID or report details";
+    public string PageSubtitle => "Search for external reports using tracking ID or report details";
     #endregion
 
     #region Event Handlers
@@ -701,7 +701,7 @@ public partial class ConfidentialHazardReportSearch : ComponentBase
     public void ViewDetails(string trackingCode)
     {
         Logger.LogInformation("Navigating to details view for tracking code: {TrackingCode}", trackingCode);
-        Navigation.NavigateToSecure($"/SMSRiskManagement/ConfidentialHazardReportSearchResult/{trackingCode}");
+        Navigation.NavigateToSecure($"/ExternalReporting/TrackStatus/{trackingCode}");
     }
 
     #endregion

@@ -1,4 +1,4 @@
-@page "/ConfidentialReporting/TrackStatus/{TrackingCode}"
+@page "/ExternalReporting/TrackStatus/{TrackingCode}"
 @using SMS_Domain.Entities
 @using SMS_Domain.ValueObjects
 @using SMS_Application.Messaging.Queries
@@ -6,7 +6,7 @@
 @layout SMS3.Components.Layout.AnonymousLayout
 @inherits ComponentBase
 
-<PageTitle>Confidential Report Details - @TrackingCode</PageTitle>
+<PageTitle>External Report Details - @TrackingCode</PageTitle>
 
 <!-- SMS Page Header using standard component -->
 <PageHeader Title="@PageTitle"
@@ -587,7 +587,7 @@ else if (!IsLoading && HasSearched)
         <RadzenIcon Icon="search_off" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" class="mb-3" />
         <h5 class="text-muted">Report Not Found</h5>
         <p class="text-muted mb-4">
-            No confidential report found for tracking ID: <strong>@TrackingCode</strong>
+            No external report found for tracking ID: <strong>@TrackingCode</strong>
         </p>
         <RadzenButton ButtonType="ButtonType.Button"
                       Click="@BackToSearch"

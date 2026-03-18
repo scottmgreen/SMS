@@ -12,16 +12,16 @@ using SMS3.Configuration.Extensions;
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
 /// <summary>
-/// Confidential Reporting page - Enhanced security for sensitive safety reports
-/// Based on HazardReporting but adapted for confidential submissions with identical layout
+/// External Reporting page - Enhanced security for sensitive safety reports
+/// Based on HazardReporting but adapted for external submissions with identical layout
 /// Removed Report Type and Urgency level, added cascading Hazard Category/Type dropdowns
 /// </summary>
-public partial class ConfidentialReporting : ComponentBase, IDisposable
+public partial class ExternalReporting : ComponentBase, IDisposable
 {
     #region Dependencies
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
-    [Inject] private ILogger<ConfidentialReporting> Logger { get; set; } = default!;
+    [Inject] private ILogger<ExternalReporting> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     
     [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
@@ -189,7 +189,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     /// <summary>
     /// Page title
     /// </summary>
-    public string PageTitle => "Submit Hazard Report";
+    public string PageTitle => "Submit External Report";
 
     /// <summary>
     /// Page subtitle
@@ -202,7 +202,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
     private int DefaultZoomLevel => 20;
 
     private IJSObjectReference? _mapModule;
-    private DotNetObjectReference<ConfidentialReporting>? _dotNetRef;
+    private DotNetObjectReference<ExternalReporting>? _dotNetRef;
 
     #endregion
 
@@ -216,7 +216,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         // Create DotNet reference for JavaScript callbacks
         _dotNetRef = DotNetObjectReference.Create(this);
 
-        Logger.LogInformation("Confidential reporting page initialized for user: {User}",
+        Logger.LogInformation("External reporting page initialized for user: {User}",
             SessionService.GetCurrentUserDisplayName() ?? "Anonymous");
     }
 
@@ -772,10 +772,10 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
             ShowSubmissionConfirmation = false;
             ShowFinalSuccessConfirmation = true;
 
-            Logger.LogInformation("? Confidential report submission completed - Report: {ReportCode}, Hazard: {HazardCode}, Tracking: {TrackingCode}",
+            Logger.LogInformation("? External report submission completed - Report: {ReportCode}, Hazard: {HazardCode}, Tracking: {TrackingCode}",
                 createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
-            NotificationHelper.ShowSuccessAsync( $"Your confidential report has been securely submitted with tracking ID: {createdTracking.TrackingCode}", 5000);
+            NotificationHelper.ShowSuccessAsync( $"Your external report has been securely submitted with tracking ID: {createdTracking.TrackingCode}", 5000);
         }
         catch (Exception ex)
         {
@@ -1224,7 +1224,7 @@ public partial class ConfidentialReporting : ComponentBase, IDisposable
         
         // 🔐 SECURE URL GENERATION - Generate encrypted tracking URL
         var secureTrackingUrl = Navigation.GenerateSecureUrl(
-            "/ConfidentialReporting/TrackStatus", 
+            "/ExternalReporting/TrackStatus", 
             "TrackingCode", 
             GeneratedTrackingId);
             
