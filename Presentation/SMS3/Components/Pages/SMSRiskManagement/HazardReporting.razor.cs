@@ -54,7 +54,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     public bool IsLoading { get; set; }
 
-    
+    public string EmailValidationMessage { get; set; } = string.Empty;
+
     /// <summary>
     /// Show map modal
     /// </summary>
@@ -169,17 +170,16 @@ public partial class HazardReporting : ComponentBase, IDisposable
     {
         if (!HazardReport.IsAnonymous)
             {
-                return IsFormValidForPreview && !string.IsNullOrEmpty(HazardReport.ReportContactName) && !string.IsNullOrEmpty(HazardReport.ReportContactCell) &&
-                !string.IsNullOrEmpty(HazardReport.ReportContactEmail) &&
-                        (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) &&
-                        DescriptionCharacterCount <= 2000;
+                return IsFormValidForPreview && 
+                !string.IsNullOrEmpty(HazardReport.ReportContactName) && 
+                !string.IsNullOrEmpty(HazardReport.ReportContactEmail) && 
+                        (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) && DescriptionCharacterCount <= 2000;
             }
 
         else
             {
             return IsFormValidForPreview &&
-                (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) &&
-                DescriptionCharacterCount <= 2000;
+                (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) && DescriptionCharacterCount <= 2000;
             }
                     
     }
@@ -278,7 +278,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             Logger.LogError(ex, "Error checking for edit mode");
             IsEditMode = false;
-            NotificationHelper.ShowErrorAsync( "Unable to determine edit mode. Defaulting to create mode.", 5000);
+            await NotificationHelper.ShowErrorAsync( "Unable to determine edit mode. Defaulting to create mode.", 5000);
             
         }
     }
@@ -346,7 +346,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     ReportContactEmail = EditingReport.ReportContactEmail,
                     IsAnonymous =   EditingReport.IsAnonymous,
                     HazardCategory = category?.Value,
-                    HazardType = primaryHazard.HazardType,
+                    HazardType = hazardType?.Value , //primaryHazard.HazardType,
                     Description = primaryHazard.Description,
                     Location = primaryHazard.LocationArea
                 };
@@ -365,7 +365,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 }
                 else
                 {
-                    Logger.LogWarning("No category found for hazard type: {HazardType}", primaryHazard.HazardType);
+                    Logger.LogWarning("No category found for hazard type: {HazardType}", hazardType); // primaryHazard.HazardType);
                     // Clear hazard types if no category
                     HazardTypeOptions.Clear();
                 }
@@ -377,7 +377,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     {
                         Latitude = primaryHazard.HazardLocation.Latitude ?? 0,
                         Longitude = primaryHazard.HazardLocation.Longitude ?? 0,
-                        Description = primaryHazard.HazardLocation.Description,
+                        Description = primaryHazard.HazardLocation.Description ?? string.Empty,
                         SelectedDateTime = DateTime.UtcNow
                     };
 
@@ -420,13 +420,13 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 DepartmentOptions.Clear();
                 SelectedDepartment =null;
             }
-            NotificationHelper.ShowInfoAsync( $"Loaded report {reportCode} for editing.", 5000);
+            await NotificationHelper.ShowInfoAsync($"Loaded report {reportCode} for editing.", 5000);
             
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading report for editing: {ReportCode}", reportCode);
-            NotificationHelper.ShowErrorAsync( "Failed to load report for editing. Redirecting to Reports page.", 5000);
+            await NotificationHelper.ShowErrorAsync("Failed to load report for editing. Redirecting to Reports page.", 5000);
             
             // Redirect back to reports on failure
             Navigation.NavigateToSecure("/SMSRiskManagement/Reports");
@@ -507,7 +507,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
             if (!IsFormValidForSubmission())
             {
-                NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 5000);
+                await NotificationHelper.ShowWarningAsync(  "Please complete all required fields before submitting.", 5000);
                 return;
             }
 
@@ -516,7 +516,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error during form submission");
-            NotificationHelper.ShowErrorAsync( "An error occurred while submitting your report. Please try again.", 5000);
+            await NotificationHelper.ShowErrorAsync("An error occurred while submitting your report. Please try again.", 5000);
             
         }
     }
@@ -597,14 +597,14 @@ public partial class HazardReporting : ComponentBase, IDisposable
             // Show notification about results
             if (successfullyProcessedFiles.Any() && failedFiles.Any())
             {
-                NotificationHelper.ShowWarningAsync( $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 5000);
+                await NotificationHelper.ShowWarningAsync($"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 5000);
             } else if (successfullyProcessedFiles.Any())
             {
-                NotificationHelper.ShowSuccessAsync( $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 5000);
+                await NotificationHelper.ShowSuccessAsync($"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 5000);
             }
             else if (failedFiles.Any())
             {
-                NotificationHelper.ShowErrorAsync( $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
+                await NotificationHelper.ShowErrorAsync($"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
             }
 
             Logger.LogInformation("📁 File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
@@ -662,10 +662,10 @@ public partial class HazardReporting : ComponentBase, IDisposable
             catch (Exception ex)
             {
                 Logger.LogError(ex, "Error initializing map in OpenMapSelector");
-                NotificationHelper.ShowWarningAsync( "Could not initialize map. Please try refreshing the page.", 5000);
+                await NotificationHelper.ShowWarningAsync("Could not initialize map. Please try refreshing the page.", 5000);
             }
         }
-        NotificationHelper.ShowInfoAsync( "Click on the map to select the hazard location.", 3000);
+        await NotificationHelper.ShowInfoAsync("Click on the map to select the hazard location.", 3000);
     }
 
     /// <summary>
@@ -686,7 +686,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         if (!HasValidCoordinates)
         {
 
-            NotificationHelper.ShowWarningAsync( "Please click on the map to select a location first.", 5000);
+            await NotificationHelper.ShowWarningAsync("Please click on the map to select a location first.", 5000);
             return;
         }
 
@@ -706,7 +706,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         ShowMapModal = false;
         StateHasChanged();
 
-        NotificationHelper.ShowSuccessAsync( $"Location selected: {GeoLocationDisplay}", 5000);
+        await NotificationHelper.ShowSuccessAsync( $"Location selected: {GeoLocationDisplay}", 5000);
         
     }
 
@@ -734,7 +734,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         StateHasChanged();
-        NotificationHelper.ShowInfoAsync( "Map selection has been cleared.", 5000);
+        await NotificationHelper.ShowInfoAsync( "Map selection has been cleared.", 5000);
         
     }
 
@@ -770,7 +770,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     {
         if (!IsFormValidForSubmission())
         {
-            NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 5000);
+            await NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 5000);
             return;
         }
 
@@ -797,14 +797,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         NotificationHelper.ShowInfoAsync( "You can continue editing your report.", 5000);
     }
 
-    /// <summary>
-    /// Toggle confidential information display
-    /// </summary>
-    public void ToggleConfidentialInfo()
-    {
-        ShowConfidentialInfo = !ShowConfidentialInfo;
-        StateHasChanged();
-    }
+    
 
     private string GetTrackingUrl()
     {
@@ -875,7 +868,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             if (string.IsNullOrEmpty(GeneratedTrackingId) || string.IsNullOrEmpty(GeneratedReportId))
             {
-                NotificationHelper.ShowWarningAsync( "No report information available to print.", 5000);
+                await NotificationHelper.ShowWarningAsync( "No report information available to print.", 5000);
                 return;
             }
 
@@ -896,16 +889,36 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             Logger?.LogError(ex, "Error printing confirmation");
 
-            NotificationHelper.ShowErrorAsync( "Failed to print confirmation. Please try again or save the page.", 5000);
+            await NotificationHelper.ShowErrorAsync( "Failed to print confirmation. Please try again or save the page.", 5000);
         }
     }
 
-    
+
 
     #endregion
 
     #region Business Logic Methods
+    /// <summary>
+    /// RFC 5322 compliant email validation
+    /// </summary>
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
 
+        // RFC 5322 compliant regex pattern
+        var pattern = @"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$";
+
+        try
+        {
+            return global::System.Text.RegularExpressions.Regex.IsMatch(email, pattern,
+                global::System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
     /// <summary>
     /// Submit the hazard report - handles both CREATE and EDIT modes
     /// </summary>
@@ -918,7 +931,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             {
                 ShowSubmissionConfirmation = true;
                 StateHasChanged();
-                NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 5000);
+                await NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 5000);
                 return;
             }
 
@@ -931,8 +944,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 // ===============================
                 // EDIT MODE - Update existing report and hazard
                 // ===============================
-                Logger.LogInformation("Starting EDIT mode submission for Report: {ReportCode}, Hazard: {HazardCode}",
-                    EditReportCode, EditHazardCode);
+                Logger.LogInformation("Starting EDIT mode submission for Report: {ReportCode}, Hazard: {HazardCode}", EditReportCode, EditHazardCode);
 
                 await UpdateExistingReportAndHazard();
             }
@@ -952,7 +964,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 IsEditMode ? "EDIT" : "CREATE");
 
             ShowSubmissionConfirmation = false;
-            NotificationHelper.ShowErrorAsync( $"An error occurred while {(IsEditMode ? "updating" : "saving")} your report. Please try again.", 5000);
+            await NotificationHelper.ShowErrorAsync( $"An error occurred while {(IsEditMode ? "updating" : "saving")} your report. Please try again.", 5000);
             
         }
         finally
@@ -1005,7 +1017,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingHazard.HazardType = HazardReport.HazardType; // This is the actual selected hazard type, not "Initial"
         
         EditingHazard.UpdatedDate = DateTime.UtcNow;
-        EditingHazard.UpdatedBy = CurrentUserService.UserCode;
+        EditingHazard.UpdatedBy = CurrentUserService.UserDisplayName;
 
         // Handle location updates
         await UpdateHazardLocation(EditingHazard);
@@ -1038,7 +1050,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         Logger.LogInformation("✅ EDIT mode completed - Report: {ReportCode}, Hazard: {HazardCode}",
             updatedHazard.ReportCode, updatedHazard.Code);
 
-        NotificationHelper.ShowSuccessAsync( $"Report {updatedHazard.ReportCode} and hazard {updatedHazard.Code} have been updated.", 5000);
+        await NotificationHelper.ShowSuccessAsync( $"Report {updatedHazard.ReportCode} and hazard {updatedHazard.Code} have been updated.", 5000);
 
         
     }
@@ -1069,7 +1081,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             Description = HazardReport.Description,
             Stage = "INITIAL",
             Status = ReportStatus.NeedsValidation, //needs validation
-            CreatedBy = CurrentUserService.UserCode,
+            CreatedBy = CurrentUserService.UserDisplayName,
             CreatedDate = DateTime.UtcNow
         };
 
@@ -1096,7 +1108,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             
             ReportCode = actualReportCode,
             IsInitialHazard = true ,
-            CreatedBy = CurrentUserService.UserCode,
+            CreatedBy = CurrentUserService.UserDisplayName,
             CreatedDate = DateTime.UtcNow
         };
 
@@ -1137,7 +1149,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
         Logger.LogInformation("✅ CREATE mode completed - Report: {ReportCode}, Hazard: {HazardCode} Tracking: { TrackingCode} ", createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
-        NotificationHelper.ShowSuccessAsync( $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}.", 5000);
+        await NotificationHelper.ShowSuccessAsync( $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}.", 5000);
 
     }
 
@@ -1438,18 +1450,37 @@ public partial class HazardReporting : ComponentBase, IDisposable
     #region Helper Methods
 
     /// <summary>
+    /// Handle email input changes with validation
+    /// </summary>
+    public void OnEmailInput(ChangeEventArgs args)
+    {
+        var email = args.Value?.ToString() ?? string.Empty;
+        HazardReport.ReportContactEmail = email;
+
+        if (!string.IsNullOrWhiteSpace(email) && !IsValidEmail(email))
+        {
+            EmailValidationMessage = "Please enter a valid email address (RFC 5322 compliant)";
+        }
+        else
+        {
+            EmailValidationMessage = string.Empty;
+        }
+
+        StateHasChanged();
+    }
+    /// <summary>
     /// Initialize form defaults for new reports
     /// </summary>
     private void InitializeFormDefaults()
     {
         //var currentUser = CurrentUserService.UserCode;
-        var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
+        var theDate = DateTime.Now; //.AddMinutes(-10);
         
         HazardReport = new HazardReportForm
         {
             SubmittedBy = CurrentUserService.UserDisplayName ?? "Unknown",
-            SubmittedDate = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
-            IncidentDateTime = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day, tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
+            SubmittedDate = new DateTime(theDate.Year, theDate.Month, theDate.Day, theDate.Hour, theDate.Minute, 0),
+            IncidentDateTime = new DateTime(theDate.Year, theDate.Month, theDate.Day, theDate.Hour, theDate.Minute, 0),
         };
 
         SelectedGeoLocation = new GeoLocationData

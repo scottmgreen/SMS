@@ -4,6 +4,8 @@ using SMS_Application.Interfaces;
 using SMS_Application.Services;
 using Infrastructure.Interfaces;
 using System.Text.Json;
+using SMS_Domain.Enums;
+using SMS_Domain.Errors;
 
 namespace SMS3.Components.Pages;
 
@@ -16,7 +18,12 @@ public partial class Verify2FA : ComponentBase
     [Inject] private IHttpContextAccessor HttpContextAccessor { get; set; } = default!;
     [Inject] private TwoFactorAuthService TwoFactorAuthService { get; set; } = default!;
     [Inject] private SessionTimerService SessionTimerService { get; set; } = default!;
+    
+    // 🔧 SMART REPOSITORY INJECTION - All three user repositories
     [Inject] private ISMSApplicationUserRepository ApplicationUserRepository { get; set; } = default!;
+    [Inject] private ISMSOrganizationalUserRepository OrganizationalUserRepository { get; set; } = default!;
+    [Inject] private Infrastructure.Interfaces.ISMSStakeholderUserRepository StakeholderUserRepository { get; set; } = default!;
+    
     [Inject] private TwoFactorSessionTimerService TwoFactorTimer { get; set; } = default!;
 
     [Parameter, SupplyParameterFromQuery] public string? User { get; set; }
@@ -93,7 +100,7 @@ public partial class Verify2FA : ComponentBase
             var (pendingUser, userType) = pendingUserTuple.Value;
             Logger.LogInformation("🔐 Retrieved pending 2FA user: {UserCode} ({UserType})", pendingUser.Code, userType.Value);
             
-            UserDisplayName = pendingUser.DisplayName;
+            UserDisplayName = pendingUser.UserName;
             UserSecretKey = pendingUser.TwoFactorSecretKey ?? string.Empty;
 
             // Check if user needs to set up 2FA (no secret key)
@@ -175,13 +182,13 @@ public partial class Verify2FA : ComponentBase
             }
 
             var (pendingUser, userType) = pendingUserTuple.Value;
-            Logger.LogInformation("🔐 Completing 2FA setup for user: {User}", pendingUser.Code);
+            Logger.LogInformation("🔐 Completing 2FA setup for user: {User} ({UserType})", pendingUser.Code, userType.Value);
 
             // Validate the verification code
             var isValid = TwoFactorAuthService.ValidateTotpCode(UserSecretKey, model.Code);
             if (!isValid)
             {
-                Logger.LogWarning("❌ Invalid 2FA setup verification code for user: {User}", pendingUser.Code);
+                Logger.LogWarning("❌ Invalid 2FA setup verification code for user: {User} ({UserType})", pendingUser.Code, userType.Value);
                 ErrorMessage = "Invalid verification code. Please check your authenticator app and try again.";
                 SetupModel.Code = string.Empty;
                 return;
@@ -191,21 +198,18 @@ public partial class Verify2FA : ComponentBase
             var backupCodes = TwoFactorAuthService.GenerateBackupCodes();
             var backupCodesJson = JsonSerializer.Serialize(backupCodes);
 
-            // Save 2FA setup to database
-            var setupResult = await ApplicationUserRepository.Setup2FAAsync(
-                pendingUser.Code, 
-                UserSecretKey, 
-                backupCodesJson
-            );
+            // 🔧 SMART REPOSITORY USAGE - Save 2FA setup using the correct repository based on user type
+            var setupResult = await Setup2FAAsync(pendingUser.Code, UserSecretKey, backupCodesJson, userType);
 
             if (setupResult.IsFailure)
             {
-                Logger.LogError("❌ Failed to save 2FA setup for user: {User}", pendingUser.Code);
+                Logger.LogError("❌ Failed to save 2FA setup for user: {User} ({UserType}) - Error: {Error}", 
+                    pendingUser.Code, userType.Value, setupResult.Error?.Message);
                 ErrorMessage = "Failed to save 2FA setup. Please try again.";
                 return;
             }
 
-            Logger.LogInformation("✅ 2FA setup completed successfully for user: {User}", pendingUser.Code);
+            Logger.LogInformation("✅ 2FA setup completed successfully for user: {User} ({UserType})", pendingUser.Code, userType.Value);
 
             // Complete login process
             await CompleteLoginAsync(pendingUser, userType);
@@ -242,23 +246,28 @@ public partial class Verify2FA : ComponentBase
             }
 
             var (pendingUser, userType) = pendingUserTuple.Value;
-            Logger.LogInformation("🔐 Verifying 2FA code for user: {User}", pendingUser.Code);
+            Logger.LogInformation("🔐 Verifying 2FA code for user: {User} ({UserType})", pendingUser.Code, userType.Value);
 
             // Validate TOTP code
             var isValid = TwoFactorAuthService.ValidateTotpCode(UserSecretKey, model.Code);
             if (isValid)
             {
-                Logger.LogInformation("✅ 2FA verification successful for user: {User}", pendingUser.Code);
+                Logger.LogInformation("✅ 2FA verification successful for user: {User} ({UserType})", pendingUser.Code, userType.Value);
 
-                // Reset any failed attempts
-                await ApplicationUserRepository.Reset2FAFailedAttemptsAsync(pendingUser.Code);
+                // 🔧 SMART REPOSITORY USAGE - Reset failed attempts using the correct repository
+                var resetResult = await Reset2FAFailedAttemptsAsync(pendingUser.Code, userType);
+                if (resetResult.IsFailure)
+                {
+                    Logger.LogWarning("⚠️ Failed to reset 2FA attempts for user: {User} ({UserType}) - continuing with login", 
+                        pendingUser.Code, userType.Value);
+                }
 
                 // Complete login
                 await CompleteLoginAsync(pendingUser, userType);
             }
             else
             {
-                Logger.LogWarning("❌ Invalid 2FA code for user: {User}", pendingUser.Code);
+                Logger.LogWarning("❌ Invalid 2FA code for user: {User} ({UserType})", pendingUser.Code, userType.Value);
 
                 // Increment failed attempts
                 var failedAttempts = pendingUser.FailedTwoFactorAttempts + 1;
@@ -267,14 +276,17 @@ public partial class Verify2FA : ComponentBase
                 if (failedAttempts >= 5)
                 {
                     lockoutUntil = DateTime.UtcNow.AddMinutes(15);
-                    Logger.LogWarning("🔒 User {User} locked out due to too many failed 2FA attempts", pendingUser.Code);
+                    Logger.LogWarning("🔒 User {User} ({UserType}) locked out due to too many failed 2FA attempts", 
+                        pendingUser.Code, userType.Value);
                 }
 
-                await ApplicationUserRepository.Update2FAFailedAttemptsAsync(
-                    pendingUser.Code, 
-                    failedAttempts, 
-                    lockoutUntil
-                );
+                // 🔧 SMART REPOSITORY USAGE - Update failed attempts using the correct repository
+                var updateResult = await Update2FAFailedAttemptsAsync(pendingUser.Code, failedAttempts, lockoutUntil, userType);
+                if (updateResult.IsFailure)
+                {
+                    Logger.LogError("❌ Failed to update 2FA failed attempts for user: {User} ({UserType}) - Error: {Error}",
+                        pendingUser.Code, userType.Value, updateResult.Error?.Message);
+                }
 
                 ErrorMessage = lockoutUntil.HasValue 
                     ? "Too many failed attempts. Account locked for 15 minutes."
@@ -332,6 +344,73 @@ public partial class Verify2FA : ComponentBase
     }
 
     #region Helper Methods
+
+    /// <summary>
+    /// 🔧 SMART REPOSITORY RESOLVER - Returns the correct repository based on SMSUserType
+    /// </summary>
+    private object GetUserRepositoryForType(SMSUserType userType)
+    {
+        if (userType == SMSUserType.Application)
+            return ApplicationUserRepository;
+        else if (userType == SMSUserType.Organizational)
+            return OrganizationalUserRepository;
+        else if (userType == SMSUserType.Stakeholder)
+            return StakeholderUserRepository;
+        else
+            throw new ArgumentException($"Unknown user type: {userType.Value}");
+    }
+
+    /// <summary>
+    /// 🔧 SMART 2FA SETUP - Saves 2FA setup using the correct repository
+    /// </summary>
+    private async Task<Result> Setup2FAAsync(string userCode, string secretKey, string backupCodesJson, SMSUserType userType)
+    {
+        Logger.LogInformation("🔐 Setting up 2FA for user {UserCode} with type {UserType}", userCode, userType.Value);
+        
+        if (userType == SMSUserType.Application)
+            return await ApplicationUserRepository.Setup2FAAsync(userCode, secretKey, backupCodesJson);
+        else if (userType == SMSUserType.Organizational)
+            return await OrganizationalUserRepository.Setup2FAAsync(userCode, secretKey, backupCodesJson);
+        else if (userType == SMSUserType.Stakeholder)
+            return await StakeholderUserRepository.Setup2FAAsync(userCode, secretKey, backupCodesJson);
+        else
+            return Result.Failure(DomainErrors.BaseUserError.InvalidUserType);
+    }
+
+    /// <summary>
+    /// 🔧 SMART 2FA RESET - Resets failed attempts using the correct repository
+    /// </summary>
+    private async Task<Result> Reset2FAFailedAttemptsAsync(string userCode, SMSUserType userType)
+    {
+        Logger.LogInformation("🔐 Resetting 2FA failed attempts for user {UserCode} with type {UserType}", userCode, userType.Value);
+        
+        if (userType == SMSUserType.Application)
+            return await ApplicationUserRepository.Reset2FAFailedAttemptsAsync(userCode);
+        else if (userType == SMSUserType.Organizational)
+            return await OrganizationalUserRepository.Reset2FAFailedAttemptsAsync(userCode);
+        else if (userType == SMSUserType.Stakeholder)
+            return await StakeholderUserRepository.Reset2FAFailedAttemptsAsync(userCode);
+        else
+            return Result.Failure(DomainErrors.BaseUserError.InvalidUserType);
+    }
+
+    /// <summary>
+    /// 🔧 SMART 2FA UPDATE - Updates failed attempts using the correct repository
+    /// </summary>
+    private async Task<Result> Update2FAFailedAttemptsAsync(string userCode, int failedAttempts, DateTime? lockoutUntil, SMSUserType userType)
+    {
+        Logger.LogInformation("🔐 Updating 2FA failed attempts for user {UserCode} with type {UserType} - Attempts: {Attempts}", 
+            userCode, userType.Value, failedAttempts);
+        
+        if (userType == SMSUserType.Application)
+            return await ApplicationUserRepository.Update2FAFailedAttemptsAsync(userCode, failedAttempts, lockoutUntil);
+        else if (userType == SMSUserType.Organizational)
+            return await OrganizationalUserRepository.Update2FAFailedAttemptsAsync(userCode, failedAttempts, lockoutUntil);
+        else if (userType == SMSUserType.Stakeholder)
+            return await StakeholderUserRepository.Update2FAFailedAttemptsAsync(userCode, failedAttempts, lockoutUntil);
+        else
+            return Result.Failure(DomainErrors.BaseUserError.InvalidUserType);
+    }
 
     private void ShowBackupOptions()
     {

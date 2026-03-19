@@ -53,6 +53,7 @@ public partial class OrganizationalUsers : ComponentBase
     private string NewDepartmentId { get; set; } = string.Empty;
     private string NewPosition { get; set; } = string.Empty;
     private string NewOrganizationLevelId { get; set; } =  string.Empty;
+    private bool NewTwoFactorEnabled { get; set; } = false;
     private SMSUserRole? NewSMSUserRole { get; set; }
 
     // Update form fields to use role ID instead of role name
@@ -69,6 +70,7 @@ public partial class OrganizationalUsers : ComponentBase
     private string EditPosition { get; set; } = string.Empty;
     private string EditOrganizationLevelId { get; set; }  = string.Empty;
     private bool EditIsActive { get; set; } = true;
+    private bool EditTwoFactorEnabled { get; set; } = false;
 
     // Password change fields
     private string PasswordUserId { get; set; } = string.Empty;
@@ -273,6 +275,7 @@ public partial class OrganizationalUsers : ComponentBase
         NewDepartmentId = string.Empty;
         NewPosition = string.Empty;
         NewOrganizationLevelId = string.Empty;
+        NewTwoFactorEnabled = false;
         NewSMSUserRole = null;
         ShowCreateModal = true;
     }
@@ -287,6 +290,7 @@ public partial class OrganizationalUsers : ComponentBase
         NewDepartmentId = string.Empty;
         NewPosition = string.Empty;
         NewOrganizationLevelId = string.Empty;
+        NewTwoFactorEnabled = false;
         NewSMSUserRole = null;
     }
 
@@ -338,6 +342,7 @@ public partial class OrganizationalUsers : ComponentBase
                 Position = NewPosition,
                 OrganizationLevel = SMSOrganizationalLevel.FromName(NewOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel,
                 SMSUserRole = NewSMSUserRole,
+                TwoFactorEnabled = NewTwoFactorEnabled,
                 IsActive = true
             };
 
@@ -400,6 +405,7 @@ public partial class OrganizationalUsers : ComponentBase
             EditPosition = CurrentUser.Position ?? string.Empty;
             EditOrganizationLevelId = CurrentUser.OrganizationLevel.Name ?? SMSOrganizationalLevel.UnassignedLevel;
             EditIsActive = CurrentUser.IsActive;
+            EditTwoFactorEnabled = CurrentUser.TwoFactorEnabled;
             //EditSMSUserRoleId = CurrentUser.SMSUserRole?.Code ?? string.Empty;
             // Open edit modal
             ShowEditModal = true;
@@ -423,6 +429,7 @@ public partial class OrganizationalUsers : ComponentBase
         EditOrganizationLevelId = string.Empty;
         EditSMSUserRoleId = string.Empty; // ADDED: Reset SMS User Role
         EditIsActive = true;
+        EditTwoFactorEnabled = false;
     }
 
     private async Task UpdateUser()
@@ -445,6 +452,7 @@ public partial class OrganizationalUsers : ComponentBase
             CurrentUser.Position = EditPosition;
             CurrentUser.OrganizationLevel = SMSOrganizationalLevel.FromName(EditOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel;
             CurrentUser.IsActive = EditIsActive;
+            CurrentUser.TwoFactorEnabled = EditTwoFactorEnabled;
             // ADDED: Handle SMS User Role update
             if (!string.IsNullOrEmpty(EditSMSUserRoleId))
             {
@@ -535,7 +543,7 @@ public partial class OrganizationalUsers : ComponentBase
 
     #region Delete Operations
 
-    private void ConfirmDelete(string userId, string displayName)
+    private void ConfirmDelete(String userId, string displayName)
     {
         DeleteUserId = userId;
         DeleteUserDisplayName = displayName;

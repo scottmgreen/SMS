@@ -11,6 +11,7 @@
 using SMS_Domain.Errors;
 using SMS_Domain.Interfaces;
 
+using Infrastructure.Interfaces;
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
@@ -139,7 +140,7 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
         }
     }
 
-    public async Task<Result<SMSStakeholderUser>> GetByIdAsync(BaseUserID id)
+    public async Task<Result<SMSStakeholderUser>> GetByCodeAsync(BaseUserID id)
     {
         try
         {
@@ -366,6 +367,15 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLastLoginDate, user.LastLoginDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserIsPOPEmployee, user.IsPOPEmployee));
+            
+            // 🔐 NEW: Add 2FA parameters to AddAsync - uses same parameter names as Application and Organizational users
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSecretKey, user.TwoFactorSecretKey));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorEnabled, user.TwoFactorEnabled));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserBackupCodes, user.BackupCodes));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSetupDate, user.TwoFactorSetupDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserFailedTwoFactorAttempts, user.FailedTwoFactorAttempts));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorLockedUntil, user.TwoFactorLockedUntil));
+            
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, user.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
@@ -380,7 +390,7 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
 
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
 
-            return await GetByIdAsync(newCodeValue).ConfigureAwait(false);
+            return await GetByCodeAsync(newCodeValue).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -417,6 +427,15 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLastLoginDate, user.LastLoginDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserIsPOPEmployee, user.IsPOPEmployee));
+            
+            // 🔐 NEW: Add 2FA parameters to UpdateAsync - uses same parameter names as Application and Organizational users
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSecretKey, user.TwoFactorSecretKey));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorEnabled, user.TwoFactorEnabled));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserBackupCodes, user.BackupCodes));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSetupDate, user.TwoFactorSetupDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserFailedTwoFactorAttempts, user.FailedTwoFactorAttempts));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorLockedUntil, user.TwoFactorLockedUntil));
+            
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, user.UpdatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 

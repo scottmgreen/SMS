@@ -55,42 +55,6 @@ public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHa
     }
 }
 
-public class GetSMSStakeholderUserByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUserByIdQuery, Result<SMSStakeholderUser>>
-{
-    private readonly SMSStakeholderUserDataService _dataService;
-    private readonly ILogger<GetSMSStakeholderUserByIdQueryHandler> _logger;
-
-    public GetSMSStakeholderUserByIdQueryHandler(SMSStakeholderUserDataService dataService, ILogger<GetSMSStakeholderUserByIdQueryHandler> logger)
-    {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<SMSStakeholderUser>> HandleAsync(GetSMSStakeholderUserByIdQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInformation("Processing GetSMSStakeholderUserByIdQuery for ID: {UserId}", request.UserId);
-            var result = await _dataService.GetByIdAsync(request.UserId, ct);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully retrieved SMS Stakeholder User with ID: {UserId}", request.UserId);
-            }
-            else
-            {
-                _logger.LogWarning("SMS Stakeholder User not found with ID: {UserId}", request.UserId);
-            }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Error processing GetSMSStakeholderUserByIdQuery for ID: {UserId}", ApplicationEventIds.Error, ex);
-            return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
-}
 
 public class GetSMSStakeholderUserByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUserByCodeQuery, Result<SMSStakeholderUser>>
 {
@@ -108,7 +72,7 @@ public class GetSMSStakeholderUserByCodeQueryHandler : BaseQueryBundle, IRequest
         try
         {
             _logger.LogInformation("Processing GetSMSStakeholderUserByCodeQuery for Code: {UserCode}", request.UserCode);
-            var result = await _dataService.GetByIdAsync(request.UserCode, ct);
+            var result = await _dataService.GetByCodeAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {

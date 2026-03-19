@@ -225,6 +225,15 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserOrganizationLevel, user.OrganizationLevel.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserIsActive, user.IsActive));
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserLastLoginDate, user.LastLoginDate));
+            
+            // 🔐 NEW: Add 2FA parameters to AddAsync - uses same parameter names as Application and Stakeholder users
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSecretKey, user.TwoFactorSecretKey));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorEnabled, user.TwoFactorEnabled));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserBackupCodes, user.BackupCodes));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSetupDate, user.TwoFactorSetupDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserFailedTwoFactorAttempts, user.FailedTwoFactorAttempts));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorLockedUntil, user.TwoFactorLockedUntil));
+            
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, user.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
@@ -276,6 +285,15 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserAuthorityLevel, user.AuthorityLevel));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserRiskApprovalAuthority, user.RiskApprovalAuthority));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserIsActive, user.IsActive));
+            
+            // 🔐 NEW: Add 2FA parameters to UpdateAsync - uses same parameter names as Application and Stakeholder users
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSecretKey, user.TwoFactorSecretKey));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorEnabled, user.TwoFactorEnabled));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserBackupCodes, user.BackupCodes));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSetupDate, user.TwoFactorSetupDate));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserFailedTwoFactorAttempts, user.FailedTwoFactorAttempts));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorLockedUntil, user.TwoFactorLockedUntil));
+            
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, user.UpdatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 

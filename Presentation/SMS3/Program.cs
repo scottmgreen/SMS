@@ -1,20 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.FeatureManagement;
 using SMS_Application.Configuration;
 using SMS_Infrastructure.Configuration;
 using SMS_Shared.Configuration;
-
 using SMS3.Components;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration;
 using SMS3.Security;
 using SMS3.Api.Endpoints;
 using Infrastructure.Configuration.Extensions;
+using SMS_Application.Services;
+using Microsoft.AspNetCore.Authentication.Cookies;
 
 namespace SMS3;
 public class Program
 {
-    public static void Main(string[] args)
+    public static async Task Main(string[] args)
     {
         var builder = WebApplication.CreateBuilder(args);
 
@@ -22,6 +23,9 @@ public class Program
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents();
         builder.Services.AddRadzenComponents();
+        
+        // **🚀 FEATURE MANAGEMENT - Must be registered early**
+        builder.Services.AddSharedServices(builder.Configuration);
         
         // **🔐 SESSION CONFIGURATION - Load from appsettings.json**
         var sessionConfig = new SMS_Application.Configuration.SessionConfiguration();
@@ -38,23 +42,68 @@ public class Program
         builder.Services.AddMemoryCache();
         builder.Services.AddDistributedMemoryCache();
         
-        // **🔐 CSRF PROTECTION - Enhanced antiforgery configuration**
-        builder.Services.AddAntiforgery(options =>
+        // Register session configuration for DI
+        builder.Services.Configure<SMS_Application.Configuration.SessionConfiguration>(
+            builder.Configuration.GetSection(SMS_Application.Configuration.SessionConfiguration.SectionName));
+        builder.Services.AddSingleton(sessionConfig);
+
+        // **🚀 REGISTER APPLICATION SERVICES EARLY - Need SecurityFeatureService**
+        builder.Services.AddApplicationServices();
+
+        // **🔧 BLAZOR SERVER CIRCUIT AUTHENTICATION STORAGE**
+        builder.Services.AddSingleton<SMS_Application.Services.IBlazorCircuitAuthStorage, SMS_Application.Services.BlazorCircuitAuthStorage>();
+
+        // **🔐 SIMPLE COOKIE AUTHENTICATION - Replace problematic session management**
+        builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+            .AddCookie(options =>
+            {
+                options.LoginPath = "/login";
+                options.LogoutPath = "/logout";
+                options.ExpireTimeSpan = sessionConfig.IdleTimeout;
+                options.SlidingExpiration = sessionConfig.SlidingExpiration;
+                options.Cookie.Name = "SMS_Auth";
+                options.Cookie.HttpOnly = sessionConfig.HttpOnly;
+                options.Cookie.SameSite = sessionConfig.SameSiteMode;
+            });
+
+        // **🔐 AUTHORIZATION**
+        builder.Services.AddAuthorizationBuilder();
+        
+        // **🔐 FEATURE-DRIVEN CSRF PROTECTION - Enhanced antiforgery configuration**
+        builder.Services.AddAntiforgery(async options =>
         {
+            // Create a temporary service provider to resolve the security feature service
+            using var serviceProvider = builder.Services.BuildServiceProvider();
+            var securityFeatureService = serviceProvider.GetRequiredService<ISecurityFeatureService>();
+            
             options.HeaderName = "X-CSRF-TOKEN";
             options.Cookie.Name = "__SMS_RequestVerificationToken";
             options.Cookie.HttpOnly = true;
-            options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+            
+            // 🚀 Feature-driven secure policy
+            options.Cookie.SecurePolicy = await securityFeatureService.GetCookieSecurePolicyAsync(SecurityFeatures.AllowHttpCookies);
+            
             options.Cookie.SameSite = SameSiteMode.Strict;
             options.SuppressXFrameOptionsHeader = false;
+            
+            // Log the configuration decision
+            var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
+            logger.LogInformation("🔐 Antiforgery cookie policy set to: {Policy}", options.Cookie.SecurePolicy);
         });
         
-        // **🔐 SESSION CONFIGURATION - Apply secure settings from configuration**
-        builder.Services.AddSession(options =>
+        // **🔐 FEATURE-DRIVEN SESSION CONFIGURATION - Apply secure settings from configuration**
+        builder.Services.AddSession(async options =>
         {
+            // Create a temporary service provider to resolve the security feature service
+            using var serviceProvider = builder.Services.BuildServiceProvider();
+            var securityFeatureService = serviceProvider.GetRequiredService<ISecurityFeatureService>();
+            
             options.IdleTimeout = sessionConfig.IdleTimeout;
             options.Cookie.HttpOnly = sessionConfig.HttpOnly;
-            options.Cookie.SecurePolicy = sessionConfig.SecurePolicy;
+            
+            // 🚀 Feature-driven secure policy
+            options.Cookie.SecurePolicy = await securityFeatureService.GetCookieSecurePolicyAsync(SecurityFeatures.AllowHttpCookies);
+            
             options.Cookie.SameSite = sessionConfig.SameSiteMode;
             options.Cookie.Name = sessionConfig.CookieName;
             options.Cookie.Path = sessionConfig.CookiePath;
@@ -64,12 +113,11 @@ public class Program
             {
                 options.Cookie.Domain = sessionConfig.CookieDomain;
             }
+            
+            // Log the configuration decision
+            var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
+            logger.LogInformation("🔐 Session cookie policy set to: {Policy}", options.Cookie.SecurePolicy);
         });
-
-        // Register session configuration for DI
-        builder.Services.Configure<SMS_Application.Configuration.SessionConfiguration>(
-            builder.Configuration.GetSection(SMS_Application.Configuration.SessionConfiguration.SectionName));
-        builder.Services.AddSingleton(sessionConfig);
 
         // **🔐 REQUEST VALIDATION CONFIGURATION - Load from appsettings.json**
         var requestValidationConfig = new SMS_Application.Configuration.RequestValidationConfiguration();
@@ -103,41 +151,34 @@ public class Program
             builder.Configuration.GetSection(SMS_Application.Configuration.TwoFactorAuthConfiguration.SectionName));
         builder.Services.AddSingleton(twoFactorConfig);
 
-        // **🔐 LOG SESSION CONFIGURATION** (only in development for security)
+        // **🔐 LOG SECURITY CONFIGURATION** (only in development for security)
         if (builder.Environment.IsDevelopment())
         {
-            var logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("SessionConfig");
-            logger.LogInformation("🔐 Session Configuration Loaded:");
-            logger.LogInformation("  - Timeout: {TimeoutMinutes} minutes", sessionConfig.TimeoutMinutes);
-            logger.LogInformation("  - Sliding Expiration: {SlidingExpiration}", sessionConfig.SlidingExpiration);
-            logger.LogInformation("  - Secure Cookies: {SecureCookies}", sessionConfig.SecureCookies);
-            logger.LogInformation("  - HttpOnly: {HttpOnly}", sessionConfig.HttpOnly);
-            logger.LogInformation("  - SameSite: {SameSite}", sessionConfig.SameSite);
-            logger.LogInformation("  - Cookie Name: {CookieName}", sessionConfig.CookieName);
-            logger.LogInformation("  - Session Activity Logging: {LogSessionActivity}", sessionConfig.LogSessionActivity);
-
-            var requestLogger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("RequestValidation");
-            requestLogger.LogInformation("🔐 Request Validation Configuration Loaded:");
-            requestLogger.LogInformation("  - CSRF Protection: {EnableCsrfProtection}", requestValidationConfig.EnableCsrfProtection);
-            requestLogger.LogInformation("  - Input Sanitization: {EnableInputSanitization}", requestValidationConfig.EnableInputSanitization);
-            requestLogger.LogInformation("  - SQL Injection Detection: {EnableSqlInjectionDetection}", requestValidationConfig.EnableSqlInjectionDetection);
-            requestLogger.LogInformation("  - Max Request Size: {MaxRequestBodySize} bytes", requestValidationConfig.MaxRequestBodySize);
-            requestLogger.LogInformation("  - Max Input Length: {MaxInputLength} chars", requestValidationConfig.MaxInputLength);
-            requestLogger.LogInformation("  - Rate Limiting: {EnableRateLimiting} ({RateLimitPerMinute}/min)", requestValidationConfig.EnableRateLimiting, requestValidationConfig.RateLimitPerMinute);
-
-            var twoFactorLogger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("TwoFactorAuth");
-            twoFactorLogger.LogInformation("🔐 Two-Factor Authentication Configuration Loaded:");
-            twoFactorLogger.LogInformation("  - 2FA Enabled: {Enable2FA}", twoFactorConfig.Enable2FA);
-            twoFactorLogger.LogInformation("  - Required for All Users: {RequireFor2FAForAllUsers}", twoFactorConfig.RequireFor2FAForAllUsers);
-            twoFactorLogger.LogInformation("  - Application Name: {ApplicationName}", twoFactorConfig.ApplicationName);
-            twoFactorLogger.LogInformation("  - Issuer: {IssuerName}", twoFactorConfig.IssuerName);
-            twoFactorLogger.LogInformation("  - TOTP Digits: {TotpDigits}", twoFactorConfig.TotpDigits);
-            twoFactorLogger.LogInformation("  - Time Window: {TimeWindowSeconds}s", twoFactorConfig.TimeWindowSeconds);
-            twoFactorLogger.LogInformation("  - Session Timeout: {TwoFASessionTimeoutMinutes} minutes", twoFactorConfig.TwoFASessionTimeoutMinutes);
-            twoFactorLogger.LogInformation("  - Backup Codes Enabled: {EnableBackupCodes}", twoFactorConfig.EnableBackupCodes);
+            // Create temporary service provider for logging
+            using var serviceProvider = builder.Services.BuildServiceProvider();
+            var securityFeatureService = serviceProvider.GetRequiredService<ISecurityFeatureService>();
+            var securityContext = await securityFeatureService.GetSecurityContextAsync(builder.Environment);
+            
+            var logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("SecurityConfig");
+            logger.LogInformation("🚀 Security Feature Context:");
+            logger.LogInformation("  - Environment: {Environment}", securityContext.Environment);
+            logger.LogInformation("  - Allow HTTP Cookies: {AllowHttpCookies}", securityContext.AllowHttpCookies);
+            logger.LogInformation("  - Allow HTTP in Development: {AllowHttpInDevelopment}", securityContext.AllowHttpInDevelopment);
+            logger.LogInformation("  - Cookie Secure Policy: {CookieSecurePolicy}", securityContext.CookieSecurePolicy);
+            
+            var sessionLogger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("SessionConfig");
+            sessionLogger.LogInformation("🔐 Session Configuration Loaded:");
+            sessionLogger.LogInformation("  - Timeout: {TimeoutMinutes} minutes", sessionConfig.TimeoutMinutes);
+            sessionLogger.LogInformation("  - Sliding Expiration: {SlidingExpiration}", sessionConfig.SlidingExpiration);
+            sessionLogger.LogInformation("  - Secure Cookies: {SecureCookies}", sessionConfig.SecureCookies);
+            sessionLogger.LogInformation("  - HttpOnly: {HttpOnly}", sessionConfig.HttpOnly);
+            sessionLogger.LogInformation("  - SameSite: {SameSite}", sessionConfig.SameSite);
+            sessionLogger.LogInformation("  - Cookie Name: {CookieName}", sessionConfig.CookieName);
+            sessionLogger.LogInformation("  - Development Mode: {EnableDevelopmentMode}", sessionConfig.EnableDevelopmentMode);
         }
 
         // **PRESENTATION LAYER SERVICES - Centralized registration**
+        // 🔧 NOTE: AddPresentationServices includes AddHttpContextAccessor() registration
         builder.Services.AddPresentationServices(builder.Configuration);
         builder.Services.AddPresentationMiddleware();
         builder.Services.ConfigurePresentationOptions(builder.Configuration);
@@ -146,9 +187,9 @@ public class Program
         builder.Services.AddSingleton<ISecureRoutingService, SecureRoutingService>();
                 
         // Register SMS Services
+        // 🔧 NOTE: AddInfrastructureServices also includes AddHttpContextAccessor() registration
         builder.Services.AddSharedServices(builder.Configuration);
         builder.Services.AddInfrastructureServices(builder.Configuration);
-        builder.Services.AddApplicationServices();
 
         var app = builder.Build();
         
@@ -165,32 +206,37 @@ public class Program
         if (!app.Environment.IsDevelopment())
         {
             app.UseExceptionHandler("/Error");
-            // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
             app.UseHsts();
         }
         else
         {
             app.UseDeveloperExceptionPage();
-            
-            // **SWAGGER/OpenAPI UI - Feature flag controlled**
             app.UseSMSSwagger();
         }
 
-        app.UseHttpsRedirection();
-        app.UseStaticFiles();
+        // 🚀 Feature-driven HTTPS redirection
+        var featureManager = app.Services.GetRequiredService<IFeatureManager>();
+        if (await featureManager.IsEnabledAsync(SecurityFeatures.EnforceHttpsRedirection))
+        {
+            app.UseHttpsRedirection();
+        }
+        else
+        {
+            var logger = app.Services.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning("🚨 HTTPS redirection is DISABLED via feature flag");
+        }
 
+        app.UseStaticFiles();
         app.UseRouting();
-        
-        // **🔐 SESSION MIDDLEWARE - Must be after UseRouting and before UseAntiforgery**
+
+        // **🔐 AUTHENTICATION & AUTHORIZATION MIDDLEWARE**
+        app.UseAuthentication();
+        app.UseAuthorization();
+
         app.UseSession();
-        
         app.UseAntiforgery();
 
-        // ============================================================================
-        // EXTERNAL API ENDPOINTS - Feature flag controlled
-        // ============================================================================
         app.MapPDXSMSApiEndpoints();
-
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
 

@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Http;
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
 
+using SMS3.Configuration.Extensions;
+
 namespace SMS3.Components.Pages;
 
 public partial class Login : ComponentBase
@@ -90,10 +92,11 @@ public partial class Login : ComponentBase
                         // Clear any existing error messages
                         ErrorMessage = string.Empty;
                         StateHasChanged();
-                        
+
                         // Navigate to 2FA verification page
-                        Navigation.NavigateTo("/verify-2fa", forceLoad: false);
-                        
+                        //Navigation.NavigateTo("/verify-2fa", forceLoad: false);
+                        Navigation.NavigateToSecure("/verify-2fa", forceLoad: false);
+
                         // Add additional logging after navigation
                         Logger.LogInformation("✅ Navigation to /verify-2fa initiated successfully");
                         return;

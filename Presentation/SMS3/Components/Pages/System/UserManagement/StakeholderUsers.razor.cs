@@ -139,6 +139,7 @@ public partial class StakeholderUsers : ComponentBase
                 Organization = NewUser.Organization,
                 IsActive = NewUser.IsActive,
                 IsPOPEmployee = NewUser.IsPOPEmployee,
+                TwoFactorEnabled = NewUser.TwoFactorEnabled,
                 SMSUserType = SMSUserType.Stakeholder
             };
 
@@ -213,7 +214,8 @@ public partial class StakeholderUsers : ComponentBase
             Organization = user.Organization,
             UserRoleCode = user.UserRole?.Code ?? "",
             IsActive = user.IsActive,
-            IsPOPEmployee = user.IsPOPEmployee
+            IsPOPEmployee = user.IsPOPEmployee,
+            TwoFactorEnabled = user.TwoFactorEnabled
         };
         ShowEditModal = true;
         StateHasChanged();
@@ -244,6 +246,7 @@ public partial class StakeholderUsers : ComponentBase
             CurrentEditUser.Organization = editUser.Organization;
             CurrentEditUser.IsActive = editUser.IsActive;
             CurrentEditUser.IsPOPEmployee = editUser.IsPOPEmployee;
+            CurrentEditUser.TwoFactorEnabled = editUser.TwoFactorEnabled;
             CurrentEditUser.UpdatedBy = CurrentUserService.UserCode;
             CurrentEditUser.SMSUserType = SMSUserType.Stakeholder;
             // Update user role if specified
@@ -441,7 +444,7 @@ public partial class StakeholderUsers : ComponentBase
     {
         try
         {
-            var getUserQuery = new GetSMSStakeholderUserByIdQuery(userId);
+            var getUserQuery = new GetSMSStakeholderUserByCodeQuery(userId);
             var userResult = await Mediator.SendAsync(getUserQuery, CancellationToken.None);
 
             if (userResult.IsFailure)
@@ -751,7 +754,7 @@ public partial class StakeholderUsers : ComponentBase
         public string Organization { get; set; } = "";
         public string UserRoleCode { get; set; } = "";
         public bool IsPOPEmployee { get; set; } = false;
-
+        public bool TwoFactorEnabled { get; set; } = false;
         public bool IsActive { get; set; } = false;
     }
 
@@ -764,7 +767,7 @@ public partial class StakeholderUsers : ComponentBase
         public string Organization { get; set; } = "";
         public string UserRoleCode { get; set; } = "";
         public bool IsActive { get; set; } = true;
-
+        public bool TwoFactorEnabled { get; set; } = false;
         public bool IsPOPEmployee { get; set; } = false;
     }
 

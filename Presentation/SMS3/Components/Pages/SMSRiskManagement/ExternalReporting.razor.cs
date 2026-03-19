@@ -171,8 +171,9 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     {
         if (!HazardReport.IsAnonymous)
         {
-            return IsFormValidForPreview && !string.IsNullOrEmpty(HazardReport.ReportContactName) && !string.IsNullOrEmpty(HazardReport.ReportContactCell) &&
-            !string.IsNullOrEmpty(HazardReport.ReportContactEmail) &&
+            return IsFormValidForPreview && 
+                !string.IsNullOrEmpty(HazardReport.ReportContactName) && 
+                !string.IsNullOrEmpty(HazardReport.ReportContactEmail) &&
                     (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) &&
                     DescriptionCharacterCount <= 2000;
         }
@@ -180,8 +181,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         else
         {
             return IsFormValidForPreview &&
-                (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) &&
-                DescriptionCharacterCount <= 2000;
+                (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) &&  DescriptionCharacterCount <= 2000;
         }
 
     }
@@ -216,8 +216,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         // Create DotNet reference for JavaScript callbacks
         _dotNetRef = DotNetObjectReference.Create(this);
 
-        Logger.LogInformation("External reporting page initialized for user: {User}",
-            SessionService.GetCurrentUserDisplayName() ?? "Anonymous");
+        Logger.LogInformation("External reporting page initialized for user: {User}", SessionService.GetCurrentUserDisplayName() ?? "Anonymous");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -622,7 +621,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     {
         if (!IsFormValidForSubmission())
         {
-            NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 4000);
+            await NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 4000);
             return;
         }
 
@@ -966,7 +965,52 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     #endregion
 
     #region Helper Methods and Dropdown Logic
+    /// <summary>
+    /// RFC 5322 compliant email validation
+    /// </summary>
+    private bool IsValidEmail(string email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
 
+        // RFC 5322 compliant regex pattern
+        var pattern = @"^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$";
+
+        try
+        {
+            return global::System.Text.RegularExpressions.Regex.IsMatch(email, pattern,
+                global::System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Email validation message for display
+    /// </summary>
+    public string EmailValidationMessage { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Handle email input changes with validation
+    /// </summary>
+    public void OnEmailInput(ChangeEventArgs args)
+    {
+        var email = args.Value?.ToString() ?? string.Empty;
+        HazardReport.ReportContactEmail = email;
+
+        if (!string.IsNullOrWhiteSpace(email) && !IsValidEmail(email))
+        {
+            EmailValidationMessage = "Please enter a valid email address (RFC 5322 compliant)";
+        }
+        else
+        {
+            EmailValidationMessage = string.Empty;
+        }
+
+        StateHasChanged();
+    }
     /// <summary>
     /// Format file size for display
     /// </summary>
@@ -1029,12 +1073,11 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     /// </summary>
     private void InitializeFormDefaults()
     {
-        var tenMinutesAgo = DateTime.Now.AddMinutes(-10);
+        var theDate = DateTime.Now;
         HazardReport = new HazardReportForm
         {
             SubmittedBy = "Anonymous Reporter",
-            SubmittedDate = new DateTime(tenMinutesAgo.Year, tenMinutesAgo.Month, tenMinutesAgo.Day,
-                tenMinutesAgo.Hour, tenMinutesAgo.Minute, 0),
+            SubmittedDate = new DateTime(theDate.Year, theDate.Month, theDate.Day,theDate.Hour, theDate.Minute, 0),
             IsAnonymous = false // Always true for confidential reporting
         };
 
@@ -1221,9 +1264,10 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             return string.Empty;
 
         var baseUri = Navigation.BaseUri.TrimEnd('/');
-        
+
         // 🔐 SECURE URL GENERATION - Generate encrypted tracking URL
-        var secureTrackingUrl = Navigation.GenerateSecureUrl(
+        //var secureTrackingUrl = Navigation.GenerateSecureUrl(
+        var secureTrackingUrl = Navigation.GenerateUrl(
             "/ExternalReporting/TrackStatus", 
             "TrackingCode", 
             GeneratedTrackingId);
@@ -1240,7 +1284,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         {
             if (string.IsNullOrEmpty(GeneratedTrackingId) || string.IsNullOrEmpty(GeneratedReportId))
             {
-                NotificationHelper.ShowWarningAsync( "No report information available to print.", 3000);
+                await NotificationHelper.ShowWarningAsync( "No report information available to print.", 3000);
                 return;
             }
 
@@ -1261,21 +1305,11 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         {
             Logger?.LogError(ex, "Error printing confirmation");
 
-            NotificationHelper.ShowErrorAsync("Failed to print confirmation. Please try again or save the page.", 5000);
+            await NotificationHelper.ShowErrorAsync("Failed to print confirmation. Please try again or save the page.", 5000);
         }
     }
 
         
-    /// <summary>
-    /// Show tracking info alert as fallback if clipboard access fails
-    /// </summary>
-    private async Task ShowTrackingInfoAlert()
-    {
-        var trackingInfo = $"Tracking ID: {GeneratedTrackingId}\\n\\nTracking URL: {GetTrackingUrl()}\\n\\nSubmitted: {SubmissionDateTime?.ToString("MM/dd/yyyy HH:mm")}";
-
-        // Use JavaScript alert as fallback
-        await JSRuntime.InvokeVoidAsync("alert", $"Please copy and save this tracking information:\\n\\n{trackingInfo}");
-    }
-
+       
     #endregion
 }

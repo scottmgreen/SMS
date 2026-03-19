@@ -8,7 +8,7 @@
 @using Radzen.Blazor
 
 <PageTitle>Stakeholder User Management - SMS3</PageTitle>
-<PageHeader Title="Application User Management"
+<PageHeader Title="Stakeholder User Management"
             Subtitle="@($"Manage SMS Stakeholder Users ({@StakeholderUsersList.Count()})")"
             Icon="fas fa-user-tie">
             <AdditionalContent>
@@ -66,7 +66,7 @@
                                     </Template>
                                 </RadzenDataGridColumn>
 
-                                <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="DisplayName" Title="User" Width="150px" Sortable="true" Filterable="true">
+                                <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="DisplayName" Title="User" Width="120px" Sortable="true" Filterable="true">
                                     <Template Context="user">
                                         <div class="d-flex align-items-center">
                                             <div>
@@ -88,7 +88,7 @@
                                         }
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="Organization" Title="Organization" Width="200px" >
+                                <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="Organization" Title="Organization" Width="180px" >
                                     <Template Context="user">
                                         @user.Organization.ToUpper()
                                     </Template>
@@ -106,7 +106,12 @@
                                                     Style="@(user.IsPOPEmployee ? "color: var(--rz-success);" : "color: var(--rz-text-disabled-color);")" />
                                     </Template>
                                 </RadzenDataGridColumn>
-                                                               
+                                <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="TwoFactorEnabled" Title="2FA Required" Width="120px">
+                                    <Template Context="user">
+                                        <RadzenIcon Icon="@(user.TwoFactorEnabled ? "check_box" : "check_box_outline_blank")"
+                                                    Style="@(user.TwoFactorEnabled ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />
+                                    </Template>
+                                </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="IsActive" Title="Active" Width="75px">
                                     <Template Context="user">
                                         <RadzenIcon Icon="@(user.IsActive ? "check_box" : "check_box_outline_blank")"
@@ -264,6 +269,16 @@
                                     </RadzenFormField>
                                 </RadzenColumn>
                             </RadzenRow>
+                            <RadzenRow Gap="1rem">
+                                <RadzenColumn Size="12">
+                                    <RadzenFormField Text="Two-Factor Authentication" Variant="Variant.Outlined">
+                                        <div class="d-flex align-items-center p-2">
+                                            <RadzenCheckBox @bind-Value="@NewUser.TwoFactorEnabled" Name="NewUserTwoFactorEnabled" />
+                                            <RadzenLabel Text="Require 2FA" Component="NewUserTwoFactorEnabled" Style="margin-left: 0.5rem; cursor: pointer;" />
+                                        </div>
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                            </RadzenRow>
                         
                     </RadzenTemplateForm>
                 </div>
@@ -366,6 +381,16 @@
                                 </RadzenFormField>
                             </RadzenColumn>
                         </RadzenRow>
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12">
+                                <RadzenFormField Text="Two-Factor Authentication" Variant="Variant.Outlined">
+                                    <div class="d-flex align-items-center p-2">
+                                        <RadzenCheckBox @bind-Value="@editUser.TwoFactorEnabled" Name="EditUserTwoFactorEnabled" />
+                                        <RadzenLabel Text="Require 2FA" Component="EditUserTwoFactorEnabled" Style="margin-left: 0.5rem; cursor: pointer;" />
+                                    </div>
+                                </RadzenFormField>
+                            </RadzenColumn>
+                        </RadzenRow>
                     </RadzenTemplateForm>
                     
 
@@ -397,17 +422,7 @@
                     </h5>
                 </div>
                 <div class="sms-modal-body">
-                  @*   <RadzenFormField Text="Select Role" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                        <RadzenDropDown @bind-Value="@CurrentRoleCode" Data="@UserRoles" 
-                                      ValueProperty="Code" TextProperty="Name" 
-                                      Placeholder="-- Remove Role Assignment --" AllowClear="true" 
-                                      Style="width: 100%;" />
-                    </RadzenFormField>
-                    <br />
-                    <RadzenText TextStyle="TextStyle.Caption" Style="margin-top: 0.5rem;">
-                        Select a role to assign permissions and access levels, or clear to remove role assignment.
-                    </RadzenText> *@
-                    
+                                      
                     <RadzenRow Gap="1rem">
                         <RadzenColumn Size="12">
                             <RadzenFormField Text="Current Role" Variant="Variant.Outlined">
@@ -431,29 +446,7 @@
                             </RadzenFormField>
                         </RadzenColumn>
                     </RadzenRow>
-                   @*  @if (!string.IsNullOrEmpty(CurrentRoleCode))
-                    {
-                        var selectedRole = UserRoles.FirstOrDefault(r => r.Code == CurrentRoleCode);
-                        if (selectedRole != null)
-                        {
-                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" class="rz-mt-3">
-                                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 600;">
-                                        Selected Role: @selectedRole.Name
-                                    </RadzenText>
-                                    @if (selectedRole.Permissions?.Any() == true)
-                                    {
-                                        var totalPermissions = selectedRole.Permissions.Sum(p => (p.Create ? 1 : 0) + (p.Read ? 1 : 0) + (p.Update ? 1 : 0) + (p.Delete ? 1 : 0));
-                                        var maxPermissions = 20; // 5 modules × 4 permissions
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                            This role grants @totalPermissions of @maxPermissions possible permissions.
-                                        </RadzenText>
-                                    }
-                                </RadzenStack>
-                            </RadzenAlert>
-                        }
-                    }
-       *@         
+                  
                         @if (!string.IsNullOrEmpty(CurrentRoleCode))
                     {
                         var selectedRole = UserRoles.FirstOrDefault(r => r.Code == CurrentRoleCode);

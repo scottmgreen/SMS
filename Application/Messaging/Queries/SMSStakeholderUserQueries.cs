@@ -23,29 +23,6 @@ public class GetAllSMSStakeholderUsersQuery : BaseQueryBundle, IRequest<Result<I
     }
 }
 
-/// <summary>
-/// Query to get an SMS stakeholder user by ID
-/// </summary>
-public class GetSMSStakeholderUserByIdQuery : BaseQueryBundle, IRequest<Result<SMSStakeholderUser>>
-{
-    /// <summary>
-    /// The ID of the stakeholder user to retrieve
-    /// </summary>
-    public string UserId { get; set; }
-
-    /// <summary>
-    /// Initializes a new instance of the GetSMSStakeholderUserByIdQuery class.
-    /// </summary>
-    /// <param name="userId">The ID of the stakeholder user to retrieve</param>
-    /// <exception cref="ArgumentException">Thrown when userId is null or empty</exception>
-    public GetSMSStakeholderUserByIdQuery(string userId)
-    {
-        if (string.IsNullOrWhiteSpace(userId))
-            throw new ArgumentException("User ID cannot be null or empty", nameof(userId));
-
-        UserId = userId;
-    }
-}
 
 /// <summary>
 /// Query to get an SMS stakeholder user by code

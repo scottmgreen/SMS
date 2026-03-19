@@ -2,8 +2,8 @@
 // <copyright file="SessionConfiguration.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Configuration options for secure session management with validation and defaults.
-//                  Provides strongly-typed configuration binding for session security settings.
+//     Description: Configuration options for secure session management with feature flag support.
+//                  Provides strongly-typed configuration binding with validation and security defaults.
 // </copyright>
 //-----------------------------------------------------------------------
 
@@ -73,6 +73,11 @@ public class SessionConfiguration
     public bool LogSessionActivity { get; set; } = false;
 
     /// <summary>
+    /// Enable development-friendly cookie policies (feature flag controlled)
+    /// </summary>
+    public bool EnableDevelopmentMode { get; set; } = false;
+
+    /// <summary>
     /// Convert TimeoutMinutes to TimeSpan for ASP.NET Core session configuration
     /// </summary>
     public TimeSpan IdleTimeout => TimeSpan.FromMinutes(TimeoutMinutes);
@@ -89,11 +94,20 @@ public class SessionConfiguration
     };
 
     /// <summary>
-    /// Get CookieSecurePolicy based on SecureCookies setting
+    /// Get CookieSecurePolicy based on SecureCookies setting and development mode
+    /// Uses feature flags to determine appropriate policy
     /// </summary>
-    public CookieSecurePolicy SecurePolicy => SecureCookies 
-        ? CookieSecurePolicy.Always 
-        : CookieSecurePolicy.SameAsRequest;
+    public CookieSecurePolicy GetSecurePolicy(bool isDevelopment = false, bool allowHttpInDevelopment = false)
+    {
+        // If development mode is explicitly enabled and we allow HTTP in development
+        if (EnableDevelopmentMode && isDevelopment && allowHttpInDevelopment)
+        {
+            return CookieSecurePolicy.SameAsRequest;
+        }
+
+        // Otherwise use the configured secure cookies setting
+        return SecureCookies ? CookieSecurePolicy.Always : CookieSecurePolicy.SameAsRequest;
+    }
 
     /// <summary>
     /// Validate the configuration settings

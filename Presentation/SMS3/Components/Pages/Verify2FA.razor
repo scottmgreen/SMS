@@ -126,7 +126,7 @@
                     <h6 class="alert-heading">
                         <i class="fas fa-shield-alt me-2"></i>Security Verification
                     </h6>
-                    <p class="mb-2">Open your <strong>Microsoft Authenticator</strong> app and enter the 6-digit code for <strong>@UserDisplayName</strong>.</p>
+                    <p class="mb-2">Using the <strong>Microsoft Authenticator</strong> app, enter the 6-digit code<br /> for <strong>@UserDisplayName</strong>.</p>
                     <p class="mb-0"><small>Code refreshes every 30 seconds • Time remaining: <strong>@GetTimeRemaining()</strong></small></p>
                 </div>
 
@@ -159,7 +159,7 @@
                 </RadzenTemplateForm>
 
                 <!-- Backup Options -->
-                <div class="sms-2fa-backup">
+                @* <div class="sms-2fa-backup">
                     <div class="text-center">
                         <RadzenButton Text="Having trouble? Use backup method" 
                                       ButtonStyle="ButtonStyle.Base" 
@@ -204,7 +204,8 @@
                             </div>
                         }
                     }
-                </div>
+                
+                </div> *@
             </div>
         }
 

@@ -79,12 +79,12 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
     /// <summary>
     /// Gets SMS Stakeholder User by ID
     /// </summary>
-    public async Task<Result<SMSStakeholderUser>> GetByIdAsync(string id, CancellationToken ct = default)
+    public async Task<Result<SMSStakeholderUser>> GetByCodeAsync(string id, CancellationToken ct = default)
     {
         try
         {
             _logger.LogInformation("Retrieving SMS Stakeholder User with ID: {Id}", id);
-            return await _repository.GetByIdAsync(id);
+            return await _repository.GetByCodeAsync(id);
         }
         catch (Exception ex)
         {
@@ -212,7 +212,7 @@ public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakehold
             }
 
             // Return the updated user
-            return await _repository.GetByIdAsync(user.Code);
+            return await _repository.GetByCodeAsync(user.Code);
         }
         catch (Exception ex)
         {

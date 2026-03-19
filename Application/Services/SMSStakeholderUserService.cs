@@ -87,7 +87,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
         try
         {
             _logger.LogInformation("Retrieving SMS Stakeholder User with ID: {Id}", id);
-            return await _dataService.GetByIdAsync(id, ct).ConfigureAwait(false);
+            return await _dataService.GetByCodeAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -194,7 +194,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
             }
 
             // Business validation - check if user exists
-            var existingUserResult = await _dataService.GetByIdAsync(user.UserId.Value, ct).ConfigureAwait(false);
+            var existingUserResult = await _dataService.GetByCodeAsync(user.Code, ct).ConfigureAwait(false);
             if (existingUserResult.IsFailure)
             {
                 _logger.LogWarning("Cannot update non-existent SMS Stakeholder User with ID: {Id}", user.UserId);

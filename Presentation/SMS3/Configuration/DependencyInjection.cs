@@ -173,9 +173,9 @@ public static class DependencyInjection
     /// <returns>The service collection for method chaining</returns>
     public static IServiceCollection AddPresentationMiddleware(this IServiceCollection services)
     {
-        // HTTP context accessor for static services
-        services.AddHttpContextAccessor();
-
+        // 🔧 NOTE: HttpContextAccessor is already registered in Infrastructure layer
+        // Removed duplicate registration to follow DI best practices
+        
         // Add any middleware-specific services here
         // services.AddScoped<IRequestLoggingService, RequestLoggingService>();
 
@@ -244,9 +244,9 @@ public static class DependencyInjection
 
                 app.UseSwaggerUI(options =>
                 {
-                    options.SwaggerEndpoint("/api-docs/v1/swagger.json", "SMS Confidential Reporting API v1");
+                    options.SwaggerEndpoint("/api-docs/v1/swagger.json", "SMS External Reporting API v1");
                     options.RoutePrefix = "api-docs";
-                    options.DocumentTitle = "SMS Safety Management API Documentation";
+                    options.DocumentTitle = "SMS External Reporting API Documentation";
 
                     // Security-focused UI configuration
                     options.DefaultModelsExpandDepth(-1); // Don't expand models by default
@@ -268,20 +268,20 @@ public static class DependencyInjection
         {
             options.SwaggerDoc("v1", new OpenApiInfo
             {
-                Title = "SMS Confidential Reporting API",
+                Title = "SMS External Reporting API",
                 Version = "v1.0",
-                Description = BuildApiDescription(),
-                Contact = new OpenApiContact
-                {
-                    Name = "SMS Support Team",
-                    Email = "sms-support@flypdx.com",
-                    Url = new Uri("https://flypdx.com/sms-support")
-                },
-                License = new OpenApiLicense
-                {
-                    Name = "Port of Portland - Internal Use Only",
-                    Url = new Uri("https://flypdx.com/terms")
-                }
+                Description = BuildApiDescription()
+                //Contact = new OpenApiContact
+                //{
+                //    Name = "SMS Support Team",
+                //    Email = "sms-support@flypdx.com",
+                //    Url = new Uri("https://flypdx.com/sms-support")
+                //},
+                //License = new OpenApiLicense
+                //{
+                //    Name = "Port of Portland - Internal Use Only",
+                //    Url = new Uri("https://flypdx.com/terms")
+                //}
             });
         }
 
@@ -364,15 +364,15 @@ public static class DependencyInjection
         private static string BuildApiDescription()
         {
             return @"
-## SMS Confidential Reporting API
+## SMS External Reporting API
 
-This API provides secure endpoints for external systems to submit confidential safety reports to the Port of Portland SMS system.
+This API provides secure endpoints for external systems to submit safety reports to the Port of Portland SMS system.
 
 ### Features
 - ?? **API Key Authentication** - Secure access control
 - ?? **Comprehensive Validation** - Request validation and error handling
 - ?? **File Attachments** - Support for document uploads
-- ??? **Location Data** - Geographic coordinate support
+- ?? **Location Data** - Geographic coordinate support
 - ?? **Reference Data** - Hazard categories and types
 
 ### Getting Started
@@ -385,15 +385,14 @@ This API provides secure endpoints for external systems to submit confidential s
 - Larger files may require additional time
 
 ### Support
-For technical support or API key requests, contact the SMS team.
-            ";
+For technical support or API key requests, contact the SMS team.";
         }
 
         private static bool IsSwaggerEnabledInProduction(WebApplication app)
         {
-            // Check if Swagger is explicitly enabled in production via feature flag
+            // Check if Swagger is explicitly enabled via feature flag
             var featureManager = app.Services.GetService<IFeatureManager>();
-            return featureManager?.IsEnabledAsync("SwaggerInProduction").GetAwaiter().GetResult() ?? false;
+            return featureManager?.IsEnabledAsync("SwaggerEnabled").GetAwaiter().GetResult() ?? false;
         }
 
         #endregion

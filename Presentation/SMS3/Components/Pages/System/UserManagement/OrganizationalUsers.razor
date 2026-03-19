@@ -100,7 +100,12 @@
                             }
                         </Template>
                     </RadzenDataGridColumn>
-
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="TwoFactorEnabled" Title="2FA Required" Width="120px">
+                        <Template Context="user">
+                            <RadzenIcon Icon="@(user.TwoFactorEnabled ? "check_box" : "check_box_outline_blank")"
+                                        Style="@(user.TwoFactorEnabled ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="IsActive" Title="Active" Width="75px" Sortable="true" Filterable="true">
                         <Template Context="user">
                             <RadzenIcon Icon="@(user.IsActive ? "check_box" : "check_box_outline_blank")"
@@ -207,15 +212,21 @@
                                                 title="Select the Organization Level that determines authority and approval permissions" />
                             </RadzenFormField>
 
-                            @* <RadzenFormField Text="SMS Role" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenDropDown @bind-Value="@NewSMSUserRoleId" Data="@SMSRoleOptions"
-                                                TextProperty="Text" ValueProperty="Value" 
-                                                Style="width: 100%;" Placeholder="Select SMS role (optional)"/>
-                            </RadzenFormField> *@
+                            
                         </RadzenStack>
                     </RadzenColumn>
                 </RadzenRow>
                 
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12">
+                        <RadzenFormField Text="Two-Factor Authentication" Variant="Variant.Outlined">
+                            <div class="d-flex align-items-center p-2">
+                                <RadzenCheckBox @bind-Value="@NewTwoFactorEnabled" Name="NewTwoFactorEnabled" />
+                                <RadzenLabel Text="Require 2FA" Component="NewTwoFactorEnabled" Style="margin-left: 0.5rem; cursor: pointer;" />
+                            </div>
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
                                 
                 <!-- Modal Footer -->
                 <div class="d-flex justify-content-end gap-2 mt-3">
@@ -301,6 +312,17 @@
                                                 Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+                
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12">
+                        <RadzenFormField Text="Two-Factor Authentication" Variant="Variant.Outlined">
+                            <div class="d-flex align-items-center p-2">
+                                <RadzenCheckBox @bind-Value="@EditTwoFactorEnabled" Name="EditTwoFactorEnabled" />
+                                <RadzenLabel Text="Require 2FA" Component="EditTwoFactorEnabled" Style="margin-left: 0.5rem; cursor: pointer;" />
+                            </div>
+                        </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
                 

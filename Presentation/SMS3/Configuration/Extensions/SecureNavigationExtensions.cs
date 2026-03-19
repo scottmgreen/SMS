@@ -9,6 +9,17 @@ namespace SMS3.Configuration.Extensions;
 public static class SecureNavigationExtensions
 {
     /// <summary>
+    /// Generate standard URL with single parameter (non-encrypted)
+    /// </summary>
+    public static string GenerateUrl(this NavigationManager navigationManager,
+        string path,
+        string parameterName,
+        string parameterValue)
+    {
+        return $"{path}?{parameterName}={Uri.EscapeDataString(parameterValue)}";
+    }
+
+    /// <summary>
     /// Navigate to any URL with automatic encryption
     /// </summary>
     public static void NavigateToSecure(this NavigationManager navigationManager, 

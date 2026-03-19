@@ -138,6 +138,9 @@ else
                                                            Name="ContactName"
                                                            MaxLength="60"
                                                            Style="width: 100%;min-width: 100%;" />
+                                            <RadzenRegexValidator Component="ContactName"
+                                                                  Text="Please enter a valid name (letters, spaces, hyphens, and apostrophes only)"
+                                                                  Pattern="^[a-zA-Z\s\-'\.]+$" />
                                         </RadzenFormField>
                                     
                                     </RadzenColumn>
@@ -156,13 +159,20 @@ else
                                     <RadzenColumn Size="3">
                                         <RadzenFormField AllowFloatingLabel="false" Text="Contact Email" Variant="Variant.Outlined" Style="width: 100%;">
                                                 <RadzenTextBox @bind-Value="@HazardReport.ReportContactEmail"
+                                                           @oninput="@OnEmailInput"
                                                            Placeholder="Enter email ..."
                                                            Name="ContactEmail"
                                                            MaxLength="254"
                                                            Style="display: block; width: 100%;" />
                                         </RadzenFormField>
                                         <RadzenEmailValidator Component="ContactEmail" Text="Invalid email address" />
-
+                                        @if (!string.IsNullOrEmpty(EmailValidationMessage))
+                                        {
+                                            <div class="text-danger small mt-1">
+                                                <i class="fas fa-exclamation-circle me-1"></i>
+                                                @EmailValidationMessage
+                                            </div>
+                                        }
                                     </RadzenColumn>
                                 </RadzenCard>
                             }
@@ -779,7 +789,7 @@ else
     .sms-modal-submission {
         max-width: 900px;
         width: 100%;
-        height:500px;
+        height:520px;
         
     }
 

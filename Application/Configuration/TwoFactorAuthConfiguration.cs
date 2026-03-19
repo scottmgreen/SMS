@@ -42,7 +42,7 @@ public class TwoFactorAuthConfiguration
     /// Issuer name for QR codes (organization name)
     /// </summary>
     [StringLength(50, MinimumLength = 3, ErrorMessage = "Issuer name must be between 3 and 50 characters")]
-    public string IssuerName { get; set; } = "Port of Portland";
+    public string IssuerName { get; set; } = "Port of Portland SMS";
 
     /// <summary>
     /// TOTP time window in seconds (default: 30 seconds)

@@ -132,9 +132,14 @@ else
                                                            Name="ContactName"
                                                            MaxLength="60"
                                                            Style="width: 100%;min-width: 100%;" />
+                                            <RadzenRegexValidator Component="ContactName" 
+                                                Text="Please enter a valid name (letters, spaces, hyphens, and apostrophes only)" 
+                                                Pattern="^[a-zA-Z\s\-'\.]+$" />
+                                            <RadzenRequiredValidator Component="ContactName" Text="Contact Name is required" />
                                         </RadzenFormField>
 
                                     </RadzenColumn>
+                                    
                                     <RadzenColumn Size="3">
                                         <RadzenFormField AllowFloatingLabel="false" Text="Contact Mobile" Variant="Variant.Outlined" Style="width: 100%;">
                                             <RadzenMask Mask="(***) ***-****" CharacterPattern="[0-9]"
@@ -142,21 +147,28 @@ else
                                                         Style="width: 100%;" aria-label="ContactCell" />
                                             <RadzenRegexValidator Component="ContactCell" Text="Must be in (***)***-**** format"
                                                                   Pattern="^(\(\d{3}\)|\d{3})[-.\s]?\d{3}[-.\s]?\d{4}$" />
-
                                         </RadzenFormField>
 
 
                                     </RadzenColumn>
                                     <RadzenColumn Size="3">
-                                        <RadzenFormField AllowFloatingLabel="false" Text="Contact Email" Variant="Variant.Outlined" Style="width: 100%;">
+                                        <RadzenFormField AllowFloatingLabel="false" Text="Contact Email *" Variant="Variant.Outlined" Style="width: 100%;">
                                             <RadzenTextBox @bind-Value="@HazardReport.ReportContactEmail"
+                                                           @oninput="@OnEmailInput"
                                                            Placeholder="Enter email ..."
                                                            Name="ContactEmail"
                                                            MaxLength="254"
                                                            Style="display: block; width: 100%;" />
                                         </RadzenFormField>
-                                        <RadzenEmailValidator Component="ContactEmail" Text="Invalid email address" />
-
+                                        <!-- Required validation -->
+                                        <RadzenRequiredValidator Component="ContactEmail" Text="Email is required" />
+                                        @if (!string.IsNullOrEmpty(EmailValidationMessage))
+                                        {
+                                            <div class="text-danger small mt-1">
+                                                <i class="fas fa-exclamation-circle me-1"></i>
+                                                @EmailValidationMessage
+                                            </div>
+                                        }
                                     </RadzenColumn>
                                 </RadzenCard>
                             }
@@ -177,7 +189,7 @@ else
 
                                     </RadzenFormField>
                                 </RadzenColumn>
-                                <RadzenColumn Size="3">
+                                @* <RadzenColumn Size="3">
                                     <RadzenFormField Text="Submitted By *" Variant="Variant.Outlined" Style="width: 100%;">
                                         <RadzenTextBox @bind-Value="@HazardReport.SubmittedBy"
                                                        Placeholder="Name and position (e.g., 'John Smith - Ground Operations Supervisor')"
@@ -186,33 +198,9 @@ else
                                                        Style="width: 100%;min-width: 100%;" />
                                     </RadzenFormField>
                                     <RadzenRequiredValidator Component="SubmittedBy" Text="Reported by is required" />
-                                </RadzenColumn>
-
-                                @* <RadzenColumn Size="3">
-                                    <RadzenFormField Text="Submitting Department *" Variant="Variant.Outlined" Style="width: 100%;">
-
-                                        <RadzenDropDown @bind-Value="@HazardReport.SubmittingDepartment"
-                                                        Data="@DepartmentOptions"
-                                                        TextProperty="Text"
-                                                        ValueProperty="Value"
-                                                        Placeholder="Select submitting department..."
-                                                        Name="SubmittingDepartment"
-                                                        Change="@(async (object value) => await OnDepartmentChanged(value?.ToString()))"
-                                                        Style="width: 100%; min-width: 100%;" />
-                                    </RadzenFormField>
-                                    <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
-                                </RadzenColumn>
-                                <RadzenColumn Size="5">
-                                    <RadzenFormField Text="Job Function" AllowFloatingLabel="false" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenTextArea @bind-Value="@HazardReport.SubmittingDepartmentJobFunction"
-                                                        Placeholder="Enter reporting department or organization..."
-                                                        Name="SubmittingDepartmentJobFunction"
-                                                        MaxLength="200"
-                                                        Style="width: 100%; min-width: 100%;"
-                                                        Rows="2" Cols="100" />
-                                    </RadzenFormField>
-                                    <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
                                 </RadzenColumn> *@
+
+                                
 
                             </RadzenCard>
 

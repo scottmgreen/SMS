@@ -10,7 +10,7 @@
 
 using SMS_Domain.Interfaces;
 
-namespace SMS_Infrastructure.Persistence;
+namespace Infrastructure.Interfaces;
 public interface ISMSStakeholderUserRepository
 {
     Task<Result<SMSStakeholderUser>> AddAsync(SMSStakeholderUser user);
@@ -20,7 +20,7 @@ public interface ISMSStakeholderUserRepository
     
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetAllAsync();
     //Task<Result<IEnumerable<SMSStakeholderUser>>> GetByAccessLevelAsync(string accessLevel);
-    Task<Result<SMSStakeholderUser>> GetByIdAsync(BaseUserID id);
+    Task<Result<SMSStakeholderUser>> GetByCodeAsync(BaseUserID id);
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetByOrganizationAsync(string organization);
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetByStakeholderTypeAsync(string stakeholderType);
     Task<Result<SMSStakeholderUser>> GetByUserNameAsync(string userName);
@@ -35,4 +35,10 @@ public interface ISMSStakeholderUserRepository
     //Task<Result<bool>> UpdatePasswordAsync(SMSStakeholderUserID userId, string hashedPassword);*/
     Task<Result<bool>> UpdatePasswordAsync(SMSStakeholderUserID userId, string hashedPassword);
     Task<Result<bool>> UserNameExistsAsync(string userName);
+
+    // 🔐 Two-Factor Authentication Methods
+    Task<Result<bool>> Setup2FAAsync(string userCode, string secretKey, string? backupCodes = null, string updatedBy = "SYSTEM-2FA");
+    Task<Result<bool>> Update2FAFailedAttemptsAsync(string userCode, int failedAttempts, DateTime? lockoutUntil = null, string updatedBy = "SYSTEM-2FA");
+    Task<Result<bool>> Reset2FAFailedAttemptsAsync(string userCode, string updatedBy = "SYSTEM-2FA");
+    Task<Result<bool>> Disable2FAAsync(string userCode, string updatedBy = "SYSTEM-2FA");
 }
