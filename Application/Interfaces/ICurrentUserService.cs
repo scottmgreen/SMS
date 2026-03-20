@@ -116,4 +116,23 @@ public interface ICurrentUserService
     Task ClearAuthentication();
 
     #endregion
+
+    #region 2FA State Management
+
+    /// <summary>
+    /// Check if user has 2FA enabled (requires 2FA verification)
+    /// </summary>
+    bool RequiresTwoFactorAuth { get; }
+
+    /// <summary>
+    /// Check if user is currently pending 2FA verification (password authenticated but 2FA not verified)
+    /// </summary>
+    bool IsPending2FAVerification { get; }
+
+    /// <summary>
+    /// Check if user is fully authenticated (password + 2FA verified, or 2FA not required)
+    /// </summary>
+    bool IsFullyAuthenticated { get; }
+
+    #endregion
 }

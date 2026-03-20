@@ -31,7 +31,7 @@
 
         <!-- Navigation Links -->
         <div class="collapse navbar-collapse" id="navbarNav">
-            @if (CurrentUserService?.IsAuthenticated == true)
+            @if (CurrentUserService?.IsFullyAuthenticated == true)
             {
                 <!-- All menu items should be right-justified for authenticated users -->
                 <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
@@ -166,23 +166,48 @@
             }
             else
             {
-                <!-- Only show menu items if NOT on PDX or Login pages -->
-                @if (!IsOnRestrictedPage)
+                <!-- Show minimal navigation during 2FA verification -->
+                @if (CurrentUserService?.IsPending2FAVerification == true)
                 {
-                    <!-- RIGHT SIDE RADZEN MENU -->
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <!-- External Reporting Menu -->
-                        <div class="nav-item">
-                            <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                                <RadzenMenuItem Text="Submit Report" Value='"/ExternalReporting"' Icon="security"></RadzenMenuItem>
-                            </RadzenMenu>
+                    <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                        <div class="nav-item me-3">
+                            <span class="text-warning">
+                                <i class="fas fa-shield-alt me-2"></i>
+                                2FA Verification Required
+                            </span>
                         </div>
-                        <div class="nav-item">
-                            <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                                <RadzenMenuItem Text="Track Report Status" Value='"/ExternalReporting/TrackStatus"' Icon="search"></RadzenMenuItem>
-                            </RadzenMenu>
-                        </div>
+                        
+                        @* DEBUG: Show current authentication states in development *@
+                        @if (Environment.IsDevelopment())
+                        {
+                            <div class="nav-item me-3">
+                                <small class="text-muted">
+                                    [DEBUG: Auth=@(CurrentUserService?.IsAuthenticated), 2FA=@(CurrentUserService?.RequiresTwoFactorAuth), Pending=@(CurrentUserService?.IsPending2FAVerification), Full=@(CurrentUserService?.IsFullyAuthenticated)]
+                                </small>
+                            </div>
+                        }
                     </div>
+                }
+                else
+                {
+                    <!-- Only show menu items if NOT on PDX or Login pages -->
+                    @if (!IsOnRestrictedPage)
+                    {
+                        <!-- RIGHT SIDE RADZEN MENU -->
+                        <div style="display: flex; gap: 1rem; align-items: center;">
+                            <!-- External Reporting Menu -->
+                            <div class="nav-item">
+                                <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                                    <RadzenMenuItem Text="Submit Report" Value='"/ExternalReporting"' Icon="security"></RadzenMenuItem>
+                                </RadzenMenu>
+                            </div>
+                            <div class="nav-item">
+                                <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
+                                    <RadzenMenuItem Text="Track Report Status" Value='"/ExternalReporting/TrackStatus"' Icon="search"></RadzenMenuItem>
+                                </RadzenMenu>
+                            </div>
+                        </div>
+                    }
                 }
             }
         
@@ -236,11 +261,11 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Initialize session timer if user is authenticated
-        if (CurrentUserService.IsAuthenticated)
+        // Initialize session timer if user is fully authenticated (not pending 2FA)
+        if (CurrentUserService.IsFullyAuthenticated)
         {
             SessionTimerService.StartTimer();
-            Logger.LogDebug("NavMenu initialized with session timer for authenticated user");
+            Logger.LogDebug("NavMenu initialized with session timer for fully authenticated user");
         }
     }
 
@@ -316,8 +341,8 @@
     {
         try
         {
-            // Update session activity on menu interaction
-            if (CurrentUserService.IsAuthenticated)
+            // Update session activity on menu interaction - only for fully authenticated users
+            if (CurrentUserService.IsFullyAuthenticated)
             {
                 SessionTimerService.UpdateActivity();
             }
@@ -363,8 +388,8 @@
     /// </summary>
     private void NavigateToAbout()
     {
-        // Update session activity
-        if (CurrentUserService.IsAuthenticated)
+        // Update session activity - only for fully authenticated users
+        if (CurrentUserService.IsFullyAuthenticated)
         {
             SessionTimerService.UpdateActivity();
         }
@@ -376,7 +401,7 @@
     // **🔥 USER PROFILE MODAL - USING COMPONENT**
     private async Task ShowUserProfileModal()
     {
-        if (CurrentUserService?.IsAuthenticated != true) return;
+        if (CurrentUserService?.IsFullyAuthenticated != true) return;
 
         // Update session activity
         SessionTimerService.UpdateActivity();
@@ -414,8 +439,8 @@
 
     protected override async Task OnParametersSetAsync()
     {
-        // Update session activity when parameters change
-        if (CurrentUserService.IsAuthenticated)
+        // Update session activity when parameters change - only for fully authenticated users
+        if (CurrentUserService.IsFullyAuthenticated)
         {
             SessionTimerService.UpdateActivity();
         }

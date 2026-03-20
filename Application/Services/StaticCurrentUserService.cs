@@ -111,6 +111,28 @@ public class StaticCurrentUserService : ICurrentUserService
 
     #endregion
 
+    #region 2FA State Management
+
+    /// <summary>
+    /// Check if user has 2FA enabled (requires 2FA verification)
+    /// Static service doesn't track 2FA state, so returns false
+    /// </summary>
+    public bool RequiresTwoFactorAuth => false;
+
+    /// <summary>
+    /// Check if user is currently pending 2FA verification (password authenticated but 2FA not verified)
+    /// Static service doesn't track 2FA state, so returns false
+    /// </summary>
+    public bool IsPending2FAVerification => false;
+
+    /// <summary>
+    /// Check if user is fully authenticated (password + 2FA verified, or 2FA not required)
+    /// For static service, this is the same as IsAuthenticated since it doesn't handle 2FA
+    /// </summary>
+    public bool IsFullyAuthenticated => IsAuthenticated;
+
+    #endregion
+
     #region Static Methods for Setting Authentication State
 
     public static void SetAuthenticationState(BaseUser user, SMSUserType userType)

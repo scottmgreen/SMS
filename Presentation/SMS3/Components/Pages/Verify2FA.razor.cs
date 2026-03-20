@@ -319,16 +319,34 @@ public partial class Verify2FA : ComponentBase
             // 🔐 STOP 2FA TIMER - User successfully completed 2FA
             TwoFactorTimer.StopTimer();
 
-            // Clear pending 2FA data
+            // 🚨 CRITICAL: Clear pending 2FA data FIRST and wait for it
+            Logger.LogInformation("🗑️ Clearing pending 2FA user data...");
             await SessionService.ClearPending2FAUserAsync();
+            
+            // 🚨 ADD VERIFICATION: Ensure pending data is actually cleared
+            await Task.Delay(100); // Brief pause to ensure cleanup completes
+            var verifyCleared = SessionService.GetPending2FAUser();
+            if (verifyCleared != null)
+            {
+                Logger.LogWarning("⚠️ Pending 2FA data not fully cleared on first attempt, trying again...");
+                await SessionService.ClearPending2FAUserAsync();
+                await Task.Delay(200);
+            }
+            Logger.LogInformation("✅ Pending 2FA user data cleared successfully");
 
             // Create full SMS session
+            Logger.LogInformation("🔐 Creating full SMS session...");
             await SessionService.CreateSMSSessionAsync(user, userType);
+            Logger.LogInformation("✅ Full SMS session created successfully");
 
             // Start session timer
             SessionTimerService.StartTimer();
 
             Logger.LogInformation("✅ Login completed successfully for user: {User}", user.Code);
+
+            // Add a small delay to ensure all state changes are processed before navigation
+            await Task.Delay(100);
+            StateHasChanged(); // Force UI update before navigation
 
             // Navigate to home page
             Navigation.NavigateTo("/", forceLoad: false);

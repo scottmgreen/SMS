@@ -23,6 +23,8 @@ public interface IBlazorCircuitAuthStorage
     Dictionary<string, string>? GetAuthDataByUserId(string userId);
     void ClearAuthData(string circuitId);
     void ClearAuthDataByUserId(string userId);
+    Dictionary<string, Dictionary<string, string>> GetAllAuthData();
+    void SetAuthData(string circuitId, Dictionary<string, string> authData);
 }
 
 public class BlazorCircuitAuthStorage : IBlazorCircuitAuthStorage
@@ -66,5 +68,21 @@ public class BlazorCircuitAuthStorage : IBlazorCircuitAuthStorage
         {
             _circuitAuthData.TryRemove(key, out _);
         }
+    }
+
+    /// <summary>
+    /// Get all stored authentication data - used for fallback scenarios
+    /// </summary>
+    public Dictionary<string, Dictionary<string, string>> GetAllAuthData()
+    {
+        return _circuitAuthData.ToDictionary(kvp => kvp.Key, kvp => kvp.Value);
+    }
+
+    /// <summary>
+    /// Enhanced storage method with the same functionality as StoreAuthData
+    /// </summary>
+    public void SetAuthData(string circuitId, Dictionary<string, string> authData)
+    {
+        StoreAuthData(circuitId, authData);
     }
 }

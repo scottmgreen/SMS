@@ -24,15 +24,18 @@ public class SessionBasedCurrentUserService : ICurrentUserService
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<SessionBasedCurrentUserService> _logger;
     private readonly IBlazorCircuitAuthStorage _circuitAuthStorage;
+    private readonly ISMSSessionService _smsSessionService;
 
     public SessionBasedCurrentUserService(
         IHttpContextAccessor httpContextAccessor, 
         ILogger<SessionBasedCurrentUserService> logger,
-        IBlazorCircuitAuthStorage circuitAuthStorage)
+        IBlazorCircuitAuthStorage circuitAuthStorage,
+        ISMSSessionService smsSessionService)
     {
         _httpContextAccessor = httpContextAccessor ?? throw new ArgumentNullException(nameof(httpContextAccessor));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _circuitAuthStorage = circuitAuthStorage ?? throw new ArgumentNullException(nameof(circuitAuthStorage));
+        _smsSessionService = smsSessionService ?? throw new ArgumentNullException(nameof(smsSessionService));
     }
 
     #region Basic Auth Properties - Direct from Session
@@ -129,6 +132,101 @@ public class SessionBasedCurrentUserService : ICurrentUserService
             .Select(p => p.SMSModule ?? "Unknown")
             .Distinct()
             .ToList();
+    }
+
+    #endregion
+
+    #region 2FA State Management
+
+    /// <summary>
+    /// Check if user has 2FA enabled (requires 2FA verification)
+    /// </summary>
+    public bool RequiresTwoFactorAuth 
+    { 
+        get 
+        { 
+            return SafeGetSessionBool("SMS_TwoFactorEnabled");
+        } 
+    }
+
+    /// <summary>
+    /// Check if user is currently pending 2FA verification (password authenticated but 2FA not verified)
+    /// This checks if there's pending 2FA data indicating the user is in the intermediate state
+    /// </summary>
+    public bool IsPending2FAVerification 
+    { 
+        get 
+        {
+            try
+            {
+                // Use the SMS Session Service to check for pending 2FA user more accurately
+                var hasPending = _smsSessionService.HasPending2FAUser();
+                
+                if (hasPending)
+                {
+                    _logger.LogDebug("?? Pending 2FA verification detected via SMS Session Service");
+                }
+                
+                return hasPending;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking pending 2FA status via SMS Session Service");
+                
+                // Fallback to manual checking if SMS Session Service fails
+                try
+                {
+                    // Check if there's pending 2FA user data in any of the storage strategies
+                    var context = _httpContextAccessor.HttpContext;
+                    if (context?.Items.ContainsKey("Pending2FA_UserData") == true ||
+                        context?.Items.ContainsKey("Pending2FA_UserType") == true)
+                    {
+                        _logger.LogDebug("?? Pending 2FA verification detected via HttpContext.Items fallback");
+                        return true;
+                    }
+
+                    // Check circuit storage for pending 2FA data
+                    var circuitData = GetCurrentCircuitAuthData();
+                    if (circuitData != null && 
+                        (circuitData.ContainsKey("Pending2FA_UserData") || 
+                         circuitData.ContainsKey("Pending2FA_UserType")))
+                    {
+                        _logger.LogDebug("?? Pending 2FA verification detected via circuit storage fallback");
+                        return true;
+                    }
+
+                    // Check session for pending 2FA markers
+                    var pending2FAData = SafeGetSessionString("Pending2FA_UserData");
+                    if (!string.IsNullOrEmpty(pending2FAData))
+                    {
+                        _logger.LogDebug("?? Pending 2FA verification detected via session fallback");
+                        return true;
+                    }
+
+                    return false;
+                }
+                catch (Exception fallbackEx)
+                {
+                    _logger.LogError(fallbackEx, "Error in fallback pending 2FA status check");
+                    return false;
+                }
+            }
+        } 
+    }
+
+    /// <summary>
+    /// Check if user is fully authenticated (password + 2FA verified, or 2FA not required)
+    /// This is what should be used for NavMenu display logic
+    /// </summary>
+    public bool IsFullyAuthenticated 
+    { 
+        get 
+        {
+            // User is fully authenticated if:
+            // 1. They are authenticated AND
+            // 2. Either they don't require 2FA OR they are not pending 2FA verification
+            return IsAuthenticated && (!RequiresTwoFactorAuth || !IsPending2FAVerification);
+        } 
     }
 
     #endregion

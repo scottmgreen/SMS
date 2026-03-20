@@ -11,6 +11,7 @@ using SMS3.Api.Endpoints;
 using Infrastructure.Configuration.Extensions;
 using SMS_Application.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using SMS_Application.Interfaces;
 
 namespace SMS3;
 public class Program
@@ -50,6 +51,23 @@ public class Program
         // **🚀 REGISTER APPLICATION SERVICES EARLY - Need SecurityFeatureService**
         builder.Services.AddApplicationServices();
 
+        // **🎯 EXPLICIT PROTOCOL CONFIGURATION - NO SQUISHY AUTO-DETECTION**
+        var masterProtocolConfig = builder.Configuration.GetSection("MasterProtocol");
+        var explicitProtocol = masterProtocolConfig.GetValue<string>("Protocol", "HTTP");
+        var forceEverywhere = masterProtocolConfig.GetValue<bool>("ForceProtocolEverywhere", true);
+        var allowMixed = masterProtocolConfig.GetValue<bool>("AllowMixedMode", false);
+
+        var protocolLogger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("ProtocolConfig");
+        protocolLogger.LogInformation("🎯 EXPLICIT PROTOCOL CONFIGURATION:");
+        protocolLogger.LogInformation("  - Protocol: {Protocol}", explicitProtocol);
+        protocolLogger.LogInformation("  - Force Everywhere: {ForceEverywhere}", forceEverywhere);
+        protocolLogger.LogInformation("  - Allow Mixed: {AllowMixed}", allowMixed);
+
+        // Determine explicit settings based on protocol
+        var isHttps = explicitProtocol.Equals("HTTPS", StringComparison.OrdinalIgnoreCase);
+        var secureCookies = isHttps && forceEverywhere;
+        var strictSameSite = isHttps ? SameSiteMode.Strict : SameSiteMode.Lax;
+
         // **🔧 BLAZOR SERVER CIRCUIT AUTHENTICATION STORAGE**
         builder.Services.AddSingleton<SMS_Application.Services.IBlazorCircuitAuthStorage, SMS_Application.Services.BlazorCircuitAuthStorage>();
 
@@ -70,41 +88,31 @@ public class Program
         builder.Services.AddAuthorizationBuilder();
         
         // **🔐 FEATURE-DRIVEN CSRF PROTECTION - Enhanced antiforgery configuration**
-        builder.Services.AddAntiforgery(async options =>
+        builder.Services.AddAntiforgery(options =>
         {
-            // Create a temporary service provider to resolve the security feature service
-            using var serviceProvider = builder.Services.BuildServiceProvider();
-            var securityFeatureService = serviceProvider.GetRequiredService<ISecurityFeatureService>();
-            
             options.HeaderName = "X-CSRF-TOKEN";
             options.Cookie.Name = "__SMS_RequestVerificationToken";
             options.Cookie.HttpOnly = true;
             
-            // 🚀 Feature-driven secure policy
-            options.Cookie.SecurePolicy = await securityFeatureService.GetCookieSecurePolicyAsync(SecurityFeatures.AllowHttpCookies);
-            
-            options.Cookie.SameSite = SameSiteMode.Strict;
+            // 🎯 EXPLICIT: Use protocol-based settings
+            options.Cookie.SecurePolicy = secureCookies ? CookieSecurePolicy.Always : CookieSecurePolicy.None;
+            options.Cookie.SameSite = strictSameSite;
             options.SuppressXFrameOptionsHeader = false;
             
-            // Log the configuration decision
-            var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
-            logger.LogInformation("🔐 Antiforgery cookie policy set to: {Policy}", options.Cookie.SecurePolicy);
+            protocolLogger.LogInformation("🔐 Antiforgery cookie policy: Secure={Secure}, SameSite={SameSite}", 
+                options.Cookie.SecurePolicy, options.Cookie.SameSite);
         });
         
-        // **🔐 FEATURE-DRIVEN SESSION CONFIGURATION - Apply secure settings from configuration**
-        builder.Services.AddSession(async options =>
+        // **🔐 EXPLICIT SESSION CONFIGURATION - Uses protocol settings directly**
+        builder.Services.AddSession(options =>
         {
-            // Create a temporary service provider to resolve the security feature service
-            using var serviceProvider = builder.Services.BuildServiceProvider();
-            var securityFeatureService = serviceProvider.GetRequiredService<ISecurityFeatureService>();
-            
             options.IdleTimeout = sessionConfig.IdleTimeout;
             options.Cookie.HttpOnly = sessionConfig.HttpOnly;
             
-            // 🚀 Feature-driven secure policy
-            options.Cookie.SecurePolicy = await securityFeatureService.GetCookieSecurePolicyAsync(SecurityFeatures.AllowHttpCookies);
+            // 🎯 EXPLICIT: Use protocol-based settings
+            options.Cookie.SecurePolicy = secureCookies ? CookieSecurePolicy.Always : CookieSecurePolicy.None;
+            options.Cookie.SameSite = strictSameSite;
             
-            options.Cookie.SameSite = sessionConfig.SameSiteMode;
             options.Cookie.Name = sessionConfig.CookieName;
             options.Cookie.Path = sessionConfig.CookiePath;
             
@@ -114,9 +122,8 @@ public class Program
                 options.Cookie.Domain = sessionConfig.CookieDomain;
             }
             
-            // Log the configuration decision
-            var logger = serviceProvider.GetRequiredService<ILogger<Program>>();
-            logger.LogInformation("🔐 Session cookie policy set to: {Policy}", options.Cookie.SecurePolicy);
+            protocolLogger.LogInformation("🔐 Session cookie policy: Secure={Secure}, SameSite={SameSite}", 
+                options.Cookie.SecurePolicy, options.Cookie.SameSite);
         });
 
         // **🔐 REQUEST VALIDATION CONFIGURATION - Load from appsettings.json**
@@ -151,6 +158,39 @@ public class Program
             builder.Configuration.GetSection(SMS_Application.Configuration.TwoFactorAuthConfiguration.SectionName));
         builder.Services.AddSingleton(twoFactorConfig);
 
+        // 🎯 NEW: AUTHENTICATION STRATEGY CONFIGURATION - Load from appsettings.json
+        var authConfig = new SMS_Application.Configuration.AuthenticationConfiguration();
+        builder.Configuration.GetSection(SMS_Application.Configuration.AuthenticationConfiguration.SectionName).Bind(authConfig);
+        
+        // Validate authentication configuration
+        var (isAuthConfigValid, authConfigErrors) = authConfig.Validate();
+        if (!isAuthConfigValid)
+        {
+            throw new InvalidOperationException($"Invalid authentication configuration: {string.Join(", ", authConfigErrors)}");
+        }
+
+        // Register authentication configuration
+        builder.Services.Configure<SMS_Application.Configuration.AuthenticationConfiguration>(
+            builder.Configuration.GetSection(SMS_Application.Configuration.AuthenticationConfiguration.SectionName));
+        builder.Services.AddSingleton(authConfig);
+
+        // 🎯 NEW: AUTHENTICATION STRATEGY SERVICES - Clean Architecture Implementation
+        
+        // Protocol detection and compatibility services
+        builder.Services.AddScoped<SMS_Application.Interfaces.IProtocolDetectionService, SMS_Application.Services.ProtocolDetectionService>();
+        
+        // User validation and instantiation services (CQRS-based)
+        builder.Services.AddScoped<SMS_Application.Interfaces.IUserCompletenessValidator, SMS_Application.Services.UserCompletenessValidator>();
+        builder.Services.AddScoped<SMS_Application.Interfaces.IUserInstantiationService, SMS_Application.Services.UserInstantiationService>();
+        
+        // Authentication strategy implementations
+        builder.Services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, SMS_Application.Services.Authentication.SessionBasedAuthenticationStrategy>();
+        builder.Services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, SMS_Application.Services.Authentication.CircuitBasedAuthenticationStrategy>();
+        builder.Services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, SMS_Application.Services.Authentication.ContextBasedAuthenticationStrategy>();
+        
+        // Authentication strategy manager (orchestrator)
+        builder.Services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategyManager, SMS_Application.Services.AuthenticationStrategyManager>();
+
         // **🔐 LOG SECURITY CONFIGURATION** (only in development for security)
         if (builder.Environment.IsDevelopment())
         {
@@ -175,6 +215,17 @@ public class Program
             sessionLogger.LogInformation("  - SameSite: {SameSite}", sessionConfig.SameSite);
             sessionLogger.LogInformation("  - Cookie Name: {CookieName}", sessionConfig.CookieName);
             sessionLogger.LogInformation("  - Development Mode: {EnableDevelopmentMode}", sessionConfig.EnableDevelopmentMode);
+            
+            // 🎯 NEW: AUTHENTICATION STRATEGY CONFIGURATION LOGGING
+            var authLogger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("AuthenticationConfig");
+            authLogger.LogInformation("🎯 Authentication Strategy Configuration Loaded:");
+            authLogger.LogInformation("  - Primary Method: {PreferredMethod}", authConfig.PreferredMethod);
+            authLogger.LogInformation("  - Fallback Method: {FallbackMethod}", authConfig.FallbackMethod);
+            authLogger.LogInformation("  - Enable Fallback Chain: {EnableFallbackChain}", authConfig.EnableFallbackChain);
+            authLogger.LogInformation("  - Require Complete Users: {RequireCompleteUserInstantiation}", authConfig.RequireCompleteUserInstantiation);
+            authLogger.LogInformation("  - Strict Mode: {StrictMode}", authConfig.StrictMode);
+            authLogger.LogInformation("  - Circuit Cache Timeout: {CircuitCacheTimeoutMinutes} minutes", authConfig.CircuitCacheTimeoutMinutes);
+            authLogger.LogInformation("  - Log Auth Decisions: {LogAuthenticationDecisions}", authConfig.LogAuthenticationDecisions);
         }
 
         // **PRESENTATION LAYER SERVICES - Centralized registration**
@@ -214,16 +265,15 @@ public class Program
             app.UseSMSSwagger();
         }
 
-        // 🚀 Feature-driven HTTPS redirection
-        var featureManager = app.Services.GetRequiredService<IFeatureManager>();
-        if (await featureManager.IsEnabledAsync(SecurityFeatures.EnforceHttpsRedirection))
+        // 🎯 EXPLICIT HTTPS redirection based on protocol configuration
+        if (isHttps && forceEverywhere)
         {
             app.UseHttpsRedirection();
+            protocolLogger.LogInformation("✅ HTTPS redirection enabled (explicit HTTPS protocol)");
         }
         else
         {
-            var logger = app.Services.GetRequiredService<ILogger<Program>>();
-            logger.LogWarning("🚨 HTTPS redirection is DISABLED via feature flag");
+            protocolLogger.LogInformation("🚨 HTTPS redirection DISABLED (explicit HTTP protocol)");
         }
 
         app.UseStaticFiles();
@@ -237,6 +287,7 @@ public class Program
         app.UseAntiforgery();
 
         app.MapPDXSMSApiEndpoints();
+        app.MapAuthenticationStatusEndpoints(); // 🎯 NEW: Development diagnostics endpoints
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
 
