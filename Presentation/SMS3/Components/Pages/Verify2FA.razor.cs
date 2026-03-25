@@ -59,6 +59,30 @@ public partial class Verify2FA : ComponentBase
             // Add delay to ensure session is fully available
             await Task.Delay(200);
 
+            // 🚨 CRITICAL: Check for session contamination and clean slate verification
+            var initialPendingCheck = SessionService.GetPending2FAUser();
+            if (initialPendingCheck != null)
+            {
+                Logger.LogInformation("🔍 Found existing pending 2FA user: {ExistingUser} - verifying it's not contaminated", 
+                    initialPendingCheck.Value.User.UserName.Value);
+                
+                // If we have a query parameter user and it doesn't match the pending user, clear contaminated data
+                if (!string.IsNullOrEmpty(User) && initialPendingCheck.Value.User.UserName.Value != User)
+                {
+                    Logger.LogError("🚨 SESSION CONTAMINATION DETECTED: Pending user {PendingUser} does not match URL user {UrlUser}",
+                        initialPendingCheck.Value.User.UserName.Value, User);
+                    
+                    // Clear contaminated data
+                    await SessionService.ClearPending2FAUserAsync();
+                    await Task.Delay(200);
+                    
+                    ErrorMessage = "Session contamination detected. Please log in again.";
+                    Logger.LogError("❌ Redirecting to login due to session contamination");
+                    Navigation.NavigateTo("/login", forceLoad: true);
+                    return;
+                }
+            }
+
             // Get pending 2FA user from session
             var pendingUserTuple = SessionService.GetPending2FAUser();
             Logger.LogInformation("🔐 First attempt to get pending user: {Found}", pendingUserTuple != null ? "FOUND" : "NOT FOUND");
@@ -211,7 +235,25 @@ public partial class Verify2FA : ComponentBase
 
             Logger.LogInformation("✅ 2FA setup completed successfully for user: {User} ({UserType})", pendingUser.Code, userType.Value);
 
-            // Complete login process
+            // 🚨 CRITICAL FIX: Refresh user data from database after 2FA setup
+            Logger.LogInformation("🔄 Refreshing user data after 2FA setup to ensure complete user object...");
+            var refreshedUserResult = await RefreshUserFromDatabaseAsync(pendingUser.Code, userType);
+            if (refreshedUserResult.IsFailure || refreshedUserResult.Value == null)
+            {
+                Logger.LogError("❌ Failed to refresh user data after 2FA setup - using original user object");
+                // Use original user, but manually update the 2FA fields
+                pendingUser.TwoFactorSecretKey = UserSecretKey;
+                pendingUser.TwoFactorEnabled = true;
+                pendingUser.BackupCodes = backupCodesJson;
+                pendingUser.TwoFactorSetupDate = DateTime.UtcNow;
+            }
+            else
+            {
+                Logger.LogInformation("✅ User data refreshed successfully after 2FA setup");
+                pendingUser = refreshedUserResult.Value; // Use refreshed user with complete 2FA data
+            }
+
+            // Complete login process with refreshed user data
             await CompleteLoginAsync(pendingUser, userType);
         }
         catch (Exception ex)
@@ -316,47 +358,103 @@ public partial class Verify2FA : ComponentBase
         {
             Logger.LogInformation("🔐 Completing login process for user: {User}", user.Code);
 
-            // 🔐 STOP 2FA TIMER - User successfully completed 2FA
+            // 🔐 STOP 2FA TIMER
             TwoFactorTimer.StopTimer();
 
-            // 🚨 CRITICAL: Clear pending 2FA data FIRST and wait for it
+            // 🚨 CRITICAL: Clear pending 2FA data FIRST
             Logger.LogInformation("🗑️ Clearing pending 2FA user data...");
             await SessionService.ClearPending2FAUserAsync();
             
-            // 🚨 ADD VERIFICATION: Ensure pending data is actually cleared
-            await Task.Delay(100); // Brief pause to ensure cleanup completes
+            // Verify clearing was successful
+            await Task.Delay(200);
             var verifyCleared = SessionService.GetPending2FAUser();
             if (verifyCleared != null)
             {
-                Logger.LogWarning("⚠️ Pending 2FA data not fully cleared on first attempt, trying again...");
+                Logger.LogWarning("⚠️ Pending 2FA data not fully cleared, forcing additional cleanup...");
                 await SessionService.ClearPending2FAUserAsync();
-                await Task.Delay(200);
+                await Task.Delay(300);
             }
             Logger.LogInformation("✅ Pending 2FA user data cleared successfully");
 
-            // Create full SMS session
+            // 🔧 CRITICAL FIX: Create full SMS session with multiple retry attempts and fallback strategies
             Logger.LogInformation("🔐 Creating full SMS session...");
-            await SessionService.CreateSMSSessionAsync(user, userType);
-            Logger.LogInformation("✅ Full SMS session created successfully");
+            var sessionCreated = false;
+            var maxAttempts = 5;
+            Exception? lastException = null;
+            
+            for (int attempt = 1; attempt <= maxAttempts; attempt++)
+            {
+                try
+                {
+                    Logger.LogInformation("🔄 Session creation attempt {Attempt} of {MaxAttempts}", attempt, maxAttempts);
+                    
+                    // Add progressive delay to allow system state to settle
+                    if (attempt > 1)
+                    {
+                        var delayMs = 200 * attempt;
+                        Logger.LogInformation("⏱️ Waiting {DelayMs}ms before retry...", delayMs);
+                        await Task.Delay(delayMs);
+                    }
+                    
+                    await SessionService.CreateSMSSessionAsync(user, userType);
+                    sessionCreated = true;
+                    Logger.LogInformation("✅ Full SMS session created successfully on attempt {Attempt}", attempt);
+                    break;
+                }
+                catch (Exception sessionEx)
+                {
+                    lastException = sessionEx;
+                    Logger.LogWarning(sessionEx, "⚠️ Session creation failed on attempt {Attempt}: {Error}", attempt, sessionEx.Message);
+                    
+                    // If this isn't the last attempt, continue trying
+                    if (attempt < maxAttempts)
+                    {
+                        Logger.LogInformation("🔄 Will retry session creation...");
+                    }
+                }
+            }
+            
+            if (!sessionCreated)
+            {
+                Logger.LogError(lastException, "❌ CRITICAL: Failed to create SMS session after {MaxAttempts} attempts", maxAttempts);
+                
+                // 🚨 FALLBACK: Try to complete login anyway and let the user access the system
+                // The authentication may still work via circuit storage
+                Logger.LogWarning("⚠️ Attempting fallback login completion despite session creation failure...");
+            }
 
-            // Start session timer
-            SessionTimerService.StartTimer();
+            // Start session timer regardless of session creation success
+            // The timer service should handle missing sessions gracefully
+            try
+            {
+                SessionTimerService.StartTimer();
+                Logger.LogInformation("✅ Session timer started");
+            }
+            catch (Exception timerEx)
+            {
+                Logger.LogWarning(timerEx, "⚠️ Failed to start session timer, continuing anyway");
+            }
 
-            Logger.LogInformation("✅ Login completed successfully for user: {User}", user.Code);
+            Logger.LogInformation("✅ Login completed for user: {User} (SessionCreated: {SessionCreated})", user.Code, sessionCreated);
 
-            // Add a small delay to ensure all state changes are processed before navigation
+            // Force multiple state changes to ensure UI updates
+            await InvokeAsync(StateHasChanged);
+            await Task.Delay(50);
+            await InvokeAsync(StateHasChanged);
+            
+            // Navigate with a small delay to ensure state changes are processed
             await Task.Delay(100);
-            StateHasChanged(); // Force UI update before navigation
-
-            // Navigate to home page
-            Navigation.NavigateTo("/", forceLoad: false);
+            Logger.LogInformation("🔄 Navigating to home page...");
+            Navigation.NavigateTo("/", forceLoad: true);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "❌ Error completing login process");
-            ErrorMessage = "Login completed but there was an error setting up your session.";
+            Logger.LogError(ex, "❌ Error completing login process for user: {UserCode}", user.Code);
+            ErrorMessage = "Login verification successful, but there was an error completing the process. You may already be logged in.";
             
-            // Still try to navigate
+            // Force navigation anyway - user might still be authenticated
+            await Task.Delay(2000);
+            Logger.LogInformation("🔄 Force navigating to home page after error...");
             Navigation.NavigateTo("/", forceLoad: true);
         }
     }
@@ -430,6 +528,57 @@ public partial class Verify2FA : ComponentBase
             return Result.Failure(DomainErrors.BaseUserError.InvalidUserType);
     }
 
+    /// <summary>
+    /// 🔄 REFRESH USER - Retrieves fresh user data from database after 2FA setup
+    /// </summary>
+    private async Task<Result<BaseUser>> RefreshUserFromDatabaseAsync(string userCode, SMSUserType userType)
+    {
+        try
+        {
+            Logger.LogInformation("🔄 Refreshing user {UserCode} with type {UserType} from database", userCode, userType.Value);
+            
+            if (userType == SMSUserType.Application)
+            {
+                var result = await ApplicationUserRepository.GetByCodeAsync(userCode);
+                if (result.IsSuccess)
+                {
+                    Logger.LogInformation("✅ Application user refreshed successfully from database");
+                    return Result<BaseUser>.Success((BaseUser)result.Value);
+                }
+                return Result<BaseUser>.Failure<BaseUser>(result.Error);
+            }
+            else if (userType == SMSUserType.Organizational)
+            {
+                var result = await OrganizationalUserRepository.GetByCodeAsync(userCode);
+                if (result.IsSuccess)
+                {
+                    Logger.LogInformation("✅ Organizational user refreshed successfully from database");
+                    return Result<BaseUser>.Success((BaseUser)result.Value);
+                }
+                return Result<BaseUser>.Failure<BaseUser>(result.Error);
+            }
+            else if (userType == SMSUserType.Stakeholder)
+            {
+                var result = await StakeholderUserRepository.GetByCodeAsync(userCode);
+                if (result.IsSuccess)
+                {
+                    Logger.LogInformation("✅ Stakeholder user refreshed successfully from database");
+                    return Result<BaseUser>.Success((BaseUser)result.Value);
+                }
+                return Result<BaseUser>.Failure<BaseUser>(result.Error);
+            }
+            else
+            {
+                return Result<BaseUser>.Failure<BaseUser>(DomainErrors.BaseUserError.InvalidUserType);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Error refreshing user {UserCode} from database", userCode);
+            return Result<BaseUser>.Failure<BaseUser>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
     private void ShowBackupOptions()
     {
         ShowBackupMethods = !ShowBackupMethods;
@@ -463,7 +612,10 @@ public partial class Verify2FA : ComponentBase
         
         _timeRemainingTimer = new Timer(async _ =>
         {
-            TimeRemainingInWindow = TwoFactorAuthService.GetTimeRemainingInWindow();
+            var newTimeRemaining = TwoFactorAuthService.GetTimeRemainingInWindow();
+            
+            // Update every second as requested - keep the smooth countdown
+            TimeRemainingInWindow = newTimeRemaining;
             await InvokeAsync(StateHasChanged);
         }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));
     }

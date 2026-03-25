@@ -1,0 +1,126 @@
+@page "/auth-debug"
+@using SMS_Application.Interfaces
+@inject ICurrentUserService CurrentUserService
+@inject ILogger<AuthDebug> Logger
+
+<PageTitle>Authentication Debug</PageTitle>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Authentication Debug Information</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h5>Current User Service Status</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Service Available:</strong></td>
+                                    <td><span class="badge @(CurrentUserService != null ? "bg-success" : "bg-danger")">@(CurrentUserService != null ? "Yes" : "No")</span></td>
+                                </tr>
+                                @if (CurrentUserService != null)
+                                {
+                                    <tr>
+                                        <td><strong>IsAuthenticated:</strong></td>
+                                        <td><span class="badge @(CurrentUserService.IsAuthenticated ? "bg-success" : "bg-secondary")">@CurrentUserService.IsAuthenticated</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>IsFullyAuthenticated:</strong></td>
+                                        <td><span class="badge @(CurrentUserService.IsFullyAuthenticated ? "bg-success" : "bg-warning")">@CurrentUserService.IsFullyAuthenticated</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>IsPending2FA:</strong></td>
+                                        <td><span class="badge @(CurrentUserService.IsPending2FAVerification ? "bg-warning" : "bg-success")">@CurrentUserService.IsPending2FAVerification</span></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>User Code:</strong></td>
+                                        <td><code>@CurrentUserService.UserCode</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>User Type:</strong></td>
+                                        <td><code>@CurrentUserService.UserType</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Display Name:</strong></td>
+                                        <td><code>@CurrentUserService.UserDisplayName</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Email:</strong></td>
+                                        <td><code>@CurrentUserService.Email</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Role Code:</strong></td>
+                                        <td><code>@CurrentUserService.UserRoleCode</code></td>
+                                    </tr>
+                                    <tr>
+                                        <td><strong>Permission Count:</strong></td>
+                                        <td><span class="badge bg-info">@CurrentUserService.Permissions.Count</span></td>
+                                    </tr>
+                                }
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>NavMenu Display Logic</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Should Show Main Menu:</strong></td>
+                                    <td><span class="badge @(CurrentUserService?.IsFullyAuthenticated == true ? "bg-success" : "bg-secondary")">@(CurrentUserService?.IsFullyAuthenticated == true)</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Should Show 2FA Status:</strong></td>
+                                    <td><span class="badge @(CurrentUserService?.IsPending2FAVerification == true ? "bg-warning" : "bg-secondary")">@(CurrentUserService?.IsPending2FAVerification == true)</span></td>
+                                </tr>
+                            </table>
+                            
+                            <h5>Available Modules</h5>
+                            <div class="list-group">
+                                @if (CurrentUserService?.IsFullyAuthenticated == true)
+                                {
+                                    var modules = CurrentUserService.GetAccessibleModules();
+                                    @foreach (var module in modules)
+                                    {
+                                        <div class="list-group-item">@module</div>
+                                    }
+                                }
+                                else
+                                {
+                                    <div class="list-group-item text-muted">Not authenticated</div>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button class="btn btn-primary" @onclick="RefreshData">Refresh Data</button>
+                            <button class="btn btn-secondary ms-2" @onclick="NavigateToHome">Go to Home</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    
+    private async Task RefreshData()
+    {
+        Logger.LogInformation("?? Refreshing authentication debug data");
+        StateHasChanged();
+    }
+    
+    private void NavigateToHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+    
+    protected override async Task OnInitializedAsync()
+    {
+        Logger.LogInformation("?? AuthDebug page loaded");
+    }
+}

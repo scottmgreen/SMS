@@ -120,9 +120,13 @@ public static class DependencyInjection
         services.AddScoped<StaticCurrentUserService>();
         services.AddScoped<SessionBasedCurrentUserService>();
         
+        // 🚀 PERFORMANCE: Add authentication state caching
+        services.AddScoped<IAuthenticationStateCache, AuthenticationStateCache>();
+        
+        // 🔧 DISABLED: Strategy-based authentication is now handled in Program.cs
         // Register the session-based version as the primary implementation
-        services.AddScoped<ICurrentUserService>(provider => 
-            provider.GetRequiredService<SessionBasedCurrentUserService>());
+        // services.AddScoped<ICurrentUserService>(provider => 
+        //     provider.GetRequiredService<SessionBasedCurrentUserService>());
 
         // 🔐 SESSION TIMER SERVICE - For session timeout management
         services.AddScoped<SessionTimerService>();
@@ -234,7 +238,7 @@ public static class DependencyInjection
         /// <returns>Web application for method chaining</returns>
         public static WebApplication UseSMSSwagger(this WebApplication app)
         {
-            // Only enable Swagger in development or if explicitly enabled
+            // Check if Swagger should be enabled
             if (app.Environment.IsDevelopment() || IsSwaggerEnabledInProduction(app))
             {
                 app.UseSwagger(options =>
@@ -339,18 +343,13 @@ public static class DependencyInjection
 
         private static void ConfigureServers(SwaggerGenOptions options, IConfiguration configuration)
         {
-            // Add server URLs for different environments
-            options.AddServer(new OpenApiServer
+            // Always use servers from appsettings.json configuration
+            var configuredServers = configuration.GetSection("Swagger:Servers").Get<List<ApiServer>>();
+            
+            if (configuredServers?.Any() == true)
             {
-                Url = "https://localhost:7178",
-                Description = "Development Server"
-            });
-
-            // Add additional servers from configuration
-            var servers = configuration.GetSection("Swagger:Servers").Get<List<ApiServer>>();
-            if (servers?.Any() == true)
-            {
-                foreach (var server in servers)
+                // Use servers from appsettings.json
+                foreach (var server in configuredServers)
                 {
                     options.AddServer(new OpenApiServer
                     {
@@ -359,6 +358,13 @@ public static class DependencyInjection
                     });
                 }
             }
+            
+            // ALWAYS add a relative path server as primary option
+            options.AddServer(new OpenApiServer
+            {
+                Url = "",
+                Description = "Current Host (Relative Path)"
+            });
         }
 
         private static string BuildApiDescription()
@@ -390,9 +396,14 @@ For technical support or API key requests, contact the SMS team.";
 
         private static bool IsSwaggerEnabledInProduction(WebApplication app)
         {
-            // Check if Swagger is explicitly enabled via feature flag
+            // Check if Swagger is explicitly enabled via feature flag OR configuration
             var featureManager = app.Services.GetService<IFeatureManager>();
-            return featureManager?.IsEnabledAsync("SwaggerEnabled").GetAwaiter().GetResult() ?? false;
+            var featureEnabled = featureManager?.IsEnabledAsync("SwaggerEnabled").GetAwaiter().GetResult() ?? false;
+            
+            // Also check the configuration setting
+            var configEnabled = app.Configuration.GetValue<bool>("Swagger:EnableInProduction", false);
+            
+            return featureEnabled || configEnabled;
         }
 
         #endregion

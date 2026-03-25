@@ -16,6 +16,7 @@
 @inject NavigationManager Navigation
 @inject Radzen.DialogService DialogService
 @inject IWebHostEnvironment Environment
+@inject IConfiguration Configuration
 @inject ISecureRoutingService SecureRoutingService
 
 @using SMS3.Components.Shared
@@ -170,22 +171,12 @@
                 @if (CurrentUserService?.IsPending2FAVerification == true)
                 {
                     <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
-                        <div class="nav-item me-3">
+                       @*  <div class="nav-item me-3">
                             <span class="text-warning">
                                 <i class="fas fa-shield-alt me-2"></i>
                                 2FA Verification Required
                             </span>
-                        </div>
-                        
-                        @* DEBUG: Show current authentication states in development *@
-                        @if (Environment.IsDevelopment())
-                        {
-                            <div class="nav-item me-3">
-                                <small class="text-muted">
-                                    [DEBUG: Auth=@(CurrentUserService?.IsAuthenticated), 2FA=@(CurrentUserService?.RequiresTwoFactorAuth), Pending=@(CurrentUserService?.IsPending2FAVerification), Full=@(CurrentUserService?.IsFullyAuthenticated)]
-                                </small>
-                            </div>
-                        }
+                        </div> *@
                     </div>
                 }
                 else
@@ -229,9 +220,9 @@
     // Session Timer
     private CancellationTokenSource _cancellationTokenSource = new();
 
-    // Environment Detection
-    private string BrandCssClass => Environment.IsDevelopment() ? "development" : "";
-    private string EnvironmentSuffix => Environment.IsDevelopment() ? "[Development]" : "";
+    // Environment Detection - Always production appearance
+    private string BrandCssClass => "";
+    private string EnvironmentSuffix => "";
 
     // URL-based login visibility - show login only on specific paths or encrypted login
     private bool ShouldShowLoginToAnonymous => Navigation.Uri.Contains("/pdx") || 
@@ -261,13 +252,35 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Initialize session timer if user is fully authenticated (not pending 2FA)
-        if (CurrentUserService.IsFullyAuthenticated)
+        try
         {
-            SessionTimerService.StartTimer();
-            Logger.LogDebug("NavMenu initialized with session timer for fully authenticated user");
+            Logger.LogDebug("🔐 NavMenu OnInitializedAsync - Checking authentication state");
+            
+            // Single check - no loops
+            if (CurrentUserService?.IsFullyAuthenticated == true)
+            {
+                SessionTimerService.StartTimer();
+                Logger.LogDebug("✅ NavMenu initialized with session timer for user: {UserCode}", CurrentUserService.UserCode);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ Error in NavMenu OnInitializedAsync");
         }
     }
+    
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Only check on first render to avoid constant polling
+        if (firstRender && CurrentUserService?.IsFullyAuthenticated == true)
+        {
+            _hasShownAuthenticatedMenu = true;
+            SessionTimerService.StartTimer();
+        }
+    }
+
+    // Add these fields at the class level
+    private bool _hasShownAuthenticatedMenu = false;
 
     /// <summary>
     /// Handle session timer expiry - automatic logout

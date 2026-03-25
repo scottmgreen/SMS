@@ -20,6 +20,17 @@ public class Program
     {
         var builder = WebApplication.CreateBuilder(args);
 
+        // 🔧 ENSURE LOGS DIRECTORY EXISTS - Simple directory creation
+        try
+        {
+            var logsDirectory = Path.Combine(Directory.GetCurrentDirectory(), "logs");
+            Directory.CreateDirectory(logsDirectory);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Warning: Could not create logs directory: {ex.Message}");
+        }
+
         // Add services to the container.
         builder.Services.AddRazorComponents()
             .AddInteractiveServerComponents();
@@ -57,12 +68,6 @@ public class Program
         var forceEverywhere = masterProtocolConfig.GetValue<bool>("ForceProtocolEverywhere", true);
         var allowMixed = masterProtocolConfig.GetValue<bool>("AllowMixedMode", false);
 
-        var protocolLogger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("ProtocolConfig");
-        protocolLogger.LogInformation("🎯 EXPLICIT PROTOCOL CONFIGURATION:");
-        protocolLogger.LogInformation("  - Protocol: {Protocol}", explicitProtocol);
-        protocolLogger.LogInformation("  - Force Everywhere: {ForceEverywhere}", forceEverywhere);
-        protocolLogger.LogInformation("  - Allow Mixed: {AllowMixed}", allowMixed);
-
         // Determine explicit settings based on protocol
         var isHttps = explicitProtocol.Equals("HTTPS", StringComparison.OrdinalIgnoreCase);
         var secureCookies = isHttps && forceEverywhere;
@@ -98,9 +103,6 @@ public class Program
             options.Cookie.SecurePolicy = secureCookies ? CookieSecurePolicy.Always : CookieSecurePolicy.None;
             options.Cookie.SameSite = strictSameSite;
             options.SuppressXFrameOptionsHeader = false;
-            
-            protocolLogger.LogInformation("🔐 Antiforgery cookie policy: Secure={Secure}, SameSite={SameSite}", 
-                options.Cookie.SecurePolicy, options.Cookie.SameSite);
         });
         
         // **🔐 EXPLICIT SESSION CONFIGURATION - Uses protocol settings directly**
@@ -121,9 +123,6 @@ public class Program
             {
                 options.Cookie.Domain = sessionConfig.CookieDomain;
             }
-            
-            protocolLogger.LogInformation("🔐 Session cookie policy: Secure={Secure}, SameSite={SameSite}", 
-                options.Cookie.SecurePolicy, options.Cookie.SameSite);
         });
 
         // **🔐 REQUEST VALIDATION CONFIGURATION - Load from appsettings.json**
@@ -191,41 +190,14 @@ public class Program
         // Authentication strategy manager (orchestrator)
         builder.Services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategyManager, SMS_Application.Services.AuthenticationStrategyManager>();
 
+        // 🔧 CRITICAL FIX: Register Strategy-Based Current User Service for NavMenu
+        builder.Services.AddScoped<SMS_Application.Interfaces.ICurrentUserService, SMS_Application.Services.StrategyBasedCurrentUserService>();
+
         // **🔐 LOG SECURITY CONFIGURATION** (only in development for security)
         if (builder.Environment.IsDevelopment())
         {
-            // Create temporary service provider for logging
-            using var serviceProvider = builder.Services.BuildServiceProvider();
-            var securityFeatureService = serviceProvider.GetRequiredService<ISecurityFeatureService>();
-            var securityContext = await securityFeatureService.GetSecurityContextAsync(builder.Environment);
-            
-            var logger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("SecurityConfig");
-            logger.LogInformation("🚀 Security Feature Context:");
-            logger.LogInformation("  - Environment: {Environment}", securityContext.Environment);
-            logger.LogInformation("  - Allow HTTP Cookies: {AllowHttpCookies}", securityContext.AllowHttpCookies);
-            logger.LogInformation("  - Allow HTTP in Development: {AllowHttpInDevelopment}", securityContext.AllowHttpInDevelopment);
-            logger.LogInformation("  - Cookie Secure Policy: {CookieSecurePolicy}", securityContext.CookieSecurePolicy);
-            
-            var sessionLogger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("SessionConfig");
-            sessionLogger.LogInformation("🔐 Session Configuration Loaded:");
-            sessionLogger.LogInformation("  - Timeout: {TimeoutMinutes} minutes", sessionConfig.TimeoutMinutes);
-            sessionLogger.LogInformation("  - Sliding Expiration: {SlidingExpiration}", sessionConfig.SlidingExpiration);
-            sessionLogger.LogInformation("  - Secure Cookies: {SecureCookies}", sessionConfig.SecureCookies);
-            sessionLogger.LogInformation("  - HttpOnly: {HttpOnly}", sessionConfig.HttpOnly);
-            sessionLogger.LogInformation("  - SameSite: {SameSite}", sessionConfig.SameSite);
-            sessionLogger.LogInformation("  - Cookie Name: {CookieName}", sessionConfig.CookieName);
-            sessionLogger.LogInformation("  - Development Mode: {EnableDevelopmentMode}", sessionConfig.EnableDevelopmentMode);
-            
-            // 🎯 NEW: AUTHENTICATION STRATEGY CONFIGURATION LOGGING
-            var authLogger = LoggerFactory.Create(b => b.AddConsole()).CreateLogger("AuthenticationConfig");
-            authLogger.LogInformation("🎯 Authentication Strategy Configuration Loaded:");
-            authLogger.LogInformation("  - Primary Method: {PreferredMethod}", authConfig.PreferredMethod);
-            authLogger.LogInformation("  - Fallback Method: {FallbackMethod}", authConfig.FallbackMethod);
-            authLogger.LogInformation("  - Enable Fallback Chain: {EnableFallbackChain}", authConfig.EnableFallbackChain);
-            authLogger.LogInformation("  - Require Complete Users: {RequireCompleteUserInstantiation}", authConfig.RequireCompleteUserInstantiation);
-            authLogger.LogInformation("  - Strict Mode: {StrictMode}", authConfig.StrictMode);
-            authLogger.LogInformation("  - Circuit Cache Timeout: {CircuitCacheTimeoutMinutes} minutes", authConfig.CircuitCacheTimeoutMinutes);
-            authLogger.LogInformation("  - Log Auth Decisions: {LogAuthenticationDecisions}", authConfig.LogAuthenticationDecisions);
+            // Security configuration logging disabled to reduce console noise
+            // Enable these logs in appsettings.Development.json if needed for debugging
         }
 
         // **PRESENTATION LAYER SERVICES - Centralized registration**
@@ -248,7 +220,11 @@ public class Program
         SMS3.Components.Shared.UIHelpers.ServiceLocator.Current = app.Services;
 
         // ⚡ SECURITY MIDDLEWARE - Must be first to add headers to all responses
-        app.UseSecurityHeaders();
+        // 🎯 CONDITIONAL: Only apply security headers if enabled in configuration
+        if (isHttps || app.Configuration.GetValue<bool>("FeatureManagement:EnableSecurityHeaders", false))
+        {
+            app.UseSecurityHeaders();
+        }
 
         // **🔐 REQUEST VALIDATION MIDDLEWARE - Validate and sanitize all requests**
         app.UseMiddleware<SMS3.Middleware.RequestValidationMiddleware>();
@@ -269,21 +245,19 @@ public class Program
         if (isHttps && forceEverywhere)
         {
             app.UseHttpsRedirection();
-            protocolLogger.LogInformation("✅ HTTPS redirection enabled (explicit HTTPS protocol)");
-        }
-        else
-        {
-            protocolLogger.LogInformation("🚨 HTTPS redirection DISABLED (explicit HTTP protocol)");
         }
 
         app.UseStaticFiles();
+        
+        // **🔐 CRITICAL FIX: SESSION MUST BE BEFORE ROUTING AND AUTHENTICATION**
+        app.UseSession();
+        
         app.UseRouting();
 
         // **🔐 AUTHENTICATION & AUTHORIZATION MIDDLEWARE**
         app.UseAuthentication();
         app.UseAuthorization();
 
-        app.UseSession();
         app.UseAntiforgery();
 
         app.MapPDXSMSApiEndpoints();

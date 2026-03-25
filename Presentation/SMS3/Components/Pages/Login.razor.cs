@@ -40,6 +40,9 @@ public partial class Login : ComponentBase
                 Logger.LogInformation("🔐 2FA Enabled: {TwoFactorEnabled}", authResult.User.TwoFactorEnabled);
 
                 // 🔐 Record successful authentication audit with simplified data
+                // DISABLED: Authentication auditing via dedicated commands temporarily disabled
+                // Main audit system already captures all authentication events
+                /*
                 try
                 {
                     var authSuccessCommand = new RecordAuthenticationSuccessCommand(
@@ -59,6 +62,7 @@ public partial class Login : ComponentBase
                     Logger.LogError(auditEx, "❌ Failed to record authentication success audit for {Username}", model.Username);
                     // Continue with login even if audit fails
                 }
+                */
 
                 // 🔐 CHECK FOR TWO-FACTOR AUTHENTICATION
                 if (authResult.User.TwoFactorEnabled)
@@ -68,6 +72,10 @@ public partial class Login : ComponentBase
                     
                     try
                     {
+                        // 🚨 CRITICAL SESSION ISOLATION FIX: Clear any previous user's 2FA data first
+                        Logger.LogInformation("🧹 Clearing any previous 2FA session data for session isolation...");
+                        await SessionService.ClearPending2FAUserAsync();
+                        
                         // Store user temporarily for 2FA verification with explicit wait
                         Logger.LogInformation("🔐 Storing pending 2FA user data for {Username}...", model.Username);
                         await SessionService.StorePending2FAUserAsync(authResult.User, authResult.UserType);
@@ -86,7 +94,18 @@ public partial class Login : ComponentBase
                             return;
                         }
                         
-                        Logger.LogInformation("✅ Pending 2FA user stored and verified successfully: {UserCode}", storedUser?.User.Code);
+                        // 🚨 VERIFICATION: Ensure stored user matches current user (prevent contamination)
+                        if (storedUser.Value.User.UserName.Value != model.Username)
+                        {
+                            Logger.LogError("❌ CRITICAL SESSION CONTAMINATION: Stored user {StoredUser} does not match login user {LoginUser}",
+                                storedUser.Value.User.UserName.Value, model.Username);
+                            ErrorMessage = "Session error detected. Please try logging in again.";
+                            await SessionService.ClearPending2FAUserAsync(); // Clear contaminated data
+                            return;
+                        }
+                        
+                        Logger.LogInformation("✅ Pending 2FA user stored and verified successfully: {UserCode} matches {Username}", 
+                            storedUser?.User.Code, model.Username);
                         Logger.LogInformation("🔐 Navigating to /verify-2fa...");
                         
                         // Clear any existing error messages

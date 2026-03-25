@@ -57,8 +57,9 @@ namespace Infrastructure.Configuration.Middleware
                 // Only add headers if they haven't been set already
                 if (!response.Headers.ContainsKey("X-Frame-Options"))
                 {
-                    // Prevents clickjacking attacks by denying the page from being displayed in an iframe
-                    response.Headers.Add("X-Frame-Options", "DENY");
+                    // ?? PRODUCTION FIX: Allow same-origin frames instead of DENY for IIS compatibility
+                    // DENY was causing Chrome security errors in production IIS deployment
+                    response.Headers.Add("X-Frame-Options", "SAMEORIGIN");
                 }
 
                 if (!response.Headers.ContainsKey("X-Content-Type-Options"))
@@ -188,8 +189,8 @@ namespace Infrastructure.Configuration.Middleware
             // Form action restriction
             cspBuilder.Add("form-action 'self'");
 
-            // Frame ancestors (redundant with X-Frame-Options but more specific)
-            cspBuilder.Add("frame-ancestors 'none'");
+            // Frame ancestors (allow same-origin instead of none for IIS compatibility)
+            cspBuilder.Add("frame-ancestors 'self'");
 
             // Remove invalid embed-src directive (not a standard CSP directive)
             // Use object-src 'none' instead which is more secure

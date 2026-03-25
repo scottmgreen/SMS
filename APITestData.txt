@@ -1,0 +1,42 @@
+{
+  "hazardCategory": "INCIDENT",
+  "hazardType": "AIRCRAFT_INCIDENT", 
+  "description": "Test incident report from external API - Aircraft experienced minor hydraulic issue during taxi, returned to gate safely for maintenance inspection",
+  "submittedBy": "External System Test",
+  "submittedDate": "2024-01-15T10:30:00Z",
+  "submittingDepartment": "EXTERNAL_SYSTEM",
+  "submittingDepartmentJobFunction": "API_INTEGRATION",
+  "isAnonymous": false,
+  "reportContactName": "Test User",
+  "reportContactCell": "503-555-0123",
+  "reportContactEmail": "test@example.com",
+  "locationDescription": "Gate A5, Terminal ramp area",
+  "latitude": 45.5898,
+  "longitude": -122.5951,
+  "incidentDateTime": "2024-01-15T09:45:00Z",
+  "attachments": null
+}
+
+# Test the hazard categories endpoint (GET request - simpler)
+$headers = @{
+    "X-API-Key" = "SMS-DEV-12345-ABCDEF"
+    "Content-Type" = "application/json"
+}
+
+Invoke-RestMethod -Uri "http://localhost:5113/api/pdxsms/hazard-categories" -Method GET -Headers $headers
+
+
+
+$headers = @{
+    "X-API-Key" = "SMS-DEV-12345-ABCDEF" 
+    "Content-Type" = "application/json"
+}
+
+$body = @{
+    hazardCategory = "INCIDENT"
+    hazardType = "AIRCRAFT_INCIDENT" 
+    description = "Test from PowerShell"
+    locationDescription = "Test Location"
+} | ConvertTo-Json
+
+Invoke-RestMethod -Uri "http://localhost:5113/api/pdxsms" -Method POST -Headers $headers -Body $body

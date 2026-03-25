@@ -37,6 +37,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{B7FA1A75-D282-4128-AA2D-FF7D67E711A0}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{AE0EC883-6738-4E77-A41B-FA0E5DBF469C}"
+	ProjectSection(SolutionItems) = preProject
+		APITestData.txt = APITestData.txt
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

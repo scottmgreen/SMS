@@ -51,6 +51,16 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
     /// </summary>
     public async Task<Result<bool>> StoreUserAsync(BaseUser user, SMSUserType userType, CancellationToken cancellationToken = default)
     {
+        return await StoreUserAsync(user, userType, null, cancellationToken);
+    }
+
+    /// <summary>
+    /// Store complete user authentication data in HttpContext.Items with optional additional data
+    /// WARNING: Only persists for current request - not suitable for long-term auth
+    /// ENHANCED: Accepts additional data for 2FA markers and other temporary storage needs
+    /// </summary>
+    public async Task<Result<bool>> StoreUserAsync(BaseUser user, SMSUserType userType, Dictionary<string, string>? additionalData, CancellationToken cancellationToken = default)
+    {
         try
         {
             var context = _httpContextAccessor.HttpContext;
@@ -60,7 +70,7 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
                 return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
-            _logger.LogWarning("?? Storing user {UserCode} ({UserType}) in HttpContext.Items (REQUEST-SCOPED ONLY)", user.Code, userType.Value);
+            _logger.LogInformation("?? Storing user {UserCode} ({UserType}) in HttpContext.Items for 2FA", user.Code, userType.Value);
 
             // Get serialized user data with all roles/permissions
             var userData = _userInstantiationService.SerializeCompleteUser(user, userType);
@@ -71,6 +81,16 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             userData["SMS_StoredAt"] = DateTime.UtcNow.ToString("O");
             userData["SMS_RequestId"] = context.TraceIdentifier ?? Guid.NewGuid().ToString();
 
+            // ?? CRITICAL: Add any additional data (like 2FA markers)
+            if (additionalData != null)
+            {
+                foreach (var kvp in additionalData)
+                {
+                    userData[kvp.Key] = kvp.Value;
+                    _logger.LogDebug("?? Added additional data to context: {Key} = {Value}", kvp.Key, kvp.Value?.Length > 50 ? $"{kvp.Value[..50]}..." : kvp.Value);
+                }
+            }
+
             // Store all data in context items
             foreach (var kvp in userData)
             {
@@ -80,7 +100,7 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             // Store keys for cleanup tracking
             context.Items["SMS_AUTH_KEYS"] = string.Join("|", userData.Keys);
 
-            _logger.LogInformation("? User {UserCode} ({UserType}) stored in HttpContext.Items with {FieldCount} fields (REQUEST-SCOPED)", 
+            _logger.LogInformation("? SUCCESS: User {UserCode} ({UserType}) stored in HttpContext.Items with {FieldCount} fields (REQUEST-SCOPED)", 
                 user.Code, userType.Value, userData.Count);
 
             return Result<bool>.Success(true);

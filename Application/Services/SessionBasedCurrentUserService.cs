@@ -152,6 +152,7 @@ public class SessionBasedCurrentUserService : ICurrentUserService
     /// <summary>
     /// Check if user is currently pending 2FA verification (password authenticated but 2FA not verified)
     /// This checks if there's pending 2FA data indicating the user is in the intermediate state
+    /// CRITICAL: Must distinguish between pending 2FA and full authentication
     /// </summary>
     public bool IsPending2FAVerification 
     { 
@@ -159,57 +160,55 @@ public class SessionBasedCurrentUserService : ICurrentUserService
         {
             try
             {
-                // Use the SMS Session Service to check for pending 2FA user more accurately
-                var hasPending = _smsSessionService.HasPending2FAUser();
-                
-                if (hasPending)
+                // FIRST: Check if user is already fully authenticated
+                // If IsAuthenticated is true, we should NOT be in pending 2FA state
+                if (IsAuthenticated)
                 {
-                    _logger.LogDebug("?? Pending 2FA verification detected via SMS Session Service");
-                }
-                
-                return hasPending;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error checking pending 2FA status via SMS Session Service");
-                
-                // Fallback to manual checking if SMS Session Service fails
-                try
-                {
-                    // Check if there's pending 2FA user data in any of the storage strategies
+                    _logger.LogDebug("?? User is authenticated - checking if truly pending or fully authenticated");
+                    
+                    // Check for specific pending 2FA markers (not full auth data)
                     var context = _httpContextAccessor.HttpContext;
-                    if (context?.Items.ContainsKey("Pending2FA_UserData") == true ||
-                        context?.Items.ContainsKey("Pending2FA_UserType") == true)
+                    if (context?.Items.ContainsKey("Pending2FA_UserData") == true || 
+                        context?.Items.ContainsKey("Pending2FA_UserType") == true ||
+                        context?.Items.ContainsKey("Pending2FA_StoredAt") == true)
                     {
-                        _logger.LogDebug("?? Pending 2FA verification detected via HttpContext.Items fallback");
+                        _logger.LogDebug("?? Found pending 2FA markers in HttpContext - user is pending 2FA verification");
                         return true;
                     }
 
-                    // Check circuit storage for pending 2FA data
+                    // Check circuit storage for pending 2FA specific markers
                     var circuitData = GetCurrentCircuitAuthData();
                     if (circuitData != null && 
                         (circuitData.ContainsKey("Pending2FA_UserData") || 
-                         circuitData.ContainsKey("Pending2FA_UserType")))
+                         circuitData.ContainsKey("Pending2FA_UserType") ||
+                         circuitData.ContainsKey("Pending2FA_StoredAt")))
                     {
-                        _logger.LogDebug("?? Pending 2FA verification detected via circuit storage fallback");
+                        _logger.LogDebug("?? Found pending 2FA markers in circuit storage - user is pending 2FA verification");
                         return true;
                     }
 
-                    // Check session for pending 2FA markers
+                    // Check session for pending 2FA specific markers
                     var pending2FAData = SafeGetSessionString("Pending2FA_UserData");
-                    if (!string.IsNullOrEmpty(pending2FAData))
+                    var pending2FAStoredAt = SafeGetSessionString("Pending2FA_StoredAt");
+                    if (!string.IsNullOrEmpty(pending2FAData) || !string.IsNullOrEmpty(pending2FAStoredAt))
                     {
-                        _logger.LogDebug("?? Pending 2FA verification detected via session fallback");
+                        _logger.LogDebug("?? Found pending 2FA markers in session - user is pending 2FA verification");
                         return true;
                     }
 
+                    // If user is authenticated but no pending 2FA markers found, they are fully authenticated
+                    _logger.LogDebug("?? User is authenticated with no pending 2FA markers - fully authenticated");
                     return false;
                 }
-                catch (Exception fallbackEx)
-                {
-                    _logger.LogError(fallbackEx, "Error in fallback pending 2FA status check");
-                    return false;
-                }
+
+                // User is not authenticated at all, so definitely not pending 2FA
+                _logger.LogDebug("?? User is not authenticated - not pending 2FA verification");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error checking pending 2FA status");
+                return false;
             }
         } 
     }

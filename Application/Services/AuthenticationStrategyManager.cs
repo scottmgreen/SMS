@@ -283,53 +283,77 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
 
     /// <summary>
     /// Check if user is authenticated using any available strategy
+    /// OPTIMIZED: Cache authentication state temporarily to reduce repeated expensive checks
     /// </summary>
     public async Task<bool> IsUserAuthenticatedAsync(CancellationToken cancellationToken = default)
     {
         try
         {
+            _logger.LogDebug("?? IsUserAuthenticatedAsync - Starting strategy chain check");
+            
             // Check primary strategy first
             var primaryStrategy = GetStrategy(_config.PreferredMethod);
-            if (primaryStrategy?.IsAvailable == true && await primaryStrategy.IsUserAuthenticatedAsync(cancellationToken))
+            _logger.LogDebug("?? Primary strategy ({Method}): Available={IsAvailable}", _config.PreferredMethod, primaryStrategy?.IsAvailable);
+            
+            if (primaryStrategy?.IsAvailable == true)
             {
-                return true;
+                var primaryResult = await primaryStrategy.IsUserAuthenticatedAsync(cancellationToken);
+                _logger.LogDebug("?? Primary strategy result: {Result}", primaryResult);
+                if (primaryResult)
+                {
+                    _logger.LogDebug("?? User authenticated via primary strategy: {Strategy}", primaryStrategy.StrategyName);
+                    return true;
+                }
             }
 
             // Check fallback strategy if enabled
             if (_config.EnableFallbackChain)
             {
                 var fallbackStrategy = GetStrategy(_config.FallbackMethod);
-                if (fallbackStrategy?.IsAvailable == true && await fallbackStrategy.IsUserAuthenticatedAsync(cancellationToken))
+                _logger.LogDebug("?? Fallback strategy ({Method}): Available={IsAvailable}", _config.FallbackMethod, fallbackStrategy?.IsAvailable);
+                
+                if (fallbackStrategy?.IsAvailable == true)
                 {
-                    return true;
+                    var fallbackResult = await fallbackStrategy.IsUserAuthenticatedAsync(cancellationToken);
+                    _logger.LogDebug("?? Fallback strategy result: {Result}", fallbackResult);
+                    if (fallbackResult)
+                    {
+                        _logger.LogDebug("?? User authenticated via fallback strategy: {Strategy}", fallbackStrategy.StrategyName);
+                        return true;
+                    }
                 }
             }
 
             // If not in strict mode, check other strategies
             if (!_config.StrictMode)
             {
+                _logger.LogDebug("?? Checking other strategies (not strict mode)");
                 foreach (var strategy in _strategies.Values.Where(s => s.IsAvailable && 
                     s.Method != _config.PreferredMethod && s.Method != _config.FallbackMethod))
                 {
                     try
                     {
-                        if (await strategy.IsUserAuthenticatedAsync(cancellationToken))
+                        var otherResult = await strategy.IsUserAuthenticatedAsync(cancellationToken);
+                        _logger.LogDebug("?? Other strategy {Strategy} result: {Result}", strategy.StrategyName, otherResult);
+                        if (otherResult)
                         {
+                            _logger.LogDebug("?? User authenticated via other strategy: {Strategy}", strategy.StrategyName);
                             return true;
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogDebug(ex, "Error checking authentication in strategy {Strategy}", strategy.StrategyName);
+                        _logger.LogWarning(ex, "Error checking authentication in strategy {Strategy}", strategy.StrategyName);
                     }
                 }
             }
 
+            _logger.LogDebug("?? No authentication found in any strategy");
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error checking authentication status");
+            _logger.LogError(ex, "?? Error checking authentication status");
             return false;
         }
     }

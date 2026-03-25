@@ -436,6 +436,7 @@ public class UserInstantiationService : IUserInstantiationService
     /// <summary>
     /// Create minimal user object from cached session/circuit data to avoid database calls during deserialization
     /// CRITICAL: This prevents infinite loops during authentication strategy retrieval
+    /// FIXED: Now includes role and permissions from cached JSON data
     /// </summary>
     private BaseUser? CreateMinimalUserFromCachedData(Dictionary<string, string> userData, SMSUserType userType)
     {
@@ -445,6 +446,8 @@ public class UserInstantiationService : IUserInstantiationService
             var email = userData.GetValueOrDefault("SMS_Email", "");
             var firstName = userData.GetValueOrDefault("SMS_FirstName", "");
             var lastName = userData.GetValueOrDefault("SMS_LastName", "");
+            var roleCode = userData.GetValueOrDefault("SMS_UserRoleCode", "");
+            var roleName = userData.GetValueOrDefault("SMS_UserRoleName", "");
             
             if (string.IsNullOrEmpty(userCode))
             {
@@ -452,95 +455,172 @@ public class UserInstantiationService : IUserInstantiationService
             }
 
             // Create basic user based on type - using the exact pattern from Mappers.cs
+            BaseUser user;
             switch (userType.Value.ToUpperInvariant())
             {
                 case "APPLICATION":
                     var appUserId = new SMSApplicationUserID(userCode);
                     var appUser = new SMSApplicationUser(appUserId);
-
                     appUser.Code = userCode;
-                    
-                    // Use the same pattern as Mappers.cs for value objects
-                    var userNameResult = UserName.Create(email);
-                    if (userNameResult.IsSuccess)
-                        appUser.UserName = userNameResult.Value;
-
-                    var firstNameResult = FirstName.Create(firstName);
-                    if (firstNameResult.IsSuccess)
-                        appUser.FirstName = firstNameResult.Value;
-
-                    var lastNameResult = LastName.Create(lastName);
-                    if (lastNameResult.IsSuccess)
-                        appUser.LastName = lastNameResult.Value;
-
-                    appUser.TwoFactorEnabled = bool.TryParse(userData.GetValueOrDefault("SMS_TwoFactorEnabled", "false"), out var twoFAEnabled) && twoFAEnabled;
-                    appUser.TwoFactorSecretKey = userData.GetValueOrDefault("SMS_TwoFactorSecretKey", "");
-                    appUser.FailedTwoFactorAttempts = int.TryParse(userData.GetValueOrDefault("SMS_FailedTwoFactorAttempts", "0"), out var failedAttempts) ? failedAttempts : 0;
-                    appUser.IsActive = bool.TryParse(userData.GetValueOrDefault("SMS_IsActive", "true"), out var isActive) && isActive;
-                    appUser.LastLoginDate = DateTime.TryParse(userData.GetValueOrDefault("SMS_LastLoginDate", ""), out var lastLogin) ? lastLogin : null;
-
-                    return appUser;
+                    user = appUser;
+                    break;
 
                 case "ORGANIZATIONAL":
                     var orgUserId = new SMSOrganizationalUserID(userCode);
                     var orgUser = new SMSOrganizationalUser(orgUserId);
-
                     orgUser.Code = userCode;
                     orgUser.Position = userData.GetValueOrDefault("SMS_Position", "");
-
-                    // Set value objects using same pattern
-                    var orgUserNameResult = UserName.Create(email);
-                    if (orgUserNameResult.IsSuccess)
-                        orgUser.UserName = orgUserNameResult.Value;
-
-                    var orgFirstNameResult = FirstName.Create(firstName);
-                    if (orgFirstNameResult.IsSuccess)
-                        orgUser.FirstName = orgFirstNameResult.Value;
-
-                    var orgLastNameResult = LastName.Create(lastName);
-                    if (orgLastNameResult.IsSuccess)
-                        orgUser.LastName = orgLastNameResult.Value;
-
-                    orgUser.TwoFactorEnabled = bool.TryParse(userData.GetValueOrDefault("SMS_TwoFactorEnabled", "false"), out var orgTwoFAEnabled) && orgTwoFAEnabled;
-                    orgUser.IsActive = bool.TryParse(userData.GetValueOrDefault("SMS_IsActive", "true"), out var orgIsActive) && orgIsActive;
-
-                    return orgUser;
+                    user = orgUser;
+                    break;
 
                 case "STAKEHOLDER":
                     var stakeUserId = new SMSStakeholderUserID(userCode);
                     var stakeUser = new SMSStakeholderUser(stakeUserId);
-
                     stakeUser.Code = userCode;
                     stakeUser.Organization = userData.GetValueOrDefault("SMS_Organization", "");
                     stakeUser.StakeholderType = userData.GetValueOrDefault("SMS_StakeholderType", "");
-
-                    // Set value objects using same pattern
-                    var stakeUserNameResult = UserName.Create(email);
-                    if (stakeUserNameResult.IsSuccess)
-                        stakeUser.UserName = stakeUserNameResult.Value;
-
-                    var stakeFirstNameResult = FirstName.Create(firstName);
-                    if (stakeFirstNameResult.IsSuccess)
-                        stakeUser.FirstName = stakeFirstNameResult.Value;
-
-                    var stakeLastNameResult = LastName.Create(lastName);
-                    if (stakeLastNameResult.IsSuccess)
-                        stakeUser.LastName = stakeLastNameResult.Value;
-
-                    stakeUser.TwoFactorEnabled = bool.TryParse(userData.GetValueOrDefault("SMS_TwoFactorEnabled", "false"), out var stakeTwoFAEnabled) && stakeTwoFAEnabled;
-                    stakeUser.IsActive = bool.TryParse(userData.GetValueOrDefault("SMS_IsActive", "true"), out var stakeIsActive) && stakeIsActive;
-
-                    return stakeUser;
+                    user = stakeUser;
+                    break;
 
                 default:
                     _logger.LogWarning("Unknown user type for minimal user creation: {UserType}", userType.Value);
                     return null;
             }
+
+            // Set common value objects using same pattern
+            var userNameResult = UserName.Create(email);
+            if (userNameResult.IsSuccess)
+                user.UserName = userNameResult.Value;
+
+            var firstNameResult = FirstName.Create(firstName);
+            if (firstNameResult.IsSuccess)
+                user.FirstName = firstNameResult.Value;
+
+            var lastNameResult = LastName.Create(lastName);
+            if (lastNameResult.IsSuccess)
+                user.LastName = lastNameResult.Value;
+
+            user.TwoFactorEnabled = bool.TryParse(userData.GetValueOrDefault("SMS_TwoFactorEnabled", "false"), out var twoFAEnabled) && twoFAEnabled;
+            user.TwoFactorSecretKey = userData.GetValueOrDefault("SMS_TwoFactorSecretKey", "");
+            user.FailedTwoFactorAttempts = int.TryParse(userData.GetValueOrDefault("SMS_FailedTwoFactorAttempts", "0"), out var failedAttempts) ? failedAttempts : 0;
+            user.IsActive = bool.TryParse(userData.GetValueOrDefault("SMS_IsActive", "true"), out var isActive) && isActive;
+            user.LastLoginDate = DateTime.TryParse(userData.GetValueOrDefault("SMS_LastLoginDate", ""), out var lastLogin) ? lastLogin : null;
+
+            // ?? CRITICAL FIX: Create and populate the user role with permissions from cached JSON data
+            if (!string.IsNullOrEmpty(roleCode))
+            {
+                var roleId = new SMSUserRoleID(roleCode);
+                user.UserRole = new SMSUserRole(roleId)
+                {
+                    Code = roleCode,
+                    Name = roleName,
+                    Permissions = new List<SMSUserRolePermission>()
+                };
+
+                // Deserialize permissions from JSON if available
+                var permissionsJson = userData.GetValueOrDefault("SMS_UserPermissionsJson", "");
+                if (!string.IsNullOrEmpty(permissionsJson))
+                {
+                    try
+                    {
+                        var permissionData = JsonSerializer.Deserialize<List<PermissionData>>(permissionsJson);
+                        if (permissionData != null)
+                        {
+                            foreach (var permData in permissionData)
+                            {
+                                var permissionId = new SMSUserRolePermissionID(permData.Code ?? $"PERM-{Guid.NewGuid():N}");
+                                var permission = new SMSUserRolePermission(permissionId)
+                                {
+                                    Code = permData.Code ?? $"PERM-{Guid.NewGuid():N}",
+                                    SMSUserRoleCode = roleCode,
+                                    SMSModule = permData.Module ?? "",
+                                    Create = permData.Create,
+                                    Read = permData.Read,
+                                    Update = permData.Update,
+                                    Delete = permData.Delete
+                                };
+                                user.UserRole.Permissions.Add(permission);
+                            }
+
+                            _logger.LogInformation("? Reconstructed {PermissionCount} permissions for user {UserCode} from cached JSON data", 
+                                user.UserRole.Permissions.Count, userCode);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogWarning(ex, "?? Failed to deserialize permissions JSON for user {UserCode}, will use legacy format", userCode);
+                        
+                        // Fallback to legacy permission format
+                        var legacyPermissions = userData.GetValueOrDefault("SMS_UserPermissions", "");
+                        if (!string.IsNullOrEmpty(legacyPermissions))
+                        {
+                            ParseLegacyPermissions(user.UserRole, legacyPermissions, roleCode);
+                        }
+                    }
+                }
+            }
+
+            _logger.LogInformation("? Created minimal user from cached data for {UserCode} with role {RoleCode} and {PermissionCount} permissions", 
+                userCode, roleCode ?? "None", user.UserRole?.Permissions?.Count ?? 0);
+
+            return user;
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "? Error creating minimal user from cached data");
             return null;
         }
+    }
+
+    /// <summary>
+    /// Parse legacy permission format for backward compatibility
+    /// </summary>
+    private void ParseLegacyPermissions(SMSUserRole userRole, string permissionsString, string roleCode)
+    {
+        try
+        {
+            var permissionPairs = permissionsString.Split('|', StringSplitOptions.RemoveEmptyEntries);
+            foreach (var pair in permissionPairs)
+            {
+                var parts = pair.Split(':', 2);
+                if (parts.Length == 2)
+                {
+                    var module = parts[0];
+                    var actions = parts[1].Split(",");
+                    
+                    var permissionId = new SMSUserRolePermissionID($"PERM-{Guid.NewGuid():N}");
+                    var permission = new SMSUserRolePermission(permissionId)
+                    {
+                        Code = $"PERM-{Guid.NewGuid():N}",
+                        SMSUserRoleCode = roleCode,
+                        SMSModule = module,
+                        Create = actions.Contains("Create"),
+                        Read = actions.Contains("Read"),
+                        Update = actions.Contains("Update"),
+                        Delete = actions.Contains("Delete")
+                    };
+                    userRole.Permissions.Add(permission);
+                }
+            }
+            
+            _logger.LogInformation("? Parsed {PermissionCount} permissions from legacy format", userRole.Permissions.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "?? Error parsing legacy permissions");
+        }
+    }
+
+    /// <summary>
+    /// Data structure for JSON permission deserialization
+    /// </summary>
+    private class PermissionData
+    {
+        public string? Module { get; set; }
+        public bool Create { get; set; }
+        public bool Read { get; set; }
+        public bool Update { get; set; }
+        public bool Delete { get; set; }
+        public string? Code { get; set; }
     }
 }
