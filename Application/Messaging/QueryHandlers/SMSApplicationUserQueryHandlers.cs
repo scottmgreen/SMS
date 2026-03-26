@@ -110,25 +110,19 @@ public class GetSMSApplicationUserByUserNameQueryHandler : BaseQueryBundle, IReq
         {
             _logger.LogInformation("Processing GetSMSApplicationUserByUserNameQuery for UserName: {UserName}", request.UserName);
 
-            // Get all users and filter by username (or implement a specific method in the service)
-            var allUsersResult = await _dataService.GetAllSMSApplicationUsersAsync(ct);
-            if (allUsersResult.IsFailure)
-            {
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(allUsersResult.Error);
-            }
+            // FIXED: Call the direct method instead of filtering all users
+            var result = await _dataService.GetSMSApplicationUserByUserNameAsync(request.UserName, ct);
 
-            var user = allUsersResult.Value?.FirstOrDefault(u => u.UserName.Value.Equals(request.UserName, StringComparison.OrdinalIgnoreCase));
-
-            if (user != null)
+            if (result.IsSuccess)
             {
                 _logger.LogInformation("Successfully retrieved SMS Application User with UserName: {UserName}", request.UserName);
-                return Result<SMSApplicationUser>.Success(user);
             }
             else
             {
                 _logger.LogWarning("SMS Application User not found with UserName: {UserName}", request.UserName);
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NotFound);
             }
+
+            return result;
         }
         catch (Exception ex)
         {

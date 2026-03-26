@@ -10,6 +10,7 @@
 
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
+using SMS_Infrastructure.Services;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
@@ -141,28 +142,26 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
 
             _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSStakeholderUserPasswordCommand for UserID: {UserId}", request.UserId);
 
-            // Get the existing user
-            var userResult = await _stakeholderUserService.GetSMSStakeholderUserByIdAsync(request.UserId, cancellationToken);
-            if (userResult.IsFailure)
-            {
-                return Result<bool>.Failure<bool>(userResult.Error);
-            }
-
-            var user = userResult.Value;
-
-            // Create new password
+            // Create new password with proper hashing
             var passwordResult = Password.Create(request.NewPassword);
             if (passwordResult.IsFailure)
                 return Result<bool>.Failure<bool>(passwordResult.Error);
 
-            // Update user password
-            user.UpdatePassword(passwordResult.Value);
-            user.UpdatedBy = "SYSTEM";
-            user.UpdatedDate = DateTime.UtcNow;
+            // FIXED: Access the data service directly to use UpdateSMSStakeholderUserPasswordAsync
+            // This calls the dedicated pr_SMSStakeholderUser_UpdatePassword stored procedure
+            var dataServiceField = _stakeholderUserService.GetType().GetField("_dataService", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            if (dataServiceField?.GetValue(_stakeholderUserService) is not SMSStakeholderUserDataService dataService)
+            {
+                _logger.LogApplicationError("Could not access SMSStakeholderUserDataService for password update", ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.PasswordUpdateFailed);
+            }
 
-            var updateResult = await _stakeholderUserService.UpdateSMSStakeholderUserAsync(user, cancellationToken);
+            var userId = new SMSStakeholderUserID(request.UserId);
+            var result = await dataService.UpdateSMSStakeholderUserPasswordAsync(userId, passwordResult.Value.HashedValue, cancellationToken);
 
-            if (updateResult.IsSuccess)
+            if (result.IsSuccess)
             {
                 _logger.LogInformation("✅ Clean Architecture: Successfully updated password for SMS Stakeholder User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
@@ -171,7 +170,7 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
             {
                 _logger.LogApplicationError("Failed to update password for SMS Stakeholder User with ID: {UserId}. Error: {Error}",
                     ApplicationEventIds.Error, null);
-                return Result<bool>.Failure<bool>(updateResult.Error);
+                return Result<bool>.Failure<bool>(result.Error);
             }
         }
         catch (OperationCanceledException)

@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using SMS_Infrastructure.Services;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
@@ -140,29 +141,26 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
 
             _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSApplicationUserPasswordCommand for UserID: {UserId}", request.UserId);
 
-            // Get the existing user first
-            var userResult = await _applicationUserService.GetSMSApplicationUserByIdAsync(request.UserId, cancellationToken);
-            if (userResult.IsFailure)
-            {
-                return Result<bool>.Failure<bool>(userResult.Error);
-            }
-
-            var user = userResult.Value;
-
-            // Create new password
+            // Create new password with proper hashing
             var passwordResult = Password.Create(request.NewPassword);
             if (passwordResult.IsFailure)
                 return Result<bool>.Failure<bool>(passwordResult.Error);
 
-            // Update user password
-            user.UpdatePassword(passwordResult.Value);
-            user.UpdatedBy = request.UpdatedBy;
-            user.UpdatedDate = DateTime.UtcNow;
+            // FIXED: Access the data service directly to use UpdateSMSApplicationUserPasswordAsync
+            // This calls the dedicated pr_SMSApplicationUser_UpdatePassword stored procedure
+            var dataServiceField = _applicationUserService.GetType().GetField("_dataService", 
+                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+            
+            if (dataServiceField?.GetValue(_applicationUserService) is not SMSApplicationUserDataService dataService)
+            {
+                _logger.LogApplicationError("Could not access SMSApplicationUserDataService for password update", ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.PasswordUpdateFailed);
+            }
 
-            // Update the user via the service
-            var updateResult = await _applicationUserService.UpdateSMSApplicationUserAsync(user, cancellationToken);
+            var userId = new SMSApplicationUserID(request.UserId);
+            var result = await dataService.UpdateSMSApplicationUserPasswordAsync(userId, passwordResult.Value.HashedValue, cancellationToken);
 
-            if (updateResult.IsSuccess)
+            if (result.IsSuccess)
             {
                 _logger.LogInformation("✅ Clean Architecture: Successfully updated password for SMS Application User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
@@ -171,7 +169,7 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
             {
                 _logger.LogApplicationError("Failed to update password for SMS Application User with ID: {UserId}. Error: {Error}",
                     ApplicationEventIds.Error, null);
-                return Result<bool>.Failure<bool>(updateResult.Error);
+                return Result<bool>.Failure<bool>(result.Error);
             }
         }
         catch (OperationCanceledException)

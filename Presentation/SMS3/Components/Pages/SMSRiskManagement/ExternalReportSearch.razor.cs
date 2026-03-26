@@ -185,7 +185,7 @@ public partial class ExternalReportSearch : ComponentBase
         // Check for exact HT-YYYY-NNNN format
         if (global::System.Text.RegularExpressions.Regex.IsMatch(cleaned, @"^HT-\d{4}-\d{4}$"))
         {
-            TrackingIdFormatMessage = "? Valid tracking ID format";
+            TrackingIdFormatMessage = "Valid tracking ID format";
             TrackingIdFormatColor = "#28a745";
             TrackingIdFormatIcon = "fa-check-circle";
         }
@@ -197,20 +197,20 @@ public partial class ExternalReportSearch : ComponentBase
                 ? $"HT-{currentYear}-{cleaned.PadLeft(4, '0')}"
                 : $"HT-{currentYear}-{cleaned}";
 
-            TrackingIdFormatMessage = $"?? Will search for format: {suggestion}";
+            TrackingIdFormatMessage = $"Will search for format: {suggestion}";
             TrackingIdFormatColor = "#ffc107";
             TrackingIdFormatIcon = "fa-exclamation-triangle";
         }
         // Check for partial HT- format
         else if (cleaned.StartsWith("HT-"))
         {
-            TrackingIdFormatMessage = "?? Incomplete format - continue typing or search anyway";
+            TrackingIdFormatMessage = "Incomplete format - continue typing or search anyway";
             TrackingIdFormatColor = "#17a2b8";
             TrackingIdFormatIcon = "fa-info-circle";
         }
         else
         {
-            TrackingIdFormatMessage = "? Expected format: HT-YYYY-NNNN (e.g., HT-2026-0006)";
+            TrackingIdFormatMessage = "Expected format: HT-YYYY-NNNN (e.g., HT-2026-0006)";
             TrackingIdFormatColor = "#dc3545";
             TrackingIdFormatIcon = "fa-times-circle";
         }
@@ -221,7 +221,7 @@ public partial class ExternalReportSearch : ComponentBase
     #region Search Methods
 
     /// <summary>
-    /// Search by tracking ID (primary search method) with enhanced error handling and suggestions
+    /// Search by tracking ID (primary search method) - EXACT MATCH ONLY for External Report Search
     /// </summary>
     public async Task SearchByTrackingId()
     {
@@ -239,15 +239,16 @@ public partial class ExternalReportSearch : ComponentBase
             LastSearchQuery = TrackingIdSearch.Trim();
             StateHasChanged();
 
-            Logger.LogInformation("Searching by tracking ID: {TrackingId}", TrackingIdSearch);
+            Logger.LogInformation("Searching by tracking ID (EXACT MATCH ONLY): {TrackingId}", TrackingIdSearch);
 
             // Clean and validate the tracking ID format
             var cleanedTrackingId = CleanTrackingId(TrackingIdSearch.Trim());
 
-            // First try exact match
+            // ONLY try exact match - NO similar searches for ExternalReportSearch
             var query = new GetHazardReportTrackingByTrackingCodeQuery(cleanedTrackingId);
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
+            // Reset similar results flags - NOT USED in ExternalReportSearch
             HasSimilarResults = false;
             SimilarityScores.Clear();
 
@@ -258,30 +259,22 @@ public partial class ExternalReportSearch : ComponentBase
                 if (searchResult != null)
                 {
                     SearchResults.Add(searchResult);
-                    SimilarityScores[searchResult.TrackingCode] = 100; // Exact match
+                    SimilarityScores[searchResult.TrackingCode] = 100; // Exact match only
                 }
-            }
-            else
-            {
-                // If no exact match found, try to find similar tracking IDs
-                HasSimilarResults = true;
-                await SearchForSimilarTrackingIds(cleanedTrackingId);
             }
 
             HasSearched = true;
 
             if (!SearchResults.Any())
             {
-                await ShowNoResultsFoundMessage(cleanedTrackingId);
-                Logger.LogInformation("No results found for tracking ID: {TrackingId}", TrackingIdSearch);
+                // Show simple no results message without suggestions
+                await NotificationHelper.ShowInfoAsync($"No hazard report found for tracking ID: {cleanedTrackingId}");
+                Logger.LogInformation("No exact match found for tracking ID: {TrackingId}", TrackingIdSearch);
             }
             else
             {
-                var message = SearchResults.Count == 1
-                    ? $"Found hazard report for tracking ID: {TrackingIdSearch}"
-                    : $"Found {SearchResults.Count} similar tracking IDs for: {TrackingIdSearch}";
-                await NotificationHelper.ShowSuccessAsync(message);
-                Logger.LogInformation("Found {Count} result(s) for tracking ID: {TrackingId}", SearchResults.Count, TrackingIdSearch);
+                await NotificationHelper.ShowSuccessAsync($"Found hazard report for tracking ID: {TrackingIdSearch}");
+                Logger.LogInformation("Found exact match for tracking ID: {TrackingId}", TrackingIdSearch);
             }
         }
         catch (Exception ex)
