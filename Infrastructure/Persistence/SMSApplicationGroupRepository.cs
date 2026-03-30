@@ -2,11 +2,13 @@
 // <copyright file="SMSApplicationGroupRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Repository implementing data access operations for SMS smsapplicationgroup entities with stored procedure integration.
+//     Description: Repository implementing data access operations for SMS smsapplicationgroup entities with group management functionality.
 //                  Repository implementation providing data access operations
 //                  with stored procedure integration and entity mapping.
 // </copyright>
 //-----------------------------------------------------------------------
+
+using SMS_Domain.Entities;
 
 using SMS_Domain.Errors;
 
@@ -14,6 +16,9 @@ using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
 
+/// <summary>
+/// Repository implementation for SMS Application Group operations
+/// </summary>
 public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicationGroupRepository, SMSApplicationGroup>
 {
     private readonly ILogger<SMSApplicationGroupRepository> _logger;
@@ -507,50 +512,6 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationGroupError.NotFound);
         }
     }
-
-    //public async Task<Result<IEnumerable<SMSApplicationGroup>>> GetGroupsByUserCodeAsync(string userCode, CancellationToken ct = default)
-    //{
-    //    try
-    //    {
-    //        if (string.IsNullOrWhiteSpace(userCode))
-    //        {
-    //            return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.CodeRequired);
-    //        }
-
-    //        _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SMSApplicationGroups_GetByUserCode} GroupCode:{userCode}", null);
-
-    //        using SqlConnection sql = new(_connectionString);
-    //        using SqlCommand cmd = new(StoredProcs.pr_SMSApplicationGroups_GetByUserCode, sql)
-    //        {
-    //            CommandType = CommandType.StoredProcedure
-    //        };
-
-    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupUserCode, userCode));
-
-    //        List<SMSApplicationGroup> groups = new();
-
-    //        await sql.OpenAsync(ct).ConfigureAwait(false);
-    //        using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
-    //        {
-    //            while (await reader.ReadAsync().ConfigureAwait(false))
-    //            {
-    //                var group = Mappers.MapToSMSApplicationGroup(reader);
-    //                groups.Add(group);
-    //            }
-    //        }
-    //        await sql.CloseAsync().ConfigureAwait(false);
-
-    //        return Result<IEnumerable<SMSApplicationGroup>>.Success((IEnumerable<SMSApplicationGroup>)groups);
-    //    }
-    //    catch (Exception ex)
-    //    {
-    //        _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
-    //        return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.NotFound);
-    //    }
-    //}
-
-
-
 
     /// <summary>
     /// Gets an SMS application group by code with its members

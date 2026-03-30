@@ -2,17 +2,18 @@
 // <copyright file="IHazardFileDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating ihazardfile repository operations with safety management workflows.
+//     Description: Data service contracts defining business-focused data operations for SMS domain entities.
 //                  Infrastructure service contract defining data access operations
 //                  and external system integration interfaces.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
-/// HazardFile Data Service Interface - follows the exact same pattern as IHazardDataService
-/// Defines the contract for HazardFile business logic operations
+/// Hazard File Data Service Interface
 /// </summary>
 public interface IHazardFileDataService
 {

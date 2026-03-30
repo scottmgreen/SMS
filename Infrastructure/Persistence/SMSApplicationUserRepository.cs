@@ -8,12 +8,11 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Infrastructure.Interfaces;
-
+using SMS_Domain.Entities;
+using SMS_Infrastructure.Interfaces;
 using SMS_Domain.Errors;
 using SMS_Domain.Interfaces;
 
-using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
 
@@ -957,5 +956,19 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
     public async Task<Result<IEnumerable<SMSApplicationUser>>> GetByApplicationRoleAsync(string applicationRole)
     {
         return await GetBySMSApplicationUserRoleAsync(applicationRole);
+    }
+
+    /// <summary>
+    /// Base interface method implementation - required by IBaseUserRepository
+    /// Delegates to the string version for consistency
+    /// </summary>
+    public async Task<Result<SMSApplicationUser>> GetByIdAsync(BaseUserID id)
+    {
+        if (id?.Value is null || string.IsNullOrWhiteSpace(id.Value))
+        {
+            return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+        }
+
+        return await GetByIdAsync(id.Value);
     }
 }

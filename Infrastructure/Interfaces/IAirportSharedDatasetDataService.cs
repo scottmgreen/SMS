@@ -2,16 +2,18 @@
 // <copyright file="IAirportSharedDatasetDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating iairportshareddataset repository operations with transaction management and business validation.
+//     Description: Data service contracts defining business-focused data operations for SMS domain entities.
 //                  Infrastructure service contract defining data access operations
 //                  and external system integration interfaces.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
-/// Interface for Airport Shared Dataset Data Service operations
+/// Airport Shared Dataset Data Service Interface
 /// Provides CRUD operations for Airport Shared Dataset entities
 /// This critical SMS compliance interface manages all regulatory-required data elements
 /// for SMS Risk validation and hazard processing

@@ -8,6 +8,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 
 namespace SMS_Infrastructure.Services;

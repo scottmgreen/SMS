@@ -2,26 +2,20 @@
 // <copyright file="InterviewDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating interview repository operations with transaction management and business validation.
-//                  Infrastructure service providing external system integration
-//                  and technical functionality support.
+//     Description: Interview data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
-// =============================================
-// SMS DATA SERVICES - COMPLETE SET
-// All 10 SMS Data Services for easy copy/paste
-// =============================================
-
-// 1. HazardDataService.cs
-namespace SMS_Infrastructure.Services;
-
+using SMS_Domain.Entities;
 using SMS_Infrastructure.Interfaces;
 using SMS_Infrastructure.Persistence;
 
+namespace SMS_Infrastructure.Services;
+
 /// <summary>
-/// Interview Data Service - follows the exact same pattern as HazardDataService
-/// Provides business logic layer between CQRS handlers and repository
+/// Interview Data Service providing business operations for Interview entities
 /// </summary>
 public class InterviewDataService : BaseDataService<InterviewDataService>, IInterviewDataService
 {

@@ -8,10 +8,12 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
-/// HazardLocation Repository Interface
+/// Hazard Location Repository Interface
 /// </summary>
 public interface IHazardLocationRepository
 {

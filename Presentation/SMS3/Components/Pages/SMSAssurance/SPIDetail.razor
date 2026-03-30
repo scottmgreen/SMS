@@ -1,13 +1,13 @@
 @page "/SMSAssurance/SPIDetail/{SPICode}"
-@using SMS_Application.Messaging.Queries
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Pages.SMSAssurance.Components
+@using SMS3.Components.Shared
 @using SMS_Application.Messaging.Commands
+@using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @using SMS_Shared.Common
-@using Radzen
-@using Radzen.Blazor
-@using SMS3.Components.Shared
-@using SMS3.Components.Pages.SMSAssurance.Components
 @rendermode InteractiveServer
 
 <PageTitle>@(SPI?.Name ?? "SPI Detail") - SMS Assurance</PageTitle>

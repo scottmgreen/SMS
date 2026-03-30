@@ -2,21 +2,19 @@
 // <copyright file="SMSAuditPlanDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating smsauditplan repository operations supporting compliance and audit processes.
-//                  Infrastructure service providing external system integration
-//                  and technical functionality support.
+//     Description: SMS Audit Plan data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Domain.Models;
-
-using Infrastructure.Persistence;
+using SMS_Domain.Entities;
+using SMS_Infrastructure.Persistence;
 
 namespace SMS_Infrastructure.Services;
 
 /// <summary>
-/// Data service for SMS Audit Plan operations
-/// Handles all database interactions for SMS audit plan management
+/// SMS Audit Plan Data Service providing business operations for SMSAuditPlan entities
 /// </summary>
 public class SMSAuditPlanDataService : BaseDataService<SMSAuditPlanDataService>
 {
@@ -158,12 +156,12 @@ public class SMSAuditPlanDataService : BaseDataService<SMSAuditPlanDataService>
     /// <summary>
     /// Gets SMS Audit Calendar data for dashboard
     /// </summary>
-    public async Task<Result<SMSAuditCalendarData>> GetAuditCalendarDataAsync(DateTime startDate, DateTime endDate,
+    public async Task<Result<SMSAuditCalendarEvent>> GetAuditCalendarDataAsync(DateTime startDate, DateTime endDate,
         string? departmentFilter = null, string? auditTypeFilter = null, string? auditorFilter = null, CancellationToken ct = default)
     {
         // This method would need to be implemented based on specific business requirements
         // For now, return a placeholder implementation
-        var calendarData = new SMSAuditCalendarData
+        var calendarData = new SMSAuditCalendarEvent
         {
             Id = Guid.NewGuid().ToString(),
             Title = "Audit Calendar Data",
@@ -177,6 +175,6 @@ public class SMSAuditPlanDataService : BaseDataService<SMSAuditPlanDataService>
             ResponsibleDepartment = departmentFilter ?? "All Departments"
         };
 
-        return Result<SMSAuditCalendarData>.Success(calendarData);
+        return Result<SMSAuditCalendarEvent>.Success(calendarData);
     }
 }

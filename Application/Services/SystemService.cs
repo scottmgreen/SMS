@@ -9,11 +9,15 @@
 //-----------------------------------------------------------------------
 
 
+using SMS_Domain.Entities;
 using Microsoft.FeatureManagement;
 
 namespace SMS_Application.Services;
 
-public sealed class SystemService : IFeatureManager
+/// <summary>
+/// System Service providing system-wide operations and configuration management
+/// </summary>
+public class SystemService
 {
     private readonly IFeatureManager _featureManager;
     private readonly SystemDataService _dataService;

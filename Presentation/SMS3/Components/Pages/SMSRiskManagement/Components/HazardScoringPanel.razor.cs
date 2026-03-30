@@ -1,5 +1,4 @@
-﻿using SMS_Domain.Entities;
-using SMS_Domain.Enums;
+﻿using SMS_Domain.Enums;
 using SMS_Domain.ValueObjects;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;

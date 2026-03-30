@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+﻿//-------------------------------------------------------------------------
 // <copyright file="SMSApplicationUserService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -6,9 +6,10 @@
 //                  Provides business logic operations and coordinates domain entities
 //                  through the CQRS pattern via Mediator services.
 // </copyright>
-//-----------------------------------------------------------------------
+//-------------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using SMS_Domain.Entities;
 
 using static SMS_Domain.Errors.DomainErrors;
 

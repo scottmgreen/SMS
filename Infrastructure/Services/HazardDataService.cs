@@ -2,22 +2,21 @@
 // <copyright file="HazardDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating hazard repository operations with safety management workflows.
-//                  Data service providing business-focused data operations
-//                  with repository coordination and transaction management.
+//     Description: Hazard data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
-// =============================================
-// SMS DATA SERVICES - COMPLETE SET
-// All 10 SMS Data Services for easy copy/paste
-// =============================================
+using SMS_Domain.Entities;
 
-// 1. HazardDataService.cs
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Services;
 
+/// <summary>
+/// Hazard Data Service providing business operations for Hazard entities
+/// </summary>
 public class HazardDataService : BaseDataService<HazardDataService>, IHazardDataService
 {
     private readonly ILogger<HazardDataService> _logger;

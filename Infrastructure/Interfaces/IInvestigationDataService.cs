@@ -2,17 +2,18 @@
 // <copyright file="IInvestigationDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating iinvestigation repository operations with investigation workflow management.
+//     Description: Data service contracts defining business-focused data operations for SMS domain entities.
 //                  Infrastructure service contract defining data access operations
 //                  and external system integration interfaces.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
-/// Enhanced Investigation Data Service Interface
-/// Defines the contract for Investigation business logic operations
+/// Investigation Data Service Interface
 /// </summary>
 public interface IInvestigationDataService
 {

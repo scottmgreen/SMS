@@ -2,32 +2,27 @@
 // <copyright file="ISMSApplicationUserRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Repository implementing data access operations for SMS ismsapplicationuser entities with CRUD operations and business queries.
+//     Description: Repository implementing data access operations for SMS ismsapplicationuser entities with safety management integration.
 //                  Infrastructure service contract defining data access operations
 //                  and external system integration interfaces.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
 using SMS_Domain.Interfaces;
 
-namespace Infrastructure.Interfaces;
-public interface ISMSApplicationUserRepository
+namespace SMS_Infrastructure.Interfaces;
+
+/// <summary>
+/// SMS Application User Repository Interface
+/// Extends the base user repository with SMS-specific operations
+/// </summary>
+public interface ISMSApplicationUserRepository : IBaseUserRepository<SMSApplicationUser>
 {
-    Task<Result<SMSApplicationUser>> AddAsync(SMSApplicationUser user);
-    Task<Result<bool>> DeleteAsync(BaseUserID userId);
-    Task<Result<IEnumerable<SMSApplicationUser>>> GetActiveUsersAsync();
-    Task<Result<IEnumerable<SMSApplicationUser>>> GetAllAsync();
+    // Additional SMS-specific methods not covered by base interface
     Task<Result<IEnumerable<SMSApplicationUser>>> GetByApplicationRoleAsync(string applicationRole);
-    Task<Result<SMSApplicationUser>> GetByCodeAsync(string code);
     Task<Result<SMSApplicationUser>> GetByIdAsync(SMSApplicationUserID id);
-    Task<Result<SMSApplicationUser>> GetByIdAsync(string id);
     Task<Result<IEnumerable<SMSApplicationUser>>> GetBySMSApplicationUserRoleAsync(string applicationRole);
-    Task<Result<SMSApplicationUser>> GetByUserNameAsync(string userName);
-    Task<Result<UserStatistics>> GetUserStatisticsAsync();
-    Task<Result<bool>> RecordLoginAsync(BaseUserID userId, DateTime loginDate);
-    Task<Result<bool>> UpdateAsync(SMSApplicationUser user);
-    Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword);
-    Task<Result<bool>> UserNameExistsAsync(string userName);
 
     // 🔐 Two-Factor Authentication Methods
     Task<Result<bool>> Setup2FAAsync(string userCode, string secretKey, string? backupCodes = null, string updatedBy = "SYSTEM-2FA");

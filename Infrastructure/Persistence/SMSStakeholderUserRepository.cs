@@ -8,10 +8,9 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 using SMS_Domain.Interfaces;
-
-using Infrastructure.Interfaces;
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;

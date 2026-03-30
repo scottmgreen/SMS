@@ -8,6 +8,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 using Microsoft.FeatureManagement;
 
 using SMS_Domain.Errors;

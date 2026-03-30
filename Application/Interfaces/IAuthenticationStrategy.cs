@@ -7,6 +7,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 using SMS_Application.Configuration;
 using SMS_Domain.Enums;
 

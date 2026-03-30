@@ -2,21 +2,19 @@
 // <copyright file="ScoringPanelDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating scoringpanel repository operations with transaction management and business validation.
-//                  Data service providing business-focused data operations
-//                  with repository coordination and transaction management.
+//     Description: Scoring panel data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
-// =============================================
-// SMS DATA SERVICES - COMPLETE SET
-// All 10 SMS Data Services for easy copy/paste
-// =============================================
+using SMS_Domain.Entities;
 
-// 1. HazardDataService.cs
 namespace SMS_Infrastructure.Services;
 
-// 10. ScoringPanelDataService.cs
+/// <summary>
+/// Scoring Panel Data Service providing business operations for ScoringPanel entities
+/// </summary>
 public class ScoringPanelDataService : BaseDataService<ScoringPanelDataService>
 {
     private readonly ILogger<ScoringPanelDataService> _logger;

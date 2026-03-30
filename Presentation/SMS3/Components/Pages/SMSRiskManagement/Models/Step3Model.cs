@@ -1,4 +1,5 @@
-﻿namespace SMS3.Components.Pages.SMSRiskManagement.Models;
+﻿
+namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 /// <summary>
 /// Step 3: Risk Analysis

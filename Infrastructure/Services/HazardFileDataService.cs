@@ -2,19 +2,20 @@
 // <copyright file="HazardFileDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating hazardfile repository operations with safety management workflows.
-//                  Infrastructure service providing external system integration
-//                  and technical functionality support.
+//     Description: Hazard file data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
+
+using SMS_Domain.Entities;
 
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Services;
 
 /// <summary>
-/// HazardFile Data Service - follows the exact same pattern as HazardDataService
-/// Provides business logic layer between CQRS handlers and repository
+/// Hazard File Data Service providing business operations for HazardFile entities
 /// </summary>
 public class HazardFileDataService : BaseDataService<HazardFileDataService>, IHazardFileDataService
 {

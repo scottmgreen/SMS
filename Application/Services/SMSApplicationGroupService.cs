@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using SMS_Domain.Entities;
 
 namespace SMS_Application.Services;
 

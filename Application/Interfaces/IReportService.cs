@@ -8,6 +8,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 namespace Application.Interfaces;
 
 public interface IReportService

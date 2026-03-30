@@ -2,16 +2,20 @@
 // <copyright file="HazardLocationDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating hazardlocation repository operations with safety management workflows.
-//                  Data service providing business-focused data operations
-//                  with repository coordination and transaction management.
+//     Description: Hazard location data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Services;
 
+/// <summary>
+/// Hazard Location Data Service providing business operations for HazardLocation entities
+/// </summary>
 public class HazardLocationDataService : BaseDataService<HazardLocationDataService>, IHazardLocationDataService
 {
     private readonly ILogger<HazardLocationDataService> _logger;

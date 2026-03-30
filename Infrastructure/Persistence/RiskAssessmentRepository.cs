@@ -2,18 +2,21 @@
 // <copyright file="RiskAssessmentRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Repository implementing data access operations for SMS riskassessment entities supporting risk assessment workflows.
+//     Description: Repository implementing data access operations for SMS riskassessment entities supporting comprehensive risk evaluation workflows.
 //                  Repository implementation providing data access operations
 //                  with stored procedure integration and entity mapping.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
 
+/// <summary>
+/// Repository implementation for Risk Assessment operations
+/// </summary>
 public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepository, RiskAssessment>, IRiskAssessmentRepository
 {
     private readonly ILogger<RiskAssessmentRepository> _logger;

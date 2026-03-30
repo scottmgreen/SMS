@@ -1,4 +1,3 @@
-using Domain.Entities;
 
 using SMS_Shared.Configuration;
 

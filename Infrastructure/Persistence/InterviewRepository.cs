@@ -2,20 +2,20 @@
 // <copyright file="InterviewRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Repository implementing data access operations for SMS interview entities with stored procedure integration.
+//     Description: Repository implementing data access operations for SMS interview entities supporting investigation workflow management.
 //                  Repository implementation providing data access operations
 //                  with stored procedure integration and entity mapping.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
 
 /// <summary>
-/// Enhanced Interview Repository with comprehensive interview management capabilities
+/// Repository implementation for Interview operations
 /// </summary>
 public sealed class InterviewRepository : BaseRepository<InterviewRepository, Interview>, IInterviewRepository
 {

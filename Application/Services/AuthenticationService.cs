@@ -10,7 +10,6 @@
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 
 namespace SMS_Application.Services;

@@ -9,9 +9,10 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using SMS_Domain.Entities;
+
 
 namespace SMS_Application.Services;
-
 public sealed class MitigationAssignmentService
 {
     private readonly MitigationAssignmentDataService _dataService;

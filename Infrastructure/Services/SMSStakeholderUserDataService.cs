@@ -2,22 +2,22 @@
 // <copyright file="SMSStakeholderUserDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating smsstakeholderuser repository operations with business logic and validation.
-//                  Infrastructure service providing external system integration
-//                  and technical functionality support.
+//     Description: SMS Stakeholder User data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 using SMS_Domain.Interfaces;
 
 namespace SMS_Infrastructure.Services;
 
 /// <summary>
-/// Data service for SMS Stakeholder User operations
-/// Provides high-level data access abstraction over repository layer
+/// SMS Stakeholder User Data Service providing business operations for SMSStakeholderUser entities
 /// </summary>
-public sealed class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserDataService>
+public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserDataService>
 {
     private readonly SMSStakeholderUserRepository _repository;
     private readonly ILogger<SMSStakeholderUserDataService> _logger;

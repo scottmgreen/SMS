@@ -2,10 +2,11 @@
 using Microsoft.AspNetCore.Http;
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
-using Infrastructure.Interfaces;
+using SMS_Infrastructure.Interfaces;
 using System.Text.Json;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
+
 
 namespace SMS3.Components.Pages;
 
@@ -22,7 +23,7 @@ public partial class Verify2FA : ComponentBase
     // 🔧 SMART REPOSITORY INJECTION - All three user repositories
     [Inject] private ISMSApplicationUserRepository ApplicationUserRepository { get; set; } = default!;
     [Inject] private ISMSOrganizationalUserRepository OrganizationalUserRepository { get; set; } = default!;
-    [Inject] private Infrastructure.Interfaces.ISMSStakeholderUserRepository StakeholderUserRepository { get; set; } = default!;
+    [Inject] private ISMSStakeholderUserRepository StakeholderUserRepository { get; set; } = default!;
     
     [Inject] private TwoFactorSessionTimerService TwoFactorTimer { get; set; } = default!;
 

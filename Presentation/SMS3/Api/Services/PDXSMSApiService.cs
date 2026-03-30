@@ -12,10 +12,11 @@ using SMS3.Api.Models;
 using SMS3.Api.Services;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
 using SMS_Shared.Common;
+using SMS_Domain.Entities;
+
 
 namespace SMS3.Api.Services
 {

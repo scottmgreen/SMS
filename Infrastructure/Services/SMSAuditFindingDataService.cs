@@ -2,21 +2,21 @@
 // <copyright file="SMSAuditFindingDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating smsauditfinding repository operations supporting compliance and audit processes.
-//                  Infrastructure service providing external system integration
-//                  and technical functionality support.
+//     Description: SMS Audit Finding data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Domain.Models;
 
-using Infrastructure.Persistence;
+
+using SMS_Domain.Entities;
+using SMS_Infrastructure.Persistence;
 
 namespace SMS_Infrastructure.Services;
 
 /// <summary>
-/// Data service for SMS Audit Finding operations
-/// Handles all database interactions for SMS audit findings management
+/// SMS Audit Finding Data Service providing business operations for SMSAuditFinding entities
 /// </summary>
 public class SMSAuditFindingDataService : BaseDataService<SMSAuditFindingDataService>
 {

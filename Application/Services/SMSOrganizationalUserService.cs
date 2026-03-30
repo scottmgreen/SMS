@@ -8,7 +8,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Application.Interfaces;
+using SMS_Application.Interfaces;
+using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 

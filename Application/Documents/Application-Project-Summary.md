@@ -206,7 +206,6 @@ services.AddApplicationServices();
 
 ### Key Dependencies
 - **Microsoft.Extensions.Logging**: Comprehensive logging support
-- **Microsoft.Data.SqlClient**: Database connectivity
 - **Microsoft.AspNetCore.Http**: HTTP context access for user sessions
 
 ## Business Workflow Examples

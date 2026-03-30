@@ -2,21 +2,19 @@
 // <copyright file="RiskAnalysisDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating riskanalysis repository operations supporting risk assessment and analysis.
-//                  Data service providing business-focused data operations
-//                  with repository coordination and transaction management.
+//     Description: Risk analysis data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
-// =============================================
-// SMS DATA SERVICES - COMPLETE SET
-// All 10 SMS Data Services for easy copy/paste
-// =============================================
+using SMS_Domain.Entities;
 
-// 1. HazardDataService.cs
 namespace SMS_Infrastructure.Services;
 
-// 5. RiskAnalysisDataService.cs
+/// <summary>
+/// Risk Analysis Data Service providing business operations for RiskAnalysis entities
+/// </summary>
 public class RiskAnalysisDataService : BaseDataService<RiskAnalysisDataService>
 {
     private readonly ILogger<RiskAnalysisDataService> _logger;

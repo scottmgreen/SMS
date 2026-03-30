@@ -7,8 +7,10 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
+
+using SMS_Application.Interfaces;
+
 using SMS_Domain.Enums;
 
 namespace SMS_Application.Services;

@@ -2,11 +2,13 @@
 // <copyright file="SafetyPerformanceIndicatorRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Repository implementing data access operations for SMS safetyperformanceindicator entities with stored procedure integration.
+//     Description: Repository implementing data access operations for SMS safetyperformanceindicator entities supporting performance tracking and KPI management.
 //                  Repository implementation providing data access operations
 //                  with stored procedure integration and entity mapping.
 // </copyright>
 //-----------------------------------------------------------------------
+
+using SMS_Domain.Entities;
 
 using SMS_Domain.Errors;
 
@@ -14,6 +16,9 @@ using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
 
+/// <summary>
+/// Repository implementation for Safety Performance Indicator operations
+/// </summary>
 public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<SafetyPerformanceIndicatorRepository, SafetyPerformanceIndicator>
 {
     private readonly ILogger<SafetyPerformanceIndicatorRepository> _logger;

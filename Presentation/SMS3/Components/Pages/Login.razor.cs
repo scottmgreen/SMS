@@ -1,4 +1,7 @@
 ﻿using System.ComponentModel.DataAnnotations;
+
+using SMS_Domain.Entities;
+
 using Microsoft.AspNetCore.Http;
 using SMS_Application.Interfaces;
 using SMS_Application.Services;

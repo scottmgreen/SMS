@@ -2,21 +2,19 @@
 // <copyright file="ReportValidationDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating reportvalidation repository operations with reporting and validation processes.
-//                  Data service providing business-focused data operations
-//                  with repository coordination and transaction management.
+//     Description: Report validation data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
-// =============================================
-// SMS DATA SERVICES - COMPLETE SET
-// All 10 SMS Data Services for easy copy/paste
-// =============================================
+using SMS_Domain.Entities;
 
-// 1. HazardDataService.cs
 namespace SMS_Infrastructure.Services;
 
-// 9. ReportValidationDataService.cs
+/// <summary>
+/// Report Validation Data Service providing business operations for ReportValidation entities
+/// </summary>
 public class ReportValidationDataService : BaseDataService<ReportValidationDataService>
 {
     private readonly ILogger<ReportValidationDataService> _logger;

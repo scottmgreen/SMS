@@ -2,21 +2,21 @@
 // <copyright file="SMSAuditEvidenceDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating smsauditevidence repository operations supporting compliance and audit processes.
-//                  Infrastructure service providing external system integration
-//                  and technical functionality support.
+//     Description: SMS Audit Evidence data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Domain.Models;
 
-using Infrastructure.Persistence;
+
+using SMS_Domain.Entities;
+using SMS_Infrastructure.Persistence;
 
 namespace SMS_Infrastructure.Services;
 
 /// <summary>
-/// Data service for SMS Audit Evidence operations
-/// Handles all database interactions for SMS audit evidence management
+/// SMS Audit Evidence Data Service providing business operations for SMSAuditEvidence entities
 /// </summary>
 public class SMSAuditEvidenceDataService : BaseDataService<SMSAuditEvidenceDataService>
 {

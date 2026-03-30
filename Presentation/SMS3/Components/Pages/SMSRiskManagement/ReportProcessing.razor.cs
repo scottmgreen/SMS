@@ -1,14 +1,11 @@
 ﻿using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
-
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
-
 using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 using SMS_Domain.Interfaces;
-
 using SMS_Shared.Configuration;
-
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 

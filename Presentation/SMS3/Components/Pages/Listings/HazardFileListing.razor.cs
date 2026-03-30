@@ -1,6 +1,8 @@
 using System.Linq.Expressions;
 using System.Text;
 
+using SMS_Domain.Entities;
+
 using Microsoft.JSInterop;
 
 using Radzen;
@@ -8,7 +10,6 @@ using Radzen;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 
-using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 using SMS_Domain.ValueObjects;

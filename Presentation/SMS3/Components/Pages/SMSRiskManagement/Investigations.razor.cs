@@ -1,4 +1,4 @@
-﻿using SMS_Domain.Entities;
+﻿
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
@@ -42,7 +42,7 @@ public partial class Investigations : ComponentBase
 
     private string InvestigationStatusId { get; set; } = string.Empty;
 
-    public SMS_Domain.Entities.Investigation? InvestigationEntity { get; set; }
+    public Investigation? InvestigationEntity { get; set; }
     public List<Interview> Interviews { get; set; } = new();
     public List<SMSApplicationUser> AvailableInvestigators { get; set; } = new();
     public List<HazardFile> EvidenceFiles { get; set; } = new();

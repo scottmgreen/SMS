@@ -1,3 +1,4 @@
+
 namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 /// <summary>

@@ -8,9 +8,6 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Infrastructure.Interfaces;
-using Infrastructure.Persistence;
-
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Configuration;

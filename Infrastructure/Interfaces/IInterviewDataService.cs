@@ -2,17 +2,18 @@
 // <copyright file="IInterviewDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating iinterview repository operations with transaction management and business validation.
+//     Description: Data service contracts defining business-focused data operations for SMS domain entities.
 //                  Infrastructure service contract defining data access operations
 //                  and external system integration interfaces.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
 /// Interview Data Service Interface
-/// Defines the contract for Interview business logic operations
 /// </summary>
 public interface IInterviewDataService
 {

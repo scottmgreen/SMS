@@ -8,8 +8,6 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Domain.Entities;
-
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Interfaces;

@@ -2,21 +2,21 @@
 // <copyright file="SMSOrganizationalGroupDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating smsorganizationalgroup repository operations with transaction management and business validation.
-//                  Infrastructure service providing external system integration
-//                  and technical functionality support.
+//     Description: SMS Organizational Group data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 
 namespace SMS_Infrastructure.Services;
 
 /// <summary>
-/// Data service for SMS Organizational Group operations
-/// Provides high-level data access abstraction over repository layer
+/// SMS Organizational Group Data Service providing business operations for SMSOrganizationalGroup entities
 /// </summary>
-public sealed class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganizationalGroupDataService>
+public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganizationalGroupDataService>
 {
     private readonly SMSOrganizationalGroupRepository _repository;
     private readonly ILogger<SMSOrganizationalGroupDataService> _logger;

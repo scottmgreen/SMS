@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SMS_Application.Configuration;
 using SMS_Application.Interfaces;
+using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 

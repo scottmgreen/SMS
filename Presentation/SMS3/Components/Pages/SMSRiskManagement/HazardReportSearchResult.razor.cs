@@ -5,7 +5,6 @@ using SMS_Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using Radzen;
 using Radzen.Blazor;
-using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
 using SMS3.Components.Shared.UIHelpers;

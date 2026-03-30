@@ -2,16 +2,18 @@
 // <copyright file="IHazard.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Domain contract defining operations and ensuring clean architecture boundaries for SMS business logic.
-//                  Domain service contract defining business operations
-//                  and ensuring clean architecture boundaries.
+//     Description: Domain service contracts defining business operations for SMS domain entities.
+//                  Domain service interfaces providing abstraction for business
+//                  operations while maintaining domain model integrity.
 // </copyright>
 //-----------------------------------------------------------------------
+
+using SMS_Domain.Entities;
 
 namespace SMS_Domain.Interfaces;
 
 /// <summary>
-/// Hazard interface defining the contract for SMS hazard entities
+/// Business interface for Hazard entity operations
 /// Includes all properties required for comprehensive hazard management
 /// </summary>
 public interface IHazard

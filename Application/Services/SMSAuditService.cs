@@ -11,6 +11,7 @@
 using Microsoft.Extensions.Logging;
 
 using SMS_Application.Messaging.Queries;
+using SMS_Domain.Entities;
 
 namespace SMS_Application.Services;
 
@@ -366,10 +367,10 @@ public class SMSAuditService
         try
         {
             // Calculate average audit duration if not already set
-            if (dashboardData.AverageAuditDuration == 0 && dashboardData.CompletedAudits > 0)
+            if (dashboardData.AverageAuditDurationHours == 0 && dashboardData.CompletedAudits > 0)
             {
                 // This would typically be calculated from actual audit data
-                dashboardData.AverageAuditDuration = GetEstimatedAverageDuration();
+                dashboardData.AverageAuditDurationHours = (double)GetEstimatedAverageDuration();
             }
 
             // Calculate on-time completion rate
@@ -377,15 +378,13 @@ public class SMSAuditService
             {
                 var onTimeAudits = dashboardData.CompletedAudits - dashboardData.OverdueAudits;
                 dashboardData.OnTimeCompletionRate = Math.Max(0,
-                    (decimal)onTimeAudits / dashboardData.TotalAudits * 100);
+                    (double)onTimeAudits / dashboardData.TotalAudits * 100);
             }
 
-            // Calculate finding closure rate
-            if (dashboardData.TotalFindings > 0)
-            {
-                // This would be calculated from actual finding closure data
-                dashboardData.FindingClosureRate = 75; // Placeholder calculation
-            }
+            // The FindingClosureRate is now a calculated property, so no need to set it
+            // It's automatically calculated from FindingsResolved and TotalFindings
+            _logger.LogInformation("Performance metrics calculated for dashboard with {FindingClosureRate}% finding closure rate",
+                dashboardData.FindingClosureRate);
         }
         catch (Exception ex)
         {

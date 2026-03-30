@@ -2,11 +2,13 @@
 // <copyright file="HazardLocationRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Repository implementing data access operations for SMS hazardlocation entities with safety management integration.
+//     Description: Repository implementing data access operations for SMS hazardlocation entities supporting geographic and spatial data management.
 //                  Repository implementation providing data access operations
 //                  with stored procedure integration and entity mapping.
 // </copyright>
 //-----------------------------------------------------------------------
+
+using SMS_Domain.Entities;
 
 using SMS_Domain.Errors;
 
@@ -14,6 +16,9 @@ using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Persistence;
 
+/// <summary>
+/// Repository implementation for Hazard Location operations
+/// </summary>
 public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepository, HazardLocation>, IHazardLocationRepository
 {
     private readonly ILogger<HazardLocationRepository> _logger;

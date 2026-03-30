@@ -1,10 +1,11 @@
 ﻿using System.Linq.Expressions;
 
+using SMS_Domain.Entities;
+
 using Radzen;
 
 using SMS_Application.Messaging.Queries;
 
-using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
@@ -690,7 +691,7 @@ public partial class ReportListing : ComponentBase
                 var report = reportResult.Value;
 
                 // Create new ReportValidation using the static factory method
-                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, CurrentUserService?.UserDisplayName);
+                var validation = ReportValidation.Create(reportCode, CurrentUserService?.UserDisplayName);
                 validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
 
                 var createCommand = new CreateReportValidationCommand(validation);

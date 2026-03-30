@@ -2,24 +2,23 @@
 // <copyright file="SMSApplicationUserDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating smsapplicationuser repository operations with business logic and validation.
-//                  Infrastructure service providing external system integration
-//                  and technical functionality support.
+//     Description: SMS Application User data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Infrastructure.Interfaces;
-
+using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 using SMS_Domain.Interfaces;
+using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Services;
 
 /// <summary>
-/// Data service for SMS Application User operations
-/// Provides high-level data access abstraction over repository layer
+/// SMS Application User Data Service providing business operations for SMSApplicationUser entities
 /// </summary>
-public sealed class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserDataService>
+public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserDataService>
 {
     private readonly ISMSApplicationUserRepository _repository;
     private readonly ILogger<SMSApplicationUserDataService> _logger;

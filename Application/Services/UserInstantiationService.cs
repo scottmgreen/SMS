@@ -2,11 +2,13 @@
 // <copyright file="UserInstantiationService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Service for complete user instantiation with roles and permissions
+//     Description: User instantiation service providing comprehensive user creation and initialization.
+//                  Application service implementing user instantiation operations
 //                  using CQRS pattern via Mediator - NO direct repository access.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
@@ -17,9 +19,7 @@ using System.Text.Json;
 namespace SMS_Application.Services;
 
 /// <summary>
-/// Service for complete user instantiation with roles and permissions
-/// Uses CQRS pattern exclusively - NO direct repository access
-/// Ensures users are fully populated regardless of authentication method
+/// User Instantiation Service providing comprehensive user creation and initialization
 /// </summary>
 public class UserInstantiationService : IUserInstantiationService
 {

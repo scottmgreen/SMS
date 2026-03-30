@@ -7,6 +7,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Configuration;

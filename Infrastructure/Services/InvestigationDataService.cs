@@ -16,6 +16,8 @@
 // 1. HazardDataService.cs
 namespace SMS_Infrastructure.Services;
 
+using SMS_Domain.Entities;
+
 using SMS_Infrastructure.Interfaces;
 using SMS_Infrastructure.Persistence;
 

@@ -38,7 +38,6 @@
 
   <ItemGroup>
     <Using Include="SMS_Domain.Common" />
-    <Using Include="SMS_Domain.Entities" />
     <Using Include="SMS_Domain.Enums" />
     <Using Include="SMS_Domain.Errors" />
     <Using Include="SMS_Domain.Interfaces" />
@@ -47,11 +46,6 @@
     <Using Include="Microsoft.Extensions.Configuration" />
     <Using Include="Microsoft.Extensions.Logging" />
     <Using Include="System.Reflection" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Events\DomainEvents\" />
-    <Folder Include="Events\SystemEvents\" />
   </ItemGroup>
 
 </Project>

@@ -8,11 +8,13 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 using SMS_Domain.Errors;
 
 using SMS_Infrastructure.Interfaces;
 
-namespace Infrastructure.Persistence;
+namespace SMS_Infrastructure.Persistence;
 
 public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidenceRepository, SMSAuditEvidence>
 {

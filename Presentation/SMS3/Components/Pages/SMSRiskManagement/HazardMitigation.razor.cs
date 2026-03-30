@@ -1,4 +1,5 @@
-﻿using SMS3.Components.Shared.UIHelpers;
+﻿
+using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
@@ -29,7 +30,7 @@ public partial class HazardMitigation : ComponentBase
     private bool IsEditMode => !string.IsNullOrWhiteSpace(MitigationCode);
 
     // Use the Domain Entity directly - NO MODELS!
-    public SMS_Domain.Entities.Mitigation CurrentMitigation { get; set; } = new(new MitigationID(Guid.NewGuid().ToString()));
+    public Mitigation CurrentMitigation { get; set; } = new(new MitigationID(Guid.NewGuid().ToString()));
 
     public string PageTitle => IsEditMode ? "Edit Hazard Mitigation" : "Create Hazard Mitigation";
     public string PageSubtitle => IsEditMode ? $"Modify hazard mitigation strategy {MitigationCode}" : "Create new hazard mitigation strategy";
@@ -138,7 +139,7 @@ public partial class HazardMitigation : ComponentBase
     #endregion
 
     #region Form Actions
-    private async Task HandleFormSubmit(SMS_Domain.Entities.Mitigation mitigation)
+    private async Task HandleFormSubmit(Mitigation mitigation)
     {
         await SaveMitigation();
     }

@@ -1,7 +1,5 @@
 using Microsoft.JSInterop;
 
-using SMS_Domain.Entities;
-
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
 
@@ -570,7 +568,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             // Check if HazardLocation already exists for this hazard
             var hazardLocationResult = await Mediator.SendAsync(new GetHazardLocationsByHazardCodeQuery(hazard.Code), CancellationToken.None);
 
-            SMS_Domain.Entities.HazardLocation? hazardLocation = null;
+            HazardLocation? hazardLocation = null;
 
             if (hazardLocationResult.IsSuccess && hazardLocationResult.Value.Any())
             {

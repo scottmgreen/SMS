@@ -2,17 +2,18 @@
 // <copyright file="IReportDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating ireport repository operations with reporting and validation processes.
+//     Description: Data service contracts defining business-focused data operations for SMS domain entities.
 //                  Infrastructure service contract defining data access operations
 //                  and external system integration interfaces.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
-/// Interface for Report Data Service operations
-/// Provides CRUD operations for Report entities
+/// Report Data Service Interface
 /// </summary>
 public interface IReportDataService
 {

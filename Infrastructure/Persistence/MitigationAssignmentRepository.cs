@@ -8,8 +8,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
 using SMS_Domain.Errors;
-
 using SMS_Infrastructure.Interfaces;
 
 using static SMS_Domain.Errors.DomainErrors;

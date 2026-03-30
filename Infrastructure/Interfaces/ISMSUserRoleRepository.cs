@@ -2,16 +2,18 @@
 // <copyright file="ISMSUserRoleRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Repository implementing data access operations for SMS ismsuserrole entities with CRUD operations and business queries.
+//     Description: Repository implementing data access operations for SMS ismsuserrole entities with safety management integration.
 //                  Infrastructure service contract defining data access operations
 //                  and external system integration interfaces.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 namespace SMS_Infrastructure.Interfaces;
 
 /// <summary>
-/// Repository interface for SMS User Role operations
+/// SMS User Role Repository Interface
 /// </summary>
 public interface ISMSUserRoleRepository
 {

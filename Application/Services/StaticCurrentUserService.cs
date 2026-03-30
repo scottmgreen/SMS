@@ -6,6 +6,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 

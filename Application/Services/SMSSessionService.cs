@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using SMS_Application.Configuration;
 using SMS_Application.Interfaces;
 using Microsoft.AspNetCore.Http;
+using SMS_Domain.Entities;
 
 namespace SMS_Application.Services;
 

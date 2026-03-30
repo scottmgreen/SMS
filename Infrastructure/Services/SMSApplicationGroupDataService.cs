@@ -2,21 +2,21 @@
 // <copyright file="SMSApplicationGroupDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Data service coordinating smsapplicationgroup repository operations with transaction management and business validation.
-//                  Infrastructure service providing external system integration
-//                  and technical functionality support.
+//     Description: SMS Application Group data service providing business operations for SMS domain entities.
+//                  Infrastructure layer service implementing data access patterns
+//                  through repositories while maintaining clean architecture.
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 
 namespace SMS_Infrastructure.Services;
 
 /// <summary>
-/// Data service for SMS Application Group operations
-/// Provides high-level data access abstraction over repository layer
+/// SMS Application Group Data Service providing business operations for SMSApplicationGroup entities
 /// </summary>
-public sealed class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGroupDataService>
+public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGroupDataService>
 {
     private readonly SMSApplicationGroupRepository _repository;
     private readonly ILogger<SMSApplicationGroupDataService> _logger;
