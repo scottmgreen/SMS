@@ -8,6 +8,9 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Domain", "Domain", "{2F4FC3A2-EDD1-4D0E-866C-C9BDC278B2A2}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{69E1C783-EE49-4422-B627-0B542F4508D8}"
+	ProjectSection(SolutionItems) = preProject
+		Documentation\PDXSMS Functional Requirements Document_V2.rtf = Documentation\PDXSMS Functional Requirements Document_V2.rtf
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Infrastructure", "Infrastructure", "{A3673D90-ADA2-48AF-9376-C025E58F0876}"
 EndProject
@@ -42,10 +45,6 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
-	ProjectSection(SolutionItems) = preProject
-		Deployment.txt = Deployment.txt
-		..\Documents\For Charli\PDXSMS Functional Requirements Document_V2.rtf = ..\Documents\For Charli\PDXSMS Functional Requirements Document_V2.rtf
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
