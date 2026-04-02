@@ -137,15 +137,22 @@ public class CommandAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResu
 
     /// <summary>
     /// Gets the resource identifier for the command
+    /// Uses enhanced audit interface if available, otherwise falls back to command type name
     /// </summary>
     private static string GetResourceIdentifier(TRequest request)
     {
         return request switch
         {
-            ICreateCommand createCmd => createCmd.GetResourceIdentifier?.Invoke() ?? "Unknown Resource",
-            IUpdateCommand updateCmd => updateCmd.GetResourceIdentifier?.Invoke() ?? "Unknown Resource",
-            IDeleteCommand deleteCmd => deleteCmd.GetResourceIdentifier?.Invoke() ?? "Unknown Resource",
-            _ => "Unknown Resource"
+            // Check for enhanced audit command first
+            IEnhancedAuditCommand enhancedCmd => enhancedCmd.GetResourceIdentifier(),
+            
+            // For basic commands, use the command type name as resource identifier
+            ICreateCommand => request.GetType().Name.Replace("Command", "").Replace("Create", ""),
+            IUpdateCommand => request.GetType().Name.Replace("Command", "").Replace("Update", ""),
+            IDeleteCommand => request.GetType().Name.Replace("Command", "").Replace("Delete", ""),
+            
+            // Fallback
+            _ => request.GetType().Name
         };
     }
 }

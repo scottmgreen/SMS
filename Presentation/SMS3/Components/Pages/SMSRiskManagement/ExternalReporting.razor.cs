@@ -698,7 +698,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                 ReportContactCell = HazardReport.ReportContactCell, 
                 ReportContactEmail  = HazardReport.ReportContactEmail,
                 Stage = "Initial",
-                Status = ReportStatus.Created
+                Status = ReportStatus.NeedsValidation
                 
             };
 
@@ -1272,7 +1272,8 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             "/ExternalReporting/TrackStatus", 
             "TrackingCode", 
             GeneratedTrackingId);
-            
+
+        
         return $"{baseUri}{secureTrackingUrl}";
     }
 

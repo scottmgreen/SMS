@@ -41,6 +41,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 		APITestData.txt = APITestData.txt
 	EndProjectSection
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
+	ProjectSection(SolutionItems) = preProject
+		Deployment.txt = Deployment.txt
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -89,6 +94,7 @@ Global
 		{6C97EC26-5E32-48D6-8AF0-11D25218BAAB} = {67E0A2F5-DB99-49DA-98DF-49247404EB91}
 		{B7FA1A75-D282-4128-AA2D-FF7D67E711A0} = {A3673D90-ADA2-48AF-9376-C025E58F0876}
 		{AE0EC883-6738-4E77-A41B-FA0E5DBF469C} = {67E0A2F5-DB99-49DA-98DF-49247404EB91}
+		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {69E1C783-EE49-4422-B627-0B542F4508D8}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FA00CD6C-50A6-478F-927F-B9E1A96A2D14}

@@ -44,7 +44,7 @@ else if (ShowFinalSuccessConfirmation)
                             <hr />
                             <RadzenRow Gap="1rem">
                                 <RadzenColumn Size="12" SizeLG="12">
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Tracking URL: </strong>@GetTrackingUrl()</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Tracking ID: </strong>@GeneratedTrackingId</RadzenText>
                                 </RadzenColumn>
                             </RadzenRow>
                             <RadzenRow Gap="1rem">
@@ -56,7 +56,7 @@ else if (ShowFinalSuccessConfirmation)
                             <br />
                             <br />
                             <RadzenRow Gap="0.5rem">
-                                <RadzenColumn Size="12" SizeLG="12">
+                                @* <RadzenColumn Size="12" SizeLG="12">
                                     <div class="text-center">
                                         <RadzenFieldset Text="Track Report URL">
                                             <RadzenQRCode Value="@GetTrackingUrl()" Size="100"/>
@@ -65,7 +65,7 @@ else if (ShowFinalSuccessConfirmation)
                                             </div>
                                         </RadzenFieldset>
                                     </div>
-                                </RadzenColumn>
+                                </RadzenColumn> *@
                                 
                             </RadzenRow> 
                         </div>
@@ -751,20 +751,7 @@ else
    ============================================================================= */
 
 /* Modal Overlay and Dialog */
-@* .modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 1050;
-    padding: 1rem;
-} *@
-    .modal-overlay {
+.modal-overlay {
         position: fixed;
         top: 0;
         left: 0;
@@ -786,12 +773,12 @@ else
     overflow-y: auto;
 }
 
-    .sms-modal-submission {
-        max-width: 900px;
-        width: 100%;
-        height:520px;
+.sms-modal-submission {
+    max-width: 900px;
+    width: 100%;
+    height:520px;
         
-    }
+}
 
 .sms-modal-lg {
     max-width: 1100px;
