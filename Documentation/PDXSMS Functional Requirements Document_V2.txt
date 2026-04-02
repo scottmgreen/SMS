@@ -1,0 +1,1122 @@
+PDXSMS Functional Requirements Document
+Version: 1.0
+Date: September 2025
+Prepared By: PDXSMS Development Team
+Architecture: Clean Architecture | Domain-Driven Design | .NET 8
+Scope: Safety Management System for Part 139 Airport Operators (PDX)
+
+Abstract
+This document defines the functional, technical, and regulatory requirements for the Portland International Airport Safety Management System (PDXSMS). The system is designed to support compliance with 14 CFR Part 139 and FAA Advisory Circular 150/5200-37A, enabling a scalable, proactive, and auditable approach to airport safety. The document is structured to support Clean Architecture principles and software engineering best practices, ensuring traceability from regulatory requirements to implementation and testing.
+
+
+
+Table of Contents
+1. Introduction	3
+1.1 Purpose	3
+1.2 Scope	3
+2. System Context	4
+2.1 Architecture	4
+2.2 Technology Stack	5
+3. Functional Requirements	6
+3.1 Safety Event Management	6
+3.2 Risk Assessment Management	10
+3.3 General Incident Management	12
+3.4 Training Management	14
+3.5 User Management	16
+3.6 Audit Management	18
+3.7 Task Management & Workflow	20
+3.8 System Administration & Infrastructure	22
+3.9 Reporting & Analytics	25
+Section 4 – Traceability Matrix	27
+Section 5 – Implementation Technology Mapping	28
+Appendices	29
+Appendix A – Safety Objectives (Sample)	29
+Appendix B – Risk Matrix (5x5 Format)	29
+Appendix C – Hazard Assessment Form (Template)	30
+Appendix D – Safety Reporting Channels	30
+Glossary of Terms	31
+Gap Analysis Summary	32
+Fully Mapped (Both CFR + AC)	32
+Partially Mapped (Only AC or CFR)	32
+Unmapped (Internal/Best Practice)	32
+Reverse Traceability Analysis	33
+Summary of Coverage	33
+Not Covered Requirements (Gaps)	33
+Partially Covered Requirements	34
+Fully Covered Areas	34
+Recommendations	35
+
+
+
+
+1. Introduction
+1.1 Purpose
+This document defines the functional requirements for the PDX Safety Management System (PDXSMS), a software platform designed to support compliance with 14 CFR Part 139 and FAA AC 150/5200-37A. It is intended for developers, analysts, airport safety personnel, and regulatory stakeholders.
+1.2 Scope
+PDXSMS supports the following capabilities:
+* Safety event and incident management
+* Risk assessment and mitigation tracking
+* Training and competency management
+* Audit scheduling and reporting
+* Task management and escalation
+* Safety performance monitoring
+* Role-based access control
+* Notification and communication workflows
+
+2. System Context
+2.1 Architecture
+PDXSMS is implemented using Clean Architecture principles with Domain-Driven Design. It is composed of:
+* Domain Layer: Core business logic and entities
+* Application Layer: Use cases and services
+* Infrastructure Layer: Data access and integrations
+* Presentation Layer: RESTful APIs and UI
+
+
+2.2 Technology Stack
+* .NET 8 / C#
+* SQL Server
+* Mediator (CQRS)
+
+
+
+3. Functional Requirements
+3.1 Safety Event Management
+FR-3.1.1 – Safety Event Creation
+ID: FR-3.1.1
+Title: Safety Event Creation
+Description:
+The system shall allow authorized users to create new safety event records with structured documentation, including event type, location, severity, and associated operational context.
+Rationale:
+Per AC 150/5200-37A §4.2.1 and 14 CFR §139.401(b), airports must establish a system for identifying safety issues and hazards. Documenting safety events is a foundational activity in Safety Risk Management (SRM).
+Inputs:
+* Event description (validated via Description value object)
+* Date/time of occurrence
+* Event type (e.g., incursion, excursion, FOD, wildlife strike)
+* Location (GeoLocation value object)
+* Reporting user credentials
+* Initial severity estimate (optional)
+Processing:
+* Validate input using domain rules
+* Assign unique SafetyEventID
+* Store event using BaseAuditableEntity pattern
+* Trigger notification workflow
+* Log event in audit trail
+Outputs:
+* Confirmation of event creation
+* Notification to designated safety personnel
+* Audit log entry
+Dependencies:
+* FR-3.5.1 (User Authentication)
+* FR-3.8.1 (Audit Trail)
+* FR-3.8.2 (Notification System)
+
+
+Acceptance Criteria:
+* Event created with unique ID and timestamp
+* Event types aligned with FAA AC 150/5200-37A examples
+* Required fields validated using domain value objects
+* Audit trail includes user ID and creation context
+* Notification sent to Safety Officer or designated role
+
+FR-3.1.2 – Safety Event Status Tracking
+ID: FR-3.1.2
+Title: Safety Event Status Tracking
+Description:
+The system shall support lifecycle tracking of safety events through defined workflow states, including automated transitions and manual overrides.
+Rationale:
+Tracking the status of safety events supports continuous monitoring and ensures timely resolution, as recommended in AC 150/5200-37A §5.2.2 and §139.402(c)(1).
+Inputs:
+* SafetyEventID
+* New status
+* User credentials
+* Justification (if manual override)
+Processing:
+* Validate status transition rules
+* Update event record
+* Log change in audit trail
+* Trigger notifications if required
+Outputs:
+* Updated event status
+* Notification to stakeholders
+* Audit log entry
+Dependencies:
+* FR-3.1.1 (Event Creation)
+* FR-3.5.2 (Role-Based Access Control)
+* FR-3.8.1 (Audit Trail)
+
+
+Acceptance Criteria:
+* Workflow states: Open ? Investigating ? Under Review ? Closed
+* Status changes logged with timestamp and user ID
+* Notifications triggered for critical status changes
+* Overdue status changes flagged for escalation
+
+FR-3.1.3 – Safety Event Response Management
+ID: FR-3.1.3
+Title: Safety Event Response Management
+Description:
+The system shall enable structured responses to safety events, including assignment of responsible personnel, escalation levels, and mitigation tracking.
+Rationale:
+Structured response supports proactive risk mitigation and aligns with AC 150/5200-37A §4.2.2.5.5 and §139.402(b).
+Inputs:
+* SafetyEventID
+* Response description
+* Assigned responder
+* Escalation level
+* Estimated completion date
+Processing:
+* Create EventResponse entity
+* Validate responder role and availability
+* Assign priority
+* Trigger notifications and escalation logic
+Outputs:
+* Response record with tracking ID
+* Notification to responder and stakeholders
+* Audit log entry
+Dependencies:
+* FR-3.1.1 (Event Creation)
+* FR-3.5.1 (User Management)
+* FR-3.8.2 (Notification System)
+
+
+Acceptance Criteria:
+* Response linked to originating event
+* Escalation levels: Low, Medium, High, Critical
+* Notifications sent based on escalation level
+* Timeline tracking with overdue alerts
+
+FR-3.1.4 – Event Response Escalation
+ID: FR-3.1.4
+Title: Event Response Escalation
+Description:
+The system shall provide automated escalation of safety event responses based on severity, timeline, and organizational hierarchy.
+Rationale:
+Escalation ensures timely resolution of critical safety issues and supports the airport’s safety objectives under AC 150/5200-37A §4.2.2.5.5 and §139.402(c)(2).
+Inputs:
+* EventResponseID
+* Escalation criteria (severity, overdue status)
+* Management hierarchy
+Processing:
+* Evaluate escalation triggers
+* Identify appropriate escalation path
+* Notify management
+* Update response priority
+Outputs:
+* Escalation notification
+* Updated response record
+* Audit log entry
+Dependencies:
+* FR-3.1.3 (Response Management)
+* FR-3.5.2 (Role Management)
+* FR-3.8.2 (Notification System)
+Acceptance Criteria:
+* Escalation triggered by overdue or high-severity events
+* Notifications include context and required actions
+* Manual override supported by authorized roles
+* Full audit trail of escalation actions
+
+3.2 Risk Assessment Management
+FR-3.2.1 – Risk Assessment Creation
+ID: FR-3.2.1
+Title: Risk Assessment Creation
+Description:
+The system shall provide a structured risk assessment capability using a configurable risk matrix (e.g., 5x5) to evaluate hazards associated with safety events or operational changes.
+Rationale:
+Per AC 150/5200-37A §4.2.2 and 14 CFR §139.402(b)(2), airports must establish a systematic process to analyze hazards and their associated risks. This includes determining severity and likelihood, assigning risk levels, and documenting the results for traceability and mitigation planning.
+Inputs:
+* Associated SafetyEventID or GeneralIncidentID
+* Risk category (e.g., Human Error, Mechanical Failure)
+* Severity score (1–5)
+* Likelihood score (1–5)
+* Risk description
+* Mitigation recommendations
+* Assessor credentials
+Processing:
+* Calculate risk score using domain logic: severity × likelihood
+* Determine risk level (e.g., Low, Medium, High, Critical)
+* Validate input using domain rules
+* Store assessment with audit trail and traceability to source event
+Outputs:
+* Risk assessment record with unique ID
+* Calculated risk score and level
+* Linked mitigation recommendations
+* Audit log entry
+Dependencies:
+* FR-3.1.1 (Safety Event Creation)
+* FR-3.3.1 (Incident Documentation)
+* FR-3.8.1 (Audit Trail)
+Acceptance Criteria:
+* Risk score calculated using domain method CalculateRisk()
+* Risk level assigned per airport-defined matrix (e.g., FAA 5x5)
+* Assessment linked to originating event or incident
+* Mitigation recommendations documented
+* Assessor identity and timestamp recorded
+
+FR-3.2.2 – Risk Category Management
+ID: FR-3.2.2
+Title: Risk Category Management
+Description:
+The system shall support standardized risk categorization for all assessments to enable classification, filtering, and trend analysis.
+Rationale:
+Categorizing risks supports trend identification and targeted mitigation strategies, as recommended in AC 150/5200-37A §4.2.1.1.2 and §4.2.2.5.2.
+Inputs:
+* RiskAssessmentID
+* Risk category selection (from domain enum)
+* Classification criteria
+Processing:
+* Validate category against domain enumeration
+* Assign category to risk assessment
+* Enable filtering and reporting
+Outputs:
+* Categorized risk assessment
+* Enhanced reporting and analytics
+Dependencies:
+* FR-3.2.1 (Risk Assessment Creation)
+* Reporting and analytics modules
+Acceptance Criteria:
+* Categories include: MechanicalFailure, HumanError, EnvironmentalHazard, Wildlife, Infrastructure, Other
+* Category assignment logged with audit trail
+* Filtering supported in dashboards and reports
+* Historical category data retained for trend analysis
+
+FR-3.2.3 – Risk Mitigation Task Management
+ID: FR-3.2.3
+Title: Risk Mitigation Task Management
+Description:
+The system shall support the creation, assignment, and tracking of mitigation tasks linked to risk assessments, with accountability and progress monitoring.
+Rationale:
+Mitigation is a required step for addressing unacceptable risk, per AC 150/5200-37A §4.2.2.5.5. Task tracking ensures mitigations are implemented, verified, and evaluated for effectiveness.
+Inputs:
+* RiskAssessmentID
+* Task description
+* Assigned user
+* Due date
+* Priority level
+* Estimated effort
+Processing:
+* Create MitigationTask entity with unique ID
+* Assign to qualified user
+* Track progress through workflow states
+* Trigger alerts for overdue tasks
+Outputs:
+* Task assignment confirmation
+* Progress dashboard
+* Completion verification
+* Accountability reporting
+Dependencies:
+* FR-3.2.1 (Risk Assessment)
+* FR-3.5.1 (User Management)
+* FR-3.7.1 (Task Management)
+Acceptance Criteria:
+* Tasks linked to originating risk assessment
+* Workflow states: Pending ? InProgress ? Completed
+* Overdue tasks flagged and escalated
+* Completion requires sign-off and documentation
+* Integration with reporting and compliance dashboards
+
+3.3 General Incident Management
+FR-3.3.1 – Comprehensive Incident Documentation
+ID: FR-3.3.1
+Title: Comprehensive Incident Documentation
+Description:
+The system shall support the documentation of general operational incidents that may not meet the criteria for safety events but still impact airport operations, infrastructure, or services.
+Rationale:
+Per AC 150/5200-37A §4.2.1.1.1–1.1.2 and 14 CFR §139.401(b), airports must identify and document safety issues and operational disruptions that could contribute to hazards. Capturing general incidents supports proactive hazard identification and trend analysis.
+Inputs:
+* Incident description and context
+* Date/time of occurrence
+* Location (GeoLocation)
+* Severity level
+* Reporter credentials
+* Incident type classification
+Processing:
+* Validate input using domain rules
+* Assign unique GeneralIncidentID
+* Categorize by type and severity
+* Store incident record with audit trail
+Outputs:
+* Incident record with unique ID
+* Categorization and severity assignment
+* Reporting and analytics integration
+Dependencies:
+* FR-3.5.1 (User Authentication)
+* FR-3.8.1 (Audit Trail)
+* FR-3.8.2 (Notification System)
+Acceptance Criteria:
+* Supports incident types: operational disruption, infrastructure failure, environmental impact, customer service issue, etc.
+* Severity classification includes business impact and operational risk
+* Location tracking with precision
+* Reporter identity and timestamp recorded
+* Integration with safety event system for escalation if needed
+
+FR-3.3.2 – Incident Investigation Workflow
+ID: FR-3.3.2
+Title: Incident Investigation Workflow
+Description:
+The system shall support structured investigation workflows for general incidents, including evidence tracking, root cause analysis, and corrective action assignment.
+Rationale:
+Structured investigations support continuous improvement and align with AC 150/5200-37A §5.2.2.2 and §4.2.2.5.5, which emphasize evaluating mitigations and identifying systemic issues.
+Inputs:
+* Incident ID
+* Investigation plan
+* Evidence records
+* Findings and root cause analysis
+* Corrective actions
+Processing:
+* Create investigation record
+* Track evidence with chain of custody
+* Document findings and assign actions
+* Monitor progress and verify completion
+Outputs:
+* Investigation report
+* Evidence inventory
+* Corrective action assignments
+* Completion verification
+Dependencies:
+* FR-3.3.1 (Incident Documentation)
+* FR-3.7.1 (Task Assignment)
+* FR-3.5.1 (User Management)
+Acceptance Criteria:
+* Linked to originating incident
+* Evidence tracking includes timestamps and custody chain
+* Root cause analysis documented using standard methodology
+* Corrective actions assigned with accountability and due dates
+* Investigation status tracked through defined workflow
+
+3.4 Training Management
+FR-3.4.1 – Training Session Scheduling and Management
+ID: FR-3.4.1
+Title: Training Session Scheduling and Management
+Description:
+The system shall support the scheduling and management of safety-related training sessions, including instructor assignment, capacity tracking, and resource coordination.
+
+Rationale:
+Per AC 150/5200-37A §6.2.1.4.1 and 14 CFR §139.402(d)(3), airports must provide SMS-specific training to employees with responsibilities under the SMS. Structured scheduling ensures timely delivery of required training and supports compliance with recurrent training intervals.
+Inputs:
+* Training title and description
+* Scheduled date and time
+* Instructor assignment
+* Location and resource requirements
+* Maximum participant capacity
+* Training materials
+Processing:
+* Validate instructor qualifications
+* Detect scheduling conflicts
+* Track enrollment and capacity
+* Associate training materials with version control
+Outputs:
+* Training session confirmation
+* Instructor and participant notifications
+* Capacity status dashboard
+* Training calendar integration
+Dependencies:
+* FR-3.5.1 (User Management)
+* FR-3.8.2 (Notification System)
+* Resource and calendar management modules
+Acceptance Criteria:
+* Instructor assignment validated against qualifications
+* Capacity limits enforced with waitlist support
+* Session materials versioned and linked to session
+* Conflict detection for instructors, rooms, and resources
+* Integration with organizational calendar and reporting tools
+
+FR-3.4.2 – Training Assignment and Competency Tracking
+ID: FR-3.4.2
+Title: Training Assignment and Competency Tracking
+Description:
+The system shall manage individual training assignments, track progress, assess competency, and issue certifications where applicable.
+
+Rationale:
+Per AC 150/5200-37A §6.2.1.4.2–4.4 and 14 CFR §139.402(d)(1–3), airports must ensure that personnel receive appropriate SMS training and maintain records of training completion and competency. This supports both regulatory compliance and continuous improvement.
+Inputs:
+* User ID
+* Assigned training session
+* Assignment date and due date
+* Competency requirements
+* Assessment criteria
+Processing:
+* Create TrainingAssignment entity
+* Track progress and completion status
+* Conduct assessments and record results
+* Issue certifications upon successful completion
+Outputs:
+* Assignment confirmation
+* Progress dashboard
+* Assessment results
+* Certification record
+Dependencies:
+* FR-3.4.1 (Training Session Scheduling)
+* FR-3.5.1 (User Management)
+* FR-3.8.1 (Audit Trail)
+Acceptance Criteria:
+* Assignments include due dates and competency criteria
+* Progress tracked through defined milestones
+* Assessments scored using standardized rubrics
+* Certifications issued with audit trail and expiration tracking
+* Integration with user profile for renewal and compliance reporting
+
+3.5 User Management
+FR-3.5.1 – User Authentication and Session Management
+ID: FR-3.5.1
+Title: User Authentication and Session Management
+Description:
+The system shall provide secure user authentication and session management, including support for multi-factor authentication, session timeout policies, and audit logging.
+Rationale:
+Secure access control ensures that only authorized personnel can perform safety-critical functions. This supports the integrity of the SMS and aligns with AC 150/5200-37A §3.2.2.4 and 14 CFR §139.402(a)(6–7), which require clear lines of safety responsibility and accountability.
+Inputs:
+* Username and password
+* Multi-factor authentication token (if applicable)
+* Session parameters (timeout, IP address, device info)
+Processing:
+* Authenticate user credentials
+* Validate role and permissions
+* Establish secure session
+* Log session activity for audit trail
+Outputs:
+* Session token
+* Authentication confirmation
+* Session log entry
+
+Dependencies:
+* FR-3.5.2 (Role Management)
+* FR-3.8.1 (Audit Trail)
+* Security infrastructure (e.g., identity provider)
+Acceptance Criteria:
+* Supports multi-factor authentication for administrative roles
+* Enforces session timeout and renewal policies
+* Logs all login attempts, session starts, and terminations
+* Integrates with enterprise authentication systems (e.g., AD)
+* Session logs include user ID, IP address, and timestamp
+
+FR-3.5.2 – Role-Based Access Control Management
+ID: FR-3.5.2
+Title: Role-Based Access Control Management
+Description:
+The system shall support aviation-specific user roles with defined permissions, responsibilities, and hierarchical access control.
+Rationale:
+Per 14 CFR §139.402(a)(1–5) and AC 150/5200-37A §3.2.2, airports must define and communicate the safety organizational structure, including the Accountable Executive and other SMS roles. Role-based access ensures that users can only access functions appropriate to their responsibilities.
+Inputs:
+* Role name and description
+* Permission matrix
+* User-role assignments
+* Role expiration date (optional)
+* Organizational hierarchy
+Processing:
+* Create and manage role definitions
+* Assign roles to users with temporal tracking
+* Enforce access control based on role
+* Monitor role expiration and renewal
+Outputs:
+* Role assignment confirmation
+* Access control enforcement
+* Audit trail of role changes
+
+Dependencies:
+* FR-3.5.1 (User Authentication)
+* FR-3.8.1 (Audit Trail)
+* Organizational structure definition
+Acceptance Criteria:
+* Supports roles such as: Accountable Executive, SMS Manager, Safety Officer, Maintenance Manager, Training Manager, Auditor, System Administrator
+* Enforces least-privilege access model
+* Role assignments logged with timestamp and authorizing user
+* Role expiration alerts and renewal workflows
+* Supports delegation and hierarchical access control
+
+3.6 Audit Management
+FR-3.6.1 – Comprehensive Audit Scheduling
+ID: FR-3.6.1
+Title: Comprehensive Audit Scheduling
+Description:
+The system shall support the scheduling of internal safety audits and evaluations, including assignment of qualified personnel, timeline tracking, and automated reminders.
+Rationale:
+Per AC 150/5200-37A §5.2.2.2 and 14 CFR §139.402(c)(1), airports must monitor safety performance and evaluate the effectiveness of SMS processes. Scheduled audits support continuous improvement and verification of compliance with safety objectives.
+Inputs:
+* Audit type (e.g., SMS Evaluation, Self-Inspection Review)
+* Scheduled date and duration
+* Assigned auditor(s)
+* Scope and checklist
+* Location and department
+Processing:
+* Validate auditor qualifications
+* Create audit schedule with timeline tracking
+* Assign checklist and scope
+* Trigger automated reminders and calendar integration
+Outputs:
+* Audit schedule confirmation
+* Assigned auditor notification
+* Timeline alerts and reminders
+* Audit tracking dashboard
+Dependencies:
+* FR-3.5.1 (User Management)
+* FR-3.8.2 (Notification System)
+* FR-3.8.3 (System Health Monitoring)
+Acceptance Criteria:
+* Supports multiple audit types: SMS Evaluation, Training Review, Incident Follow-up, Safety Objective Review
+* Auditor qualifications validated (e.g., training, role)
+* Timeline compliance alerts for overdue or upcoming audits
+* Integration with calendar and reporting systems
+* Audit metadata stored for traceability and trend analysis
+
+FR-3.6.2 – Automated Multi-Type Audit Report Generation
+ID: FR-3.6.2
+Title: Automated Multi-Type Audit Report Generation
+Description:
+The system shall generate structured audit reports based on collected data, including compliance status, performance metrics, and recommended actions.
+Rationale:
+Audit reports are essential for evaluating SMS effectiveness and communicating findings to the Accountable Executive, as required by AC 150/5200-37A §5.2.2.2 and 14 CFR §139.402(c)(2).
+
+
+
+Inputs:
+* AuditScheduleID
+* Reporting period
+* Data sources (e.g., hazard reports, training logs, incident records)
+* Report type and template
+Processing:
+* Aggregate data from relevant modules
+* Analyze compliance with safety objectives
+* Generate structured report with findings and recommendations
+* Include performance metrics and trend analysis
+Outputs:
+* Audit report document (PDF or structured format)
+* Compliance summary
+* Performance dashboard
+* Actionable recommendations
+Dependencies:
+* FR-3.6.1 (Audit Scheduling)
+* FR-3.2.3 (Mitigation Tracking)
+* FR-3.8.1 (Audit Trail)
+* Reporting and analytics modules
+Acceptance Criteria:
+* Supports multiple report types: SMS Evaluation, Safety Objective Review, Training Compliance, Incident Response Effectiveness
+* Includes executive summary, findings, metrics, and recommendations
+* Automatically references relevant safety objectives and mitigations
+* Exportable in standard formats (PDF, JSON, XML)
+* Report traceability to audit schedule and data sources
+
+3.7 Task Management & Workflow
+FR-3.7.1 – Mitigation Task Assignment and Tracking
+ID: FR-3.7.1
+Title: Mitigation Task Assignment and Tracking
+Description:
+The system shall support the assignment and tracking of mitigation tasks related to safety events, risk assessments, or incident investigations, with full accountability and progress monitoring.
+Rationale:
+Per AC 150/5200-37A §4.2.2.5.5 and §5.2.2.2, airports must implement and monitor mitigations for identified hazards. Task tracking ensures that mitigations are completed and verified.
+
+Inputs:
+* Task description
+* Assigned user
+* Due date and priority
+* Related event/incident/assessment
+* Estimated effort
+Processing:
+* Create MitigationTask entity
+* Assign to qualified user
+* Track progress through workflow states
+* Trigger alerts for overdue tasks
+Outputs:
+* Task assignment confirmation
+* Progress dashboard
+* Completion verification
+* Accountability reporting
+Dependencies:
+* FR-3.2.3 (Risk Mitigation)
+* FR-3.3.2 (Incident Investigation)
+* FR-3.5.1 (User Management)
+* FR-3.8.2 (Notification System)
+Acceptance Criteria:
+* Tasks linked to originating safety record
+* Workflow states: Pending ? InProgress ? Completed
+* Overdue tasks flagged and escalated
+* Completion requires sign-off and documentation
+* Estimated vs. actual effort tracked for process improvement
+
+FR-3.7.2 – Task Progress Monitoring and Alerts
+ID: FR-3.7.2
+Title: Task Progress Monitoring and Alerts
+Description:
+The system shall provide real-time monitoring of task progress, with automated alerts for overdue items, escalation triggers, and completion verification.
+Rationale:
+Monitoring task progress ensures timely implementation of safety improvements and supports accountability, as emphasized in AC 150/5200-37A §5.2.2.2 and §4.2.4.
+
+Inputs:
+* Task updates
+* Milestone completions
+* Delay notifications
+* Completion verification
+Processing:
+* Track task status and timeline adherence
+* Identify overdue tasks
+* Trigger escalation alerts
+* Verify completion and close tasks
+Outputs:
+* Real-time progress dashboard
+* Overdue task alerts
+* Escalation notifications
+* Completion reports
+Dependencies:
+* FR-3.7.1 (Task Assignment)
+* FR-3.8.2 (Notification System)
+* FR-3.5.1 (User Management)
+Acceptance Criteria:
+* Dashboard shows task status, due dates, and progress
+* Alerts triggered based on configurable thresholds
+* Escalation logic for critical overdue tasks
+* Completion requires verification and documentation
+* Supports trend analysis and resource planning
+
+3.8 System Administration & Infrastructure
+FR-3.8.1 – Comprehensive Audit Trail Management
+ID: FR-3.8.1
+Title: Comprehensive Audit Trail Management
+Description:
+The system shall maintain immutable audit trails for all safety-related actions, including user activity, data changes, and system events, with full context and traceability.
+
+Rationale:
+Per AC 150/5200-37A §5.2.2.2 and 14 CFR §139.402(c)(2), airports must monitor SMS performance and maintain documentation to support evaluations and continuous improvement. Audit trails ensure accountability and support forensic analysis of safety-critical activities.
+Inputs:
+* System actions and transactions
+* User ID and session context
+* Timestamps with time zone
+* Action descriptions and data changes
+Processing:
+* Log all actions using BaseAuditableEntity pattern
+* Ensure immutability through technical controls
+* Provide query and filtering capabilities
+* Maintain data integrity and retention policies
+Outputs:
+* Immutable audit log entries
+* Filterable audit reports
+* Compliance verification records
+Dependencies:
+* FR-3.5.1 (User Authentication)
+* FR-3.5.2 (Role Management)
+* FR-3.6.2 (Audit Reporting)
+Acceptance Criteria:
+* All safety-related actions logged with full context
+* Audit records cryptographically verifiable (if required)
+* Queryable by user, action type, date range, and entity
+* Retention policies configurable to meet FAA and organizational standards
+* Supports export for compliance audits and investigations
+
+FR-3.8.2 – Notification and Communication System
+ID: FR-3.8.2
+Title: Notification and Communication System
+Description:
+The system shall provide automated notifications for safety events, task assignments, training deadlines, and escalation triggers, using multiple delivery channels.
+Rationale:
+Effective communication is essential to Safety Promotion and Safety Assurance, as outlined in AC 150/5200-37A §6.2.3 and §5.2.3. Timely alerts ensure that responsible personnel are informed and can act on safety-critical information.
+Inputs:
+* Event triggers (e.g., new hazard, overdue task)
+* Recipient roles and preferences
+* Message templates
+* Delivery channel configuration
+Processing:
+* Evaluate triggers against notification rules
+* Determine recipients based on role and escalation level
+* Compose contextual messages
+* Deliver via configured channels
+Outputs:
+* Notification delivery confirmation
+* Read receipt tracking
+* Escalation alerts for unacknowledged messages
+Dependencies:
+* FR-3.1.1 (Safety Event Creation)
+* FR-3.2.3 (Mitigation Task Management)
+* FR-3.4.2 (Training Assignment)
+* FR-3.5.2 (Role Management)
+Acceptance Criteria:
+* Supports email, SMS, system alerts, and push notifications
+* Priority-based routing with urgency indicators
+* Read receipts and acknowledgment tracking for critical alerts
+* Escalation logic for unacknowledged high-priority messages
+* Integration with user preferences and communication logs
+
+FR-3.8.3 – System Health Monitoring and Performance Management
+ID: FR-3.8.3
+Title: System Health Monitoring and Performance Management
+Description:
+The system shall provide real-time monitoring of system health, performance metrics, and availability, with proactive alerting and capacity planning support.
+Rationale:
+Reliable system performance is essential for safety-critical operations. Per AC 150/5200-37A §5.2.2.2 and 14 CFR §139.401(b), SMS systems must support continuous availability and timely access to safety data.
+Inputs:
+* System performance metrics (CPU, memory, response time)
+* Error logs and exceptions
+* Usage statistics
+* Resource utilization data
+Processing:
+* Monitor system health in real time
+* Analyze trends and detect anomalies
+* Trigger alerts for performance degradation
+* Generate capacity planning reports
+Outputs:
+* Health dashboard
+* Performance trend reports
+* Alert notifications
+* Capacity forecasts
+Dependencies:
+* Infrastructure monitoring tools
+* Logging and analytics subsystems
+Acceptance Criteria:
+* Real-time dashboard with uptime, latency, and throughput metrics
+* Alerts for system errors, slowdowns, and capacity thresholds
+* Historical trend analysis for forecasting and optimization
+* Integration with enterprise monitoring platforms
+* Supports SLA tracking and operational readiness reviews
+
+3.9 Reporting & Analytics
+FR-3.9.1 – Safety Performance Reporting and Dashboards
+ID: FR-3.9.1
+Title: Safety Performance Reporting and Dashboards
+Description:
+The system shall provide configurable dashboards and reports that visualize safety performance metrics, audit outcomes, training compliance, and task completion status.
+Rationale:
+Per 14 CFR §139.402(c)(1) and AC 150/5200-37A §5.2.2.2, airports must monitor safety performance and evaluate the effectiveness of SMS processes. Visual reporting supports decision-making and continuous improvement.
+Inputs:
+* Safety event and incident data
+* Risk assessments and mitigations
+* Training records
+* Audit results
+* Task status and completion metrics
+Processing:
+* Aggregate data from all SMS modules
+* Calculate key performance indicators (KPIs)
+* Generate visualizations and trend lines
+* Support filtering by date, category, severity, and status
+Outputs:
+* Interactive dashboards
+* Exportable reports (PDF, Excel, JSON)
+* KPI summaries for executive review
+Dependencies:
+* FR-3.1.x (Safety Events)
+* FR-3.2.x (Risk Assessments)
+* FR-3.4.x (Training)
+* FR-3.6.x (Audits)
+* FR-3.7.x (Tasks)
+Acceptance Criteria:
+* Dashboards display real-time and historical data
+* Reports include safety objectives, trends, and compliance indicators
+* Filtering supports operational, regulatory, and executive views
+* Exportable formats for FAA review and internal use
+
+
+
+Section 4 – Traceability Matrix
+Business Requirement (Part 139 / AC 150/5200-37A)
+Functional Requirement(s)
+Implementation Class
+Test Ref
+§139.401(b), AC §4.2.1
+FR-3.1.1, FR-3.3.1
+Domain.Entities.SafetyEvent
+TC-001, TC-003
+§139.402(b)(2), AC §4.2.2
+FR-3.2.1, FR-3.2.2
+Domain.Entities.RiskAssessment
+TC-020, TC-021
+§139.402(b)(2)(v), AC §4.2.2.5.5
+FR-3.2.3, FR-3.7.1
+Domain.Entities.MitigationTask
+TC-022, TC-100
+§139.402(d)(3), AC §6.2.1.4
+FR-3.4.1, FR-3.4.2
+Domain.Entities.TrainingSession
+TC-120,
+ TC-121
+§139.402(a)(1–7), AC §3.2.2
+FR-3.5.1, FR-3.5.2
+Domain.Entities.User, UserRole
+TC-080, TC-081
+§139.402(c)(1–2), AC §5.2.2
+FR-3.6.1, FR-3.6.2
+Application.Services.AuditService
+TC-045, TC-046
+§139.402(c)(2), AC §5.2.1
+FR-3.8.1
+Infrastructure.Logging
+TC-160
+§139.402(d)(5), AC §6.2.3
+FR-3.8.2
+Domain.Entities.Notification
+TC-161
+§139.402(c)(1), AC §5.2.2.2
+FR-3.9.1
+Application.Services.ReportingService
+TC-170
+
+
+
+
+Section 5 – Implementation Technology Mapping
+Functional Area
+Technology Component
+Implementation Details
+Domain Layer
+.NET 8 / C#
+Domain entities, value objects, enums
+Application Layer
+CQRS + Mediator
+Command/Query handlers, services
+Infrastructure
+Entity Framework Core, SQL Server
+Repositories, stored procedures
+Presentation
+ASP.NET Core Web API
+RESTful endpoints, Swagger/OpenAPI
+Security
+ASP.NET Identity
+Authentication, RBAC, MFA
+Audit Trail
+BaseAuditableEntity
+Immutable logging, audit trail
+Reporting
+Power BI / SSRS / Custom
+Dashboards, exportable reports
+Notifications
+SMTP, SMS Gateway, Push
+Multi-channel delivery
+Monitoring
+Application Insights / Prometheus
+Health checks, performance metrics
+
+
+
+Appendices
+Appendix A – Safety Objectives (Sample)
+Objective ID
+Description
+Metric
+Target
+Review Frequency
+SO-001
+Reduce V/PDs
+V/PD count
+? 25% YoY
+Quarterly
+SO-002
+Improve training compliance
+% trained
+? 98%
+Monthly
+SO-003
+Close mitigation tasks faster
+Avg. days
+? 14
+Monthly
+SO-004
+Increase hazard reporting
+# reports
++15% YoY
+Quarterly
+
+Appendix B – Risk Matrix (5x5 Format)
+Severity ? / Likelihood ?
+Rare (1)
+Unlikely (2)
+Possible (3)
+Likely (4)
+Frequent (5)
+Catastrophic (5)
+M
+H
+C
+C
+C
+Major (4)
+M
+M
+H
+C
+C
+Moderate (3)
+L
+M
+M
+H
+C
+Minor (2)
+L
+L
+M
+M
+H
+Negligible (1)
+L
+L
+L
+M
+M
+* C = Critical (Unacceptable)
+* H = High (Mitigation Required)
+* M = Medium (Mitigation Preferred)
+* L = Low (Acceptable)
+
+
+Appendix C – Hazard Assessment Form (Template)
+Field
+Description
+Hazard ID
+Auto-generated unique identifier
+Description
+Narrative of the hazard
+Associated Event
+Safety Event or Incident ID
+Severity
+Selected from predefined scale
+Likelihood
+Selected from predefined scale
+Risk Level
+Calculated from matrix
+Mitigation(s)
+Proposed or implemented actions
+Responsible Party
+Assigned user or role
+Status
+Open / In Progress / Closed
+Date Assessed
+Timestamp
+Reviewed By
+SMS Manager or Panel
+
+Appendix D – Safety Reporting Channels
+* Web Portal: [internal URL]
+* Mobile App: [app name or link]
+* Drop Boxes: Ops Office, Maintenance, HQ
+* Email: safety@pdxsms.local
+* Hotline: x4444 (internal)
+
+Glossary of Terms
+Term
+Definition
+Accountable Executive
+Individual responsible for SMS implementation and performance.
+Hazard
+A condition that could cause or contribute to injury, damage, or an accident.
+Risk
+Composite of severity and likelihood of a hazard’s effect.
+Mitigation
+Action taken to reduce risk.
+Safety Assurance
+Processes to verify effectiveness of risk controls.
+Safety Policy
+Documented commitment to safety and responsibilities.
+Safety Promotion
+Training and communication supporting SMS.
+Safety Risk Management
+Process for identifying, analyzing, and mitigating hazards.
+SMS
+Safety Management System – formalized safety framework.
+V/PD
+Vehicle/Pedestrian Deviation – unauthorized movement in movement areas.
+
+
+
+Gap Analysis Summary
+Fully Mapped (Both CFR + AC)
+These FRs are explicitly supported by both 14 CFR Part 139 and AC 150/5200-37A:
+* FR-3.1.1 to FR-3.1.4 (Safety Event Lifecycle)
+* FR-3.2.1 to FR-3.2.3 (Risk Assessment & Mitigation)
+* FR-3.3.1, FR-3.3.2 (Incident Management)
+* FR-3.4.1, FR-3.4.2 (Training)
+* FR-3.5.1, FR-3.5.2 (User & Role Management)
+* FR-3.6.1, FR-3.6.2 (Audits)
+* FR-3.7.1, FR-3.7.2 (Task Management)
+* FR-3.8.1, FR-3.8.2 (Audit Trail, Notifications)
+* FR-3.9.1 (Dashboards)
+
+
+Partially Mapped (Only AC or CFR)
+* FR-3.8.3 – System Health Monitoring
+* CFR: §139.401(b) (general system availability)
+* AC: Indirectly supported in §5.2.2.2 (performance monitoring), but not explicitly detailed.
+* FR-3.5.1 – MFA & Session Security
+* AC: Mentions secure access and accountability, but multi-factor authentication is a best practice, not a regulatory requirement.
+
+Unmapped (Internal/Best Practice)
+None of the FRs are entirely unmapped. All are at least partially supported by FAA guidance or regulation.
+
+
+
+Reverse Traceability Analysis
+
+Not all requirements from 14 CFR Part 139 and FAA AC 150/5200-37A are explicitly covered in the PDXSMS Functional Requirements Document (V2).
+However, the core SMS-related requirements from both documents — especially those in Subpart E of Part 139 and Chapters 3–6 of the Advisory Circular — are comprehensively implemented.
+
+Summary of Coverage
+Source
+Total Relevant Requirements
+Fully Covered in PDXSMS
+Partially Covered
+Not Covered
+14 CFR Part 139 (Subpart E)
+~25
+? 20
+?? 3
+? 2
+AC 150/5200-37A
+~40+ (core SRM/SA/SP/Policy)
+? 35
+?? 4
+
+
+Not Covered Requirements (Gaps)
+From 14 CFR Part 139:
+1. §139.325 – Airport Emergency Plan
+* Not explicitly addressed in the FRD. Emergency response is partially implied in escalation logic but not mapped to the full EOP requirements (e.g., bomb threats, water rescue, etc.).
+2. §139.321 – Handling and Storing Hazardous Substances
+* No FRs address fuel farm safety, hazardous materials storage, or fire safety training for fueling personnel.
+
+From AC 150/5200-37A:
+1. Chapter 2 – SMS Implementation Plan
+* The FRD assumes an implemented system but does not include requirements for SMS Implementation Planning, phasing, or gap analysis documentation.
+
+
+
+
+
+Partially Covered Requirements
+From 14 CFR Part 139:
+* §139.303 – Personnel
+* Training is covered (FR-3.4.x), but not all required curriculum elements (e.g., radio communication, NOTAMs, etc.) are explicitly listed.
+* §139.327 – Self-Inspection Program
+* Hazard identification is covered, but daily inspection procedures and equipment requirements are not detailed.
+* §139.337 – Wildlife Hazard Management
+* Risk categories include “Wildlife,” but no FR addresses wildlife hazard assessments or WHMP integration.
+
+From AC 150/5200-37A:
+* §4.3 – Integrated SRM Efforts
+* No FR explicitly supports joint SRM panels with tenants or FAA.
+* §5.2.3 – Reporting to Accountable Executive
+* Dashboards (FR-3.9.1) support this, but no FR mandates reporting cadence or content to the AE.
+* §6.2.1.4.5 – Training Material Review
+* Training is versioned, but no FR requires periodic review of training content.
+* Appendix C – Implementation Checklist
+* No FRs support checklist-based implementation tracking or status reporting.
+
+Fully Covered Areas
+* Safety Event Lifecycle (FR-3.1.x)
+* Risk Assessment & Mitigation (FR-3.2.x)
+* Training & Competency (FR-3.4.x)
+* Audit & Reporting (FR-3.6.x, FR-3.9.1)
+* User Access & Roles (FR-3.5.x)
+* Notification & Escalation (FR-3.8.2)
+* Audit Trail & Logging (FR-3.8.1)
+
+
+
+
+
+
+Recommendations
+To achieve full FAA alignment, consider adding or extending FRs to cover:
+1. Emergency Plan Integration (EOP scenarios, §139.325)
+2. Hazardous Materials Handling (§139.321)
+3. Wildlife Hazard Management (§139.337)
+4. Self-Inspection Program Requirements (§139.327)
+5. SMS Implementation Planning & Phasing (AC §2.3)
+6. Accountable Executive Reporting Logic (AC §5.2.3)
+7. Training Material Review Cycle (AC §6.2.1.4.5)
+
+2
+
+
