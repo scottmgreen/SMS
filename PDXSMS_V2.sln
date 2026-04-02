@@ -44,6 +44,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentation", "{02EA681E-C7D8-13C7-8484-4AC65E1B71E8}"
 	ProjectSection(SolutionItems) = preProject
 		Deployment.txt = Deployment.txt
+		..\Documents\For Charli\PDXSMS Functional Requirements Document_V2.rtf = ..\Documents\For Charli\PDXSMS Functional Requirements Document_V2.rtf
 	EndProjectSection
 EndProject
 Global
