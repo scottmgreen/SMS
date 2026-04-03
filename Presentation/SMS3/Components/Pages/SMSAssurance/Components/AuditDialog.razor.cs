@@ -13,10 +13,10 @@ public partial class AuditDialog : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<AuditDialog> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<AuditDialog> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
     #region Form State
@@ -204,18 +204,18 @@ public partial class AuditDialog : ComponentBase
                     createdBy: "CURRENT_USER"
                 );
 
-                var result = await Mediator.SendAsync(command, CancellationToken.None);
+                var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
-                    Logger.LogInformation("Audit created successfully: {Code}", Code);
-                    NotificationHelper.ShowSuccessAsync("Audit created successfully");
-                    DialogService.Close(true);
+                    _logger.LogInformation("Audit created successfully: {Code}", Code);
+                    _notificationHelper.ShowSuccessAsync("Audit created successfully");
+                    _dialogService.Close(true);
                 }
                 else
                 {
-                    Logger.LogError("Failed to create audit: {Error}", result.Error?.Message);
-                    NotificationHelper.ShowErrorAsync($"Failed to create audit: {result.Error?.Message}");
+                    _logger.LogError("Failed to create audit: {Error}", result.Error?.Message);
+                    _notificationHelper.ShowErrorAsync($"Failed to create audit: {result.Error?.Message}");
                 }
             }
             else
@@ -245,25 +245,25 @@ public partial class AuditDialog : ComponentBase
                 Audit.UpdatedDate = DateTime.UtcNow;
 
                 var command = new UpdateSMSAuditCommand(Audit);
-                var result = await Mediator.SendAsync(command, CancellationToken.None);
+                var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
-                    Logger.LogInformation("Audit updated successfully: {Code}", Code);
-                    await NotificationHelper.ShowSuccessAsync("Audit updated successfully");
-                    DialogService.Close(true);
+                    _logger.LogInformation("Audit updated successfully: {Code}", Code);
+                    await _notificationHelper.ShowSuccessAsync("Audit updated successfully");
+                    _dialogService.Close(true);
                 }
                 else
                 {
-                    Logger.LogError("Failed to update audit: {Error}", result.Error?.Message);
-                    await NotificationHelper.ShowErrorAsync($"Failed to update audit: {result.Error?.Message}");
+                    _logger.LogError("Failed to update audit: {Error}", result.Error?.Message);
+                    await _notificationHelper.ShowErrorAsync($"Failed to update audit: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error saving audit");
-            await NotificationHelper.ShowErrorAsync("Error saving audit");
+            _logger.LogError(ex, "Error saving audit");
+            await _notificationHelper.ShowErrorAsync("Error saving audit");
         }
         finally
         {
@@ -274,7 +274,7 @@ public partial class AuditDialog : ComponentBase
 
     private void Cancel()
     {
-        DialogService.Close(false);
+        _dialogService.Close(false);
     }
 
     private void OnScheduledStartDateChanged(DateTime? value)

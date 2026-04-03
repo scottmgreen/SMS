@@ -28,13 +28,11 @@ public partial class RiskAssessmentListing : ComponentBase
     private string BasicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Dependencies
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<RiskAssessmentListing> Logger { get; set; } = default!;
-    
-
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<RiskAssessmentListing> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -62,26 +60,26 @@ public partial class RiskAssessmentListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading risk assessments for listing view");
+            _logger.LogInformation("Loading risk assessments for listing view");
 
             var query = new GetAllRiskAssessmentsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 allAssessments = result.Value.ToList(); // Ensure it's a concrete list
                 assessments = allAssessments; // Initially show all assessments
                 totalCount = allAssessments.Count();
-                Logger.LogInformation("Loaded {Count} risk assessments for listing", totalCount);
+                _logger.LogInformation("Loaded {Count} risk assessments for listing", totalCount);
 
                 // Only show success notification if we have data
                 if (totalCount > 0)
                 {
-                    await NotificationHelper.ShowSuccessAsync($"Successfully loaded {totalCount} risk assessments");
+                    await _notificationHelper.ShowSuccessAsync($"Successfully loaded {totalCount} risk assessments");
                 }
                 else
                 {
-                    await NotificationHelper.ShowInfoAsync("No risk assessments found");
+                    await _notificationHelper.ShowInfoAsync("No risk assessments found");
                 }
             }
             else
@@ -91,8 +89,8 @@ public partial class RiskAssessmentListing : ComponentBase
                 assessments = allAssessments;
                 totalCount = 0;
                 
-                await NotificationHelper.ShowErrorAsync("Failed to load risk assessments");
-                Logger.LogError("Failed to load risk assessments: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync("Failed to load risk assessments");
+                _logger.LogError("Failed to load risk assessments: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
@@ -102,8 +100,8 @@ public partial class RiskAssessmentListing : ComponentBase
             assessments = allAssessments;
             totalCount = 0;
             
-            Logger.LogError(ex, "Error loading risk assessments");
-            await NotificationHelper.ShowErrorAsync($"Error loading risk assessments: {ex.Message}");
+            _logger.LogError(ex, "Error loading risk assessments");
+            await _notificationHelper.ShowErrorAsync($"Error loading risk assessments: {ex.Message}");
         }
         finally
         {
@@ -119,27 +117,27 @@ public partial class RiskAssessmentListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
+            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all assessments yet, load them first
             if (allAssessments == null || !allAssessments.Any())
             {
-                Logger.LogInformation("No assessments cached, loading initial data");
+                _logger.LogInformation("No assessments cached, loading initial data");
                 await LoadInitialData();
                 return;
             }
 
             // Start with all assessments
             var query = allAssessments.AsQueryable();
-            Logger.LogInformation("Starting with {Count} total assessments", query.Count());
+            _logger.LogInformation("Starting with {Count} total assessments", query.Count());
 
             // Apply filtering
             if (!string.IsNullOrEmpty(args.Filter))
             {
-                Logger.LogInformation("Applying filter: {Filter}", args.Filter);
+                _logger.LogInformation("Applying filter: {Filter}", args.Filter);
                 query = ApplyFiltering(query, args);
-                Logger.LogInformation("After filtering: {Count} assessments", query.Count());
+                _logger.LogInformation("After filtering: {Count} assessments", query.Count());
             }
 
             // Get total count after filtering but before paging
@@ -148,40 +146,40 @@ public partial class RiskAssessmentListing : ComponentBase
             // Apply sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                Logger.LogInformation("Applying sorting: {OrderBy}", args.OrderBy);
+                _logger.LogInformation("Applying sorting: {OrderBy}", args.OrderBy);
                 query = ApplySorting(query, args.OrderBy);
-                Logger.LogInformation("Sorting applied successfully");
+                _logger.LogInformation("Sorting applied successfully");
             }
             else
             {
                 // Default sorting by CreatedDate descending
-                Logger.LogInformation("Applying default sort by CreatedDate");
+                _logger.LogInformation("Applying default sort by CreatedDate");
                 query = query.OrderByDescending(a => a.CreatedDate ?? DateTime.MinValue);
             }
 
             // Apply paging
             if (args.Skip.HasValue && args.Skip > 0)
             {
-                Logger.LogInformation("Applying skip: {Skip}", args.Skip);
+                _logger.LogInformation("Applying skip: {Skip}", args.Skip);
                 query = query.Skip(args.Skip.Value);
             }
 
             if (args.Top.HasValue && args.Top > 0)
             {
-                Logger.LogInformation("Applying take: {Top}", args.Top);
+                _logger.LogInformation("Applying take: {Top}", args.Top);
                 query = query.Take(args.Top.Value);
             }
 
             assessments = query.ToList();
 
-            Logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} assessments", 
+            _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} assessments", 
                 assessments.Count(), totalCount);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
+            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
-            await NotificationHelper.ShowErrorAsync($"Error loading data: {ex.Message}");
+            await _notificationHelper.ShowErrorAsync($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
             try
@@ -191,7 +189,7 @@ public partial class RiskAssessmentListing : ComponentBase
             }
             catch (Exception fallbackEx)
             {
-                Logger.LogError(fallbackEx, "Error in LoadData fallback");
+                _logger.LogError(fallbackEx, "Error in LoadData fallback");
                 assessments = new List<RiskAssessment>();
                 totalCount = 0;
             }
@@ -210,14 +208,14 @@ public partial class RiskAssessmentListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
+            _logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
                 args.Filter, args.Filters?.Count() ?? 0);
 
             // Handle simple string filter (when user types in the general filter)
             if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
             {
                 var filterValue = args.Filter.ToLower();
-                Logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
+                _logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
                 
                 query = query.Where(a => 
                     (!string.IsNullOrEmpty(a.Code) && a.Code.ToLower().Contains(filterValue)) ||
@@ -233,7 +231,7 @@ public partial class RiskAssessmentListing : ComponentBase
             // Handle advanced column-specific filters
             if (args.Filters != null && args.Filters.Any())
             {
-                Logger.LogInformation("Applying {Count} advanced filters", args.Filters.Count());
+                _logger.LogInformation("Applying {Count} advanced filters", args.Filters.Count());
                 
                 foreach (var filter in args.Filters)
                 {
@@ -241,7 +239,7 @@ public partial class RiskAssessmentListing : ComponentBase
                     var filterValue = filter.FilterValue?.ToString()?.ToLower();
                     var filterOperator = filter.FilterOperator;
 
-                    Logger.LogInformation("Processing filter - Column: {Column}, Value: {Value}, Operator: {Operator}", 
+                    _logger.LogInformation("Processing filter - Column: {Column}, Value: {Value}, Operator: {Operator}", 
                         columnName, filterValue, filterOperator);
 
                     if (string.IsNullOrEmpty(filterValue)) continue;
@@ -297,7 +295,7 @@ public partial class RiskAssessmentListing : ComponentBase
                             }
                             break;
                         default:
-                            Logger.LogWarning("Unknown filter column: {ColumnName}", columnName);
+                            _logger.LogWarning("Unknown filter column: {ColumnName}", columnName);
                             break;
                     }
                 }
@@ -307,7 +305,7 @@ public partial class RiskAssessmentListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
+            _logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
                 args.Filter, args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
             return query; // Return unfiltered query if filtering fails
         }
@@ -407,7 +405,7 @@ public partial class RiskAssessmentListing : ComponentBase
             var propertyName = parts[0].ToLower();
             var isDescending = parts.Length > 1 && parts[1].ToLower() == "desc";
 
-            Logger.LogInformation("Applying sorting: Property={PropertyName}, Descending={IsDescending}", propertyName, isDescending);
+            _logger.LogInformation("Applying sorting: Property={PropertyName}, Descending={IsDescending}", propertyName, isDescending);
 
             return propertyName switch
             {
@@ -429,7 +427,7 @@ public partial class RiskAssessmentListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
+            _logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
             return query.OrderByDescending(a => a.CreatedDate ?? DateTime.MinValue); // Fallback to default sort
         }
     }
@@ -465,16 +463,16 @@ public partial class RiskAssessmentListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Viewing risk assessment: {Code}", assessment.Code);
+            _logger.LogInformation("Viewing risk assessment: {Code}", assessment.Code);
             SelectedAssessment = assessment;
             ShowViewDialog = true;
             StateHasChanged();
-            await NotificationHelper.ShowInfoAsync($"Viewing details for assessment {assessment.Code}");
+            await _notificationHelper.ShowInfoAsync($"Viewing details for assessment {assessment.Code}");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error viewing risk assessment {Code}", assessment.Code);
-            await NotificationHelper.ShowErrorAsync("Error viewing risk assessment");
+            _logger.LogError(ex, "Error viewing risk assessment {Code}", assessment.Code);
+            await _notificationHelper.ShowErrorAsync("Error viewing risk assessment");
         }
     }
 
@@ -482,13 +480,13 @@ public partial class RiskAssessmentListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Editing risk assessment: {Code}", assessment.Code);
+            _logger.LogInformation("Editing risk assessment: {Code}", assessment.Code);
             await NavigateToTechnicalAssessment(assessment);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error editing risk assessment {Code}", assessment.Code);
-            await NotificationHelper.ShowErrorAsync("Error opening risk assessment editor");
+            _logger.LogError(ex, "Error editing risk assessment {Code}", assessment.Code);
+            await _notificationHelper.ShowErrorAsync("Error opening risk assessment editor");
         }
     }
     
@@ -501,21 +499,21 @@ public partial class RiskAssessmentListing : ComponentBase
 
             if (string.IsNullOrEmpty(reportCode))
             {
-                Logger.LogWarning("Could not determine ReportCode for assessment {AssessmentCode}", assessment.Code);
-                await NotificationHelper.ShowErrorAsync("Could not determine report code for this assessment");
+                _logger.LogWarning("Could not determine ReportCode for assessment {AssessmentCode}", assessment.Code);
+                await _notificationHelper.ShowErrorAsync("Could not determine report code for this assessment");
                 return;
             }
 
             var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{reportCode}/{assessment.HazardCode}/{assessment.CurrentStep}";
 
-            Logger.LogInformation("Navigating to Technical Assessment: {Url}", navigationUrl);
-            Navigation.NavigateToSecure(navigationUrl);
-            await NotificationHelper.ShowInfoAsync($"Opening technical assessment for {assessment.Code}");
+            _logger.LogInformation("Navigating to Technical Assessment: {Url}", navigationUrl);
+            _navigation.NavigateToSecure(navigationUrl);
+            await _notificationHelper.ShowInfoAsync($"Opening technical assessment for {assessment.Code}");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error navigating to Technical Assessment for {AssessmentCode}", assessment.Code);
-            await NotificationHelper.ShowErrorAsync("Failed to navigate to Technical Assessment");
+            _logger.LogError(ex, "Error navigating to Technical Assessment for {AssessmentCode}", assessment.Code);
+            await _notificationHelper.ShowErrorAsync("Failed to navigate to Technical Assessment");
         }
     }
     
@@ -526,33 +524,33 @@ public partial class RiskAssessmentListing : ComponentBase
             // Use the HazardCode from the assessment to get the proper ReportCode
             if (string.IsNullOrEmpty(assessment.HazardCode))
             {
-                Logger.LogWarning("Assessment {AssessmentCode} has no HazardCode", assessment.Code);
+                _logger.LogWarning("Assessment {AssessmentCode} has no HazardCode", assessment.Code);
                 return null;
             }
 
-            Logger.LogInformation("Getting ReportCode via HazardCode {HazardCode} from assessment {AssessmentCode}",
+            _logger.LogInformation("Getting ReportCode via HazardCode {HazardCode} from assessment {AssessmentCode}",
                 assessment.HazardCode, assessment.Code);
 
             var hazardQuery = new GetHazardByCodeQuery(new HazardID(assessment.HazardCode));
-            var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+            var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
             if (hazardResult.IsSuccess && hazardResult.Value != null)
             {
                 var reportCode = hazardResult.Value.ReportCode;
-                Logger.LogInformation("Found ReportCode {ReportCode} for HazardCode {HazardCode}",
+                _logger.LogInformation("Found ReportCode {ReportCode} for HazardCode {HazardCode}",
                     reportCode, assessment.HazardCode);
                 return reportCode;
             }
             else
             {
-                Logger.LogWarning("Failed to load Hazard {HazardCode}: {Error}",
+                _logger.LogWarning("Failed to load Hazard {HazardCode}: {Error}",
                     assessment.HazardCode, hazardResult.Error?.Message ?? "Unknown error");
                 return null;
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error getting ReportCode from assessment {AssessmentCode} via HazardCode {HazardCode}",
+            _logger.LogError(ex, "Error getting ReportCode from assessment {AssessmentCode} via HazardCode {HazardCode}",
                 assessment.Code, assessment.HazardCode);
             return null;
         }
@@ -562,7 +560,7 @@ public partial class RiskAssessmentListing : ComponentBase
     {
         try
         {
-            var confirmResult = await DialogService.Confirm(
+            var confirmResult = await _dialogService.Confirm(
                 message: $"Are you sure you want to delete risk assessment '{assessment.Name}' ({assessment.Code})?\n\nThis action cannot be undone.",
                 title: "Confirm Deletion",
                 options: new ConfirmOptions
@@ -574,15 +572,15 @@ public partial class RiskAssessmentListing : ComponentBase
 
             if (confirmResult == true)
             {
-                Logger.LogInformation("Deleting risk assessment: {Code}", assessment.Code);
+                _logger.LogInformation("Deleting risk assessment: {Code}", assessment.Code);
 
                 var deleteCommand = new DeleteRiskAssessmentCommand(new RiskAssessmentID(assessment.Id.Value));
-                var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+                var result = await _mediator.SendAsync(deleteCommand, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
-                    await NotificationHelper.ShowSuccessAsync($"Risk assessment '{assessment.Name}' deleted successfully");
-                    Logger.LogInformation("Successfully deleted risk assessment: {Code}", assessment.Code);
+                    await _notificationHelper.ShowSuccessAsync($"Risk assessment '{assessment.Name}' deleted successfully");
+                    _logger.LogInformation("Successfully deleted risk assessment: {Code}", assessment.Code);
 
                     // Refresh the data grid by reloading initial data
                     await LoadInitialData();
@@ -590,15 +588,15 @@ public partial class RiskAssessmentListing : ComponentBase
                 }
                 else
                 {
-                    await NotificationHelper.ShowErrorAsync($"Failed to delete risk assessment: {result.Error?.Message}");
-                    Logger.LogError("Failed to delete risk assessment {Code}: {Error}", assessment.Code, result.Error?.Message);
+                    await _notificationHelper.ShowErrorAsync($"Failed to delete risk assessment: {result.Error?.Message}");
+                    _logger.LogError("Failed to delete risk assessment {Code}: {Error}", assessment.Code, result.Error?.Message);
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting risk assessment {Code}", assessment.Code);
-            await NotificationHelper.ShowErrorAsync("Error deleting risk assessment");
+            _logger.LogError(ex, "Error deleting risk assessment {Code}", assessment.Code);
+            await _notificationHelper.ShowErrorAsync("Error deleting risk assessment");
         }
     }
     #endregion

@@ -30,11 +30,10 @@ public partial class HazardFileListing : ComponentBase
     private string BasicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Dependencies
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<HazardFileListing> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<HazardFileListing> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     #endregion
 
@@ -69,17 +68,17 @@ public partial class HazardFileListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading hazard files for listing view");
+            _logger.LogInformation("Loading hazard files for listing view");
 
             var query = new GetActiveHazardFilesQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 allFiles = result.Value.ToList(); // Store all files for filtering/sorting
                 files = allFiles; // Initially show all files
                 totalCount = allFiles.Count();
-                Logger.LogInformation("Loaded {Count} hazard files for listing", totalCount);
+                _logger.LogInformation("Loaded {Count} hazard files for listing", totalCount);
 
                 // Show success notification if we have data
                 if (totalCount > 0)
@@ -99,7 +98,7 @@ public partial class HazardFileListing : ComponentBase
                 totalCount = 0;
                 
                 ShowErrorAsyncNotification("Failed to load hazard files");
-                Logger.LogError("Failed to load hazard files: {Error}", result.Error?.Message);
+                _logger.LogError("Failed to load hazard files: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
@@ -109,7 +108,7 @@ public partial class HazardFileListing : ComponentBase
             files = allFiles;
             totalCount = 0;
             
-            Logger.LogError(ex, "Error loading hazard files");
+            _logger.LogError(ex, "Error loading hazard files");
             ShowErrorAsyncNotification($"Error loading hazard files: {ex.Message}");
         }
         finally
@@ -126,27 +125,27 @@ public partial class HazardFileListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
+            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all files yet, load them first
             if (allFiles == null || !allFiles.Any())
             {
-                Logger.LogInformation("No files cached, loading initial data");
+                _logger.LogInformation("No files cached, loading initial data");
                 await LoadInitialData();
                 return;
             }
 
             // Start with all files
             var query = allFiles.AsQueryable();
-            Logger.LogInformation("Starting with {Count} total files", query.Count());
+            _logger.LogInformation("Starting with {Count} total files", query.Count());
 
             // Apply filtering
             if (!string.IsNullOrEmpty(args.Filter))
             {
-                Logger.LogInformation("Applying filter: {Filter}", args.Filter);
+                _logger.LogInformation("Applying filter: {Filter}", args.Filter);
                 query = ApplyFiltering(query, args);
-                Logger.LogInformation("After filtering: {Count} files", query.Count());
+                _logger.LogInformation("After filtering: {Count} files", query.Count());
             }
 
             // Get total count after filtering but before paging
@@ -155,38 +154,38 @@ public partial class HazardFileListing : ComponentBase
             // Apply sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                Logger.LogInformation("Applying sorting: {OrderBy}", args.OrderBy);
+                _logger.LogInformation("Applying sorting: {OrderBy}", args.OrderBy);
                 query = ApplySorting(query, args.OrderBy);
-                Logger.LogInformation("Sorting applied successfully");
+                _logger.LogInformation("Sorting applied successfully");
             }
             else
             {
                 // Default sorting by UploadedDate descending
-                Logger.LogInformation("Applying default sort by UploadedDate");
+                _logger.LogInformation("Applying default sort by UploadedDate");
                 query = query.OrderByDescending(f => f.UploadedDate ?? DateTime.MinValue);
             }
 
             // Apply paging
             if (args.Skip.HasValue && args.Skip > 0)
             {
-                Logger.LogInformation("Applying skip: {Skip}", args.Skip);
+                _logger.LogInformation("Applying skip: {Skip}", args.Skip);
                 query = query.Skip(args.Skip.Value);
             }
 
             if (args.Top.HasValue && args.Top > 0)
             {
-                Logger.LogInformation("Applying take: {Top}", args.Top);
+                _logger.LogInformation("Applying take: {Top}", args.Top);
                 query = query.Take(args.Top.Value);
             }
 
             files = query.ToList();
 
-            Logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} files", 
+            _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} files", 
                 files.Count(), totalCount);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
+            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
             ShowErrorAsyncNotification($"Error loading data: {ex.Message}");
             
@@ -198,7 +197,7 @@ public partial class HazardFileListing : ComponentBase
             }
             catch (Exception fallbackEx)
             {
-                Logger.LogError(fallbackEx, "Error in LoadData fallback");
+                _logger.LogError(fallbackEx, "Error in LoadData fallback");
                 files = new List<HazardFile>();
                 totalCount = 0;
             }
@@ -217,14 +216,14 @@ public partial class HazardFileListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
+            _logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
                 args.Filter, args.Filters?.Count() ?? 0);
 
             // Handle simple string filter (when user types in the general filter)
             if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
             {
                 var filterValue = args.Filter.ToLower();
-                Logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
+                _logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
                 
                 query = query.Where(f => 
                     (!string.IsNullOrEmpty(f.Code) && f.Code.ToLower().Contains(filterValue)) ||
@@ -242,7 +241,7 @@ public partial class HazardFileListing : ComponentBase
             // Handle advanced column-specific filters
             if (args.Filters != null && args.Filters.Any())
             {
-                Logger.LogInformation("Applying {Count} advanced filters", args.Filters.Count());
+                _logger.LogInformation("Applying {Count} advanced filters", args.Filters.Count());
                 
                 foreach (var filter in args.Filters)
                 {
@@ -250,7 +249,7 @@ public partial class HazardFileListing : ComponentBase
                     var filterValue = filter.FilterValue?.ToString()?.ToLower();
                     var filterOperator = filter.FilterOperator;
 
-                    Logger.LogInformation("Processing filter - Column: {Column}, Value: {Value}, Operator: {Operator}", 
+                    _logger.LogInformation("Processing filter - Column: {Column}, Value: {Value}, Operator: {Operator}", 
                         columnName, filterValue, filterOperator);
 
                     if (string.IsNullOrEmpty(filterValue)) continue;
@@ -300,7 +299,7 @@ public partial class HazardFileListing : ComponentBase
                             }
                             break;
                         default:
-                            Logger.LogWarning("Unknown filter column: {ColumnName}", columnName);
+                            _logger.LogWarning("Unknown filter column: {ColumnName}", columnName);
                             break;
                     }
                 }
@@ -310,7 +309,7 @@ public partial class HazardFileListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
+            _logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
                 args.Filter, args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
             return query; // Return unfiltered query if filtering fails
         }
@@ -396,7 +395,7 @@ public partial class HazardFileListing : ComponentBase
             var propertyName = parts[0].ToLower();
             var isDescending = parts.Length > 1 && parts[1].ToLower() == "desc";
 
-            Logger.LogInformation("Applying sorting: Property={PropertyName}, Descending={IsDescending}", propertyName, isDescending);
+            _logger.LogInformation("Applying sorting: Property={PropertyName}, Descending={IsDescending}", propertyName, isDescending);
 
             return propertyName switch
             {
@@ -417,7 +416,7 @@ public partial class HazardFileListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
+            _logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
             return query.OrderByDescending(f => f.UploadedDate ?? DateTime.MinValue); // Fallback to default sort
         }
     }
@@ -499,7 +498,7 @@ public partial class HazardFileListing : ComponentBase
     /// </summary>
     private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message, 7000);
+        _notificationHelper.ShowErrorAsync( message, 7000);
     }
 
     /// <summary>
@@ -507,7 +506,7 @@ public partial class HazardFileListing : ComponentBase
     /// </summary>
     private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message, 5000);
+        _notificationHelper.ShowSuccessAsync( message, 5000);
     }
 
     /// <summary>
@@ -515,7 +514,7 @@ public partial class HazardFileListing : ComponentBase
     /// </summary>
     private void ShowInfoAsyncNotification(string message)
     {
-        NotificationHelper.ShowInfoAsync( message, 5000);
+        _notificationHelper.ShowInfoAsync( message, 5000);
     }
     #endregion
 
@@ -527,7 +526,7 @@ public partial class HazardFileListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Reading file: {Code} - {FileName}", file.Code, file.FileName);
+            _logger.LogInformation("Reading file: {Code} - {FileName}", file.Code, file.FileName);
 
             selectedFile = file;
             showFileModal = true;
@@ -539,12 +538,12 @@ public partial class HazardFileListing : ComponentBase
 
             // Get file data using correct CQRS query
             var query = new GetHazardFileDataQuery(file.Code);
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsFailure || result.Value?.FileData == null)
             {
                 fileViewError = "Could not load file data. File may be stored externally or corrupted.";
-                Logger.LogWarning("Failed to load file data for: {Code}", file.Code);
+                _logger.LogWarning("Failed to load file data for: {Code}", file.Code);
                 return;
             }
 
@@ -572,12 +571,12 @@ public partial class HazardFileListing : ComponentBase
                 fileViewError = $"Preview not supported for {file.FileType} files. You can download the file instead.";
             }
 
-            Logger.LogInformation("Successfully loaded file data for viewing: {Code}", file.Code);
+            _logger.LogInformation("Successfully loaded file data for viewing: {Code}", file.Code);
             ShowInfoAsyncNotification($"Opened file viewer for {file.FileName}");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error reading file: {Code}", file.Code);
+            _logger.LogError(ex, "Error reading file: {Code}", file.Code);
             fileViewError = "An error occurred while loading the file.";
             ShowErrorAsyncNotification("Error reading file");
         }
@@ -595,7 +594,7 @@ public partial class HazardFileListing : ComponentBase
     {
         try
         {
-            var confirmed = await DialogService.Confirm(
+            var confirmed = await _dialogService.Confirm(
                 $"Are you sure you want to delete '{file.FileName}'?\n\nThis action cannot be undone.",
                 "Delete File",
                 new ConfirmOptions()
@@ -606,7 +605,7 @@ public partial class HazardFileListing : ComponentBase
 
             if (confirmed == true)
             {
-                Logger.LogInformation("Deleting file: {Code} - {FileName}", file.Code, file.FileName);
+                _logger.LogInformation("Deleting file: {Code} - {FileName}", file.Code, file.FileName);
 
                 // Use correct CQRS command for deactivation (soft delete)
                 var command = new DeactivateHazardFileCommand(
@@ -614,7 +613,7 @@ public partial class HazardFileListing : ComponentBase
                     "Deleted by user from HazardFileListing"
                 );
 
-                var result = await Mediator.SendAsync(command, CancellationToken.None);
+                var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
@@ -624,18 +623,18 @@ public partial class HazardFileListing : ComponentBase
                     await LoadInitialData();
                     StateHasChanged();
 
-                    Logger.LogInformation("Successfully deleted file: {Code}", file.Code);
+                    _logger.LogInformation("Successfully deleted file: {Code}", file.Code);
                 }
                 else
                 {
                     ShowErrorAsyncNotification($"Failed to delete file: {result.Error?.Message}");
-                    Logger.LogError("Failed to delete file {Code}: {Error}", file.Code, result.Error?.Message);
+                    _logger.LogError("Failed to delete file {Code}: {Error}", file.Code, result.Error?.Message);
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting file: {Code}", file.Code);
+            _logger.LogError(ex, "Error deleting file: {Code}", file.Code);
             ShowErrorAsyncNotification("An error occurred while deleting the file.");
         }
     }
@@ -659,13 +658,13 @@ public partial class HazardFileListing : ComponentBase
 
         try
         {
-            Logger.LogInformation("Downloading file: {Code} - {FileName}", selectedFile.Code, selectedFile.FileName);
+            _logger.LogInformation("Downloading file: {Code} - {FileName}", selectedFile.Code, selectedFile.FileName);
 
             // Get file data if we don't have it
             if (string.IsNullOrEmpty(fileDataUrl) && string.IsNullOrEmpty(fileTextContent))
             {
                 var query = new GetHazardFileDataQuery(selectedFile.Code);
-                var result = await Mediator.SendAsync(query, CancellationToken.None);
+                var result = await _mediator.SendAsync(query, CancellationToken.None);
 
                 if (result.IsFailure || result.Value?.FileData == null)
                 {
@@ -693,7 +692,7 @@ public partial class HazardFileListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error downloading file: {Code}", selectedFile.Code);
+            _logger.LogError(ex, "Error downloading file: {Code}", selectedFile.Code);
             ShowErrorAsyncNotification("An error occurred while downloading the file.");
         }
     }

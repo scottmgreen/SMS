@@ -6,9 +6,9 @@ namespace SMS3.Components.Pages.Listings;
 
 public partial class RiskAnalysisListing : ComponentBase
 {
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<RiskAnalysisListing> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<RiskAnalysisListing> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
 
     private RadzenDataGrid<RiskAnalysis>? analysisGrid;
     private IEnumerable<RiskAnalysis> analysisResults = new List<RiskAnalysis>();
@@ -25,24 +25,24 @@ public partial class RiskAnalysisListing : ComponentBase
         try
         {
             var query = new GetAllRiskAnalysisQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 analysisResults = result.Value;
                 totalCount = analysisResults.Count();
-                Logger.LogInformation("Loaded {Count} risk analysis results", totalCount);
+                _logger.LogInformation("Loaded {Count} risk analysis results", totalCount);
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync("Failed to load risk analysis results");
-                Logger.LogError("Failed to load risk analysis: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync("Failed to load risk analysis results");
+                _logger.LogError("Failed to load risk analysis: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading risk analysis");
-            await NotificationHelper.ShowErrorAsync("Error loading risk analysis");
+            _logger.LogError(ex, "Error loading risk analysis");
+            await _notificationHelper.ShowErrorAsync("Error loading risk analysis");
         }
     }
 
@@ -79,8 +79,8 @@ public partial class RiskAnalysisListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in LoadData");
-            await NotificationHelper.ShowErrorAsync("Error loading data");
+            _logger.LogError(ex, "Error in LoadData");
+            await _notificationHelper.ShowErrorAsync("Error loading data");
         }
         finally
         {
@@ -99,6 +99,6 @@ public partial class RiskAnalysisListing : ComponentBase
 
     private void ShowActions(RiskAnalysis analysis)
     {
-        Logger.LogInformation("Actions requested for risk analysis: {Code}", analysis.Code);
+        _logger.LogInformation("Actions requested for risk analysis: {Code}", analysis.Code);
     }
 }

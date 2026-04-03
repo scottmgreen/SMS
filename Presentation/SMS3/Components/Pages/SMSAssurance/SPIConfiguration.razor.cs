@@ -8,11 +8,11 @@ namespace SMS3.Components.Pages.SMSAssurance;
 public partial class SPIConfiguration
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
 
     #region Component References
@@ -90,7 +90,7 @@ public partial class SPIConfiguration
         try
         {
             var query = new GetAllSafetyPerformanceIndicatorsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -250,7 +250,7 @@ public partial class SPIConfiguration
 
     private async Task DeleteSPI(SafetyPerformanceIndicator spi)
     {
-        var confirmed = await DialogService.Confirm(
+        var confirmed = await _dialogService.Confirm(
             $"Are you sure you want to delete the SPI '{spi.Code} - {spi.Name}'?\n\nThis action cannot be undone and will also delete all associated data points.",
             "Delete SPI",
             new ConfirmOptions()
@@ -266,7 +266,7 @@ public partial class SPIConfiguration
             {
                 var spiId = new SafetyPerformanceIndicatorID(spi.Id.Value);
                 var command = new DeleteSafetyPerformanceIndicatorCommand(spiId);
-                var result = await Mediator.SendAsync(command, CancellationToken.None);
+                var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
@@ -310,7 +310,7 @@ public partial class SPIConfiguration
             { "AvailableDepartments", availableDepartments }
         };
 
-        var result = await DialogService.OpenAsync<Components.SPIEditDialog>(
+        var result = await _dialogService.OpenAsync<Components.SPIEditDialog>(
             "", // Empty title since we're using custom header
             parameters,
             options);
@@ -351,7 +351,7 @@ public partial class SPIConfiguration
                     "SYSTEM"
                 );
 
-                result = await Mediator.SendAsync(command, CancellationToken.None);
+                result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
@@ -388,7 +388,7 @@ public partial class SPIConfiguration
                     "SYSTEM"
                 );
 
-                result = await Mediator.SendAsync(command, CancellationToken.None);
+                result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
@@ -486,17 +486,17 @@ public partial class SPIConfiguration
     #region Notification Methods
     private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        _notificationHelper.ShowSuccessAsync( message);
     }
 
     private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        _notificationHelper.ShowErrorAsync( message);
     }
 
     private void ShowInfoAsyncNotification(string message)
     {
-        NotificationHelper.ShowInfoAsync( message);
+        _notificationHelper.ShowInfoAsync( message);
     }
     #endregion
 

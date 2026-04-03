@@ -12,16 +12,15 @@
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @inject IJSRuntime JSRuntime
-@inject ILogger<NavMenu> Logger
-@inject NavigationManager Navigation
-@inject Radzen.DialogService DialogService
-@inject IWebHostEnvironment Environment
-@inject IConfiguration Configuration
-@inject ISecureRoutingService SecureRoutingService
+@inject ILogger<NavMenu> _logger
+@inject NavigationManager _navigation
+@inject Radzen.DialogService _dialogService
+@inject IWebHostEnvironment _environment
+@inject IConfiguration _configuration
+@inject ISecureRoutingService _secureRoutingService
 
-@using SMS3.Components.Shared
 
-<!-- SMS Navigation with FULL Original Menu Structure -->
+<!-- SMS _navigation with FULL Original Menu Structure -->
 <nav class="navbar navbar-expand-lg sms-nav">
     <div class="container-fluid">
         <!-- Brand Logo with Environment Detection -->
@@ -52,31 +51,72 @@
                                     <RadzenMenuItem Text="Report Processing" Value='"/SMSRiskManagement/ReportProcessing"' Icon="settings"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Search Reports" Value='"/SMSRiskManagement/HazardReportSearch"' Icon="search"></RadzenMenuItem>
                                     <!-- Investigations -->
-                                    <RadzenMenuItem Text="Investigate" Icon="search">
-                                        <RadzenMenuItem Text="Active Investigations" Value='"/Listings/Investigations"' Icon="assignment"></RadzenMenuItem>
-                                        <RadzenMenuItem Text="Interview Calendar" Value='"/SMSRiskManagement/InterviewCalendar"' Icon="diversity_3"></RadzenMenuItem>
-                                    </RadzenMenuItem>
+                                    @if (CurrentUserService.CanRead("SMS_Listings_Investigations"))
+                                    {
+                                        <RadzenMenuItem Text="Investigate" Icon="search">
+                                            <RadzenMenuItem Text="Active Investigations" Value='"/Listings/Investigations"' Icon="assignment"></RadzenMenuItem>
+                                            <RadzenMenuItem Text="Interview Calendar" Value='"/SMSRiskManagement/InterviewCalendar"' Icon="diversity_3"></RadzenMenuItem>
+                                        </RadzenMenuItem> 
+                                    }
+                                    
                                     <!-- Mitigation -->
-                                    <RadzenMenuItem Text="Mitigation" Icon="search">
-                                        <RadzenMenuItem Text="Active Mitigations" Value='"/Listings/Mitigations"' Icon="assignment"></RadzenMenuItem>
-                                        <RadzenMenuItem Text="Mitigations Calendar" Value='"/SMSRiskManagement/MitigationCalendar"' Icon="diversity_3"></RadzenMenuItem>
-                                    </RadzenMenuItem>
+                                    @if (CurrentUserService.CanRead("SMS_Listings_Mitigations"))
+                                    {
+                                        <RadzenMenuItem Text="Mitigation" Icon="search">
+                                            <RadzenMenuItem Text="Active Mitigations" Value='"/Listings/Mitigations"' Icon="assignment"></RadzenMenuItem>
+                                            <RadzenMenuItem Text="Mitigations Calendar" Value='"/SMSRiskManagement/MitigationCalendar"' Icon="diversity_3"></RadzenMenuItem>
+                                        </RadzenMenuItem>
+                                    }
+                                    
                                 </RadzenMenuItem>
                             </RadzenMenu>
                         </div>
                     }
 
-                    <!-- Listings Menu -->
+                    <!-- Listings Menu NEEDS THE PERMISSIONS if (CurrentUserService.CanRead("SMS_Listings_Reports")) APPLIED
+
+                    SMS_Listings
+                    SMS_Listings_HazardFiles
+                    SMS_Listings_HazardLocations
+                    SMS_Listings_Hazards
+                    SMS_Listings_Investigations
+                    SMS_Listings_Mitigations
+                    SMS_Listings_Reports
+                    SMS_Listings_RiskAssessments
+
+                     -->
                     <div class="nav-item me-3">
                         <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                             <RadzenMenuItem Text="Listings" Icon="list" class="sms-menu-item">
-                                <RadzenMenuItem Text="Reports" Value='"/Listings/Reports"' Icon="assignment"></RadzenMenuItem>
-                                <RadzenMenuItem Text="Hazards" Value='"/Listings/Hazards"' Icon="warning"></RadzenMenuItem>
-                                <RadzenMenuItem Text="Risk Assessments" Value='"/Listings/RiskAssessments"' Icon="assessment"></RadzenMenuItem>
-                                <RadzenMenuItem Text="Mitigations" Value='"/Listings/Mitigations"' Icon="security"></RadzenMenuItem>
-                                <RadzenMenuItem Text="Investigations" Value='"/Listings/Investigations"' Icon="search"></RadzenMenuItem>
-                                <RadzenMenuItem Text="Hazard Locations" Value='"/Listings/HazardLocations"' Icon="place"></RadzenMenuItem>
-                                <RadzenMenuItem Text="Hazard Files" Value='"/Listings/HazardFiles"' Icon="attach_file"></RadzenMenuItem>
+                                @if (CurrentUserService.CanRead("SMS_Listings_Reports"))
+                                {
+                                    <RadzenMenuItem Text="Reports" Value='"/Listings/Reports"' Icon="assignment"></RadzenMenuItem>
+                                }
+                                @if (CurrentUserService.CanRead("SMS_Listings_Hazards"))
+                                {
+                                    <RadzenMenuItem Text="Hazards" Value='"/Listings/Hazards"' Icon="warning"></RadzenMenuItem> 
+                                }
+                                @if (CurrentUserService.CanRead("SMS_Listings_RiskAssessments"))
+                                {
+                                    <RadzenMenuItem Text="Risk Assessments" Value='"/Listings/RiskAssessments"' Icon="assessment"></RadzenMenuItem> 
+                                }
+                                @if (CurrentUserService.CanRead("SMS_Listings_Mitigations"))
+                                {
+                                    <RadzenMenuItem Text="Mitigations" Value='"/Listings/Mitigations"' Icon="security"></RadzenMenuItem>
+                                }
+                                @if (CurrentUserService.CanRead("SMS_Listings_Investigations"))
+                                {
+                                    <RadzenMenuItem Text="Investigations" Value='"/Listings/Investigations"' Icon="search"></RadzenMenuItem>
+                                }
+                                @if (CurrentUserService.CanRead("SMS_Listings_HazardLocations"))
+                                {
+                                    <RadzenMenuItem Text="Hazard Locations" Value='"/Listings/HazardLocations"' Icon="place"></RadzenMenuItem>
+                                }
+                                @if (CurrentUserService.CanRead("SMS_Listings_HazardFiles"))
+                                {
+                                    <RadzenMenuItem Text="Hazard Files" Value='"/Listings/HazardFiles"' Icon="attach_file"></RadzenMenuItem>
+                                }
+                                
                             </RadzenMenuItem>
                         </RadzenMenu>
                     </div>
@@ -157,8 +197,6 @@
                     <div class="nav-item">
                         <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                             <RadzenMenuItem Text="@CurrentUserService?.UserDisplayName" Icon="person" class="sms-menu-item">
-                                @* <RadzenMenuItem Text="Role & Permissions" Icon="account_circle" Click="@ShowUserProfileModal" />
-                                <RadzenMenuItem Text="About" Icon="info" Value='"/About"' /> *@
                                 <RadzenMenuItem Text="Logout" Icon="logout" Click="@OnLogoutClick" />
                             </RadzenMenuItem>
                         </RadzenMenu>
@@ -222,12 +260,12 @@
 
     // Environment Detection - Always production appearance
     private string BrandCssClass => "";
-    private string EnvironmentSuffix => "";
+    private string EnvironmentSuffix => _environment.IsDevelopment() ? "[Development]" : "";
 
     // URL-based login visibility - show login only on specific paths or encrypted login
-    private bool ShouldShowLoginToAnonymous => Navigation.Uri.Contains("/pdx") || 
-                                              Navigation.Uri.Contains("/admin") ||
-                                              Navigation.Uri.Contains("/login") ||
+    private bool ShouldShowLoginToAnonymous => _navigation.Uri.Contains("/pdx") || 
+                                              _navigation.Uri.Contains("/admin") ||
+                                              _navigation.Uri.Contains("/login") ||
                                               IsObfuscatedLogin();
 
     /// <summary>
@@ -237,11 +275,11 @@
     {
         try
         {
-            var currentPath = Navigation.ToBaseRelativePath(Navigation.Uri);
+            var currentPath = _navigation.ToBaseRelativePath(_navigation.Uri);
             if (currentPath.StartsWith("s/"))
             {
                 var encryptedPart = currentPath.Substring(2);
-                var decrypted = SecureRoutingService.DecryptRouteParameter(encryptedPart);
+                var decrypted = _secureRoutingService.DecryptRouteParameter(encryptedPart);
                 return decrypted.Contains("/login");
             }
         }
@@ -254,18 +292,18 @@
     {
         try
         {
-            Logger.LogDebug("🔐 NavMenu OnInitializedAsync - Checking authentication state");
+            _logger.LogDebug("🔐 NavMenu OnInitializedAsync - Checking authentication state");
             
             // Single check - no loops
             if (CurrentUserService?.IsFullyAuthenticated == true)
             {
                 SessionTimerService.StartTimer();
-                Logger.LogDebug("✅ NavMenu initialized with session timer for user: {UserCode}", CurrentUserService.UserCode);
+                _logger.LogDebug("✅ NavMenu initialized with session timer for user: {UserCode}", CurrentUserService.UserCode);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "❌ Error in NavMenu OnInitializedAsync");
+            _logger.LogError(ex, "❌ Error in NavMenu OnInitializedAsync");
         }
     }
     
@@ -289,7 +327,7 @@
     {
         try
         {
-            Logger.LogWarning("🔐 Session timer expired - initiating automatic logout");
+            _logger.LogWarning("🔐 Session timer expired - initiating automatic logout");
             
             // Stop the session timer
             SessionTimerService.StopTimer();
@@ -299,10 +337,10 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error handling session timer expiry");
+            _logger.LogError(ex, "Error handling session timer expiry");
             
             // Force navigation to login as fallback
-            Navigation.NavigateTo("/login", forceLoad: true);
+            _navigation.NavigateTo("/login", forceLoad: true);
         }
     }
 
@@ -314,7 +352,7 @@
         try
         {
             var remaining = SessionTimerService.GetRemainingTime();
-            Logger.LogInformation("🔐 Session warning: {RemainingTime} remaining for user {UserId}", 
+            _logger.LogInformation("🔐 Session warning: {RemainingTime} remaining for user {UserId}", 
                 remaining, CurrentUserService.UserCode);
             
             // The modal warning is handled by the SessionTimeoutModal component
@@ -322,7 +360,7 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error handling session warning");
+            _logger.LogError(ex, "Error handling session warning");
         }
     }
 
@@ -333,7 +371,7 @@
     {
         try
         {
-            Logger.LogInformation("🔐 Session continued by user {UserId}", CurrentUserService.UserCode);
+            _logger.LogInformation("🔐 Session continued by user {UserId}", CurrentUserService.UserCode);
             
             // Update session activity (already done in modal, but ensure it's logged)
             SessionTimerService.UpdateActivity();
@@ -342,7 +380,7 @@
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error handling session continuation");
+            _logger.LogError(ex, "Error handling session continuation");
         }
     }
 
@@ -360,30 +398,30 @@
                 SessionTimerService.UpdateActivity();
             }
 
-            Logger.LogInformation("OnMenuClick called with value: {Value}", args.Value?.ToString());
+            _logger.LogInformation("OnMenuClick called with value: {Value}", args.Value?.ToString());
             
             if (!string.IsNullOrEmpty(args.Value?.ToString()))
             {
                 var value = args.Value.ToString();
                 if (value.StartsWith("/"))
                 {
-                    Logger.LogInformation("Navigating to secure URL: {Url}", value);
+                    _logger.LogInformation("Navigating to secure URL: {Url}", value);
                     // 🔐 SECURE NAVIGATION - All URLs automatically encrypted
-                    Navigation.NavigateToSecure(value);
+                    _navigation.NavigateToSecure(value);
                 }
                 else
                 {
-                    Logger.LogWarning("URL does not start with /: {Url}", value);
+                    _logger.LogWarning("URL does not start with /: {Url}", value);
                 }
             }
             else
             {
-                Logger.LogWarning("OnMenuClick called with empty or null value");
+                _logger.LogWarning("OnMenuClick called with empty or null value");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in OnMenuClick");
+            _logger.LogError(ex, "Error in OnMenuClick");
         }
     }
 
@@ -407,8 +445,8 @@
             SessionTimerService.UpdateActivity();
         }
 
-        Logger.LogInformation("Navigating to About page via secure navigation");
-        Navigation.NavigateToSecure("/About");
+        _logger.LogInformation("Navigating to About page via secure navigation");
+        _navigation.NavigateToSecure("/About");
     }
 
     // **🔥 USER PROFILE MODAL - USING COMPONENT**
@@ -430,7 +468,7 @@
             ShowClose = true
         };
 
-        await DialogService.OpenAsync<UserProfileDialog>("User Profile & Permissions",
+        await _dialogService.OpenAsync<UserProfileDialog>("User Profile & Permissions",
             new Dictionary<string, object>()
             {
                 { "CurrentUserService", CurrentUserService }                
@@ -446,8 +484,8 @@
     }
 
     // Hide all menu items on PDX and Login pages
-    private bool IsOnRestrictedPage => Navigation.Uri.Contains("/pdx") || 
-                                      Navigation.Uri.Contains("/login") ||
+    private bool IsOnRestrictedPage => _navigation.Uri.Contains("/pdx") || 
+                                      _navigation.Uri.Contains("/login") ||
                                       IsObfuscatedLogin();
 
     protected override async Task OnParametersSetAsync()

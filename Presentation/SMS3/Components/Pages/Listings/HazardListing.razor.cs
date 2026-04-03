@@ -25,14 +25,11 @@ public partial class HazardListing : ComponentBase
     private string BasicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Dependencies
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<HazardListing> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<HazardListing> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     
-    [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -58,17 +55,17 @@ public partial class HazardListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading hazards for listing view");
+            _logger.LogInformation("Loading hazards for listing view");
 
             var query = new GetAllHazardsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 allHazards = result.Value; // Store all hazards for filtering/sorting
                 hazards = allHazards; // Initially show all hazards
                 totalCount = allHazards.Count();
-                Logger.LogInformation("Loaded {Count} hazards for listing", totalCount);
+                _logger.LogInformation("Loaded {Count} hazards for listing", totalCount);
 
                 ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazards");
                
@@ -76,12 +73,12 @@ public partial class HazardListing : ComponentBase
             else
             {
                 ShowErrorAsyncNotification("Failed to load hazards");
-                Logger.LogError("Failed to load hazards: {Error}", result.Error?.Message);
+                _logger.LogError("Failed to load hazards: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading hazards");
+            _logger.LogError(ex, "Error loading hazards");
             ShowErrorAsyncNotification("Error loading hazards");
         }
         finally
@@ -98,7 +95,7 @@ public partial class HazardListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
+            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all hazards yet, load them first
@@ -144,12 +141,12 @@ public partial class HazardListing : ComponentBase
 
             hazards = query.ToList();
 
-            Logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} hazards", 
+            _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} hazards", 
                 hazards.Count(), totalCount);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in LoadData");
+            _logger.LogError(ex, "Error in LoadData");
             ShowErrorAsyncNotification("Error loading data");
         }
         finally
@@ -229,7 +226,7 @@ public partial class HazardListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying filters");
+            _logger.LogError(ex, "Error applying filters");
             return query; // Return unfiltered query if filtering fails
         }
     }
@@ -327,7 +324,7 @@ public partial class HazardListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
+            _logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
             return query.OrderByDescending(h => h.CreatedDate); // Fallback to default sort
         }
     }
@@ -344,7 +341,7 @@ public partial class HazardListing : ComponentBase
 
     private void ShowActions(Hazard hazard)
     {
-        Logger.LogInformation("Actions requested for hazard: {Code}", hazard.Code);
+        _logger.LogInformation("Actions requested for hazard: {Code}", hazard.Code);
     }
 
     /// <summary>
@@ -352,7 +349,7 @@ public partial class HazardListing : ComponentBase
     /// </summary>
     private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message, 7000);
+        _notificationHelper.ShowErrorAsync( message, 7000);
     }
 
     /// <summary>
@@ -360,7 +357,7 @@ public partial class HazardListing : ComponentBase
     /// </summary>
     private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message, 5000);
+        _notificationHelper.ShowSuccessAsync( message, 5000);
     }
     #endregion
 
@@ -372,7 +369,7 @@ public partial class HazardListing : ComponentBase
     /// <param name="hazard">Hazard to view</param>
     public async Task OnViewHazardAsync(Hazard hazard)
     {
-        Logger.LogInformation("View hazard details requested: {HazardCode}", hazard.Code);
+        _logger.LogInformation("View hazard details requested: {HazardCode}", hazard.Code);
 
         try
         {
@@ -385,7 +382,7 @@ public partial class HazardListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading hazard details for {HazardCode}", hazard.Code);
+            _logger.LogError(ex, "Error loading hazard details for {HazardCode}", hazard.Code);
             ShowErrorAsyncNotification("Failed to load hazard details");
         }
         finally
@@ -401,11 +398,11 @@ public partial class HazardListing : ComponentBase
     /// <param name="hazard">Hazard to edit</param>
     public async Task OnEditHazardAsync(Hazard hazard)
     {
-        Logger.LogInformation("Edit hazard requested: {HazardCode}", hazard.Code);
+        _logger.LogInformation("Edit hazard requested: {HazardCode}", hazard.Code);
 
         try
         {
-            var confirmed = await DialogService.Confirm(
+            var confirmed = await _dialogService.Confirm(
                 $"Edit hazard '{hazard.Code} - {hazard.Name}'?\n\nThis will navigate to the hazard form in edit mode.",
                 "Edit Hazard",
                 new ConfirmOptions()
@@ -418,12 +415,12 @@ public partial class HazardListing : ComponentBase
             {
                 // TODO: Implement navigation to hazard edit form
                 ShowSuccessAsyncNotification($"Edit hazard {hazard.Code} - Navigation coming soon!");
-                Logger.LogInformation("Edit confirmed for hazard: {HazardCode}", hazard.Code);
+                _logger.LogInformation("Edit confirmed for hazard: {HazardCode}", hazard.Code);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error navigating to edit hazard {HazardCode}", hazard.Code);
+            _logger.LogError(ex, "Error navigating to edit hazard {HazardCode}", hazard.Code);
             ShowErrorAsyncNotification("Failed to navigate to edit form");
         }
     }
@@ -434,7 +431,7 @@ public partial class HazardListing : ComponentBase
     /// <param name="hazard">Hazard to delete</param>
     public async Task OnDeleteHazardAsync(Hazard hazard)
     {
-        Logger.LogInformation("Delete hazard requested: {HazardCode}", hazard.Code);
+        _logger.LogInformation("Delete hazard requested: {HazardCode}", hazard.Code);
 
         try
         {
@@ -446,7 +443,7 @@ public partial class HazardListing : ComponentBase
                                     "?? WARNING: This hazard has associated details that may also be affected.\n\n" +
                                     "? This action cannot be undone!";
 
-            var confirmed = await DialogService.Confirm(
+            var confirmed = await _dialogService.Confirm(
                 confirmationMessage, 
                 "Confirm Delete Hazard",
                 new ConfirmOptions()
@@ -460,12 +457,12 @@ public partial class HazardListing : ComponentBase
             {
                 // TODO: Implement delete command when ready
                 ShowSuccessAsyncNotification($"Delete hazard {hazard.Code} - Command coming soon!");
-                Logger.LogInformation("Delete confirmed for hazard: {HazardCode}", hazard.Code);
+                _logger.LogInformation("Delete confirmed for hazard: {HazardCode}", hazard.Code);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting hazard: {HazardCode}", hazard.Code);
+            _logger.LogError(ex, "Error deleting hazard: {HazardCode}", hazard.Code);
             ShowErrorAsyncNotification("Failed to delete the hazard");
         }
     }

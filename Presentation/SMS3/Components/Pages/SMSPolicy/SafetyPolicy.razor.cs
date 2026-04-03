@@ -6,9 +6,9 @@ namespace SMS3.Components.Pages.SMSPolicy;
 
 public partial class SafetyPolicy : ComponentBase
 {
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
-    [Inject] private ILogger<SafetyPolicy> Logger { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
+    [Inject] private ILogger<SafetyPolicy> _logger { get; set; } = default!;
 
     // Document management properties
     private List<PolicyDocument> PolicyDocuments { get; set; } = new();
@@ -92,16 +92,16 @@ public partial class SafetyPolicy : ComponentBase
             var documentUrl = $"/documents/{category}/{filename}";
 
             // Log document access for analytics
-            Logger.LogInformation("Opening PDF document in new tab: {Filename} from category {Category}", filename, category);
+            _logger.LogInformation("Opening PDF document in new tab: {Filename} from category {Category}", filename, category);
 
             // Open PDF in new tab using JavaScript
-            await JSRuntime.InvokeVoidAsync("window.open", documentUrl, "_blank");
+            await _jsRuntime.InvokeVoidAsync("window.open", documentUrl, "_blank");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error opening PDF document {Filename} in new tab", filename);
+            _logger.LogError(ex, "Error opening PDF document {Filename} in new tab", filename);
             // Optionally show a user-friendly error message
-            await JSRuntime.InvokeVoidAsync("alert", $"Error opening document: {filename}");
+            await _jsRuntime.InvokeVoidAsync("alert", $"Error opening document: {filename}");
         }
     }
 
@@ -112,25 +112,25 @@ public partial class SafetyPolicy : ComponentBase
             var downloadUrl = $"/documents/{documentPath}";
 
             // Log download activity
-            Logger.LogInformation("Document download initiated: {DocumentPath}", documentPath);
+            _logger.LogInformation("Document download initiated: {DocumentPath}", documentPath);
 
             // Trigger download using JavaScript
-            await JSRuntime.InvokeVoidAsync("window.open", downloadUrl, "_blank");
+            await _jsRuntime.InvokeVoidAsync("window.open", downloadUrl, "_blank");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error downloading document: {DocumentPath}", documentPath);
+            _logger.LogError(ex, "Error downloading document: {DocumentPath}", documentPath);
         }
     }
 
     #endregion
 
-    #region Navigation
+    #region _navigation
 
     private void NavigateToPage(string url)
     {
         // ?? SECURE NAVIGATION - Navigate with encrypted URL
-        Navigation.NavigateToSecure(url);
+        _navigation.NavigateToSecure(url);
     }
 
     #endregion

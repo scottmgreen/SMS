@@ -19,11 +19,10 @@ public partial class AuditEvidenceDialog : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<AuditEvidenceDialog> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<AuditEvidenceDialog> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -100,7 +99,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error submitting evidence");
+            _logger.LogError(ex, "Error submitting evidence");
             ShowErrorAsyncNotification("Error saving evidence");
         }
         finally
@@ -112,7 +111,7 @@ public partial class AuditEvidenceDialog : ComponentBase
 
     private void OnCancel()
     {
-        DialogService.Close(null);
+        _dialogService.Close(null);
     }
 
     private void OnEvidenceTypeChanged(object value)
@@ -137,7 +136,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error processing uploaded file");
+            _logger.LogError(ex, "Error processing uploaded file");
             ShowErrorAsyncNotification("Error processing uploaded file");
         }
     }
@@ -157,7 +156,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error downloading file");
+            _logger.LogError(ex, "Error downloading file");
             ShowErrorAsyncNotification("Error downloading file");
         }
     }
@@ -197,11 +196,11 @@ public partial class AuditEvidenceDialog : ComponentBase
             }
             */
 
-            DialogService.Close(true);
+            _dialogService.Close(true);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating evidence");
+            _logger.LogError(ex, "Error creating evidence");
             ShowErrorAsyncNotification("Error uploading evidence");
         }
     }
@@ -240,11 +239,11 @@ public partial class AuditEvidenceDialog : ComponentBase
             }
             */
 
-            DialogService.Close(true);
+            _dialogService.Close(true);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating evidence");
+            _logger.LogError(ex, "Error updating evidence");
             ShowErrorAsyncNotification("Error updating evidence");
         }
     }
@@ -361,12 +360,12 @@ public partial class AuditEvidenceDialog : ComponentBase
     #region Notification Methods
     private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        _notificationHelper.ShowSuccessAsync( message);
     }
 
     private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        _notificationHelper.ShowErrorAsync( message);
     }
     #endregion
 }

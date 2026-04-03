@@ -14,12 +14,12 @@ public partial class SPIDetail : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<SPIDetail> Logger { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<SPIDetail> _logger { get; set; } = default!;
     
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -39,7 +39,7 @@ public partial class SPIDetail : ComponentBase
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
-        Logger.LogInformation("Initializing SPIDetail page for code: {SPICode}", SPICode);
+        _logger.LogInformation("Initializing SPIDetail page for code: {SPICode}", SPICode);
         await LoadSPIDataAsync();
     }
 
@@ -61,7 +61,7 @@ public partial class SPIDetail : ComponentBase
             ErrorMessage = null;
             StateHasChanged();
 
-            Logger.LogInformation("Loading SPI data for code: {SPICode}", SPICode);
+            _logger.LogInformation("Loading SPI data for code: {SPICode}", SPICode);
 
             if (string.IsNullOrWhiteSpace(SPICode))
             {
@@ -70,26 +70,26 @@ public partial class SPIDetail : ComponentBase
             }
 
             var query = new GetSafetyPerformanceIndicatorByCodeQuery(SPICode, includeDataPoints: true);
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 SPI = result.Value;
                 DataPoints = SPI.DataPoints?.OrderByDescending(dp => dp.MeasurementDate).ToList() ?? new List<SPIDataPoint>();
 
-                Logger.LogInformation("Successfully loaded SPI: {SPIName} with {DataPointCount} data points",
+                _logger.LogInformation("Successfully loaded SPI: {SPIName} with {DataPointCount} data points",
                     SPI.Name, DataPoints.Count);
             }
             else
             {
                 ErrorMessage = result.Error?.Message ?? "Failed to load SPI data";
-                Logger.LogError("Failed to load SPI data for code {SPICode}: {Error}", SPICode, ErrorMessage);
+                _logger.LogError("Failed to load SPI data for code {SPICode}: {Error}", SPICode, ErrorMessage);
             }
         }
         catch (Exception ex)
         {
             ErrorMessage = "An error occurred while loading SPI data";
-            Logger.LogError(ex, "Error loading SPI data for code: {SPICode}", SPICode);
+            _logger.LogError(ex, "Error loading SPI data for code: {SPICode}", SPICode);
         }
         finally
         {
@@ -101,20 +101,20 @@ public partial class SPIDetail : ComponentBase
     private async Task RefreshDataAsync()
     {
         await LoadSPIDataAsync();
-        await NotificationHelper.ShowSuccessAsync("SPI data refreshed successfully");
+        await _notificationHelper.ShowSuccessAsync("SPI data refreshed successfully");
     }
     #endregion
 
-    #region Navigation Methods
+    #region _navigation Methods
     private void NavigateToConfiguration()
     {
-        Navigation.NavigateToSecure("/SMSAssurance/SPIConfiguration");
+        _navigation.NavigateToSecure("/SMSAssurance/SPIConfiguration");
     }
 
     private async Task EditSPI()
     {
         // Navigate to edit mode in configuration page
-        Navigation.NavigateTo($"/SMSAssurance/SPIConfiguration?edit={SPICode}");
+        _navigation.NavigateTo($"/SMSAssurance/SPIConfiguration?edit={SPICode}");
     }
     #endregion
 
@@ -145,7 +145,7 @@ public partial class SPIDetail : ComponentBase
             { "OnCancel", EventCallback.Factory.Create(this, OnDataPointDialogCanceled) }
         };
 
-        await DialogService.OpenAsync<SPIDataPointDialog>(
+        await _dialogService.OpenAsync<SPIDataPointDialog>(
             null, // No title needed as it's built into the component
             parameters,
             new DialogOptions
@@ -189,7 +189,7 @@ public partial class SPIDetail : ComponentBase
             { "OnCancel", EventCallback.Factory.Create(this, OnDataPointDialogCanceled) }
         };
 
-        await DialogService.OpenAsync<SPIDataPointDialog>(
+        await _dialogService.OpenAsync<SPIDataPointDialog>(
             null, // No title needed as it's built into the component
             parameters,
             new DialogOptions
@@ -206,7 +206,7 @@ public partial class SPIDetail : ComponentBase
 
     private async Task DeleteDataPoint(SPIDataPoint dataPoint)
     {
-        var confirmed = await DialogService.Confirm(
+        var confirmed = await _dialogService.Confirm(
             $"Are you sure you want to delete this data point? Value: {dataPoint.Value:F2} from {dataPoint.MeasurementDate:MMM dd, yyyy}",
             "Confirm Delete",
             new ConfirmOptions { OkButtonText = "Delete", CancelButtonText = "Cancel" });
@@ -221,22 +221,22 @@ public partial class SPIDetail : ComponentBase
                 //    "SYSTEM" // TODO: Get current user
                 //);
 
-                var result = await Mediator.SendAsync(command, CancellationToken.None);
+                var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
-                    await NotificationHelper.ShowSuccessAsync("Data point deleted successfully");
+                    await _notificationHelper.ShowSuccessAsync("Data point deleted successfully");
                     await RefreshDataAsync();
                 }
                 else
                 {
-                    await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to delete data point");
+                    await _notificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to delete data point");
                 }
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error deleting data point");
-                await NotificationHelper.ShowErrorAsync("Failed to delete data point");
+                _logger.LogError(ex, "Error deleting data point");
+                await _notificationHelper.ShowErrorAsync("Failed to delete data point");
             }
         }
     }
@@ -247,7 +247,7 @@ public partial class SPIDetail : ComponentBase
         {
             if (SPI == null) return;
 
-            Logger.LogInformation("Saving data point for SPI {SPICode}: Value={Value}, Date={Date}",
+            _logger.LogInformation("Saving data point for SPI {SPICode}: Value={Value}, Date={Date}",
                 SPI.Code, savedDataPoint.Value, savedDataPoint.MeasurementDate);
 
             if (IsEditingDataPoint && CurrentDataPoint != null)
@@ -255,16 +255,16 @@ public partial class SPIDetail : ComponentBase
                 // Update existing data point
                 var updateCommand = new UpdateSPIDataPointCommand(savedDataPoint);
 
-                var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+                var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
-                    await NotificationHelper.ShowSuccessAsync("Data point updated successfully");
+                    await _notificationHelper.ShowSuccessAsync("Data point updated successfully");
                     await RefreshDataAsync();
                 }
                 else
                 {
-                    await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to update data point");
+                    await _notificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to update data point");
                 }
             }
             else
@@ -279,23 +279,23 @@ public partial class SPIDetail : ComponentBase
                 //    savedDataPoint.Notes
                 //);
 
-                var result = await Mediator.SendAsync(addCommand, CancellationToken.None);
+                var result = await _mediator.SendAsync(addCommand, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
-                    await NotificationHelper.ShowSuccessAsync("Data point added successfully");
+                    await _notificationHelper.ShowSuccessAsync("Data point added successfully");
                     await RefreshDataAsync();
                 }
                 else
                 {
-                    await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to save data point");
+                    await _notificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to save data point");
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error saving data point");
-            await NotificationHelper.ShowErrorAsync("An error occurred while saving the data point");
+            _logger.LogError(ex, "Error saving data point");
+            await _notificationHelper.ShowErrorAsync("An error occurred while saving the data point");
         }
     }
 

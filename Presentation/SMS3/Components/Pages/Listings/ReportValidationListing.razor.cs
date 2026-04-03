@@ -6,9 +6,9 @@ namespace SMS3.Components.Pages.Listings;
 
 public partial class ReportValidationListing : ComponentBase
 {
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<ReportValidationListing> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<ReportValidationListing> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     
 
     private RadzenDataGrid<ReportValidation>? validationsGrid;
@@ -26,24 +26,24 @@ public partial class ReportValidationListing : ComponentBase
         try
         {
             var query = new GetAllReportValidationsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 validations = result.Value;
                 totalCount = validations.Count();
-                Logger.LogInformation("Loaded {Count} report validations", totalCount);
+                _logger.LogInformation("Loaded {Count} report validations", totalCount);
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync("Failed to load report validations");
-                Logger.LogError("Failed to load report validations: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync("Failed to load report validations");
+                _logger.LogError("Failed to load report validations: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading report validations");
-            await NotificationHelper.ShowErrorAsync("Error loading report validations");
+            _logger.LogError(ex, "Error loading report validations");
+            await _notificationHelper.ShowErrorAsync("Error loading report validations");
         }
     }
 
@@ -80,8 +80,8 @@ public partial class ReportValidationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in LoadData");
-            await NotificationHelper.ShowErrorAsync("Error loading data");
+            _logger.LogError(ex, "Error in LoadData");
+            await _notificationHelper.ShowErrorAsync("Error loading data");
         }
         finally
         {
@@ -100,6 +100,6 @@ public partial class ReportValidationListing : ComponentBase
 
     private void ShowActions(ReportValidation validation)
     {
-        Logger.LogInformation("Actions requested for report validation: {Code}", validation.Code);
+        _logger.LogInformation("Actions requested for report validation: {Code}", validation.Code);
     }
 }

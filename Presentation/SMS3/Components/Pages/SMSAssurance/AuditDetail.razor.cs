@@ -18,12 +18,12 @@ public partial class AuditDetail : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<AuditDetail> Logger { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<AuditDetail> _logger { get; set; } = default!;
     
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -48,7 +48,7 @@ public partial class AuditDetail : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(AuditCode))
         {
-            Navigation.NavigateToSecure("/SMSAssurance/AuditManagement");
+            _navigation.NavigateToSecure("/SMSAssurance/AuditManagement");
             return;
         }
 
@@ -64,7 +64,7 @@ public partial class AuditDetail : ComponentBase
             IsLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading audit detail for code: {AuditCode}", AuditCode);
+            _logger.LogInformation("Loading audit detail for code: {AuditCode}", AuditCode);
 
             await Task.WhenAll(
                 LoadAuditAsync(),
@@ -75,11 +75,11 @@ public partial class AuditDetail : ComponentBase
 
             CalculateStatistics();
 
-            Logger.LogInformation("Audit detail loaded successfully for: {AuditCode}", AuditCode);
+            _logger.LogInformation("Audit detail loaded successfully for: {AuditCode}", AuditCode);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading audit detail for code: {AuditCode}", AuditCode);
+            _logger.LogError(ex, "Error loading audit detail for code: {AuditCode}", AuditCode);
             ShowErrorAsyncNotification("Error loading audit details");
         }
         finally
@@ -94,7 +94,7 @@ public partial class AuditDetail : ComponentBase
         try
         {
             var query = new GetSMSAuditByCodeQuery(AuditCode!);
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
@@ -102,14 +102,14 @@ public partial class AuditDetail : ComponentBase
             }
             else
             {
-                Logger.LogWarning("Audit not found: {AuditCode}", AuditCode);
+                _logger.LogWarning("Audit not found: {AuditCode}", AuditCode);
                 ShowErrorAsyncNotification("Audit not found");
-                Navigation.NavigateToSecure("/SMSAssurance/AuditManagement");
+                _navigation.NavigateToSecure("/SMSAssurance/AuditManagement");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading audit: {AuditCode}", AuditCode);
+            _logger.LogError(ex, "Error loading audit: {AuditCode}", AuditCode);
             throw;
         }
     }
@@ -119,7 +119,7 @@ public partial class AuditDetail : ComponentBase
         try
         {
             var query = new GetSMSAuditFindingsByAuditCodeQuery(AuditCode!);
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
@@ -132,7 +132,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading findings for audit: {AuditCode}", AuditCode);
+            _logger.LogError(ex, "Error loading findings for audit: {AuditCode}", AuditCode);
             Findings = new List<SMSAuditFinding>();
         }
     }
@@ -142,7 +142,7 @@ public partial class AuditDetail : ComponentBase
         try
         {
             var query = new GetSMSAuditEvidenceByAuditCodeQuery(AuditCode!);
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
@@ -155,7 +155,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading evidence for audit: {AuditCode}", AuditCode);
+            _logger.LogError(ex, "Error loading evidence for audit: {AuditCode}", AuditCode);
             Evidence = new List<SMSAuditEvidence>();
         }
     }
@@ -165,7 +165,7 @@ public partial class AuditDetail : ComponentBase
         try
         {
             var query = new GetSMSAuditChecklistItemsByAuditCodeQuery(AuditCode!);
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
@@ -178,7 +178,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading checklist items for audit: {AuditCode}", AuditCode);
+            _logger.LogError(ex, "Error loading checklist items for audit: {AuditCode}", AuditCode);
             ChecklistItems = new List<SMSAuditChecklistItem>();
         }
     }
@@ -226,7 +226,7 @@ public partial class AuditDetail : ComponentBase
 
         try
         {
-            var result = await DialogService.OpenAsync<Components.AuditDialog>("Edit Audit",
+            var result = await _dialogService.OpenAsync<Components.AuditDialog>("Edit Audit",
                 new Dictionary<string, object>()
                 {
                     { "Audit", Audit },
@@ -242,7 +242,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error editing audit");
+            _logger.LogError(ex, "Error editing audit");
             ShowErrorAsyncNotification("Error editing audit");
         }
     }
@@ -258,7 +258,7 @@ public partial class AuditDetail : ComponentBase
 
             // Use the proper CQRS StartSMSAuditCommand
             var command = new StartSMSAuditCommand(Audit.Code!, "CURRENT_USER");
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -272,7 +272,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error starting audit");
+            _logger.LogError(ex, "Error starting audit");
             ShowErrorAsyncNotification("Error starting audit");
         }
         finally
@@ -288,7 +288,7 @@ public partial class AuditDetail : ComponentBase
 
         try
         {
-            var confirm = await DialogService.Confirm(
+            var confirm = await _dialogService.Confirm(
                 "Are you sure you want to complete this audit? Please provide completion summary.",
                 "Complete Audit",
                 new ConfirmOptions()
@@ -319,7 +319,7 @@ public partial class AuditDetail : ComponentBase
                 "Audit completed successfully within scheduled timeframe."
             );
 
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -334,7 +334,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error completing audit");
+            _logger.LogError(ex, "Error completing audit");
             ShowErrorAsyncNotification("Error completing audit");
         }
         finally
@@ -352,7 +352,7 @@ public partial class AuditDetail : ComponentBase
 
         try
         {
-            var result = await DialogService.OpenAsync<Components.AuditFindingDialog>("Create Finding",
+            var result = await _dialogService.OpenAsync<Components.AuditFindingDialog>("Create Finding",
                 new Dictionary<string, object>()
                 {
                     { "AuditCode", Audit.Code! },
@@ -369,7 +369,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating finding");
+            _logger.LogError(ex, "Error creating finding");
             ShowErrorAsyncNotification("Error creating finding");
         }
     }
@@ -378,7 +378,7 @@ public partial class AuditDetail : ComponentBase
     {
         try
         {
-            var result = await DialogService.OpenAsync<Components.AuditFindingDialog>("Edit Finding",
+            var result = await _dialogService.OpenAsync<Components.AuditFindingDialog>("Edit Finding",
                 new Dictionary<string, object>()
                 {
                     { "AuditCode", Audit!.Code! },
@@ -396,7 +396,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error editing finding");
+            _logger.LogError(ex, "Error editing finding");
             ShowErrorAsyncNotification("Error editing finding");
         }
     }
@@ -405,7 +405,7 @@ public partial class AuditDetail : ComponentBase
     {
         try
         {
-            var confirm = await DialogService.Confirm(
+            var confirm = await _dialogService.Confirm(
                 $"Are you sure you want to delete the finding '{finding.Title ?? finding.FindingDescription}'?",
                 "Confirm Delete",
                 new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
@@ -414,7 +414,7 @@ public partial class AuditDetail : ComponentBase
             {
                 // Use the proper CQRS DeleteSMSAuditFindingCommand
                 var command = new DeleteSMSAuditFindingCommand(finding.Code!, "CURRENT_USER");
-                var result = await Mediator.SendAsync(command, CancellationToken.None);
+                var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
@@ -430,7 +430,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting finding");
+            _logger.LogError(ex, "Error deleting finding");
             ShowErrorAsyncNotification("Error deleting finding");
         }
     }
@@ -439,12 +439,12 @@ public partial class AuditDetail : ComponentBase
     {
         try
         {
-            // For now, use simple default values since DialogService.Prompt doesn't exist
+            // For now, use simple default values since _dialogService.Prompt doesn't exist
             // In a full implementation, you would create a proper dialog component
             var responsiblePerson = "TBD";
             var correctiveAction = $"Address finding: {finding.Title ?? finding.FindingDescription}";
 
-            var confirm = await DialogService.Confirm(
+            var confirm = await _dialogService.Confirm(
                 $"Assign corrective action to '{responsiblePerson}' for finding: {finding.Title ?? finding.FindingDescription}?",
                 "Assign Corrective Action",
                 new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "Cancel" });
@@ -461,7 +461,7 @@ public partial class AuditDetail : ComponentBase
                 "CURRENT_USER"
             );
 
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -476,7 +476,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning corrective action");
+            _logger.LogError(ex, "Error assigning corrective action");
             ShowErrorAsyncNotification("Error assigning corrective action");
         }
     }
@@ -485,7 +485,7 @@ public partial class AuditDetail : ComponentBase
     {
         try
         {
-            var confirm = await DialogService.Confirm(
+            var confirm = await _dialogService.Confirm(
                 $"Mark corrective action as completed for finding: {finding.Title ?? finding.FindingDescription}?",
                 "Complete Corrective Action",
                 new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "Cancel" });
@@ -502,7 +502,7 @@ public partial class AuditDetail : ComponentBase
                 "CURRENT_USER"
             );
 
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -517,7 +517,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error completing corrective action");
+            _logger.LogError(ex, "Error completing corrective action");
             ShowErrorAsyncNotification("Error completing corrective action");
         }
     }
@@ -526,7 +526,7 @@ public partial class AuditDetail : ComponentBase
     {
         try
         {
-            var confirm = await DialogService.Confirm(
+            var confirm = await _dialogService.Confirm(
                 $"Verify finding: {finding.Title ?? finding.FindingDescription}?",
                 "Verify Finding",
                 new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "Cancel" });
@@ -543,7 +543,7 @@ public partial class AuditDetail : ComponentBase
                 "CURRENT_USER"
             );
 
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -558,7 +558,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error verifying finding");
+            _logger.LogError(ex, "Error verifying finding");
             ShowErrorAsyncNotification("Error verifying finding");
         }
     }
@@ -571,7 +571,7 @@ public partial class AuditDetail : ComponentBase
 
         try
         {
-            var result = await DialogService.OpenAsync<Components.AuditEvidenceDialog>("Upload Evidence",
+            var result = await _dialogService.OpenAsync<Components.AuditEvidenceDialog>("Upload Evidence",
                 new Dictionary<string, object>()
                 {
                     { "AuditCode", Audit.Code! },
@@ -588,7 +588,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error uploading evidence");
+            _logger.LogError(ex, "Error uploading evidence");
             ShowErrorAsyncNotification("Error uploading evidence");
         }
     }
@@ -597,7 +597,7 @@ public partial class AuditDetail : ComponentBase
     {
         try
         {
-            var result = await DialogService.OpenAsync<Components.AuditEvidenceDialog>("Edit Evidence",
+            var result = await _dialogService.OpenAsync<Components.AuditEvidenceDialog>("Edit Evidence",
                 new Dictionary<string, object>()
                 {
                     { "AuditCode", Audit!.Code! },
@@ -615,7 +615,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error editing evidence");
+            _logger.LogError(ex, "Error editing evidence");
             ShowErrorAsyncNotification("Error editing evidence");
         }
     }
@@ -629,7 +629,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error viewing evidence");
+            _logger.LogError(ex, "Error viewing evidence");
             ShowErrorAsyncNotification("Error viewing evidence");
         }
     }
@@ -638,7 +638,7 @@ public partial class AuditDetail : ComponentBase
     {
         try
         {
-            var confirm = await DialogService.Confirm(
+            var confirm = await _dialogService.Confirm(
                 $"Are you sure you want to delete the evidence '{evidence.Title}'?",
                 "Confirm Delete",
                 new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
@@ -653,7 +653,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting evidence");
+            _logger.LogError(ex, "Error deleting evidence");
             ShowErrorAsyncNotification("Error deleting evidence");
         }
     }
@@ -667,26 +667,26 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error downloading evidence");
+            _logger.LogError(ex, "Error downloading evidence");
             ShowErrorAsyncNotification("Error downloading evidence");
         }
     }
     #endregion
 
-    #region Navigation Methods
+    #region _navigation Methods
     private void NavigateToAuditManagement()
     {
-        Navigation.NavigateToSecure("/SMSAssurance/AuditManagement");
+        _navigation.NavigateToSecure("/SMSAssurance/AuditManagement");
     }
 
     private void NavigateToFindings()
     {
-        Navigation.NavigateToSecure("/SMSAssurance/AuditFindings");
+        _navigation.NavigateToSecure("/SMSAssurance/AuditFindings");
     }
 
     private void NavigateToEvidence()
     {
-        Navigation.NavigateToSecure("/SMSAssurance/AuditEvidence");
+        _navigation.NavigateToSecure("/SMSAssurance/AuditEvidence");
     }
 
     private async Task GenerateReport()
@@ -707,7 +707,7 @@ public partial class AuditDetail : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error generating audit report");
+            _logger.LogError(ex, "Error generating audit report");
             ShowErrorAsyncNotification("Error generating audit report");
         }
     }
@@ -826,12 +826,12 @@ public partial class AuditDetail : ComponentBase
     #region Notification Methods
     private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        _notificationHelper.ShowSuccessAsync( message);
     }
 
     private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        _notificationHelper.ShowErrorAsync( message);
     }
     #endregion
 

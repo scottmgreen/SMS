@@ -27,6 +27,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Remove="Scripts\**" />
+    <EmbeddedResource Remove="Scripts\**" />
+    <None Remove="Scripts\**" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Compile Remove="Services\SMSAuthorizationService.cs" />
     <Compile Remove="Services\SMSRiskAssessmentWorkflowService.cs" />
     <Compile Remove="Services\SMSRoleService.cs" />

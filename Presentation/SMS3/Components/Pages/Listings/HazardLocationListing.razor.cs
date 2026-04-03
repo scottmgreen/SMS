@@ -28,12 +28,10 @@ public partial class HazardLocationListing : ComponentBase
     private string BasicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Dependencies
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<HazardLocationListing> Logger { get; set; } = default!;
-
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<HazardLocationListing> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -59,17 +57,17 @@ public partial class HazardLocationListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading hazard locations for listing view");
+            _logger.LogInformation("Loading hazard locations for listing view");
 
             var query = new GetAllHazardLocationsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 allLocations = result.Value.ToList(); // Store all locations for filtering/sorting
                 locations = allLocations; // Initially show all locations
                 totalCount = allLocations.Count();
-                Logger.LogInformation("Loaded {Count} hazard locations for listing", totalCount);
+                _logger.LogInformation("Loaded {Count} hazard locations for listing", totalCount);
 
                 // Show success notification if we have data
                 if (totalCount > 0)
@@ -89,7 +87,7 @@ public partial class HazardLocationListing : ComponentBase
                 totalCount = 0;
                 
                 ShowErrorAsyncNotification("Failed to load hazard locations");
-                Logger.LogError("Failed to load hazard locations: {Error}", result.Error?.Message);
+                _logger.LogError("Failed to load hazard locations: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
@@ -99,7 +97,7 @@ public partial class HazardLocationListing : ComponentBase
             locations = allLocations;
             totalCount = 0;
             
-            Logger.LogError(ex, "Error loading hazard locations");
+            _logger.LogError(ex, "Error loading hazard locations");
             ShowErrorAsyncNotification($"Error loading hazard locations: {ex.Message}");
         }
         finally
@@ -116,27 +114,27 @@ public partial class HazardLocationListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
+            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all locations yet, load them first
             if (allLocations == null || !allLocations.Any())
             {
-                Logger.LogInformation("No locations cached, loading initial data");
+                _logger.LogInformation("No locations cached, loading initial data");
                 await LoadInitialData();
                 return;
             }
 
             // Start with all locations
             var query = allLocations.AsQueryable();
-            Logger.LogInformation("Starting with {Count} total locations", query.Count());
+            _logger.LogInformation("Starting with {Count} total locations", query.Count());
 
             // Apply filtering
             if (!string.IsNullOrEmpty(args.Filter))
             {
-                Logger.LogInformation("Applying filter: {Filter}", args.Filter);
+                _logger.LogInformation("Applying filter: {Filter}", args.Filter);
                 query = ApplyFiltering(query, args);
-                Logger.LogInformation("After filtering: {Count} locations", query.Count());
+                _logger.LogInformation("After filtering: {Count} locations", query.Count());
             }
 
             // Get total count after filtering but before paging
@@ -145,38 +143,38 @@ public partial class HazardLocationListing : ComponentBase
             // Apply sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                Logger.LogInformation("Applying sorting: {OrderBy}", args.OrderBy);
+                _logger.LogInformation("Applying sorting: {OrderBy}", args.OrderBy);
                 query = ApplySorting(query, args.OrderBy);
-                Logger.LogInformation("Sorting applied successfully");
+                _logger.LogInformation("Sorting applied successfully");
             }
             else
             {
                 // Default sorting by CreatedDate descending
-                Logger.LogInformation("Applying default sort by CreatedDate");
+                _logger.LogInformation("Applying default sort by CreatedDate");
                 query = query.OrderByDescending(l => l.CreatedDate ?? DateTime.MinValue);
             }
 
             // Apply paging
             if (args.Skip.HasValue && args.Skip > 0)
             {
-                Logger.LogInformation("Applying skip: {Skip}", args.Skip);
+                _logger.LogInformation("Applying skip: {Skip}", args.Skip);
                 query = query.Skip(args.Skip.Value);
             }
 
             if (args.Top.HasValue && args.Top > 0)
             {
-                Logger.LogInformation("Applying take: {Top}", args.Top);
+                _logger.LogInformation("Applying take: {Top}", args.Top);
                 query = query.Take(args.Top.Value);
             }
 
             locations = query.ToList();
 
-            Logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} locations", 
+            _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} locations", 
                 locations.Count(), totalCount);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
+            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
             ShowErrorAsyncNotification($"Error loading data: {ex.Message}");
             
@@ -188,7 +186,7 @@ public partial class HazardLocationListing : ComponentBase
             }
             catch (Exception fallbackEx)
             {
-                Logger.LogError(fallbackEx, "Error in LoadData fallback");
+                _logger.LogError(fallbackEx, "Error in LoadData fallback");
                 locations = new List<HazardLocation>();
                 totalCount = 0;
             }
@@ -207,14 +205,14 @@ public partial class HazardLocationListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
+            _logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
                 args.Filter, args.Filters?.Count() ?? 0);
 
             // Handle simple string filter (when user types in the general filter)
             if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
             {
                 var filterValue = args.Filter.ToLower();
-                Logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
+                _logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
                 
                 query = query.Where(l => 
                     (!string.IsNullOrEmpty(l.Code) && l.Code.ToLower().Contains(filterValue)) ||
@@ -230,7 +228,7 @@ public partial class HazardLocationListing : ComponentBase
             // Handle advanced column-specific filters
             if (args.Filters != null && args.Filters.Any())
             {
-                Logger.LogInformation("Applying {Count} advanced filters", args.Filters.Count());
+                _logger.LogInformation("Applying {Count} advanced filters", args.Filters.Count());
                 
                 foreach (var filter in args.Filters)
                 {
@@ -238,7 +236,7 @@ public partial class HazardLocationListing : ComponentBase
                     var filterValue = filter.FilterValue?.ToString()?.ToLower();
                     var filterOperator = filter.FilterOperator;
 
-                    Logger.LogInformation("Processing filter - Column: {Column}, Value: {Value}, Operator: {Operator}", 
+                    _logger.LogInformation("Processing filter - Column: {Column}, Value: {Value}, Operator: {Operator}", 
                         columnName, filterValue, filterOperator);
 
                     if (string.IsNullOrEmpty(filterValue)) continue;
@@ -282,7 +280,7 @@ public partial class HazardLocationListing : ComponentBase
                             }
                             break;
                         default:
-                            Logger.LogWarning("Unknown filter column: {ColumnName}", columnName);
+                            _logger.LogWarning("Unknown filter column: {ColumnName}", columnName);
                             break;
                     }
                 }
@@ -292,7 +290,7 @@ public partial class HazardLocationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
+            _logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
                 args.Filter, args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
             return query; // Return unfiltered query if filtering fails
         }
@@ -395,7 +393,7 @@ public partial class HazardLocationListing : ComponentBase
             var propertyName = parts[0].ToLower();
             var isDescending = parts.Length > 1 && parts[1].ToLower() == "desc";
 
-            Logger.LogInformation("Applying sorting: Property={PropertyName}, Descending={IsDescending}", propertyName, isDescending);
+            _logger.LogInformation("Applying sorting: Property={PropertyName}, Descending={IsDescending}", propertyName, isDescending);
 
             return propertyName switch
             {
@@ -413,7 +411,7 @@ public partial class HazardLocationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
+            _logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
             return query.OrderByDescending(l => l.CreatedDate ?? DateTime.MinValue); // Fallback to default sort
         }
     }
@@ -442,7 +440,7 @@ public partial class HazardLocationListing : ComponentBase
     /// </summary>
     private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message, 7000);
+        _notificationHelper.ShowErrorAsync( message, 7000);
     }
 
     /// <summary>
@@ -450,7 +448,7 @@ public partial class HazardLocationListing : ComponentBase
     /// </summary>
     private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message, 5000);
+        _notificationHelper.ShowSuccessAsync( message, 5000);
     }
 
     /// <summary>
@@ -458,7 +456,7 @@ public partial class HazardLocationListing : ComponentBase
     /// </summary>
     private void ShowInfoAsyncNotification(string message)
     {
-        NotificationHelper.ShowInfoAsync( message, 5000);
+        _notificationHelper.ShowInfoAsync( message, 5000);
     }
     #endregion
 
@@ -470,7 +468,7 @@ public partial class HazardLocationListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Opening location map for hazard location: {LocationCode}", location.Code);
+            _logger.LogInformation("Opening location map for hazard location: {LocationCode}", location.Code);
 
             if (!HasValidCoordinates(location))
             {
@@ -493,7 +491,7 @@ public partial class HazardLocationListing : ComponentBase
                 : $"Hazard: {location.HazardCode}";
 
             // Open modal dialog with HazardLocationDisplay component
-            await DialogService.OpenAsync(title,
+            await _dialogService.OpenAsync(title,
                 ds => 
                 {
                     var content = new RenderFragment(builder =>
@@ -577,7 +575,7 @@ public partial class HazardLocationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error opening location map for {LocationCode}", location.Code);
+            _logger.LogError(ex, "Error opening location map for {LocationCode}", location.Code);
             ShowErrorAsyncNotification("Error opening location map");
         }
     }
@@ -593,26 +591,26 @@ public partial class HazardLocationListing : ComponentBase
                 return null;
 
             var hazardQuery = new GetHazardByCodeQuery(new HazardID(location.HazardCode));
-            var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+            var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
             if (hazardResult.IsSuccess && hazardResult.Value != null)
             {
                 return hazardResult.Value;
             }
 
-            Logger.LogWarning("Could not find hazard {HazardCode} for location {LocationCode}", location.HazardCode, location.Code);
+            _logger.LogWarning("Could not find hazard {HazardCode} for location {LocationCode}", location.HazardCode, location.Code);
             return null;
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading hazard {HazardCode} for location {LocationCode}", location.HazardCode, location.Code);
+            _logger.LogError(ex, "Error loading hazard {HazardCode} for location {LocationCode}", location.HazardCode, location.Code);
             return null;
         }
     }
 
     private void ShowActions(HazardLocation location)
     {
-        Logger.LogInformation("Actions requested for hazard location: {Code}", location.Code);
+        _logger.LogInformation("Actions requested for hazard location: {Code}", location.Code);
     }
     #endregion
 }

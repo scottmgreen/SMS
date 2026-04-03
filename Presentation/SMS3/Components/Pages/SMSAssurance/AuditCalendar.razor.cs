@@ -7,11 +7,10 @@ namespace SMS3.Components.Pages.SMSAssurance;
 public partial class AuditCalendar : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<AuditCalendar> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<AuditCalendar> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
     #region Component State - Matching Radzen sample
@@ -38,15 +37,15 @@ public partial class AuditCalendar : ComponentBase
             IsLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading audit plans for calendar display");
+            _logger.LogInformation("Loading audit plans for calendar display");
 
             var query = new GetAllSMSAuditPlansQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 AuditPlans = result.Value.ToList();
-                Logger.LogInformation("Loaded {Count} audit plans for calendar", AuditPlans.Count);
+                _logger.LogInformation("Loaded {Count} audit plans for calendar", AuditPlans.Count);
 
                 // Convert audit plans to scheduler items - matching Radzen sample pattern
                 var auditItems = new List<AuditSchedulerItem>();
@@ -58,16 +57,16 @@ public partial class AuditCalendar : ComponentBase
             }
             else
             {
-                Logger.LogError("Failed to load audit plans: {Error}", result.Error?.Message);
-                await NotificationHelper.ShowErrorAsync("Failed to load audit plans for calendar");
+                _logger.LogError("Failed to load audit plans: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync("Failed to load audit plans for calendar");
                 AuditPlans = new List<SMSAuditPlan>();
                 SchedulerData = new List<AuditSchedulerItem>();
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading audit plans for calendar");
-            await NotificationHelper.ShowErrorAsync("Error loading audit plans");
+            _logger.LogError(ex, "Error loading audit plans for calendar");
+            await _notificationHelper.ShowErrorAsync("Error loading audit plans");
         }
         finally
         {
@@ -87,7 +86,7 @@ public partial class AuditCalendar : ComponentBase
             await scheduler.Reload();
         }
 
-        await NotificationHelper.ShowSuccessAsync("Calendar data refreshed");
+        await _notificationHelper.ShowSuccessAsync("Calendar data refreshed");
         console?.Log("Calendar refresh completed");
     }
     #endregion
@@ -159,7 +158,7 @@ public partial class AuditCalendar : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error rendering slot");
+            _logger.LogError(ex, "Error rendering slot");
             console?.Log($"Error in SlotRender: {ex.Message}");
         }
     }
@@ -169,7 +168,7 @@ public partial class AuditCalendar : ComponentBase
         try
         {
             console?.Log($"SlotSelect: Start={args.Start:yyyy-MM-dd HH:mm} End={args.End:yyyy-MM-dd HH:mm}");
-            Logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
+            _logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
 
             // Don't create appointments in year view (like Radzen sample)
             if (args.View.Text != "Year")
@@ -180,7 +179,7 @@ public partial class AuditCalendar : ComponentBase
                     PlannedEndDate = args.End
                 };
 
-                var data = await DialogService.OpenAsync<AuditPlanDialog>("Add Audit Plan",
+                var data = await _dialogService.OpenAsync<AuditPlanDialog>("Add Audit Plan",
                     new Dictionary<string, object>
                     {
                         { "AuditPlan", newAuditPlan },
@@ -193,14 +192,14 @@ public partial class AuditCalendar : ComponentBase
                     await LoadAuditPlansAsync();
                     // Either call the Reload method or reassign the Data property of the Scheduler
                     await scheduler.Reload();
-                    await NotificationHelper.ShowSuccessAsync("Audit plan created successfully");
+                    await _notificationHelper.ShowSuccessAsync("Audit plan created successfully");
                     console?.Log("New audit plan created successfully");
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error handling slot selection");
+            _logger.LogError(ex, "Error handling slot selection");
             console?.Log($"Error in SlotSelect: {ex.Message}");
         }
     }
@@ -210,7 +209,7 @@ public partial class AuditCalendar : ComponentBase
         try
         {
             console?.Log($"AppointmentSelect: AuditPlan={args.Data.AuditPlanCode}");
-            Logger.LogInformation("Audit appointment selected: {AuditCode}", args.Data.AuditPlanCode);
+            _logger.LogInformation("Audit appointment selected: {AuditCode}", args.Data.AuditPlanCode);
 
             // Find the actual audit plan
             var auditPlan = AuditPlans.FirstOrDefault(a => a.Code == args.Data.AuditPlanCode);
@@ -238,7 +237,7 @@ public partial class AuditCalendar : ComponentBase
                     CreatedDate = auditPlan.CreatedDate
                 };
 
-                var data = await DialogService.OpenAsync<AuditPlanDialog>("Edit Audit Plan",
+                var data = await _dialogService.OpenAsync<AuditPlanDialog>("Edit Audit Plan",
                     new Dictionary<string, object>
                     {
                         { "AuditPlan", copy },
@@ -251,15 +250,15 @@ public partial class AuditCalendar : ComponentBase
                     // Reload the data and scheduler
                     await LoadAuditPlansAsync();
                     await scheduler.Reload();
-                    await NotificationHelper.ShowSuccessAsync("Audit plan updated successfully");
+                    await _notificationHelper.ShowSuccessAsync("Audit plan updated successfully");
                     console?.Log($"Audit plan {auditPlan.Code} updated successfully");
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error handling appointment selection");
-            await NotificationHelper.ShowErrorAsync("Error opening audit plan details");
+            _logger.LogError(ex, "Error handling appointment selection");
+            await _notificationHelper.ShowErrorAsync("Error opening audit plan details");
             console?.Log($"Error in AppointmentSelect: {ex.Message}");
         }
     }
@@ -297,7 +296,7 @@ public partial class AuditCalendar : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error rendering appointment");
+            _logger.LogError(ex, "Error rendering appointment");
             console?.Log($"Error in AppointmentRender: {ex.Message}");
         }
     }
@@ -329,15 +328,15 @@ public partial class AuditCalendar : ComponentBase
                 await UpdateAuditPlanDateTime(draggedAppointment);
 
                 await scheduler.Reload();
-                await NotificationHelper.ShowSuccessAsync($"Audit plan {draggedAppointment.AuditPlanCode} rescheduled successfully");
+                await _notificationHelper.ShowSuccessAsync($"Audit plan {draggedAppointment.AuditPlanCode} rescheduled successfully");
                 console?.Log($"Audit plan {draggedAppointment.AuditPlanCode} rescheduled successfully");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error moving appointment");
+            _logger.LogError(ex, "Error moving appointment");
             console?.Log($"Error in AppointmentMove: {ex.Message}");
-            await NotificationHelper.ShowErrorAsync("Error rescheduling audit plan");
+            await _notificationHelper.ShowErrorAsync("Error rescheduling audit plan");
         }
     }
 
@@ -359,24 +358,24 @@ public partial class AuditCalendar : ComponentBase
 
                 // Save via CQRS
                 var updateCommand = new UpdateSMSAuditPlanCommand(auditPlan);
-                var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+                var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
-                    Logger.LogInformation("Audit plan {AuditCode} datetime updated successfully", auditPlan.Code);
+                    _logger.LogInformation("Audit plan {AuditCode} datetime updated successfully", auditPlan.Code);
                     console?.Log($"Audit plan {auditPlan.Code} updated in database");
                 }
                 else
                 {
-                    Logger.LogError("Failed to update audit plan datetime: {Error}", result.Error?.Message);
+                    _logger.LogError("Failed to update audit plan datetime: {Error}", result.Error?.Message);
                     console?.Log($"Error updating audit plan: {result.Error?.Message}");
-                    await NotificationHelper.ShowErrorAsync("Failed to save audit plan changes");
+                    await _notificationHelper.ShowErrorAsync("Failed to save audit plan changes");
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating audit plan datetime");
+            _logger.LogError(ex, "Error updating audit plan datetime");
             console?.Log($"Exception updating audit plan: {ex.Message}");
         }
     }
@@ -396,7 +395,7 @@ public partial class AuditCalendar : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error navigating to today");
+            _logger.LogError(ex, "Error navigating to today");
             console?.Log($"Error navigating to today: {ex.Message}");
         }
     }
@@ -417,7 +416,7 @@ public partial class AuditCalendar : ComponentBase
                 PlannedEndDate = endDate
             };
 
-            var result = await DialogService.OpenAsync<AuditPlanDialog>("Create Audit Plan",
+            var result = await _dialogService.OpenAsync<AuditPlanDialog>("Create Audit Plan",
                 new Dictionary<string, object>()
                 {
                     { "AuditPlan", newAuditPlan },
@@ -429,14 +428,14 @@ public partial class AuditCalendar : ComponentBase
             {
                 await LoadAuditPlansAsync();
                 await scheduler.Reload();
-                await NotificationHelper.ShowSuccessAsync("Audit plan created successfully");
+                await _notificationHelper.ShowSuccessAsync("Audit plan created successfully");
                 console?.Log("New audit plan created successfully");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error showing create audit plan dialog");
-            await NotificationHelper.ShowErrorAsync("Error opening create audit plan dialog");
+            _logger.LogError(ex, "Error showing create audit plan dialog");
+            await _notificationHelper.ShowErrorAsync("Error opening create audit plan dialog");
             console?.Log($"Error in create dialog: {ex.Message}");
         }
     }

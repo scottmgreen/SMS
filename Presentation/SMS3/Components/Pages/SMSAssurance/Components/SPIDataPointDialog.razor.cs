@@ -18,8 +18,10 @@ public partial class SPIDataPointDialog : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<SPIDataPointDialog> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -153,12 +155,12 @@ public partial class SPIDataPointDialog : ComponentBase
             }
 
             await OnSave.InvokeAsync(currentDataPoint);
-            DialogService.Close();
+            _dialogService.Close();
         }
         catch (Exception)
         {
             // Simple error notification without excessive details
-            await NotificationHelper.ShowErrorAsync("Failed to save data point");
+            await _notificationHelper.ShowErrorAsync("Failed to save data point");
         }
     }
 
@@ -167,11 +169,11 @@ public partial class SPIDataPointDialog : ComponentBase
         try
         {
             await OnCancel.InvokeAsync();
-            DialogService.Close();
+            _dialogService.Close();
         }
         catch
         {
-            DialogService.Close();
+            _dialogService.Close();
         }
     }
 

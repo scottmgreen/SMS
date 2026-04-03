@@ -6,10 +6,10 @@ namespace SMS3.Components.Pages.SMSAssurance;
 public partial class SPIDashboard : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<SPIDashboard> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<SPIDashboard> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -62,7 +62,7 @@ public partial class SPIDashboard : ComponentBase
             IsLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading SPI Dashboard data with filters - Type: {Type}, Department: {Department}, Period: {Period}",
+            _logger.LogInformation("Loading SPI Dashboard data with filters - Type: {Type}, Department: {Department}, Period: {Period}",
                 SelectedSPIType, SelectedDepartment, SelectedTimePeriod);
 
             var (startDate, endDate) = GetDateRange();
@@ -79,7 +79,7 @@ public partial class SPIDashboard : ComponentBase
                 includeAlerts: true
             );
 
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
@@ -87,20 +87,20 @@ public partial class SPIDashboard : ComponentBase
                 await LoadTrendSPIOptionsAsync();
                 await LoadCategoryDataAsync();
 
-                Logger.LogInformation("SPI Dashboard data loaded successfully - Total SPIs: {TotalSPIs}, Active Alerts: {ActiveAlerts}",
+                _logger.LogInformation("SPI Dashboard data loaded successfully - Total SPIs: {TotalSPIs}, Active Alerts: {ActiveAlerts}",
                     DashboardData.TotalSPIs, DashboardData.ActiveAlerts.Count);
             }
             else
             {
-                Logger.LogError("Failed to load SPI Dashboard data: {Error}", result.Error?.Message);
-                await NotificationHelper.ShowErrorAsync("Failed to load SPI dashboard data");
+                _logger.LogError("Failed to load SPI Dashboard data: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync("Failed to load SPI dashboard data");
                 DashboardData = new SPIDashboardData(); // Initialize empty
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading SPI Dashboard data");
-            await NotificationHelper.ShowErrorAsync("Error loading SPI dashboard data");
+            _logger.LogError(ex, "Error loading SPI Dashboard data");
+            await _notificationHelper.ShowErrorAsync("Error loading SPI dashboard data");
             DashboardData = new SPIDashboardData();
         }
         finally
@@ -183,7 +183,7 @@ public partial class SPIDashboard : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading trend data for SPI: {SPIName}", SelectedTrendSPI);
+            _logger.LogError(ex, "Error loading trend data for SPI: {SPIName}", SelectedTrendSPI);
             TrendData = null;
             TrendTargetData = null;
         }
@@ -213,7 +213,7 @@ public partial class SPIDashboard : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading category data");
+            _logger.LogError(ex, "Error loading category data");
             CategoryData = null;
         }
     }
@@ -221,7 +221,7 @@ public partial class SPIDashboard : ComponentBase
     private async Task RefreshDashboard()
     {
         await LoadDashboardDataAsync();
-        await NotificationHelper.ShowSuccessAsync("SPI Dashboard refreshed successfully");
+        await _notificationHelper.ShowSuccessAsync("SPI Dashboard refreshed successfully");
     }
     #endregion
 
@@ -300,20 +300,20 @@ public partial class SPIDashboard : ComponentBase
     }
     #endregion
 
-    #region Navigation Methods
+    #region _navigation Methods
     private void NavigateToConfiguration()
     {
-        Navigation.NavigateToSecure("/SMSAssurance/SPIConfiguration");
+        _navigation.NavigateToSecure("/SMSAssurance/SPIConfiguration");
     }
 
     private void NavigateToSPIDetail(string spiId)
     {
-        Navigation.NavigateToSecure($"/SMSAssurance/SPIDetail/{spiId}");
+        _navigation.NavigateToSecure($"/SMSAssurance/SPIDetail/{spiId}");
     }
 
     private void ShowAllAlerts()
     {
-        Navigation.NavigateToSecure("/SMSAssurance/SPIAlerts");
+        _navigation.NavigateToSecure("/SMSAssurance/SPIAlerts");
     }
     #endregion
 

@@ -14,10 +14,10 @@ public partial class AuditFindingDialog : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<AuditFindingDialog> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<AuditFindingDialog> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -83,8 +83,8 @@ public partial class AuditFindingDialog : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error submitting finding");
-            await NotificationHelper.ShowErrorAsync("Error saving finding");
+            _logger.LogError(ex, "Error submitting finding");
+            await _notificationHelper.ShowErrorAsync("Error saving finding");
         }
         finally
         {
@@ -95,7 +95,7 @@ public partial class AuditFindingDialog : ComponentBase
 
     private void OnCancel()
     {
-        DialogService.Close(null);
+        _dialogService.Close(null);
     }
     #endregion
 
@@ -118,22 +118,22 @@ public partial class AuditFindingDialog : ComponentBase
                 "CURRENT_USER"          // createdBy
             );
 
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                await NotificationHelper.ShowSuccessAsync("Finding created successfully");
-                DialogService.Close(result.Value);
+                await _notificationHelper.ShowSuccessAsync("Finding created successfully");
+                _dialogService.Close(result.Value);
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync($"Failed to create finding: {result.Error?.Message}");
+                await _notificationHelper.ShowErrorAsync($"Failed to create finding: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating finding");
-            await NotificationHelper.ShowErrorAsync("Error creating finding");
+            _logger.LogError(ex, "Error creating finding");
+            await _notificationHelper.ShowErrorAsync("Error creating finding");
         }
     }
 
@@ -156,22 +156,22 @@ public partial class AuditFindingDialog : ComponentBase
                 "CURRENT_USER"          // updatedBy
             );
 
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                await NotificationHelper.ShowSuccessAsync("Finding updated successfully");
-                DialogService.Close(result.Value);
+                await _notificationHelper.ShowSuccessAsync("Finding updated successfully");
+                _dialogService.Close(result.Value);
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync($"Failed to update finding: {result.Error?.Message}");
+                await _notificationHelper.ShowErrorAsync($"Failed to update finding: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating finding");
-            await NotificationHelper.ShowErrorAsync("Error updating finding");
+            _logger.LogError(ex, "Error updating finding");
+            await _notificationHelper.ShowErrorAsync("Error updating finding");
         }
     }
     #endregion
@@ -181,20 +181,20 @@ public partial class AuditFindingDialog : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(ViewModel.Title))
         {
-            await NotificationHelper.ShowErrorAsync("Finding title is required");
+            await _notificationHelper.ShowErrorAsync("Finding title is required");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(ViewModel.Description))
         {
-            await NotificationHelper.ShowErrorAsync("Finding description is required");
+            await _notificationHelper.ShowErrorAsync("Finding description is required");
             return false;
         }
 
         if (ViewModel.TargetResolutionDate.HasValue &&
             ViewModel.TargetResolutionDate.Value < ViewModel.DiscoveredDate)
         {
-            await NotificationHelper.ShowErrorAsync("Target resolution date cannot be before discovered date");
+            await _notificationHelper.ShowErrorAsync("Target resolution date cannot be before discovered date");
             return false;
         }
 

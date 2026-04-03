@@ -34,13 +34,12 @@ public partial class MitigationListing : ComponentBase
     #endregion
 
     #region Dependencies
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<MitigationListing> Logger { get; set; } = default!;
-    
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<MitigationListing> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -86,12 +85,12 @@ public partial class MitigationListing : ComponentBase
             if (!string.IsNullOrEmpty(HazardCode))
             {
                 var hazardQuery = new GetHazardByCodeQuery(new HazardID(HazardCode));
-                var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+                var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
                 if (hazardResult.IsSuccess && hazardResult.Value != null)
                 {
                     ContextHazard = hazardResult.Value;
-                    Logger.LogInformation("Loaded context hazard: {HazardCode}", HazardCode);
+                    _logger.LogInformation("Loaded context hazard: {HazardCode}", HazardCode);
                 }
             }
 
@@ -99,18 +98,18 @@ public partial class MitigationListing : ComponentBase
             if (!string.IsNullOrEmpty(ReportId))
             {
                 var reportQuery = new GetReportByCodeQuery(new ReportID(ReportId));
-                var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+                var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
                 if (reportResult.IsSuccess && reportResult.Value != null)
                 {
                     ContextReport = reportResult.Value;
-                    Logger.LogInformation("Loaded context report: {ReportId}", ReportId);
+                    _logger.LogInformation("Loaded context report: {ReportId}", ReportId);
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading context data for Report: {ReportId}, Hazard: {HazardCode}", ReportId, HazardCode);
+            _logger.LogError(ex, "Error loading context data for Report: {ReportId}, Hazard: {HazardCode}", ReportId, HazardCode);
         }
     }
     #endregion
@@ -123,13 +122,13 @@ public partial class MitigationListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading mitigations for listing view");
+            _logger.LogInformation("Loading mitigations for listing view");
 
             if (!string.IsNullOrEmpty(HazardCode))
             {
                 // Load mitigations for specific hazard
                 var query = new GetMitigationsByHazardCodeQuery(HazardCode);
-                var result = await Mediator.SendAsync(query, CancellationToken.None);
+                var result = await _mediator.SendAsync(query, CancellationToken.None);
 
                 if (result.IsSuccess && result.Value != null)
                 {
@@ -144,30 +143,30 @@ public partial class MitigationListing : ComponentBase
                     }
 
                     allMitigations = hazardMitigations;
-                    Logger.LogInformation("Loaded {Count} mitigations for hazard {HazardCode}", allMitigations.Count, HazardCode);
+                    _logger.LogInformation("Loaded {Count} mitigations for hazard {HazardCode}", allMitigations.Count, HazardCode);
                 }
                 else
                 {
                     allMitigations = new List<Mitigation>();
-                    Logger.LogInformation("No mitigations found for hazard {HazardCode}", HazardCode);
+                    _logger.LogInformation("No mitigations found for hazard {HazardCode}", HazardCode);
                 }
             }
             else
             {
                 // Load all mitigations
                 var query = new GetAllMitigationsQuery();
-                var result = await Mediator.SendAsync(query, CancellationToken.None);
+                var result = await _mediator.SendAsync(query, CancellationToken.None);
 
                 if (result.IsSuccess && result.Value != null)
                 {
                     allMitigations = result.Value.ToList();
-                    Logger.LogInformation("Loaded {Count} total mitigations", allMitigations.Count);
+                    _logger.LogInformation("Loaded {Count} total mitigations", allMitigations.Count);
                 }
                 else
                 {
                     allMitigations = new List<Mitigation>();
-                    await NotificationHelper.ShowErrorAsync("Failed to load mitigations");
-                    Logger.LogError("Failed to load mitigations");
+                    await _notificationHelper.ShowErrorAsync("Failed to load mitigations");
+                    _logger.LogError("Failed to load mitigations");
                 }
             }
 
@@ -182,23 +181,23 @@ public partial class MitigationListing : ComponentBase
             // Show success notification if we have data
             if (totalCount > 0)
             {
-                await NotificationHelper.ShowSuccessAsync($"Successfully loaded {totalCount} mitigations");
+                await _notificationHelper.ShowSuccessAsync($"Successfully loaded {totalCount} mitigations");
 
                 if (totalCount == 0)
                 {
-                    await NotificationHelper.ShowInfoAsync("No mitigations found");
+                    await _notificationHelper.ShowInfoAsync("No mitigations found");
                 }
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync("Failed to load mitigations");
-                Logger.LogError("Error loading mitigations");
+                await _notificationHelper.ShowErrorAsync("Failed to load mitigations");
+                _logger.LogError("Error loading mitigations");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading mitigations");
-            await NotificationHelper.ShowErrorAsync($"Error loading mitigations: {ex.Message}");
+            _logger.LogError(ex, "Error loading mitigations");
+            await _notificationHelper.ShowErrorAsync($"Error loading mitigations: {ex.Message}");
         }
         finally
         {
@@ -214,27 +213,27 @@ public partial class MitigationListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
+            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all mitigation models yet, load them first
             if (allMitigationModels == null || !allMitigationModels.Any())
             {
-                Logger.LogInformation("No mitigation models cached, loading initial data");
+                _logger.LogInformation("No mitigation models cached, loading initial data");
                 await LoadInitialData();
                 return;
             }
 
             // Start with all mitigation models
             var query = allMitigationModels.AsQueryable();
-            Logger.LogInformation("Starting with {Count} total mitigation models", query.Count());
+            _logger.LogInformation("Starting with {Count} total mitigation models", query.Count());
 
             // Apply filtering
             if (!string.IsNullOrEmpty(args.Filter))
             {
-                Logger.LogInformation("Applying filter: {Filter}", args.Filter);
+                _logger.LogInformation("Applying filter: {Filter}", args.Filter);
                 query = ApplyFiltering(query, args);
-                Logger.LogInformation("After filtering: {Count} mitigations", query.Count());
+                _logger.LogInformation("After filtering: {Count} mitigations", query.Count());
             }
 
             // Get total count after filtering but before paging
@@ -243,41 +242,41 @@ public partial class MitigationListing : ComponentBase
             // Apply sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                Logger.LogInformation("Applying sorting: {OrderBy}", args.OrderBy);
+                _logger.LogInformation("Applying sorting: {OrderBy}", args.OrderBy);
                 query = ApplySorting(query, args.OrderBy);
-                Logger.LogInformation("Sorting applied successfully");
+                _logger.LogInformation("Sorting applied successfully");
             }
             else
             {
                 // Default sorting by CreatedDate descending
-                Logger.LogInformation("Applying default sort by CreatedDate");
+                _logger.LogInformation("Applying default sort by CreatedDate");
                 query = query.OrderByDescending(m => m.Mitigation.CreatedDate ?? DateTime.MinValue);
             }
 
             // Apply paging
             if (args.Skip.HasValue && args.Skip > 0)
             {
-                Logger.LogInformation("Applying skip: {Skip}", args.Skip);
+                _logger.LogInformation("Applying skip: {Skip}", args.Skip);
                 query = query.Skip(args.Skip.Value);
             }
 
             if (args.Top.HasValue && args.Top > 0)
             {
-                Logger.LogInformation("Applying take: {Top}", args.Top);
+                _logger.LogInformation("Applying take: {Top}", args.Top);
                 query = query.Take(args.Top.Value);
             }
 
             mitigationModels = query.ToList();
             mitigations = mitigationModels.Select(m => m.Mitigation).ToList();
 
-            Logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} mitigations", 
+            _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} mitigations", 
                 mitigationModels.Count(), totalCount);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
+            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
-            await NotificationHelper.ShowErrorAsync($"Error loading data: {ex.Message}");
+            await _notificationHelper.ShowErrorAsync($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
             try
@@ -288,7 +287,7 @@ public partial class MitigationListing : ComponentBase
             }
             catch (Exception fallbackEx)
             {
-                Logger.LogError(fallbackEx, "Error in LoadData fallback");
+                _logger.LogError(fallbackEx, "Error in LoadData fallback");
                 mitigationModels = new List<MitigationModel>();
                 mitigations = new List<Mitigation>();
                 totalCount = 0;
@@ -368,7 +367,7 @@ public partial class MitigationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying filters");
+            _logger.LogError(ex, "Error applying filters");
             return query; // Return unfiltered query if filtering fails
         }
     }
@@ -463,7 +462,7 @@ public partial class MitigationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
+            _logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
             return query.OrderByDescending(m => m.Mitigation.CreatedDate ?? DateTime.MinValue); // Fallback to default sort
         }
     }
@@ -487,7 +486,7 @@ public partial class MitigationListing : ComponentBase
                     try
                     {
                         var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazardCode));
-                        var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+                        var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
                         if (hazardResult.IsSuccess && hazardResult.Value != null)
                         {
@@ -496,7 +495,7 @@ public partial class MitigationListing : ComponentBase
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogWarning(ex, "Failed to load hazard {HazardCode}", hazardCode);
+                        _logger.LogWarning(ex, "Failed to load hazard {HazardCode}", hazardCode);
                     }
                     return null;
                 }).ToArray();
@@ -544,11 +543,11 @@ public partial class MitigationListing : ComponentBase
             }
 
             allMitigationModels = viewModels;
-            Logger.LogInformation("Created {Count} mitigation view models", viewModels.Count);
+            _logger.LogInformation("Created {Count} mitigation view models", viewModels.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating mitigation view models");
+            _logger.LogError(ex, "Error creating mitigation view models");
             allMitigationModels = new List<MitigationModel>();
         }
     }
@@ -569,16 +568,16 @@ public partial class MitigationListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Viewing mitigation: {Code}", mitigation.Code);
+            _logger.LogInformation("Viewing mitigation: {Code}", mitigation.Code);
             SelectedMitigation = mitigation;
             ShowViewDialog = true;
             StateHasChanged();
-            await NotificationHelper.ShowInfoAsync($"Viewing details for mitigation {mitigation.Code}");
+            await _notificationHelper.ShowInfoAsync($"Viewing details for mitigation {mitigation.Code}");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error viewing mitigation {Code}", mitigation.Code);
-            await NotificationHelper.ShowErrorAsync("Error viewing mitigation");
+            _logger.LogError(ex, "Error viewing mitigation {Code}", mitigation.Code);
+            await _notificationHelper.ShowErrorAsync("Error viewing mitigation");
         }
     }
 
@@ -586,14 +585,14 @@ public partial class MitigationListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Editing mitigation: {Code}", mitigation.Code);
-            Navigation.NavigateToSecure($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.Code}");
-            await NotificationHelper.ShowInfoAsync($"Opening mitigation editor for {mitigation.Code}");
+            _logger.LogInformation("Editing mitigation: {Code}", mitigation.Code);
+            _navigation.NavigateToSecure($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.Code}");
+            await _notificationHelper.ShowInfoAsync($"Opening mitigation editor for {mitigation.Code}");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error editing mitigation {Code}", mitigation.Code);
-            await NotificationHelper.ShowErrorAsync("Error opening mitigation editor");
+            _logger.LogError(ex, "Error editing mitigation {Code}", mitigation.Code);
+            await _notificationHelper.ShowErrorAsync("Error opening mitigation editor");
         }
     }
 
@@ -603,27 +602,27 @@ public partial class MitigationListing : ComponentBase
         {
             mitigation.Status = MitigationStatus.Approved;
             mitigation.UpdatedDate = DateTime.UtcNow;
-            mitigation.UpdatedBy = CurrentUserService.UserCode ?? "System";
-            mitigation.ApprovedBy = CurrentUserService?.UserCode ?? "System";  // ? FIXED: Set ApprovedBy property
+            mitigation.UpdatedBy = _currentUserService.UserCode ?? "System";
+            mitigation.ApprovedBy = _currentUserService?.UserCode ?? "System";  // ? FIXED: Set ApprovedBy property
 
             var updateCommand = new UpdateMitigationCommand(mitigation);
-            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                await NotificationHelper.ShowSuccessAsync($"Mitigation {mitigation.Code} approved successfully");
+                await _notificationHelper.ShowSuccessAsync($"Mitigation {mitigation.Code} approved successfully");
                 await LoadInitialData();
                 StateHasChanged();
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync($"Failed to approve mitigation: {result.Error?.Message}");
+                await _notificationHelper.ShowErrorAsync($"Failed to approve mitigation: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.Code);
-            await NotificationHelper.ShowErrorAsync("Error approving mitigation");
+            _logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.Code);
+            await _notificationHelper.ShowErrorAsync("Error approving mitigation");
         }
     }
 
@@ -635,7 +634,7 @@ public partial class MitigationListing : ComponentBase
 
             if (!approvableMitigations.Any())
             {
-                await NotificationHelper.ShowInfoAsync("All mitigations are already approved");
+                await _notificationHelper.ShowInfoAsync("All mitigations are already approved");
                 return;
             }
 
@@ -643,12 +642,12 @@ public partial class MitigationListing : ComponentBase
             ShowBulkApprovalDialog = true;
             StateHasChanged();
 
-            Logger.LogInformation("Opening bulk approval dialog for {Count} mitigations", approvableMitigations.Count);
+            _logger.LogInformation("Opening bulk approval dialog for {Count} mitigations", approvableMitigations.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error opening bulk approval dialog");
-            await NotificationHelper.ShowErrorAsync("Error opening bulk approval dialog");
+            _logger.LogError(ex, "Error opening bulk approval dialog");
+            await _notificationHelper.ShowErrorAsync("Error opening bulk approval dialog");
         }
     }
 
@@ -670,7 +669,7 @@ public partial class MitigationListing : ComponentBase
             var successCount = 0;
             var errorCount = 0;
 
-            Logger.LogInformation("Starting bulk approval for {Count} mitigations", mitigationsToApprove.Count);
+            _logger.LogInformation("Starting bulk approval for {Count} mitigations", mitigationsToApprove.Count);
 
             foreach (var mitigation in mitigationsToApprove)
             {
@@ -678,50 +677,50 @@ public partial class MitigationListing : ComponentBase
                 {
                     mitigation.Status = MitigationStatus.Approved;
                     mitigation.UpdatedDate = DateTime.UtcNow;
-                    mitigation.UpdatedBy = CurrentUserService?.UserCode ?? "System";
-                    mitigation.ApprovedBy = CurrentUserService?.UserCode ?? "System";  // ? FIXED: Set ApprovedBy property
+                    mitigation.UpdatedBy = _currentUserService?.UserCode ?? "System";
+                    mitigation.ApprovedBy = _currentUserService?.UserCode ?? "System";  // ? FIXED: Set ApprovedBy property
 
                     var updateCommand = new UpdateMitigationCommand(mitigation);
-                    var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+                    var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
                     if (result.IsSuccess)
                     {
                         successCount++;
-                        Logger.LogInformation("Approved mitigation: {Code}", mitigation.Code);
+                        _logger.LogInformation("Approved mitigation: {Code}", mitigation.Code);
                     }
                     else
                     {
                         errorCount++;
-                        Logger.LogError("Failed to approve mitigation {Code}: {Error}", mitigation.Code, result.Error?.Message);
+                        _logger.LogError("Failed to approve mitigation {Code}: {Error}", mitigation.Code, result.Error?.Message);
                     }
                 }
                 catch (Exception ex)
                 {
                     errorCount++;
-                    Logger.LogError(ex, "Error approving mitigation {Code}", mitigation.Code);
+                    _logger.LogError(ex, "Error approving mitigation {Code}", mitigation.Code);
                 }
             }
 
             if (successCount > 0)
             {
-                await NotificationHelper.ShowSuccessAsync($"Successfully approved {successCount} mitigation(s)");
+                await _notificationHelper.ShowSuccessAsync($"Successfully approved {successCount} mitigation(s)");
             }
 
             if (errorCount > 0)
             {
-                await NotificationHelper.ShowErrorAsync($"Failed to approve {errorCount} mitigation(s)");
+                await _notificationHelper.ShowErrorAsync($"Failed to approve {errorCount} mitigation(s)");
             }
 
             await LoadInitialData();
             await CloseBulkApprovalDialog();
 
-            Logger.LogInformation("Bulk approval completed: {SuccessCount} approved, {ErrorCount} failed",
+            _logger.LogInformation("Bulk approval completed: {SuccessCount} approved, {ErrorCount} failed",
                 successCount, errorCount);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error processing bulk approval");
-            await NotificationHelper.ShowErrorAsync("Error processing bulk approval");
+            _logger.LogError(ex, "Error processing bulk approval");
+            await _notificationHelper.ShowErrorAsync("Error processing bulk approval");
         }
         finally
         {
@@ -734,13 +733,13 @@ public partial class MitigationListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Viewing mitigation history: {Code}", mitigation.Code);
-            await NotificationHelper.ShowInfoAsync($"History functionality for mitigation {mitigation.Code} needs to be implemented");
+            _logger.LogInformation("Viewing mitigation history: {Code}", mitigation.Code);
+            await _notificationHelper.ShowInfoAsync($"History functionality for mitigation {mitigation.Code} needs to be implemented");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error viewing mitigation history {Code}", mitigation.Code);
-            await NotificationHelper.ShowErrorAsync("Error viewing mitigation history");
+            _logger.LogError(ex, "Error viewing mitigation history {Code}", mitigation.Code);
+            await _notificationHelper.ShowErrorAsync("Error viewing mitigation history");
         }
     }
 
@@ -748,7 +747,7 @@ public partial class MitigationListing : ComponentBase
     {
         try
         {
-            var confirmResult = await DialogService.Confirm(
+            var confirmResult = await _dialogService.Confirm(
                 message: $"Are you sure you want to delete mitigation '{mitigation.Name}' ({mitigation.Code})?\n\nThis action cannot be undone.",
                 title: "Confirm Deletion",
                 options: new ConfirmOptions
@@ -760,27 +759,27 @@ public partial class MitigationListing : ComponentBase
 
             if (confirmResult == true)
             {
-                Logger.LogInformation("Deleting mitigation: {Code}", mitigation.Code);
+                _logger.LogInformation("Deleting mitigation: {Code}", mitigation.Code);
 
                 var deleteCommand = new DeleteMitigationCommand(new MitigationID(mitigation.Id.Value));
-                var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+                var result = await _mediator.SendAsync(deleteCommand, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
-                    await NotificationHelper.ShowSuccessAsync($"Mitigation '{mitigation.Name}' deleted successfully");
+                    await _notificationHelper.ShowSuccessAsync($"Mitigation '{mitigation.Name}' deleted successfully");
                     await LoadInitialData();
                     StateHasChanged();
                 }
                 else
                 {
-                    await NotificationHelper.ShowErrorAsync($"Failed to delete mitigation: {result.Error?.Message}");
+                    await _notificationHelper.ShowErrorAsync($"Failed to delete mitigation: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting mitigation {Code}", mitigation.Code);
-            await NotificationHelper.ShowErrorAsync("Error deleting mitigation");
+            _logger.LogError(ex, "Error deleting mitigation {Code}", mitigation.Code);
+            await _notificationHelper.ShowErrorAsync("Error deleting mitigation");
         }
     }
     #endregion

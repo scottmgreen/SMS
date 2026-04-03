@@ -26,14 +26,13 @@ public partial class ReportListing : ComponentBase
     private string BasicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Dependencies
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<ReportListing> Logger { get; set; } = default!;
-    
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IMediator __mediator { get; set; } = default!;
+    [Inject] private ILogger<ReportListing> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
 
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -92,31 +91,31 @@ public partial class ReportListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading reports for listing view");
+            _logger.LogInformation("Loading reports for listing view");
 
             var query = new GetAllReportsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await __mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 allReports = result.Value; // Store all reports for filtering/sorting
                 reports = allReports; // Initially show all reports
                 totalCount = allReports.Count();
-                Logger.LogInformation("Loaded {Count} reports for listing", totalCount);
+                _logger.LogInformation("Loaded {Count} reports for listing", totalCount);
 
-                await NotificationHelper.ShowSuccessAsync($"Successfully loaded {totalCount} reports");
+                await _notificationHelper.ShowSuccessAsync($"Successfully loaded {totalCount} reports");
                
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync("Failed to load reports");
-                Logger.LogError("Failed to load reports: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync("Failed to load reports");
+                _logger.LogError("Failed to load reports: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading reports");
-            await NotificationHelper.ShowErrorAsync("Error loading reports");
+            _logger.LogError(ex, "Error loading reports");
+            await _notificationHelper.ShowErrorAsync("Error loading reports");
         }
         finally
         {
@@ -132,7 +131,7 @@ public partial class ReportListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
+            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all reports yet, load them first
@@ -178,13 +177,13 @@ public partial class ReportListing : ComponentBase
 
             reports = query.ToList();
 
-            Logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} reports", 
+            _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} reports", 
                 reports.Count(), totalCount);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in LoadData");
-            await NotificationHelper.ShowErrorAsync("Error loading data");
+            _logger.LogError(ex, "Error in LoadData");
+            await _notificationHelper.ShowErrorAsync("Error loading data");
         }
         finally
         {
@@ -260,7 +259,7 @@ public partial class ReportListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying filters");
+            _logger.LogError(ex, "Error applying filters");
             return query; // Return unfiltered query if filtering fails
         }
     }
@@ -343,7 +342,7 @@ public partial class ReportListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
+            _logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
             return query.OrderByDescending(r => r.CreatedDate); // Fallback to default sort
         }
     }
@@ -357,7 +356,7 @@ public partial class ReportListing : ComponentBase
     /// <param name="report">Report to view</param>
     public async Task OnViewReportAsync(Report report)
     {
-        Logger.LogInformation("View report details requested: {ReportCode}", report.Code);
+        _logger.LogInformation("View report details requested: {ReportCode}", report.Code);
 
         try
         {
@@ -366,7 +365,7 @@ public partial class ReportListing : ComponentBase
 
             // Get detailed report information
             var reportQuery = new GetReportByCodeQuery(new ReportID(report.Code));
-            var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+            var reportResult = await __mediator.SendAsync(reportQuery, CancellationToken.None);
 
             if (reportResult.IsSuccess && reportResult.Value != null)
             {
@@ -383,16 +382,16 @@ public partial class ReportListing : ComponentBase
             // Show the details modal
             ShowDetailsModal = true;
 
-            Logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards",
+            _logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards",
                 report.Code, AssociatedHazards.Count);
-            await NotificationHelper.ShowInfoAsync($"Displaying comprehensive details for {report.Code}", 4000);
+            await _notificationHelper.ShowInfoAsync($"Displaying comprehensive details for {report.Code}", 4000);
             
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading report details for {ReportCode}", report.Code);
+            _logger.LogError(ex, "Error loading report details for {ReportCode}", report.Code);
 
-            await NotificationHelper.ShowErrorAsync("Failed to load report details");
+            await _notificationHelper.ShowErrorAsync("Failed to load report details");
         }
         finally
         {
@@ -407,11 +406,11 @@ public partial class ReportListing : ComponentBase
     /// <param name="report">Report to edit</param>
     public async Task OnEditReportAsync(Report report)
     {
-        Logger.LogInformation("Edit report requested: {ReportCode}", report.Code);
+        _logger.LogInformation("Edit report requested: {ReportCode}", report.Code);
 
         try
         {
-            var confirmed = await DialogService.Confirm(
+            var confirmed = await _dialogService.Confirm(
                 $"Edit report '{report.Code} - {report.Name}'?\n\nThis will navigate to the hazard reporting form in edit mode.",
                 "Edit Report",
                 new ConfirmOptions()
@@ -422,17 +421,17 @@ public partial class ReportListing : ComponentBase
 
             if (confirmed == true)
             {
-                Navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting?mode=edit&reportCode={report.Code}");
+                _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting?mode=edit&reportCode={report.Code}");
 
-                Logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
-                await NotificationHelper.ShowInfoAsync($"Opening {report.Code} for editing...", 4000);
+                _logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
+                await _notificationHelper.ShowInfoAsync($"Opening {report.Code} for editing...", 4000);
                 
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error navigating to edit report {ReportCode}", report.Code);
-            await NotificationHelper.ShowErrorAsync("Failed to navigate to edit form");
+            _logger.LogError(ex, "Error navigating to edit report {ReportCode}", report.Code);
+            await _notificationHelper.ShowErrorAsync("Failed to navigate to edit form");
         }
     }
 
@@ -442,7 +441,7 @@ public partial class ReportListing : ComponentBase
     /// <param name="report">Report to delete</param>
     public async Task OnDeleteReportAsync(Report report)
     {
-        Logger.LogInformation("Delete report requested: {ReportCode}", report.Code);
+        _logger.LogInformation("Delete report requested: {ReportCode}", report.Code);
 
         try
         {
@@ -459,7 +458,7 @@ public partial class ReportListing : ComponentBase
                                     (hazardCount > 0 ? "??  WARNING: This report has associated hazards that may also be affected.\n\n" : "") +
                                     "?? This action cannot be undone!";
 
-            var confirmed = await DialogService.Confirm(
+            var confirmed = await _dialogService.Confirm(
                 confirmationMessage,
                 "Confirm Delete Report",
                 new ConfirmOptions()
@@ -472,15 +471,15 @@ public partial class ReportListing : ComponentBase
             if (confirmed == true)
             {
                 var deleteCommand = new DeleteReportCommand(new ReportID(report.Code));
-                var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+                var result = await __mediator.SendAsync(deleteCommand, CancellationToken.None);
 
                 if (result.IsSuccess && result.Value)
                 {
-                    Logger.LogInformation("Successfully deleted report: {ReportCode}", report.Code);
+                    _logger.LogInformation("Successfully deleted report: {ReportCode}", report.Code);
 
                     // Reload the grid data
                     await LoadInitialData();
-                    await NotificationHelper.ShowSuccessAsync($"Report {report.Code} has been successfully deleted.");
+                    await _notificationHelper.ShowSuccessAsync($"Report {report.Code} has been successfully deleted.");
                     
                 }
                 else
@@ -491,8 +490,8 @@ public partial class ReportListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting report: {ReportCode}", report.Code);
-            await NotificationHelper.ShowErrorAsync("Failed to delete the report");
+            _logger.LogError(ex, "Error deleting report: {ReportCode}", report.Code);
+            await _notificationHelper.ShowErrorAsync("Failed to delete the report");
         }
     }
     #endregion
@@ -531,27 +530,27 @@ public partial class ReportListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Loading hazards for report: {ReportCode}", reportCode);
+            _logger.LogInformation("Loading hazards for report: {ReportCode}", reportCode);
 
             var hazardsQuery = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
-            var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
+            var hazardsResult = await __mediator.SendAsync(hazardsQuery, CancellationToken.None);
 
             if (hazardsResult.IsSuccess && hazardsResult.Value != null)
             {
                 AssociatedHazards = hazardsResult.Value.ToList();
-                Logger.LogInformation("Loaded {Count} hazards for report {ReportCode}",
+                _logger.LogInformation("Loaded {Count} hazards for report {ReportCode}",
                     AssociatedHazards.Count, reportCode);
             }
             else
             {
                 AssociatedHazards = new List<Hazard>();
-                Logger.LogWarning("No hazards found for report {ReportCode}: {Error}",
+                _logger.LogWarning("No hazards found for report {ReportCode}: {Error}",
                     reportCode, hazardsResult.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading hazards for report {ReportCode}", reportCode);
+            _logger.LogError(ex, "Error loading hazards for report {ReportCode}", reportCode);
             AssociatedHazards = new List<Hazard>();
         }
     }
@@ -600,18 +599,18 @@ public partial class ReportListing : ComponentBase
     /// </summary>
     private void ShowActions(Report report)
     {
-        Logger.LogInformation("Actions requested for report: {Code}", report.Code);
+        _logger.LogInformation("Actions requested for report: {Code}", report.Code);
     }
 
     private async Task<Result<bool>> ResetReportValidation(string reportCode)
     {
         try
         {
-            Logger.LogInformation("Resetting ReportValidation for ReportCode: {ReportCode}", reportCode);
+            _logger.LogInformation("Resetting ReportValidation for ReportCode: {ReportCode}", reportCode);
             var reportId = new ReportID(reportCode);
 
             var queryHazard = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
-            var hazardResult = await Mediator.SendAsync(queryHazard, CancellationToken.None);
+            var hazardResult = await __mediator.SendAsync(queryHazard, CancellationToken.None);
 
             if (hazardResult != null)
             {
@@ -624,7 +623,7 @@ public partial class ReportListing : ComponentBase
                     hazard.ResidualRiskMatrixCode = "TBD";
                     hazard.InitialRiskMatrixCode = "TBD";
                     var cmdHazardReset = new ResetHazardScoresCommand(hazard);
-                    var hazardResetResult = await Mediator.SendAsync(cmdHazardReset, CancellationToken.None);
+                    var hazardResetResult = await __mediator.SendAsync(cmdHazardReset, CancellationToken.None);
 
 
                 }
@@ -632,12 +631,12 @@ public partial class ReportListing : ComponentBase
 
 
             var validationQuery = new GetReportValidationByReportIdQuery(reportId);
-            var validationResult = await Mediator.SendAsync(validationQuery, CancellationToken.None);
+            var validationResult = await __mediator.SendAsync(validationQuery, CancellationToken.None);
             if (validationResult.IsSuccess && validationResult.Value != null)
             {
                 var validation = validationResult.Value;
                 var cmd = new ResetReportValidationCommand(new ReportValidationID(validation.Code));
-                var cmdReset = await Mediator.SendAsync(cmd, CancellationToken.None);
+                var cmdReset = await __mediator.SendAsync(cmd, CancellationToken.None);
 
                 if (cmdReset.IsSuccess)
                 {
@@ -648,7 +647,7 @@ public partial class ReportListing : ComponentBase
                         
                     }
 
-                    Logger.LogInformation("Successfully reset ReportValidation {ValidationCode} for ReportCode: {ReportCode}", validation.Code, reportCode);
+                    _logger.LogInformation("Successfully reset ReportValidation {ValidationCode} for ReportCode: {ReportCode}", validation.Code, reportCode);
                     return true;    
                 }
                 else
@@ -659,7 +658,7 @@ public partial class ReportListing : ComponentBase
             }
             else
             {
-                Logger.LogWarning("No ReportValidation found for ReportCode: {ReportCode}. Creating new validation...", reportCode);
+                _logger.LogWarning("No ReportValidation found for ReportCode: {ReportCode}. Creating new validation...", reportCode);
                 // If no existing validation found, create a new one
                 var createresult =await CreateNewReportValidation(reportCode);
                 return createresult;
@@ -668,7 +667,7 @@ public partial class ReportListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error resetting ReportValidation for ReportCode: {ReportCode}", reportCode);
+            _logger.LogError(ex, "Error resetting ReportValidation for ReportCode: {ReportCode}", reportCode);
             throw; // Re-throw to be handled by the calling method
         }
 
@@ -680,22 +679,22 @@ public partial class ReportListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Creating new ReportValidation for ReportCode: {ReportCode}", reportCode);
+            _logger.LogInformation("Creating new ReportValidation for ReportCode: {ReportCode}", reportCode);
 
             // Get the report details first
             var reportQuery = new GetReportByCodeQuery(new ReportID(reportCode));
-            var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+            var reportResult = await __mediator.SendAsync(reportQuery, CancellationToken.None);
 
             if (reportResult.IsSuccess && reportResult.Value != null)
             {
                 var report = reportResult.Value;
 
                 // Create new ReportValidation using the static factory method
-                var validation = ReportValidation.Create(reportCode, CurrentUserService?.UserDisplayName);
+                var validation = ReportValidation.Create(reportCode, _currentUserService?.UserDisplayName);
                 validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
 
                 var createCommand = new CreateReportValidationCommand(validation);
-                var createResult = await Mediator.SendAsync(createCommand, CancellationToken.None);
+                var createResult = await __mediator.SendAsync(createCommand, CancellationToken.None);
 
                 if (createResult.IsSuccess)
                 {
@@ -709,12 +708,12 @@ public partial class ReportListing : ComponentBase
 
 
 
-                    Logger.LogInformation("Successfully created new ReportValidation {ValidationCode} for ReportCode: {ReportCode}",
+                    _logger.LogInformation("Successfully created new ReportValidation {ValidationCode} for ReportCode: {ReportCode}",
                         createResult.Value.Code, reportCode);
                 }
                 else
                 {
-                    Logger.LogError("Failed to create new ReportValidation for ReportCode: {ReportCode}, Error: {Error}",
+                    _logger.LogError("Failed to create new ReportValidation for ReportCode: {ReportCode}, Error: {Error}",
                         reportCode, createResult.Error?.Message);
                     throw new InvalidOperationException($"Failed to create new ReportValidation: {createResult.Error?.Message}");
                 }
@@ -727,18 +726,18 @@ public partial class ReportListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating new ReportValidation for ReportCode: {ReportCode}", reportCode);
+            _logger.LogError(ex, "Error creating new ReportValidation for ReportCode: {ReportCode}", reportCode);
             throw;
         }
     }
     
     private async Task<bool> UpdateReportStatus(string reportcode, ReportStatus status)
     {
-        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, CurrentUserService?.UserDisplayName);
-        var getupdateResult = await Mediator.SendAsync(updatestatuscmd, CancellationToken.None);
+        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, _currentUserService?.UserDisplayName);
+        var getupdateResult = await __mediator.SendAsync(updatestatuscmd, CancellationToken.None);
         if (!getupdateResult.IsSuccess)
         {
-            await NotificationHelper.ShowErrorAsync($"Report{reportcode} Status Was not Updated");
+            await _notificationHelper.ShowErrorAsync($"Report{reportcode} Status Was not Updated");
             return false;
         }
         return true;
@@ -753,12 +752,12 @@ public partial class ReportListing : ComponentBase
     {
         if (report == null)
         {
-            Logger.LogWarning("OnResetReportAsync called with null report");
-            await NotificationHelper.ShowErrorAsync("Invalid report selected");
+            _logger.LogWarning("OnResetReportAsync called with null report");
+            await _notificationHelper.ShowErrorAsync("Invalid report selected");
             return;
         }
 
-        Logger.LogInformation("Reset Report requested: {ReportCode}", report.Code);
+        _logger.LogInformation("Reset Report requested: {ReportCode}", report.Code);
 
         try
         {
@@ -777,8 +776,8 @@ public partial class ReportListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error preparing reset confirmation for report {ReportCode}", report.Code);
-            await NotificationHelper.ShowErrorAsync($"Error preparing reset confirmation: {ex.Message}");
+            _logger.LogError(ex, "Error preparing reset confirmation for report {ReportCode}", report.Code);
+            await _notificationHelper.ShowErrorAsync($"Error preparing reset confirmation: {ex.Message}");
         }
         finally
         {
@@ -800,17 +799,17 @@ public partial class ReportListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("User confirmed reset for report {ReportCode}", reportToReset.Code);
+            _logger.LogInformation("User confirmed reset for report {ReportCode}", reportToReset.Code);
 
             // Perform the reset operation
             var result = await ResetReportValidation(reportToReset.Code);
 
             if (result.IsSuccess && result.Value)
             {
-                Logger.LogInformation("Successfully reset report validation for {ReportCode}", reportToReset.Code);
+                _logger.LogInformation("Successfully reset report validation for {ReportCode}", reportToReset.Code);
 
                 // Show success notification
-                await NotificationHelper.ShowSuccessAsync($"Report '{reportToReset.Code}' validation has been successfully reset");
+                await _notificationHelper.ShowSuccessAsync($"Report '{reportToReset.Code}' validation has been successfully reset");
 
                 // Refresh the data grid to reflect changes
                 await LoadInitialData();
@@ -821,15 +820,15 @@ public partial class ReportListing : ComponentBase
             else
             {
                 var errorMessage = result.Error?.Message ?? "Unknown error occurred during reset";
-                Logger.LogError("Failed to reset report validation for {ReportCode}: {Error}", reportToReset.Code, errorMessage);
+                _logger.LogError("Failed to reset report validation for {ReportCode}: {Error}", reportToReset.Code, errorMessage);
 
-                await NotificationHelper.ShowErrorAsync($"Failed to reset report validation: {errorMessage}");
+                await _notificationHelper.ShowErrorAsync($"Failed to reset report validation: {errorMessage}");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Unexpected error during reset operation for report {ReportCode}", reportToReset?.Code);
-            await NotificationHelper.ShowErrorAsync($"An unexpected error occurred while resetting the report: {ex.Message}");
+            _logger.LogError(ex, "Unexpected error during reset operation for report {ReportCode}", reportToReset?.Code);
+            await _notificationHelper.ShowErrorAsync($"An unexpected error occurred while resetting the report: {ex.Message}");
         }
         finally
         {
@@ -851,7 +850,7 @@ public partial class ReportListing : ComponentBase
         resetConfirmationMessage = string.Empty;
         StateHasChanged();
         
-        Logger.LogInformation("User cancelled reset operation for report {ReportCode}", reportToReset?.Code);
+        _logger.LogInformation("User cancelled reset operation for report {ReportCode}", reportToReset?.Code);
     }
 
     /// <summary>

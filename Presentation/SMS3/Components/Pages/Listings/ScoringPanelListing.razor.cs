@@ -6,9 +6,9 @@ namespace SMS3.Components.Pages.Listings;
 
 public partial class ScoringPanelListing : ComponentBase
 {
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<ScoringPanelListing> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<ScoringPanelListing> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     
 
     private RadzenDataGrid<ScoringPanel>? panelsGrid;
@@ -26,24 +26,24 @@ public partial class ScoringPanelListing : ComponentBase
         try
         {
             var query = new GetAllScoringPanelsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 panels = result.Value;
                 totalCount = panels.Count();
-                Logger.LogInformation("Loaded {Count} scoring panels", totalCount);
+                _logger.LogInformation("Loaded {Count} scoring panels", totalCount);
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync("Failed to load scoring panels");
-                Logger.LogError("Failed to load scoring panels: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync("Failed to load scoring panels");
+                _logger.LogError("Failed to load scoring panels: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading scoring panels");
-            await NotificationHelper.ShowErrorAsync("Error loading scoring panels");
+            _logger.LogError(ex, "Error loading scoring panels");
+            await _notificationHelper.ShowErrorAsync("Error loading scoring panels");
         }
     }
 
@@ -80,8 +80,8 @@ public partial class ScoringPanelListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in LoadData");
-            await NotificationHelper.ShowErrorAsync("Error loading data");
+            _logger.LogError(ex, "Error in LoadData");
+            await _notificationHelper.ShowErrorAsync("Error loading data");
         }
         finally
         {
@@ -100,6 +100,6 @@ public partial class ScoringPanelListing : ComponentBase
 
     private void ShowActions(ScoringPanel panel)
     {
-        Logger.LogInformation("Actions requested for scoring panel: {Code}", panel.Code);
+        _logger.LogInformation("Actions requested for scoring panel: {Code}", panel.Code);
     }
 }

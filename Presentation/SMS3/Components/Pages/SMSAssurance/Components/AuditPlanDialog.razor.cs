@@ -16,12 +16,10 @@ public partial class AuditPlanDialog : ComponentBase
     #endregion
 
     #region Injected Services
-
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<AuditPlanDialog> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<AuditPlanDialog> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
     #region Form State
@@ -97,13 +95,13 @@ public partial class AuditPlanDialog : ComponentBase
     #region Lifecycle Methods
     protected override void OnInitialized()
     {
-        Logger.LogInformation("DEBUG: OnInitialized called - IsNew: {IsNew}, AuditPlan.Status: {Status}", IsNew, AuditPlan?.Status);
+        _logger.LogInformation("DEBUG: OnInitialized called - IsNew: {IsNew}, AuditPlan.Status: {Status}", IsNew, AuditPlan?.Status);
         InitializeFormData();
     }
 
     private void InitializeFormData()
     {
-        Logger.LogInformation("DEBUG: InitializeFormData called - AuditPlan.Status: {Status}", AuditPlan?.Status);
+        _logger.LogInformation("DEBUG: InitializeFormData called - AuditPlan.Status: {Status}", AuditPlan?.Status);
 
         if (AuditPlan != null)
         {
@@ -152,7 +150,7 @@ public partial class AuditPlanDialog : ComponentBase
             RecurrencePattern = "None";
         }
 
-        Logger.LogInformation("DEBUG: InitializeFormData completed - Status set to: {Status}", Status);
+        _logger.LogInformation("DEBUG: InitializeFormData completed - Status set to: {Status}", Status);
     }
     #endregion
 
@@ -273,48 +271,48 @@ public partial class AuditPlanDialog : ComponentBase
             auditPlan.UpdatedDate = DateTime.UtcNow;
 
             // DEBUG: Log entity values after mapping
-            Logger.LogInformation("DEBUG Entity: Status = {Status}", auditPlan.Status);
-            Logger.LogInformation("DEBUG Entity: Scope = {Scope}", auditPlan.Scope);
-            Logger.LogInformation("DEBUG Entity: ApprovedBy = {ApprovedBy}", auditPlan.ApprovedBy);
+            _logger.LogInformation("DEBUG Entity: Status = {Status}", auditPlan.Status);
+            _logger.LogInformation("DEBUG Entity: Scope = {Scope}", auditPlan.Scope);
+            _logger.LogInformation("DEBUG Entity: ApprovedBy = {ApprovedBy}", auditPlan.ApprovedBy);
 
             if (IsNew)
             {
                 var command = new CreateSMSAuditPlanCommand(auditPlan);
-                var result = await Mediator.SendAsync(command, CancellationToken.None);
+                var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
-                    Logger.LogInformation("Audit plan created successfully: {Code}", Code);
+                    _logger.LogInformation("Audit plan created successfully: {Code}", Code);
                     ShowSuccessAsyncNotification("Audit plan created successfully");
-                    DialogService.Close(true);
+                    _dialogService.Close(true);
                 }
                 else
                 {
-                    Logger.LogError("Failed to create audit plan: {Error}", result.Error?.Message);
+                    _logger.LogError("Failed to create audit plan: {Error}", result.Error?.Message);
                     ShowErrorAsyncNotification($"Failed to create audit plan: {result.Error?.Message}");
                 }
             }
             else
             {
                 var command = new UpdateSMSAuditPlanCommand(auditPlan);
-                var result = await Mediator.SendAsync(command, CancellationToken.None);
+                var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
-                    Logger.LogInformation("Audit plan updated successfully: {Code}", Code);
+                    _logger.LogInformation("Audit plan updated successfully: {Code}", Code);
                     ShowSuccessAsyncNotification("Audit plan updated successfully");
-                    DialogService.Close(true);
+                    _dialogService.Close(true);
                 }
                 else
                 {
-                    Logger.LogError("Failed to update audit plan: {Error}", result.Error?.Message);
+                    _logger.LogError("Failed to update audit plan: {Error}", result.Error?.Message);
                     ShowErrorAsyncNotification($"Failed to update audit plan: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error saving audit plan");
+            _logger.LogError(ex, "Error saving audit plan");
             ShowErrorAsyncNotification("Error saving audit plan");
         }
         finally
@@ -326,7 +324,7 @@ public partial class AuditPlanDialog : ComponentBase
 
     private void Cancel()
     {
-        DialogService.Close(false);
+        _dialogService.Close(false);
     }
 
     private void OnStartDateChanged(DateTime? value)
@@ -379,7 +377,7 @@ public partial class AuditPlanDialog : ComponentBase
             // Apply reasonable bounds (minimum 2 hours, maximum 200 hours)
             EstimatedHours = Math.Max(2, Math.Min(200, calculatedHours));
 
-            Logger.LogInformation("Calculated EstimatedHours: {Hours} for {Days} days of {AuditType} audit",
+            _logger.LogInformation("Calculated EstimatedHours: {Hours} for {Days} days of {AuditType} audit",
                 EstimatedHours, totalDays, AuditType);
         }
     }
@@ -483,12 +481,12 @@ public partial class AuditPlanDialog : ComponentBase
     #region Notification Methods
     private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        _notificationHelper.ShowSuccessAsync( message);
     }
 
     private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        _notificationHelper.ShowErrorAsync( message);
     }
     #endregion
 }

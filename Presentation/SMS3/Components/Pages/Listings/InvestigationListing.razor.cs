@@ -28,11 +28,10 @@ public partial class InvestigationListing : ComponentBase
     private string BasicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Dependencies
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<InvestigationListing> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<InvestigationListing> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -58,44 +57,44 @@ public partial class InvestigationListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading investigations for listing view");
+            _logger.LogInformation("Loading investigations for listing view");
 
             var query = new GetAllInvestigationsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 allInvestigations = result.Value.ToList(); // Store all investigations for filtering/sorting
                 investigations = allInvestigations; // Initially show all investigations
                 totalCount = allInvestigations.Count();
-                Logger.LogInformation("Loaded {Count} investigations for listing", totalCount);
+                _logger.LogInformation("Loaded {Count} investigations for listing", totalCount);
 
                 // Only show success notification if we have data
                 if (totalCount > 0)
                 {
-                    await NotificationHelper.ShowSuccessAsync($"Successfully loaded {totalCount} investigations");
+                    await _notificationHelper.ShowSuccessAsync($"Successfully loaded {totalCount} investigations");
 
                     if (totalCount == 0)
                     {
-                        await NotificationHelper.ShowInfoAsync("No investigations found");
+                        await _notificationHelper.ShowInfoAsync("No investigations found");
                     }
                 }
                 else
                 {
-                    await NotificationHelper.ShowErrorAsync("Failed to load investigations");
-                    Logger.LogError("Failed to load investigations: {Error}", result.Error?.Message);
+                    await _notificationHelper.ShowErrorAsync("Failed to load investigations");
+                    _logger.LogError("Failed to load investigations: {Error}", result.Error?.Message);
                 }
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync("Failed to load investigations");
-                Logger.LogError("Failed to load investigations: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync("Failed to load investigations");
+                _logger.LogError("Failed to load investigations: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading investigations");
-            await NotificationHelper.ShowErrorAsync($"Error loading investigations: {ex.Message}");
+            _logger.LogError(ex, "Error loading investigations");
+            await _notificationHelper.ShowErrorAsync($"Error loading investigations: {ex.Message}");
         }
         finally
         {
@@ -111,27 +110,27 @@ public partial class InvestigationListing : ComponentBase
             isLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
+            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all investigations yet, load them first
             if (allInvestigations == null || !allInvestigations.Any())
             {
-                Logger.LogInformation("No investigations cached, loading initial data");
+                _logger.LogInformation("No investigations cached, loading initial data");
                 await LoadInitialData();
                 return;
             }
 
             // Start with all investigations
             var query = allInvestigations.AsQueryable();
-            Logger.LogInformation("Starting with {Count} total investigations", query.Count());
+            _logger.LogInformation("Starting with {Count} total investigations", query.Count());
 
             // Apply filtering
             if (!string.IsNullOrEmpty(args.Filter))
             {
-                Logger.LogInformation("Applying filter: {Filter}", args.Filter);
+                _logger.LogInformation("Applying filter: {Filter}", args.Filter);
                 query = ApplyFiltering(query, args);
-                Logger.LogInformation("After filtering: {Count} investigations", query.Count());
+                _logger.LogInformation("After filtering: {Count} investigations", query.Count());
             }
 
             // Get total count after filtering but before paging
@@ -140,40 +139,40 @@ public partial class InvestigationListing : ComponentBase
             // Apply sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                Logger.LogInformation("Applying sorting: {OrderBy}", args.OrderBy);
+                _logger.LogInformation("Applying sorting: {OrderBy}", args.OrderBy);
                 query = ApplySorting(query, args.OrderBy);
-                Logger.LogInformation("Sorting applied successfully");
+                _logger.LogInformation("Sorting applied successfully");
             }
             else
             {
                 // Default sorting by CreatedDate descending
-                Logger.LogInformation("Applying default sort by CreatedDate");
+                _logger.LogInformation("Applying default sort by CreatedDate");
                 query = query.OrderByDescending(i => i.CreatedDate ?? DateTime.MinValue);
             }
 
             // Apply paging
             if (args.Skip.HasValue && args.Skip > 0)
             {
-                Logger.LogInformation("Applying skip: {Skip}", args.Skip);
+                _logger.LogInformation("Applying skip: {Skip}", args.Skip);
                 query = query.Skip(args.Skip.Value);
             }
 
             if (args.Top.HasValue && args.Top > 0)
             {
-                Logger.LogInformation("Applying take: {Top}", args.Top);
+                _logger.LogInformation("Applying take: {Top}", args.Top);
                 query = query.Take(args.Top.Value);
             }
 
             investigations = query.ToList();
 
-            Logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} investigations", 
+            _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} investigations", 
                 investigations.Count(), totalCount);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
+            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
-            await NotificationHelper.ShowErrorAsync($"Error loading data: {ex.Message}");
+            await _notificationHelper.ShowErrorAsync($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
             try
@@ -183,7 +182,7 @@ public partial class InvestigationListing : ComponentBase
             }
             catch (Exception fallbackEx)
             {
-                Logger.LogError(fallbackEx, "Error in LoadData fallback");
+                _logger.LogError(fallbackEx, "Error in LoadData fallback");
                 investigations = new List<Investigation>();
                 totalCount = 0;
             }
@@ -202,14 +201,14 @@ public partial class InvestigationListing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
+            _logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
                 args.Filter, args.Filters?.Count() ?? 0);
 
             // Handle simple string filter (when user types in the general filter)
             if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
             {
                 var filterValue = args.Filter.ToLower();
-                Logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
+                _logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
                 
                 query = query.Where(i => 
                     (!string.IsNullOrEmpty(i.Code) && i.Code.ToLower().Contains(filterValue)) ||
@@ -225,7 +224,7 @@ public partial class InvestigationListing : ComponentBase
             // Handle advanced column-specific filters
             if (args.Filters != null && args.Filters.Any())
             {
-                Logger.LogInformation("Applying {Count} advanced filters", args.Filters.Count());
+                _logger.LogInformation("Applying {Count} advanced filters", args.Filters.Count());
                 
                 foreach (var filter in args.Filters)
                 {
@@ -233,7 +232,7 @@ public partial class InvestigationListing : ComponentBase
                     var filterValue = filter.FilterValue?.ToString()?.ToLower();
                     var filterOperator = filter.FilterOperator;
 
-                    Logger.LogInformation("Processing filter - Column: {Column}, Value: {Value}, Operator: {Operator}", 
+                    _logger.LogInformation("Processing filter - Column: {Column}, Value: {Value}, Operator: {Operator}", 
                         columnName, filterValue, filterOperator);
 
                     if (string.IsNullOrEmpty(filterValue)) continue;
@@ -280,7 +279,7 @@ public partial class InvestigationListing : ComponentBase
                             }
                             break;
                         default:
-                            Logger.LogWarning("Unknown filter column: {ColumnName}", columnName);
+                            _logger.LogWarning("Unknown filter column: {ColumnName}", columnName);
                             break;
                     }
                 }
@@ -290,7 +289,7 @@ public partial class InvestigationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
+            _logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
                 args.Filter, args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
             return query; // Return unfiltered query if filtering fails
         }
@@ -373,7 +372,7 @@ public partial class InvestigationListing : ComponentBase
             var propertyName = parts[0].ToLower();
             var isDescending = parts.Length > 1 && parts[1].ToLower() == "desc";
 
-            Logger.LogInformation("Applying sorting: Property={PropertyName}, Descending={IsDescending}", propertyName, isDescending);
+            _logger.LogInformation("Applying sorting: Property={PropertyName}, Descending={IsDescending}", propertyName, isDescending);
 
             return propertyName switch
             {
@@ -393,7 +392,7 @@ public partial class InvestigationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
+            _logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
             return query.OrderByDescending(i => i.CreatedDate ?? DateTime.MinValue); // Fallback to default sort
         }
     }
@@ -402,7 +401,7 @@ public partial class InvestigationListing : ComponentBase
     #region Action Methods - Enhanced with better error handling
     private void ShowActions(Investigation investigation)
     {
-        Logger.LogInformation("Actions requested for investigation: {Code}", investigation.Code);
+        _logger.LogInformation("Actions requested for investigation: {Code}", investigation.Code);
     }
 
     private async Task ViewInvestigation(Investigation investigation)
@@ -416,14 +415,14 @@ public partial class InvestigationListing : ComponentBase
                 ? $"/SMSRiskManagement/Investigations/{investigation.Code}"
                 : $"/SMSRiskManagement/Investigations/{investigation.Code}/{investigation.HazardCode}";
 
-            Logger.LogInformation("Navigating to investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
-            Navigation.NavigateToSecure(navigationUrl);
-            await NotificationHelper.ShowInfoAsync($"Opening investigation {investigation.Code}");
+            _logger.LogInformation("Navigating to investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
+            _navigation.NavigateToSecure(navigationUrl);
+            await _notificationHelper.ShowInfoAsync($"Opening investigation {investigation.Code}");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error viewing investigation {Code}", investigation?.Code);
-            await NotificationHelper.ShowErrorAsync("Error opening investigation");
+            _logger.LogError(ex, "Error viewing investigation {Code}", investigation?.Code);
+            await _notificationHelper.ShowErrorAsync("Error opening investigation");
         }
     }
 
@@ -438,14 +437,14 @@ public partial class InvestigationListing : ComponentBase
                 ? $"/SMSRiskManagement/Investigations/{investigation.Code}"
                 : $"/SMSRiskManagement/Investigations/{investigation.Code}/{investigation.HazardCode}";
 
-            Logger.LogInformation("Navigating to edit investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
-            Navigation.NavigateToSecure(navigationUrl);
-            await NotificationHelper.ShowInfoAsync($"Opening investigation editor for {investigation.Code}");
+            _logger.LogInformation("Navigating to edit investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
+            _navigation.NavigateToSecure(navigationUrl);
+            await _notificationHelper.ShowInfoAsync($"Opening investigation editor for {investigation.Code}");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error editing investigation {Code}", investigation?.Code);
-            await NotificationHelper.ShowErrorAsync("Error opening investigation editor");
+            _logger.LogError(ex, "Error editing investigation {Code}", investigation?.Code);
+            await _notificationHelper.ShowErrorAsync("Error opening investigation editor");
         }
     }
     #endregion

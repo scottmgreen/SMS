@@ -8,12 +8,12 @@ namespace SMS3.Components.Pages.SMSAssurance;
 public partial class AuditManagement : ComponentBase
 {
     #region Injected Services
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<AuditManagement> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<AuditManagement> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -66,7 +66,7 @@ public partial class AuditManagement : ComponentBase
             IsLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading Audit Management dashboard data");
+            _logger.LogInformation("Loading Audit Management dashboard data");
 
             // Load all dashboard data
             await Task.WhenAll(
@@ -77,12 +77,12 @@ public partial class AuditManagement : ComponentBase
                 LoadDashboardStatsAsync()
             );
 
-            Logger.LogInformation("Audit Management dashboard data loaded successfully");
+            _logger.LogInformation("Audit Management dashboard data loaded successfully");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading Audit Management dashboard data");
-            await NotificationHelper.ShowErrorAsync("Error loading audit management data");
+            _logger.LogError(ex, "Error loading Audit Management dashboard data");
+            await _notificationHelper.ShowErrorAsync("Error loading audit management data");
         }
         finally
         {
@@ -96,7 +96,7 @@ public partial class AuditManagement : ComponentBase
         try
         {
             var query = new GetAllSMSAuditPlansQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
@@ -107,12 +107,12 @@ public partial class AuditManagement : ComponentBase
             {
                 AuditPlans = new List<SMSAuditPlan>();
                 AllAuditPlans = new List<SMSAuditPlan>();
-                Logger.LogWarning("Failed to load audit plans: {Error}", result.Error?.Message);
+                _logger.LogWarning("Failed to load audit plans: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading audit plans");
+            _logger.LogError(ex, "Error loading audit plans");
             AuditPlans = new List<SMSAuditPlan>();
             AllAuditPlans = new List<SMSAuditPlan>();
         }
@@ -124,7 +124,7 @@ public partial class AuditManagement : ComponentBase
         {
             // Load ALL audits, not just active ones for proper statistics
             var query = new GetAllSMSAuditsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
@@ -143,12 +143,12 @@ public partial class AuditManagement : ComponentBase
             {
                 ActiveAudits = new List<SMSAudit>();
                 AllAudits = new List<SMSAudit>();
-                Logger.LogWarning("Failed to load audits: {Error}", result.Error?.Message);
+                _logger.LogWarning("Failed to load audits: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading audits");
+            _logger.LogError(ex, "Error loading audits");
             ActiveAudits = new List<SMSAudit>();
             AllAudits = new List<SMSAudit>();
         }
@@ -159,7 +159,7 @@ public partial class AuditManagement : ComponentBase
         try
         {
             var query = new GetAllSMSAuditFindingsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
@@ -171,12 +171,12 @@ public partial class AuditManagement : ComponentBase
             else
             {
                 RecentFindings = new List<SMSAuditFinding>();
-                Logger.LogWarning("Failed to load recent findings: {Error}", result.Error?.Message);
+                _logger.LogWarning("Failed to load recent findings: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading recent findings");
+            _logger.LogError(ex, "Error loading recent findings");
             RecentFindings = new List<SMSAuditFinding>();
         }
     }
@@ -186,7 +186,7 @@ public partial class AuditManagement : ComponentBase
         try
         {
             var query = new GetAllSMSAuditEvidenceQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
@@ -198,12 +198,12 @@ public partial class AuditManagement : ComponentBase
             else
             {
                 RecentEvidence = new List<SMSAuditEvidence>();
-                Logger.LogWarning("Failed to load recent evidence: {Error}", result.Error?.Message);
+                _logger.LogWarning("Failed to load recent evidence: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading recent evidence");
+            _logger.LogError(ex, "Error loading recent evidence");
             RecentEvidence = new List<SMSAuditEvidence>();
         }
     }
@@ -238,12 +238,12 @@ public partial class AuditManagement : ComponentBase
                 FindingsAwaitingAction = RecentFindings.Count(f => f.Status == "Open" || f.Status == "In Progress")
             };
 
-            Logger.LogInformation("Dashboard Stats Calculated: Plans={TotalPlans}, ActiveAudits={Active}, Overdue={Overdue}",
+            _logger.LogInformation("Dashboard Stats Calculated: Plans={TotalPlans}, ActiveAudits={Active}, Overdue={Overdue}",
                 DashboardStats.TotalAuditPlans, DashboardStats.ActiveAudits, DashboardStats.OverdueAudits);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error calculating dashboard statistics");
+            _logger.LogError(ex, "Error calculating dashboard statistics");
             DashboardStats = new AuditDashboardStats();
         }
     }
@@ -251,7 +251,7 @@ public partial class AuditManagement : ComponentBase
     private async Task RefreshDashboard()
     {
         await LoadDashboardDataAsync();
-        await NotificationHelper.ShowSuccessAsync("Audit Management dashboard refreshed successfully");
+        await _notificationHelper.ShowSuccessAsync("Audit Management dashboard refreshed successfully");
     }
     #endregion
 
@@ -296,10 +296,10 @@ public partial class AuditManagement : ComponentBase
     {
         try
         {
-            var result = await DialogService.OpenAsync<Components.AuditPlanDialog>("Create Audit Plan",
+            var result = await _dialogService.OpenAsync<Components.AuditPlanDialog>("Create Audit Plan",
                 new Dictionary<string, object>()
                 {
-                    { "AuditPlan", new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), CurrentUserService?.UserDisplayName) },
+                    { "AuditPlan", new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), _currentUserService?.UserDisplayName) },
                     { "IsNew", true }
                 },
                 new DialogOptions() { Width = "1200px", Height = "900px", Resizable = true });
@@ -308,13 +308,13 @@ public partial class AuditManagement : ComponentBase
             {
                 // Refresh ALL dashboard data after creating a plan
                 await LoadDashboardDataAsync();
-                await NotificationHelper.ShowSuccessAsync("Audit plan created successfully");
+                await _notificationHelper.ShowSuccessAsync("Audit plan created successfully");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating audit plan");
-            await NotificationHelper.ShowErrorAsync("Error creating audit plan");
+            _logger.LogError(ex, "Error creating audit plan");
+            await _notificationHelper.ShowErrorAsync("Error creating audit plan");
         }
     }
 
@@ -322,7 +322,7 @@ public partial class AuditManagement : ComponentBase
     {
         try
         {
-            var result = await DialogService.OpenAsync<Components.AuditPlanDialog>("Edit Audit Plan",
+            var result = await _dialogService.OpenAsync<Components.AuditPlanDialog>("Edit Audit Plan",
                 new Dictionary<string, object>()
                 {
                     { "AuditPlan", plan },
@@ -334,13 +334,13 @@ public partial class AuditManagement : ComponentBase
             {
                 // Refresh ALL dashboard data after editing a plan
                 await LoadDashboardDataAsync();
-                await NotificationHelper.ShowSuccessAsync("Audit plan updated successfully");
+                await _notificationHelper.ShowSuccessAsync("Audit plan updated successfully");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error editing audit plan");
-            await NotificationHelper.ShowErrorAsync("Error updating audit plan");
+            _logger.LogError(ex, "Error editing audit plan");
+            await _notificationHelper.ShowErrorAsync("Error updating audit plan");
         }
     }
 
@@ -351,7 +351,7 @@ public partial class AuditManagement : ComponentBase
             // Simple confirmation dialog instead of full form
             var confirmMessage = $"Schedule audit '{plan.Name}' for {plan.PlannedStartDate:MM/dd/yyyy} - {plan.PlannedEndDate:MM/dd/yyyy}?";
 
-            var confirm = await DialogService.Confirm(
+            var confirm = await _dialogService.Confirm(
                 confirmMessage,
                 "Schedule Audit Confirmation",
                 new ConfirmOptions()
@@ -369,11 +369,11 @@ public partial class AuditManagement : ComponentBase
                 plan.UpdatedDate = DateTime.UtcNow;
 
                 var updatePlanCommand = new UpdateSMSAuditPlanCommand(plan);
-                var updateResult = await Mediator.SendAsync(updatePlanCommand, CancellationToken.None);
+                var updateResult = await _mediator.SendAsync(updatePlanCommand, CancellationToken.None);
 
                 if (updateResult.IsFailure)
                 {
-                    await NotificationHelper.ShowErrorAsync($"Failed to update audit plan status: {updateResult.Error?.Message}");
+                    await _notificationHelper.ShowErrorAsync($"Failed to update audit plan status: {updateResult.Error?.Message}");
                     return;
                 }
 
@@ -390,24 +390,24 @@ public partial class AuditManagement : ComponentBase
                     createdBy: "CURRENT_USER"
                 );
 
-                var createAuditResult = await Mediator.SendAsync(createAuditCommand, CancellationToken.None);
+                var createAuditResult = await _mediator.SendAsync(createAuditCommand, CancellationToken.None);
 
                 if (createAuditResult.IsSuccess)
                 {
                     // Refresh ALL dashboard data after scheduling
                     await LoadDashboardDataAsync();
-                    await NotificationHelper.ShowSuccessAsync($"Audit '{plan.Name}' has been scheduled successfully and audit record created!");
+                    await _notificationHelper.ShowSuccessAsync($"Audit '{plan.Name}' has been scheduled successfully and audit record created!");
                 }
                 else
                 {
-                    await NotificationHelper.ShowErrorAsync($"Failed to create audit record: {createAuditResult.Error?.Message}");
+                    await _notificationHelper.ShowErrorAsync($"Failed to create audit record: {createAuditResult.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error scheduling audit from plan: {PlanCode}", plan.Code);
-            await NotificationHelper.ShowErrorAsync("Error scheduling audit");
+            _logger.LogError(ex, "Error scheduling audit from plan: {PlanCode}", plan.Code);
+            await _notificationHelper.ShowErrorAsync("Error scheduling audit");
         }
     }
 
@@ -415,38 +415,38 @@ public partial class AuditManagement : ComponentBase
     {
         try
         {
-            var confirm = await DialogService.Confirm(
+            var confirm = await _dialogService.Confirm(
                 $"Are you sure you want to delete the audit plan '{plan.Name}'?",
                 "Confirm Delete",
                 new ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
 
             if (confirm == true)
             {
-                var command = new DeleteSMSAuditPlanCommand(plan.Code, CurrentUserService?.UserDisplayName);
-                var result = await Mediator.SendAsync(command, CancellationToken.None);
+                var command = new DeleteSMSAuditPlanCommand(plan.Code, _currentUserService?.UserDisplayName);
+                var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
                     // Refresh ALL dashboard data after deleting a plan
                     await LoadDashboardDataAsync();
-                    await NotificationHelper.ShowSuccessAsync("Audit plan deleted successfully");
+                    await _notificationHelper.ShowSuccessAsync("Audit plan deleted successfully");
                 }
                 else
                 {
-                    await NotificationHelper.ShowErrorAsync($"Failed to delete audit plan: {result.Error?.Message}");
+                    await _notificationHelper.ShowErrorAsync($"Failed to delete audit plan: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting audit plan");
-            await NotificationHelper.ShowErrorAsync("Error deleting audit plan");
+            _logger.LogError(ex, "Error deleting audit plan");
+            await _notificationHelper.ShowErrorAsync("Error deleting audit plan");
         }
     }
 
     private async Task ViewAudit(SMSAudit audit)
     {
-        Navigation.NavigateToSecure($"/SMSAssurance/AuditDetail/{audit.Code}");
+        _navigation.NavigateToSecure($"/SMSAssurance/AuditDetail/{audit.Code}");
     }
 
     private async Task StartAudit(SMSAudit audit)
@@ -454,61 +454,61 @@ public partial class AuditManagement : ComponentBase
         try
         {
             var command = new StartSMSAuditCommand(audit.Code, "CURRENT_USER");
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 // Refresh ALL dashboard data after starting an audit
                 await LoadDashboardDataAsync();
-                await NotificationHelper.ShowSuccessAsync("Audit started successfully");
+                await _notificationHelper.ShowSuccessAsync("Audit started successfully");
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync($"Failed to start audit: {result.Error?.Message}");
+                await _notificationHelper.ShowErrorAsync($"Failed to start audit: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error starting audit");
-            await NotificationHelper.ShowErrorAsync("Error starting audit");
+            _logger.LogError(ex, "Error starting audit");
+            await _notificationHelper.ShowErrorAsync("Error starting audit");
         }
     }
     #endregion
 
-    #region Navigation Methods
+    #region _navigation Methods
     private void NavigateToAuditPlans()
     {
         // Navigate to the main audit management page with Audit Plans tab selected
-        Navigation.NavigateToSecure("/SMSAssurance/AuditManagement#audit-plans");
+        _navigation.NavigateToSecure("/SMSAssurance/AuditManagement#audit-plans");
     }
 
     private void NavigateToActiveAudits()
     {
         // Navigate to the main audit management page with Active Audits tab selected
-        Navigation.NavigateToSecure("/SMSAssurance/AuditManagement#active-audits");
+        _navigation.NavigateToSecure("/SMSAssurance/AuditManagement#active-audits");
     }
 
     private void NavigateToFindings()
     {
         // Navigate to audit finding management page (when implemented)
-        Navigation.NavigateToSecure("/SMSAssurance/AuditFindings");
+        _navigation.NavigateToSecure("/SMSAssurance/AuditFindings");
     }
 
     private void NavigateToEvidence()
     {
         // Navigate to audit evidence management page (when implemented)
-        Navigation.NavigateToSecure("/SMSAssurance/AuditEvidence");
+        _navigation.NavigateToSecure("/SMSAssurance/AuditEvidence");
     }
 
     private void NavigateToAuditReports()
     {
         // Navigate to audit reporting page (when implemented)
-        Navigation.NavigateToSecure("/SMSAssurance/AuditReports");
+        _navigation.NavigateToSecure("/SMSAssurance/AuditReports");
     }
 
     private void NavigateToFindingDetail(string findingCode)
     {
-        Navigation.NavigateToSecure($"/SMSAssurance/FindingDetail/{findingCode}");
+        _navigation.NavigateToSecure($"/SMSAssurance/FindingDetail/{findingCode}");
     }
     #endregion
 
@@ -735,7 +735,7 @@ public partial class AuditManagement : ComponentBase
     private void NavigateToOverdueAudits()
     {
         // Navigate to filtered audit view showing only overdue audits
-        Navigation.NavigateToSecure("/SMSAssurance/AuditManagement?status=Overdue");
+        _navigation.NavigateToSecure("/SMSAssurance/AuditManagement?status=Overdue");
     }
     #endregion
 
@@ -778,8 +778,8 @@ public partial class AuditManagement : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error applying filters");
-            NotificationHelper.ShowErrorAsync("Error applying filters");
+            _logger.LogError(ex, "Error applying filters");
+            _notificationHelper.ShowErrorAsync("Error applying filters");
         }
     }
     #endregion

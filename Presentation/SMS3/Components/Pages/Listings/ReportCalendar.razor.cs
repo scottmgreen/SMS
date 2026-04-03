@@ -8,11 +8,11 @@ namespace SMS3.Components.Pages.Listings;
 public partial class ReportCalendar : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<ReportCalendar> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<ReportCalendar> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -47,31 +47,31 @@ public partial class ReportCalendar : ComponentBase
             IsLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading reports for calendar display");
+            _logger.LogInformation("Loading reports for calendar display");
 
             var query = new GetAllReportsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 Reports = result.Value.ToList();
-                Logger.LogInformation("Loaded {Count} reports for calendar", Reports.Count);
+                _logger.LogInformation("Loaded {Count} reports for calendar", Reports.Count);
 
                 // Convert reports to scheduler items
                 SchedulerData = Reports.Select(MapReportToSchedulerItem).ToList();
             }
             else
             {
-                Logger.LogError("Failed to load reports: {Error}", result.Error?.Message);
-                await NotificationHelper.ShowErrorAsync("Failed to load reports for calendar");
+                _logger.LogError("Failed to load reports: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync("Failed to load reports for calendar");
                 Reports = new List<Report>();
                 SchedulerData = new List<ReportSchedulerItem>();
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading reports for calendar");
-            await NotificationHelper.ShowErrorAsync("Error loading reports");
+            _logger.LogError(ex, "Error loading reports for calendar");
+            await _notificationHelper.ShowErrorAsync("Error loading reports");
         }
         finally
         {
@@ -83,7 +83,7 @@ public partial class ReportCalendar : ComponentBase
     private async Task RefreshData()
     {
         await LoadReportsAsync();
-        await NotificationHelper.ShowSuccessAsync("Calendar data refreshed");
+        await _notificationHelper.ShowSuccessAsync("Calendar data refreshed");
     }
     #endregion
 
@@ -142,14 +142,14 @@ public partial class ReportCalendar : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
+            _logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
 
             // Optional: Show dialog to create new report for selected date
             // This can be implemented later if needed
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error handling slot selection");
+            _logger.LogError(ex, "Error handling slot selection");
         }
     }
 
@@ -158,14 +158,14 @@ public partial class ReportCalendar : ComponentBase
         try
         {
             var reportItem = args.Data;
-            Logger.LogInformation("Report appointment selected: {ReportCode}", reportItem.ReportCode);
+            _logger.LogInformation("Report appointment selected: {ReportCode}", reportItem.ReportCode);
 
             // Navigate to report details or show popup
             await ShowReportDetails(reportItem);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error handling appointment selection");
+            _logger.LogError(ex, "Error handling appointment selection");
         }
     }
 
@@ -197,7 +197,7 @@ public partial class ReportCalendar : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error rendering appointment");
+            _logger.LogError(ex, "Error rendering appointment");
         }
     }
 
@@ -210,7 +210,7 @@ public partial class ReportCalendar : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error rendering slot");
+            _logger.LogError(ex, "Error rendering slot");
         }
     }
     #endregion
@@ -229,13 +229,13 @@ public partial class ReportCalendar : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error navigating to today");
+            _logger.LogError(ex, "Error navigating to today");
         }
     }
 
     private async Task ShowReportDetails(ReportSchedulerItem reportItem)
     {
-        Logger.LogInformation("View report details requested from calendar: {ReportCode}", reportItem.ReportCode);
+        _logger.LogInformation("View report details requested from calendar: {ReportCode}", reportItem.ReportCode);
 
         try
         {
@@ -244,7 +244,7 @@ public partial class ReportCalendar : ComponentBase
 
             // Get detailed report information
             var reportQuery = new GetReportByCodeQuery(new ReportID(reportItem.ReportCode));
-            var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+            var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
             if (reportResult.IsSuccess && reportResult.Value != null)
             {
@@ -256,7 +256,7 @@ public partial class ReportCalendar : ComponentBase
                 SelectedReport = Reports.FirstOrDefault(r => r.Code == reportItem.ReportCode);
                 if (SelectedReport == null)
                 {
-                    await NotificationHelper.ShowErrorAsync($"Report {reportItem.ReportCode} not found");
+                    await _notificationHelper.ShowErrorAsync($"Report {reportItem.ReportCode} not found");
                     return;
                 }
             }
@@ -267,15 +267,15 @@ public partial class ReportCalendar : ComponentBase
             // Show the details modal
             ShowDetailsModal = true;
 
-            Logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards",
+            _logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards",
                 reportItem.ReportCode, AssociatedHazards.Count);
 
-            await NotificationHelper.ShowSuccessAsync($"Report details loaded for {reportItem.ReportCode}");
+            await _notificationHelper.ShowSuccessAsync($"Report details loaded for {reportItem.ReportCode}");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error showing report details for {ReportCode}", reportItem.ReportCode);
-            await NotificationHelper.ShowErrorAsync("Error opening report details");
+            _logger.LogError(ex, "Error showing report details for {ReportCode}", reportItem.ReportCode);
+            await _notificationHelper.ShowErrorAsync("Error opening report details");
         }
         finally
         {
@@ -337,11 +337,11 @@ public partial class ReportCalendar : ComponentBase
     /// <param name="report">Report to edit</param>
     public async Task OnEditReportAsync(Report report)
     {
-        Logger.LogInformation("Edit report requested: {ReportCode}", report.Code);
+        _logger.LogInformation("Edit report requested: {ReportCode}", report.Code);
 
         try
         {
-            var confirmed = await DialogService.Confirm(
+            var confirmed = await _dialogService.Confirm(
                 $"Edit report '{report.Code} - {report.Name}'?\n\nThis will navigate to the hazard reporting form in edit mode.",
                 "Edit Report",
                 new ConfirmOptions()
@@ -352,17 +352,17 @@ public partial class ReportCalendar : ComponentBase
 
             if (confirmed == true)
             {
-                Navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting?mode=edit&reportCode={report.Code}");
+                _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting?mode=edit&reportCode={report.Code}");
 
-                Logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
+                _logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
 
-                await NotificationHelper.ShowSuccessAsync($"Opening {report.Code} for editing...");
+                await _notificationHelper.ShowSuccessAsync($"Opening {report.Code} for editing...");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error navigating to edit report {ReportCode}", report.Code);
-            await NotificationHelper.ShowErrorAsync("Failed to navigate to edit form");
+            _logger.LogError(ex, "Error navigating to edit report {ReportCode}", report.Code);
+            await _notificationHelper.ShowErrorAsync("Failed to navigate to edit form");
         }
     }
 
@@ -374,30 +374,30 @@ public partial class ReportCalendar : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Loading hazards for report: {ReportCode}", reportCode);
+            _logger.LogInformation("Loading hazards for report: {ReportCode}", reportCode);
 
             // Try using GetHazardsByReportCodeQuery if it exists, otherwise fallback to GetAllHazardsQuery with filtering
             try
             {
                 var hazardsQuery = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
-                var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
+                var hazardsResult = await _mediator.SendAsync(hazardsQuery, CancellationToken.None);
 
                 if (hazardsResult.IsSuccess && hazardsResult.Value != null)
                 {
                     AssociatedHazards = hazardsResult.Value.ToList();
-                    Logger.LogInformation("Loaded {Count} hazards for report {ReportCode}",
+                    _logger.LogInformation("Loaded {Count} hazards for report {ReportCode}",
                         AssociatedHazards.Count, reportCode);
                     return;
                 }
             }
             catch (Exception queryEx)
             {
-                Logger.LogWarning(queryEx, "GetHazardsByReportCodeQuery not available, using fallback approach");
+                _logger.LogWarning(queryEx, "GetHazardsByReportCodeQuery not available, using fallback approach");
             }
 
             // Fallback: Get all hazards and filter by report code
             var allHazardsQuery = new GetAllHazardsQuery();
-            var allHazardsResult = await Mediator.SendAsync(allHazardsQuery, CancellationToken.None);
+            var allHazardsResult = await _mediator.SendAsync(allHazardsQuery, CancellationToken.None);
 
             if (allHazardsResult.IsSuccess && allHazardsResult.Value != null)
             {
@@ -406,19 +406,19 @@ public partial class ReportCalendar : ComponentBase
                     .Where(h => h.ReportCode == reportCode)
                     .ToList();
 
-                Logger.LogInformation("Loaded {Count} hazards for report {ReportCode} using fallback method",
+                _logger.LogInformation("Loaded {Count} hazards for report {ReportCode} using fallback method",
                     AssociatedHazards.Count, reportCode);
             }
             else
             {
                 AssociatedHazards = new List<Hazard>();
-                Logger.LogWarning("No hazards found for report {ReportCode}: {Error}",
+                _logger.LogWarning("No hazards found for report {ReportCode}: {Error}",
                     reportCode, allHazardsResult.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading hazards for report {ReportCode}", reportCode);
+            _logger.LogError(ex, "Error loading hazards for report {ReportCode}", reportCode);
             AssociatedHazards = new List<Hazard>();
         }
     }
