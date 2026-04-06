@@ -20,14 +20,14 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class ExternalReporting : ComponentBase, IDisposable
 {
     #region Dependencies
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
-    [Inject] private ILogger<ExternalReporting> Logger { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private ILogger<ExternalReporting> _logger { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
     #endregion
 
     #region Properties and Fields
@@ -217,7 +217,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         // Create DotNet reference for JavaScript callbacks
         _dotNetRef = DotNetObjectReference.Create(this);
 
-        Logger.LogInformation("External reporting page initialized for user: {User}", SessionService.GetCurrentUserDisplayName() ?? "Anonymous");
+        _logger.LogInformation("External reporting page initialized for user: {User}", SessionService.GetCurrentUserDisplayName() ?? "Anonymous");
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -227,12 +227,12 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             try
             {
                 // Initialize JavaScript mapping module only once
-                _mapModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/js/hazard-map.js");
-                Logger.LogInformation("Map module loaded successfully for confidential reporting");
+                _mapModule = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", "/js/hazard-map.js");
+                _logger.LogInformation("Map module loaded successfully for confidential reporting");
             }
             catch (Exception ex)
             {
-                Logger.LogWarning(ex, "Could not load JavaScript map module for confidential reporting");
+                _logger.LogWarning(ex, "Could not load JavaScript map module for confidential reporting");
             }
         }
     }
@@ -254,12 +254,12 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     {
         try
         {
-            Logger.LogInformation("Confidential form submit triggered with data: HazardType={HazardType}, SubmittedBy={SubmittedBy}",
+            _logger.LogInformation("Confidential form submit triggered with data: HazardType={HazardType}, SubmittedBy={SubmittedBy}",
                 formData.HazardType, formData.SubmittedBy);
 
             if (!IsFormValidForSubmission())
             {
-                await NotificationHelper.ShowWarningAsync("Please complete all required fields before submitting.", 4000);
+                await _notificationHelper.ShowWarningAsync("Please complete all required fields before submitting.", 4000);
                 return;
             }
 
@@ -267,9 +267,9 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error during confidential form submission");
+            _logger.LogError(ex, "Error during confidential form submission");
 
-            await NotificationHelper.ShowErrorAsync("An error occurred while submitting your report. Please try again.", 5000);
+            await _notificationHelper.ShowErrorAsync("An error occurred while submitting your report. Please try again.", 5000);
         }
     }
 
@@ -278,7 +278,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     /// </summary>
     public async Task OnFilesSelected(IReadOnlyList<IBrowserFile> newFiles)
     {
-        Logger.LogInformation("?? OnFilesSelected called with {Count} new files", newFiles?.Count ?? 0);
+        _logger.LogInformation("?? OnFilesSelected called with {Count} new files", newFiles?.Count ?? 0);
 
         if (newFiles?.Any() == true)
         {
@@ -297,7 +297,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
                     if (isDuplicate)
                     {
-                        Logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
+                        _logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
                         continue;
                     }
 
@@ -321,11 +321,11 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                     };
 
                     successfullyProcessedFiles.Add(attachedFile);
-                    Logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
+                    _logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
+                    _logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
                     failedFiles.Add(newFile.Name);
                 }
             }
@@ -347,12 +347,12 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             // Show notification about results
             if (successfullyProcessedFiles.Any())
             {
-                await NotificationHelper.ShowSuccessAsync($"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 3000);
+                await _notificationHelper.ShowSuccessAsync($"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 3000);
             }
         }
         else
         {
-            Logger.LogInformation("?? No files provided to OnFilesSelected");
+            _logger.LogInformation("?? No files provided to OnFilesSelected");
         }
 
         StateHasChanged();
@@ -364,7 +364,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     public async Task OnInputFileChange(InputFileChangeEventArgs args)
     {
         var newFiles = args.GetMultipleFiles(10); // Allow up to 10 files at once
-        Logger.LogInformation("?? OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
+        _logger.LogInformation("?? OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
 
         if (newFiles?.Any() == true)
         {
@@ -383,7 +383,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
                     if (isDuplicate)
                     {
-                        Logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
+                        _logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
                         continue;
                     }
 
@@ -407,11 +407,11 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                     };
 
                     successfullyProcessedFiles.Add(attachedFile);
-                    Logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
+                    _logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
+                    _logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
                     failedFiles.Add(newFile.Name);
                 }
             }
@@ -433,23 +433,23 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             // Show notification about results
             if (successfullyProcessedFiles.Any() && failedFiles.Any())
             {
-                await NotificationHelper.ShowWarningAsync( $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 4000);
+                await _notificationHelper.ShowWarningAsync( $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 4000);
             }
             else if (successfullyProcessedFiles.Any())
             {
-                await NotificationHelper.ShowSuccessAsync( $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 3000);
+                await _notificationHelper.ShowSuccessAsync( $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 3000);
             }
             else if (failedFiles.Any())
             {
-                NotificationHelper.ShowErrorAsync( $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
+                _notificationHelper.ShowErrorAsync( $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
             }
 
-            Logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
+            _logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
                 successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
         }
         else
         {
-            Logger.LogInformation("?? No files provided to OnInputFileChange");
+            _logger.LogInformation("?? No files provided to OnInputFileChange");
         }
 
         StateHasChanged();
@@ -477,7 +477,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                 await _mapModule.InvokeVoidAsync("initializeMap",
                     AirportCenterLatitude, AirportCenterLongitude, DefaultZoomLevel, _dotNetRef);
 
-                Logger.LogInformation("Map reinitialized for confidential reporting modal");
+                _logger.LogInformation("Map reinitialized for confidential reporting modal");
 
                 if (HasGeoLocation)
                 {
@@ -491,7 +491,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                     SelectedLongitude = SelectedGeoLocation.Longitude;
                     LocationDescription = SelectedGeoLocation.Description ?? "";
 
-                    Logger.LogInformation("Existing location restored in confidential reporting: {Lat}, {Lng}",
+                    _logger.LogInformation("Existing location restored in confidential reporting: {Lat}, {Lng}",
                         SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
 
                     StateHasChanged();
@@ -499,13 +499,13 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error initializing map in confidential reporting OpenMapSelector");
+                _logger.LogError(ex, "Error initializing map in confidential reporting OpenMapSelector");
 
-                NotificationHelper.ShowWarningAsync( "Could not initialize map. Please try refreshing the page.", 5000);
+                _notificationHelper.ShowWarningAsync( "Could not initialize map. Please try refreshing the page.", 5000);
             }
         }
 
-        NotificationHelper.ShowInfoAsync( "Click on the map to select the incident location.", 3000);
+        _notificationHelper.ShowInfoAsync( "Click on the map to select the incident location.", 3000);
     }
 
     /// <summary>
@@ -524,7 +524,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     {
         if (!HasValidCoordinates)
         {
-            NotificationHelper.ShowWarningAsync( "Please click on the map to select a location first.", 3000);
+            _notificationHelper.ShowWarningAsync( "Please click on the map to select a location first.", 3000);
             return;
         }
 
@@ -541,7 +541,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         ShowMapModal = false;
         StateHasChanged();
 
-        NotificationHelper.ShowSuccessAsync( $"Location selected: {GeoLocationDisplay}", 3000);
+        _notificationHelper.ShowSuccessAsync( $"Location selected: {GeoLocationDisplay}", 3000);
     }
 
     /// <summary>
@@ -563,13 +563,13 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             }
             catch (Exception ex)
             {
-                Logger.LogWarning(ex, "Error clearing map selection in confidential reporting");
+                _logger.LogWarning(ex, "Error clearing map selection in confidential reporting");
             }
         }
 
         StateHasChanged();
 
-        NotificationHelper.ShowInfoAsync( "Map selection has been cleared.", 2000);
+        _notificationHelper.ShowInfoAsync( "Map selection has been cleared.", 2000);
     }
 
     /// <summary>
@@ -584,7 +584,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
         await InvokeAsync(StateHasChanged);
 
-        Logger.LogInformation("Confidential reporting map location selected: {Lat}, {Lng}, {Desc}", latitude, longitude, description);
+        _logger.LogInformation("Confidential reporting map location selected: {Lat}, {Lng}, {Desc}", latitude, longitude, description);
     }
 
     #endregion
@@ -598,7 +598,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     {
         if (!IsFormValidForPreview)
         {
-            NotificationHelper.ShowWarningAsync( "Please complete all required fields before previewing.", 3000);
+            _notificationHelper.ShowWarningAsync( "Please complete all required fields before previewing.", 3000);
             return;
         }
 
@@ -622,7 +622,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     {
         if (!IsFormValidForSubmission())
         {
-            await NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 4000);
+            await _notificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 4000);
             return;
         }
 
@@ -642,17 +642,17 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         // Clear the form changed flag to prevent browser warning
         try
         {
-            JSRuntime.InvokeVoidAsync("clearFormChanged");
+            _jsRuntime.InvokeVoidAsync("clearFormChanged");
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Could not clear form changed flag");
+            _logger.LogWarning(ex, "Could not clear form changed flag");
         }
 
         StateHasChanged();
 
         // 🔐 SECURE NAVIGATION - Navigate to home page for anonymous users
-        Navigation.NavigateToSecure("/", forceLoad: true);
+        _navigation.NavigateToSecure("/", forceLoad: true);
     }
 
     #endregion
@@ -672,7 +672,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                 ShowSubmissionConfirmation = true;
                 StateHasChanged();
 
-                NotificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 4000);
+                _notificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 4000);
                 return;
             }
 
@@ -680,7 +680,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             ShowSubmissionConfirmation = false;
             StateHasChanged();
 
-            Logger.LogInformation("Starting confidential report submission");
+            _logger.LogInformation("Starting confidential report submission");
 
             // ===============================
             // STEP 1: Create new Report
@@ -702,7 +702,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                 
             };
 
-            var reportResult = await Mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
+            var reportResult = await _mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
 
             if (reportResult.IsFailure)
             {
@@ -712,7 +712,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             var actualReportCode = reportResult.Value.Code;
             GeneratedReportId = actualReportCode;
 
-            Logger.LogInformation("? Confidential report created with Code: {ReportCode}", actualReportCode);
+            _logger.LogInformation("? Confidential report created with Code: {ReportCode}", actualReportCode);
 
             // ===============================
             // STEP 2: Create new Hazard
@@ -733,7 +733,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
 
             var createHazardCommand = new CreateHazardCommand(hazard);
-            var createdHazardResult = await Mediator.SendAsync(createHazardCommand, CancellationToken.None);
+            var createdHazardResult = await _mediator.SendAsync(createHazardCommand, CancellationToken.None);
 
             if (createdHazardResult.IsFailure)
             {
@@ -748,7 +748,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
 
             GeneratedHazardId = createdHazard.Code;
-            Logger.LogInformation("? Confidential hazard created with Code: {HazardCode}, linked to Report: {ReportCode}",
+            _logger.LogInformation("? Confidential hazard created with Code: {HazardCode}, linked to Report: {ReportCode}",
                 createdHazard.Code, actualReportCode);
 
             // ===============================
@@ -758,7 +758,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             var createdTracking = createdtrackingcodeResult.Value;
 
             GeneratedTrackingId = createdTracking.TrackingCode;
-            Logger.LogInformation("? Tracking code created: {TrackingCode}", createdTracking.TrackingCode);
+            _logger.LogInformation("? Tracking code created: {TrackingCode}", createdTracking.TrackingCode);
 
             // ===============================
             // STEP 4: Process files for confidential hazard
@@ -772,18 +772,18 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             ShowSubmissionConfirmation = false;
             ShowFinalSuccessConfirmation = true;
 
-            Logger.LogInformation("? External report submission completed - Report: {ReportCode}, Hazard: {HazardCode}, Tracking: {TrackingCode}",
+            _logger.LogInformation("? External report submission completed - Report: {ReportCode}, Hazard: {HazardCode}, Tracking: {TrackingCode}",
                 createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
-            NotificationHelper.ShowSuccessAsync( $"Your external report has been securely submitted with tracking ID: {createdTracking.TrackingCode}", 5000);
+            _notificationHelper.ShowSuccessAsync( $"Your external report has been securely submitted with tracking ID: {createdTracking.TrackingCode}", 5000);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Error during confidential report submission");
+            _logger.LogError(ex, "? Error during confidential report submission");
 
             ShowSubmissionConfirmation = false;
 
-            NotificationHelper.ShowErrorAsync( "An error occurred while submitting your confidential report. Please try again.", 5000);
+            _notificationHelper.ShowErrorAsync( "An error occurred while submitting your confidential report. Please try again.", 5000);
         }
         finally
         {
@@ -807,16 +807,16 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             };
 
             var trackingCommand = new CreateHazardReportTrackingCommand(hazardReportTracking);
-            var createdTrackingResult = await Mediator.SendAsync(trackingCommand, CancellationToken.None);
+            var createdTrackingResult = await _mediator.SendAsync(trackingCommand, CancellationToken.None);
 
             if (createdTrackingResult.IsSuccess)
             {
-                Logger.LogInformation("✅ Confidential tracking code generated: {TrackingCode} for Hazard: {HazardCode}", 
+                _logger.LogInformation("✅ Confidential tracking code generated: {TrackingCode} for Hazard: {HazardCode}", 
                     createdTrackingResult.Value.TrackingCode, createdHazard.Code);
             }
             else
             {
-                Logger.LogError("❌ Failed to generate confidential tracking code for Hazard: {HazardCode}. Error: {Error}", 
+                _logger.LogError("❌ Failed to generate confidential tracking code for Hazard: {HazardCode}. Error: {Error}", 
                     createdHazard.Code, createdTrackingResult.Error?.Message);
             }
 
@@ -824,7 +824,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "❌ Exception generating confidential tracking code for Hazard: {HazardCode}", createdHazard.Code);
+            _logger.LogError(ex, "❌ Exception generating confidential tracking code for Hazard: {HazardCode}", createdHazard.Code);
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.CreateFailed);
         }
     }
@@ -846,7 +846,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         {
             try
             {
-                var hazardLocationResult = await Mediator.SendAsync(
+                var hazardLocationResult = await _mediator.SendAsync(
                     new GetHazardLocationsByHazardCodeQuery(hazard.Code), CancellationToken.None);
 
                 if (hazardLocationResult.IsSuccess && hazardLocationResult.Value.Any())
@@ -860,12 +860,12 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                         hazardLocation.Description = SelectedGeoLocation.Description ?? "Map selected location";
                         hazard.HazardLocation = hazardLocation;
 
-                        var locationUpdateResult = await Mediator.SendAsync(
+                        var locationUpdateResult = await _mediator.SendAsync(
                             new UpdateHazardLocationCommand(hazardLocation), CancellationToken.None);
 
                         if (locationUpdateResult.IsSuccess)
                         {
-                            Logger.LogInformation("✅ HazardLocation updated with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
+                            _logger.LogInformation("✅ HazardLocation updated with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
                                 hazardLocation.Code, SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
                         }
                     }
@@ -880,7 +880,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             }
             catch (Exception locationEx)
             {
-                Logger.LogWarning(locationEx, "Failed to create/update hazard location for confidential report, but continuing with hazard update");
+                _logger.LogWarning(locationEx, "Failed to create/update hazard location for confidential report, but continuing with hazard update");
 
                 // Set location in hazard fields as fallback
                 hazard.LocationArea = $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}";
@@ -901,7 +901,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         {
             if (AttachedFiles?.Any() == true)
             {
-                Logger.LogInformation("?? Processing {Count} cached files for confidential Hazard: {HazardCode}",
+                _logger.LogInformation("?? Processing {Count} cached files for confidential Hazard: {HazardCode}",
                     AttachedFiles.Count, hazard.Code);
 
                 foreach (var attachedFile in AttachedFiles.Where(f => f?.Data?.Length > 0))
@@ -929,37 +929,37 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                         };
 
                         var createHazardFileCommand = new CreateHazardFileCommand(hazardFile);
-                        var hazardFileResult = await Mediator.SendAsync(createHazardFileCommand, CancellationToken.None);
+                        var hazardFileResult = await _mediator.SendAsync(createHazardFileCommand, CancellationToken.None);
 
                         if (hazardFileResult.IsSuccess)
                         {
                             var createdFileId = hazardFileResult.Value.Code;
                             hazard.AddHazardFile(new HazardFileID(createdFileId));
 
-                            Logger.LogInformation("? Created confidential HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}",
+                            _logger.LogInformation("? Created confidential HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}",
                                 attachedFile.FileName, createdFileId, hazard.Code);
                         }
                         else
                         {
-                            Logger.LogError("? Failed to create confidential HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}",
+                            _logger.LogError("? Failed to create confidential HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}",
                                 attachedFile.FileName, hazard.Code, hazardFileResult.Error?.Message);
                         }
                     }
                     catch (Exception fileEx)
                     {
-                        Logger.LogError(fileEx, "? Exception creating confidential HazardFile: {FileName} for Hazard: {HazardCode}",
+                        _logger.LogError(fileEx, "? Exception creating confidential HazardFile: {FileName} for Hazard: {HazardCode}",
                             attachedFile.FileName, hazard.Code);
                     }
                 }
             }
             else
             {
-                Logger.LogInformation("?? No files to process for confidential Hazard: {HazardCode}", hazard.Code);
+                _logger.LogInformation("?? No files to process for confidential Hazard: {HazardCode}", hazard.Code);
             }
         }
         catch (Exception fileEx)
         {
-            Logger.LogError(fileEx, "?? Error processing confidential files, but continuing with hazard operation");
+            _logger.LogError(fileEx, "?? Error processing confidential files, but continuing with hazard operation");
         }
     }
 
@@ -1128,13 +1128,13 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             var hazardType = HazardType.FromValue(hazardTypeValue);
             if (hazardType != null)
             {
-                Logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}",
+                _logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}",
                     hazardType.Name, hazardType.RequiresRegulatoryReporting);
 
                 // Could show regulatory notification if required
                 if (RequiresRegulatoryReporting(hazardTypeValue))
                 {
-                    NotificationHelper.ShowInfoAsync( $"This hazard type may require regulatory reporting to appropriate authorities.", 5000);
+                    _notificationHelper.ShowInfoAsync( $"This hazard type may require regulatory reporting to appropriate authorities.", 5000);
                 }
             }
         }
@@ -1152,7 +1152,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             var hazardType = HazardType.FromValue(hazardTypeValue);
             if (hazardType != null)
             {
-                Logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}", hazardType.Name, hazardType.RequiresRegulatoryReporting);
+                _logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}", hazardType.Name, hazardType.RequiresRegulatoryReporting);
 
                 // Could show regulatory warning if required
                 return hazardType?.GuidanceText ?? string.Empty;
@@ -1224,7 +1224,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                 SelectedFiles = selectedFilesList.AsReadOnly();
             }
 
-            Logger.LogInformation("Removed confidential file: {FileName} from queue", fileToRemove.FileName);
+            _logger.LogInformation("Removed confidential file: {FileName} from queue", fileToRemove.FileName);
             StateHasChanged();
         }
     }
@@ -1248,7 +1248,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         ShowSubmissionConfirmation = false;
         StateHasChanged();
 
-        NotificationHelper.ShowInfoAsync( "You can continue editing your confidential report.", 3000);
+        _notificationHelper.ShowInfoAsync( "You can continue editing your confidential report.", 3000);
     }
 
     #endregion
@@ -1264,11 +1264,11 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         if (string.IsNullOrEmpty(GeneratedTrackingId))
             return string.Empty;
 
-        var baseUri = Navigation.BaseUri.TrimEnd('/');
+        var baseUri = _navigation.BaseUri.TrimEnd('/');
 
         // 🔐 SECURE URL GENERATION - Generate encrypted tracking URL
-        //var secureTrackingUrl = Navigation.GenerateSecureUrl(
-        var secureTrackingUrl = Navigation.GenerateUrl(
+        //var secureTrackingUrl = _navigation.GenerateSecureUrl(
+        var secureTrackingUrl = _navigation.GenerateUrl(
             "/ExternalReporting/TrackStatus", 
             "TrackingCode", 
             GeneratedTrackingId);
@@ -1286,7 +1286,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         {
             if (string.IsNullOrEmpty(GeneratedTrackingId) || string.IsNullOrEmpty(GeneratedReportId))
             {
-                await NotificationHelper.ShowWarningAsync( "No report information available to print.", 3000);
+                await _notificationHelper.ShowWarningAsync( "No report information available to print.", 3000);
                 return;
             }
 
@@ -1294,20 +1294,20 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             var submissionDate = SubmissionDateTime?.ToString("MMMM dd, yyyy 'at' h:mm tt") ?? DateTime.Now.ToString("MMMM dd, yyyy 'at' h:mm tt");
 
             // Call the NEW JavaScript function that captures the actual RadzenQRCode
-            await JSRuntime.InvokeVoidAsync("printReportConfirmation",
+            await _jsRuntime.InvokeVoidAsync("printReportConfirmation",
                 GeneratedReportId,
                 GeneratedHazardId,
                 GeneratedTrackingId,
                 submissionDate,
                 trackingUrl);
 
-            Logger?.LogInformation("Print confirmation initiated for Tracking ID: {TrackingId}", GeneratedTrackingId);
+            _logger?.LogInformation("Print confirmation initiated for Tracking ID: {TrackingId}", GeneratedTrackingId);
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Error printing confirmation");
+            _logger?.LogError(ex, "Error printing confirmation");
 
-            await NotificationHelper.ShowErrorAsync("Failed to print confirmation. Please try again or save the page.", 5000);
+            await _notificationHelper.ShowErrorAsync("Failed to print confirmation. Please try again or save the page.", 5000);
         }
     }
 

@@ -3,7 +3,7 @@
 @implements IDisposable
 @inject SessionTimerService SessionTimerService
 @inject ICurrentUserService CurrentUserService  
-@inject NavigationManager Navigation
+@inject NavigationManager _navigation
 @inject ILogger<SessionTimeoutModal> Logger
 @inject IJSRuntime JSRuntime
 
@@ -340,7 +340,7 @@ body.modal-open {
         else
         {
             // Default action - navigate to root
-            Navigation.NavigateTo("/", forceLoad: true);
+            _navigation.NavigateTo("/", forceLoad: true);
         }
     }
 
@@ -356,13 +356,13 @@ body.modal-open {
                 SessionTimerService.StopTimer();
             });
             
-            Navigation.NavigateTo("/", forceLoad: true);
+            _navigation.NavigateTo("/", forceLoad: true);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error during force logout");
             // Last resort - reload page
-            Navigation.NavigateTo("/", forceLoad: true);
+            _navigation.NavigateTo("/", forceLoad: true);
         }
     }
 

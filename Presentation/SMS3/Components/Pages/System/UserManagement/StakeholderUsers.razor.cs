@@ -1,4 +1,3 @@
-
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -8,13 +7,14 @@ namespace SMS3.Components.Pages.System.UserManagement;
 /// <summary>
 /// Code-behind for Stakeholder Users management page  
 /// Handles external stakeholder user management
+/// ? FIXED: Removed manual audit field assignments - pipeline handles automatically
 /// </summary>
 public partial class StakeholderUsers : ComponentBase
 {
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<StakeholderUsers> Logger { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<StakeholderUsers> _logger { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     
 
     [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
@@ -68,21 +68,21 @@ public partial class StakeholderUsers : ComponentBase
         {
             // Load Stakeholder Users
             var stakeholderUsersQuery = new GetAllSMSStakeholderUsersQuery();
-            var stakeholderUsersResult = await Mediator.SendAsync(stakeholderUsersQuery, CancellationToken.None);
+            var stakeholderUsersResult = await _mediator.SendAsync(stakeholderUsersQuery, CancellationToken.None);
             StakeholderUsersList = stakeholderUsersResult.IsSuccess ?
                 stakeholderUsersResult.Value?.ToList() ?? new List<SMSStakeholderUser>() :
                 new List<SMSStakeholderUser>();
 
             // Load User Roles
             var userRolesQuery = new GetAllSMSUserRolesQuery();
-            var userRolesResult = await Mediator.SendAsync(userRolesQuery, CancellationToken.None);
+            var userRolesResult = await _mediator.SendAsync(userRolesQuery, CancellationToken.None);
             UserRoles = userRolesResult.IsSuccess ?
                 userRolesResult.Value?.ToList() ?? new List<SMSUserRole>() :
                 new List<SMSUserRole>();
 
             // Load Stakeholder Groups for group management
             var groupsQuery = new GetAllSMSStakeholderGroupsQuery();
-            var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);
+            var groupsResult = await _mediator.SendAsync(groupsQuery, CancellationToken.None);
             AllStakeholderGroups = groupsResult.IsSuccess ?
                 groupsResult.Value?.ToList() ?? new List<SMSStakeholderGroup>() :
                 new List<SMSStakeholderGroup>();
@@ -91,14 +91,14 @@ public partial class StakeholderUsers : ComponentBase
             StakeholderTypes = SMSStakeholderType.GetAllValuesAsStringArray();
 
 
-            Logger.LogInformation("Loaded {UserCount} stakeholder users, {RoleCount} user roles, and {GroupCount} stakeholder groups",
+            _logger.LogInformation("Loaded {UserCount} stakeholder users, {RoleCount} user roles, and {GroupCount} stakeholder groups",
                 StakeholderUsersList.Count, UserRoles.Count, AllStakeholderGroups.Count);
 
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading stakeholder users data");
+            _logger.LogError(ex, "Error loading stakeholder users data");
             ShowErrorAsyncNotification("Error loading data. Please refresh the page.");
         }
     }
@@ -148,7 +148,7 @@ public partial class StakeholderUsers : ComponentBase
             if (!string.IsNullOrWhiteSpace(NewUser.UserRoleCode))
             {
                 var roleQuery = new GetSMSUserRoleByIdQuery(NewUser.UserRoleCode);
-                var roleResult = await Mediator.SendAsync(roleQuery, CancellationToken.None);
+                var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
                 if (roleResult.IsSuccess && roleResult.Value != null)
                 {
                     user.UserRole = roleResult.Value;
@@ -156,7 +156,7 @@ public partial class StakeholderUsers : ComponentBase
             }
 
             var command = new CreateSMSStakeholderUserCommand(user);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -171,7 +171,7 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating stakeholder user");
+            _logger.LogError(ex, "Error creating stakeholder user");
             ShowErrorAsyncNotification("Error creating stakeholder user. Please try again.");
         }
         finally
@@ -241,6 +241,7 @@ public partial class StakeholderUsers : ComponentBase
                 return;
             }
 
+            // ? FIXED: Only set business fields - let pipeline handle audit fields
             CurrentEditUser.FirstName = FirstName.Create(editUser.FirstName).Value;
             CurrentEditUser.LastName = LastName.Create(editUser.LastName).Value;
             CurrentEditUser.StakeholderType = editUser.StakeholderType;
@@ -248,13 +249,14 @@ public partial class StakeholderUsers : ComponentBase
             CurrentEditUser.IsActive = editUser.IsActive;
             CurrentEditUser.IsPOPEmployee = editUser.IsPOPEmployee;
             CurrentEditUser.TwoFactorEnabled = editUser.TwoFactorEnabled;
-            CurrentEditUser.UpdatedBy = CurrentUserService.UserCode;
             CurrentEditUser.SMSUserType = SMSUserType.Stakeholder;
+            
+                        
             // Update user role if specified
             if (!string.IsNullOrWhiteSpace(editUser.UserRoleCode))
             {
                 var roleQuery = new GetSMSUserRoleByIdQuery(editUser.UserRoleCode);
-                var roleResult = await Mediator.SendAsync(roleQuery, CancellationToken.None);
+                var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
                 if (roleResult.IsSuccess && roleResult.Value != null)
                 {
                     CurrentEditUser.UserRole = roleResult.Value;
@@ -265,8 +267,9 @@ public partial class StakeholderUsers : ComponentBase
                 CurrentEditUser.UserRole = null;
             }
 
+            // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSStakeholderUserCommand(CurrentEditUser);
-            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -281,7 +284,7 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating stakeholder user: {UserId}", editUser.UserId);
+            _logger.LogError(ex, "Error updating stakeholder user: {UserId}", editUser.UserId);
             ShowErrorAsyncNotification("Error updating stakeholder user. Please try again.");
         }
         finally
@@ -307,7 +310,7 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task ShowDeleteDialog(string userId, string displayName)
     {
-        var result = await DialogService.Confirm($"Are you sure you want to delete the user '{displayName}'?",
+        var result = await _dialogService.Confirm($"Are you sure you want to delete the user '{displayName}'?",
             "Confirm Delete",
             new ConfirmOptions
             {
@@ -342,7 +345,7 @@ public partial class StakeholderUsers : ComponentBase
         {
             var stakeholderUserId = new SMSStakeholderUserID(userId);
             var command = new DeleteSMSStakeholderUserCommand(stakeholderUserId);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -356,7 +359,7 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting stakeholder user: {UserId}", userId);
+            _logger.LogError(ex, "Error deleting stakeholder user: {UserId}", userId);
             ShowErrorAsyncNotification("Error deleting stakeholder user. Please try again.");
         }
     }
@@ -446,7 +449,7 @@ public partial class StakeholderUsers : ComponentBase
         try
         {
             var getUserQuery = new GetSMSStakeholderUserByCodeQuery(userId);
-            var userResult = await Mediator.SendAsync(getUserQuery, CancellationToken.None);
+            var userResult = await _mediator.SendAsync(getUserQuery, CancellationToken.None);
 
             if (userResult.IsFailure)
             {
@@ -456,11 +459,11 @@ public partial class StakeholderUsers : ComponentBase
 
             var user = userResult.Value;
 
-            // Update user role
+            // ? FIXED: Only set business fields - let pipeline handle audit fields
             if (!string.IsNullOrWhiteSpace(userRoleCode))
             {
                 var roleQuery = new GetSMSUserRoleByIdQuery(userRoleCode);
-                var roleResult = await Mediator.SendAsync(roleQuery, CancellationToken.None);
+                var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
                 if (roleResult.IsSuccess && roleResult.Value != null)
                 {
                     user.UserRole = roleResult.Value;
@@ -478,9 +481,13 @@ public partial class StakeholderUsers : ComponentBase
                 user.UserRole = null;
                 ShowSuccessAsyncNotification($"Role removed from {displayName} successfully.");
             }
-            user.UpdatedBy = CurrentUserService?.UserDisplayName;
+            
+            // ? REMOVED: Manual audit field assignment
+            // user.UpdatedBy = CurrentUserService?.UserDisplayName;
+            
+            // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSStakeholderUserCommand(user);
-            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -493,14 +500,14 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning role to user: {UserId}", userId);
+            _logger.LogError(ex, "Error assigning role to user: {UserId}", userId);
             ShowErrorAsyncNotification("Error assigning role. Please try again.");
         }
     }
     private readonly List<StatusOption> IsActiveOptions = StatusOptions.ActiveInactiveOptions;
 
     private readonly List<StatusOption> IsPOPEmployeeOptions = StatusOptions.YesNoOptions;
-   
+    
     #endregion
 
     #region Group Management
@@ -517,7 +524,7 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error opening group management for user: {UserId}", userId);
+            _logger.LogError(ex, "Error opening group management for user: {UserId}", userId);
             ShowErrorAsyncNotification("Error loading user groups. Please try again.");
         }
     }
@@ -528,7 +535,7 @@ public partial class StakeholderUsers : ComponentBase
         {
             // Load groups that this user is currently assigned to
             var userGroupsQuery = new GetSMSStakeholderGroupsByUserCodeQuery(userId);
-            var userGroupsResult = await Mediator.SendAsync(userGroupsQuery, CancellationToken.None);
+            var userGroupsResult = await _mediator.SendAsync(userGroupsQuery, CancellationToken.None);
             UserCurrentGroups = userGroupsResult.IsSuccess ?
                 userGroupsResult.Value?.ToList() ?? new List<SMSStakeholderGroup>() :
                 new List<SMSStakeholderGroup>();
@@ -547,12 +554,12 @@ public partial class StakeholderUsers : ComponentBase
                 SelectedGroups[group.Code] = false;
             }
 
-            Logger.LogInformation("Loaded {CurrentGroupCount} current groups and {AvailableGroupCount} available groups for user {UserId}",
+            _logger.LogInformation("Loaded {CurrentGroupCount} current groups and {AvailableGroupCount} available groups for user {UserId}",
                 UserCurrentGroups.Count, AvailableGroups.Count, userId);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading groups for user: {UserId}", userId);
+            _logger.LogError(ex, "Error loading groups for user: {UserId}", userId);
             UserCurrentGroups = new List<SMSStakeholderGroup>();
             AvailableGroups = AllStakeholderGroups.Where(g => g.IsActive).ToList();
 
@@ -587,7 +594,7 @@ public partial class StakeholderUsers : ComponentBase
         {
             var groupId = new SMSStakeholderGroupID(groupCode);
             var command = new RemoveUserFromStakeholderGroupCommand(GroupManagementUserCode, groupId);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -602,7 +609,7 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", GroupManagementUserCode, groupCode);
+            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", GroupManagementUserCode, groupCode);
             ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
@@ -619,7 +626,7 @@ public partial class StakeholderUsers : ComponentBase
         {
             var groupId = new SMSStakeholderGroupID(groupCode);
             var command = new AssignUserToStakeholderGroupCommand(GroupManagementUserCode, groupId);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -634,7 +641,7 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
             ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }
@@ -659,7 +666,7 @@ public partial class StakeholderUsers : ComponentBase
                 {
                     var groupId = new SMSStakeholderGroupID(groupCode);
                     var command = new AssignUserToStakeholderGroupCommand(GroupManagementUserCode, groupId);
-                    var result = await Mediator.SendAsync(command, CancellationToken.None);
+                    var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                     if (result.IsSuccess)
                         successCount++;
@@ -668,7 +675,7 @@ public partial class StakeholderUsers : ComponentBase
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
+                    _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
                     failureCount++;
                 }
             }
@@ -690,7 +697,7 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", GroupManagementUserCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", GroupManagementUserCode);
             ShowErrorAsyncNotification("Error assigning user to groups. Please try again.");
         }
     }

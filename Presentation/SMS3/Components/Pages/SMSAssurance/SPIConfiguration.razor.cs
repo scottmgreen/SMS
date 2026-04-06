@@ -1,4 +1,3 @@
-
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -11,7 +10,7 @@ public partial class SPIConfiguration
     [Inject] private IMediator _mediator { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     
-    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
 
@@ -92,28 +91,14 @@ public partial class SPIConfiguration
             var query = new GetAllSafetyPerformanceIndicatorsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess)
+            if (result.IsSuccess && result.Value != null)
             {
-                allSPIs = result.Value ?? new List<SafetyPerformanceIndicator>();
-
-                // Extract unique departments from loaded SPIs
-                var spiDepartments = allSPIs
-                    .Where(spi => !string.IsNullOrEmpty(spi.ResponsibleDepartment))
-                    .Select(spi => spi.ResponsibleDepartment)
-                    .Distinct()
-                    .ToList();
-
-                // Merge with predefined departments
-                availableDepartments = availableDepartments
-                    .Union(spiDepartments)
-                    .OrderBy(d => d)
-                    .ToList();
-
+                allSPIs = result.Value.ToList();
                 ApplyFilters();
             }
             else
             {
-                ShowErrorAsyncNotification("Failed to load SPIs from database.");
+                ShowErrorAsyncNotification($"Failed to load SPIs: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
@@ -486,17 +471,17 @@ public partial class SPIConfiguration
     #region Notification Methods
     private void ShowSuccessAsyncNotification(string message)
     {
-        _notificationHelper.ShowSuccessAsync( message);
+        _notificationHelper.ShowSuccessAsync(message);
     }
 
     private void ShowErrorAsyncNotification(string message)
     {
-        _notificationHelper.ShowErrorAsync( message);
+        _notificationHelper.ShowErrorAsync(message);
     }
 
     private void ShowInfoAsyncNotification(string message)
     {
-        _notificationHelper.ShowInfoAsync( message);
+        _notificationHelper.ShowInfoAsync(message);
     }
     #endregion
 

@@ -14,13 +14,11 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class ExternalReportSearch : ComponentBase
 {
     #region Dependencies
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<ExternalReportSearch> Logger { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
-
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<ExternalReportSearch> _logger { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     #endregion
 
@@ -228,7 +226,7 @@ public partial class ExternalReportSearch : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(TrackingIdSearch))
         {
-            await NotificationHelper.ShowWarningAsync("Please enter a tracking ID to search");
+            await _notificationHelper.ShowWarningAsync("Please enter a tracking ID to search");
             return;
         }
 
@@ -240,14 +238,14 @@ public partial class ExternalReportSearch : ComponentBase
             LastSearchQuery = TrackingIdSearch.Trim();
             StateHasChanged();
 
-            Logger.LogInformation("Searching by tracking ID (EXACT MATCH ONLY): {TrackingId}", TrackingIdSearch);
+            _logger.LogInformation("Searching by tracking ID (EXACT MATCH ONLY): {TrackingId}", TrackingIdSearch);
 
             // Clean and validate the tracking ID format
             var cleanedTrackingId = CleanTrackingId(TrackingIdSearch.Trim());
 
             // ONLY try exact match - NO similar searches for ExternalReportSearch
             var query = new GetHazardReportTrackingByTrackingCodeQuery(cleanedTrackingId);
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             // Reset similar results flags - NOT USED in ExternalReportSearch
             HasSimilarResults = false;
@@ -269,19 +267,19 @@ public partial class ExternalReportSearch : ComponentBase
             if (!SearchResults.Any())
             {
                 // Show simple no results message without suggestions
-                await NotificationHelper.ShowInfoAsync($"No hazard report found for tracking ID: {cleanedTrackingId}");
-                Logger.LogInformation("No exact match found for tracking ID: {TrackingId}", TrackingIdSearch);
+                await _notificationHelper.ShowInfoAsync($"No hazard report found for tracking ID: {cleanedTrackingId}");
+                _logger.LogInformation("No exact match found for tracking ID: {TrackingId}", TrackingIdSearch);
             }
             else
             {
-                await NotificationHelper.ShowSuccessAsync($"Found hazard report for tracking ID: {TrackingIdSearch}");
-                Logger.LogInformation("Found exact match for tracking ID: {TrackingId}", TrackingIdSearch);
+                await _notificationHelper.ShowSuccessAsync($"Found hazard report for tracking ID: {TrackingIdSearch}");
+                _logger.LogInformation("Found exact match for tracking ID: {TrackingId}", TrackingIdSearch);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error searching by tracking ID: {TrackingId}", TrackingIdSearch);
-            await NotificationHelper.ShowErrorAsync("Error occurred while searching. Please try again.");
+            _logger.LogError(ex, "Error searching by tracking ID: {TrackingId}", TrackingIdSearch);
+            await _notificationHelper.ShowErrorAsync("Error occurred while searching. Please try again.");
         }
         finally
         {
@@ -324,7 +322,7 @@ public partial class ExternalReportSearch : ComponentBase
         {
             // Get all tracking records and find similar ones
             var allTrackingQuery = new GetAllHazardReportTrackingQuery();
-            var allResult = await Mediator.SendAsync(allTrackingQuery, CancellationToken.None);
+            var allResult = await _mediator.SendAsync(allTrackingQuery, CancellationToken.None);
 
             if (allResult.IsSuccess && allResult.Value?.Any() == true)
             {
@@ -349,7 +347,7 @@ public partial class ExternalReportSearch : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Error searching for similar tracking IDs for: {TrackingId}", trackingId);
+            _logger.LogWarning(ex, "Error searching for similar tracking IDs for: {TrackingId}", trackingId);
         }
     }
 
@@ -492,7 +490,7 @@ public partial class ExternalReportSearch : ComponentBase
                       "• Contact support if you need assistance";
         }
 
-        await NotificationHelper.ShowInfoAsync(message);
+        await _notificationHelper.ShowInfoAsync(message);
     }
 
     /// <summary>
@@ -537,7 +535,7 @@ public partial class ExternalReportSearch : ComponentBase
     {
         if (!HasAdvancedSearchCriteria)
         {
-            await NotificationHelper.ShowWarningAsync("Please enter at least one search criteria");
+            await _notificationHelper.ShowWarningAsync("Please enter at least one search criteria");
             return;
         }
 
@@ -549,7 +547,7 @@ public partial class ExternalReportSearch : ComponentBase
             LastSearchQuery = "Advanced search criteria";
             StateHasChanged();
 
-            Logger.LogInformation("Performing advanced search with criteria: ReportCode={ReportCode}, HazardCode={HazardCode}, SubmittedBy={SubmittedBy}",
+            _logger.LogInformation("Performing advanced search with criteria: ReportCode={ReportCode}, HazardCode={HazardCode}, SubmittedBy={SubmittedBy}",
                 ReportCodeSearch, HazardCodeSearch, SubmittedBySearch);
 
             // Step 1: Search by report code if provided
@@ -574,19 +572,19 @@ public partial class ExternalReportSearch : ComponentBase
 
             if (!SearchResults.Any())
             {
-                await NotificationHelper.ShowInfoAsync("No hazard reports found matching your search criteria");
-                Logger.LogInformation("No results found for advanced search criteria");
+                await _notificationHelper.ShowInfoAsync("No hazard reports found matching your search criteria");
+                _logger.LogInformation("No results found for advanced search criteria");
             }
             else
             {
-                await NotificationHelper.ShowSuccessAsync($"Found {SearchResults.Count} hazard report(s) matching your criteria");
-                Logger.LogInformation("Found {Count} result(s) for advanced search", SearchResults.Count);
+                await _notificationHelper.ShowSuccessAsync($"Found {SearchResults.Count} hazard report(s) matching your criteria");
+                _logger.LogInformation("Found {Count} result(s) for advanced search", SearchResults.Count);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in advanced search");
-            await NotificationHelper.ShowErrorAsync("Error occurred while searching. Please try again.");
+            _logger.LogError(ex, "Error in advanced search");
+            await _notificationHelper.ShowErrorAsync("Error occurred while searching. Please try again.");
         }
         finally
         {
@@ -601,7 +599,7 @@ public partial class ExternalReportSearch : ComponentBase
     private async Task SearchByReportCode(string reportCode)
     {
         var query = new GetHazardReportTrackingByReportCodeQuery(reportCode);
-        var result = await Mediator.SendAsync(query, CancellationToken.None);
+        var result = await _mediator.SendAsync(query, CancellationToken.None);
 
         if (result.IsSuccess && result.Value?.Any() == true)
         {
@@ -627,7 +625,7 @@ public partial class ExternalReportSearch : ComponentBase
     private async Task SearchByHazardCode(string hazardCode)
     {
         var query = new GetHazardReportTrackingByHazardCodeQuery(hazardCode);
-        var result = await Mediator.SendAsync(query, CancellationToken.None);
+        var result = await _mediator.SendAsync(query, CancellationToken.None);
 
         if (result.IsSuccess && result.Value?.Any() == true)
         {
@@ -653,7 +651,7 @@ public partial class ExternalReportSearch : ComponentBase
     private async Task SearchAllWithFilters()
     {
         var query = new GetAllHazardReportTrackingQuery();
-        var result = await Mediator.SendAsync(query, CancellationToken.None);
+        var result = await _mediator.SendAsync(query, CancellationToken.None);
 
         if (result.IsSuccess && result.Value?.Any() == true)
         {
@@ -686,7 +684,7 @@ public partial class ExternalReportSearch : ComponentBase
 
     #endregion
 
-    #region Navigation Methods
+    #region _navigation Methods
 
     /// <summary>
     /// View detailed results for a tracking ID
@@ -694,8 +692,8 @@ public partial class ExternalReportSearch : ComponentBase
     /// <param name="trackingCode">Tracking code to view details for</param>
     public void ViewDetails(string trackingCode)
     {
-        Logger.LogInformation("Navigating to details view for tracking code: {TrackingCode}", trackingCode);
-        Navigation.NavigateToSecure($"/ExternalReporting/TrackStatus/{trackingCode}");
+        _logger.LogInformation("Navigating to details view for tracking code: {TrackingCode}", trackingCode);
+        _navigation.NavigateToSecure($"/ExternalReporting/TrackStatus/{trackingCode}");
     }
 
     #endregion
@@ -801,7 +799,7 @@ public partial class ExternalReportSearch : ComponentBase
                 try
                 {
                     var hazardQuery = new GetHazardByCodeQuery(new HazardID(tracking.HazardCode));
-                    var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+                    var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
                     if (hazardResult.IsSuccess && hazardResult.Value != null)
                     {
@@ -817,7 +815,7 @@ public partial class ExternalReportSearch : ComponentBase
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWarning(ex, "Could not load hazard details for code: {HazardCode}", tracking.HazardCode);
+                    _logger.LogWarning(ex, "Could not load hazard details for code: {HazardCode}", tracking.HazardCode);
                 }
             }
 
@@ -827,7 +825,7 @@ public partial class ExternalReportSearch : ComponentBase
                 try
                 {
                     var reportQuery = new GetReportByCodeQuery(new ReportID(tracking.ReportCode));
-                    var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+                    var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
                     if (reportResult.IsSuccess && reportResult.Value != null)
                     {
@@ -850,7 +848,7 @@ public partial class ExternalReportSearch : ComponentBase
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWarning(ex, "Could not load report details for code: {ReportCode}", tracking.ReportCode);
+                    _logger.LogWarning(ex, "Could not load report details for code: {ReportCode}", tracking.ReportCode);
                 }
             }
 
@@ -860,7 +858,7 @@ public partial class ExternalReportSearch : ComponentBase
                 try
                 {
                     var validationQuery = new GetReportValidationByReportIdQuery(new ReportID(tracking.ReportCode));
-                    var validationResult = await Mediator.SendAsync(validationQuery, CancellationToken.None);
+                    var validationResult = await _mediator.SendAsync(validationQuery, CancellationToken.None);
 
                     if (validationResult.IsSuccess && validationResult.Value != null)
                     {
@@ -871,7 +869,7 @@ public partial class ExternalReportSearch : ComponentBase
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogWarning(ex, "Could not load validation details for report: {ReportCode}", tracking.ReportCode);
+                    _logger.LogWarning(ex, "Could not load validation details for report: {ReportCode}", tracking.ReportCode);
                 }
             }
 
@@ -879,7 +877,7 @@ public partial class ExternalReportSearch : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error building search result for tracking: {TrackingCode}", tracking.TrackingCode);
+            _logger.LogError(ex, "Error building search result for tracking: {TrackingCode}", tracking.TrackingCode);
             return null;
         }
     }

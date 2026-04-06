@@ -1,4 +1,3 @@
-
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -14,12 +13,10 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class AirportSharedDataset : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    
-    [Inject] private ILogger<AirportSharedDataset> Logger { get; set; } = default!;
-
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!; 
+    [Inject] private ILogger<AirportSharedDataset> _logger { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     #endregion
 
@@ -77,13 +74,13 @@ public partial class AirportSharedDataset : ComponentBase
             if (string.IsNullOrWhiteSpace(ReportId))
             {
                 ShowErrorAsyncNotification("Report ID is required for dataset creation");
-                Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+                _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
                 return;
             }
 
             // Load report details
             var reportQuery = new GetReportByCodeQuery(new ReportID(ReportId));
-            var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+            var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
             if (reportResult.IsSuccess)
             {
@@ -98,7 +95,7 @@ public partial class AirportSharedDataset : ComponentBase
             if (!string.IsNullOrWhiteSpace(HazardId))
             {
                 var hazardQuery = new GetHazardByCodeQuery(new HazardID(HazardId));
-                var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+                var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
                 if (hazardResult.IsSuccess)
                 {
@@ -113,12 +110,12 @@ public partial class AirportSharedDataset : ComponentBase
                 }
             }
 
-            Logger.LogInformation("Loaded dataset page for Report: {ReportId}, Hazard: {HazardId}, EditMode: {IsEditMode}",
+            _logger.LogInformation("Loaded dataset page for Report: {ReportId}, Hazard: {HazardId}, EditMode: {IsEditMode}",
                 ReportId, HazardId ?? "None", IsEditMode);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading dataset page for Report: {ReportId}", ReportId);
+            _logger.LogError(ex, "Error loading dataset page for Report: {ReportId}", ReportId);
             ShowErrorAsyncNotification("Error loading dataset page");
         }
         finally
@@ -135,7 +132,7 @@ public partial class AirportSharedDataset : ComponentBase
             // Look for existing dataset with this HazardCode
             // Note: This is a simplified approach - in production, you might want a more specific query
             var datasetsQuery = new GetAllAirportSharedDatasetsQuery();
-            var datasetsResult = await Mediator.SendAsync(datasetsQuery, CancellationToken.None);
+            var datasetsResult = await _mediator.SendAsync(datasetsQuery, CancellationToken.None);
 
             if (datasetsResult.IsSuccess && datasetsResult.Value != null)
             {
@@ -145,7 +142,7 @@ public partial class AirportSharedDataset : ComponentBase
 
                 if (ExistingDataset != null)
                 {
-                    Logger.LogInformation("Found existing dataset {DatasetCode} for Report: {ReportId}, Hazard: {HazardId}",
+                    _logger.LogInformation("Found existing dataset {DatasetCode} for Report: {ReportId}, Hazard: {HazardId}",
                         ExistingDataset.Code, ReportId, HazardId);
 
                     // Map existing dataset to form - using only available properties
@@ -155,7 +152,7 @@ public partial class AirportSharedDataset : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error checking for existing dataset for Report: {ReportId}, Hazard: {HazardId}", ReportId, HazardId);
+            _logger.LogError(ex, "Error checking for existing dataset for Report: {ReportId}, Hazard: {HazardId}", ReportId, HazardId);
             // Don't show error to user - just log it and continue in create mode
         }
     }
@@ -183,11 +180,11 @@ public partial class AirportSharedDataset : ComponentBase
                 Model.LocationOther = dataset.LocationOther;
             }
 
-            Logger.LogInformation("Mapped existing dataset {Code} to edit form", dataset.Code);
+            _logger.LogInformation("Mapped existing dataset {Code} to edit form", dataset.Code);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error mapping dataset {Code} to form model", dataset.Code);
+            _logger.LogError(ex, "Error mapping dataset {Code} to form model", dataset.Code);
             // Continue with default values if mapping fails
         }
     }
@@ -291,24 +288,24 @@ public partial class AirportSharedDataset : ComponentBase
 
             // Save using CQRS
             var createCommand = new CreateAirportSharedDatasetCommand(dataset);
-            var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(createCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 ShowSuccessAsyncNotification($"Airport Shared Dataset {dataset.Code} created successfully!");
-                Logger.LogInformation("Created Airport Shared Dataset: {DatasetId} for Report: {ReportId}",
+                _logger.LogInformation("Created Airport Shared Dataset: {DatasetId} for Report: {ReportId}",
                     dataset.Code, ReportId);
             }
             else
             {
                 ShowErrorAsyncNotification($"Failed to create dataset: {result.Error?.Message}");
-                Logger.LogError("Failed to create Airport Shared Dataset for Report: {ReportId}, Error: {Error}",
+                _logger.LogError("Failed to create Airport Shared Dataset for Report: {ReportId}, Error: {Error}",
                     ReportId, result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error saving Airport Shared Dataset for Report: {ReportId}", ReportId);
+            _logger.LogError(ex, "Error saving Airport Shared Dataset for Report: {ReportId}", ReportId);
             ShowErrorAsyncNotification("Error saving dataset");
         }
         finally
@@ -359,8 +356,8 @@ public partial class AirportSharedDataset : ComponentBase
             navigationUrl = $"/SMSRiskManagement/{assessmentType}/{ReportId}";
         }
 
-        Logger.LogInformation("Navigating to assessment: {Url}", navigationUrl);
-        Navigation.NavigateToSecure(navigationUrl);
+        _logger.LogInformation("Navigating to assessment: {Url}", navigationUrl);
+        _navigation.NavigateToSecure(navigationUrl);
     }
     #endregion
 
@@ -414,12 +411,12 @@ public partial class AirportSharedDataset : ComponentBase
     #region Notifications
     private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        _notificationHelper.ShowSuccessAsync(message);
     }
 
     private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        _notificationHelper.ShowErrorAsync(message);
     }
     #endregion
 
@@ -480,7 +477,5 @@ public partial class AirportSharedDataset : ComponentBase
         public bool OtherIssues { get; set; }
         public string? OtherIssuesDescription { get; set; }
     }
-
-   
     #endregion
 }

@@ -128,14 +128,9 @@ public static partial class Mappers
             orgUser.OrganizationLevel = SMSOrganizationalLevel.FromValue(reader.GetString(FieldNames.fSMSOrganizationalUserOrganizationLevel));
             orgUser.AuthorityLevel = orgUser.OrganizationLevel.AuthorityLevel;
             orgUser.RiskApprovalAuthority = orgUser.OrganizationLevel.Value;
-            //orgUser.OrganizationLevel = reader.GetString(FieldNames.fSMSOrganizationalUserOrganizationLevel);
 
-            // New SMS role fields - with null checking for backward compatibility
-            //if (reader.HasColumn(FieldNames.fSMSOrganizationalUserSMSRole))
-            //{
-            //    orgUser.SMSUserRole = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserSMSRole);
-            //}
-
+            orgUser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetString(FieldNames.fSMSUserRoleCode)));
+            
 
             if (reader.HasColumn(FieldNames.fSMSOrganizationalUserRiskApprovalAuthority))
             {

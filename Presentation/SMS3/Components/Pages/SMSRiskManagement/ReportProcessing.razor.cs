@@ -192,11 +192,11 @@ public class MitigationSummary
 /// </summary>
 public partial class ReportProcessing : ComponentBase
 {
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<ReportProcessing> Logger { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<ReportProcessing> _logger { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
     
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
@@ -232,7 +232,7 @@ public partial class ReportProcessing : ComponentBase
         try
         {
             var usersQuery = new GetAllSMSOrganizationalUsersQuery(); // You may need to adjust this query name
-            var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
+            var usersResult = await _mediator.SendAsync(usersQuery, CancellationToken.None);
 
             if (usersResult.IsSuccess && usersResult.Value != null)
             {
@@ -243,17 +243,17 @@ public partial class ReportProcessing : ComponentBase
                             !string.IsNullOrEmpty(u.RiskApprovalAuthority))) // Has risk approval authority string
                 .ToList();
 
-                Logger.LogInformation("Loaded {Count} available approvers", AvailableApprovers.Count);
+                _logger.LogInformation("Loaded {Count} available approvers", AvailableApprovers.Count);
             }
             else
             {
-                Logger.LogWarning("Failed to load approvers: {Error}", usersResult.Error?.Message);
+                _logger.LogWarning("Failed to load approvers: {Error}", usersResult.Error?.Message);
                 AvailableApprovers = new List<SMSOrganizationalUser>();
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading available approvers");
+            _logger.LogError(ex, "Error loading available approvers");
             AvailableApprovers = new List<SMSOrganizationalUser>();
         }
     }
@@ -271,7 +271,7 @@ public partial class ReportProcessing : ComponentBase
 
             if (!reports.Any())
             {
-                Logger.LogWarning("? No reports found - initializing empty lists");
+                _logger.LogWarning("? No reports found - initializing empty lists");
                 InitializeEmptyLists();
                 return;
             }
@@ -284,7 +284,7 @@ public partial class ReportProcessing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Error loading report processing data");
+            _logger.LogError(ex, "? Error loading report processing data");
             InitializeEmptyLists();
         }
         finally
@@ -308,96 +308,96 @@ public partial class ReportProcessing : ComponentBase
             
             // Get all reports
             var reportsQuery = new GetAllReportsQuery();
-            var reportsResult = await Mediator.SendAsync(reportsQuery, CancellationToken.None);
+            var reportsResult = await _mediator.SendAsync(reportsQuery, CancellationToken.None);
             if (reportsResult.IsSuccess)
             {
                 reports = reportsResult.Value ?? new List<Report>();
-                Logger.LogWarning("? Successfully loaded {Count} reports from database", reports.Count);
+                _logger.LogWarning("? Successfully loaded {Count} reports from database", reports.Count);
 
 
             }
             else
             {
-                Logger.LogError("? Failed to retrieve reports: {Error}", reportsResult.Error?.Message);
+                _logger.LogError("? Failed to retrieve reports: {Error}", reportsResult.Error?.Message);
             }
 
             
             // Get all hazards
             var hazardsQuery = new GetAllHazardsQuery();
-            var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
+            var hazardsResult = await _mediator.SendAsync(hazardsQuery, CancellationToken.None);
             if (hazardsResult.IsSuccess)
             {
                 hazards = hazardsResult.Value ?? new List<Hazard>();
-                Logger.LogWarning("? Successfully loaded {Count} hazards from database", hazards.Count);
+                _logger.LogWarning("? Successfully loaded {Count} hazards from database", hazards.Count);
             }
             else
             {
-                Logger.LogError("? Failed to retrieve hazards: {Error}", hazardsResult.Error?.Message);
+                _logger.LogError("? Failed to retrieve hazards: {Error}", hazardsResult.Error?.Message);
             }
 
             
 
             // CRITICAL: Get all report validations to determine which reports have been validated
             var reportValidationsQuery = new GetAllReportValidationsQuery();
-            var reportValidationsResult = await Mediator.SendAsync(reportValidationsQuery, CancellationToken.None);
+            var reportValidationsResult = await _mediator.SendAsync(reportValidationsQuery, CancellationToken.None);
             if (reportValidationsResult.IsSuccess && reportValidationsResult.Value != null)
             {
                 reportValidations = reportValidationsResult.Value.ToList();
-                Logger.LogWarning("? Successfully loaded {Count} report validations", reportValidations.Count);
+                _logger.LogWarning("? Successfully loaded {Count} report validations", reportValidations.Count);
 
                 // Log which reports have been validated for debugging
                 foreach (var validation in reportValidations.Take(3))
                 {
-                    Logger.LogWarning("?? Validation: Report {ReportCode} | Decision: {Decision} | Type: {Type}",validation.ReportCode, validation.ValidationDecision, validation.ValidationType);
+                    _logger.LogWarning("?? Validation: Report {ReportCode} | Decision: {Decision} | Type: {Type}",validation.ReportCode, validation.ValidationDecision, validation.ValidationType);
                 }
             }
             else
             {
-                Logger.LogWarning("?? No report validations found or failed to retrieve: {Error}", reportValidationsResult.Error?.Message);
+                _logger.LogWarning("?? No report validations found or failed to retrieve: {Error}", reportValidationsResult.Error?.Message);
             }
 
             // Get all risk assessments
             var riskAssessmentsQuery = new GetAllRiskAssessmentsQuery();
-            var riskAssessmentsResult = await Mediator.SendAsync(riskAssessmentsQuery, CancellationToken.None);
+            var riskAssessmentsResult = await _mediator.SendAsync(riskAssessmentsQuery, CancellationToken.None);
             if (riskAssessmentsResult.IsSuccess)
             {
                 riskAssessments = riskAssessmentsResult.Value ?? new List<RiskAssessment>();
-                Logger.LogInformation("Loaded {Count} risk assessments", riskAssessments.Count);
+                _logger.LogInformation("Loaded {Count} risk assessments", riskAssessments.Count);
             }
             else
             {
-                Logger.LogError("Failed to retrieve risk assessments: {Error}", riskAssessmentsResult.Error?.Message);
+                _logger.LogError("Failed to retrieve risk assessments: {Error}", riskAssessmentsResult.Error?.Message);
             }
 
             // NEW: Get all investigations
             var investigationsQuery = new GetAllInvestigationsQuery();
-            var investigationsResult = await Mediator.SendAsync(investigationsQuery, CancellationToken.None);
+            var investigationsResult = await _mediator.SendAsync(investigationsQuery, CancellationToken.None);
             if (investigationsResult.IsSuccess && investigationsResult.Value != null)
             {
                 investigations = investigationsResult.Value.ToList();
-                Logger.LogInformation("Loaded {Count} investigations", investigations.Count);
+                _logger.LogInformation("Loaded {Count} investigations", investigations.Count);
             }
             else
             {
-                Logger.LogError("Failed to retrieve investigations: {Error}", investigationsResult.Error?.Message);
+                _logger.LogError("Failed to retrieve investigations: {Error}", investigationsResult.Error?.Message);
             }
 
             // NEW: Get all interviews
             var interviewsQuery = new GetAllInterviewsQuery();
-            var interviewsResult = await Mediator.SendAsync(interviewsQuery, CancellationToken.None);
+            var interviewsResult = await _mediator.SendAsync(interviewsQuery, CancellationToken.None);
             if (interviewsResult.IsSuccess && interviewsResult.Value != null)
             {
                 interviews = interviewsResult.Value.ToList();
-                Logger.LogInformation("Loaded {Count} interviews", interviews.Count);
+                _logger.LogInformation("Loaded {Count} interviews", interviews.Count);
             }
             else
             {
-                Logger.LogError("Failed to retrieve interviews: {Error}", interviewsResult.Error?.Message);
+                _logger.LogError("Failed to retrieve interviews: {Error}", interviewsResult.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Exception in LoadCoreEntitiesAsync");
+            _logger.LogError(ex, "? Exception in LoadCoreEntitiesAsync");
         }
 
        
@@ -423,7 +423,7 @@ public partial class ReportProcessing : ComponentBase
 
                 if (!reportHazards.Any())
                 {
-                    Logger.LogWarning("No hazards found for report {ReportCode}, skipping", report.Code);
+                    _logger.LogWarning("No hazards found for report {ReportCode}, skipping", report.Code);
                     continue;
                 }
 
@@ -462,7 +462,7 @@ public partial class ReportProcessing : ComponentBase
                             foreach (var hazard in reportHazards)
                             {
                                 var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
-                                var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+                                var mitigationResult = await _mediator.SendAsync(mitigationQuery, CancellationToken.None);
 
                                 if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
                                 {
@@ -494,7 +494,7 @@ public partial class ReportProcessing : ComponentBase
                         }
                         catch (Exception ex)
                         {
-                            Logger.LogError(ex, "Error loading mitigations for report {ReportCode}", report.Code);
+                            _logger.LogError(ex, "Error loading mitigations for report {ReportCode}", report.Code);
                         }
 
                         // ✅ Create ONE summary for this RiskAssessment covering all hazards
@@ -547,7 +547,7 @@ public partial class ReportProcessing : ComponentBase
 
                         summaries.Add(summary);
                         
-                        Logger.LogInformation("Created summary for Report {ReportCode} - RiskAssessment {AssessmentCode} covering {HazardCount} hazards with {MitigationCount} total mitigations",
+                        _logger.LogInformation("Created summary for Report {ReportCode} - RiskAssessment {AssessmentCode} covering {HazardCount} hazards with {MitigationCount} total mitigations",
                             report.Code, riskAssessment.Code, reportHazards.Count, allReportMitigations.Count);
                     }
                 }
@@ -612,11 +612,11 @@ public partial class ReportProcessing : ComponentBase
             }
             catch (Exception ex)
             {
-                Logger.LogError(ex, "Error creating summary for report {ReportCode}", report.Code);
+                _logger.LogError(ex, "Error creating summary for report {ReportCode}", report.Code);
             }
         }
 
-        Logger.LogInformation("Created {SummaryCount} report summaries with {TotalMitigationCount} total mitigations",
+        _logger.LogInformation("Created {SummaryCount} report summaries with {TotalMitigationCount} total mitigations",
             summaries.Count, summaries.Sum(s => s.MitigationCount));
         return summaries;
     }
@@ -631,17 +631,17 @@ public partial class ReportProcessing : ComponentBase
         ClosedReferred = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Closed).ToList();
 
         // ✅ ADD DEBUG LOGGING to see what's being categorized
-        Logger.LogWarning("📊 CATEGORIZATION RESULTS:");
-        Logger.LogWarning("   📋 Pending Validation: {Count}", PendingValidation.Count);
-        Logger.LogWarning("   📊 Pending Risk Assessment: {Count}", PendingRiskAssessment.Count);
-        Logger.LogWarning("   🔍 Pending Investigation: {Count}", PendingInvestigation.Count);
-        Logger.LogWarning("   🛠️ In Mitigation: {Count}", PendingMitigation.Count);
-        Logger.LogWarning("   ✅ Closed/Referred: {Count}", ClosedReferred.Count);
+        _logger.LogWarning("📊 CATEGORIZATION RESULTS:");
+        _logger.LogWarning("   📋 Pending Validation: {Count}", PendingValidation.Count);
+        _logger.LogWarning("   📊 Pending Risk Assessment: {Count}", PendingRiskAssessment.Count);
+        _logger.LogWarning("   🔍 Pending Investigation: {Count}", PendingInvestigation.Count);
+        _logger.LogWarning("   🛠️ In Mitigation: {Count}", PendingMitigation.Count);
+        _logger.LogWarning("   ✅ Closed/Referred: {Count}", ClosedReferred.Count);
 
         // ✅ LOG EACH REPORT'S CATEGORIZATION
         foreach (var report in reports)
         {
-            Logger.LogWarning("   📄 Report {ReportId}-{HazardId}: {Category} (HasRA: {HasRA}, RAStatus: {RAStatus}, RAStep: {RAStep}, MitigationCount: {MC})",
+            _logger.LogWarning("   📄 Report {ReportId}-{HazardId}: {Category} (HasRA: {HasRA}, RAStatus: {RAStatus}, RAStep: {RAStep}, MitigationCount: {MC})",
                 report.ReportId, report.HazardId, report.StatusCategory, 
                 report.HasRiskAssessment, report.RiskAssessmentStatus, report.CurrentAssessmentStep, report.MitigationCount);
         }
@@ -653,7 +653,7 @@ public partial class ReportProcessing : ComponentBase
 
     private ProcessingStatusCategory DetermineStatusCategory(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation, Investigation? investigation)
     {
-        Logger.LogWarning("?? CATEGORIZING Report: {ReportCode} | HasValidation: {HasValidation} | ValidationType: {ValidationType} | ValidationDecision: {ValidationDecision} | HasRiskAssessment: {HasRA} | HasInvestigation: {HasInv} | InvStatus: {InvStatus} | InvDecision: {InvDecision}",
+        _logger.LogWarning("?? CATEGORIZING Report: {ReportCode} | HasValidation: {HasValidation} | ValidationType: {ValidationType} | ValidationDecision: {ValidationDecision} | HasRiskAssessment: {HasRA} | HasInvestigation: {HasInv} | InvStatus: {InvStatus} | InvDecision: {InvDecision}",
             report.Code, reportValidation != null, reportValidation?.ValidationType ?? "NULL", reportValidation?.ValidationDecision ?? "NULL", riskAssessment != null, investigation != null, investigation?.Status ?? "NULL", investigation?.DecisionType ?? "NULL");
 
         // CRITICAL DESIGN CONCEPT: 
@@ -694,14 +694,14 @@ public partial class ReportProcessing : ComponentBase
         // No validation record = needs validation
         if (reportValidation == null)
         {
-            Logger.LogWarning("? Report {ReportId} -> VALIDATION (no validation record)", report.Code);
+            _logger.LogWarning("? Report {ReportId} -> VALIDATION (no validation record)", report.Code);
             return ProcessingStatusCategory.Validation;
         }
 
         // ENHANCED: Check if validation was reset (ValidationType or ValidationDecision is null) - THIS SHOULD CATCH IT!
         if (string.IsNullOrEmpty(reportValidation.ValidationType) || string.IsNullOrEmpty(reportValidation.ValidationDecision))
         {
-            Logger.LogWarning("? Report {ReportId} -> VALIDATION (reset validation - ValidationType: {ValidationType}, ValidationDecision: {ValidationDecision}) ? EXPECTED PATH",
+            _logger.LogWarning("? Report {ReportId} -> VALIDATION (reset validation - ValidationType: {ValidationType}, ValidationDecision: {ValidationDecision}) ? EXPECTED PATH",
                 report.Code, reportValidation.ValidationType ?? "NULL", reportValidation.ValidationDecision ?? "NULL");
             return ProcessingStatusCategory.Validation;
         }
@@ -709,7 +709,7 @@ public partial class ReportProcessing : ComponentBase
         // Has validation with decision but no risk assessment = validated, needs risk assessment
         if (riskAssessment == null)
         {
-            Logger.LogWarning("? Report {ReportId} -> RISK ASSESSMENT (validated but no assessment)", report.Code);
+            _logger.LogWarning("? Report {ReportId} -> RISK ASSESSMENT (validated but no assessment)", report.Code);
             return ProcessingStatusCategory.RiskAssessment;
         }
 
@@ -727,13 +727,13 @@ public partial class ReportProcessing : ComponentBase
                 _ => ProcessingStatusCategory.RiskAssessment
             };
 
-            Logger.LogWarning("? Report {ReportId} -> {Category} (assessment step {Step})",
+            _logger.LogWarning("? Report {ReportId} -> {Category} (assessment step {Step})",
                 report.Code, category, riskAssessment.CurrentStep);
             return category;
         }
         else if (riskAssessment.Status == RiskAssessmentStatus.AssessmentComplete)
         {
-            Logger.LogWarning("? Report {ReportId} -> MITIGATION (assessment complete)", report.Code);
+            _logger.LogWarning("? Report {ReportId} -> MITIGATION (assessment complete)", report.Code);
             return ProcessingStatusCategory.Mitigation;
         }
 
@@ -741,7 +741,7 @@ public partial class ReportProcessing : ComponentBase
         // This handles cases where risk assessment might be missing but mitigations exist
         if (hazard != null)
         {
-            Logger.LogWarning("? Report {ReportId} -> Checking if should be MITIGATION (no clear RA status but hazard exists)", report.Code);
+            _logger.LogWarning("? Report {ReportId} -> Checking if should be MITIGATION (no clear RA status but hazard exists)", report.Code);
             
             // ✅ ENHANCED: If this is being called from CreateReportSummariesAsync, check mitigation count
             // For now, let's assume any report with an associated hazard that has made it this far
@@ -753,7 +753,7 @@ public partial class ReportProcessing : ComponentBase
         // Fallback to hazard/report status for edge cases
         var effectiveStatus = hazard?.Status?.ToString() ?? report.Status ?? "New";
 
-        Logger.LogWarning("? Report {ReportId} -> Fallback logic with status: {Status}", report.Code, effectiveStatus);
+        _logger.LogWarning("? Report {ReportId} -> Fallback logic with status: {Status}", report.Code, effectiveStatus);
 
         return effectiveStatus switch
         {
@@ -1235,12 +1235,12 @@ public partial class ReportProcessing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Navigating to edit mitigation: {Code}", mitigation.MitigationCode);
-            Navigation.NavigateToSecure($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.MitigationCode}");
+            _logger.LogInformation("Navigating to edit mitigation: {Code}", mitigation.MitigationCode);
+            _navigation.NavigateToSecure($"/SMSRiskManagement/HazardMitigation/Edit/{mitigation.MitigationCode}");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error navigating to mitigation edit for {Code}", mitigation.MitigationCode);
+            _logger.LogError(ex, "Error navigating to mitigation edit for {Code}", mitigation.MitigationCode);
             ShowErrorAsyncNotification("Error navigating to mitigation editor");
         }
     }
@@ -1252,11 +1252,11 @@ public partial class ReportProcessing : ComponentBase
             IsProcessingApproval = true;
             StateHasChanged();
 
-            Logger.LogInformation("Quick approving mitigation: {Code}", mitigation.MitigationCode);
+            _logger.LogInformation("Quick approving mitigation: {Code}", mitigation.MitigationCode);
 
             // Load the full mitigation entity
             var mitigationQuery = new GetMitigationByCodeQuery(new MitigationID(mitigation.MitigationCode));
-            var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+            var mitigationResult = await _mediator.SendAsync(mitigationQuery, CancellationToken.None);
 
             if (mitigationResult.IsSuccess && mitigationResult.Value != null)
             {
@@ -1267,7 +1267,7 @@ public partial class ReportProcessing : ComponentBase
                 fullMitigation.UpdatedBy = CurrentUserService.UserCode; // You might want to get the current user
 
                 var updateCommand = new UpdateMitigationCommand(fullMitigation);
-                var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+                var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
                 if (updateResult.IsSuccess)
                 {
@@ -1291,7 +1291,7 @@ public partial class ReportProcessing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.MitigationCode);
+            _logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.MitigationCode);
             ShowErrorAsyncNotification("Error approving mitigation");
         }
         finally
@@ -1305,13 +1305,13 @@ public partial class ReportProcessing : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Viewing mitigation details: {Code}", mitigation.MitigationCode);
+            _logger.LogInformation("Viewing mitigation details: {Code}", mitigation.MitigationCode);
             // You might want to show a details dialog or navigate to a details page
             ShowInfoAsyncNotification($"Details for mitigation {mitigation.MitigationCode} - Feature to be implemented");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error viewing mitigation details for {Code}", mitigation.MitigationCode);
+            _logger.LogError(ex, "Error viewing mitigation details for {Code}", mitigation.MitigationCode);
             ShowErrorAsyncNotification("Error viewing mitigation details");
         }
     }
@@ -1330,7 +1330,7 @@ public partial class ReportProcessing : ComponentBase
             .OrderBy(a => a.DisplayName)
             .ToList();
 
-        Logger.LogInformation("Found {Count} approvers authorized for {RiskLevel} risk level approval",
+        _logger.LogInformation("Found {Count} approvers authorized for {RiskLevel} risk level approval",
             authorizedApprovers.Count, highestRiskLevel);
 
         return authorizedApprovers;
@@ -1367,17 +1367,17 @@ public partial class ReportProcessing : ComponentBase
     // Notification helper methods
     private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        _notificationHelper.ShowSuccessAsync( message);
     }
 
     private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        _notificationHelper.ShowErrorAsync( message);
     }
 
     private void ShowInfoAsyncNotification(string message)
     {
-        NotificationHelper.ShowInfoAsync( message, 5000);
+        _notificationHelper.ShowInfoAsync( message, 5000);
     }
 
     private void RenderEmptyState(RenderTreeBuilder builder, string icon, string title, string description)
@@ -1476,7 +1476,7 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Success);
                 templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
                 templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                    (args) => Navigation.NavigateTo($"/SMSRiskManagement/ReportValidation/{report.ReportId}")));
+                    (args) => _navigation.NavigateTo($"/SMSRiskManagement/ReportValidation/{report.ReportId}")));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -1612,7 +1612,7 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.AddAttribute(3, "ButtonStyle", GetAssessmentButtonStyle(report));
                 templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
                 templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                    (args) => Navigation.NavigateToSecure(report.SmartUrl)));
+                    (args) => _navigation.NavigateToSecure(report.SmartUrl)));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -1690,7 +1690,7 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.AddAttribute(2, "Icon", buttonIcon);
                 templateBuilder.AddAttribute(3, "ButtonStyle", buttonStyle);
                 templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
-                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,(args) => Navigation.NavigateTo(report.SmartUrl)));
+                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,(args) => _navigation.NavigateTo(report.SmartUrl)));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -1710,12 +1710,12 @@ public partial class ReportProcessing : ComponentBase
             ShowBulkApprovalDialog = true;
             StateHasChanged();
 
-            Logger.LogInformation("Showing bulk approval confirmation for report {ReportId} - hazard {HazardId}",
+            _logger.LogInformation("Showing bulk approval confirmation for report {ReportId} - hazard {HazardId}",
                 report.ReportId, report.HazardId);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error showing bulk approval confirmation for report {ReportId}", report.ReportId);
+            _logger.LogError(ex, "Error showing bulk approval confirmation for report {ReportId}", report.ReportId);
             ShowErrorAsyncNotification("Error showing approval confirmation dialog");
         }
     }
@@ -1785,10 +1785,10 @@ public partial class ReportProcessing : ComponentBase
             IsProcessingApproval = true;
             StateHasChanged();
 
-            Logger.LogInformation("Starting bulk approval for ALL mitigations in report: {ReportId}", reportId);
+            _logger.LogInformation("Starting bulk approval for ALL mitigations in report: {ReportId}", reportId);
 
             var hazardsQuery = new GetAllHazardsQuery();
-            var hazardsResult = await Mediator.SendAsync(hazardsQuery, CancellationToken.None);
+            var hazardsResult = await _mediator.SendAsync(hazardsQuery, CancellationToken.None);
 
             if (!hazardsResult.IsSuccess || hazardsResult.Value == null)
             {
@@ -1812,10 +1812,10 @@ public partial class ReportProcessing : ComponentBase
             {
                 try
                 {
-                    Logger.LogInformation("Processing mitigations for hazard: {HazardCode}", hazard.Code);
+                    _logger.LogInformation("Processing mitigations for hazard: {HazardCode}", hazard.Code);
 
                     var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
-                    var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+                    var mitigationResult = await _mediator.SendAsync(mitigationQuery, CancellationToken.None);
 
                     if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
                     {
@@ -1826,7 +1826,7 @@ public partial class ReportProcessing : ComponentBase
                                        m.Status == MitigationStatus.PendingApproval) 
                             .ToList();
 
-                        Logger.LogInformation("Found {Count} pending mitigations for hazard {HazardCode}: {MitigationCodes}",
+                        _logger.LogInformation("Found {Count} pending mitigations for hazard {HazardCode}: {MitigationCodes}",
                             pendingMitigations.Count, hazard.Code,
                             string.Join(", ", pendingMitigations.Select(m => $"{m.Code}({m.Status})")));
 
@@ -1843,34 +1843,34 @@ public partial class ReportProcessing : ComponentBase
                                 mitigation.UpdatedBy = CurrentUserService?.UserDisplayName;
                                 mitigation.ApprovedBy = approverCode;
                                 var updateCommand = new UpdateMitigationCommand(mitigation);
-                                var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+                                var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
                                 if (updateResult.IsSuccess)
                                 {
                                     successCount++;
-                                    Logger.LogInformation("Approved mitigation: {Code} for hazard {HazardCode}", mitigation.Code, hazard.Code);
+                                    _logger.LogInformation("Approved mitigation: {Code} for hazard {HazardCode}", mitigation.Code, hazard.Code);
                                 }
                                 else
                                 {
                                     errorCount++;
-                                    Logger.LogError("Failed to approve mitigation {Code}: {Error}", mitigation.Code, updateResult.Error?.Message);
+                                    _logger.LogError("Failed to approve mitigation {Code}: {Error}", mitigation.Code, updateResult.Error?.Message);
                                 }
                             }
                             catch (Exception ex)
                             {
                                 errorCount++;
-                                Logger.LogError(ex, "Error approving mitigation {Code} for hazard {HazardCode}", mitigation.Code, hazard.Code);
+                                _logger.LogError(ex, "Error approving mitigation {Code} for hazard {HazardCode}", mitigation.Code, hazard.Code);
                             }
                         }
                     }
                     else
                     {
-                        Logger.LogWarning("No mitigations found for hazard {HazardCode}", hazard.Code);
+                        _logger.LogWarning("No mitigations found for hazard {HazardCode}", hazard.Code);
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Error processing mitigations for hazard {HazardCode}", hazard.Code);
+                    _logger.LogError(ex, "Error processing mitigations for hazard {HazardCode}", hazard.Code);
                 }
             }
 
@@ -1897,7 +1897,7 @@ public partial class ReportProcessing : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error during bulk approval for report {ReportId}", reportId);
+            _logger.LogError(ex, "Error during bulk approval for report {ReportId}", reportId);
             ShowErrorAsyncNotification($"Error during bulk approval for report {reportId}: {ex.Message}");
         }
         finally
@@ -1912,7 +1912,7 @@ public partial class ReportProcessing : ComponentBase
     {
         
             var cmd = new UpdateReportStatusCommand(reportId, status, CurrentUserService?.UserDisplayName);
-            var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
+            var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
             if (!cmdResult.IsSuccess)
             {
                 ShowErrorAsyncNotification($"Report{reportId} Status Was not Updated");
@@ -2076,7 +2076,7 @@ public partial class ReportProcessing : ComponentBase
             return;
         }
 
-        Logger.LogInformation("Bulk approval authorized: {ApproverName} ({ApproverCode}) approving {RiskLevel} risk mitigations for report {ReportId}",
+        _logger.LogInformation("Bulk approval authorized: {ApproverName} ({ApproverCode}) approving {RiskLevel} risk mitigations for report {ReportId}",
             $"{approver.FirstName?.Value} {approver.LastName?.Value}", SelectedApprover, highestRiskLevel, SelectedReportForApproval.ReportId);
 
         await BulkApproveAllMitigationsForReport(SelectedReportForApproval.ReportId, approver.DisplayName); //SelectedApprover);

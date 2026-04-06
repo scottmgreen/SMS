@@ -87,9 +87,49 @@ public class UpdateSMSStakeholderUserCommand : BaseCommandBundle, IRequest<Resul
 }
 
 /// <summary>
+/// Command to deactivate an existing SMS Stakeholder User (soft delete)
+/// ✅ NEW: Proper CQRS command for user deactivation with audit pipeline support
+/// </summary>
+public class DeactivateSMSStakeholderUserCommand : BaseCommandBundle, IRequest<Result<SMSStakeholderUser>>, IUpdateCommand
+{
+    /// <summary>
+    /// The SMS Stakeholder User entity to deactivate
+    /// </summary>
+    public SMSStakeholderUser SMSStakeholderUser { get; set; }
+
+    /// <summary>
+    /// Reason for deactivation
+    /// </summary>
+    public string DeactivationReason { get; set; }
+
+    /// <summary>
+    /// Initializes a new instance of the DeactivateSMSStakeholderUserCommand class.
+    /// </summary>
+    /// <param name="smsStakeholderUser">The SMS stakeholder user to deactivate</param>
+    /// <param name="deactivationReason">Reason for deactivation</param>
+    /// <exception cref="ArgumentNullException">Thrown when smsStakeholderUser is null</exception>
+    public DeactivateSMSStakeholderUserCommand(SMSStakeholderUser smsStakeholderUser, string deactivationReason = "Deactivated by administrator")
+    {
+        SMSStakeholderUser = smsStakeholderUser ?? throw new ArgumentNullException(nameof(smsStakeholderUser));
+        DeactivationReason = deactivationReason;
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For deactivation commands, we don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        SMSStakeholderUser.UpdatedBy = userId;
+        SMSStakeholderUser.UpdatedDate = timestamp;
+    }
+}
+
+/// <summary>
 /// Command to update SMS Stakeholder User password
 /// </summary>
-public class UpdateSMSStakeholderUserPasswordCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
+public class UpdateSMSStakeholderUserPasswordCommand : BaseCommandBundle, IRequest<Result<bool>>, IUpdateCommand
 {
     /// <summary>
     /// The user ID
@@ -170,7 +210,7 @@ public class AuthenticateSMSStakeholderUserCommand : BaseCommandBundle, IRequest
 /// <summary>
 /// Command to record SMS Stakeholder User login
 /// </summary>
-public class RecordSMSStakeholderUserLoginCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
+public class RecordSMSStakeholderUserLoginCommand : BaseCommandBundle, IRequest<Result<bool>>, IUpdateCommand
 {
     /// <summary>
     /// The user ID
@@ -217,14 +257,19 @@ public class RecordSMSStakeholderUserLoginCommand : BaseCommandBundle, IRequest<
 #region Delete Commands
 
 /// <summary>
-/// Command to delete an SMS Stakeholder User by ID
+/// Command to delete an SMS Stakeholder User by ID (legacy - use DeactivateSMSStakeholderUserCommand instead)
 /// </summary>
-public class DeleteSMSStakeholderUserCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class DeleteSMSStakeholderUserCommand : BaseCommandBundle, IRequest<Result<bool>>, IDeleteCommand
 {
     /// <summary>
     /// The ID of the SMS Stakeholder User to delete
     /// </summary>
     public SMSStakeholderUserID SMSStakeholderUserId { get; set; }
+
+    /// <summary>
+    /// User who performed the deletion
+    /// </summary>
+    public string DeletedBy { get; set; } = string.Empty;
 
     /// <summary>
     /// Initializes a new instance of the DeleteSMSStakeholderUserCommand class.
@@ -234,6 +279,11 @@ public class DeleteSMSStakeholderUserCommand : BaseCommandBundle, IRequest<Resul
     public DeleteSMSStakeholderUserCommand(SMSStakeholderUserID smsStakeholderUserId)
     {
         SMSStakeholderUserId = smsStakeholderUserId ?? throw new ArgumentNullException(nameof(smsStakeholderUserId));
+    }
+
+    public void SetDeletedBy(string userId, DateTime timestamp)
+    {
+        DeletedBy = userId;
     }
 }
 

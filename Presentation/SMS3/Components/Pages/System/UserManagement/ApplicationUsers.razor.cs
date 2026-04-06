@@ -1,4 +1,3 @@
-
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
@@ -16,15 +15,16 @@ namespace SMS3.Components.Pages.System.UserManagement;
 /// <summary>
 /// Code-behind for Application Users management page
 /// Provides comprehensive user management capabilities for SMS Application Users
+/// ? FIXED: Removed manual audit field assignments - pipeline handles automatically
 /// </summary>
 public partial class ApplicationUsers : ComponentBase
 {
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<ApplicationUsers> Logger { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<ApplicationUsers> _logger { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
 
     // Route parameter for edit mode
     [Parameter] public string? Id { get; set; }
@@ -78,35 +78,35 @@ public partial class ApplicationUsers : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        Logger.LogInformation("OnInitializedAsync called with Id: {Id}", Id ?? "NULL");
+        _logger.LogInformation("OnInitializedAsync called with Id: {Id}", Id ?? "NULL");
         
         await LoadDataAsync();
 
         // Check if we're in edit mode
         if (!string.IsNullOrWhiteSpace(Id))
         {
-            Logger.LogInformation("Calling LoadUserForEdit from OnInitializedAsync with Id: {Id}", Id);
+            _logger.LogInformation("Calling LoadUserForEdit from OnInitializedAsync with Id: {Id}", Id);
             await LoadUserForEdit(Id);
         }
         else
         {
-            Logger.LogInformation("No Id parameter, staying in list mode");
+            _logger.LogInformation("No Id parameter, staying in list mode");
         }
     }
 
     protected override async Task OnParametersSetAsync()
     {
-        Logger.LogInformation("OnParametersSetAsync called with Id: {Id}, IsEditMode: {IsEditMode}", 
+        _logger.LogInformation("OnParametersSetAsync called with Id: {Id}, IsEditMode: {IsEditMode}", 
             Id ?? "NULL", IsEditMode);
             
         if (!string.IsNullOrWhiteSpace(Id) && !IsEditMode)
         {
-            Logger.LogInformation("Calling LoadUserForEdit from OnParametersSetAsync with Id: {Id}", Id);
+            _logger.LogInformation("Calling LoadUserForEdit from OnParametersSetAsync with Id: {Id}", Id);
             await LoadUserForEdit(Id);
         }
         else if (string.IsNullOrWhiteSpace(Id) && IsEditMode)
         {
-            Logger.LogInformation("Cancelling edit mode from OnParametersSetAsync");
+            _logger.LogInformation("Cancelling edit mode from OnParametersSetAsync");
             CancelEdit();
         }
     }
@@ -119,32 +119,32 @@ public partial class ApplicationUsers : ComponentBase
         {
             // Load Application Users
             var applicationUsersQuery = new GetAllSMSApplicationUsersQuery();
-            var applicationUsersResult = await Mediator.SendAsync(applicationUsersQuery, CancellationToken.None);
+            var applicationUsersResult = await _mediator.SendAsync(applicationUsersQuery, CancellationToken.None);
             ApplicationUsersList = applicationUsersResult.IsSuccess ?
                 applicationUsersResult.Value?.ToList() ?? new List<SMSApplicationUser>() :
                 new List<SMSApplicationUser>();
             // Load Application Groups for group management
             var groupsQuery = new GetAllSMSApplicationGroupsQuery();
-            var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);
+            var groupsResult = await _mediator.SendAsync(groupsQuery, CancellationToken.None);
             AllApplicationGroups = groupsResult.IsSuccess ?
                 groupsResult.Value?.ToList() ?? new List<SMSApplicationGroup>() :
                 new List<SMSApplicationGroup>();
 
             // ?? NEW: Load User Roles for assignment
             var userRolesQuery = new GetAllSMSUserRolesQuery();
-            var userRolesResult = await Mediator.SendAsync(userRolesQuery, CancellationToken.None);
+            var userRolesResult = await _mediator.SendAsync(userRolesQuery, CancellationToken.None);
             AvailableRoles = userRolesResult.IsSuccess ?
                 userRolesResult.Value?.ToList() ?? new List<SMSUserRole>() :
                 new List<SMSUserRole>();
 
-            Logger.LogInformation("Loaded {UserCount} application users, {GroupCount} groups, and {RoleCount} roles",
+            _logger.LogInformation("Loaded {UserCount} application users, {GroupCount} groups, and {RoleCount} roles",
                 ApplicationUsersList.Count, AllApplicationGroups.Count, AvailableRoles.Count);
 
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading application users data");
+            _logger.LogError(ex, "Error loading application users data");
             ShowErrorAsyncNotification("Error loading data. Please refresh the page.");
         }
     }
@@ -153,26 +153,26 @@ public partial class ApplicationUsers : ComponentBase
     {
         try
         {
-            Logger.LogInformation("LoadUserForEdit called with ID: {Id}", id);
+            _logger.LogInformation("LoadUserForEdit called with ID: {Id}", id);
             
             var getUserQuery = new GetSMSApplicationUserByCodeQuery(id);
-            var userResult = await Mediator.SendAsync(getUserQuery, CancellationToken.None);
+            var userResult = await _mediator.SendAsync(getUserQuery, CancellationToken.None);
 
-            Logger.LogInformation("Query result - Success: {IsSuccess}, User found: {UserFound}", 
+            _logger.LogInformation("Query result - Success: {IsSuccess}, User found: {UserFound}", 
                 userResult.IsSuccess, userResult.Value != null);
 
             if (userResult.IsFailure || userResult.Value == null)
             {
-                Logger.LogWarning("User not found for ID: {Id}", id);
+                _logger.LogWarning("User not found for ID: {Id}", id);
                 ShowErrorAsyncNotification($"User not found: {id}");
-                Navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
+                _navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
                 return;
             }
 
             CurrentUser = userResult.Value;
             IsEditMode = true;
 
-            Logger.LogInformation("Edit mode set - CurrentUser: {UserCode}, IsEditMode: {IsEditMode}", 
+            _logger.LogInformation("Edit mode set - CurrentUser: {UserCode}, IsEditMode: {IsEditMode}", 
                 CurrentUser?.Code, IsEditMode);
 
             // Populate edit form
@@ -185,18 +185,18 @@ public partial class ApplicationUsers : ComponentBase
             // Set the role code for dropdown binding
             EditUserRoleCode = CurrentUser.UserRole?.Code;
 
-            Logger.LogInformation("Edit form populated - FirstName: {FirstName}, LastName: {LastName}, RoleCode: {RoleCode}", 
+            _logger.LogInformation("Edit form populated - FirstName: {FirstName}, LastName: {LastName}, RoleCode: {RoleCode}", 
                 editUser.FirstName, editUser.LastName, EditUserRoleCode);
 
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading user for edit: {UserId}", id);
+            _logger.LogError(ex, "Error loading user for edit: {UserId}", id);
             ShowErrorAsyncNotification("An error occurred while loading the user for editing.");
             
             // Navigate back to main list on error
-            Navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
+            _navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
         }
     }
 
@@ -252,7 +252,7 @@ public partial class ApplicationUsers : ComponentBase
 
             // Get the user
             var userQuery = new GetSMSApplicationUserByCodeQuery(RoleAssignmentUserCode);
-            var userResult = await Mediator.SendAsync(userQuery, CancellationToken.None);
+            var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
             if (userResult.IsFailure || userResult.Value == null)
             {
@@ -270,14 +270,15 @@ public partial class ApplicationUsers : ComponentBase
                 return;
             }
             user.SMSUserType = SMSUserType.Application;
-            // Update user role
+            
+            // ? FIXED: Only set business fields - let pipeline handle audit fields
             user.UserRole = selectedRole;
-            user.UpdatedBy = CurrentUserService?.UserDisplayName;
-            user.UpdatedDate = DateTime.UtcNow;
+            // ? REMOVED: user.UpdatedBy = CurrentUserService?.UserDisplayName;
+            // ? REMOVED: user.UpdatedDate = DateTime.UtcNow;
 
-            // Update user
+            // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSApplicationUserCommand(user);
-            var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (updateResult.IsSuccess)
             {
@@ -294,7 +295,7 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning role to user {UserCode}", RoleAssignmentUserCode);
+            _logger.LogError(ex, "Error assigning role to user {UserCode}", RoleAssignmentUserCode);
             ShowErrorAsyncNotification("An error occurred while assigning the role. Please try again.");
         }
         finally
@@ -319,7 +320,7 @@ public partial class ApplicationUsers : ComponentBase
 
             // Get the user
             var userQuery = new GetSMSApplicationUserByCodeQuery(RoleAssignmentUserCode);
-            var userResult = await Mediator.SendAsync(userQuery, CancellationToken.None);
+            var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
             if (userResult.IsFailure || userResult.Value == null)
             {
@@ -329,14 +330,14 @@ public partial class ApplicationUsers : ComponentBase
 
             var user = userResult.Value;
 
-            // Remove role
+            // ? FIXED: Only set business fields - let pipeline handle audit fields
             user.UserRole = null;
-            user.UpdatedBy = CurrentUserService?.UserDisplayName;
-            user.UpdatedDate = DateTime.UtcNow;
+            // ? REMOVED: user.UpdatedBy = CurrentUserService?.UserDisplayName;
+            // ? REMOVED: user.UpdatedDate = DateTime.UtcNow;
 
-            // Update user
+            // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSApplicationUserCommand(user);
-            var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (updateResult.IsSuccess)
             {
@@ -353,7 +354,7 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error removing role from user {UserCode}", RoleAssignmentUserCode);
+            _logger.LogError(ex, "Error removing role from user {UserCode}", RoleAssignmentUserCode);
             ShowErrorAsyncNotification("An error occurred while removing the role. Please try again.");
         }
         finally
@@ -406,13 +407,15 @@ public partial class ApplicationUsers : ComponentBase
                 UserRole = selectedRole, // ?? NEW: Assign role during creation
                 TwoFactorEnabled = NewUser.TwoFactorEnabled, // ?? NEW: Set 2FA requirement
                 IsActive = true,
-                SMSUserType = SMSUserType.Application,
-                CreatedBy = CurrentUserService?.UserDisplayName,
-                CreatedDate = DateTime.UtcNow
+                SMSUserType = SMSUserType.Application
+                // ? FIXED: Removed manual audit field assignments
+                // ? REMOVED: CreatedBy = CurrentUserService?.UserDisplayName,
+                // ? REMOVED: CreatedDate = DateTime.UtcNow
             };
 
+            // Create user - pipeline will automatically set CreatedBy/CreatedDate
             var command = new CreateSMSApplicationUserCommand(user);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -428,7 +431,7 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating application user");
+            _logger.LogError(ex, "Error creating application user");
             ShowErrorAsyncNotification("Error creating application user. Please try again.");
         }
         finally
@@ -455,15 +458,15 @@ public partial class ApplicationUsers : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Editing user: {UserId}", userId);
+            _logger.LogInformation("Editing user: {UserId}", userId);
             
             // Use regular navigation for edit routes since secure navigation has issues with route parameters
             // TODO: Fix SecureNavigation to properly handle route parameters
-            Navigation.NavigateTo($"/System/UserManagement/ApplicationUsers/Edit/{userId}");
+            _navigation.NavigateTo($"/System/UserManagement/ApplicationUsers/Edit/{userId}");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error navigating to edit user: {UserId}", userId);
+            _logger.LogError(ex, "Error navigating to edit user: {UserId}", userId);
             ShowErrorAsyncNotification("Error opening user editor");
         }
     }
@@ -478,10 +481,11 @@ public partial class ApplicationUsers : ComponentBase
                 return;
             }
 
-            // Update user properties using the model parameter
+            // ? FIXED: Only update business fields - let pipeline handle audit fields
             CurrentUser.FirstName = FirstName.Create(model.FirstName).Value;
             CurrentUser.LastName = LastName.Create(model.LastName).Value;
             CurrentUser.SMSUserType = SMSUserType.Application;
+            
             // Update role if changed
             if (!string.IsNullOrEmpty(EditUserRoleCode))
             {
@@ -492,12 +496,14 @@ public partial class ApplicationUsers : ComponentBase
             {
                 CurrentUser.UserRole = null;
             }
-            // Set the UpdatedBy field to the currently logged-in user's ID
-            CurrentUser.UpdatedBy = CurrentUserService?.UserDisplayName;
-            CurrentUser.UpdatedDate = DateTime.UtcNow;
+            
+            // ? REMOVED: Manual audit field assignments
+            // CurrentUser.UpdatedBy = CurrentUserService?.UserDisplayName;
+            // CurrentUser.UpdatedDate = DateTime.UtcNow;
 
+            // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSApplicationUserCommand(CurrentUser);
-            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -508,7 +514,7 @@ public partial class ApplicationUsers : ComponentBase
                 CurrentUser = null;
                 
                 // Navigate back to main list with success
-                Navigation.NavigateToSecure("/System/UserManagement/ApplicationUsers");
+                _navigation.NavigateToSecure("/System/UserManagement/ApplicationUsers");
             }
             else
             {
@@ -517,14 +523,14 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating application user: {UserId}", CurrentUser?.Code);
+            _logger.LogError(ex, "Error updating application user: {UserId}", CurrentUser?.Code);
             ShowErrorAsyncNotification("Error updating application user. Please try again.");
         }
     }
 
     private async Task ShowDeleteDialog(string userId, string displayName)
     {
-        var result = await DialogService.Confirm($"Are you sure you want to delete the user '{displayName}'?",
+        var result = await _dialogService.Confirm($"Are you sure you want to delete the user '{displayName}'?",
             "Confirm Delete",
             new ConfirmOptions
             {
@@ -545,7 +551,7 @@ public partial class ApplicationUsers : ComponentBase
         {
             var applicationUserId = new SMSApplicationUserID(userId);
             var command = new DeleteSMSApplicationUserCommand(applicationUserId);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -559,7 +565,7 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting application user: {UserId}", userId);
+            _logger.LogError(ex, "Error deleting application user: {UserId}", userId);
             ShowErrorAsyncNotification("Error deleting application user. Please try again.");
         }
     }
@@ -598,7 +604,7 @@ public partial class ApplicationUsers : ComponentBase
 
     #endregion
 
-    #region Navigation & UI
+    #region _navigation & UI
 
     private void CancelEdit()
     {
@@ -606,12 +612,12 @@ public partial class ApplicationUsers : ComponentBase
         CurrentUser = null;
         EditUserRoleCode = null;
         editUser = new EditUserModel();
-        Navigation.NavigateToSecure("/System/UserManagement/ApplicationUsers");
+        _navigation.NavigateToSecure("/System/UserManagement/ApplicationUsers");
     }
 
     private void NavigateToUserManagement()
     {
-        Navigation.NavigateToSecure("/System/UserManagement");
+        _navigation.NavigateToSecure("/System/UserManagement");
     }
 
     private async Task ExportUsers()
@@ -626,17 +632,17 @@ public partial class ApplicationUsers : ComponentBase
 
     private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        _notificationHelper.ShowSuccessAsync( message);
     }
 
     private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        _notificationHelper.ShowErrorAsync( message);
     }
 
     private void ShowInfoAsyncNotification(String message)
     {
-        NotificationHelper.ShowInfoAsync( message);
+        _notificationHelper.ShowInfoAsync( message);
     }
 
     #endregion
@@ -676,7 +682,7 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error opening group management for user: {UserId}", userId);
+            _logger.LogError(ex, "Error opening group management for user: {UserId}", userId);
             ShowErrorAsyncNotification("Error loading user groups. Please try again.");
         }
     }
@@ -687,7 +693,7 @@ public partial class ApplicationUsers : ComponentBase
         {
             // Load groups that this user is currently assigned to
             var userGroupsQuery = new GetSMSApplicationGroupsByUserCodeQuery(userId);
-            var userGroupsResult = await Mediator.SendAsync(userGroupsQuery, CancellationToken.None);
+            var userGroupsResult = await _mediator.SendAsync(userGroupsQuery, CancellationToken.None);
             UserCurrentGroups = userGroupsResult.IsSuccess ?
                 userGroupsResult.Value?.ToList() ?? new List<SMSApplicationGroup>() :
                 new List<SMSApplicationGroup>();
@@ -706,12 +712,12 @@ public partial class ApplicationUsers : ComponentBase
                 SelectedGroups[group.Code] = false;
             }
 
-            Logger.LogInformation("Loaded {CurrentGroupCount} current groups and {AvailableGroupCount} available groups for user {UserId}",
+            _logger.LogInformation("Loaded {CurrentGroupCount} current groups and {AvailableGroupCount} available groups for user {UserId}",
                 UserCurrentGroups.Count, AvailableGroups.Count, userId);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading groups for user: {UserId}", userId);
+            _logger.LogError(ex, "Error loading groups for user: {UserId}", userId);
             UserCurrentGroups = new List<SMSApplicationGroup>();
             AvailableGroups = AllApplicationGroups.Where(g => g.IsActive).ToList();
 
@@ -745,7 +751,7 @@ public partial class ApplicationUsers : ComponentBase
         try
         {
             var command = new RemoveUserFromApplicationGroupCommand(GroupManagementUserCode, groupCode);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -760,7 +766,7 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", GroupManagementUserCode, groupCode);
+            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", GroupManagementUserCode, groupCode);
             ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
@@ -776,7 +782,7 @@ public partial class ApplicationUsers : ComponentBase
         try
         {
             var command = new AssignUserToApplicationGroupCommand(GroupManagementUserCode, groupCode);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -791,7 +797,7 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
             ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }
@@ -815,7 +821,7 @@ public partial class ApplicationUsers : ComponentBase
                 try
                 {
                     var command = new AssignUserToApplicationGroupCommand(GroupManagementUserCode, groupCode);
-                    var result = await Mediator.SendAsync(command, CancellationToken.None);
+                    var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                     if (result.IsSuccess)
                         successCount++;
@@ -824,7 +830,7 @@ public partial class ApplicationUsers : ComponentBase
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
+                    _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
                     failureCount++;
                 }
             }
@@ -846,7 +852,7 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", GroupManagementUserCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", GroupManagementUserCode);
             ShowErrorAsyncNotification("Error assigning user to groups. Please try again.");
         }
     }

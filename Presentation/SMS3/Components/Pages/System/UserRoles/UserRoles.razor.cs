@@ -6,11 +6,11 @@ namespace SMS3.Components.Pages.System.UserRoles;
 
 public partial class UserRoles : ComponentBase
 {
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<UserRoles> Logger { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<UserRoles> _logger { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     
 
     // Data Properties
@@ -75,19 +75,19 @@ public partial class UserRoles : ComponentBase
         {
             // Load User Roles
             var userRolesQuery = new GetAllSMSUserRolesQuery();
-            var userRolesResult = await Mediator.SendAsync(userRolesQuery, CancellationToken.None);
+            var userRolesResult = await _mediator.SendAsync(userRolesQuery, CancellationToken.None);
             UserRolesList = userRolesResult.IsSuccess ?
                 userRolesResult.Value?.ToList() ?? new List<SMSUserRole>() :
                 new List<SMSUserRole>();
 
-            Logger.LogInformation("Loaded {RoleCount} user roles", UserRolesList.Count);
+            _logger.LogInformation("Loaded {RoleCount} user roles", UserRolesList.Count);
 
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading user roles data");
-            await NotificationHelper.ShowErrorAsync("Error loading data. Please refresh the page.");
+            _logger.LogError(ex, "Error loading user roles data");
+            await _notificationHelper.ShowErrorAsync("Error loading data. Please refresh the page.");
         }
     }
 
@@ -112,7 +112,7 @@ public partial class UserRoles : ComponentBase
     {
         if (!IsCreateFormValid)
         {
-            await NotificationHelper.ShowErrorAsync("Please fill in all required fields.");
+            await _notificationHelper.ShowErrorAsync("Please fill in all required fields.");
             return;
         }
 
@@ -150,23 +150,23 @@ public partial class UserRoles : ComponentBase
             }
 
             var command = new CreateSMSUserRoleCommand(role);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                await NotificationHelper.ShowSuccessAsync($"User role '{NewRole.RoleName}' created successfully.");
+                await _notificationHelper.ShowSuccessAsync($"User role '{NewRole.RoleName}' created successfully.");
                 CloseCreateModal();
                 await LoadUserRolesAsync();
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to create user role.");
+                await _notificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to create user role.");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating user role");
-            await NotificationHelper.ShowErrorAsync("Error creating user role. Please try again.");
+            _logger.LogError(ex, "Error creating user role");
+            await _notificationHelper.ShowErrorAsync("Error creating user role. Please try again.");
         }
         finally
         {
@@ -231,11 +231,11 @@ public partial class UserRoles : ComponentBase
         try
         {
             var getRoleQuery = new GetSMSUserRoleByIdQuery(roleCode);
-            var roleResult = await Mediator.SendAsync(getRoleQuery, CancellationToken.None);
+            var roleResult = await _mediator.SendAsync(getRoleQuery, CancellationToken.None);
 
             if (roleResult.IsFailure)
             {
-                await NotificationHelper.ShowErrorAsync("Role not found.");
+                await _notificationHelper.ShowErrorAsync("Role not found.");
                 return;
             }
 
@@ -256,8 +256,8 @@ public partial class UserRoles : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading role for edit: {RoleCode}", roleCode);
-            await NotificationHelper.ShowErrorAsync("Error loading role. Please try again.");
+            _logger.LogError(ex, "Error loading role for edit: {RoleCode}", roleCode);
+            await _notificationHelper.ShowErrorAsync("Error loading role. Please try again.");
         }
     }
 
@@ -265,7 +265,7 @@ public partial class UserRoles : ComponentBase
     {
         if (!IsEditFormValid)
         {
-            await NotificationHelper.ShowErrorAsync("Please fill in all required fields.");
+            await _notificationHelper.ShowErrorAsync("Please fill in all required fields.");
             return;
         }
 
@@ -273,7 +273,7 @@ public partial class UserRoles : ComponentBase
         {
             if (CurrentEditRole == null)
             {
-                await NotificationHelper.ShowErrorAsync("No role selected for update.");
+                await _notificationHelper.ShowErrorAsync("No role selected for update.");
                 return;
             }
 
@@ -316,23 +316,23 @@ public partial class UserRoles : ComponentBase
             }
 
             var updateCommand = new UpdateSMSUserRoleCommand(CurrentEditRole);
-            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                await NotificationHelper.ShowSuccessAsync($"User role '{editRole.RoleName}' updated successfully.");
+                await _notificationHelper.ShowSuccessAsync($"User role '{editRole.RoleName}' updated successfully.");
                 CloseEditModal();
                 await LoadUserRolesAsync();
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to update user role.");
+                await _notificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to update user role.");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating user role: {RoleCode}", CurrentEditRole?.Code);
-            await NotificationHelper.ShowErrorAsync("Error updating user role. Please try again.");
+            _logger.LogError(ex, "Error updating user role: {RoleCode}", CurrentEditRole?.Code);
+            await _notificationHelper.ShowErrorAsync("Error updating user role. Please try again.");
         }
         finally
         {
@@ -374,7 +374,7 @@ public partial class UserRoles : ComponentBase
 
     private async Task ShowDeleteDialog(string roleCode, string roleName)
     {
-        var result = await DialogService.Confirm($"Are you sure you want to delete the role '{roleName}'?\n\nThis action cannot be undone and may affect users assigned to this role.",
+        var result = await _dialogService.Confirm($"Are you sure you want to delete the role '{roleName}'?\n\nThis action cannot be undone and may affect users assigned to this role.",
             "Confirm Delete",
             new ConfirmOptions
             {
@@ -395,22 +395,22 @@ public partial class UserRoles : ComponentBase
         {
             var roleId = new SMSUserRoleID(roleCode);
             var command = new DeleteSMSUserRoleCommand(roleId);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                await NotificationHelper.ShowSuccessAsync("User role deleted successfully.");
+                await _notificationHelper.ShowSuccessAsync("User role deleted successfully.");
                 await LoadUserRolesAsync();
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to delete user role.");
+                await _notificationHelper.ShowErrorAsync(result.Error?.Message ?? "Failed to delete user role.");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting user role: {RoleCode}", roleCode);
-            await NotificationHelper.ShowErrorAsync("Error deleting user role. Please try again.");
+            _logger.LogError(ex, "Error deleting user role: {RoleCode}", roleCode);
+            await _notificationHelper.ShowErrorAsync("Error deleting user role. Please try again.");
         }
     }
 
@@ -474,7 +474,7 @@ public partial class UserRoles : ComponentBase
     }
     private async Task ExportRoles()
     {
-        await NotificationHelper.ShowInfoAsync("Export functionality will be implemented soon.");
+        await _notificationHelper.ShowInfoAsync("Export functionality will be implemented soon.");
     }
 
     private int GetTotalPermissions(SMSUserRole role)

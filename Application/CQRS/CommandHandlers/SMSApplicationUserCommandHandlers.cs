@@ -120,6 +120,111 @@ public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
     }
 }
 
+public class DeactivateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<DeactivateSMSApplicationUserCommand, Result<SMSApplicationUser>>
+{
+    private readonly ISMSApplicationUserService _applicationUserService;
+    private readonly ILogger<DeactivateSMSApplicationUserCommandHandler> _logger;
+
+    public DeactivateSMSApplicationUserCommandHandler(ISMSApplicationUserService applicationUserService, ILogger<DeactivateSMSApplicationUserCommandHandler> logger)
+    {
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SMSApplicationUser>> HandleAsync(DeactivateSMSApplicationUserCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request?.SMSApplicationUser is null)
+            {
+                _logger.LogApplicationError("DeactivateSMSApplicationUserCommand received with null request or user", ApplicationEventIds.Error, null);
+                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("✅ Clean Architecture: Processing DeactivateSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUser.UserId);
+
+            // Business logic: Deactivate the user
+            request.SMSApplicationUser.Deactivate();
+
+            // Use the update service method to persist the deactivation
+            // The audit pipeline has already set UpdatedBy and UpdatedDate via SetUpdatedBy()
+            var result = await _applicationUserService.UpdateSMSApplicationUserAsync(request.SMSApplicationUser, cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("✅ Clean Architecture: Successfully deactivated SMS Application User with ID: {UserId}", request.SMSApplicationUser.UserId);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to deactivate SMS Application User with ID: {UserId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("DeactivateSMSApplicationUserCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while deactivating SMS Application User with ID: {UserId}", ApplicationEventIds.Error, ex);
+            return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.DeleteFailed);
+        }
+    }
+}
+
+public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSApplicationUserCommand, Result<bool>>
+{
+    private readonly ISMSApplicationUserService _applicationUserService;
+    private readonly ILogger<DeleteSMSApplicationUserCommandHandler> _logger;
+
+    public DeleteSMSApplicationUserCommandHandler(ISMSApplicationUserService applicationUserService, ILogger<DeleteSMSApplicationUserCommandHandler> logger)
+    {
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(DeleteSMSApplicationUserCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogApplicationError("DeleteSMSApplicationUserCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUserId);
+
+            var result = await _applicationUserService.DeleteSMSApplicationUserAsync(request.SMSApplicationUserId, cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("✅ Clean Architecture: Successfully deleted SMS Application User with ID: {UserId}", request.SMSApplicationUserId);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to delete SMS Application User with ID: {UserId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("DeleteSMSApplicationUserCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while deleting SMS Application User with ID: {UserId}", ApplicationEventIds.Error, ex);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.DeleteFailed);
+        }
+    }
+}
+
 public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationUserPasswordCommand, Result<bool>>
 {
     private readonly ISMSApplicationUserService _applicationUserService;
@@ -297,56 +402,6 @@ public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IR
         {
             _logger.LogApplicationError("Unexpected error occurred while recording login for SMS Application User with ID: {UserId}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
-        }
-    }
-}
-
-public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSApplicationUserCommand, Result<bool>>
-{
-    private readonly ISMSApplicationUserService _applicationUserService;
-    private readonly ILogger<DeleteSMSApplicationUserCommandHandler> _logger;
-
-    public DeleteSMSApplicationUserCommandHandler(ISMSApplicationUserService applicationUserService, ILogger<DeleteSMSApplicationUserCommandHandler> logger)
-    {
-        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<bool>> HandleAsync(DeleteSMSApplicationUserCommand request, CancellationToken cancellationToken)
-    {
-        try
-        {
-            if (request is null)
-            {
-                _logger.LogApplicationError("DeleteSMSApplicationUserCommand received with null request", ApplicationEventIds.Error, null);
-                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
-            }
-
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUserId);
-
-            var result = await _applicationUserService.DeleteSMSApplicationUserAsync(request.SMSApplicationUserId, cancellationToken);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted SMS Application User with ID: {UserId}", request.SMSApplicationUserId);
-            }
-            else
-            {
-                _logger.LogApplicationError("Failed to delete SMS Application User with ID: {UserId}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
-            }
-
-            return result;
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("DeleteSMSApplicationUserCommand operation was cancelled");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Unexpected error occurred while deleting SMS Application User with ID: {UserId}", ApplicationEventIds.Error, ex);
-            return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.DeleteFailed);
         }
     }
 }

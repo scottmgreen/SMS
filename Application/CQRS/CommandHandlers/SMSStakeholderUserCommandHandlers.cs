@@ -297,14 +297,79 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IR
     }
 }
 
+/// <summary>
+/// ✅ NEW: Command handler for deactivating SMS Stakeholder Users using CQRS/Mediator pattern
+/// Implements proper CQRS pattern with audit pipeline support for soft delete operations
+/// </summary>
+public class DeactivateSMSStakeholderUserCommandHandler : BaseCommandBundle, IRequestHandler<DeactivateSMSStakeholderUserCommand, Result<SMSStakeholderUser>>
+{
+    private readonly ISMSStakeholderUserService _stakeholderUserService;
+    private readonly ILogger<DeactivateSMSStakeholderUserCommandHandler> _logger;
+
+    public DeactivateSMSStakeholderUserCommandHandler(ISMSStakeholderUserService stakeholderUserService, ILogger<DeactivateSMSStakeholderUserCommandHandler> logger)
+    {
+        _stakeholderUserService = stakeholderUserService ?? throw new ArgumentNullException(nameof(stakeholderUserService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SMSStakeholderUser>> HandleAsync(DeactivateSMSStakeholderUserCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request?.SMSStakeholderUser is null)
+            {
+                _logger.LogApplicationError("DeactivateSMSStakeholderUserCommand received with null request or user", ApplicationEventIds.Error, null);
+                return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("🚀 CQRS: Handling DeactivateSMSStakeholderUserCommand for user: {UserCode} - Reason: {Reason}", 
+                request.SMSStakeholderUser.Code, request.DeactivationReason);
+
+            // Business logic: Deactivate the user
+            request.SMSStakeholderUser.Deactivate();
+
+            // Use the update service method to persist the deactivation
+            // The audit pipeline has already set UpdatedBy and UpdatedDate via SetUpdatedBy()
+            var result = await _stakeholderUserService.UpdateSMSStakeholderUserAsync(request.SMSStakeholderUser, cancellationToken);
+            
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("✅ CQRS: Successfully deactivated SMS Stakeholder User: {UserCode}", result.Value.Code);
+            }
+            else
+            {
+                _logger.LogError("❌ CQRS: Failed to deactivate SMS Stakeholder User. Error: {Error}", result.Error?.Message);
+            }
+            
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("DeactivateSMSStakeholderUserCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "💥 CQRS: Exception in DeactivateSMSStakeholderUserCommandHandler for user: {UserCode}", 
+                request.SMSStakeholderUser?.Code);
+            return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.DeleteFailed);
+        }
+    }
+}
+
 public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSStakeholderUserCommand, Result<bool>>
 {
     private readonly ISMSStakeholderUserService _stakeholderUserService;
+    private readonly IMediator _mediator;
     private readonly ILogger<DeleteSMSStakeholderUserCommandHandler> _logger;
 
-    public DeleteSMSStakeholderUserCommandHandler(ISMSStakeholderUserService stakeholderUserService, ILogger<DeleteSMSStakeholderUserCommandHandler> logger)
+    public DeleteSMSStakeholderUserCommandHandler(
+        ISMSStakeholderUserService stakeholderUserService, 
+        IMediator mediator,
+        ILogger<DeleteSMSStakeholderUserCommandHandler> logger)
     {
         _stakeholderUserService = stakeholderUserService ?? throw new ArgumentNullException(nameof(stakeholderUserService));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -318,32 +383,30 @@ public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSStakeholderUserCommand for UserID: {UserId}", request.SMSStakeholderUserId);
+            _logger.LogInformation("🚀 CQRS: Handling DeleteSMSStakeholderUserCommand (legacy) for user ID: {UserId} - Redirecting to deactivation", 
+                request.SMSStakeholderUserId.Value);
 
-            // For now, implement as logical delete by updating the user record
-            var userResult = await _stakeholderUserService.GetSMSStakeholderUserByIdAsync(request.SMSStakeholderUserId, cancellationToken);
+            // Get the user first - ✅ FIXED: Use correct method name
+            var userResult = await _stakeholderUserService.GetSMSStakeholderUserByIdAsync(request.SMSStakeholderUserId.Value, cancellationToken);
             if (userResult.IsFailure)
             {
+                _logger.LogWarning("❌ CQRS: Cannot delete non-existent SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUserId.Value);
                 return Result<bool>.Failure<bool>(userResult.Error);
             }
 
-            var user = userResult.Value;
-            user.IsActive = false;
-            user.UpdatedBy = "SYSTEM";
-            user.UpdatedDate = DateTime.UtcNow;
+            // Use the new deactivation command for consistency
+            var deactivateCommand = new DeactivateSMSStakeholderUserCommand(userResult.Value, "Deleted via legacy delete command");
+            var deactivateResult = await _mediator.SendAsync(deactivateCommand, cancellationToken);
 
-            var updateResult = await _stakeholderUserService.UpdateSMSStakeholderUserAsync(user, cancellationToken);
-
-            if (updateResult.IsSuccess)
+            if (deactivateResult.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted (deactivated) SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUserId);
+                _logger.LogInformation("✅ CQRS: Successfully processed delete as deactivation for user: {UserCode}", deactivateResult.Value.Code);
                 return Result<bool>.Success(true);
             }
             else
             {
-                _logger.LogApplicationError("Failed to delete SMS Stakeholder User with ID: {UserId}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
-                return Result<bool>.Failure<bool>(updateResult.Error);
+                _logger.LogError("❌ CQRS: Failed to process delete as deactivation. Error: {Error}", deactivateResult.Error?.Message);
+                return Result<bool>.Failure<bool>(deactivateResult.Error);
             }
         }
         catch (OperationCanceledException)

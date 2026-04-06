@@ -1,4 +1,3 @@
-
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -8,12 +7,12 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 
 public partial class Hazards : ComponentBase
 {
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<Hazards> Logger { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<Hazards> _logger { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
@@ -53,17 +52,17 @@ public partial class Hazards : ComponentBase
         {
             if (!IsAuthenticated)
             {
-                Logger.LogWarning("Unauthorized access attempt to Hazards page");
+                _logger.LogWarning("Unauthorized access attempt to Hazards page");
                 ErrorMessage = "You must be logged in to view hazards.";
             }
             else
             {
-                Logger.LogInformation("Authenticated user {UserName} accessing Hazards page", CurrentUserName);
+                _logger.LogInformation("Authenticated user {UserName} accessing Hazards page", CurrentUserName);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error checking authentication status");
+            _logger.LogError(ex, "Error checking authentication status");
             ErrorMessage = "Authentication check failed.";
         }
     }
@@ -81,30 +80,30 @@ public partial class Hazards : ComponentBase
             IsLoading = true;
             ErrorMessage = string.Empty;
 
-            Logger.LogInformation("Loading all hazards for user: {UserName}", CurrentUserName);
+            _logger.LogInformation("Loading all hazards for user: {UserName}", CurrentUserName);
 
             // Execute GetAllHazardsQuery via Mediator
             var query = new GetAllHazardsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 AllHazards = result.Value.ToList();
-                await NotificationHelper.ShowSuccessAsync($"Successfully loaded {AllHazards.Count} hazards");
-                Logger.LogInformation("Successfully loaded {Count} hazards", AllHazards.Count);
+                await _notificationHelper.ShowSuccessAsync($"Successfully loaded {AllHazards.Count} hazards");
+                _logger.LogInformation("Successfully loaded {Count} hazards", AllHazards.Count);
             }
             else
             {
                 ErrorMessage = result.Error?.Message ?? "Failed to load hazards";
-                await NotificationHelper.ShowErrorAsync(ErrorMessage);
-                Logger.LogError("Failed to load hazards: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync(ErrorMessage);
+                _logger.LogError("Failed to load hazards: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             ErrorMessage = "An unexpected error occurred while loading hazards.";
-            Logger.LogError(ex, "Exception loading hazards for user: {UserName}", CurrentUserName);
-            await NotificationHelper.ShowErrorAsync("An unexpected error occurred while loading hazards.");
+            _logger.LogError(ex, "Exception loading hazards for user: {UserName}", CurrentUserName);
+            await _notificationHelper.ShowErrorAsync("An unexpected error occurred while loading hazards.");
         }
         finally
         {
@@ -115,20 +114,20 @@ public partial class Hazards : ComponentBase
 
     private async Task RefreshAsync()
     {
-        Logger.LogInformation("Refreshing hazards list");
+        _logger.LogInformation("Refreshing hazards list");
         _expandedRows.Clear(); // Clear expanded rows when refreshing
         await LoadHazardsAsync();
     }
 
     private void ShowCreateHazardDialog()
     {
-        Logger.LogInformation("Navigate to create new hazard");
-        Navigation.NavigateToSecure("/SMSRiskManagement/HazardCreate");
+        _logger.LogInformation("Navigate to create new hazard");
+        _navigation.NavigateToSecure("/SMSRiskManagement/HazardCreate");
     }
 
     private async Task OnViewHazardAsync(Hazard hazard)
     {
-        Logger.LogInformation("View hazard details: {HazardCode}", hazard.Code);
+        _logger.LogInformation("View hazard details: {HazardCode}", hazard.Code);
 
         try
         {
@@ -146,30 +145,30 @@ public partial class Hazards : ComponentBase
 
                 Created: {hazard.CreatedDate?.ToString("MM/dd/yyyy") ?? "N/A"}";
 
-            await DialogService.Alert(hazardDetails, $"Hazard Information - {hazard.Code}");
+            await _dialogService.Alert(hazardDetails, $"Hazard Information - {hazard.Code}");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error opening hazard details for: {HazardCode}", hazard.Code);
-            await NotificationHelper.ShowErrorAsync("Failed to display hazard details.");
+            _logger.LogError(ex, "Error opening hazard details for: {HazardCode}", hazard.Code);
+            await _notificationHelper.ShowErrorAsync("Failed to display hazard details.");
         }
     }
 
     private async Task OnEditHazardAsync(Hazard hazard)
     {
-        Logger.LogInformation("Edit hazard: {HazardCode}", hazard.Code);
+        _logger.LogInformation("Edit hazard: {HazardCode}", hazard.Code);
         // ?? SECURE NAVIGATION - Navigate to Hazard Edit with encrypted URL
-        Navigation.NavigateToSecure($"/SMSRiskManagement/HazardEdit/{hazard.Code}");
+        _navigation.NavigateToSecure($"/SMSRiskManagement/HazardEdit/{hazard.Code}");
     }
 
     private async Task OnDeleteHazardAsync(Hazard hazard)
     {
-        Logger.LogInformation("Delete hazard request: {HazardCode}", hazard.Code);
+        _logger.LogInformation("Delete hazard request: {HazardCode}", hazard.Code);
 
         try
         {
             // Show confirmation dialog
-            var confirmed = await DialogService.Confirm(
+            var confirmed = await _dialogService.Confirm(
                 $"Are you sure you want to delete hazard {hazard.Code}?\n\nThis action cannot be undone.",
                 "Confirm Delete",
                 new ConfirmOptions()
@@ -181,17 +180,17 @@ public partial class Hazards : ComponentBase
             if (confirmed == true)
             {
                 // TODO: Implement delete via CQRS command when available
-                Logger.LogInformation("Delete confirmed for hazard: {HazardCode}", hazard.Code);
+                _logger.LogInformation("Delete confirmed for hazard: {HazardCode}", hazard.Code);
 
-                await NotificationHelper.ShowInfoAsync($"Hazard deletion for {hazard.Code} will be implemented in a future update.");
+                await _notificationHelper.ShowInfoAsync($"Hazard deletion for {hazard.Code} will be implemented in a future update.");
 
                 // await RefreshAsync(); // Uncomment when delete is implemented
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting hazard: {HazardCode}", hazard.Code);
-            await NotificationHelper.ShowErrorAsync("Failed to delete the hazard. Please try again.");
+            _logger.LogError(ex, "Error deleting hazard: {HazardCode}", hazard.Code);
+            await _notificationHelper.ShowErrorAsync("Failed to delete the hazard. Please try again.");
         }
     }
 
@@ -200,7 +199,7 @@ public partial class Hazards : ComponentBase
     {
         if (int.TryParse(value?.ToString(), out var pageSize))
         {
-            Logger.LogInformation("Page size changed from {OldSize} to {NewSize}", PageSize, pageSize);
+            _logger.LogInformation("Page size changed from {OldSize} to {NewSize}", PageSize, pageSize);
             PageSize = pageSize;
 
             // Clear expanded rows when changing page size
@@ -215,7 +214,7 @@ public partial class Hazards : ComponentBase
             StateHasChanged();
 
             // Show notification
-            await NotificationHelper.ShowInfoAsync($"Now showing {PageSize} hazards per page");
+            await _notificationHelper.ShowInfoAsync($"Now showing {PageSize} hazards per page");
         }
     }
 
@@ -225,12 +224,12 @@ public partial class Hazards : ComponentBase
         if (_expandedRows.Contains(hazard.Code))
         {
             _expandedRows.Remove(hazard.Code);
-            Logger.LogDebug("Collapsed hazard details: {HazardCode}", hazard.Code);
+            _logger.LogDebug("Collapsed hazard details: {HazardCode}", hazard.Code);
         }
         else
         {
             _expandedRows.Add(hazard.Code);
-            Logger.LogDebug("Expanded hazard details: {HazardCode}", hazard.Code);
+            _logger.LogDebug("Expanded hazard details: {HazardCode}", hazard.Code);
         }
         StateHasChanged();
     }

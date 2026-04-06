@@ -1,4 +1,3 @@
-
 using SMS3.Components.Pages.SMSAssurance.Components;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
@@ -8,11 +7,11 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class MitigationCalendar : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<MitigationCalendar> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<MitigationCalendar> _logger { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     #endregion
 
@@ -52,31 +51,31 @@ public partial class MitigationCalendar : ComponentBase
             IsLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading mitigations for calendar display");
+            _logger.LogInformation("Loading mitigations for calendar display");
 
             var query = new GetAllMitigationsQuery();
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
                 Mitigations = result.Value.ToList();
-                Logger.LogInformation("Loaded {Count} mitigations for calendar", Mitigations.Count);
+                _logger.LogInformation("Loaded {Count} mitigations for calendar", Mitigations.Count);
 
                 // Convert mitigations to scheduler items
                 SchedulerData = Mitigations.Select(MapMitigationToSchedulerItem).ToList();
             }
             else
             {
-                Logger.LogError("Failed to load mitigations: {Error}", result.Error?.Message);
-                await NotificationHelper.ShowErrorAsync("Failed to load mitigations for calendar");
+                _logger.LogError("Failed to load mitigations: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync("Failed to load mitigations for calendar");
                 Mitigations = new List<Mitigation>();
                 SchedulerData = new List<MitigationSchedulerItem>();
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading mitigations for calendar");
-            await NotificationHelper.ShowErrorAsync("Error loading mitigations");
+            _logger.LogError(ex, "Error loading mitigations for calendar");
+            await _notificationHelper.ShowErrorAsync("Error loading mitigations");
         }
         finally
         {
@@ -88,7 +87,7 @@ public partial class MitigationCalendar : ComponentBase
 
     private async Task RefreshData()
     {
-        Logger.LogInformation("Refreshing mitigation calendar data...");
+        _logger.LogInformation("Refreshing mitigation calendar data...");
         await LoadMitigationsAsync();
 
         // Reload the scheduler
@@ -97,34 +96,20 @@ public partial class MitigationCalendar : ComponentBase
             await scheduler.Reload();
         }
 
-        await NotificationHelper.ShowSuccessAsync("Calendar data refreshed");
-        Logger.LogInformation("Mitigation calendar refresh completed");
+        await _notificationHelper.ShowSuccessAsync("Calendar data refreshed");
+        _logger.LogInformation("Mitigation calendar refresh completed");
     }
     #endregion
 
     #region Data Mapping
     private MitigationSchedulerItem MapMitigationToSchedulerItem(Mitigation mitigation)
     {
-        var targetDate = mitigation.TargetDate ?? mitigation.CreatedDate ?? DateTime.Now;
-        //var completionDate = mitigation.CompletionDate;
-
-        // Use completion date if available and in the past, otherwise use target date
-        var startDate = targetDate; // completionDate ?? targetDate;
-        var endDate = targetDate.AddHours(1) ; // Show completed items as 1 hour blocks, targets as all-day THIS IS A HACKED UP BIT
-
         return new MitigationSchedulerItem
         {
-            MitigationId = mitigation.Id?.Value ?? "",
-            MitigationCode = mitigation.Code ?? "Unknown",
-            Text = $"Mitigation: {mitigation.Code} - {mitigation.Name}",
-            Start = startDate,
-            End = endDate,
-            Status = mitigation.Status ?? "PENDING_APPROVAL",
-            HazardCode = mitigation.HazardCode ?? "Unknown",
-            AssignedTo = mitigation.AssignedTo ?? "Unassigned",
-            Progress = mitigation.Progress,
-            IsOverdue = mitigation.TargetDate.HasValue && mitigation.TargetDate < DateTime.Today && mitigation.Status != "COMPLETE",
-            Description = GetMitigationDescription(mitigation)
+            Start = mitigation.TargetDate ?? DateTime.Today,
+            End = mitigation.TargetDate?.AddDays(1) ?? DateTime.Today.AddDays(1),
+            Text = $"{mitigation.Name} (Status: {mitigation.Status})",
+            MitigationCode = mitigation.Code
         };
     }
 
@@ -150,7 +135,7 @@ public partial class MitigationCalendar : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
+            _logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
 
             // Don't create appointments in year view
             if (args.View.Text != "Year")
@@ -160,53 +145,37 @@ public partial class MitigationCalendar : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error handling slot selection");
+            _logger.LogError(ex, "Error handling slot selection");
         }
     }
 
     private async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<MitigationSchedulerItem> args)
     {
+        if (_handlingAppointmentClick || args.Data?.MitigationCode == null)
+        {
+            return;
+        }
+
         try
         {
-            // Prevent multiple rapid clicks and modal interference
-            if (_handlingAppointmentClick || ShowDetailsModal || IsLoading)
-            {
-                return;
-            }
-
             _handlingAppointmentClick = true;
-            var mitigationItem = args.Data;
-            Logger.LogInformation("Mitigation appointment selected: {MitigationCode}", mitigationItem.MitigationCode);
+            _logger.LogInformation("Appointment selected: {MitigationCode}", args.Data.MitigationCode);
 
-            // Use a background task to handle the click without blocking the UI thread
-            _ = Task.Run(async () =>
+            // Find the actual mitigation from the loaded list
+            SelectedMitigation = Mitigations.FirstOrDefault(m => m.Code == args.Data.MitigationCode);
+            if (SelectedMitigation != null)
             {
-                try
-                {
-                    await Task.Delay(150); // Give the scheduler time to complete its focus operations
-                    await InvokeAsync(async () =>
-                    {
-                        await ShowMitigationDetails(mitigationItem);
-                    });
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogError(ex, "Error in background appointment handling");
-                    await InvokeAsync(async () =>
-                    {
-                        await NotificationHelper.ShowErrorAsync("Error opening mitigation details");
-                    });
-                }
-                finally
-                {
-                    _handlingAppointmentClick = false;
-                }
-            });
+                ShowDetailsModal = true;
+                StateHasChanged();
+            }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error handling appointment selection");
-            await NotificationHelper.ShowErrorAsync("Error opening mitigation details");
+            _logger.LogError(ex, "Error handling appointment selection");
+            await _notificationHelper.ShowErrorAsync("Error displaying mitigation details");
+        }
+        finally
+        {
             _handlingAppointmentClick = false;
         }
     }
@@ -285,7 +254,7 @@ public partial class MitigationCalendar : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error rendering appointment");
+            _logger.LogError(ex, "Error rendering appointment");
         }
     }
 
@@ -310,7 +279,7 @@ public partial class MitigationCalendar : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error rendering slot");
+            _logger.LogError(ex, "Error rendering slot");
         }
     }
 
@@ -322,7 +291,7 @@ public partial class MitigationCalendar : ComponentBase
 
             if (draggedAppointment != null)
             {
-                Logger.LogInformation("AppointmentMove: Mitigation={MitigationCode} moved to {SlotDate:yyyy-MM-dd HH:mm}", 
+                _logger.LogInformation("AppointmentMove: Mitigation={MitigationCode} moved to {SlotDate:yyyy-MM-dd HH:mm}", 
                     draggedAppointment.MitigationCode, args.SlotDate);
 
                 var duration = draggedAppointment.End - draggedAppointment.Start;
@@ -342,13 +311,13 @@ public partial class MitigationCalendar : ComponentBase
                 await UpdateMitigationTargetDate(draggedAppointment);
 
                 await scheduler.Reload();
-                await NotificationHelper.ShowSuccessAsync($"Mitigation {draggedAppointment.MitigationCode} rescheduled successfully");
+                await _notificationHelper.ShowSuccessAsync($"Mitigation {draggedAppointment.MitigationCode} rescheduled successfully");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error moving appointment");
-            await NotificationHelper.ShowErrorAsync("Error rescheduling mitigation");
+            _logger.LogError(ex, "Error moving appointment");
+            await _notificationHelper.ShowErrorAsync("Error rescheduling mitigation");
         }
     }
 
@@ -366,27 +335,27 @@ public partial class MitigationCalendar : ComponentBase
 
                 // Save via CQRS
                 var updateCommand = new UpdateMitigationCommand(mitigation);
-                var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+                var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
-                    Logger.LogInformation("Mitigation {MitigationCode} target date updated successfully", mitigation.Code);
+                    _logger.LogInformation("Mitigation {MitigationCode} target date updated successfully", mitigation.Code);
                 }
                 else
                 {
-                    Logger.LogError("Failed to update mitigation target date: {Error}", result.Error?.Message);
-                    await NotificationHelper.ShowErrorAsync("Failed to save mitigation changes");
+                    _logger.LogError("Failed to update mitigation target date: {Error}", result.Error?.Message);
+                    await _notificationHelper.ShowErrorAsync("Failed to save mitigation changes");
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating mitigation target date");
+            _logger.LogError(ex, "Error updating mitigation target date");
         }
     }
     #endregion
 
-    #region Navigation and Actions
+    #region _navigation and Actions
     private async Task GoToToday()
     {
         try
@@ -395,12 +364,12 @@ public partial class MitigationCalendar : ComponentBase
             {
                 scheduler.CurrentDate = DateTime.Today;
                 await scheduler.Reload();
-                Logger.LogInformation("Navigated to today's date");
+                _logger.LogInformation("Navigated to today's date");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error navigating to today");
+            _logger.LogError(ex, "Error navigating to today");
         }
     }
 
@@ -409,23 +378,23 @@ public partial class MitigationCalendar : ComponentBase
         try
         {
             var targetDate = selectedStart ?? DateTime.Now;
-            Logger.LogInformation("Opening create mitigation dialog for {TargetDate:yyyy-MM-dd}", targetDate);
+            _logger.LogInformation("Opening create mitigation dialog for {TargetDate:yyyy-MM-dd}", targetDate);
 
             // For now, navigate to mitigation creation page
             // TODO: Implement CreateMitigationDialog similar to CreateInterviewDialog
-            Navigation.NavigateToSecure("/Listings/Mitigations");
-            await NotificationHelper.ShowSuccessAsync("Navigate to Mitigations page to create new mitigation");
+            _navigation.NavigateToSecure("/Listings/Mitigations");
+            await _notificationHelper.ShowSuccessAsync("Navigate to Mitigations page to create new mitigation");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error showing create mitigation dialog");
-            await NotificationHelper.ShowErrorAsync("Error opening create mitigation dialog");
+            _logger.LogError(ex, "Error showing create mitigation dialog");
+            await _notificationHelper.ShowErrorAsync("Error opening create mitigation dialog");
         }
     }
 
     private async Task ShowMitigationDetails(MitigationSchedulerItem mitigationItem)
     {
-        Logger.LogInformation("View mitigation details requested from calendar: {MitigationCode}", mitigationItem.MitigationCode);
+        _logger.LogInformation("View mitigation details requested from calendar: {MitigationCode}", mitigationItem.MitigationCode);
 
         try
         {
@@ -443,7 +412,7 @@ public partial class MitigationCalendar : ComponentBase
 
             // Get detailed mitigation information
             var mitigationQuery = new GetMitigationByCodeQuery(new MitigationID(mitigationItem.MitigationCode));
-            var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+            var mitigationResult = await _mediator.SendAsync(mitigationQuery, CancellationToken.None);
 
             if (mitigationResult.IsSuccess && mitigationResult.Value != null)
             {
@@ -455,7 +424,7 @@ public partial class MitigationCalendar : ComponentBase
                 SelectedMitigation = Mitigations.FirstOrDefault(m => m.Code == mitigationItem.MitigationCode);
                 if (SelectedMitigation == null)
                 {
-                    await NotificationHelper.ShowErrorAsync($"Mitigation {mitigationItem.MitigationCode} not found");
+                    await _notificationHelper.ShowErrorAsync($"Mitigation {mitigationItem.MitigationCode} not found");
                     return;
                 }
             }
@@ -463,12 +432,12 @@ public partial class MitigationCalendar : ComponentBase
             // Show the details modal
             ShowDetailsModal = true;
 
-            Logger.LogInformation("Displaying details for mitigation: {MitigationCode}", mitigationItem.MitigationCode);
+            _logger.LogInformation("Displaying details for mitigation: {MitigationCode}", mitigationItem.MitigationCode);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error showing mitigation details for {MitigationCode}", mitigationItem.MitigationCode);
-            await NotificationHelper.ShowErrorAsync("Error opening mitigation details");
+            _logger.LogError(ex, "Error showing mitigation details for {MitigationCode}", mitigationItem.MitigationCode);
+            await _notificationHelper.ShowErrorAsync("Error opening mitigation details");
         }
         finally
         {
@@ -519,7 +488,7 @@ public partial class MitigationCalendar : ComponentBase
         {
             ShowDetailsModal = false;
             SelectedMitigation = null;
-            Logger.LogInformation("Details modal closed");
+            _logger.LogInformation("Details modal closed");
 
             // Force a brief delay before state change to prevent focus issues
             InvokeAsync(async () =>
@@ -530,7 +499,7 @@ public partial class MitigationCalendar : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error closing details modal");
+            _logger.LogError(ex, "Error closing details modal");
         }
     }
 
@@ -542,7 +511,7 @@ public partial class MitigationCalendar : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Edit requested for mitigation: {Code}", mitigation.Code);
+            _logger.LogInformation("Edit requested for mitigation: {Code}", mitigation.Code);
             CloseDetailsModal();
 
             // Add a small delay to ensure modal is fully closed
@@ -550,12 +519,12 @@ public partial class MitigationCalendar : ComponentBase
 
             // For now, navigate to mitigations listing
             // TODO: Implement EditMitigationDialog similar to EditInterviewDialog
-            Navigation.NavigateToSecure("/Listings/Mitigations");
+            _navigation.NavigateToSecure("/Listings/Mitigations");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error editing from details modal");
-            await NotificationHelper.ShowErrorAsync("Error opening edit dialog");
+            _logger.LogError(ex, "Error editing from details modal");
+            await _notificationHelper.ShowErrorAsync("Error opening edit dialog");
         }
     }
     #endregion
@@ -571,7 +540,8 @@ public partial class MitigationCalendar : ComponentBase
             "COMPLETE" => BadgeStyle.Success,
             "MONITORING_HAZARD" => BadgeStyle.Light,
             "REJECTED" => BadgeStyle.Danger,
-            _ => BadgeStyle.Secondary
+            "On Hold" => BadgeStyle.Secondary,
+            _ => BadgeStyle.Light
         };
     }
 

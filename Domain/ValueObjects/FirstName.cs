@@ -50,7 +50,7 @@ public sealed class FirstName : BaseValueObject
         Result.Create(firstName.Trim(), DomainErrors.FirstNameError.NullOrEmpty)
             .Ensure(f => !string.IsNullOrWhiteSpace(f), DomainErrors.FirstNameError.NullOrEmpty)
             .Ensure(f => f.Length <= MaxLength, DomainErrors.FirstNameError.LongerThanAllowed)
-            .Ensure(f => Regex.IsMatch(f, @"^[a-zA-Z]+$"), DomainErrors.FirstNameError.ContainsSpecialCharactersOrNumbers)
+            .Ensure(f => Regex.IsMatch(f, @"^[a-zA-Z ]+$"), DomainErrors.FirstNameError.ContainsSpecialCharactersOrNumbers)
             .Map(f => new FirstName(f));
 
     /// <inheritdoc />

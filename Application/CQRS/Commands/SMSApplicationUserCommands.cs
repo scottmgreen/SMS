@@ -87,6 +87,46 @@ public class UpdateSMSApplicationUserCommand : BaseCommandBundle, IRequest<Resul
 }
 
 /// <summary>
+/// Command to deactivate an existing SMS Application User (soft delete)
+/// ✅ NEW: Proper CQRS command for user deactivation with audit pipeline support
+/// </summary>
+public class DeactivateSMSApplicationUserCommand : BaseCommandBundle, IRequest<Result<SMSApplicationUser>>, IUpdateCommand
+{
+    /// <summary>
+    /// The SMS Application User entity to deactivate
+    /// </summary>
+    public SMSApplicationUser SMSApplicationUser { get; set; }
+
+    /// <summary>
+    /// Reason for deactivation
+    /// </summary>
+    public string DeactivationReason { get; set; }
+
+    /// <summary>
+    /// Initializes a new instance of the DeactivateSMSApplicationUserCommand class.
+    /// </summary>
+    /// <param name="smsApplicationUser">The SMS application user to deactivate</param>
+    /// <param name="deactivationReason">Reason for deactivation</param>
+    /// <exception cref="ArgumentNullException">Thrown when smsApplicationUser is null</exception>
+    public DeactivateSMSApplicationUserCommand(SMSApplicationUser smsApplicationUser, string deactivationReason = "Deactivated by administrator")
+    {
+        SMSApplicationUser = smsApplicationUser ?? throw new ArgumentNullException(nameof(smsApplicationUser));
+        DeactivationReason = deactivationReason;
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For deactivation commands, we don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        SMSApplicationUser.UpdatedBy = userId;
+        SMSApplicationUser.UpdatedDate = timestamp;
+    }
+}
+
+/// <summary>
 /// Command to update SMS Application User password
 /// </summary>
 public class UpdateSMSApplicationUserPasswordCommand : BaseCommandBundle, IRequest<Result<bool>>, IUpdateCommand
@@ -217,7 +257,7 @@ public class RecordSMSApplicationUserLoginCommand : BaseCommandBundle, IRequest<
 #region Delete Commands
 
 /// <summary>
-/// Command to delete an SMS Application User by ID
+/// Command to delete an SMS Application User by ID (legacy - use DeactivateSMSApplicationUserCommand instead)
 /// </summary>
 public class DeleteSMSApplicationUserCommand : BaseCommandBundle, IRequest<Result<bool>>, IDeleteCommand
 {

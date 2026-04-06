@@ -11,10 +11,10 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class HazardMitigation : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
-    [Inject] private ILogger<HazardMitigation> Logger { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private ILogger<HazardMitigation> _logger { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
@@ -89,13 +89,13 @@ public partial class HazardMitigation : ComponentBase
                 CurrentMitigation.CreatedDate = DateTime.UtcNow;
             }
 
-            Logger.LogInformation("Loaded hazard mitigation {Mode} page for Code: {Code} by user: {UserId}",
+            _logger.LogInformation("Loaded hazard mitigation {Mode} page for Code: {Code} by user: {UserId}",
                 IsEditMode ? "edit" : "creation", MitigationCode ?? "New", GetCurrentUserId());
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading hazard mitigation page for Code: {Code}", MitigationCode);
-            await NotificationHelper.ShowErrorAsync("Error loading hazard mitigation page");
+            _logger.LogError(ex, "Error loading hazard mitigation page for Code: {Code}", MitigationCode);
+            await _notificationHelper.ShowErrorAsync("Error loading hazard mitigation page");
         }
         finally
         {
@@ -111,29 +111,29 @@ public partial class HazardMitigation : ComponentBase
             if (string.IsNullOrWhiteSpace(MitigationCode))
                 return;
 
-            Logger.LogInformation("Loading existing hazard mitigation: {Code}", MitigationCode);
+            _logger.LogInformation("Loading existing hazard mitigation: {Code}", MitigationCode);
 
             var mitigationQuery = new GetMitigationByCodeQuery(new MitigationID(MitigationCode));
-            var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+            var mitigationResult = await _mediator.SendAsync(mitigationQuery, CancellationToken.None);
 
             if (mitigationResult.IsSuccess && mitigationResult.Value != null)
             {
                 CurrentMitigation = mitigationResult.Value;
-                Logger.LogInformation("Successfully loaded existing hazard mitigation: {Code}", MitigationCode);
+                _logger.LogInformation("Successfully loaded existing hazard mitigation: {Code}", MitigationCode);
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync($"Hazard mitigation '{MitigationCode}' not found");
-                Logger.LogError("Failed to load hazard mitigation {Code}: {Error}", MitigationCode, mitigationResult.Error?.Message);
-                Navigation.NavigateToSecure("/Listings/Mitigations");
+                await _notificationHelper.ShowErrorAsync($"Hazard mitigation '{MitigationCode}' not found");
+                _logger.LogError("Failed to load hazard mitigation {Code}: {Error}", MitigationCode, mitigationResult.Error?.Message);
+                _navigation.NavigateToSecure("/Listings/Mitigations");
                 return;
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading existing hazard mitigation: {Code}", MitigationCode);
-            await NotificationHelper.ShowErrorAsync("Error loading existing hazard mitigation");
-            Navigation.NavigateToSecure("/Listings/Mitigations");
+            _logger.LogError(ex, "Error loading existing hazard mitigation: {Code}", MitigationCode);
+            await _notificationHelper.ShowErrorAsync("Error loading existing hazard mitigation");
+            _navigation.NavigateToSecure("/Listings/Mitigations");
         }
     }
     #endregion
@@ -167,12 +167,12 @@ public partial class HazardMitigation : ComponentBase
             }
 
             // Navigate back to listings
-            Navigation.NavigateToSecure("/Listings/Mitigations");
+            _navigation.NavigateToSecure("/Listings/Mitigations");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error saving hazard mitigation for Code: {Code}", MitigationCode);
-            await NotificationHelper.ShowErrorAsync("Error saving hazard mitigation");
+            _logger.LogError(ex, "Error saving hazard mitigation for Code: {Code}", MitigationCode);
+            await _notificationHelper.ShowErrorAsync("Error saving hazard mitigation");
         }
         finally
         {
@@ -193,18 +193,18 @@ public partial class HazardMitigation : ComponentBase
 
         // Save using CREATE command
         var createCommand = new CreateMitigationCommand(CurrentMitigation);
-        var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
+        var result = await _mediator.SendAsync(createCommand, CancellationToken.None);
 
         if (result.IsSuccess)
         {
-            await NotificationHelper.ShowSuccessAsync($"Hazard mitigation {CurrentMitigation.Code} created successfully!");
-            Logger.LogInformation("Created hazard mitigation: {Code} by user: {UserId}",
+            await _notificationHelper.ShowSuccessAsync($"Hazard mitigation {CurrentMitigation.Code} created successfully!");
+            _logger.LogInformation("Created hazard mitigation: {Code} by user: {UserId}",
                 CurrentMitigation.Code, GetCurrentUserId());
         }
         else
         {
-            await NotificationHelper.ShowErrorAsync($"Failed to create hazard mitigation: {result.Error?.Message}");
-            Logger.LogError("Failed to create hazard mitigation: {Error} by user: {UserId}",
+            await _notificationHelper.ShowErrorAsync($"Failed to create hazard mitigation: {result.Error?.Message}");
+            _logger.LogError("Failed to create hazard mitigation: {Error} by user: {UserId}",
                 result.Error?.Message, GetCurrentUserId());
         }
     }
@@ -217,25 +217,25 @@ public partial class HazardMitigation : ComponentBase
 
         // Save using UPDATE command
         var updateCommand = new UpdateMitigationCommand(CurrentMitigation);
-        var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+        var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
         if (result.IsSuccess)
         {
-            await NotificationHelper.ShowSuccessAsync($"Hazard mitigation {CurrentMitigation.Code} updated successfully!");
-            Logger.LogInformation("Updated hazard mitigation: {Code} by user: {UserId}",
+            await _notificationHelper.ShowSuccessAsync($"Hazard mitigation {CurrentMitigation.Code} updated successfully!");
+            _logger.LogInformation("Updated hazard mitigation: {Code} by user: {UserId}",
                 CurrentMitigation.Code, GetCurrentUserId());
         }
         else
         {
-            await NotificationHelper.ShowErrorAsync($"Failed to update hazard mitigation: {result.Error?.Message}");
-            Logger.LogError("Failed to update hazard mitigation {Code}: {Error} by user: {UserId}",
+            await _notificationHelper.ShowErrorAsync($"Failed to update hazard mitigation: {result.Error?.Message}");
+            _logger.LogError("Failed to update hazard mitigation {Code}: {Error} by user: {UserId}",
                 CurrentMitigation.Code, result.Error?.Message, GetCurrentUserId());
         }
     }
 
     private async Task CancelAndReturn()
     {
-        Navigation.NavigateToSecure("/Listings/Mitigations");
+        _navigation.NavigateToSecure("/Listings/Mitigations");
     }
     #endregion
 
@@ -244,13 +244,13 @@ public partial class HazardMitigation : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(CurrentMitigation.Name))
         {
-            await NotificationHelper.ShowErrorAsync("Hazard mitigation name is required");
+            await _notificationHelper.ShowErrorAsync("Hazard mitigation name is required");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(CurrentMitigation.Description))
         {
-            await NotificationHelper.ShowErrorAsync("Description is required");
+            await _notificationHelper.ShowErrorAsync("Description is required");
             return false;
         }
 

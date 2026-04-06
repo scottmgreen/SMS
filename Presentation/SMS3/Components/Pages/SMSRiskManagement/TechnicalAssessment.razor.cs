@@ -24,10 +24,10 @@ public partial class TechnicalAssessment : ComponentBase
     // Keep query parameters for backward compatibility
     // [SupplyParameterFromQuery(Name = "reportId")] public string? ReportId { get; set; }
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<TechnicalAssessment> Logger { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<TechnicalAssessment> _logger { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     
 
 
@@ -135,12 +135,12 @@ public partial class TechnicalAssessment : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        Logger.LogInformation("TechnicalAssessment OnInitializedAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}", ReportId, StepNumber, HazardId);
+        _logger.LogInformation("TechnicalAssessment OnInitializedAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}", ReportId, StepNumber, HazardId);
 
         // Initialize step models that require dependency injection
-        Step3 = new Step3Model(Mediator, CurrentUserService);
-        Step4 = new Step4Model(Mediator, CurrentUserService);
-        Step5 = new Step5Model(Mediator, CurrentUserService);
+        Step3 = new Step3Model(_mediator, CurrentUserService);
+        Step4 = new Step4Model(_mediator, CurrentUserService);
+        Step5 = new Step5Model(_mediator, CurrentUserService);
 
 
 
@@ -156,20 +156,20 @@ public partial class TechnicalAssessment : ComponentBase
 
     protected override async Task OnParametersSetAsync()
     {
-        Logger.LogInformation("TechnicalAssessment OnParametersSetAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}", ReportId, StepNumber, HazardId);
+        _logger.LogInformation("TechnicalAssessment OnParametersSetAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}", ReportId, StepNumber, HazardId);
 
         // Handle route parameter changes
         var currentStep = CurrentStep;
         if (currentStep < 1 || currentStep > 5)
         {
-            Logger.LogWarning("Invalid step {CurrentStep}, redirecting to step 1", currentStep);
+            _logger.LogWarning("Invalid step {CurrentStep}, redirecting to step 1", currentStep);
             await NavigateToStep(1);
             return;
         }
         
         if (currentStep == 3)
         {
-            Logger.LogInformation("Navigating to Step 3 - reloading Step3 data to ensure HazardRiskAnalyses is complete");
+            _logger.LogInformation("Navigating to Step 3 - reloading Step3 data to ensure HazardRiskAnalyses is complete");
             // ✅ FIRST: Refresh ReportHazards to include any newly added hazards from Step 2
             await LoadReportHazardsAsync();
 
@@ -179,18 +179,18 @@ public partial class TechnicalAssessment : ComponentBase
             }
             else
             {
-                Logger.LogWarning("Cannot reload Step3 data - missing TechRiskAssessment or ReportHazards");
+                _logger.LogWarning("Cannot reload Step3 data - missing TechRiskAssessment or ReportHazards");
             }
         }
         // Log the step change
         if (StepNumber != null)
         {
-            Logger.LogInformation("Parameter change detected - Step: {StepNumber}", StepNumber);
+            _logger.LogInformation("Parameter change detected - Step: {StepNumber}", StepNumber);
         }
 
         await InvokeAsync(StateHasChanged);
 
-        Logger.LogInformation("OnParametersSetAsync completed - Current step: {CurrentStep}", CurrentStep);
+        _logger.LogInformation("OnParametersSetAsync completed - Current step: {CurrentStep}", CurrentStep);
     }
 
     #endregion
@@ -204,19 +204,19 @@ public partial class TechnicalAssessment : ComponentBase
             IsLoading = true;
             StateHasChanged();
 
-            Logger.LogInformation("Loading Technical Assessment - Step {StepNumber}, ReportId: {ReportId}, HazardId: {HazardId}",CurrentStep, ReportId, HazardId);
+            _logger.LogInformation("Loading Technical Assessment - Step {StepNumber}, ReportId: {ReportId}, HazardId: {HazardId}",CurrentStep, ReportId, HazardId);
 
             await LoadCoreAssessmentDataAsync();
             await LoadReportHazardsAsync(); // ✅ FIXED: Load hazards BEFORE loading step data
             await LoadStepDataFromAssessment(); // Step models need ReportHazards to be populated
             await LoadReferenceDataAsync();
 
-            Logger.LogInformation("Successfully loaded Technical Assessment data");
+            _logger.LogInformation("Successfully loaded Technical Assessment data");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading Technical Assessment data");
-            await NotificationHelper.ShowErrorAsync("Failed to load assessment data. Please try again.");
+            _logger.LogError(ex, "Error loading Technical Assessment data");
+            await _notificationHelper.ShowErrorAsync("Failed to load assessment data. Please try again.");
         }
         finally
         {
@@ -263,10 +263,10 @@ public partial class TechnicalAssessment : ComponentBase
 
     private async Task LoadAssessmentsByHazardCodeAsync()
     {
-        Logger.LogInformation("Loading assessments for HazardId: {HazardId}", HazardId);
+        _logger.LogInformation("Loading assessments for HazardId: {HazardId}", HazardId);
 
         var getAllAssessmentsQuery = new GetRiskAssessmentsByHazardCodeQuery(new HazardID(HazardId));
-        var allAssessmentsResult = await Mediator.SendAsync(getAllAssessmentsQuery, CancellationToken.None);
+        var allAssessmentsResult = await _mediator.SendAsync(getAllAssessmentsQuery, CancellationToken.None);
 
         if (allAssessmentsResult.IsSuccess && allAssessmentsResult.Value?.Any() == true)
         {
@@ -274,21 +274,20 @@ public partial class TechnicalAssessment : ComponentBase
 
             TechRiskAssessment = assessments.FirstOrDefault(x => x.RiskAssessmentCategory == RiskAssessmentCategory.Technical);
 
-            Logger.LogInformation("Found {Count} assessments for hazard {HazardId}", assessments.Count, HazardId);
+            _logger.LogInformation("Found {Count} assessments for hazard {HazardId}", assessments.Count, HazardId);
         }
         else
         {
-            Logger.LogWarning("No risk assessments found for HazardId: {HazardId}", HazardId);
+            _logger.LogWarning("No risk assessments found for HazardId: {HazardId}", HazardId);
         }
     }
 
-
     private async Task LoadAnalysisByHazardCodeAsync()
     {
-        Logger.LogInformation("Loading assessments for HazardId: {HazardId}", HazardId);
+        _logger.LogInformation("Loading assessments for HazardId: {HazardId}", HazardId);
 
         var getAllAnalysisQuery = new GetAllRiskAnalysisQuery();
-        var allAllAnalysisResult = await Mediator.SendAsync(getAllAnalysisQuery, CancellationToken.None);
+        var allAllAnalysisResult = await _mediator.SendAsync(getAllAnalysisQuery, CancellationToken.None);
 
         if (allAllAnalysisResult.IsSuccess && allAllAnalysisResult.Value?.Any() == true)
         {
@@ -296,21 +295,17 @@ public partial class TechnicalAssessment : ComponentBase
 
             TechRiskAnalysis = anlysis.FirstOrDefault(x => x.HazardCode == HazardId & x.RiskAssessmentCode.Trim() == TechRiskAssessment.Code);
             
-            Logger.LogInformation("Found {Count} Risk Analysis for hazard {HazardId}", anlysis.Count, HazardId);
+            _logger.LogInformation("Found {Count} Risk Analysis for hazard {HazardId}", anlysis.Count, HazardId);
         }
         else
         {
-            Logger.LogWarning("No Risk Analysis found for HazardId: {HazardId}", HazardId);
+            _logger.LogWarning("No Risk Analysis found for HazardId: {HazardId}", HazardId);
         }
     }
 
-
-
-
-
     private async Task LoadAssessmentByReportCodeAsync()
     {
-        Logger.LogInformation("Loading assessment by Report ID: {ReportId}", ReportId);
+        _logger.LogInformation("Loading assessment by Report ID: {ReportId}", ReportId);
 
         try
         {
@@ -328,12 +323,13 @@ public partial class TechnicalAssessment : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading assessment by Report ID: {ReportId}", ReportId);
+            _logger.LogError(ex, "Error loading assessment by Report ID: {ReportId}", ReportId);
         }
     }
+    
     private async Task CreateAssessmentsForReport()
     {
-        Logger.LogInformation("Creating new assessment for ReportId: {ReportId}, Hazard: {HazardId}", ReportId, HazardId);
+        _logger.LogInformation("Creating new assessment for ReportId: {ReportId}, Hazard: {HazardId}", ReportId, HazardId);
 
         try
         {
@@ -360,7 +356,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             // Save Technical assessment
             var createCommand = new CreateRiskAssessmentCommand(technicalAssessment);
-            var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(createCommand, CancellationToken.None);
 
             if (!result.IsSuccess)
             {
@@ -369,33 +365,33 @@ public partial class TechnicalAssessment : ComponentBase
 
             TechRiskAssessment = result.Value;
 
-            Logger.LogInformation("Created Technical assessment: {AssessmentId}", assessmentId);
+            _logger.LogInformation("Created Technical assessment: {AssessmentId}", assessmentId);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating assessment for ReportId: {ReportId}", ReportId);
+            _logger.LogError(ex, "Error creating assessment for ReportId: {ReportId}", ReportId);
             throw;
         }
     }
     
     private async Task LoadAssessmentsByReportCodeAsync()
     {
-        Logger.LogInformation("Loading assessments via ReportId: {ReportId}", ReportId);
+        _logger.LogInformation("Loading assessments via ReportId: {ReportId}", ReportId);
 
         // First, find hazards for this report
         var reportHazardQuery = new GetHazardsByReportCodeQuery(new ReportID(ReportId));
-        var reportHazardResult = await Mediator.SendAsync(reportHazardQuery, CancellationToken.None);
+        var reportHazardResult = await _mediator.SendAsync(reportHazardQuery, CancellationToken.None);
 
         if (reportHazardResult.IsSuccess && reportHazardResult.Value?.Any() == true)
         {
             var reportHazards = reportHazardResult.Value.ToList();
-            Logger.LogInformation("Found {Count} hazards for report {ReportId}", reportHazards.Count, ReportId);
+            _logger.LogInformation("Found {Count} hazards for report {ReportId}", reportHazards.Count, ReportId);
 
             // Try to load assessments for each hazard until we find one
             foreach (var hazard in reportHazards)
             {
                 var assessmentsQuery = new GetRiskAssessmentsByHazardCodeQuery(new HazardID(hazard.Code));
-                var assessmentsResult = await Mediator.SendAsync(assessmentsQuery, CancellationToken.None);
+                var assessmentsResult = await _mediator.SendAsync(assessmentsQuery, CancellationToken.None);
 
                 if (assessmentsResult.IsSuccess && assessmentsResult.Value?.Any() == true)
                 {
@@ -408,7 +404,7 @@ public partial class TechnicalAssessment : ComponentBase
                         HazardId = hazard.Code; // Update HazardId for consistency
                     }
 
-                    Logger.LogInformation("Found assessments via hazard {HazardCode}", hazard.Code);
+                    _logger.LogInformation("Found assessments via hazard {HazardCode}", hazard.Code);
 
                     // If we found what we need, no need to check other hazards
                     if (TechRiskAssessment != null) break;
@@ -417,7 +413,7 @@ public partial class TechnicalAssessment : ComponentBase
         }
         else
         {
-            Logger.LogWarning("No hazards found for ReportId: {ReportId}", ReportId);
+            _logger.LogWarning("No hazards found for ReportId: {ReportId}", ReportId);
         }
     }
 
@@ -431,7 +427,7 @@ public partial class TechnicalAssessment : ComponentBase
             if (!string.IsNullOrEmpty(HazardId))
             {
                 var hazardQuery = new GetHazardByCodeQuery(new HazardID(HazardId));
-                var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+                var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
                 if (hazardResult.IsSuccess && hazardResult.Value != null)
                 {
@@ -445,7 +441,7 @@ public partial class TechnicalAssessment : ComponentBase
             if (!string.IsNullOrEmpty(ReportId))
             {
                 var reportHazardQuery = new GetHazardsByReportCodeQuery(new ReportID(ReportId.Trim()));
-                var reportHazardResult = await Mediator.SendAsync(reportHazardQuery, CancellationToken.None);
+                var reportHazardResult = await _mediator.SendAsync(reportHazardQuery, CancellationToken.None);
 
                 if (reportHazardResult.IsSuccess && reportHazardResult.Value?.Any() == true)
                 {
@@ -467,7 +463,7 @@ public partial class TechnicalAssessment : ComponentBase
                     try
                     {
                         var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazardIdString));
-                        var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+                        var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
                         if (hazardResult.IsSuccess && hazardResult.Value != null
                             && !allHazards.Any(h => h.Code == hazardResult.Value.Code))
@@ -477,7 +473,7 @@ public partial class TechnicalAssessment : ComponentBase
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogWarning(ex, "Failed to load identified hazard {HazardId}", hazardIdString);
+                        _logger.LogWarning(ex, "Failed to load identified hazard {HazardId}", hazardIdString);
                     }
                 }
             }
@@ -486,11 +482,11 @@ public partial class TechnicalAssessment : ComponentBase
             ReportHazards = allHazards;
             ReportedHazards = allHazards.ToList(); // Create a new list to trigger change detection
 
-            Logger.LogInformation("Loaded {Count} hazards for assessment", allHazards.Count);
+            _logger.LogInformation("Loaded {Count} hazards for assessment", allHazards.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading report hazards");
+            _logger.LogError(ex, "Error loading report hazards");
             ReportHazards = new List<Hazard>();
             ReportedHazards = new List<Hazard>();
         }
@@ -508,54 +504,51 @@ public partial class TechnicalAssessment : ComponentBase
             await Step3.LoadFromAssessmentAsync(TechRiskAssessment,ReportHazards);
             
             Step4.LoadFromAssessment(TechRiskAssessment);
-            await Step4.LoadExistingScoringPanelsAsync(Mediator, ReportHazards);
+            await Step4.LoadExistingScoringPanelsAsync(_mediator, ReportHazards);
 
             // Step 5 uses the same assessment - the step models will determine Initial vs Residual properties
             await Step5.LoadFromAssessmentAsync(TechRiskAssessment, ReportHazards);
 
-            Logger.LogInformation("Step models loaded from assessment, including RiskAnalysis entities");
+            _logger.LogInformation("Step models loaded from assessment, including RiskAnalysis entities");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading step models from assessment");
+            _logger.LogError(ex, "Error loading step models from assessment");
         }
     }
+    
     private async Task LoadAvailableAssessorsAsync()
     {
         try
         {
             var usersQuery = new GetUsersByApplicationGroupCodeQuery("AG-0007");
-            var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
+            var usersResult = await _mediator.SendAsync(usersQuery, CancellationToken.None);
             if (usersResult.IsSuccess)
             {
                 AvailableAssessors = usersResult.Value?.ToList() ?? new List<SMSApplicationUser>();
-
-               
-                
             }
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Could not load available assessors");
-           
+            _logger.LogWarning(ex, "Could not load available assessors");
         }
     }
+    
     private async Task LoadReferenceDataAsync()
     {
         try
         {
             // Load SMS Application Users
             var smsUsersQuery = new GetAllSMSApplicationUsersQuery();
-            var smsUsersResult = await Mediator.SendAsync(smsUsersQuery, CancellationToken.None);
+            var smsUsersResult = await _mediator.SendAsync(smsUsersQuery, CancellationToken.None);
             if (smsUsersResult.IsSuccess)
             {
                 AvailableSMSUsers = smsUsersResult.Value?.Where(u => u.IsActive).ToList() ?? new List<SMSApplicationUser>();
-
-               
             }
+            
             // Load Investigators Users
             var investigatorsQuery = new GetUsersByApplicationGroupCodeQuery("AG-0006");
-            var investigatorsResult = await Mediator.SendAsync(investigatorsQuery, CancellationToken.None);
+            var investigatorsResult = await _mediator.SendAsync(investigatorsQuery, CancellationToken.None);
 
             if (investigatorsResult.IsSuccess && investigatorsResult.Value != null)
             {
@@ -564,7 +557,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             // Load Assessors Users
             var usersQuery = new GetUsersByApplicationGroupCodeQuery("AG-0007");
-            var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
+            var usersResult = await _mediator.SendAsync(usersQuery, CancellationToken.None);
             if (usersResult.IsSuccess)
             {
                 AvailableAssessors = usersResult.Value?.ToList() ?? new List<SMSApplicationUser>();
@@ -572,7 +565,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             // Load Stakeholder Users
             var stakeholdersQuery = new GetActiveSMSStakeholderUsersQuery();
-            var stakeholdersResult = await Mediator.SendAsync(stakeholdersQuery, CancellationToken.None);
+            var stakeholdersResult = await _mediator.SendAsync(stakeholdersQuery, CancellationToken.None);
             if (stakeholdersResult.IsSuccess)
             {
                 AvailableStakeholders = stakeholdersResult.Value?.ToList() ?? new List<SMSStakeholderUser>();
@@ -580,7 +573,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             // Load Stakeholder Groups
             var groupsQuery = new GetAllSMSStakeholderGroupsQuery();
-            var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);
+            var groupsResult = await _mediator.SendAsync(groupsQuery, CancellationToken.None);
             if (groupsResult.IsSuccess)
             {
                 StakeholderGroups = groupsResult.Value?.ToList() ?? new List<SMSStakeholderGroup>();
@@ -589,7 +582,7 @@ public partial class TechnicalAssessment : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading reference data");
+            _logger.LogError(ex, "Error loading reference data");
         }
     }
 
@@ -611,7 +604,7 @@ public partial class TechnicalAssessment : ComponentBase
         // Check if we're trying to jump ahead without saving current progress
         if (targetStep > CurrentStep && IsSaving)
         {
-            Logger.LogInformation("Navigation blocked - currently saving step {CurrentStep}", CurrentStep);
+            _logger.LogInformation("Navigation blocked - currently saving step {CurrentStep}", CurrentStep);
             return;
         }
 
@@ -621,7 +614,7 @@ public partial class TechnicalAssessment : ComponentBase
             var validationResult = ValidateCurrentStep();
             if (!validationResult.isValid)
             {
-                await NotificationHelper.ShowErrorAsync($"Please complete Step {CurrentStep} before proceeding to Step {targetStep}");
+                await _notificationHelper.ShowErrorAsync($"Please complete Step {CurrentStep} before proceeding to Step {targetStep}");
                 return;
             }
 
@@ -629,16 +622,14 @@ public partial class TechnicalAssessment : ComponentBase
             var saveResult = await SaveCurrentStepAsync();
             if (!saveResult.success)
             {
-                await NotificationHelper.ShowErrorAsync($"Please save Step {CurrentStep} before proceeding to Step {targetStep}");
+                await _notificationHelper.ShowErrorAsync($"Please save Step {CurrentStep} before proceeding to Step {targetStep}");
                 return;
             }
-            
-
-
         }
+        
         if (targetStep == 3)
         {
-            Logger.LogInformation("Navigating to Step 3 - reloading Step3 data to ensure HazardRiskAnalyses is complete");
+            _logger.LogInformation("Navigating to Step 3 - reloading Step3 data to ensure HazardRiskAnalyses is complete");
             // ✅ FIRST: Refresh ReportHazards to include any newly added hazards from Step 2
             await LoadReportHazardsAsync();
 
@@ -648,14 +639,14 @@ public partial class TechnicalAssessment : ComponentBase
             }
             else
             {
-                Logger.LogWarning("Cannot reload Step3 data - missing TechRiskAssessment or ReportHazards");
+                _logger.LogWarning("Cannot reload Step3 data - missing TechRiskAssessment or ReportHazards");
             }
         }
         // Include the step number in the URL
         var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/{targetStep}";
 
-        Logger.LogInformation("Navigating to: {Url}", navigationUrl);
-        Navigation.NavigateToSecure(navigationUrl);
+        _logger.LogInformation("Navigating to: {Url}", navigationUrl);
+        _navigation.NavigateToSecure(navigationUrl);
     }
 
     private async Task PreviousStep()
@@ -666,7 +657,7 @@ public partial class TechnicalAssessment : ComponentBase
         }
         else
         {
-            Logger.LogInformation("Already at first step, cannot go to previous step");
+            _logger.LogInformation("Already at first step, cannot go to previous step");
         }
     }
 
@@ -681,7 +672,7 @@ public partial class TechnicalAssessment : ComponentBase
             var validationResult = ValidateCurrentStep();
             if (!validationResult.isValid)
             {
-                await NotificationHelper.ShowErrorAsync($"Step {CurrentStep} validation failed: {validationResult.message}");
+                await _notificationHelper.ShowErrorAsync($"Step {CurrentStep} validation failed: {validationResult.message}");
                 return;
             }
 
@@ -690,7 +681,7 @@ public partial class TechnicalAssessment : ComponentBase
             IsSaving = !saveResult.success;
             if (!saveResult.success)
             {
-                await NotificationHelper.ShowErrorAsync($"Failed to save Step {CurrentStep}: {saveResult.message}");
+                await _notificationHelper.ShowErrorAsync($"Failed to save Step {CurrentStep}: {saveResult.message}");
                 return;
             }
 
@@ -698,13 +689,13 @@ public partial class TechnicalAssessment : ComponentBase
             if (CurrentStep < 5)
             {
                 await NavigateToStep(CurrentStep + 1);
-                await NotificationHelper.ShowSuccessAsync("Step saved successfully");
+                await _notificationHelper.ShowSuccessAsync("Step saved successfully");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in NextStep");
-            await NotificationHelper.ShowErrorAsync("Error proceeding to next step");
+            _logger.LogError(ex, "Error in NextStep");
+            await _notificationHelper.ShowErrorAsync("Error proceeding to next step");
         }
         finally
         {
@@ -724,7 +715,7 @@ public partial class TechnicalAssessment : ComponentBase
             var allStepsValid = ValidateAllSteps();
             if (!allStepsValid.isValid)
             {
-                await NotificationHelper.ShowErrorAsync($"Assessment cannot be completed: {allStepsValid.message}");
+                await _notificationHelper.ShowErrorAsync($"Assessment cannot be completed: {allStepsValid.message}");
                 return;
             }
 
@@ -732,22 +723,22 @@ public partial class TechnicalAssessment : ComponentBase
             var saveResult = await SaveCurrentStepAsync();
             if (!saveResult.success)
             {
-                await NotificationHelper.ShowErrorAsync($"Failed to save final step: {saveResult.message}");
+                await _notificationHelper.ShowErrorAsync($"Failed to save final step: {saveResult.message}");
                 return;
             }
 
             // Mark assessment as complete and save
             await CompleteAssessmentProcess();
 
-            await NotificationHelper.ShowSuccessAsync("Technical Assessment completed successfully!");
+            await _notificationHelper.ShowSuccessAsync("Technical Assessment completed successfully!");
 
             // Navigate back to report processing
-            Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+            _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error completing assessment");
-            await NotificationHelper.ShowErrorAsync("Error completing assessment");
+            _logger.LogError(ex, "Error completing assessment");
+            await _notificationHelper.ShowErrorAsync("Error completing assessment");
         }
         finally
         {
@@ -792,7 +783,7 @@ public partial class TechnicalAssessment : ComponentBase
             
             // Save to database
             var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
-            var initalresult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            var initalresult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
             
             //This may change but atleast it's a start//
             ReportStatus status = CurrentStep switch
@@ -806,8 +797,7 @@ public partial class TechnicalAssessment : ComponentBase
             };
 
             var cmd = new UpdateReportStatusCommand(ReportId, status, CurrentUserService?.UserDisplayName);
-            var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
-            
+            var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
 
 
             if (initalresult.IsSuccess)
@@ -816,19 +806,19 @@ public partial class TechnicalAssessment : ComponentBase
 
                 await UpdateHazardStatusForProgress();
 
-                Logger.LogInformation("Step {CurrentStep} saved successfully for assessment {AssessmentCode}", CurrentStep, TechRiskAssessment.Code);
+                _logger.LogInformation("Step {CurrentStep} saved successfully for assessment {AssessmentCode}", CurrentStep, TechRiskAssessment.Code);
 
                 return (true, $"Step {CurrentStep} saved successfully");
             }
             else
             {
-                Logger.LogError("Failed to save step {CurrentStep}: {Error}", CurrentStep, initalresult.Error?.Message);
+                _logger.LogError("Failed to save step {CurrentStep}: {Error}", CurrentStep, initalresult.Error?.Message);
                 return (false, initalresult.Error?.Message ?? "Save failed");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error saving step {Step}", CurrentStep);
+            _logger.LogError(ex, "Error saving step {Step}", CurrentStep);
             return (false, ex.Message);
         }
     }
@@ -867,7 +857,7 @@ public partial class TechnicalAssessment : ComponentBase
         {
             // Get current hazard
             var hazardQuery = new GetHazardByCodeQuery(new HazardID(HazardId));
-            var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+            var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
             if (hazardResult.IsSuccess && hazardResult.Value != null)
             {
@@ -891,23 +881,23 @@ public partial class TechnicalAssessment : ComponentBase
                 if (hazard.Status?.ToString() != originalStatus)
                 {
                     var updateHazardCommand = new UpdateHazardCommand(hazard);
-                    var updateResult = await Mediator.SendAsync(updateHazardCommand, CancellationToken.None);
+                    var updateResult = await _mediator.SendAsync(updateHazardCommand, CancellationToken.None);
 
                     if (updateResult.IsSuccess)
                     {
-                        Logger.LogInformation("Updated hazard {HazardId} status from {OldStatus} to {NewStatus}",
+                        _logger.LogInformation("Updated hazard {HazardId} status from {OldStatus} to {NewStatus}",
                             HazardId, originalStatus, hazard.Status?.ToString());
                     }
                     else
                     {
-                        Logger.LogWarning("Failed to update hazard status: {Error}", updateResult.Error?.Message);
+                        _logger.LogWarning("Failed to update hazard status: {Error}", updateResult.Error?.Message);
                     }
                 }
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating hazard status for progress");
+            _logger.LogError(ex, "Error updating hazard status for progress");
         }
     }
 
@@ -932,13 +922,13 @@ public partial class TechnicalAssessment : ComponentBase
     {
         if (string.IsNullOrEmpty(hazardCode) || hazardCode == "HZ-0000")
         {
-            Logger.LogWarning("Invalid hazard code provided: {HazardCode}", hazardCode);
+            _logger.LogWarning("Invalid hazard code provided: {HazardCode}", hazardCode);
             return new List<ScoringPanel>();
         }
 
         try
         {
-            Logger.LogInformation("Loading scoring panels for hazard {HazardCode}, Step {CurrentStep}", hazardCode, currentStep);
+            _logger.LogInformation("Loading scoring panels for hazard {HazardCode}, Step {CurrentStep}", hazardCode, currentStep);
 
             // Use the provided risk assessment code or fall back to current assessment
             var targetAssessmentCode = !string.IsNullOrEmpty(riskAssessmentCode) 
@@ -947,17 +937,17 @@ public partial class TechnicalAssessment : ComponentBase
 
             if (string.IsNullOrEmpty(targetAssessmentCode))
             {
-                Logger.LogWarning("No risk assessment code available for scoring panel filtering");
+                _logger.LogWarning("No risk assessment code available for scoring panel filtering");
                 return new List<ScoringPanel>();
             }
 
             // Load all panels for the hazard
             var query = new GetScoringPanelsByHazardCodeQuery(hazardCode);
-            var result = await Mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (!result.IsSuccess || result.Value.Count == 0)
             {
-                Logger.LogWarning("No scoring panels found for hazard {HazardCode}", hazardCode);
+                _logger.LogWarning("No scoring panels found for hazard {HazardCode}", hazardCode);
                 return new List<ScoringPanel>();
             }
 
@@ -978,14 +968,14 @@ public partial class TechnicalAssessment : ComponentBase
                 MapScoringPanelPropertiesBasedOnStep(panel, currentStep);
             }
 
-            Logger.LogInformation("Loaded {Count} scoring panels for hazard {HazardCode}, Step {CurrentStep}", 
+            _logger.LogInformation("Loaded {Count} scoring panels for hazard {HazardCode}, Step {CurrentStep}", 
                 filteredPanels.Count, hazardCode, currentStep);
 
             return filteredPanels;
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading scoring panels for hazard {HazardCode}, Step {CurrentStep}", hazardCode, currentStep);
+            _logger.LogError(ex, "Error loading scoring panels for hazard {HazardCode}, Step {CurrentStep}", hazardCode, currentStep);
             return new List<ScoringPanel>();
         }
     }
@@ -1058,7 +1048,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             if (!existingPanels.Any())
             {
-                Logger.LogInformation("No panels found for assessment {AssessmentCode} to copy scores", targetAssessmentCode);
+                _logger.LogInformation("No panels found for assessment {AssessmentCode} to copy scores", targetAssessmentCode);
                 return;
             }
 
@@ -1073,11 +1063,11 @@ public partial class TechnicalAssessment : ComponentBase
 
             if (!panelsNeedingCopy.Any())
             {
-                Logger.LogInformation("No panels need score copying for assessment {AssessmentCode} - either no Initial scores or Residual scores already exist", targetAssessmentCode);
+                _logger.LogInformation("No panels need score copying for assessment {AssessmentCode} - either no Initial scores or Residual scores already exist", targetAssessmentCode);
                 return;
             }
 
-            Logger.LogInformation("Copying Initial scores to empty Residual scores for {Count} panels in assessment {AssessmentCode}", panelsNeedingCopy.Count, targetAssessmentCode);
+            _logger.LogInformation("Copying Initial scores to empty Residual scores for {Count} panels in assessment {AssessmentCode}", panelsNeedingCopy.Count, targetAssessmentCode);
 
             bool anyUpdated = false;
 
@@ -1089,32 +1079,32 @@ public partial class TechnicalAssessment : ComponentBase
                 panel.ResidualScore = panel.InitialScore;
                 panel.ResidualRationale = $"Initial assessment: {panel.InitialRationale ?? "No rationale provided"}";
 
-                Logger.LogInformation("Copying Initial scores to empty Residual for panel {PanelCode}: {Sev}x{Like}={Score}", 
+                _logger.LogInformation("Copying Initial scores to empty Residual for panel {PanelCode}: {Sev}x{Like}={Score}", 
                     panel.Code, panel.InitialSeverity, panel.InitialLikelihood, panel.InitialScore);
 
                 // Save the updated panel
                 var updateCommand = new UpdateScoringPanelCommand(panel);
-                var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+                var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
                 if (result.IsSuccess)
                 {
-                    Logger.LogInformation("✅ Successfully copied Initial scores to empty Residual for panel {PanelCode}", panel.Code);
+                    _logger.LogInformation("✅ Successfully copied Initial scores to empty Residual for panel {PanelCode}", panel.Code);
                     anyUpdated = true;
                 }
                 else
                 {
-                    Logger.LogError("❌ Failed to copy scores for panel {PanelCode}: {Error}", panel.Code, result.Error?.Message ?? "Unknown error");
+                    _logger.LogError("❌ Failed to copy scores for panel {PanelCode}: {Error}", panel.Code, result.Error?.Message ?? "Unknown error");
                 }
             }
 
             if (anyUpdated)
             {
-                Logger.LogInformation("✅ Completed copying Initial scores to empty Residual scores for assessment {AssessmentCode}", targetAssessmentCode);
+                _logger.LogInformation("✅ Completed copying Initial scores to empty Residual scores for assessment {AssessmentCode}", targetAssessmentCode);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error copying Step 4 scores to Step 5 for assessment {AssessmentCode}", targetAssessmentCode);
+            _logger.LogError(ex, "Error copying Step 4 scores to Step 5 for assessment {AssessmentCode}", targetAssessmentCode);
         }
     }
 
@@ -1131,7 +1121,7 @@ public partial class TechnicalAssessment : ComponentBase
 
         if (!completedPanels.Any())
         {
-            Logger.LogInformation("No completed scoring panels for hazard {HazardCode}", hazardCode);
+            _logger.LogInformation("No completed scoring panels for hazard {HazardCode}", hazardCode);
             return (null, string.Empty, RiskLevel.Unkonwn);
         }
 
@@ -1148,14 +1138,14 @@ public partial class TechnicalAssessment : ComponentBase
             var roundedLikelihood = (int)Math.Round(averageLikelihood);
             var riskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
 
-            Logger.LogInformation("Calculated hazard {HazardCode} scoring: AvgSev={Severity:F2}→{RoundedSev}, AvgLike={Likelihood:F2}→{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}", 
+            _logger.LogInformation("Calculated hazard {HazardCode} scoring: AvgSev={Severity:F2}→{RoundedSev}, AvgLike={Likelihood:F2}→{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}", 
                 hazardCode, averageSeverity, roundedSeverity, averageLikelihood, roundedLikelihood, matrixCode, riskLevel?.Value ?? "Unknown");
 
             return (averageScore, matrixCode, riskLevel);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error calculating scoring data for hazard {HazardCode}", hazardCode);
+            _logger.LogError(ex, "Error calculating scoring data for hazard {HazardCode}", hazardCode);
             return (null, string.Empty, RiskLevel.Unkonwn);
         }
     }
@@ -1234,22 +1224,20 @@ public partial class TechnicalAssessment : ComponentBase
         // Apply all steps to ensure everything is saved - ENHANCED: Use async method
         await ApplyCurrentStepToAssessmentAsync();
 
-        
+        // Update risk assessment - pipeline will automatically set UpdatedBy/UpdatedDate
         var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
-        await Mediator.SendAsync(updateCommand, CancellationToken.None);
+        await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
         var cmd = new UpdateReportStatusCommand(ReportId, ReportStatus.ValidationCompleted, CurrentUserService?.UserDisplayName);
-        var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
-
-
+        var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
     }
 
    
     private async Task ApplyCurrentStepToAssessmentAsync()
     {
-        TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
-        TechRiskAssessment.UpdatedBy = CurrentUserService?.UserDisplayName;
-
+        // ✅ FIXED: Removed manual audit field assignments - pipeline handles automatically
+        // ❌ REMOVED: TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
+        // ❌ REMOVED: TechRiskAssessment.UpdatedBy = CurrentUserService?.UserDisplayName;
 
         switch (CurrentStep)
         {
@@ -1307,25 +1295,25 @@ public partial class TechnicalAssessment : ComponentBase
     {
         try
         {
-            Logger.LogInformation("AddHazard method called with hazard: {Description} (Code: {Code})", newHazard.Description, newHazard.Code);
+            _logger.LogInformation("AddHazard method called with hazard: {Description} (Code: {Code})", newHazard.Description, newHazard.Code);
 
             // CRITICAL: Check if hazard already exists to prevent duplication
             if (ReportHazards.Any(h => h.Code == newHazard.Code && h.Code != "HZ-0000"))
             {
-                Logger.LogWarning("Hazard {HazardCode} already exists in ReportHazards collection, skipping duplication", newHazard.Code);
+                _logger.LogWarning("Hazard {HazardCode} already exists in ReportHazards collection, skipping duplication", newHazard.Code);
                 return;
             }
 
             // CRITICAL: Check if hazard with same description already exists (in case of rapid duplicate submissions)
             if (ReportHazards.Any(h => h.Description?.Trim().Equals(newHazard.Description?.Trim(), StringComparison.OrdinalIgnoreCase) == true))
             {
-                Logger.LogWarning("Hazard with description '{Description}' already exists in ReportHazards collection, skipping duplication", newHazard.Description);
-                await NotificationHelper.ShowErrorAsync("A hazard with this description already exists.");
+                _logger.LogWarning("Hazard with description '{Description}' already exists in ReportHazards collection, skipping duplication", newHazard.Description);
+                await _notificationHelper.ShowErrorAsync("A hazard with this description already exists.");
                 return;
             }
 
             // The hazard was already created in the modal - we just need to add it to our collections
-            Logger.LogInformation("Hazard {HazardCode} was successfully created in modal, adding to collections", newHazard.Code);
+            _logger.LogInformation("Hazard {HazardCode} was successfully created in modal, adding to collections", newHazard.Code);
 
             // Add to collections (no database call needed here - already done in modal)
             ReportHazards.Add(newHazard);
@@ -1342,14 +1330,14 @@ public partial class TechnicalAssessment : ComponentBase
             }
             else
             {
-                Logger.LogWarning("Hazard {HazardCode} already exists in Step2 model, skipping Step2 update", newHazard.Code);
+                _logger.LogWarning("Hazard {HazardCode} already exists in Step2 model, skipping Step2 update", newHazard.Code);
             }
 
             // ✅ FIXED: Also update the assessment's IdentifiedHazardIds list
             if (TechRiskAssessment != null && !TechRiskAssessment.IdentifiedHazardIds.Contains(newHazard.Code))
             {
                 TechRiskAssessment.AddIdentifiedHazard(newHazard.Code, newHazard.Description ?? string.Empty);
-                Logger.LogInformation("Added hazard {HazardCode} to assessment's IdentifiedHazardIds", newHazard.Code);
+                _logger.LogInformation("Added hazard {HazardCode} to assessment's IdentifiedHazardIds", newHazard.Code);
             }
 
             // CRITICAL: Force complete UI refresh for parent and all children
@@ -1358,13 +1346,13 @@ public partial class TechnicalAssessment : ComponentBase
                 StateHasChanged();
             });
 
-            await NotificationHelper.ShowSuccessAsync($"Hazard {newHazard.Code} added successfully");
-            Logger.LogInformation("Successfully added hazard to collections: {HazardCode} - Total hazards: {Count}",newHazard.Code, ReportedHazards.Count);
+            await _notificationHelper.ShowSuccessAsync($"Hazard {newHazard.Code} added successfully");
+            _logger.LogInformation("Successfully added hazard to collections: {HazardCode} - Total hazards: {Count}",newHazard.Code, ReportedHazards.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in AddHazard method for hazard: {Description}", newHazard.Description);
-            await NotificationHelper.ShowErrorAsync("Error adding hazard");
+            _logger.LogError(ex, "Error in AddHazard method for hazard: {Description}", newHazard.Description);
+            await _notificationHelper.ShowErrorAsync("Error adding hazard");
         }
     }
 
@@ -1372,11 +1360,11 @@ public partial class TechnicalAssessment : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Updating hazard via CQRS: {HazardId}", updatedHazard.Code);
+            _logger.LogInformation("Updating hazard via CQRS: {HazardId}", updatedHazard.Code);
 
             // Use proper CQRS UpdateHazardCommand
             var updateCommand = new UpdateHazardCommand(updatedHazard);
-            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess && result.Value != null)
             {
@@ -1387,19 +1375,19 @@ public partial class TechnicalAssessment : ComponentBase
                     ReportHazards[existingIndex] = result.Value;
                 }
 
-                await NotificationHelper.ShowSuccessAsync($"Hazard {updatedHazard.Code} updated successfully");
-                Logger.LogInformation("Successfully updated hazard via CQRS: {HazardCode}", updatedHazard.Code);
+                await _notificationHelper.ShowSuccessAsync($"Hazard {updatedHazard.Code} updated successfully");
+                _logger.LogInformation("Successfully updated hazard via CQRS: {HazardCode}", updatedHazard.Code);
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync($"Failed to update hazard: {result.Error?.Message}");
-                Logger.LogError("CQRS UpdateHazardCommand failed: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync($"Failed to update hazard: {result.Error?.Message}");
+                _logger.LogError("CQRS UpdateHazardCommand failed: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating hazard via CQRS");
-            await NotificationHelper.ShowErrorAsync("Error updating hazard");
+            _logger.LogError(ex, "Error updating hazard via CQRS");
+            await _notificationHelper.ShowErrorAsync("Error updating hazard");
         }
     }
 
@@ -1407,18 +1395,18 @@ public partial class TechnicalAssessment : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Deleting hazard: {HazardCode}", hazardToDelete.Code);
+            _logger.LogInformation("Deleting hazard: {HazardCode}", hazardToDelete.Code);
 
             // Check if this is the initial hazard - should not be deleted
             if (hazardToDelete.Code == HazardId)
             {
-                await NotificationHelper.ShowErrorAsync("Cannot delete the initial hazard from the report");
+                await _notificationHelper.ShowErrorAsync("Cannot delete the initial hazard from the report");
                 return;
             }
 
             // Use proper CQRS DeleteHazardCommand
             var deleteCommand = new DeleteHazardCommand(new HazardID(hazardToDelete.Code));
-            var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(deleteCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -1450,25 +1438,25 @@ public partial class TechnicalAssessment : ComponentBase
                             : $"Hazard {remainingHazardId}";
                         TechRiskAssessment.AddIdentifiedHazard(remainingHazardId, hazardDescription);
                     }
-                    Logger.LogInformation("Removed hazard {HazardCode} from assessment's IdentifiedHazardIds", hazardToDelete.Code);
+                    _logger.LogInformation("Removed hazard {HazardCode} from assessment's IdentifiedHazardIds", hazardToDelete.Code);
                 }
 
                 // Force UI refresh
                 await InvokeAsync(StateHasChanged);
 
-                await NotificationHelper.ShowSuccessAsync($"Hazard {hazardToDelete.Code} deleted successfully");
-                Logger.LogInformation("Successfully deleted hazard: {HazardCode} - Remaining hazards: {Count}",hazardToDelete.Code, ReportedHazards.Count);
+                await _notificationHelper.ShowSuccessAsync($"Hazard {hazardToDelete.Code} deleted successfully");
+                _logger.LogInformation("Successfully deleted hazard: {HazardCode} - Remaining hazards: {Count}",hazardToDelete.Code, ReportedHazards.Count);
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync($"Failed to delete hazard: {result.Error?.Message}");
-                Logger.LogError("DeleteHazardCommand failed: {Error}", result.Error?.Message);
+                await _notificationHelper.ShowErrorAsync($"Failed to delete hazard: {result.Error?.Message}");
+                _logger.LogError("DeleteHazardCommand failed: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting hazard");
-            await NotificationHelper.ShowErrorAsync("Error deleting hazard");
+            _logger.LogError(ex, "Error deleting hazard");
+            await _notificationHelper.ShowErrorAsync("Error deleting hazard");
         }
     }
 

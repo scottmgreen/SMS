@@ -25,10 +25,10 @@ public partial class HazardReportSearchResult : ComponentBase
     #endregion
 
     #region Dependencies
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<HazardReportSearchResult> Logger { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<HazardReportSearchResult> _logger { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     #endregion
 
@@ -97,15 +97,15 @@ public partial class HazardReportSearchResult : ComponentBase
             HasSearched = false;
             StateHasChanged();
 
-            Logger.LogInformation("Loading detailed report information for tracking code: {TrackingCode}", TrackingCode);
+            _logger.LogInformation("Loading detailed report information for tracking code: {TrackingCode}", TrackingCode);
 
             // Step 1: Get tracking record
             var trackingQuery = new GetHazardReportTrackingByTrackingCodeQuery(TrackingCode);
-            var trackingResult = await Mediator.SendAsync(trackingQuery, CancellationToken.None);
+            var trackingResult = await _mediator.SendAsync(trackingQuery, CancellationToken.None);
 
             if (trackingResult.IsFailure || trackingResult.Value == null)
             {
-                Logger.LogWarning("No tracking record found for: {TrackingCode}", TrackingCode);
+                _logger.LogWarning("No tracking record found for: {TrackingCode}", TrackingCode);
                 HasSearched = true;
                 return;
             }
@@ -145,12 +145,12 @@ public partial class HazardReportSearchResult : ComponentBase
 
             HasSearched = true;
 
-            Logger.LogInformation("Successfully loaded all details for tracking code: {TrackingCode}", TrackingCode);
+            _logger.LogInformation("Successfully loaded all details for tracking code: {TrackingCode}", TrackingCode);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading report details for tracking code: {TrackingCode}", TrackingCode);
-            await NotificationHelper.ShowErrorAsync("Error loading report details. Please try again.");
+            _logger.LogError(ex, "Error loading report details for tracking code: {TrackingCode}", TrackingCode);
+            await _notificationHelper.ShowErrorAsync("Error loading report details. Please try again.");
         }
         finally
         {
@@ -169,7 +169,7 @@ public partial class HazardReportSearchResult : ComponentBase
         try
         {
             var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazardCode));
-            var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
+            var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
             if (hazardResult.IsSuccess && hazardResult.Value != null)
             {
@@ -188,16 +188,16 @@ public partial class HazardReportSearchResult : ComponentBase
                 ReportDetails.LocationArea = hazard.LocationArea ?? "";
                 ReportDetails.LocationSubArea = hazard.LocationSubArea ?? "";
 
-                Logger.LogInformation("Loaded hazard information for code: {HazardCode}", hazardCode);
+                _logger.LogInformation("Loaded hazard information for code: {HazardCode}", hazardCode);
             }
             else
             {
-                Logger.LogWarning("Could not load hazard information for code: {HazardCode}", hazardCode);
+                _logger.LogWarning("Could not load hazard information for code: {HazardCode}", hazardCode);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Error loading hazard information for code: {HazardCode}", hazardCode);
+            _logger.LogWarning(ex, "Error loading hazard information for code: {HazardCode}", hazardCode);
         }
     }
 
@@ -211,7 +211,7 @@ public partial class HazardReportSearchResult : ComponentBase
         try
         {
             var reportQuery = new GetReportByCodeQuery(new ReportID(reportCode));
-            var reportResult = await Mediator.SendAsync(reportQuery, CancellationToken.None);
+            var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
             if (reportResult.IsSuccess && reportResult.Value != null)
             {
@@ -257,16 +257,16 @@ public partial class HazardReportSearchResult : ComponentBase
                 }
 
 
-                Logger.LogInformation("Loaded report information for code: {ReportCode}", reportCode);
+                _logger.LogInformation("Loaded report information for code: {ReportCode}", reportCode);
             }
             else
             {
-                Logger.LogWarning("Could not load report information for code: {ReportCode}", reportCode);
+                _logger.LogWarning("Could not load report information for code: {ReportCode}", reportCode);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Error loading report information for code: {ReportCode}", reportCode);
+            _logger.LogWarning(ex, "Error loading report information for code: {ReportCode}", reportCode);
         }
     }
 
@@ -280,21 +280,21 @@ public partial class HazardReportSearchResult : ComponentBase
         try
         {
             var validationQuery = new GetReportValidationByReportIdQuery(new ReportID(reportCode));
-            var validationResult = await Mediator.SendAsync(validationQuery, CancellationToken.None);
+            var validationResult = await _mediator.SendAsync(validationQuery, CancellationToken.None);
 
             if (validationResult.IsSuccess && validationResult.Value != null)
             {
                 ReportValidation = validationResult.Value;
-                Logger.LogInformation("Loaded validation information for report: {ReportCode}", reportCode);
+                _logger.LogInformation("Loaded validation information for report: {ReportCode}", reportCode);
             }
             else
             {
-                Logger.LogInformation("No validation information found for report: {ReportCode}", reportCode);
+                _logger.LogInformation("No validation information found for report: {ReportCode}", reportCode);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Error loading validation information for report: {ReportCode}", reportCode);
+            _logger.LogWarning(ex, "Error loading validation information for report: {ReportCode}", reportCode);
         }
     }
 
@@ -308,7 +308,7 @@ public partial class HazardReportSearchResult : ComponentBase
         try
         {
             var riskAssessmentQuery = new GetRiskAssessmentsByHazardCodeQuery(new HazardID(hazardCode));
-            var riskAssessmentResult = await Mediator.SendAsync(riskAssessmentQuery, CancellationToken.None);
+            var riskAssessmentResult = await _mediator.SendAsync(riskAssessmentQuery, CancellationToken.None);
 
             if (riskAssessmentResult.IsSuccess && riskAssessmentResult.Value?.Any() == true)
             {
@@ -318,17 +318,17 @@ public partial class HazardReportSearchResult : ComponentBase
                 CurrentRiskAssessment = assessments.FirstOrDefault(ra => ra.RiskAssessmentCategory == RiskAssessmentCategory.Technical) 
                                      ?? assessments.FirstOrDefault();
 
-                Logger.LogInformation("Loaded risk assessment information for hazard: {HazardCode}, Found {Count} assessments", 
+                _logger.LogInformation("Loaded risk assessment information for hazard: {HazardCode}, Found {Count} assessments", 
                     hazardCode, assessments.Count);
             }
             else
             {
-                Logger.LogInformation("No risk assessment information found for hazard: {HazardCode}", hazardCode);
+                _logger.LogInformation("No risk assessment information found for hazard: {HazardCode}", hazardCode);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Error loading risk assessment information for hazard: {HazardCode}", hazardCode);
+            _logger.LogWarning(ex, "Error loading risk assessment information for hazard: {HazardCode}", hazardCode);
         }
     }
 
@@ -343,7 +343,7 @@ public partial class HazardReportSearchResult : ComponentBase
         try
         {
             var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazardCode);
-            var mitigationResult = await Mediator.SendAsync(mitigationQuery, CancellationToken.None);
+            var mitigationResult = await _mediator.SendAsync(mitigationQuery, CancellationToken.None);
 
             if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
             {
@@ -352,16 +352,16 @@ public partial class HazardReportSearchResult : ComponentBase
                 // Find the Technical assessment first, fallback to any assessment
                 CurrentMitigation = mitigations.FirstOrDefault() ?? mitigations.FirstOrDefault();
 
-                Logger.LogInformation("Loaded mitigation information for hazard: {HazardCode}, Found {Count} mitigations",hazardCode, mitigations.Count);
+                _logger.LogInformation("Loaded mitigation information for hazard: {HazardCode}, Found {Count} mitigations",hazardCode, mitigations.Count);
             }
             else
             {
-                Logger.LogInformation("No mitigation information information found for hazard: {HazardCode}", hazardCode);
+                _logger.LogInformation("No mitigation information information found for hazard: {HazardCode}", hazardCode);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Error loading mitigation information information for hazard: {HazardCode}", hazardCode);
+            _logger.LogWarning(ex, "Error loading mitigation information information for hazard: {HazardCode}", hazardCode);
         }
     }
     /// <summary>
@@ -374,21 +374,21 @@ public partial class HazardReportSearchResult : ComponentBase
         try
         {
             var locationQuery = new GetHazardLocationsByHazardCodeQuery(hazardCode);
-            var locationResult = await Mediator.SendAsync(locationQuery, CancellationToken.None);
+            var locationResult = await _mediator.SendAsync(locationQuery, CancellationToken.None);
 
             if (locationResult.IsSuccess && locationResult.Value?.Any() == true)
             {
                 HazardLocation = locationResult.Value.FirstOrDefault();
-                Logger.LogInformation("Loaded location information for hazard: {HazardCode}", hazardCode);
+                _logger.LogInformation("Loaded location information for hazard: {HazardCode}", hazardCode);
             }
             else
             {
-                Logger.LogInformation("No location information found for hazard: {HazardCode}", hazardCode);
+                _logger.LogInformation("No location information found for hazard: {HazardCode}", hazardCode);
             }
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Error loading location information for hazard: {HazardCode}", hazardCode);
+            _logger.LogWarning(ex, "Error loading location information for hazard: {HazardCode}", hazardCode);
         }
     }
 
@@ -402,22 +402,22 @@ public partial class HazardReportSearchResult : ComponentBase
         try
         {
             var filesQuery = new GetHazardFilesByHazardCodeQuery(hazardCode);
-            var filesResult = await Mediator.SendAsync(filesQuery, CancellationToken.None);
+            var filesResult = await _mediator.SendAsync(filesQuery, CancellationToken.None);
 
             if (filesResult.IsSuccess && filesResult.Value?.Any() == true)
             {
                 AttachedFiles = filesResult.Value.ToList();
-                Logger.LogInformation("Loaded {Count} attached files for hazard: {HazardCode}", AttachedFiles.Count, hazardCode);
+                _logger.LogInformation("Loaded {Count} attached files for hazard: {HazardCode}", AttachedFiles.Count, hazardCode);
             }
             else
             {
-                Logger.LogInformation("No attached files found for hazard: {HazardCode}", hazardCode);
+                _logger.LogInformation("No attached files found for hazard: {HazardCode}", hazardCode);
                 AttachedFiles = new List<HazardFile>();
             }
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Error loading attached files for hazard: {HazardCode}", hazardCode);
+            _logger.LogWarning(ex, "Error loading attached files for hazard: {HazardCode}", hazardCode);
             AttachedFiles = new List<HazardFile>();
         }
     }
@@ -620,7 +620,7 @@ public partial class HazardReportSearchResult : ComponentBase
 
     #endregion
 
-    #region Navigation Methods
+    #region _navigation Methods
 
     /// <summary>
     /// Navigate back to search page
@@ -628,7 +628,7 @@ public partial class HazardReportSearchResult : ComponentBase
     public void BackToSearch()
     {
         // ?? SECURE NAVIGATION - Navigate back to hazard report search with encrypted URL
-        Navigation.NavigateToSecure("/SMSRiskManagement/HazardReportSearch");
+        _navigation.NavigateToSecure("/SMSRiskManagement/HazardReportSearch");
     }
 
     #endregion

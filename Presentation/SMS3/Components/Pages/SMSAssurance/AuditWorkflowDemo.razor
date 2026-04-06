@@ -221,17 +221,17 @@
             <RadzenButton Text="View Audit Management" 
                         Icon="assignment" 
                         ButtonStyle="ButtonStyle.Primary"
-                        Click="@(() => Navigation.NavigateToSecure("/SMSAssurance/AuditManagement"))"
+                        Click="@(() => _navigation.NavigateToSecure("/SMSAssurance/AuditManagement"))"
                         Size="ButtonSize.Medium" />
             <RadzenButton Text="View Audit Calendar" 
                         Icon="calendar_today" 
                         ButtonStyle="ButtonStyle.Success"
-                        Click="@(() => Navigation.NavigateToSecure("/SMSAssurance/AuditCalendar"))"
+                        Click="@(() => _navigation.NavigateToSecure("/SMSAssurance/AuditCalendar"))"
                         Size="ButtonSize.Medium" />
         </RadzenStack>
     </RadzenStack>
 </RadzenCard>
 
 @code {
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
 }

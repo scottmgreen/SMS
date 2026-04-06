@@ -1,4 +1,3 @@
-
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
@@ -17,13 +16,11 @@ public partial class ApplicationGroups : ComponentBase
 {
     #region Dependency Injection
 
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<ApplicationGroups> Logger { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    
-
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<ApplicationGroups> _logger { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
@@ -104,24 +101,24 @@ public partial class ApplicationGroups : ComponentBase
         {
             // Load Application Groups
             var groupsQuery = new GetAllSMSApplicationGroupsQuery();
-            var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);
+            var groupsResult = await _mediator.SendAsync(groupsQuery, CancellationToken.None);
             SMSApplicationGroups = groupsResult.IsSuccess ?
                 groupsResult.Value?.ToList() ?? new List<SMSApplicationGroup>() :
                 new List<SMSApplicationGroup>();
 
             // Load Application Users for potential group assignments
             var usersQuery = new GetAllSMSApplicationUsersQuery();
-            var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
+            var usersResult = await _mediator.SendAsync(usersQuery, CancellationToken.None);
             SMSApplicationUsers = usersResult.IsSuccess ?
                 usersResult.Value?.ToList() ?? new List<SMSApplicationUser>() :
                 new List<SMSApplicationUser>();
 
-            Logger.LogInformation("Loaded {GroupCount} application groups and {UserCount} application users",
+            _logger.LogInformation("Loaded {GroupCount} application groups and {UserCount} application users",
                 SMSApplicationGroups.Count, SMSApplicationUsers.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading data");
+            _logger.LogError(ex, "Error loading data");
             ShowErrorAsyncNotification("Error loading data. Please try again.");
         }
     }
@@ -141,7 +138,7 @@ public partial class ApplicationGroups : ComponentBase
         try
         {
             var getGroupQuery = new GetSMSApplicationGroupByCodeQuery(groupCode);
-            var groupResult = await Mediator.SendAsync(getGroupQuery, CancellationToken.None);
+            var groupResult = await _mediator.SendAsync(getGroupQuery, CancellationToken.None);
 
             if (groupResult.IsFailure)
             {
@@ -161,7 +158,7 @@ public partial class ApplicationGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading group for edit: {GroupCode}", groupCode);
+            _logger.LogError(ex, "Error loading group for edit: {GroupCode}", groupCode);
             ShowErrorAsyncNotification("Error loading group. Please try again.");
         }
     }
@@ -173,7 +170,7 @@ public partial class ApplicationGroups : ComponentBase
         EditGroupName = string.Empty;
         EditDescription = string.Empty;
         EditIsActive = true;
-        Navigation.NavigateToSecure("/System/UserGroups/ApplicationGroups");
+        _navigation.NavigateToSecure("/System/UserGroups/ApplicationGroups");
     }
 
     private void CloseEditModal()
@@ -214,7 +211,7 @@ public partial class ApplicationGroups : ComponentBase
             };
 
             var command = new CreateSMSApplicationGroupCommand(group);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -230,7 +227,7 @@ public partial class ApplicationGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating application group");
+            _logger.LogError(ex, "Error creating application group");
             ShowErrorAsyncNotification("Error creating application group. Please try again.");
         }
         finally
@@ -257,9 +254,9 @@ public partial class ApplicationGroups : ComponentBase
             CurrentGroup.Name = EditGroupName;
             CurrentGroup.Description = EditDescription;
             CurrentGroup.IsActive = EditIsActive;
-
+            
             var updateCommand = new UpdateSMSApplicationGroupCommand(CurrentGroup);
-            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -275,7 +272,7 @@ public partial class ApplicationGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating application group: {GroupCode}", CurrentGroup.Code);
+            _logger.LogError(ex, "Error updating application group: {GroupCode}", CurrentGroup.Code);
             ShowErrorAsyncNotification("Error updating application group. Please try again.");
         }
         finally
@@ -299,7 +296,7 @@ public partial class ApplicationGroups : ComponentBase
             StateHasChanged();
 
             var command = new DeleteSMSApplicationGroupCommand(DeleteGroupCode);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -321,7 +318,7 @@ public partial class ApplicationGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting application group: {GroupCode}", DeleteGroupCode);
+            _logger.LogError(ex, "Error deleting application group: {GroupCode}", DeleteGroupCode);
             ShowErrorAsyncNotification("Error deleting application group. Please try again.");
         }
         finally
@@ -369,12 +366,12 @@ public partial class ApplicationGroups : ComponentBase
 
     private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        _notificationHelper.ShowErrorAsync(message);
     }
 
     private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        _notificationHelper.ShowSuccessAsync(message);
     }
 
     #endregion
@@ -404,7 +401,7 @@ public partial class ApplicationGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error entering manage members mode for group: {GroupCode}", groupCode);
+            _logger.LogError(ex, "Error entering manage members mode for group: {GroupCode}", groupCode);
             ShowErrorAsyncNotification("Error entering manage members mode. Please try again.");
         }
     }
@@ -415,7 +412,7 @@ public partial class ApplicationGroups : ComponentBase
         {
             // Get users in this group using the enhanced repository method
             var groupMembersQuery = new GetUsersByApplicationGroupCodeQuery(groupCode);
-            var membersResult = await Mediator.SendAsync(groupMembersQuery, CancellationToken.None);
+            var membersResult = await _mediator.SendAsync(groupMembersQuery, CancellationToken.None);
             GroupMembers = membersResult.IsSuccess ?
                 membersResult.Value?.ToList() ?? new List<SMSApplicationUser>() :
                 new List<SMSApplicationUser>();
@@ -436,12 +433,12 @@ public partial class ApplicationGroups : ComponentBase
                 SelectedUsers[user.Code] = false;
             }
 
-            Logger.LogInformation("Loaded {MemberCount} group members and {AvailableCount} available users for group {GroupCode}",
+            _logger.LogInformation("Loaded {MemberCount} group members and {AvailableCount} available users for group {GroupCode}",
                 GroupMembers.Count, AvailableUsers.Count, groupCode);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading group members for group: {GroupCode}", groupCode);
+            _logger.LogError(ex, "Error loading group members for group: {GroupCode}", groupCode);
 
             // For now, if the query fails, just load empty collections
             GroupMembers = new List<SMSApplicationUser>();
@@ -457,7 +454,7 @@ public partial class ApplicationGroups : ComponentBase
         GroupMembers.Clear();
         AvailableUsers.Clear();
         SelectedUsers.Clear();
-        Navigation.NavigateToSecure("/System/UserGroups/ApplicationGroups");
+        _navigation.NavigateToSecure("/System/UserGroups/ApplicationGroups");
     }
 
     private void CloseMembersModal()
@@ -482,7 +479,7 @@ public partial class ApplicationGroups : ComponentBase
         try
         {
             var command = new RemoveUserFromApplicationGroupCommand(userCode, CurrentGroupCode);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -497,7 +494,7 @@ public partial class ApplicationGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, CurrentGroupCode);
+            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, CurrentGroupCode);
             ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
@@ -521,7 +518,7 @@ public partial class ApplicationGroups : ComponentBase
                 try
                 {
                     var command = new AssignUserToApplicationGroupCommand(userCode, CurrentGroupCode);
-                    var result = await Mediator.SendAsync(command, CancellationToken.None);
+                    var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                     if (result.IsSuccess)
                         successCount++;
@@ -530,7 +527,7 @@ public partial class ApplicationGroups : ComponentBase
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
+                    _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
                     failureCount++;
                 }
             }
@@ -552,7 +549,7 @@ public partial class ApplicationGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning multiple users to group {GroupCode}", CurrentGroupCode);
+            _logger.LogError(ex, "Error assigning multiple users to group {GroupCode}", CurrentGroupCode);
             ShowErrorAsyncNotification("Error assigning users to group. Please try again.");
         }
     }
@@ -568,7 +565,7 @@ public partial class ApplicationGroups : ComponentBase
         try
         {
             var command = new AssignUserToApplicationGroupCommand(userCode, CurrentGroupCode);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -583,7 +580,7 @@ public partial class ApplicationGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
             ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }

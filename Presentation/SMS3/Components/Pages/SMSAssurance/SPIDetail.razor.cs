@@ -1,4 +1,3 @@
-
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Pages.SMSAssurance.Components;
@@ -17,7 +16,7 @@ public partial class SPIDetail : ComponentBase
     [Inject] private IMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<SPIDetail> _logger { get; set; } = default!;
     
-    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion

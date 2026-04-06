@@ -280,7 +280,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserDepartment, user.Department.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPosition, user.Position));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserOrganizationLevel, user.OrganizationLevel.Value));
-            //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserSMSRole, user.SMSUserRole.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserSMSRole, user.UserRole.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserAuthorityLevel, user.AuthorityLevel));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserRiskApprovalAuthority, user.RiskApprovalAuthority));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserIsActive, user.IsActive));

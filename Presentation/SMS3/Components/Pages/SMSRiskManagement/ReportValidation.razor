@@ -197,7 +197,7 @@ else
                             <!-- Action Buttons -->
                             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" class="rz-mt-4">
                                 <RadzenButton Text="Back to Processing Queue" Icon="arrow_back" ButtonStyle="ButtonStyle.Light"
-                                              Click="@(() => Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing"))" />
+                                              Click="@(() => _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing"))" />
 
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
                                     @if (SelectedValidationDecision == ValidationDecision.SmsRisk)

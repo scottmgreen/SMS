@@ -87,9 +87,49 @@ public class UpdateSMSOrganizationalUserCommand : BaseCommandBundle, IRequest<Re
 }
 
 /// <summary>
+/// Command to deactivate an existing SMS Organizational User (soft delete)
+/// ✅ NEW: Proper CQRS command for user deactivation with audit pipeline support
+/// </summary>
+public class DeactivateSMSOrganizationalUserCommand : BaseCommandBundle, IRequest<Result<SMSOrganizationalUser>>, IUpdateCommand
+{
+    /// <summary>
+    /// The SMS Organizational User entity to deactivate
+    /// </summary>
+    public SMSOrganizationalUser SMSOrganizationalUser { get; set; }
+
+    /// <summary>
+    /// Reason for deactivation
+    /// </summary>
+    public string DeactivationReason { get; set; }
+
+    /// <summary>
+    /// Initializes a new instance of the DeactivateSMSOrganizationalUserCommand class.
+    /// </summary>
+    /// <param name="smsOrganizationalUser">The SMS organizational user to deactivate</param>
+    /// <param name="deactivationReason">Reason for deactivation</param>
+    /// <exception cref="ArgumentNullException">Thrown when smsOrganizationalUser is null</exception>
+    public DeactivateSMSOrganizationalUserCommand(SMSOrganizationalUser smsOrganizationalUser, string deactivationReason = "Deactivated by administrator")
+    {
+        SMSOrganizationalUser = smsOrganizationalUser ?? throw new ArgumentNullException(nameof(smsOrganizationalUser));
+        DeactivationReason = deactivationReason;
+    }
+
+    public void SetCreatedBy(string userId, DateTime timestamp)
+    {
+        // For deactivation commands, we don't modify CreatedBy
+    }
+
+    public void SetUpdatedBy(string userId, DateTime timestamp)
+    {
+        SMSOrganizationalUser.UpdatedBy = userId;
+        SMSOrganizationalUser.UpdatedDate = timestamp;
+    }
+}
+
+/// <summary>
 /// Command to update SMS Organizational User password
 /// </summary>
-public class UpdateSMSOrganizationalUserPasswordCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
+public class UpdateSMSOrganizationalUserPasswordCommand : BaseCommandBundle, IRequest<Result<bool>>, IUpdateCommand
 {
     /// <summary>
     /// The user ID
@@ -170,7 +210,7 @@ public class AuthenticateSMSOrganizationalUserCommand : BaseCommandBundle, IRequ
 /// <summary>
 /// Command to record SMS Organizational User login
 /// </summary>
-public class RecordSMSOrganizationalUserLoginCommand : BaseCommandBundle, IRequest<Result<bool>>, IHasAuditFields
+public class RecordSMSOrganizationalUserLoginCommand : BaseCommandBundle, IRequest<Result<bool>>, IUpdateCommand
 {
     /// <summary>
     /// The user ID
@@ -217,14 +257,19 @@ public class RecordSMSOrganizationalUserLoginCommand : BaseCommandBundle, IReque
 #region Delete Commands
 
 /// <summary>
-/// Command to delete an SMS Organizational User by ID
+/// Command to delete an SMS Organizational User by ID (legacy - use DeactivateSMSOrganizationalUserCommand instead)
 /// </summary>
-public class DeleteSMSOrganizationalUserCommand : BaseCommandBundle, IRequest<Result<bool>>
+public class DeleteSMSOrganizationalUserCommand : BaseCommandBundle, IRequest<Result<bool>>, IDeleteCommand
 {
     /// <summary>
     /// The ID of the SMS Organizational User to delete
     /// </summary>
     public SMSOrganizationalUserID SMSOrganizationalUserId { get; set; }
+
+    /// <summary>
+    /// User who performed the deletion
+    /// </summary>
+    public string DeletedBy { get; set; } = string.Empty;
 
     /// <summary>
     /// Initializes a new instance of the DeleteSMSOrganizationalUserCommand class.
@@ -234,6 +279,11 @@ public class DeleteSMSOrganizationalUserCommand : BaseCommandBundle, IRequest<Re
     public DeleteSMSOrganizationalUserCommand(SMSOrganizationalUserID smsOrganizationalUserId)
     {
         SMSOrganizationalUserId = smsOrganizationalUserId ?? throw new ArgumentNullException(nameof(smsOrganizationalUserId));
+    }
+
+    public void SetDeletedBy(string userId, DateTime timestamp)
+    {
+        DeletedBy = userId;
     }
 }
 

@@ -121,6 +121,66 @@ public class UpdateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IReq
     }
 }
 
+/// <summary>
+/// ✅ NEW: Command handler for deactivating SMS Organizational Users using CQRS/Mediator pattern
+/// Implements proper CQRS pattern with audit pipeline support for soft delete operations
+/// </summary>
+public class DeactivateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IRequestHandler<DeactivateSMSOrganizationalUserCommand, Result<SMSOrganizationalUser>>
+{
+    private readonly ISMSOrganizationalUserService _organizationalUserService;
+    private readonly ILogger<DeactivateSMSOrganizationalUserCommandHandler> _logger;
+
+    public DeactivateSMSOrganizationalUserCommandHandler(ISMSOrganizationalUserService organizationalUserService, ILogger<DeactivateSMSOrganizationalUserCommandHandler> logger)
+    {
+        _organizationalUserService = organizationalUserService ?? throw new ArgumentNullException(nameof(organizationalUserService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SMSOrganizationalUser>> HandleAsync(DeactivateSMSOrganizationalUserCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request?.SMSOrganizationalUser is null)
+            {
+                _logger.LogApplicationError("DeactivateSMSOrganizationalUserCommand received with null request or user", ApplicationEventIds.Error, null);
+                return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("🚀 CQRS: Handling DeactivateSMSOrganizationalUserCommand for user: {UserCode} - Reason: {Reason}", 
+                request.SMSOrganizationalUser.Code, request.DeactivationReason);
+
+            // Business logic: Deactivate the user
+            request.SMSOrganizationalUser.Deactivate();
+
+            // Use the update service method to persist the deactivation
+            // The audit pipeline has already set UpdatedBy and UpdatedDate via SetUpdatedBy()
+            var result = await _organizationalUserService.UpdateSMSOrganizationalUserAsync(request.SMSOrganizationalUser, cancellationToken);
+            
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("✅ CQRS: Successfully deactivated SMS Organizational User: {UserCode}", result.Value.Code);
+            }
+            else
+            {
+                _logger.LogError("❌ CQRS: Failed to deactivate SMS Organizational User. Error: {Error}", result.Error?.Message);
+            }
+            
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("DeactivateSMSOrganizationalUserCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "💥 CQRS: Exception in DeactivateSMSOrganizationalUserCommandHandler for user: {UserCode}", 
+                request.SMSOrganizationalUser?.Code);
+            return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.DeleteFailed);
+        }
+    }
+}
+
 public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSOrganizationalUserPasswordCommand, Result<bool>>
 {
     private readonly ISMSOrganizationalUserService _organizationalUserService;
@@ -300,11 +360,16 @@ public class RecordSMSOrganizationalUserLoginCommandHandler : BaseCommandBundle,
 public class DeleteSMSOrganizationalUserCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSOrganizationalUserCommand, Result<bool>>
 {
     private readonly ISMSOrganizationalUserService _organizationalUserService;
+    private readonly IMediator _mediator;
     private readonly ILogger<DeleteSMSOrganizationalUserCommandHandler> _logger;
 
-    public DeleteSMSOrganizationalUserCommandHandler(ISMSOrganizationalUserService organizationalUserService, ILogger<DeleteSMSOrganizationalUserCommandHandler> logger)
+    public DeleteSMSOrganizationalUserCommandHandler(
+        ISMSOrganizationalUserService organizationalUserService, 
+        IMediator mediator,
+        ILogger<DeleteSMSOrganizationalUserCommandHandler> logger)
     {
         _organizationalUserService = organizationalUserService ?? throw new ArgumentNullException(nameof(organizationalUserService));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -318,32 +383,30 @@ public class DeleteSMSOrganizationalUserCommandHandler : BaseCommandBundle, IReq
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSOrganizationalUserCommand for UserID: {UserId}", request.SMSOrganizationalUserId);
+            _logger.LogInformation("🚀 CQRS: Handling DeleteSMSOrganizationalUserCommand (legacy) for user ID: {UserId} - Redirecting to deactivation", 
+                request.SMSOrganizationalUserId.Value);
 
-            // For now, implement as logical delete by updating the user record
+            // Get the user first
             var userResult = await _organizationalUserService.GetSMSOrganizationalUserByCodeAsync(request.SMSOrganizationalUserId.Value, cancellationToken);
             if (userResult.IsFailure)
             {
+                _logger.LogWarning("❌ CQRS: Cannot delete non-existent SMS Organizational User with ID: {UserId}", request.SMSOrganizationalUserId.Value);
                 return Result<bool>.Failure<bool>(userResult.Error);
             }
 
-            var user = userResult.Value;
-            user.IsActive = false;
-            user.UpdatedBy = "SYSTEM";
-            user.UpdatedDate = DateTime.UtcNow;
+            // Use the new deactivation command for consistency
+            var deactivateCommand = new DeactivateSMSOrganizationalUserCommand(userResult.Value, "Deleted via legacy delete command");
+            var deactivateResult = await _mediator.SendAsync(deactivateCommand, cancellationToken);
 
-            var updateResult = await _organizationalUserService.UpdateSMSOrganizationalUserAsync(user, cancellationToken);
-
-            if (updateResult.IsSuccess)
+            if (deactivateResult.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted (deactivated) SMS Organizational User with ID: {UserId}", request.SMSOrganizationalUserId);
+                _logger.LogInformation("✅ CQRS: Successfully processed delete as deactivation for user: {UserCode}", deactivateResult.Value.Code);
                 return Result<bool>.Success(true);
             }
             else
             {
-                _logger.LogApplicationError("Failed to delete SMS Organizational User with ID: {UserId}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
-                return Result<bool>.Failure<bool>(updateResult.Error);
+                _logger.LogError("❌ CQRS: Failed to process delete as deactivation. Error: {Error}", deactivateResult.Error?.Message);
+                return Result<bool>.Failure<bool>(deactivateResult.Error);
             }
         }
         catch (OperationCanceledException)

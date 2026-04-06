@@ -16,17 +16,12 @@ namespace SMS3.Components.Pages.System.UserGroups;
 public partial class StakeholderGroups : ComponentBase
 {
     #region Dependency Injection
-
     [Inject] private IMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<StakeholderGroups> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    
-
     [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
-
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-
     #endregion
 
     #region Parameters

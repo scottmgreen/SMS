@@ -1,4 +1,3 @@
-
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -10,13 +9,11 @@ public partial class OrganizationalGroups : ComponentBase
 {
     #region Dependency Injection
 
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<OrganizationalGroups> Logger { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    
-
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<OrganizationalGroups> _logger { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
@@ -110,24 +107,24 @@ public partial class OrganizationalGroups : ComponentBase
         {
             // Load Organizational Groups
             var groupsQuery = new GetAllSMSOrganizationalGroupsQuery();
-            var groupsResult = await Mediator.SendAsync(groupsQuery, CancellationToken.None);
+            var groupsResult = await _mediator.SendAsync(groupsQuery, CancellationToken.None);
             SMSOrganizationalGroups = groupsResult.IsSuccess ?
                 groupsResult.Value?.ToList() ?? new List<SMSOrganizationalGroup>() :
                 new List<SMSOrganizationalGroup>();
 
             // Load Organizational Users for potential group assignments
             var usersQuery = new GetAllSMSOrganizationalUsersQuery();
-            var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
+            var usersResult = await _mediator.SendAsync(usersQuery, CancellationToken.None);
             SMSOrganizationalUsers = usersResult.IsSuccess ?
                 usersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() :
                 new List<SMSOrganizationalUser>();
 
-            Logger.LogInformation("Loaded {GroupCount} organizational groups and {UserCount} organizational users",
+            _logger.LogInformation("Loaded {GroupCount} organizational groups and {UserCount} organizational users",
                 SMSOrganizationalGroups.Count, SMSOrganizationalUsers.Count);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading data");
+            _logger.LogError(ex, "Error loading data");
             ShowErrorAsyncNotification("Error loading data. Please try again.");
         }
     }
@@ -147,7 +144,7 @@ public partial class OrganizationalGroups : ComponentBase
         try
         {
             var getGroupQuery = new GetSMSOrganizationalGroupByCodeQuery(groupCode);
-            var groupResult = await Mediator.SendAsync(getGroupQuery, CancellationToken.None);
+            var groupResult = await _mediator.SendAsync(getGroupQuery, CancellationToken.None);
 
             if (groupResult.IsFailure)
             {
@@ -169,7 +166,7 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading group for edit: {GroupCode}", groupCode);
+            _logger.LogError(ex, "Error loading group for edit: {GroupCode}", groupCode);
             ShowErrorAsyncNotification("Error loading group. Please try again.");
         }
     }
@@ -183,7 +180,7 @@ public partial class OrganizationalGroups : ComponentBase
         EditGroupType = string.Empty;
         EditAuthorityLevel = string.Empty;
         EditIsActive = true;
-        Navigation.NavigateToSecure("/System/UserGroups/OrganizationalGroups");
+        _navigation.NavigateToSecure("/System/UserGroups/OrganizationalGroups");
     }
 
     private void CloseEditModal()
@@ -228,7 +225,7 @@ public partial class OrganizationalGroups : ComponentBase
             };
 
             var command = new CreateSMSOrganizationalGroupCommand(group);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -244,7 +241,7 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error creating organizational group");
+            _logger.LogError(ex, "Error creating organizational group");
             ShowErrorAsyncNotification("Error creating organizational group. Please try again.");
         }
         finally
@@ -275,7 +272,7 @@ public partial class OrganizationalGroups : ComponentBase
             CurrentGroup.IsActive = EditIsActive;
 
             var updateCommand = new UpdateSMSOrganizationalGroupCommand(CurrentGroup);
-            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -291,7 +288,7 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating organizational group: {GroupCode}", CurrentGroup.Code);
+            _logger.LogError(ex, "Error updating organizational group: {GroupCode}", CurrentGroup.Code);
             ShowErrorAsyncNotification("Error updating organizational group. Please try again.");
         }
         finally
@@ -316,7 +313,7 @@ public partial class OrganizationalGroups : ComponentBase
 
             // Get existing group to pass to delete command
             var getGroupQuery = new GetSMSOrganizationalGroupByCodeQuery(DeleteGroupCode);
-            var groupResult = await Mediator.SendAsync(getGroupQuery, CancellationToken.None);
+            var groupResult = await _mediator.SendAsync(getGroupQuery, CancellationToken.None);
 
             if (groupResult.IsFailure)
             {
@@ -325,7 +322,7 @@ public partial class OrganizationalGroups : ComponentBase
             }
 
             var deleteCommand = new DeleteSMSOrganizationalGroupCommand(groupResult.Value);
-            var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(deleteCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -347,7 +344,7 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting organizational group: {GroupCode}", DeleteGroupCode);
+            _logger.LogError(ex, "Error deleting organizational group: {GroupCode}", DeleteGroupCode);
             ShowErrorAsyncNotification("Error deleting organizational group. Please try again.");
         }
         finally
@@ -399,12 +396,12 @@ public partial class OrganizationalGroups : ComponentBase
 
     private void ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        _notificationHelper.ShowErrorAsync(message);
     }
 
     private void ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        _notificationHelper.ShowSuccessAsync(message);
     }
 
     #endregion
@@ -434,7 +431,7 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error entering manage members mode for group: {GroupCode}", groupCode);
+            _logger.LogError(ex, "Error entering manage members mode for group: {GroupCode}", groupCode);
             ShowErrorAsyncNotification("Error entering manage members mode. Please try again.");
         }
     }
@@ -445,7 +442,7 @@ public partial class OrganizationalGroups : ComponentBase
         {
             // Get users in this group
             var groupMembersQuery = new GetUsersByOrganizationalGroupCodeQuery(groupCode);
-            var membersResult = await Mediator.SendAsync(groupMembersQuery, CancellationToken.None);
+            var membersResult = await _mediator.SendAsync(groupMembersQuery, CancellationToken.None);
             GroupMembers = membersResult.IsSuccess ?
                 membersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() :
                 new List<SMSOrganizationalUser>();
@@ -466,12 +463,12 @@ public partial class OrganizationalGroups : ComponentBase
                 SelectedUsers[user.Code] = false;
             }
 
-            Logger.LogInformation("Loaded {MemberCount} group members and {AvailableCount} available users for group {GroupCode}",
+            _logger.LogInformation("Loaded {MemberCount} group members and {AvailableCount} available users for group {GroupCode}",
                 GroupMembers.Count, AvailableUsers.Count, groupCode);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading group members for group: {GroupCode}", groupCode);
+            _logger.LogError(ex, "Error loading group members for group: {GroupCode}", groupCode);
 
             // For now, if the query fails, just load empty collections
             GroupMembers = new List<SMSOrganizationalUser>();
@@ -486,10 +483,10 @@ public partial class OrganizationalGroups : ComponentBase
         CurrentGroupCode = null;
         CurrentGroup = null;
         
-        Logger.LogInformation("Exited member management view");
-        NotificationHelper.ShowInfoAsync( "Returned to group management", 3000);
+        _logger.LogInformation("Exited member management view");
+        _notificationHelper.ShowInfoAsync("Returned to group management", 3000);
         
-        Navigation.NavigateToSecure("/System/UserGroups/OrganizationalGroups");
+        _navigation.NavigateToSecure("/System/UserGroups/OrganizationalGroups");
     }
 
     private void CloseMembersModal()
@@ -515,7 +512,7 @@ public partial class OrganizationalGroups : ComponentBase
         {
             var groupId = new SMSOrganizationalGroupID(CurrentGroupCode);
             var command = new RemoveUserFromOrganizationalGroupCommand(userCode, groupId);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -530,7 +527,7 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, CurrentGroupCode);
+            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, CurrentGroupCode);
             ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
@@ -555,7 +552,7 @@ public partial class OrganizationalGroups : ComponentBase
                 {
                     var groupId = new SMSOrganizationalGroupID(CurrentGroupCode);
                     var command = new AssignUserToOrganizationalGroupCommand(userCode, groupId);
-                    var result = await Mediator.SendAsync(command, CancellationToken.None);
+                    var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                     if (result.IsSuccess)
                         successCount++;
@@ -564,7 +561,7 @@ public partial class OrganizationalGroups : ComponentBase
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
+                    _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
                     failureCount++;
                 }
             }
@@ -586,7 +583,7 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning multiple users to group {GroupCode}", CurrentGroupCode);
+            _logger.LogError(ex, "Error assigning multiple users to group {GroupCode}", CurrentGroupCode);
             ShowErrorAsyncNotification("Error assigning users to group. Please try again.");
         }
     }
@@ -603,7 +600,7 @@ public partial class OrganizationalGroups : ComponentBase
         {
             var groupId = new SMSOrganizationalGroupID(CurrentGroupCode);
             var command = new AssignUserToOrganizationalGroupCommand(userCode, groupId);
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -618,7 +615,7 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
             ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }

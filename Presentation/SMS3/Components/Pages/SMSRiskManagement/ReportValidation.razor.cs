@@ -1,4 +1,3 @@
-
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
@@ -14,12 +13,12 @@ public partial class ReportValidation : ComponentBase
     [Parameter] public string ReportId { get; set; } = "";
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<ReportValidation> Logger { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<ReportValidation> _logger { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
     
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
 
     // Form Data Properties - Using Smart Enum
     private ValidationDecision? SelectedValidationDecision { get; set; }
@@ -75,25 +74,25 @@ public partial class ReportValidation : ComponentBase
     {
         try
         {
-            Logger.LogInformation("Loading SMS report validation for report: {ReportId}", ReportId);
+            _logger.LogInformation("Loading SMS report validation for report: {ReportId}", ReportId);
 
             if (string.IsNullOrWhiteSpace(ReportId))
             {
-                await NotificationHelper.ShowErrorAsync("Report ID is required for SMS report validation");
-                Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+                await _notificationHelper.ShowErrorAsync("Report ID is required for SMS report validation");
+                _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
                 return;
             }
 
             var reportCode = new ReportID(ReportId);
 
             // Load report details
-            var reportResult = await Mediator.SendAsync(new GetReportByCodeQuery(reportCode), CancellationToken.None);
+            var reportResult = await _mediator.SendAsync(new GetReportByCodeQuery(reportCode), CancellationToken.None);
             if (reportResult.IsSuccess)
             {
                 ReportDetails = reportResult.Value;
 
                 // Load associated hazard
-                var hazardResult = await Mediator.SendAsync(new GetHazardsByReportCodeQuery(reportCode), CancellationToken.None);
+                var hazardResult = await _mediator.SendAsync(new GetHazardsByReportCodeQuery(reportCode), CancellationToken.None);
                 if (hazardResult.IsSuccess)
                 {
                     ReportHazard = hazardResult.Value?.FirstOrDefault(h => h.ReportCode.Trim() == reportCode.Value.Trim());
@@ -103,7 +102,7 @@ public partial class ReportValidation : ComponentBase
 
             // Check for existing validation
             var existingValidationQuery = new GetReportValidationByReportIdQuery(reportCode);
-            var validationResult = await Mediator.SendAsync(existingValidationQuery, CancellationToken.None);
+            var validationResult = await _mediator.SendAsync(existingValidationQuery, CancellationToken.None);
 
             if (validationResult.IsSuccess)
             {
@@ -121,12 +120,12 @@ public partial class ReportValidation : ComponentBase
                 ValidationType = RiskAssessmentCategory.Technical ;
                 ValidatedBy = ExistingValidation.ValidatedBy ?? "";
 
-                Logger.LogInformation("Found existing ReportValidation for report {ReportId} - Decision: {Decision}",
+                _logger.LogInformation("Found existing ReportValidation for report {ReportId} - Decision: {Decision}",
                     ReportId, SelectedValidationDecision?.Name ?? "None");
             }
             else
             {
-                Logger.LogInformation("No existing ReportValidation found for report: {ReportId}", ReportId);
+                _logger.LogInformation("No existing ReportValidation found for report: {ReportId}", ReportId);
 
                 // Set defaults for new validation
                 SelectedValidationDecision = null;
@@ -143,9 +142,9 @@ public partial class ReportValidation : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error loading report for SMS validation: {ReportId}", ReportId);
-            await NotificationHelper.ShowErrorAsync("An error occurred while loading the report for validation");
-            Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+            _logger.LogError(ex, "Error loading report for SMS validation: {ReportId}", ReportId);
+            await _notificationHelper.ShowErrorAsync("An error occurred while loading the report for validation");
+            _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
         }
     }
 
@@ -154,7 +153,7 @@ public partial class ReportValidation : ComponentBase
         try
         {
             var usersQuery = new GetUsersByApplicationGroupCodeQuery("AG-0007");
-            var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
+            var usersResult = await _mediator.SendAsync(usersQuery, CancellationToken.None);
             if (usersResult.IsSuccess)
             {
                 AvailableAssessors = usersResult.Value?.ToList() ?? new List<SMSApplicationUser>();
@@ -177,7 +176,7 @@ public partial class ReportValidation : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Could not load available assessors");
+            _logger.LogWarning(ex, "Could not load available assessors");
             LeadAssessorOptions = new List<DropdownOption>
             {
                 new DropdownOption { Value = "", Text = "" }
@@ -190,7 +189,7 @@ public partial class ReportValidation : ComponentBase
         try
         {
             var usersQuery = new GetUsersByApplicationGroupCodeQuery("AG-0006");
-            var usersResult = await Mediator.SendAsync(usersQuery, CancellationToken.None);
+            var usersResult = await _mediator.SendAsync(usersQuery, CancellationToken.None);
             if (usersResult.IsSuccess)
             {
                 AvailableInvestigators = usersResult.Value?.ToList() ?? new List<SMSApplicationUser>();
@@ -213,7 +212,7 @@ public partial class ReportValidation : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogWarning(ex, "Could not load available assessors");
+            _logger.LogWarning(ex, "Could not load available assessors");
             LeadInvestigatorOptions = new List<DropdownOption>
             {
                 new DropdownOption { Value = "", Text = "" }
@@ -256,18 +255,18 @@ public partial class ReportValidation : ComponentBase
             IsProcessing = true;
             StateHasChanged();
 
-            Logger.LogInformation("HandleSubmit called for ReportId: {ReportId}, Decision: {Decision}", ReportId, SelectedValidationDecision?.Value);
+            _logger.LogInformation("HandleSubmit called for ReportId: {ReportId}, Decision: {Decision}", ReportId, SelectedValidationDecision?.Value);
 
             // Manual validation
             if (SelectedValidationDecision == null)
             {
-                await NotificationHelper.ShowErrorAsync("Please select a validation decision");
+                await _notificationHelper.ShowErrorAsync("Please select a validation decision");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(ValidationComments))
             {
-                await NotificationHelper.ShowErrorAsync("Validation comments are required");
+                await _notificationHelper.ShowErrorAsync("Validation comments are required");
                 return;
             }
 
@@ -294,8 +293,8 @@ public partial class ReportValidation : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in HandleSubmit for ReportId: {ReportId}", ReportId);
-            await NotificationHelper.ShowErrorAsync("Error processing validation. Please try again.");
+            _logger.LogError(ex, "Error in HandleSubmit for ReportId: {ReportId}", ReportId);
+            await _notificationHelper.ShowErrorAsync("Error processing validation. Please try again.");
         }
         finally
         {
@@ -303,33 +302,32 @@ public partial class ReportValidation : ComponentBase
             StateHasChanged();
         }
     }
+    
     private async Task<bool> UpdateReportStatus(string reportId, ReportStatus status)
     {
         var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
-        var getReportQueryResult = await Mediator.SendAsync(getReportQuery, CancellationToken.None);
+        var getReportQueryResult = await _mediator.SendAsync(getReportQuery, CancellationToken.None);
 
         var cmd = new UpdateReportStatusCommand(reportId, status, CurrentUserService?.UserDisplayName);
-        var cmdResult = await Mediator.SendAsync(cmd, CancellationToken.None);
+        var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
         if (!cmdResult.IsSuccess)
         {
-            await NotificationHelper.ShowErrorAsync($"Report{reportId} Status Was not Updated");
+            await _notificationHelper.ShowErrorAsync($"Report{reportId} Status Was not Updated");
             return false;
         }
         return true;
     }
-    /// <summary>
-    /// Smart validation record creation - reuses existing validation if available, creates new if needed
-    /// </summary>
+    
     private async Task CreateValidationRecord()
     {
         try
         {
-            Logger.LogInformation("Smart validation record processing for ReportId: {ReportId}, HasExisting: {HasExisting}",ReportId, ExistingValidation != null);
+            _logger.LogInformation("Smart validation record processing for ReportId: {ReportId}, HasExisting: {HasExisting}",ReportId, ExistingValidation != null);
 
             if (ExistingValidation != null)
             {
                 // ? UPDATE EXISTING VALIDATION
-                Logger.LogInformation("Updating existing ReportValidation: {ValidationCode}", ExistingValidation.Code);
+                _logger.LogInformation("Updating existing ReportValidation: {ValidationCode}", ExistingValidation.Code);
 
                 // Update the existing validation with new values
                 ExistingValidation.ValidationDecision = ValidationDecisionValue;
@@ -344,7 +342,7 @@ public partial class ReportValidation : ComponentBase
                 ExistingValidation.UpdatedDate = DateTime.UtcNow;
 
                 var updateCommand = new UpdateReportValidationCommand(ExistingValidation);
-                var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+                var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
                 if (!result.IsSuccess)
                 {
@@ -356,13 +354,13 @@ public partial class ReportValidation : ComponentBase
                     throw new Exception($"Failed to Update Report Status during Update Validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.UpdateFailed.Message}");
                 }
 
-                Logger.LogInformation("Successfully updated existing ReportValidation: {ValidationCode}", ExistingValidation.Code);
-                await NotificationHelper.ShowSuccessAsync($"Validation updated successfully. Decision: {SelectedValidationDecision?.Name}");
+                _logger.LogInformation("Successfully updated existing ReportValidation: {ValidationCode}", ExistingValidation.Code);
+                await _notificationHelper.ShowSuccessAsync($"Validation updated successfully. Decision: {SelectedValidationDecision?.Name}");
             }
             else
             {
                 // ? CREATE NEW VALIDATION (only if none exists)
-                Logger.LogInformation("Creating new ReportValidation for ReportId: {ReportId}", ReportId);
+                _logger.LogInformation("Creating new ReportValidation for ReportId: {ReportId}", ReportId);
 
                 var validationId = new ReportValidationID($"RV-0000");
                 var validation = new SMS_Domain.Entities.ReportValidation(validationId)
@@ -381,7 +379,7 @@ public partial class ReportValidation : ComponentBase
                 };
 
                 var createCommand = new CreateReportValidationCommand(validation);
-                var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
+                var result = await _mediator.SendAsync(createCommand, CancellationToken.None);
 
                 if (!result.IsSuccess)
                 {
@@ -392,8 +390,8 @@ public partial class ReportValidation : ComponentBase
                 {
                     throw new Exception($"Failed to Update Report Status during Create new validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.CreateFailed.Message}");
                 }
-                Logger.LogInformation("Successfully created new ReportValidation: {ValidationCode}", result.Value.Code);
-                await NotificationHelper.ShowSuccessAsync($"Validation recorded successfully. Decision: {SelectedValidationDecision?.Name}");
+                _logger.LogInformation("Successfully created new ReportValidation: {ValidationCode}", result.Value.Code);
+                await _notificationHelper.ShowSuccessAsync($"Validation recorded successfully. Decision: {SelectedValidationDecision?.Name}");
             }
 
             
@@ -401,15 +399,11 @@ public partial class ReportValidation : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in smart validation record processing for ReportId: {ReportId}", ReportId);
+            _logger.LogError(ex, "Error in smart validation record processing for ReportId: {ReportId}", ReportId);
             throw; // Re-throw to be handled by HandleSubmit
         }
     }
 
-
-    /// <summary>
-    /// Navigate to Risk Assessment with optimized flow control
-    /// </summary>
     private async Task NavigateToRiskAssessment()
     {
         try
@@ -428,14 +422,11 @@ public partial class ReportValidation : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in NavigateToRiskAssessment for Report: {ReportId}", ReportId);
-            await NotificationHelper.ShowErrorAsync("Error navigating to risk assessment. Please try again.");
+            _logger.LogError(ex, "Error in NavigateToRiskAssessment for Report: {ReportId}", ReportId);
+            await _notificationHelper.ShowErrorAsync("Error navigating to risk assessment. Please try again.");
         }
     }
 
-    /// <summary>
-    /// Navigate to Risk Registry with optimized flow control
-    /// </summary>
     private async Task NavigateToRiskRegistry()
     {
         try
@@ -450,43 +441,37 @@ public partial class ReportValidation : ComponentBase
             }
 
             // Step 2: Navigate directly to Risk Registry
-            Logger.LogInformation("User skipped Airport Shared Dataset creation, navigating to Risk Registry for Report: {ReportId}", ReportId);
+            _logger.LogInformation("User skipped Airport Shared Dataset creation, navigating to Risk Registry for Report: {ReportId}", ReportId);
             
             string navigationUrl = "/SMSAssurance/RiskRegistry";
             await DelayAndNavigate(navigationUrl);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error in NavigateToRiskRegistry for Report: {ReportId}", ReportId);
-            await NotificationHelper.ShowErrorAsync("Error navigating to risk registry. Please try again.");
+            _logger.LogError(ex, "Error in NavigateToRiskRegistry for Report: {ReportId}", ReportId);
+            await _notificationHelper.ShowErrorAsync("Error navigating to risk registry. Please try again.");
         }
     }
 
-
-
-
-    /// <summary>
-    /// Navigate to Investigation (create investigation first if needed)
-    /// </summary>
     private async Task NavigateToInvestigation()
     {
         try
         {
             if (ReportHazard == null)
             {
-                await NotificationHelper.ShowErrorAsync("Cannot create investigation - hazard information not found");
+                await _notificationHelper.ShowErrorAsync("Cannot create investigation - hazard information not found");
                 return;
             }
 
             if (string.IsNullOrWhiteSpace(ReportHazard.Code))
             {
-                await NotificationHelper.ShowErrorAsync("Cannot create investigation - invalid hazard code");
+                await _notificationHelper.ShowErrorAsync("Cannot create investigation - invalid hazard code");
                 return;
             }
 
             // Check for existing investigation first
             var existingInvestigationsQuery = new GetAllInvestigationsQuery();
-            var existingResult = await Mediator.SendAsync(existingInvestigationsQuery, CancellationToken.None);
+            var existingResult = await _mediator.SendAsync(existingInvestigationsQuery, CancellationToken.None);
 
             Investigation? existingInvestigation = null;
             if (existingResult.IsSuccess && existingResult.Value != null)
@@ -499,9 +484,9 @@ public partial class ReportValidation : ComponentBase
             if (existingInvestigation != null)
             {
                 // Navigate to existing investigation
-                await NotificationHelper.ShowSuccessAsync($"Loading existing investigation {existingInvestigation.Code}");
+                await _notificationHelper.ShowSuccessAsync($"Loading existing investigation {existingInvestigation.Code}");
                 var navigationUrl = $"/SMSRiskManagement/Investigations/{existingInvestigation.Code}/{ReportHazard.Code}";
-                Logger.LogInformation("Navigating to existing investigation: {Url}", navigationUrl);
+                _logger.LogInformation("Navigating to existing investigation: {Url}", navigationUrl);
                 bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.UnderInvestigation);
                 if (!flowControl)
                 {
@@ -509,7 +494,7 @@ public partial class ReportValidation : ComponentBase
                 }
                 await Task.Delay(1500);
                 // ?? SECURE NAVIGATION - Navigate to existing investigation
-                Navigation.NavigateToSecure(navigationUrl);
+                _navigation.NavigateToSecure(navigationUrl);
             }
             else
             {
@@ -526,14 +511,14 @@ public partial class ReportValidation : ComponentBase
                 investigation.InvestigationNotes = $"Investigation initiated from report validation. Validation comments: {ValidationComments}";
 
                 CreateInvestigationCommand command = new CreateInvestigationCommand(investigation);
-                var createResult = await Mediator.SendAsync(command, CancellationToken.None);
+                var createResult = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (createResult.IsSuccess)
                 {
                     var newInvestigation = createResult.Value;
-                    await NotificationHelper.ShowSuccessAsync($"Investigation {newInvestigation.Code} created successfully");
+                    await _notificationHelper.ShowSuccessAsync($"Investigation {newInvestigation.Code} created successfully");
                     var navigationUrl = $"/SMSRiskManagement/Investigations/{newInvestigation.Code}/{ReportHazard.Code}";
-                    Logger.LogInformation("Navigating to new investigation: {Url}", navigationUrl);
+                    _logger.LogInformation("Navigating to new investigation: {Url}", navigationUrl);
 
                     bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.UnderInvestigation);
                     if (!flowControl)
@@ -542,7 +527,7 @@ public partial class ReportValidation : ComponentBase
                     }
                     await Task.Delay(1500);
                     // ?? SECURE NAVIGATION - Navigate to new investigation
-                    Navigation.NavigateToSecure(navigationUrl);
+                    _navigation.NavigateToSecure(navigationUrl);
                 }
                 else
                 {
@@ -552,17 +537,14 @@ public partial class ReportValidation : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error handling investigation for ReportId: {ReportId}", ReportId);
-            await NotificationHelper.ShowErrorAsync("Error handling investigation. Please try again.");
+            _logger.LogError(ex, "Error handling investigation for ReportId: {ReportId}", ReportId);
+            await _notificationHelper.ShowErrorAsync("Error handling investigation. Please try again.");
         }
     }
 
-    /// <summary>
-    /// Handle NOT_SMS_RISK decision - prompt user and close report if confirmed
-    /// </summary>
     private async Task HandleNotSmsRisk()
     {
-        var confirmed = await DialogService.Confirm(
+        var confirmed = await _dialogService.Confirm(
             message: "This report has been determined to be NOT an SMS Risk. Do you want to close this report?",
             title: "Close Report",
             options: new ConfirmOptions()
@@ -578,15 +560,12 @@ public partial class ReportValidation : ComponentBase
         }
         else
         {
-            await NotificationHelper.ShowSuccessAsync("Validation completed. Report remains open for further review.");
+            await _notificationHelper.ShowSuccessAsync("Validation completed. Report remains open for further review.");
             await Task.Delay(1500);
            // Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing");
         }
     }
 
-    /// <summary>
-    /// Close the report using CQRS mediator
-    /// </summary>
     private async Task CloseReport()
     {
         try
@@ -604,22 +583,21 @@ public partial class ReportValidation : ComponentBase
             }
             else
             {
-                await NotificationHelper.ShowSuccessAsync("Report has been closed successfully");
-                Logger.LogInformation("Report {ReportId} closed due to NOT_SMS_RISK validation", ReportId);
+                await _notificationHelper.ShowSuccessAsync("Report has been closed successfully");
+                _logger.LogInformation("Report {ReportId} closed due to NOT_SMS_RISK validation", ReportId);
                 await Task.Delay(1500);
                 // ?? SECURE NAVIGATION - Navigate to Report Processing
-                Navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+                _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
             }
 
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error closing report {ReportId}", ReportId);
-            await NotificationHelper.ShowErrorAsync($"Error closing report: {ex.Message}");
+            _logger.LogError(ex, "Error closing report {ReportId}", ReportId);
+            await _notificationHelper.ShowErrorAsync($"Error closing report: {ex.Message}");
         }
     }
 
-    
     #endregion
 
     #region UI Helper Methods
@@ -657,7 +635,7 @@ public partial class ReportValidation : ComponentBase
     /// </summary>
     private async Task<bool> ShowAirportDatasetDialog()
     {
-        return await DialogService.Confirm(
+        return await _dialogService.Confirm(
             message: "Do you want to create an Airport Shared Dataset for this SMS Risk assessment?",
             title: "Airport Shared Dataset",
             options: new ConfirmOptions()
@@ -673,7 +651,7 @@ public partial class ReportValidation : ComponentBase
     /// </summary>
     private async Task NavigateToDatasetCreation()
     {
-        Logger.LogInformation("User chose to create Airport Shared Dataset for Report: {ReportId}", ReportId);
+        _logger.LogInformation("User chose to create Airport Shared Dataset for Report: {ReportId}", ReportId);
         
         var datasetUrl = $"/SMSRiskManagement/AirportSharedDataset/{ReportId}";
         if (!string.IsNullOrEmpty(ReportHazard?.Code))
@@ -682,7 +660,7 @@ public partial class ReportValidation : ComponentBase
         }
 
         // Use secure navigation for consistency
-        Navigation.NavigateToSecure(datasetUrl);
+        _navigation.NavigateToSecure(datasetUrl);
     }
 
     /// <summary>
@@ -690,7 +668,7 @@ public partial class ReportValidation : ComponentBase
     /// </summary>
     private async Task HandleRiskAssessmentNavigation()
     {
-        Logger.LogInformation("User skipped Airport Shared Dataset creation for Report: {ReportId}", ReportId);
+        _logger.LogInformation("User skipped Airport Shared Dataset creation for Report: {ReportId}", ReportId);
 
         // Find existing risk assessment for this hazard
         var existingRiskAssessment = await FindExistingRiskAssessment();
@@ -715,7 +693,7 @@ public partial class ReportValidation : ComponentBase
             return null;
 
         var query = new GetAllRiskAssessmentsQuery();
-        var result = await Mediator.SendAsync(query, CancellationToken.None);
+        var result = await _mediator.SendAsync(query, CancellationToken.None);
 
         if (!result.IsSuccess || result.Value?.Count == 0)
             return null;
@@ -736,19 +714,19 @@ public partial class ReportValidation : ComponentBase
             existingRiskAssessment.LeadAssessorId = LeadAssessor;
             
             var updateCmd = new UpdateRiskAssessmentCommand(existingRiskAssessment);
-            await Mediator.SendAsync(updateCmd, CancellationToken.None);
+            await _mediator.SendAsync(updateCmd, CancellationToken.None);
         }
 
         // Update report status
         await UpdateReportStatusWithValidation(ReportStatus.RiskAssessmentInProgress, 
             "Failed to update report status for existing risk assessment");
 
-        await NotificationHelper.ShowSuccessAsync($"Loading existing Risk Assessment {existingRiskAssessment.Code}");
+        await _notificationHelper.ShowSuccessAsync($"Loading existing Risk Assessment {existingRiskAssessment.Code}");
         
         // Fix: Use the hazard code from the existing risk assessment if ReportHazard is null
         var hazardCode = ReportHazard?.Code ?? existingRiskAssessment.HazardCode ?? existingRiskAssessment.PrimaryHazardId;
         var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{hazardCode}/1";
-        Logger.LogInformation("Navigating to existing Risk Assessment: {Url}", navigationUrl);
+        _logger.LogInformation("Navigating to existing Risk Assessment: {Url}", navigationUrl);
 
         await DelayAndNavigate(navigationUrl);
     }
@@ -767,7 +745,7 @@ public partial class ReportValidation : ComponentBase
         var riskAssessment = CreateRiskAssessmentEntity();
         
         var command = new CreateRiskAssessmentCommand(riskAssessment);
-        var createResult = await Mediator.SendAsync(command, CancellationToken.None);
+        var createResult = await _mediator.SendAsync(command, CancellationToken.None);
 
         if (!createResult.IsSuccess)
         {
@@ -779,11 +757,11 @@ public partial class ReportValidation : ComponentBase
             "Failed to update report status for new risk assessment");
 
         var newRiskAssessment = createResult.Value;
-        await NotificationHelper.ShowSuccessAsync($"Risk Assessment {newRiskAssessment.Code} created successfully");
+        await _notificationHelper.ShowSuccessAsync($"Risk Assessment {newRiskAssessment.Code} created successfully");
 
         // Fix: Ensure hazard code is properly passed - use the ReportHazard.Code which we validated exists above
         var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
-        Logger.LogInformation("Navigating to new risk assessment: {Url}", navigationUrl);
+        _logger.LogInformation("Navigating to new risk assessment: {Url}", navigationUrl);
 
         await DelayAndNavigate(navigationUrl);
     }
@@ -831,6 +809,6 @@ public partial class ReportValidation : ComponentBase
     private async Task DelayAndNavigate(string url)
     {
         await Task.Delay(1000);
-        Navigation.NavigateToSecure(url); // Use secure navigation consistently
+        _navigation.NavigateToSecure(url); // Use secure navigation consistently
     }
 }

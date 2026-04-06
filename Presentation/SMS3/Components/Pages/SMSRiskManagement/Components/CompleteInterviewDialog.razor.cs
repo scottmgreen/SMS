@@ -5,10 +5,10 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 public partial class CompleteInterviewDialog : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
-    [Inject] private ILogger<CompleteInterviewDialog> Logger { get; set; } = default!;
-    [Inject] private DialogService DialogService { get; set; } = default!;
+    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private ILogger<CompleteInterviewDialog> _logger { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
     #region Parameters
@@ -53,7 +53,7 @@ public partial class CompleteInterviewDialog : ComponentBase
         {
             if (string.IsNullOrWhiteSpace(model.InvestigatorNotes))
             {
-                await NotificationHelper.ShowErrorAsync("Investigator notes are required to complete the interview");
+                await _notificationHelper.ShowErrorAsync("Investigator notes are required to complete the interview");
                 return;
             }
 
@@ -70,7 +70,7 @@ public partial class CompleteInterviewDialog : ComponentBase
 
             if (completeResult.IsFailure)
             {
-                await NotificationHelper.ShowErrorAsync($"Failed to complete interview: {completeResult.Error?.Message}");
+                await _notificationHelper.ShowErrorAsync($"Failed to complete interview: {completeResult.Error?.Message}");
                 return;
             }
 
@@ -83,23 +83,23 @@ public partial class CompleteInterviewDialog : ComponentBase
 
             // Save interview
             var updateCommand = new UpdateInterviewCommand(Interview);
-            var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+            var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                Logger.LogInformation("Interview completed successfully: {Code}", Interview.Code);
-                await NotificationHelper.ShowSuccessAsync("Interview completed successfully");
-                DialogService.Close(true);
+                _logger.LogInformation("Interview completed successfully: {Code}", Interview.Code);
+                await _notificationHelper.ShowSuccessAsync("Interview completed successfully");
+                _dialogService.Close(true);
             }
             else
             {
-                await NotificationHelper.ShowErrorAsync($"Failed to save completed interview: {result.Error?.Message}");
+                await _notificationHelper.ShowErrorAsync($"Failed to save completed interview: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error completing interview");
-            await NotificationHelper.ShowErrorAsync("Error completing interview");
+            _logger.LogError(ex, "Error completing interview");
+            await _notificationHelper.ShowErrorAsync("Error completing interview");
         }
         finally
         {
