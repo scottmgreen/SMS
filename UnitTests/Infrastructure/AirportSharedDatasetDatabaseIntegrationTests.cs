@@ -3,7 +3,7 @@ using Microsoft.Extensions.Logging;
 
 using SMS_Domain.Entities;
 
-using SMS_Infrastructure.Repositories;
+using SMS_Infrastructure.Persistence;
 using SMS_Infrastructure.Services;
 
 namespace PDXSMS_UnitTests.Infrastructure;
@@ -66,7 +66,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
         result.IsSuccess.Should().BeTrue("Repository creation should succeed");
         result.Value.Should().NotBeNull();
         result.Value!.Code.Should().NotBe(testDataset.Code);
-        result.Value.ReportID.Should().Be(testDataset.ReportID);
+        result.Value.ReportCode.Should().Be(testDataset.ReportCode);
         result.Value.PrivateNarrative.Should().Be(testDataset.PrivateNarrative);
 
         _logger.LogInformation("Repository successfully created airport shared dataset with ID: {Id}", result.Value.Id);
@@ -88,7 +88,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
         try
         {
             // Act
-            var result = await _airportSharedDatasetRepository.GetAirportSharedDatasetByIdAsync(createdDatasetId);
+            var result = await _airportSharedDatasetRepository.GetAirportSharedDatasetByCodeAsync(createdDatasetId);
 
             // Assert
             result.Should().NotBeNull();
@@ -191,7 +191,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
         deleteResult.Value.Should().BeTrue();
 
         // Verify dataset is actually deleted
-        var getResult = await _airportSharedDatasetRepository.GetAirportSharedDatasetByIdAsync(datasetId);
+        var getResult = await _airportSharedDatasetRepository.GetAirportSharedDatasetByCodeAsync(datasetId);
         getResult.IsSuccess.Should().BeFalse("Dataset should no longer exist after deletion");
     }
 
@@ -214,7 +214,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
         result.IsSuccess.Should().BeTrue("DataService creation should succeed");
         result.Value.Should().NotBeNull();
         result.Value!.Code.Should().NotBe(testDataset.Code);
-        result.Value.ReportID.Should().Be(testDataset.ReportID);
+        result.Value.ReportCode.Should().Be(testDataset.ReportCode);
         //result.Value.Name.Should().Be(testDataset.Name);
 
         _logger.LogInformation("DataService successfully created airport shared dataset with ID: {Id}", result.Value.Id);
@@ -236,7 +236,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
         try
         {
             // Act
-            var result = await _airportSharedDatasetDataService.GetAirportSharedDatasetByIdAsync(createdDatasetId);
+            var result = await _airportSharedDatasetDataService.GetAirportSharedDatasetByCodeAsync(createdDatasetId);
 
             // Assert
             result.Should().NotBeNull();
@@ -336,7 +336,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
         deleteResult.Value.Should().BeTrue();
 
         // Verify deletion via repository
-        var getResult = await _airportSharedDatasetRepository.GetAirportSharedDatasetByIdAsync(datasetId);
+        var getResult = await _airportSharedDatasetRepository.GetAirportSharedDatasetByCodeAsync(datasetId);
         getResult.IsSuccess.Should().BeFalse("Dataset should no longer exist after DataService deletion");
     }
 
@@ -361,7 +361,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
             var createdId = new AirportSharedDatasetID(createResult.Value!.Code);
 
             // Read via Repository
-            var readResult = await _airportSharedDatasetRepository.GetAirportSharedDatasetByIdAsync(createdId);
+            var readResult = await _airportSharedDatasetRepository.GetAirportSharedDatasetByCodeAsync(createdId);
 
             // Assert
             readResult.IsSuccess.Should().BeTrue("Repository should read DataService-created dataset");

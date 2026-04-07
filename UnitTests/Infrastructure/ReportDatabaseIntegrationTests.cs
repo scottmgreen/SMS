@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
-using SMS_Infrastructure.Repositories;
+
+using SMS_Infrastructure.Persistence;
 using SMS_Infrastructure.Services;
 
 namespace PDXSMS_UnitTests.Infrastructure;
@@ -85,7 +86,7 @@ public class ReportDatabaseIntegrationTests : DatabaseTestBase
         try
         {
             // Act
-            var result = await _reportRepository.GetReportByIdAsync(createdReportId);
+            var result = await _reportRepository.GetReportByCodeAsync(createdReportId);
 
             // Assert
             result.Should().NotBeNull();
@@ -188,7 +189,7 @@ public class ReportDatabaseIntegrationTests : DatabaseTestBase
         deleteResult.Value.Should().BeTrue();
 
         // Verify report is actually deleted
-        var getResult = await _reportRepository.GetReportByIdAsync(reportId);
+        var getResult = await _reportRepository.GetReportByCodeAsync(reportId);
         getResult.IsSuccess.Should().BeFalse("Report should no longer exist after deletion");
     }
 
@@ -232,7 +233,7 @@ public class ReportDatabaseIntegrationTests : DatabaseTestBase
         try
         {
             // Act
-            var result = await _reportDataService.GetReportByIdAsync(createdReportId);
+            var result = await _reportDataService.GetReportByCodeAsync(createdReportId);
 
             // Assert
             result.Should().NotBeNull();
@@ -332,7 +333,7 @@ public class ReportDatabaseIntegrationTests : DatabaseTestBase
         deleteResult.Value.Should().BeTrue();
 
         // Verify deletion via repository
-        var getResult = await _reportRepository.GetReportByIdAsync(reportId);
+        var getResult = await _reportRepository.GetReportByCodeAsync(reportId);
         getResult.IsSuccess.Should().BeFalse("Report should no longer exist after DataService deletion");
     }
 
@@ -357,7 +358,7 @@ public class ReportDatabaseIntegrationTests : DatabaseTestBase
             var createdId = new ReportID(createResult.Value!.Code);
 
             // Read via Repository
-            var readResult = await _reportRepository.GetReportByIdAsync(createdId);
+            var readResult = await _reportRepository.GetReportByCodeAsync(createdId);
 
             // Assert
             readResult.IsSuccess.Should().BeTrue("Repository should read DataService-created report");

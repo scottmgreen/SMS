@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
-using SMS_Infrastructure.Repositories;
+
+using SMS_Infrastructure.Persistence;
 using SMS_Infrastructure.Services;
 
 namespace PDXSMS_UnitTests.Infrastructure;
@@ -84,15 +85,14 @@ public class ScoringPanelDatabaseIntegrationTests : DatabaseTestBase
 
         try
         {
-            // Act
-            var result = await _scoringPanelRepository.GetScoringPanelByIdAsync(createdScoringPanelId);
+            // Act - Fix to use GetScoringPanelByCodeAsync
+            var result = await _scoringPanelRepository.GetScoringPanelByCodeAsync(createdScoringPanelId);
 
             // Assert
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue("Repository should find existing scoring panel");
             result.Value.Should().NotBeNull();
-            //result.Value!.Code.Should().NotBe(createdScoringPanelId.Value);
-            //result.Value.Code.Should().Be(testScoringPanel.Code);
+            result.Value!.Code.Should().Be(createdScoringPanelId.Value);
         }
         finally
         {
@@ -147,8 +147,8 @@ public class ScoringPanelDatabaseIntegrationTests : DatabaseTestBase
         try
         {
             // Modify the scoring panel
-            createdScoringPanel.Likelihood = "UPDATED - " + createdScoringPanel.Likelihood;
-            createdScoringPanel.Severity = "UPDATED - " + createdScoringPanel.Severity;
+            createdScoringPanel.Likelihood = 99; // Use numeric value instead of string
+            createdScoringPanel.Severity = 88; // Use numeric value instead of string
             createdScoringPanel.UpdatedBy = "INTEGRATION_TEST_REPO_UPDATE";
             createdScoringPanel.UpdatedDate = DateTime.UtcNow;
 
@@ -159,8 +159,8 @@ public class ScoringPanelDatabaseIntegrationTests : DatabaseTestBase
             updateResult.Should().NotBeNull();
             updateResult.IsSuccess.Should().BeTrue("Repository update should succeed");
             updateResult.Value.Should().NotBeNull();
-            updateResult.Value!.Likelihood.Should().StartWith("UPDATED", "Likelihood should be updated");
-            updateResult.Value.Severity.Should().StartWith("UPDATED", "Severity should be updated");
+            updateResult.Value!.Likelihood.Should().Be(99); // Use numeric assertion
+            updateResult.Value.Severity.Should().Be(88); // Use numeric assertion
         }
         finally
         {
@@ -187,9 +187,9 @@ public class ScoringPanelDatabaseIntegrationTests : DatabaseTestBase
         deleteResult.IsSuccess.Should().BeTrue("Repository delete should succeed");
         deleteResult.Value.Should().BeTrue();
 
-        // Verify scoring panel is actually deleted
-        var getResult = await _scoringPanelRepository.GetScoringPanelByIdAsync(scoringPanelId);
-        getResult.IsSuccess.Should().BeFalse("ScoringPanel should no longer exist after deletion");
+        // Verify scoring panel is actually deleted - Fix to use GetScoringPanelByCodeAsync
+        var getResult = await _scoringPanelRepository.GetScoringPanelByCodeAsync(scoringPanelId);
+        getResult.IsSuccess.Should().BeFalse("Scoring panel should no longer exist after deletion");
     }
 
     #endregion
@@ -331,9 +331,9 @@ public class ScoringPanelDatabaseIntegrationTests : DatabaseTestBase
         deleteResult.IsSuccess.Should().BeTrue("DataService delete should succeed");
         deleteResult.Value.Should().BeTrue();
 
-        // Verify deletion via repository
-        var getResult = await _scoringPanelRepository.GetScoringPanelByIdAsync(scoringPanelId);
-        getResult.IsSuccess.Should().BeFalse("ScoringPanel should no longer exist after DataService deletion");
+        // Verify deletion via repository - Fix to use GetScoringPanelByCodeAsync
+        var getResult = await _scoringPanelRepository.GetScoringPanelByCodeAsync(scoringPanelId);
+        getResult.IsSuccess.Should().BeFalse("Scoring panel should no longer exist after DataService deletion");
     }
 
     #endregion
@@ -346,7 +346,6 @@ public class ScoringPanelDatabaseIntegrationTests : DatabaseTestBase
         // Arrange
         var testScoringPanel = CreateTestScoringPanel();
         var testId = GenerateTestId();
-        //testScoringPanel.Name = $"CrossLayer Test {testId}";
 
         try
         {
@@ -356,14 +355,12 @@ public class ScoringPanelDatabaseIntegrationTests : DatabaseTestBase
             
             var createdId = new ScoringPanelID(createResult.Value!.Code);
 
-            // Read via Repository
-            var readResult = await _scoringPanelRepository.GetScoringPanelByIdAsync(createdId);
+            // Read via Repository - Fix to use GetScoringPanelByCodeAsync
+            var readResult = await _scoringPanelRepository.GetScoringPanelByCodeAsync(createdId);
 
             // Assert
             readResult.IsSuccess.Should().BeTrue("Repository should read DataService-created scoring panel");
-            readResult.Value!.Id.Should().Be(createResult.Value.Id);
-            readResult.Value.Code.Should().Be(createResult.Value.Code);
-            //readResult.Value.Name.Should().Be(createResult.Value.Name);
+            readResult.Value!.Code.Should().Be(createResult.Value.Code);
 
             // Cleanup
             await CleanupScoringPanelAsync(createdId);

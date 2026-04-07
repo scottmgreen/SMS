@@ -2,10 +2,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SMS_Infrastructure.Configuration;
-using SMS_Infrastructure.Repositories;
 using SMS_Infrastructure.Services;
 using SMS_Shared.Configuration;
 using SMS_Domain.Entities;
+using SMS_Domain.Enums; // Add this for enum types
+using SMS_Infrastructure.Persistence;
 
 namespace PDXSMS_UnitTests.Infrastructure;
 
@@ -198,7 +199,7 @@ public abstract class DatabaseTestBase : IDisposable
         var dataset = new AirportSharedDataset(tempId)
         {
             Code = testId,
-            ReportID = GenerateTestId("RP"),
+            ReportCode = GenerateTestId("RP"),
             PrivateNarrative = $"Test airport shared dataset - {testId}",
             SharedNarrative = $"Test shared narrative - {testId}",
             CreatedBy = "INTEGRATION_TEST",
@@ -243,9 +244,9 @@ public abstract class DatabaseTestBase : IDisposable
             Code = testId,
             HazardCode = GenerateTestId("HZ"),
             SMSUserCode = GenerateTestId("SMS"),
-            Likelihood = "Medium",
-            Severity = "High",
-            Score = "75",
+            Likelihood = 4,
+            Severity = 3,
+            Score = 3,
             CreatedBy = "INTEGRATION_TEST",
             CreatedDate = DateTime.UtcNow
         };
@@ -275,72 +276,61 @@ public abstract class DatabaseTestBase : IDisposable
     /// <summary>
     /// Creates a test risk analysis entity with unique values
     /// </summary>
-    protected RiskAnalysis CreateTestRiskAnalysis()
+    protected RiskAnalysis CreateTestRiskAnalysis(string? testId = null)
     {
-        var testId = GenerateTestId();
-        var tempId = new RiskAnalysisID($"RA-{testId}");
-        
-        var riskAnalysis = new RiskAnalysis(tempId)
+        testId ??= GenerateTestId("RA");
+        var riskAnalysisId = new RiskAnalysisID(testId);
+        return new RiskAnalysis(riskAnalysisId)
         {
-            Code = $"RA-{testId}",
-            Name = $"Test Risk Analysis {testId}",
-            Description = $"Test risk analysis created for integration testing - {testId}",
-            HazardCode = $"HZ-{testId}",
-            Status = "Active",
-            Stage = "Analysis",
-            WorstCredibleOutcome = "Equipment damage",
-            RootCause = "Human error",
+            Code = testId,
+            AssessmentType = RiskAnalysisType.Initial,
+            HazardCode = GenerateTestId("HZ"),
+            RiskAssessmentCode = GenerateTestId("RASS"),
+            InitialWorstCredibleOutcome = "Equipment damage",
+            InitialRootCause = "Human error",
+            InitialAdditionalComments = $"Test risk analysis created for integration testing - {testId}",
+            ResidualWorstCredibleOutcome = "Minor damage",
+            ResidualRootCause = "Process improvement",
+            ResidualAdditionalComments = "Post-mitigation analysis notes",
             CreatedBy = "INTEGRATION_TEST",
             CreatedDate = DateTime.UtcNow
         };
-
-        return riskAnalysis;
     }
 
     /// <summary>
-    /// Creates a test risk assessment entity with unique values
+    /// Creates a test RiskAssessment entity for integration testing
     /// </summary>
-    protected RiskAssessment CreateTestRiskAssessment()
+    protected RiskAssessment CreateTestRiskAssessment(string? testId = null)
     {
-        var testId = GenerateTestId();
-        var tempId = new RiskAssessmentID($"RAS-{testId}");
-        
-        var riskAssessment = new RiskAssessment(tempId)
+        testId ??= GenerateTestId("RASS");
+        var riskAssessmentId = new RiskAssessmentID(testId);
+        return new RiskAssessment(riskAssessmentId)
         {
-            Code = $"RAS-{testId}",
-            Name = $"Test Risk Assessment {testId}",
-            Description = $"Test risk assessment created for integration testing - {testId}",
-            HazardCode = $"HZ-{testId}",
-            AssessmentType = "Initial",
-            Status = "Active",
-            Stage = "Assessment",
+            Code = testId,
+            HazardCode = GenerateTestId("HZ"),
+            AssessmentType = RiskAssessmentType.Initial, // Use actual enum value
+            Status = RiskAssessmentStatus.AssessmentComplete, // Use actual enum value
+            Stage = RiskAssessmentStage.DescribingSystem, // Use actual enum value
             CreatedBy = "INTEGRATION_TEST",
             CreatedDate = DateTime.UtcNow
         };
-
-        return riskAssessment;
     }
 
     /// <summary>
-    /// Creates a test report validation entity with unique values
+    /// Creates a test ReportValidation entity for integration testing
     /// </summary>
-    protected ReportValidation CreateTestReportValidation()
+    protected ReportValidation CreateTestReportValidation(string? testId = null)
     {
-        var testId = GenerateTestId();
-        var tempId = new ReportValidationID($"RV-{testId}");
-        
-        var reportValidation = new ReportValidation(tempId)
+        testId ??= GenerateTestId("RV");
+        var reportValidationId = new ReportValidationID(testId);
+        return new ReportValidation(reportValidationId)
         {
-            Code = $"RV-{testId}",
-            ReportCode = $"RPT-{testId}",
-            ValidationDecision = "Approved",
-            Status = "Active",
-            Stage = "Validation",
+            Code = testId,
+            ReportCode = GenerateTestId("RP"),
+            Status = ReportValidationStatus.ValidationNeeded, // Use actual enum value
             CreatedBy = "INTEGRATION_TEST",
             CreatedDate = DateTime.UtcNow
         };
-
-        return reportValidation;
     }
 
     /// <summary>

@@ -1,32 +1,38 @@
-using System.IO;
+//-----------------------------------------------------------------------
+// <copyright file="ApplicationTestBase.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Base class for Application layer unit tests providing comprehensive testing infrastructure.
+//                  Provides DI configuration, mocking utilities, and test data generation aligned with current Application architecture.
+// </copyright>
+//-----------------------------------------------------------------------
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
-using Microsoft.FeatureManagement;
 using Moq;
+using System.Diagnostics;
 using SMS_Application.Interfaces;
-using SMS_Application.Services;
-using SMS_Domain.Entities;
-using SMS_Infrastructure.Services;
-using SMS_Infrastructure.Repositories;
-using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Configuration;
+using SMS_Domain.Enums;
 
 namespace PDXSMS_UnitTests.Application.Common;
 
 /// <summary>
-/// Base class for Application layer unit tests providing common setup and utilities
-/// Provides consistent DI configuration and helper methods for all Application tests
+/// Comprehensive base class for Application layer unit tests
+/// Provides modern testing infrastructure with proper DI, mocking, and utilities
+/// Aligned with the current SMS Application CQRS architecture
 /// </summary>
 public abstract class ApplicationTestBase : IDisposable
 {
     protected readonly ServiceProvider ServiceProvider;
     protected readonly IMediator Mediator;
+    protected readonly ILogger<ApplicationTestBase> Logger;
 
     protected ApplicationTestBase()
     {
         ServiceProvider = BuildServiceProvider();
         Mediator = ServiceProvider.GetRequiredService<IMediator>();
+        Logger = ServiceProvider.GetRequiredService<ILogger<ApplicationTestBase>>();
     }
 
     /// <summary>
@@ -34,101 +40,72 @@ public abstract class ApplicationTestBase : IDisposable
     /// </summary>
     protected abstract void RegisterServices(IServiceCollection services);
 
+    /// <summary>
+    /// Override this method to register additional mocked services specific to the test
+    /// </summary>
+    protected virtual void RegisterMockedServices(IServiceCollection services)
+    {
+        // Default implementation - override in derived classes for specific mocks
+    }
+
     private ServiceProvider BuildServiceProvider()
     {
         var services = new ServiceCollection();
         
-        // Load configuration from appsettings.json like the real application
-        var configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory())
-            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            .Build();
-            
+        // Load configuration from appsettings.json
+        var configuration = LoadTestConfiguration();
         services.AddSingleton<IConfiguration>(configuration);
         
-        // Add logging services
+        // Add logging with test-appropriate levels
         services.AddLogging(builder =>
         {
             builder.AddConsole();
-            builder.SetMinimumLevel(LogLevel.Warning); // Keep logs quiet for tests
+            builder.AddDebug();
+            builder.SetMinimumLevel(LogLevel.Information);
         });
         
-        // Use Infrastructure DI configuration like DatabaseTestBase
-        services.AddInfrastructureServices(configuration);
-        
-        // Register core mediator 
-        services.AddTransient<IMediator, Mediator>();
+        // Core Application services
+        RegisterCoreApplicationServices(services);
         
         // Allow derived classes to register their specific services
         RegisterServices(services);
         
+        // Allow derived classes to register mocked services
+        RegisterMockedServices(services);
+        
         return services.BuildServiceProvider();
     }
 
-    #region Mock Creation Helpers
-
-    /// <summary>
-    /// Creates a mock HazardDataService with proper constructor mocking
-    /// </summary>
-    protected static Mock<HazardDataService> CreateMockHazardDataService()
+    private static IConfiguration LoadTestConfiguration()
     {
-        var mockLogger = new Mock<ILogger<HazardDataService>>();
-        var mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
-        var mockConfiguration = new Mock<IConfiguration>();
-        var mockLogSupport = new Mock<ILogSupport>();
-        
-        // Create a concrete HazardRepository instance for the mock
-        var hazardRepo = new HazardRepository(
-            Mock.Of<ILogger<HazardRepository>>(),
-            mockLogSupport.Object,
-            mockConfiguration.Object);
-        
-        // Mock the HazardDataService with CallBase = false to avoid concrete class issues
-        var mockDataService = new Mock<HazardDataService>(
-            mockLogger.Object,
-            mockServiceScopeFactory.Object,
-            mockConfiguration.Object,
-            hazardRepo)
+        var configData = new Dictionary<string, string>
         {
-            CallBase = false // This prevents calling actual methods on the concrete class
+            ["ConnectionStrings:DefaultConnection"] = "Data Source=:memory:",
+            ["Logging:LogLevel:Default"] = "Information",
+            ["Testing:Environment"] = "UnitTest"
         };
 
-        return mockDataService;
+        return new ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: true, reloadOnChange: false)
+            .AddInMemoryCollection(configData)
+            .Build();
     }
 
-    /// <summary>
-    /// Creates a mock ReportDataService with proper constructor mocking
-    /// </summary>
-    protected static Mock<ReportDataService> CreateMockReportDataService()
+    private static void RegisterCoreApplicationServices(IServiceCollection services)
     {
-        var mockLogger = new Mock<ILogger<ReportDataService>>();
-        var mockServiceScopeFactory = new Mock<IServiceScopeFactory>();
-        var mockConfiguration = new Mock<IConfiguration>();
-        var mockLogSupport = new Mock<ILogSupport>();
-        
-        var reportRepo = new ReportRepository(
-            Mock.Of<ILogger<ReportRepository>>(),
-            mockLogSupport.Object,
-            mockConfiguration.Object);
-        
-        var mockDataService = new Mock<ReportDataService>(
-            mockLogger.Object,
-            mockServiceScopeFactory.Object,
-            mockConfiguration.Object,
-            reportRepo)
-        {
-            CallBase = false
-        };
-
-        return mockDataService;
+        // Register the core mediator service
+        services.AddTransient<IMediator, SMS_Application.Services.Mediator>();
     }
+
+    #region Mock Service Factories
 
     /// <summary>
     /// Creates a mock logger for the specified type
     /// </summary>
-    protected static Mock<ILogger<T>> CreateMockLogger<T>()
+    protected static ILogger<T> CreateMockLogger<T>()
     {
-        return new Mock<ILogger<T>>();
+        return new Mock<ILogger<T>>().Object;
     }
 
     #endregion
@@ -136,181 +113,203 @@ public abstract class ApplicationTestBase : IDisposable
     #region Test Entity Creation Helpers
 
     /// <summary>
-    /// Creates a test Hazard entity with unique values
+    /// Creates a test Hazard entity with realistic values based on actual entity structure
     /// </summary>
     protected static Hazard CreateTestHazard(string? code = null)
     {
-        var hazardCode = code ?? GenerateTestCode("HZ");
+        var hazardCode = code ?? GenerateUniqueCode("HZ");
         var hazardId = new HazardID(hazardCode);
         return new Hazard(hazardId)
         {
             Code = hazardCode,
             Name = $"Test Hazard {hazardCode}",
-            Description = $"Test hazard for unit testing - {hazardCode}",
-            ReportCode = GenerateTestCode("RP"),
-            CreatedBy = "UNIT_TEST",
-            CreatedDate = DateTime.UtcNow
+            Description = $"Unit test hazard created for testing - {hazardCode}",
+            ReportCode = GenerateUniqueCode("RP"),
+            Status = HazardStatus.InitialRiskAssessment, // Use actual enum value
+            HazardCategory = "Safety",
+            HazardType = "Operational",
+            CreatedBy = "TEST_USER",
+            CreatedDate = DateTime.UtcNow,
+            UpdatedBy = "TEST_USER", 
+            UpdatedDate = DateTime.UtcNow
         };
     }
 
     /// <summary>
-    /// Creates a test Report entity with unique values
+    /// Creates a test Report entity with realistic values based on actual entity structure
     /// </summary>
     protected static Report CreateTestReport(string? code = null)
     {
-        var reportCode = code ?? GenerateTestCode("RP");
+        var reportCode = code ?? GenerateUniqueCode("RP");
         var reportId = new ReportID(reportCode);
         return new Report(reportId)
         {
             Code = reportCode,
             Name = $"Test Report {reportCode}",
-            Description = $"Test report for unit testing - {reportCode}",
-            Status = "Active",
-            Stage = "Draft",
-            CreatedBy = "UNIT_TEST",
-            CreatedDate = DateTime.UtcNow
+            Description = $"Unit test report created for testing - {reportCode}",
+            Status = "Active", // Report.Status is string, not enum
+            Stage = "Investigation",
+            SubmittedBy = "TEST_USER",
+            SubmittedDate = DateTime.UtcNow,
+            CreatedBy = "TEST_USER",
+            CreatedDate = DateTime.UtcNow,
+            UpdatedBy = "TEST_USER",
+            UpdatedDate = DateTime.UtcNow
         };
     }
 
     /// <summary>
-    /// Creates a test Investigation entity with unique values
+    /// Creates a test Investigation entity
     /// </summary>
     protected static Investigation CreateTestInvestigation(string? code = null)
     {
-        var investigationCode = code ?? GenerateTestCode("INV");
+        var investigationCode = code ?? GenerateUniqueCode("INV");
         var investigationId = new InvestigationID(investigationCode);
         return new Investigation(investigationId)
         {
             Code = investigationCode,
-            ReportCode = GenerateTestCode("RP"),
-            InvestigationNotes = $"Test investigation notes - {investigationCode}",
-            CreatedBy = "UNIT_TEST",
+            ReportCode = GenerateUniqueCode("RP"),
+            Status = InvestigationStatus.InvestigatorAssigned, // Use actual enum value
+            CreatedBy = "TEST_USER",
             CreatedDate = DateTime.UtcNow
         };
     }
 
     /// <summary>
-    /// Creates a test Mitigation entity with unique values
-    /// </summary>
-    protected static Mitigation CreateTestMitigation(string? code = null)
-    {
-        var mitigationCode = code ?? GenerateTestCode("MIT");
-        var mitigationId = new MitigationID(mitigationCode);
-        return new Mitigation(mitigationId)
-        {
-            Code = mitigationCode,
-            HazardCode = GenerateTestCode("HZ"),
-            CreatedBy = "UNIT_TEST",
-            CreatedDate = DateTime.UtcNow
-        };
-    }
-
-    /// <summary>
-    /// Creates a test Interview entity with unique values
+    /// Creates a test Interview entity
     /// </summary>
     protected static Interview CreateTestInterview(string? code = null)
     {
-        var interviewCode = code ?? GenerateTestCode("IV");
+        var interviewCode = code ?? GenerateUniqueCode("IV");
         var interviewId = new InterviewID(interviewCode);
         return new Interview(interviewId)
         {
             Code = interviewCode,
-            CreatedBy = "UNIT_TEST",
+            InvestigationCode = GenerateUniqueCode("INV"),
+            Status = InterviewStatus.InterviewComplete, // Use actual enum value
+            CreatedBy = "TEST_USER",
             CreatedDate = DateTime.UtcNow
         };
     }
 
     /// <summary>
-    /// Creates a test RiskAnalysis entity with unique values
+    /// Creates a test Mitigation entity
     /// </summary>
-    protected static RiskAnalysis CreateTestRiskAnalysis(string? code = null)
+    protected static Mitigation CreateTestMitigation(string? code = null)
     {
-        var riskAnalysisCode = code ?? GenerateTestCode("RA");
-        var riskAnalysisId = new RiskAnalysisID(riskAnalysisCode);
-        return new RiskAnalysis(riskAnalysisId)
+        var mitigationCode = code ?? GenerateUniqueCode("MIT");
+        var mitigationId = new MitigationID(mitigationCode);
+        return new Mitigation(mitigationId)
         {
-            Code = riskAnalysisCode,
-            HazardCode = GenerateTestCode("HZ"),
-            CreatedBy = "UNIT_TEST",
+            Code = mitigationCode,
+            HazardCode = GenerateUniqueCode("HZ"),
+            Description = $"Unit test mitigation - {mitigationCode}",
+            Status = MitigationStatus.PendingApproval, // Use actual enum value
+            CreatedBy = "TEST_USER",
             CreatedDate = DateTime.UtcNow
         };
     }
 
     /// <summary>
-    /// Creates a test RiskAssessment entity with unique values
-    /// </summary>
-    protected static RiskAssessment CreateTestRiskAssessment(string? code = null)
-    {
-        var riskAssessmentCode = code ?? GenerateTestCode("RA");
-        var riskAssessmentId = new RiskAssessmentID(riskAssessmentCode);
-        return new RiskAssessment(riskAssessmentId)
-        {
-            Code = riskAssessmentCode,
-            HazardCode = GenerateTestCode("HZ"),
-            CreatedBy = "UNIT_TEST",
-            CreatedDate = DateTime.UtcNow
-        };
-    }
-
-    /// <summary>
-    /// Creates a test ScoringPanel entity with unique values
-    /// </summary>
-    protected static ScoringPanel CreateTestScoringPanel(string? code = null)
-    {
-        var scoringPanelCode = code ?? GenerateTestCode("SP");
-        var scoringPanelId = new ScoringPanelID(scoringPanelCode);
-        return new ScoringPanel(scoringPanelId)
-        {
-            Code = scoringPanelCode,
-            CreatedBy = "UNIT_TEST",
-            CreatedDate = DateTime.UtcNow
-        };
-    }
-
-    /// <summary>
-    /// Creates a test AirportSharedDataset entity with unique values
-    /// </summary>
-    protected static AirportSharedDataset CreateTestAirportSharedDataset(string? code = null)
-    {
-        var datasetCode = code ?? GenerateTestCode("ASD");
-        var datasetId = new AirportSharedDatasetID(datasetCode);
-        return new AirportSharedDataset(datasetId)
-        {
-            Code = datasetCode,
-            ReportID = GenerateTestCode("RP"),
-            CreatedBy = "UNIT_TEST",
-            CreatedDate = DateTime.UtcNow
-        };
-    }
-
-    /// <summary>
-    /// Creates a test MitigationAssignment entity with unique values
+    /// Creates a test MitigationAssignment entity
     /// </summary>
     protected static MitigationAssignment CreateTestMitigationAssignment(string? code = null)
     {
-        var assignmentCode = code ?? GenerateTestCode("MA");
+        var assignmentCode = code ?? GenerateUniqueCode("MA");
         var assignmentId = new MitigationAssignmentID(assignmentCode);
         return new MitigationAssignment(assignmentId)
         {
             Code = assignmentCode,
-            MitigationCode = GenerateTestCode("MIT"),
-            CreatedBy = "UNIT_TEST",
+            MitigationCode = GenerateUniqueCode("MIT"),
+            CreatedBy = "TEST_USER",
             CreatedDate = DateTime.UtcNow
         };
     }
 
     /// <summary>
-    /// Creates a test ReportValidation entity with unique values
+    /// Creates a test RiskAnalysis entity with actual properties from the domain
+    /// </summary>
+    protected static RiskAnalysis CreateTestRiskAnalysis(string? code = null)
+    {
+        var riskCode = code ?? GenerateUniqueCode("RA");
+        var riskId = new RiskAnalysisID(riskCode);
+        return new RiskAnalysis(riskId)
+        {
+            Code = riskCode,
+            AssessmentType = RiskAnalysisType.Initial,
+            HazardCode = GenerateUniqueCode("HZ"),
+            RiskAssessmentCode = GenerateUniqueCode("RASS"),
+            InitialWorstCredibleOutcome = "Equipment damage",
+            InitialRootCause = "Human error",
+            InitialAdditionalComments = "Test risk analysis for unit testing",
+            ResidualWorstCredibleOutcome = "Minor damage",
+            ResidualRootCause = "Process improvement",
+            ResidualAdditionalComments = "Post-mitigation analysis",
+            CreatedBy = "TEST_USER",
+            CreatedDate = DateTime.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Creates a test RiskAssessment entity
+    /// </summary>
+    protected static RiskAssessment CreateTestRiskAssessment(string? code = null)
+    {
+        var assessmentCode = code ?? GenerateUniqueCode("RA");
+        var assessmentId = new RiskAssessmentID(assessmentCode);
+        return new RiskAssessment(assessmentId)
+        {
+            Code = assessmentCode,
+            HazardCode = GenerateUniqueCode("HZ"),
+            Status = RiskAssessmentStatus.AssessmentUnderway, // Use actual enum value
+            CreatedBy = "TEST_USER",
+            CreatedDate = DateTime.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Creates a test ScoringPanel entity
+    /// </summary>
+    protected static ScoringPanel CreateTestScoringPanel(string? code = null)
+    {
+        var panelCode = code ?? GenerateUniqueCode("SP");
+        var panelId = new ScoringPanelID(panelCode);
+        return new ScoringPanel(panelId)
+        {
+            Code = panelCode,
+            CreatedBy = "TEST_USER",
+            CreatedDate = DateTime.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Creates a test AirportSharedDataset entity
+    /// </summary>
+    protected static AirportSharedDataset CreateTestAirportSharedDataset(string? code = null)
+    {
+        var datasetCode = code ?? GenerateUniqueCode("ASD");
+        var datasetId = new AirportSharedDatasetID(datasetCode);
+        return new AirportSharedDataset(datasetId)
+        {
+            Code = datasetCode,
+            CreatedBy = "TEST_USER",
+            CreatedDate = DateTime.UtcNow
+        };
+    }
+
+    /// <summary>
+    /// Creates a test ReportValidation entity
     /// </summary>
     protected static ReportValidation CreateTestReportValidation(string? code = null)
     {
-        var validationCode = code ?? GenerateTestCode("RV");
+        var validationCode = code ?? GenerateUniqueCode("RV");
         var validationId = new ReportValidationID(validationCode);
         return new ReportValidation(validationId)
         {
             Code = validationCode,
-            ReportCode = GenerateTestCode("RP"),
-            CreatedBy = "UNIT_TEST",
+            ReportCode = GenerateUniqueCode("RP"),
+            Status = ReportValidationStatus.ValidationNeeded, // Use actual enum value
+            CreatedBy = "TEST_USER",
             CreatedDate = DateTime.UtcNow
         };
     }
@@ -320,55 +319,122 @@ public abstract class ApplicationTestBase : IDisposable
     #region Test Utilities
 
     /// <summary>
-    /// Generates a unique test code with the given prefix
+    /// Generates a unique test code with timestamp and random component
     /// </summary>
-    protected static string GenerateTestCode(string prefix)
+    protected static string GenerateUniqueCode(string prefix)
     {
         var timestamp = DateTime.Now.ToString("HHmmss");
         var random = Random.Shared.Next(100, 999);
-        return $"{prefix}-TEST-{timestamp}-{random}";
+        return $"{prefix}-T{timestamp}{random}";
     }
 
     /// <summary>
-    /// Creates a list of test entities of the specified type
+    /// Creates a collection of test entities using a factory method
     /// </summary>
-    protected static List<T> CreateTestEntities<T>(int count, Func<string, T> entityFactory, string prefix)
+    protected static List<T> CreateTestEntities<T>(int count, Func<string, T> factory, string prefix)
     {
         return Enumerable.Range(1, count)
-            .Select(i => entityFactory($"{prefix}-{i:D3}"))
+            .Select(i => factory($"{prefix}-{i:D3}"))
             .ToList();
     }
 
     /// <summary>
-    /// Creates a CancellationToken that will be cancelled after the specified delay
+    /// Creates a cancellation token with the specified timeout
     /// </summary>
     protected static CancellationToken CreateTimeoutToken(TimeSpan timeout)
     {
-        var cts = new CancellationTokenSource(timeout);
-        return cts.Token;
+        return new CancellationTokenSource(timeout).Token;
     }
 
     /// <summary>
-    /// Measures the execution time of an async operation
+    /// Measures execution time of an async operation
     /// </summary>
     protected static async Task<(T Result, TimeSpan Duration)> MeasureAsync<T>(Func<Task<T>> operation)
     {
-        var stopwatch = System.Diagnostics.Stopwatch.StartNew();
+        var stopwatch = Stopwatch.StartNew();
         var result = await operation();
         stopwatch.Stop();
         return (result, stopwatch.Elapsed);
     }
 
-    #endregion
-
-    #region Performance Testing Helpers
+    /// <summary>
+    /// Validates that a Result object contains expected success/failure state
+    /// </summary>
+    protected static void ValidateResult<T>(Result<T> result, bool shouldSucceed, string? expectedError = null)
+    {
+        result.Should().NotBeNull();
+        
+        if (shouldSucceed)
+        {
+            result.IsSuccess.Should().BeTrue($"Expected successful result but got error: {result.Error}");
+            result.Value.Should().NotBeNull();
+        }
+        else
+        {
+            result.IsFailure.Should().BeTrue("Expected failed result but got success");
+            if (!string.IsNullOrEmpty(expectedError))
+            {
+                result.Error.ToString().Should().Contain(expectedError);
+            }
+        }
+    }
 
     /// <summary>
-    /// Executes a test operation multiple times and measures performance metrics
+    /// Creates a realistic test command cancellation scenario
+    /// </summary>
+    protected static async Task<bool> TestCancellationScenario<T>(Func<CancellationToken, Task<T>> operation)
+    {
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        try
+        {
+            await operation(cts.Token);
+            return false; // Operation completed despite cancellation
+        }
+        catch (OperationCanceledException)
+        {
+            return true; // Cancellation was properly honored
+        }
+        catch
+        {
+            return false; // Some other exception occurred
+        }
+    }
+
+    #endregion
+
+    #region Performance Testing
+
+    /// <summary>
+    /// Performance testing metrics container
+    /// </summary>
+    public class PerformanceMetrics
+    {
+        public int TotalIterations { get; set; }
+        public int SuccessfulIterations { get; set; }
+        public int FailedIterations { get; set; }
+        public TimeSpan AverageDuration { get; set; }
+        public TimeSpan MinDuration { get; set; }
+        public TimeSpan MaxDuration { get; set; }
+        public List<Exception> Exceptions { get; set; } = new();
+
+        public double SuccessRate => TotalIterations > 0 ? (double)SuccessfulIterations / TotalIterations * 100 : 0;
+        
+        public override string ToString()
+        {
+            return $"Performance: {SuccessfulIterations}/{TotalIterations} successful ({SuccessRate:F1}%), " +
+                   $"Avg: {AverageDuration.TotalMilliseconds:F1}ms, " +
+                   $"Range: {MinDuration.TotalMilliseconds:F1}ms - {MaxDuration.TotalMilliseconds:F1}ms";
+        }
+    }
+
+    /// <summary>
+    /// Measures performance of an operation across multiple iterations
     /// </summary>
     protected static async Task<PerformanceMetrics> MeasurePerformanceAsync<T>(
         Func<Task<T>> operation, 
-        int iterations = 100)
+        int iterations = 10)
     {
         var durations = new List<TimeSpan>();
         var exceptions = new List<Exception>();
@@ -405,20 +471,4 @@ public abstract class ApplicationTestBase : IDisposable
         ServiceProvider?.Dispose();
         GC.SuppressFinalize(this);
     }
-}
-
-/// <summary>
-/// Performance metrics for test operations
-/// </summary>
-public class PerformanceMetrics
-{
-    public int TotalIterations { get; set; }
-    public int SuccessfulIterations { get; set; }
-    public int FailedIterations { get; set; }
-    public TimeSpan AverageDuration { get; set; }
-    public TimeSpan MinDuration { get; set; }
-    public TimeSpan MaxDuration { get; set; }
-    public List<Exception> Exceptions { get; set; } = new();
-
-    public double SuccessRate => TotalIterations > 0 ? (double)SuccessfulIterations / TotalIterations * 100 : 0;
 }

@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
-using SMS_Infrastructure.Repositories;
+
+using SMS_Infrastructure.Persistence;
 using SMS_Infrastructure.Services;
 
 namespace PDXSMS_UnitTests.Infrastructure;

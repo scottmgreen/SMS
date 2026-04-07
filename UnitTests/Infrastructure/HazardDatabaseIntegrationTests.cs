@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
-using SMS_Infrastructure.Repositories;
+
+using SMS_Infrastructure.Persistence;
 using SMS_Infrastructure.Services;
 
 namespace PDXSMS_UnitTests.Infrastructure;
@@ -85,7 +86,7 @@ public class HazardDatabaseIntegrationTests : DatabaseTestBase
         try
         {
             // Act
-            var result = await _hazardRepository.GetHazardByIdAsync(createdHazardId);
+            var result = await _hazardRepository.GetByIdAsync(createdHazardId);
 
             // Assert
             result.Should().NotBeNull();
@@ -188,7 +189,7 @@ public class HazardDatabaseIntegrationTests : DatabaseTestBase
         deleteResult.Value.Should().BeTrue();
 
         // Verify hazard is actually deleted
-        var getResult = await _hazardRepository.GetHazardByIdAsync(hazardId);
+        var getResult = await _hazardRepository.GetByIdAsync(hazardId);
         getResult.IsSuccess.Should().BeFalse("Hazard should no longer exist after deletion");
     }
 
@@ -232,7 +233,7 @@ public class HazardDatabaseIntegrationTests : DatabaseTestBase
         try
         {
             // Act
-            var result = await _hazardDataService.GetHazardByIdAsync(createdHazardId);
+            var result = await _hazardDataService.GetHazardByCodeAsync(createdHazardId);
 
             // Assert
             result.Should().NotBeNull();
@@ -332,7 +333,7 @@ public class HazardDatabaseIntegrationTests : DatabaseTestBase
         deleteResult.Value.Should().BeTrue();
 
         // Verify deletion via repository
-        var getResult = await _hazardRepository.GetHazardByIdAsync(hazardId);
+        var getResult = await _hazardRepository.GetByIdAsync(hazardId);
         getResult.IsSuccess.Should().BeFalse("Hazard should no longer exist after DataService deletion");
     }
 
@@ -357,7 +358,7 @@ public class HazardDatabaseIntegrationTests : DatabaseTestBase
             var createdId = new HazardID(createResult.Value!.Code);
 
             // Read via Repository
-            var readResult = await _hazardRepository.GetHazardByIdAsync(createdId);
+            var readResult = await _hazardRepository.GetByIdAsync(createdId);
 
             // Assert
             readResult.IsSuccess.Should().BeTrue("Repository should read DataService-created hazard");

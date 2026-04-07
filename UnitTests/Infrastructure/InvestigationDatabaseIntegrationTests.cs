@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
-using SMS_Infrastructure.Repositories;
+
+using SMS_Infrastructure.Persistence;
 using SMS_Infrastructure.Services;
 
 namespace PDXSMS_UnitTests.Infrastructure;
@@ -126,24 +127,22 @@ public class InvestigationDatabaseIntegrationTests : DatabaseTestBase
         var createResult = await _investigationRepository.CreateInvestigationAsync(testInvestigation);
         createResult.IsSuccess.Should().BeTrue();
         
-        var createdInvestigationId = new InvestigationID(createResult.Value!.Code);
+        var createdInvestigationCode = createResult.Value!.Code;
 
         try
         {
-            // Act
-            var result = await _investigationRepository.GetInvestigationByIdAsync(createdInvestigationId);
+            // Act - Use GetInvestigationByCodeAsync instead
+            var result = await _investigationRepository.GetInvestigationByCodeAsync(createdInvestigationCode);
 
             // Assert
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue("Repository should find existing investigation");
             result.Value.Should().NotBeNull();
-          //  result.Value!.Code.Should().Be(createdInvestigationId.Value);
-          //  result.Value.Code.Should().Be(testInvestigation.Code);
         }
         finally
         {
             // Cleanup
-            await CleanupInvestigationAsync(createdInvestigationId);
+            await CleanupInvestigationAsync(new InvestigationID(createdInvestigationCode));
         }
     }
 
@@ -231,8 +230,8 @@ public class InvestigationDatabaseIntegrationTests : DatabaseTestBase
         deleteResult.IsSuccess.Should().BeTrue("Repository delete should succeed");
         deleteResult.Value.Should().BeTrue();
 
-        // Verify investigation is actually deleted
-        var getResult = await _investigationRepository.GetInvestigationByIdAsync(investigationId);
+        // Verify investigation is actually deleted - Use GetInvestigationByCodeAsync
+        var getResult = await _investigationRepository.GetInvestigationByCodeAsync(createResult.Value.Code);
         getResult.IsSuccess.Should().BeFalse("Investigation should no longer exist after deletion");
     }
 
@@ -270,23 +269,23 @@ public class InvestigationDatabaseIntegrationTests : DatabaseTestBase
         var createResult = await _investigationDataService.CreateInvestigationAsync(testInvestigation);
         createResult.IsSuccess.Should().BeTrue();
         
-        var createdInvestigationId = new InvestigationID(createResult.Value!.Code);
+        var createdInvestigationCode = createResult.Value!.Code;
 
         try
         {
-            // Act
-            var result = await _investigationDataService.GetInvestigationByIdAsync(createdInvestigationId);
+            // Act - Use GetInvestigationByCodeAsync instead
+            var result = await _investigationDataService.GetInvestigationByCodeAsync(createdInvestigationCode);
 
             // Assert
             result.Should().NotBeNull();
             result.IsSuccess.Should().BeTrue("DataService should find existing investigation");
             result.Value.Should().NotBeNull();
-            result.Value!.Code.Should().Be(createdInvestigationId.Value);
+            result.Value!.Code.Should().Be(createdInvestigationCode);
         }
         finally
         {
             // Cleanup
-            await CleanupInvestigationAsync(createdInvestigationId);
+            await CleanupInvestigationAsync(new InvestigationID(createdInvestigationCode));
         }
     }
 
@@ -373,8 +372,8 @@ public class InvestigationDatabaseIntegrationTests : DatabaseTestBase
         deleteResult.IsSuccess.Should().BeTrue("DataService delete should succeed");
         deleteResult.Value.Should().BeTrue();
 
-        // Verify deletion via repository
-        var getResult = await _investigationRepository.GetInvestigationByIdAsync(investigationId);
+        // Verify deletion via repository - Use GetInvestigationByCodeAsync
+        var getResult = await _investigationRepository.GetInvestigationByCodeAsync(createResult.Value.Code);
         getResult.IsSuccess.Should().BeFalse("Investigation should no longer exist after DataService deletion");
     }
 
@@ -396,10 +395,10 @@ public class InvestigationDatabaseIntegrationTests : DatabaseTestBase
             var createResult = await _investigationDataService.CreateInvestigationAsync(testInvestigation);
             createResult.IsSuccess.Should().BeTrue();
             
-            var createdId = new InvestigationID(createResult.Value!.Code);
+            var createdCode = createResult.Value!.Code;
 
-            // Read via Repository
-            var readResult = await _investigationRepository.GetInvestigationByIdAsync(createdId);
+            // Read via Repository - Use GetInvestigationByCodeAsync
+            var readResult = await _investigationRepository.GetInvestigationByCodeAsync(createdCode);
 
             // Assert
             readResult.IsSuccess.Should().BeTrue("Repository should read DataService-created investigation");
@@ -407,7 +406,7 @@ public class InvestigationDatabaseIntegrationTests : DatabaseTestBase
             readResult.Value.InvestigationNotes.Should().Be(createResult.Value.InvestigationNotes);
 
             // Cleanup
-            await CleanupInvestigationAsync(createdId);
+            await CleanupInvestigationAsync(new InvestigationID(createdCode));
         }
         catch
         {
@@ -486,6 +485,123 @@ public class InvestigationDatabaseIntegrationTests : DatabaseTestBase
                 await CleanupInvestigationAsync(id);
             }
         }
+    }
+
+    #endregion
+
+    #region Investigation CRUD Operations
+
+    [Fact]
+    public async Task Investigation_CRUDOperations_ShouldPersistCorrectly()
+    {
+        // Arrange
+        var investigationCode = GenerateTestId("INV");
+        var testInvestigation = CreateTestInvestigation(); // Use parameterless method
+
+        // Act - Create
+        var createResult = await _investigationRepository.CreateInvestigationAsync(testInvestigation);
+        Assert.True(createResult.IsSuccess);
+
+        // Act - Read using Code
+        var result = await _investigationRepository.GetInvestigationByCodeAsync(testInvestigation.Code);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        var retrievedInvestigation = result.Value;
+        Assert.Equal(testInvestigation.Code, retrievedInvestigation.Code);
+        Assert.Equal(testInvestigation.InvestigationNotes, retrievedInvestigation.InvestigationNotes);
+    }
+
+    [Fact]
+    public async Task Investigation_UpdateOperation_ShouldPersistChanges()
+    {
+        // Arrange
+        var testInvestigation = CreateTestInvestigation(); // Use parameterless method
+
+        var createResult = await _investigationRepository.CreateInvestigationAsync(testInvestigation);
+        Assert.True(createResult.IsSuccess);
+
+        // Modify the investigation
+        testInvestigation.InvestigationNotes = "Updated Notes"; // Use actual property
+        testInvestigation.UpdatedBy = "UPDATED_USER";
+        testInvestigation.UpdatedDate = DateTime.UtcNow;
+
+        // Act
+        var updateResult = await _investigationRepository.UpdateInvestigationAsync(testInvestigation);
+
+        // Assert
+        Assert.True(updateResult.IsSuccess);
+
+        // Verify changes persisted
+        var getResult = await _investigationRepository.GetInvestigationByCodeAsync(testInvestigation.Code);
+        Assert.True(getResult.IsSuccess);
+        Assert.Equal("Updated Notes", getResult.Value.InvestigationNotes);
+        Assert.Equal("UPDATED_USER", getResult.Value.UpdatedBy);
+    }
+
+    [Fact]
+    public async Task InvestigationDataService_GetInvestigation_ShouldReturnInvestigation()
+    {
+        // Arrange
+        var testInvestigation = CreateTestInvestigation(); // Use parameterless method
+
+        var createResult = await _investigationRepository.CreateInvestigationAsync(testInvestigation);
+        Assert.True(createResult.IsSuccess);
+
+        // Act
+        var result = await _investigationDataService.GetInvestigationByCodeAsync(testInvestigation.Code);
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        var retrievedInvestigation = result.Value;
+        Assert.Equal(testInvestigation.Code, retrievedInvestigation.Code);
+        Assert.Equal(testInvestigation.InvestigationNotes, retrievedInvestigation.InvestigationNotes);
+    }
+
+    [Fact]
+    public async Task Investigation_DeleteOperation_ShouldRemoveRecord()
+    {
+        // Arrange
+        var testInvestigation = CreateTestInvestigation(); // Use parameterless method
+
+        var createResult = await _investigationRepository.CreateInvestigationAsync(testInvestigation);
+        Assert.True(createResult.IsSuccess);
+
+        var investigationId = new InvestigationID(testInvestigation.Code);
+
+        // Act
+        var deleteResult = await _investigationRepository.DeleteInvestigationAsync(investigationId);
+
+        // Assert
+        Assert.True(deleteResult.IsSuccess);
+
+        // Verify deletion
+        var getResult = await _investigationRepository.GetInvestigationByCodeAsync(testInvestigation.Code);
+        Assert.False(getResult.IsSuccess);
+    }
+
+    [Fact]
+    public async Task Investigation_ConcurrentOperations_ShouldHandleCorrectly()
+    {
+        // Arrange
+        var investigation1 = CreateTestInvestigation(); // Use parameterless method
+        var investigation2 = CreateTestInvestigation(); // Use parameterless method
+
+        // Act
+        var task1 = _investigationRepository.CreateInvestigationAsync(investigation1);
+        var task2 = _investigationRepository.CreateInvestigationAsync(investigation2);
+
+        var results = await Task.WhenAll(task1, task2);
+
+        // Assert
+        foreach (var result in results)
+        {
+            Assert.True(result.IsSuccess);
+        }
+
+        // Verify both records exist
+        var readResult = await _investigationRepository.GetInvestigationByCodeAsync(investigation1.Code);
+        Assert.True(readResult.IsSuccess);
     }
 
     #endregion

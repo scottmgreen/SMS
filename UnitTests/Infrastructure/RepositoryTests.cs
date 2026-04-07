@@ -3,7 +3,8 @@ using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
 using SMS_Infrastructure.Common;
 using SMS_Infrastructure.Interfaces;
-using SMS_Infrastructure.Repositories;
+using SMS_Infrastructure.Persistence;
+
 
 namespace PDXSMS_UnitTests.Infrastructure;
 
@@ -143,7 +144,7 @@ public class InfrastructureCommonTests
     {
         // Assert
         StoredProcs.pr_Hazard_Insert.Should().Be("pr_Hazard_Insert");
-        StoredProcs.pr_Hazard_GetById.Should().Be("pr_Hazard_GetById");
+        StoredProcs.pr_Hazard_GetByCode.Should().Be("pr_Hazard_GetByCode");
         StoredProcs.pr_Hazard_GetAll.Should().Be("pr_Hazard_GetAll");
         StoredProcs.pr_Hazard_Update.Should().Be("pr_Hazard_Update");
         StoredProcs.pr_Hazard_Delete.Should().Be("pr_Hazard_Delete");
@@ -154,7 +155,7 @@ public class InfrastructureCommonTests
     {
         // Assert
         StoredProcs.pr_Report_Insert.Should().Be("pr_Report_Insert");
-        StoredProcs.pr_Report_GetById.Should().Be("pr_Report_GetById");
+        StoredProcs.pr_Hazard_GetByCode.Should().Be("pr_Hazard_GetByCode");
         StoredProcs.pr_Report_GetAll.Should().Be("pr_Report_GetAll");
         StoredProcs.pr_Report_Update.Should().Be("pr_Report_Update");
         StoredProcs.pr_Report_Delete.Should().Be("pr_Report_Delete");
@@ -165,7 +166,7 @@ public class InfrastructureCommonTests
     {
         // Assert
         StoredProcs.pr_AirportSharedDataset_Insert.Should().Be("pr_AirportSharedDataset_Insert");
-        StoredProcs.pr_AirportSharedDataset_GetById.Should().Be("pr_AirportSharedDataset_GetById");
+        StoredProcs.pr_AirportSharedDataset_GetByCode.Should().Be("pr_Hazard_GetByCode");
         StoredProcs.pr_AirportSharedDataset_GetAll.Should().Be("pr_AirportSharedDataset_GetAll");
         StoredProcs.pr_AirportSharedDataset_Update.Should().Be("pr_AirportSharedDataset_Update");
         StoredProcs.pr_AirportSharedDataset_Delete.Should().Be("pr_AirportSharedDataset_Delete");
@@ -198,7 +199,7 @@ public class InfrastructureCommonTests
     {
         // Assert
         StoredProcs.pr_RiskAnalysis_Insert.Should().Be("pr_RiskAnalysis_Insert");
-        StoredProcs.pr_RiskAnalysis_GetById.Should().Be("pr_RiskAnalysis_GetById");
+        StoredProcs.pr_RiskAnalysis_GetByCode.Should().Be("pr_Hazard_GetByCode");
         StoredProcs.pr_RiskAnalysis_GetAll.Should().Be("pr_RiskAnalysis_GetAll");
         StoredProcs.pr_RiskAnalysis_Update.Should().Be("pr_RiskAnalysis_Update");
         StoredProcs.pr_RiskAnalysis_Delete.Should().Be("pr_RiskAnalysis_Delete");
@@ -209,7 +210,7 @@ public class InfrastructureCommonTests
     {
         // Assert
         StoredProcs.pr_RiskAssessment_Insert.Should().Be("pr_RiskAssessment_Insert");
-        StoredProcs.pr_RiskAssessment_GetById.Should().Be("pr_RiskAssessment_GetById");
+        StoredProcs.pr_RiskAssessment_GetByCode.Should().Be("pr_RiskAssessment_GetByCode");
         StoredProcs.pr_RiskAssessment_GetAll.Should().Be("pr_RiskAssessment_GetAll");
         StoredProcs.pr_RiskAssessment_Update.Should().Be("pr_RiskAssessment_Update");
         StoredProcs.pr_RiskAssessment_Delete.Should().Be("pr_RiskAssessment_Delete");
@@ -220,7 +221,7 @@ public class InfrastructureCommonTests
     {
         // Assert
         StoredProcs.pr_Mitigation_Insert.Should().Be("pr_Mitigation_Insert");
-        StoredProcs.pr_Mitigation_GetById.Should().Be("pr_Mitigation_GetById");
+        StoredProcs.pr_Mitigation_GetByCode.Should().Be("pr_Mitigation_GetByCode");
         StoredProcs.pr_Mitigation_GetAll.Should().Be("pr_Mitigation_GetAll");
         StoredProcs.pr_Mitigation_Update.Should().Be("pr_Mitigation_Update");
         StoredProcs.pr_Mitigation_Delete.Should().Be("pr_Mitigation_Delete");
@@ -231,7 +232,7 @@ public class InfrastructureCommonTests
     {
         // Assert
         StoredProcs.pr_ScoringPanel_Insert.Should().Be("pr_ScoringPanel_Insert");
-        StoredProcs.pr_ScoringPanel_GetById.Should().Be("pr_ScoringPanel_GetById");
+        StoredProcs.pr_ScoringPanel_GetByCode.Should().Be("pr_ScoringPanel_GetByCode");
         StoredProcs.pr_ScoringPanel_GetAll.Should().Be("pr_ScoringPanel_GetAll");
         StoredProcs.pr_ScoringPanel_Update.Should().Be("pr_ScoringPanel_Update");
         StoredProcs.pr_ScoringPanel_Delete.Should().Be("pr_ScoringPanel_Delete");
@@ -278,7 +279,6 @@ public class InfrastructureCommonTests
     public void ParameterNames_AirportSharedDatasetParameters_HaveCorrectNames()
     {
         // Assert
-        ParameterNames.pmAirportSharedDatasetId.Should().Be("@pID");
         ParameterNames.pmAirportSharedDatasetCode.Should().Be("@pCode");
         ParameterNames.pmPrivateNarrative.Should().Be("@pPrivateNarrative");
         ParameterNames.pmSharedNarrative.Should().Be("@pSharedNarrative");

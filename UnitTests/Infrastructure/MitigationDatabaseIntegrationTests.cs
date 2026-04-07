@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
-using SMS_Infrastructure.Repositories;
+
+using SMS_Infrastructure.Persistence;
 using SMS_Infrastructure.Services;
 
 namespace PDXSMS_UnitTests.Infrastructure;
@@ -83,8 +84,8 @@ public class MitigationDatabaseIntegrationTests : DatabaseTestBase
 
         try
         {
-            // Act
-            var result = await _mitigationRepository.GetMitigationByIdAsync(createdMitigationId);
+            // Act - Fix to use GetMitigationByCodeAsync 
+            var result = await _mitigationRepository.GetMitigationByCodeAsync(createdMitigationId);
 
             // Assert
             result.Should().NotBeNull();
@@ -184,8 +185,8 @@ public class MitigationDatabaseIntegrationTests : DatabaseTestBase
         deleteResult.IsSuccess.Should().BeTrue("Repository delete should succeed");
         deleteResult.Value.Should().BeTrue();
 
-        // Verify mitigation is actually deleted
-        var getResult = await _mitigationRepository.GetMitigationByIdAsync(mitigationId);
+        // Verify mitigation is actually deleted - Fix to use GetMitigationByCodeAsync
+        var getResult = await _mitigationRepository.GetMitigationByCodeAsync(mitigationId);
         getResult.IsSuccess.Should().BeFalse("Mitigation should no longer exist after deletion");
     }
 
@@ -228,8 +229,8 @@ public class MitigationDatabaseIntegrationTests : DatabaseTestBase
 
         try
         {
-            // Act
-            var result = await _mitigationDataService.GetMitigationByIdAsync(createdMitigationId);
+            // Act - Fix to use GetMitigationByCodeAsync
+            var result = await _mitigationDataService.GetMitigationByCodeAsync(createdMitigationId);
 
             // Assert
             result.Should().NotBeNull();
@@ -327,8 +328,8 @@ public class MitigationDatabaseIntegrationTests : DatabaseTestBase
         deleteResult.IsSuccess.Should().BeTrue("DataService delete should succeed");
         deleteResult.Value.Should().BeTrue();
 
-        // Verify deletion via repository
-        var getResult = await _mitigationRepository.GetMitigationByIdAsync(mitigationId);
+        // Verify deletion via repository - Fix to use GetMitigationByCodeAsync
+        var getResult = await _mitigationRepository.GetMitigationByCodeAsync(mitigationId);
         getResult.IsSuccess.Should().BeFalse("Mitigation should no longer exist after DataService deletion");
     }
 
@@ -352,8 +353,8 @@ public class MitigationDatabaseIntegrationTests : DatabaseTestBase
             
             var createdId = new MitigationID(createResult.Value!.Code);
 
-            // Read via Repository
-            var readResult = await _mitigationRepository.GetMitigationByIdAsync(createdId);
+            // Read via Repository - Fix to use GetMitigationByCodeAsync
+            var readResult = await _mitigationRepository.GetMitigationByCodeAsync(createdId);
 
             // Assert
             readResult.IsSuccess.Should().BeTrue("Repository should read DataService-created mitigation");
@@ -467,6 +468,123 @@ public class MitigationDatabaseIntegrationTests : DatabaseTestBase
         {
             _logger.LogWarning(ex, "Error during cleanup of test mitigation: {Id}", mitigationId.Value);
         }
+    }
+
+    #endregion
+
+    #region Additional Repository Tests
+
+    [Fact]
+    public async Task Mitigation_CRUDOperations_ShouldPersistCorrectly()
+    {
+        // Arrange
+        var mitigationCode = GenerateTestId("MIT");
+        var testMitigation = CreateTestMitigation(); // Use parameterless
+
+        // Act - Create
+        var createResult = await _mitigationRepository.CreateMitigationAsync(testMitigation);
+        Assert.True(createResult.IsSuccess);
+
+        // Act - Read (Use code-based method since that's what the repository supports)
+        var result = await _mitigationRepository.GetMitigationByCodeAsync(new MitigationID(testMitigation.Code));
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        var retrievedMitigation = result.Value;
+        Assert.Equal(testMitigation.Code, retrievedMitigation.Code);
+        Assert.Equal(testMitigation.Description, retrievedMitigation.Description);
+    }
+
+    [Fact]
+    public async Task Mitigation_UpdateOperation_ShouldPersistChanges()
+    {
+        // Arrange
+        var testMitigation = CreateTestMitigation(); // Use parameterless
+
+        var createResult = await _mitigationRepository.CreateMitigationAsync(testMitigation);
+        Assert.True(createResult.IsSuccess);
+
+        // Modify the mitigation
+        testMitigation.Description = "Updated Description";
+        testMitigation.UpdatedBy = "UPDATED_USER";
+        testMitigation.UpdatedDate = DateTime.UtcNow;
+
+        // Act
+        var updateResult = await _mitigationRepository.UpdateMitigationAsync(testMitigation);
+
+        // Assert
+        Assert.True(updateResult.IsSuccess);
+
+        // Verify changes persisted
+        var getResult = await _mitigationRepository.GetMitigationByCodeAsync(new MitigationID(testMitigation.Code));
+        Assert.True(getResult.IsSuccess);
+        Assert.Equal("Updated Description", getResult.Value.Description);
+        Assert.Equal("UPDATED_USER", getResult.Value.UpdatedBy);
+    }
+
+    [Fact]
+    public async Task MitigationDataService_GetMitigation_ShouldReturnMitigation()
+    {
+        // Arrange
+        var testMitigation = CreateTestMitigation(); // Use parameterless
+
+        var createResult = await _mitigationRepository.CreateMitigationAsync(testMitigation);
+        Assert.True(createResult.IsSuccess);
+
+        // Act
+        var result = await _mitigationDataService.GetMitigationByCodeAsync(new MitigationID(testMitigation.Code));
+
+        // Assert
+        Assert.True(result.IsSuccess);
+        var retrievedMitigation = result.Value;
+        Assert.Equal(testMitigation.Code, retrievedMitigation.Code);
+        Assert.Equal(testMitigation.Description, retrievedMitigation.Description);
+    }
+
+    [Fact]
+    public async Task Mitigation_DeleteOperation_ShouldRemoveRecord()
+    {
+        // Arrange
+        var testMitigation = CreateTestMitigation(); // Use parameterless
+
+        var createResult = await _mitigationRepository.CreateMitigationAsync(testMitigation);
+        Assert.True(createResult.IsSuccess);
+
+        var mitigationId = new MitigationID(testMitigation.Code);
+
+        // Act
+        var deleteResult = await _mitigationRepository.DeleteMitigationAsync(mitigationId);
+
+        // Assert
+        Assert.True(deleteResult.IsSuccess);
+
+        // Verify deletion
+        var getResult = await _mitigationRepository.GetMitigationByCodeAsync(mitigationId);
+        Assert.False(getResult.IsSuccess);
+    }
+
+    [Fact]
+    public async Task Mitigation_ConcurrentOperations_ShouldHandleCorrectly()
+    {
+        // Arrange
+        var mitigation1 = CreateTestMitigation(); // Use parameterless
+        var mitigation2 = CreateTestMitigation(); // Use parameterless
+
+        // Act
+        var task1 = _mitigationRepository.CreateMitigationAsync(mitigation1);
+        var task2 = _mitigationRepository.CreateMitigationAsync(mitigation2);
+
+        var results = await Task.WhenAll(task1, task2);
+
+        // Assert
+        foreach (var result in results)
+        {
+            Assert.True(result.IsSuccess);
+        }
+
+        // Verify both records exist
+        var readResult = await _mitigationRepository.GetMitigationByCodeAsync(new MitigationID(mitigation1.Code));
+        Assert.True(readResult.IsSuccess);
     }
 
     #endregion
