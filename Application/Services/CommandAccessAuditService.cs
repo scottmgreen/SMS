@@ -132,9 +132,9 @@ public class CommandAccessAuditService : ICommandAccessAuditService
                 var afterRecord = withoutCommand.Substring(6);
                 // Extract the main entity (first meaningful word)
                 if (afterRecord.Contains("Authentication"))
-                    return "Authentication";
+                    return "SMSAuthentication";
                 if (afterRecord.Contains("Logout"))
-                    return "Authentication";
+                    return "SMSAuthentication";
                 return afterRecord;
             }
             else if (withoutCommand.StartsWith("Reset"))

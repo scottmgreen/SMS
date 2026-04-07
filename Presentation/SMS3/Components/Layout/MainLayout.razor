@@ -101,7 +101,7 @@
             // 🔐 Record logout audit BEFORE clearing authentication (and wait for it)
             try
             {
-                var logoutCommand = new RecordLogoutCommand(
+                var logoutCommand = new RecordAuthenticationLogoutCommand(
                     currentUserName,
                     userType,
                     sessionId,

@@ -72,7 +72,7 @@ public class AuthenticationService : IAuthenticationService
     }
 
     /// <summary>
-    /// Try to authenticate as SMSApplicationUser
+    /// Try to authenticate as SMSApplicationUser - ? PIPELINE APPROACH with audit logging
     /// </summary>
     private async Task<AuthenticationResult> TryAuthenticateApplicationUserAsync(string email, string password, CancellationToken cancellationToken)
     {
@@ -85,6 +85,27 @@ public class AuthenticationService : IAuthenticationService
             if (result.IsSuccess && result.Value != null && result.Value.Authenticate(password))
             {
                 result.Value.RecordLogin();
+                
+                // ? PIPELINE APPROACH: Record authentication success
+                try
+                {
+                    var authSuccessCommand = new RecordAuthenticationSuccessCommand(
+                        email,
+                        SMSUserType.Application,
+                        result.Value.DisplayName,
+                        "Server", // Service layer doesn't have access to HTTP context
+                        "Application Service",
+                        Guid.NewGuid().ToString()
+                    );
+                    var auditResult = await _mediator.SendAsync(authSuccessCommand, cancellationToken);
+                    _logger.LogInformation("? Authentication success audit recorded for Application User: {Email}", email);
+                }
+                catch (Exception auditEx)
+                {
+                    _logger.LogError(auditEx, "? Failed to record authentication audit for Application User: {Email}", email);
+                    // Don't fail authentication due to audit failure
+                }
+
                 return AuthenticationResult.Success(result.Value, SMSUserType.Application);
             }
 
@@ -98,7 +119,7 @@ public class AuthenticationService : IAuthenticationService
     }
 
     /// <summary>
-    /// Try to authenticate as SMSOrganizationalUser
+    /// Try to authenticate as SMSOrganizationalUser - ? PIPELINE APPROACH with audit logging
     /// </summary>
     private async Task<AuthenticationResult> TryAuthenticateOrganizationalUserAsync(string email, string password, CancellationToken cancellationToken)
     {
@@ -111,6 +132,27 @@ public class AuthenticationService : IAuthenticationService
             if (result.IsSuccess && result.Value != null && result.Value.Authenticate(password))
             {
                 result.Value.RecordLogin();
+                
+                // ? PIPELINE APPROACH: Record authentication success
+                try
+                {
+                    var authSuccessCommand = new RecordAuthenticationSuccessCommand(
+                        email,
+                        SMSUserType.Organizational,
+                        result.Value.DisplayName,
+                        "Server",
+                        "Application Service",
+                        Guid.NewGuid().ToString()
+                    );
+                    var auditResult = await _mediator.SendAsync(authSuccessCommand, cancellationToken);
+                    _logger.LogInformation("? Authentication success audit recorded for Organizational User: {Email}", email);
+                }
+                catch (Exception auditEx)
+                {
+                    _logger.LogError(auditEx, "? Failed to record authentication audit for Organizational User: {Email}", email);
+                    // Don't fail authentication due to audit failure
+                }
+
                 return AuthenticationResult.Success(result.Value, SMSUserType.Organizational);
             }
 
@@ -124,7 +166,7 @@ public class AuthenticationService : IAuthenticationService
     }
 
     /// <summary>
-    /// Try to authenticate as SMSStakeholderUser
+    /// Try to authenticate as SMSStakeholderUser - ? PIPELINE APPROACH with audit logging
     /// </summary>
     private async Task<AuthenticationResult> TryAuthenticateStakeholderUserAsync(string email, string password, CancellationToken cancellationToken)
     {
@@ -137,6 +179,27 @@ public class AuthenticationService : IAuthenticationService
             if (result.IsSuccess && result.Value != null && result.Value.Authenticate(password))
             {
                 result.Value.RecordLogin();
+                
+                // ? PIPELINE APPROACH: Record authentication success
+                try
+                {
+                    var authSuccessCommand = new RecordAuthenticationSuccessCommand(
+                        email,
+                        SMSUserType.Stakeholder,
+                        result.Value.DisplayName,
+                        "Server",
+                        "Application Service",
+                        Guid.NewGuid().ToString()
+                    );
+                    var auditResult = await _mediator.SendAsync(authSuccessCommand, cancellationToken);
+                    _logger.LogInformation("? Authentication success audit recorded for Stakeholder User: {Email}", email);
+                }
+                catch (Exception auditEx)
+                {
+                    _logger.LogError(auditEx, "? Failed to record authentication audit for Stakeholder User: {Email}", email);
+                    // Don't fail authentication due to audit failure
+                }
+
                 return AuthenticationResult.Success(result.Value, SMSUserType.Stakeholder);
             }
 

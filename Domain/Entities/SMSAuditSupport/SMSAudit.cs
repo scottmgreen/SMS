@@ -88,7 +88,7 @@ public class SMSAudit : BaseAuditableEntity
     public List<SMSAuditFinding> Findings { get; set; }
     public List<SMSAuditEvidence> Evidence { get; set; }
 
-    // Business Methods
+    // Business Methods - ✅ PIPELINE APPROACH: Removed manual audit field setting
     public Result StartAudit(string startedBy)
     {
         try
@@ -99,8 +99,10 @@ public class SMSAudit : BaseAuditableEntity
             Status = "In Progress";
             ActualStartDate = DateTime.UtcNow;
             CurrentPhase = "Opening";
-            UpdatedBy = startedBy;
-            UpdatedDate = DateTime.UtcNow;
+            
+            // ✅ REMOVED: Manual audit field setting - pipeline handles this
+            // UpdatedBy = startedBy;
+            // UpdatedDate = DateTime.UtcNow;
 
             return Result.Success();
         }
@@ -123,8 +125,10 @@ public class SMSAudit : BaseAuditableEntity
             AuditSummary = auditSummary;
             KeyFindings = keyFindings;
             ProgressPercentage = 100;
-            UpdatedBy = completedBy;
-            UpdatedDate = DateTime.UtcNow;
+            
+            // ✅ REMOVED: Manual audit field setting - pipeline handles this
+            // UpdatedBy = completedBy;
+            // UpdatedDate = DateTime.UtcNow;
 
             // Update finding counts
             UpdateFindingCounts();
@@ -154,8 +158,10 @@ public class SMSAudit : BaseAuditableEntity
 
             Findings.Add(finding);
             UpdateFindingCounts();
-            UpdatedBy = foundBy;
-            UpdatedDate = DateTime.UtcNow;
+            
+            // ✅ REMOVED: Manual audit field setting - pipeline handles this
+            // UpdatedBy = foundBy;
+            // UpdatedDate = DateTime.UtcNow;
 
             return Result.Success();
         }

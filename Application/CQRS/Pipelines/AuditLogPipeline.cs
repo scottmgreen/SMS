@@ -3,20 +3,21 @@
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
 //     Description: Enhanced audit logging pipeline for comprehensive business action tracking.
-//                  Implements cross-cutting concerns in the request/response pipeline.
-//                  Handles logging, auditing, validation, and other aspects.
+//                  UPDATED: Now uses feature flags to control audit verbosity and prevent duplication
 // </copyright>
 //-----------------------------------------------------------------------
 
 using Microsoft.FeatureManagement;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
+using SMS_Application.Common;
 
 namespace SMS_Application.Messaging.Pipelines;
 
 /// <summary>
 /// Enhanced pipeline for comprehensive audit logging of business actions
 /// Integrates with CurrentUserService and SystemService for reliable audit trails
+/// UPDATED: Now respects EnableBusinessAuditLog feature flag to prevent duplicate logging
 /// </summary>
 public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult> 
     where TRequest : IRequest<TResult> 
@@ -47,8 +48,11 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
         var currentUserId = _currentUserService.UserDisplayName;
         var timestamp = DateTime.UtcNow;
 
-        _logger.LogInformation("✅ Clean Architecture: Audit pipeline processing {CommandType} by user {UserId}", 
-            commandName, currentUserId);
+        // Check if business audit logging is enabled via feature flag
+        var isBusinessAuditEnabled = await _featureManager.IsEnabledAsync("EnableBusinessAuditLog").ConfigureAwait(false);
+
+        _logger.LogDebug("📋 Business Audit: Processing {CommandType} by user {UserId} - Feature Enabled: {Enabled}", 
+            commandName, currentUserId, isBusinessAuditEnabled);
 
         try
         {
@@ -56,7 +60,7 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
             var result = await next().ConfigureAwait(false);
 
             // Log audit entry after execution (only if feature is enabled)
-            if (await _featureManager.IsEnabledAsync("AuditLogEnabled").ConfigureAwait(false))
+            if (isBusinessAuditEnabled)
             {
                 await LogBusinessActionAsync(request, result, currentUserId, timestamp, cancellation).ConfigureAwait(false);
             }
@@ -65,8 +69,8 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
         }
         catch (Exception ex)
         {
-            // Log failed business actions for audit compliance
-            if (await _featureManager.IsEnabledAsync("AuditLogEnabled").ConfigureAwait(false))
+            // Log failed business actions for audit compliance (only if feature is enabled)
+            if (isBusinessAuditEnabled)
             {
                 await LogFailedActionAsync(request, ex, currentUserId, timestamp, cancellation).ConfigureAwait(false);
             }
@@ -101,17 +105,17 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
             
             if (auditResult.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Audit entry created for {CommandType}", request.GetType().Name);
+                _logger.LogDebug("✅ Business Audit: Entry created for {CommandType}", request.GetType().Name);
             }
             else
             {
-                _logger.LogWarning("⚠️ Failed to create audit entry for {CommandType}: {Error}", 
+                _logger.LogWarning("⚠️ Business Audit: Failed to create entry for {CommandType}: {Error}", 
                     request.GetType().Name, auditResult.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error creating audit log entry for {CommandType}", request.GetType().Name);
+            _logger.LogError(ex, "❌ Error creating business audit log entry for {CommandType}", request.GetType().Name);
             // Don't throw - audit logging failure shouldn't break business operations
         }
     }
@@ -148,13 +152,7 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
     /// </summary>
     private static bool ShouldAuditCommand(TRequest request)
     {
-        var requestType = request.GetType();
-        
-        // Check if implements any auditable interfaces - no magic strings!
-        return typeof(ICreateCommand).IsAssignableFrom(requestType) ||
-               typeof(IUpdateCommand).IsAssignableFrom(requestType) ||
-               typeof(IDeleteCommand).IsAssignableFrom(requestType) ||
-               typeof(IReadQuery).IsAssignableFrom(requestType);
+        return EntityInformationExtractor.IsAuditableCommand(request) || EntityInformationExtractor.IsReadQuery(request);
     }
 
     /// <summary>
@@ -162,64 +160,41 @@ public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
     /// </summary>
     private static string GetAuditEventType(TRequest request)
     {
-        var requestType = request.GetType();
+        return EntityInformationExtractor.GetActionType(request) switch
+        {
+            "CREATE" => "ENTITY_CREATED",
+            "UPDATE" => "ENTITY_UPDATED",
+            "DELETE" => "ENTITY_DELETED",
+            "READ" => "DATA_ACCESSED",
+            _ => GetLegacyEventType(request)
+        };
+    }
+
+    /// <summary>
+    /// Get legacy event type for backward compatibility
+    /// </summary>
+    private static string GetLegacyEventType(TRequest request)
+    {
+        var requestName = request.GetType().Name;
         
-        if (typeof(ICreateCommand).IsAssignableFrom(requestType))
-            return "ENTITY_CREATED";
-        if (typeof(IUpdateCommand).IsAssignableFrom(requestType))
-            return "ENTITY_UPDATED";
-        if (typeof(IDeleteCommand).IsAssignableFrom(requestType))
-            return "ENTITY_DELETED";
-        if (typeof(IReadQuery).IsAssignableFrom(requestType))
-            return "DATA_ACCESSED";
-        
-        // Fallback for other types
-        if (request.GetType().Name.Contains("Validate"))
+        if (requestName.Contains("Validate"))
             return "VALIDATION_PERFORMED";
-        if (request.GetType().Name.Contains("Authenticate"))
+        if (requestName.Contains("Authenticate"))
             return "AUTHENTICATION_ATTEMPT";
             
         return "BUSINESS_ACTION";
     }
 
     /// <summary>
-    /// Generate comprehensive audit description
+    /// Generate comprehensive audit description using shared utility
     /// </summary>
     private static string GetAuditDescription(TRequest request, TResult result)
     {
         var action = GetAuditEventType(request);
         var status = result.IsSuccess ? "successfully" : "with errors";
-        var entityInfo = ExtractEntityInfo(request);
+        var entityInfo = EntityInformationExtractor.GetEntityInfo(request);
         
         return $"User {action.ToLower().Replace('_', ' ')} {status} via {request.GetType().Name}. Entity: {entityInfo}";
-    }
-
-    /// <summary>
-    /// Extract entity information from the command for audit trails
-    /// </summary>
-    private static string ExtractEntityInfo(TRequest request)
-    {
-        try
-        {
-            var properties = request.GetType().GetProperties();
-            var entityProps = properties.Where(p => 
-                p.Name.EndsWith("Id", StringComparison.OrdinalIgnoreCase) || 
-                p.Name.EndsWith("Code", StringComparison.OrdinalIgnoreCase)).ToList();
-            
-            if (entityProps.Any())
-            {
-                var values = entityProps.Take(2) // Limit to avoid long descriptions
-                    .Select(p => $"{p.Name}:{p.GetValue(request)}")
-                    .Where(v => !string.IsNullOrEmpty(v));
-                return string.Join(", ", values);
-            }
-
-            return request.GetType().Name.Replace("Command", "").Replace("Query", "");
-        }
-        catch
-        {
-            return "Unknown";
-        }
     }
 }
 

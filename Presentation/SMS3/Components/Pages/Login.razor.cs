@@ -42,31 +42,7 @@ public partial class Login : ComponentBase
                 Logger.LogInformation("✅ Authentication successful for user: {Username}, Type: {UserType}", model.Username, authResult.UserType.Value);
                 Logger.LogInformation("🔐 2FA Enabled: {TwoFactorEnabled}", authResult.User.TwoFactorEnabled);
 
-                // 🔐 Record successful authentication audit with simplified data
-                // DISABLED: Authentication auditing via dedicated commands temporarily disabled
-                // Main audit system already captures all authentication events
-                /*
-                try
-                {
-                    var authSuccessCommand = new RecordAuthenticationSuccessCommand(
-                        model.Username,
-                        authResult.UserType,
-                        authResult.User.DisplayName,
-                        "Server", // Simplified IP address
-                        "Blazor", // Simplified user agent
-                        Guid.NewGuid().ToString() // Session ID
-                    );
-                    var auditResult = await Mediator.SendAsync(authSuccessCommand, CancellationToken.None);
-                    Logger.LogInformation("✅ Authentication success audit recorded for user: {Username}, Result: {IsSuccess}", 
-                        model.Username, auditResult.IsSuccess);
-                }
-                catch (Exception auditEx)
-                {
-                    Logger.LogError(auditEx, "❌ Failed to record authentication success audit for {Username}", model.Username);
-                    // Continue with login even if audit fails
-                }
-                */
-
+                
                 // 🔐 CHECK FOR TWO-FACTOR AUTHENTICATION
                 if (authResult.User.TwoFactorEnabled)
                 {
@@ -116,7 +92,6 @@ public partial class Login : ComponentBase
                         StateHasChanged();
 
                         // Navigate to 2FA verification page
-                        //Navigation.NavigateTo("/verify-2fa", forceLoad: false);
                         Navigation.NavigateToSecure("/verify-2fa", forceLoad: false);
 
                         // Add additional logging after navigation
@@ -153,6 +128,57 @@ public partial class Login : ComponentBase
         {
             IsLoading = false;
             StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// ✅ NEW: Get client IP address for audit logging
+    /// </summary>
+    private string GetClientIPAddress()
+    {
+        try
+        {
+            var httpContext = HttpContextAccessor.HttpContext;
+            if (httpContext != null)
+            {
+                // Check for forwarded IP first (load balancer/proxy scenarios)
+                var forwardedFor = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(forwardedFor))
+                {
+                    return forwardedFor.Split(',')[0].Trim();
+                }
+
+                // Check for real IP header
+                var realIp = httpContext.Request.Headers["X-Real-IP"].FirstOrDefault();
+                if (!string.IsNullOrEmpty(realIp))
+                {
+                    return realIp;
+                }
+
+                // Fall back to connection remote IP
+                return httpContext.Connection.RemoteIpAddress?.ToString() ?? "Unknown";
+            }
+            return "Server";
+        }
+        catch
+        {
+            return "Unknown";
+        }
+    }
+
+    /// <summary>
+    /// ✅ NEW: Get user agent for audit logging
+    /// </summary>
+    private string GetUserAgent()
+    {
+        try
+        {
+            var httpContext = HttpContextAccessor.HttpContext;
+            return httpContext?.Request.Headers["User-Agent"].FirstOrDefault() ?? "Blazor";
+        }
+        catch
+        {
+            return "Unknown";
         }
     }
 

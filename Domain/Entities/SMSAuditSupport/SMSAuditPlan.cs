@@ -66,7 +66,7 @@ public class SMSAuditPlan : BaseAuditableEntity
     // Navigation Properties
     public List<SMSAudit> AuditCalendarEntries { get; set; }
 
-    // Business Methods
+    // Business Methods - ✅ PIPELINE APPROACH: Removed manual audit field setting
     public Result ScheduleAudit(DateTime scheduledDate, string scheduledBy)
     {
         try
@@ -93,8 +93,6 @@ public class SMSAuditPlan : BaseAuditableEntity
             };
 
             AuditCalendarEntries.Add(audit);
-            UpdatedBy = scheduledBy;
-            UpdatedDate = DateTime.UtcNow;
 
             return Result.Success();
         }
@@ -115,8 +113,6 @@ public class SMSAuditPlan : BaseAuditableEntity
             ApprovedBy = approvedBy;
             ApprovedDate = DateTime.UtcNow;
             ApprovalNotes = approvalNotes;
-            UpdatedBy = approvedBy;
-            UpdatedDate = DateTime.UtcNow;
 
             return Result.Success();
         }
@@ -137,8 +133,6 @@ public class SMSAuditPlan : BaseAuditableEntity
                 return Result.Failure(new Error("INVALID_STATUS_FOR_COMPLETION", "Audit plan must be scheduled or approved to be completed"));
 
             Status = "Completed";
-            UpdatedBy = completedBy;
-            UpdatedDate = DateTime.UtcNow;
 
             // Add completion notes to existing notes
             if (!string.IsNullOrEmpty(completionNotes))

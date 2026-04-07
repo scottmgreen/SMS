@@ -4,18 +4,22 @@
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
 //     Description: Pipeline behavior for auditing query (read) operations
 //                  Tracks all data access for compliance and security monitoring
+//                  UPDATED: Now uses feature flags to control audit verbosity
 // </copyright>
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
+using SMS_Application.Common;
 
 namespace SMS_Application.Messaging.Pipelines;
 
 /// <summary>
 /// Pipeline behavior that audits all query operations implementing IReadQuery
 /// Provides comprehensive audit trail for data access operations
+/// UPDATED: Now respects EnableQueryAudit feature flag to reduce chattiness
 /// </summary>
 public class QueryAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
     where TRequest : IRequest<TResult>
@@ -23,15 +27,18 @@ public class QueryAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResult
 {
     private readonly IQueryAccessAuditService _queryAuditService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IFeatureManager _featureManager;
     private readonly ILogger<QueryAuditPipeline<TRequest, TResult>> _logger;
 
     public QueryAuditPipeline(
         IQueryAccessAuditService queryAuditService,
         ICurrentUserService currentUserService,
+        IFeatureManager featureManager,
         ILogger<QueryAuditPipeline<TRequest, TResult>> logger)
     {
         _queryAuditService = queryAuditService ?? throw new ArgumentNullException(nameof(queryAuditService));
         _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+        _featureManager = featureManager ?? throw new ArgumentNullException(nameof(featureManager));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -44,12 +51,18 @@ public class QueryAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResult
 
         var queryType = request.GetType().Name;
         var currentUserId = _currentUserService.UserDisplayName;
-        var isAuthenticated = _currentUserService.IsAuthenticated;
 
-        // Only audit queries that implement IReadQuery
-        if (request is IReadQuery readQuery)
+        // Check if query auditing is enabled via feature flag
+        var isQueryAuditEnabled = await _featureManager.IsEnabledAsync("EnableQueryAudit");
+
+        // Only audit queries if feature is enabled AND request implements IReadQuery
+        if (isQueryAuditEnabled && EntityInformationExtractor.IsReadQuery(request))
         {
-            _logger.LogInformation("?? Query Audit: Processing read query {QueryType} by user {UserId}", 
+            var readQuery = (IReadQuery)request;
+            var resourceIdentifier = EntityInformationExtractor.GetResourceIdentifier(request);
+            var accessType = EntityInformationExtractor.GetActionType(request);
+            
+            _logger.LogDebug("?? Query Audit: Processing read query {QueryType} by user {UserId}", 
                 queryType, currentUserId);
 
             try
@@ -63,11 +76,11 @@ public class QueryAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResult
                     await _queryAuditService.LogQueryAccessAsync(
                         currentUserId,
                         queryType,
-                        readQuery.GetResourceIdentifier(),
-                        readQuery.GetAccessType(),
+                        resourceIdentifier,
+                        accessType,
                         cancellationToken);
 
-                    _logger.LogInformation("?? Query Audit: Successfully audited {QueryType} access by {UserId}", 
+                    _logger.LogDebug("? Query Audit: Successfully audited {QueryType} access by {UserId}", 
                         queryType, currentUserId);
                 }
                 else
@@ -76,8 +89,8 @@ public class QueryAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResult
                     await _queryAuditService.LogQueryAccessAsync(
                         currentUserId,
                         queryType,
-                        readQuery.GetResourceIdentifier(),
-                        $"{readQuery.GetAccessType()}_FAILED",
+                        resourceIdentifier,
+                        $"{accessType}_FAILED",
                         $"Query failed: {result.Error?.Message}",
                         cancellationToken);
 
@@ -93,8 +106,8 @@ public class QueryAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResult
                 await _queryAuditService.LogQueryAccessAsync(
                     currentUserId,
                     queryType,
-                    readQuery.GetResourceIdentifier(),
-                    $"{readQuery.GetAccessType()}_ERROR",
+                    resourceIdentifier,
+                    $"{accessType}_ERROR",
                     $"Query exception: {ex.Message}",
                     cancellationToken);
 
@@ -106,8 +119,9 @@ public class QueryAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResult
         }
         else
         {
-            // For non-read queries, just execute without audit logging
-            _logger.LogDebug("?? Query Audit: Skipping audit for non-read request {QueryType}", queryType);
+            // Query auditing disabled or not a read query - just execute without audit logging
+            _logger.LogTrace("?? Query Audit: Skipping audit - Feature: {Enabled}, IsReadQuery: {IsRead}", 
+                isQueryAuditEnabled, EntityInformationExtractor.IsReadQuery(request));
             return await next().ConfigureAwait(false);
         }
     }

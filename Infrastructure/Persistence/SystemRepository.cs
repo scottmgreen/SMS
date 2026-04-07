@@ -60,8 +60,8 @@ public sealed class SystemRepository : BaseRepository<SystemRepository, AuditLog
 
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
-            // ✅ FIXED: Use ExecuteNonQueryAsync instead of ExecuteScalarAsync
-            int rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            
+            int rowsAffected = (int)await cmd.ExecuteScalarAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
             bool success = rowsAffected > 0;

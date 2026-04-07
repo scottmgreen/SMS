@@ -1,31 +1,26 @@
-//-----------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------
 // <copyright file="AuthenticationAuditCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Command handlers for authentication audit operations - NOW USING AUDIT PIPELINE
-//                  Processes authentication audit commands using proper CQRS pattern with audit pipeline.
+//     Description: Command handlers for authentication audit operations - PIPELINE ONLY
+//                  ✅ REFACTORED: Simplified handlers that rely entirely on audit pipeline
 // </copyright>
 //-----------------------------------------------------------------------
-
-using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
 /// <summary>
-/// Handler for recording successful authentication events - NOW USING AUDIT PIPELINE
+/// ✅ PIPELINE ONLY: Handler for authentication success - no manual audit creation
+/// All audit logging handled automatically by AuditFieldsPipeline
 /// </summary>
 public class RecordAuthenticationSuccessCommandHandler : BaseCommandBundle, IRequestHandler<RecordAuthenticationSuccessCommand, Result<bool>>
 {
-    private readonly SystemService _systemService;
     private readonly ILogger<RecordAuthenticationSuccessCommandHandler> _logger;
 
-    public RecordAuthenticationSuccessCommandHandler(
-        SystemService systemService,
-        ILogger<RecordAuthenticationSuccessCommandHandler> logger)
+    public RecordAuthenticationSuccessCommandHandler(ILogger<RecordAuthenticationSuccessCommandHandler> logger)
     {
-        _systemService = systemService ?? throw new ArgumentNullException(nameof(systemService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -33,59 +28,36 @@ public class RecordAuthenticationSuccessCommandHandler : BaseCommandBundle, IReq
     {
         try
         {
-            _logger.LogInformation("? CQRS-AUTH: Recording authentication SUCCESS for user {UserName} ({UserType}) - AUDIT PIPELINE ACTIVE", 
-                request.UserName, request.UserType);
+            _logger.LogInformation("✅ AUTH-SUCCESS: User '{UserName}' ({UserType}) authenticated from {IPAddress}. Session: {SessionId}", 
+                request.UserName, request.UserType, request.IPAddress, request.SessionId);
 
-            // Now the AuditFieldsPipeline has already set request.CreatedBy and request.CreatedDate!
-            _logger.LogInformation("?? AUDIT PIPELINE: CreatedBy='{CreatedBy}' at {CreatedDate}", 
-                request.CreatedBy, request.CreatedDate);
+            // ✅ PIPELINE APPROACH: No manual audit creation!
+            // The AuditFieldsPipeline automatically:
+            // 1. Sets CreatedBy/CreatedDate via SetCreatedBy() 
+            // 2. Creates audit log entry via LogCommandExecutionIfApplicable()
+            // 3. Uses consistent format via ICommandAccessAuditService
+            // 4. Handles all cross-cutting audit concerns
 
-            // Create comprehensive audit log entry
-            var auditEntry = new AuditLogEntry(new AuditLogEntryID(Guid.NewGuid().ToString()))
-            {
-                UserID = request.UserName,
-                EventDateTime = request.AuthenticationTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                MessageType = "AUTHENTICATION_SUCCESS",
-                Severity = "INFORMATION", 
-                Module = "SMS_Authentication",
-                Function = "UserLogin",
-                Description = $"User '{request.UserDisplayName}' ({request.UserType}) successfully authenticated from {request.IPAddress}. Session: {request.SessionId}. Audit: CreatedBy={request.CreatedBy}"
-            };
-
-            var result = await _systemService.AddAuditLogEntryAsync(auditEntry, cancellationToken);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("? CQRS-AUTH: Authentication success audit recorded for {UserName} via AUDIT PIPELINE", request.UserName);
-                return Result<bool>.Success(true);
-            }
-            else
-            {
-                _logger.LogWarning("?? Failed to record authentication success audit for {UserName}", request.UserName);
-                return Result<bool>.Failure<bool>(new Error("AUDIT_FAILED", "Failed to record authentication audit"));
-            }
+            return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error recording authentication success audit for {UserName}", request.UserName);
-            return Result<bool>.Failure<bool>(new Error("AUDIT_ERROR", ex.Message));
+            _logger.LogError(ex, "❌ AUTH-ERROR: Error processing authentication success for {UserName}", request.UserName);
+            return Result<bool>.Failure<bool>(new Error("AUTH_SUCCESS_ERROR", ex.Message));
         }
     }
 }
 
 /// <summary>
-/// Handler for recording failed authentication attempts - NOW USING AUDIT PIPELINE
+/// ✅ PIPELINE ONLY: Handler for authentication failure - no manual audit creation
+/// All audit logging handled automatically by AuditFieldsPipeline
 /// </summary>
 public class RecordAuthenticationFailureCommandHandler : BaseCommandBundle, IRequestHandler<RecordAuthenticationFailureCommand, Result<bool>>
 {
-    private readonly SystemService _systemService;
     private readonly ILogger<RecordAuthenticationFailureCommandHandler> _logger;
 
-    public RecordAuthenticationFailureCommandHandler(
-        SystemService systemService,
-        ILogger<RecordAuthenticationFailureCommandHandler> logger)
+    public RecordAuthenticationFailureCommandHandler(ILogger<RecordAuthenticationFailureCommandHandler> logger)
     {
-        _systemService = systemService ?? throw new ArgumentNullException(nameof(systemService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -93,101 +65,53 @@ public class RecordAuthenticationFailureCommandHandler : BaseCommandBundle, IReq
     {
         try
         {
-            _logger.LogWarning("?? CQRS-AUTH: SECURITY ALERT - Authentication FAILURE for user {UserName} from {IPAddress} - AUDIT PIPELINE ACTIVE", 
-                request.UserName, request.IPAddress);
+            _logger.LogWarning("🚨 AUTH-FAILURE: SECURITY ALERT - Authentication FAILED for '{UserName}' from {IPAddress}. Reason: {FailureReason}", 
+                request.UserName, request.IPAddress, request.FailureReason);
 
-            // Now the AuditFieldsPipeline has already set request.CreatedBy and request.CreatedDate!
-            _logger.LogInformation("?? AUDIT PIPELINE: CreatedBy='{CreatedBy}' at {CreatedDate}", 
-                request.CreatedBy, request.CreatedDate);
+            // ✅ PIPELINE APPROACH: No manual audit creation!
+            // Security events are automatically audited by the pipeline
+            // with proper failure tracking and consistent formatting
 
-            // Create security-focused audit log entry
-            var auditEntry = new AuditLogEntry(new AuditLogEntryID(Guid.NewGuid().ToString()))
-            {
-                UserID = request.UserName,
-                EventDateTime = request.AttemptTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                MessageType = "AUTHENTICATION_FAILURE",
-                Severity = "WARNING",
-                Module = "SMS_Authentication", 
-                Function = "UserLogin",
-                Description = $"?? SECURITY ALERT: Failed authentication attempt for '{request.UserName}' from {request.IPAddress}. Reason: {request.FailureReason}. Attempt #{request.AttemptCount}. Audit: CreatedBy={request.CreatedBy}"
-            };
-
-            var result = await _systemService.AddAuditLogEntryAsync(auditEntry, cancellationToken);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("? CQRS-AUTH: Authentication failure audit recorded for {UserName} via AUDIT PIPELINE", request.UserName);
-                return Result<bool>.Success(true);
-            }
-            else
-            {
-                _logger.LogError("?? Critical: Failed to record authentication failure audit for {UserName}", request.UserName);
-                return Result<bool>.Failure<bool>(new Error("SECURITY_AUDIT_FAILED", "Failed to record security audit"));
-            }
+            return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? Critical: Error recording authentication failure audit for {UserName}", request.UserName);
-            return Result<bool>.Failure<bool>(new Error("SECURITY_AUDIT_ERROR", ex.Message));
+            _logger.LogError(ex, "❌ AUTH-ERROR: Critical error processing authentication failure for {UserName}", request.UserName);
+            return Result<bool>.Failure<bool>(new Error("AUTH_FAILURE_ERROR", ex.Message));
         }
     }
 }
 
 /// <summary>
-/// Handler for recording user logout events - NOW USING AUDIT PIPELINE
+/// ✅ PIPELINE ONLY: Handler for logout events - no manual audit creation
+/// All audit logging handled automatically by AuditFieldsPipeline
 /// </summary>
-public class RecordLogoutCommandHandler : BaseCommandBundle, IRequestHandler<RecordLogoutCommand, Result<bool>>
+public class RecordLogoutCommandHandler : BaseCommandBundle, IRequestHandler<RecordAuthenticationLogoutCommand, Result<bool>>
 {
-    private readonly SystemService _systemService;
     private readonly ILogger<RecordLogoutCommandHandler> _logger;
 
-    public RecordLogoutCommandHandler(
-        SystemService systemService,
-        ILogger<RecordLogoutCommandHandler> logger)
+    public RecordLogoutCommandHandler(ILogger<RecordLogoutCommandHandler> logger)
     {
-        _systemService = systemService ?? throw new ArgumentNullException(nameof(systemService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<bool>> HandleAsync(RecordLogoutCommand request, CancellationToken cancellationToken)
+    public async Task<Result<bool>> HandleAsync(RecordAuthenticationLogoutCommand request, CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogInformation("? CQRS-AUTH: Recording LOGOUT for user {UserName} ({LogoutType}) - AUDIT PIPELINE ACTIVE", 
-                request.UserName, request.LogoutType);
+            _logger.LogInformation("✅ LOGOUT: User '{UserName}' logged out ({LogoutType}). Session duration: {SessionDuration}", 
+                request.UserName, request.LogoutType, request.SessionDuration);
 
-            // Now the AuditFieldsPipeline has already set request.CreatedBy and request.CreatedDate!
-            _logger.LogInformation("?? AUDIT PIPELINE: CreatedBy='{CreatedBy}' at {CreatedDate}", 
-                request.CreatedBy, request.CreatedDate);
+            // ✅ PIPELINE APPROACH: No manual audit creation!
+            // Logout events are automatically tracked by the pipeline
+            // with consistent session tracking and audit formatting
 
-            var auditEntry = new AuditLogEntry(new AuditLogEntryID(Guid.NewGuid().ToString()))
-            {
-                UserID = request.UserName,
-                EventDateTime = request.LogoutTime.ToString("yyyy-MM-dd HH:mm:ss"),
-                MessageType = "USER_LOGOUT",
-                Severity = "INFORMATION",
-                Module = "SMS_Authentication",
-                Function = "UserLogout", 
-                Description = $"User '{request.UserName}' ({request.UserType}) logged out ({request.LogoutType}). Session duration: {request.SessionDuration:hh\\:mm\\:ss}. Session: {request.SessionId}. Audit: CreatedBy={request.CreatedBy}"
-            };
-
-            var result = await _systemService.AddAuditLogEntryAsync(auditEntry, cancellationToken);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("? CQRS-AUTH: Logout audit recorded for {UserName} via AUDIT PIPELINE", request.UserName);
-                return Result<bool>.Success(true);
-            }
-            else
-            {
-                _logger.LogWarning("?? Failed to record logout audit for {UserName}", request.UserName);
-                return Result<bool>.Failure<bool>(new Error("LOGOUT_AUDIT_FAILED", "Failed to record logout audit"));
-            }
+            return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error recording logout audit for {UserName}", request.UserName);
-            return Result<bool>.Failure<bool>(new Error("LOGOUT_AUDIT_ERROR", ex.Message));
+            _logger.LogError(ex, "❌ LOGOUT-ERROR: Error processing logout for {UserName}", request.UserName);
+            return Result<bool>.Failure<bool>(new Error("LOGOUT_ERROR", ex.Message));
         }
     }
 }

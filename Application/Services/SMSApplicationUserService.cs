@@ -203,13 +203,13 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
 
     /// <summary>
     /// Deletes an SMS Application User with business validation (actually deactivates using CQRS)
-    /// ✅ FIXED: Now uses proper CQRS DeactivateSMSApplicationUserCommand with audit pipeline
+    /// ✅ PIPELINE APPROACH: Uses proper CQRS DeactivateSMSApplicationUserCommand with audit pipeline
     /// </summary>
     public async Task<Result<bool>> DeleteSMSApplicationUserAsync(string userId, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Deleting (deactivating) SMS Application User with ID: {Id} using CQRS", userId);
+            _logger.LogInformation("Deleting (deactivating) SMS Application User with ID: {Id} using CQRS pipeline", userId);
 
             // Business validation - check if user exists
             var existingUserResult = await _dataService.GetSMSApplicationUserByIdAsync(userId, ct).ConfigureAwait(false);
@@ -219,18 +219,10 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NotFound);
             }
 
-            // ✅ SOLUTION: Use proper CQRS command instead of manual service call
-            // This ensures the audit pipeline sets UpdatedBy/UpdatedDate correctly
-            var deactivateCommand = new DeactivateSMSApplicationUserCommand(existingUserResult.Value, "Deactivated via service layer");
-            
-            // For now, we'll need to inject IMediator into this service to use the command properly
-            // TEMPORARY WORKAROUND: Continue with manual approach but with proper audit field setting
+            // ✅ PIPELINE APPROACH: Domain method only + pipeline handles audit fields
             var user = existingUserResult.Value;
             user.Deactivate();
             
-            // Set audit fields manually (will be replaced by CQRS command in next iteration)
-            user.UpdatedBy = "SYSTEM"; // TODO: Get from current user context
-            user.UpdatedDate = DateTime.UtcNow;
 
             var updateResult = await _dataService.UpdateSMSApplicationUserAsync(user, ct).ConfigureAwait(false);
             if (updateResult.IsFailure)

@@ -83,13 +83,30 @@ public static partial class Mappers
             applicationUser.IsActive = reader.GetBoolean(FieldNames.fSMSApplicationUserIsActive);
             applicationUser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSApplicationUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSApplicationUserLastLoginDate);
             
-            // 🔐 Two-Factor Authentication Properties
-            applicationUser.TwoFactorSecretKey = reader.GetValue<string>(FieldNames.fSMSApplicationUserTwoFactorSecretKey);
-            applicationUser.TwoFactorEnabled = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorEnabled) ? false : reader.GetBoolean(FieldNames.fSMSApplicationUserTwoFactorEnabled);
-            applicationUser.BackupCodes = reader.GetValue<string>(FieldNames.fSMSApplicationUserBackupCodes);
-            applicationUser.TwoFactorSetupDate = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorSetupDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSApplicationUserTwoFactorSetupDate);
-            applicationUser.FailedTwoFactorAttempts = reader.IsDBNull(FieldNames.fSMSApplicationUserFailedTwoFactorAttempts) ? 0 : reader.GetInt32(FieldNames.fSMSApplicationUserFailedTwoFactorAttempts);
-            applicationUser.TwoFactorLockedUntil = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorLockedUntil) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSApplicationUserTwoFactorLockedUntil);
+            // 🔐 Two-Factor Authentication Properties - FIXED: Safe NULL handling
+            applicationUser.TwoFactorSecretKey = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorSecretKey) ? 
+                string.Empty : 
+                reader.GetString(FieldNames.fSMSApplicationUserTwoFactorSecretKey) ?? string.Empty;
+                
+            applicationUser.TwoFactorEnabled = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorEnabled) ? 
+                false : 
+                reader.GetBoolean(FieldNames.fSMSApplicationUserTwoFactorEnabled);
+                
+            applicationUser.BackupCodes = reader.IsDBNull(FieldNames.fSMSApplicationUserBackupCodes) ? 
+                string.Empty : 
+                reader.GetString(FieldNames.fSMSApplicationUserBackupCodes) ?? string.Empty;
+                
+            applicationUser.TwoFactorSetupDate = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorSetupDate) ? 
+                (DateTime?)null : 
+                reader.GetDateTime(FieldNames.fSMSApplicationUserTwoFactorSetupDate);
+                
+            applicationUser.FailedTwoFactorAttempts = reader.IsDBNull(FieldNames.fSMSApplicationUserFailedTwoFactorAttempts) ? 
+                0 : 
+                reader.GetInt32(FieldNames.fSMSApplicationUserFailedTwoFactorAttempts);
+                
+            applicationUser.TwoFactorLockedUntil = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorLockedUntil) ? 
+                (DateTime?)null : 
+                reader.GetDateTime(FieldNames.fSMSApplicationUserTwoFactorLockedUntil);
             
             applicationUser.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
             applicationUser.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);

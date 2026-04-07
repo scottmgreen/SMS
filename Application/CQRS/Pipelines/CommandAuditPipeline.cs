@@ -4,17 +4,21 @@
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
 //     Description: Pipeline behavior for auditing command (write) operations
 //                  Tracks all data modification for compliance and security monitoring
+//                  UPDATED: Now uses feature flags to control audit verbosity
 // </copyright>
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using Microsoft.FeatureManagement;
 using SMS_Application.Interfaces;
+using SMS_Application.Common;
 
 namespace SMS_Application.Messaging.Pipelines;
 
 /// <summary>
 /// Pipeline behavior that audits all command operations implementing ICreateCommand, IUpdateCommand, IDeleteCommand
 /// Provides comprehensive audit trail for data modification operations
+/// UPDATED: Now respects EnableCommandAudit feature flag to reduce chattiness
 /// </summary>
 public class CommandAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
     where TRequest : IRequest<TResult>
@@ -22,15 +26,18 @@ public class CommandAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResu
 {
     private readonly ICommandAccessAuditService _commandAuditService;
     private readonly ICurrentUserService _currentUserService;
+    private readonly IFeatureManager _featureManager;
     private readonly ILogger<CommandAuditPipeline<TRequest, TResult>> _logger;
 
     public CommandAuditPipeline(
         ICommandAccessAuditService commandAuditService,
         ICurrentUserService currentUserService,
+        IFeatureManager featureManager,
         ILogger<CommandAuditPipeline<TRequest, TResult>> logger)
     {
         _commandAuditService = commandAuditService ?? throw new ArgumentNullException(nameof(commandAuditService));
         _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+        _featureManager = featureManager ?? throw new ArgumentNullException(nameof(featureManager));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -43,14 +50,17 @@ public class CommandAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResu
 
         var commandType = request.GetType().Name;
         var currentUserId = _currentUserService.UserDisplayName;
-        var isAuthenticated = _currentUserService.IsAuthenticated;
 
-        // Only audit commands that implement command interfaces
-        if (IsAuditableCommand(request))
+        // Check if command auditing is enabled via feature flag
+        var isCommandAuditEnabled = await _featureManager.IsEnabledAsync("EnableCommandAudit");
+
+        // Only audit commands if feature is enabled AND request implements command interfaces
+        if (isCommandAuditEnabled && EntityInformationExtractor.IsAuditableCommand(request))
         {
-            var commandAction = GetCommandAction(request);
+            var commandAction = EntityInformationExtractor.GetActionType(request);
+            var resourceIdentifier = EntityInformationExtractor.GetResourceIdentifier(request);
             
-            _logger.LogInformation("?? Command Audit: Processing {CommandAction} command {CommandType} by user {UserId}", 
+            _logger.LogDebug("?? Command Audit: Processing {CommandAction} command {CommandType} by user {UserId}", 
                 commandAction, commandType, currentUserId);
 
             try
@@ -64,11 +74,11 @@ public class CommandAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResu
                     await _commandAuditService.LogCommandExecutionAsync(
                         currentUserId,
                         commandType,
-                        GetResourceIdentifier(request),
+                        resourceIdentifier,
                         commandAction,
                         cancellationToken);
 
-                    _logger.LogInformation("? Command Audit: Successfully audited {CommandAction} {CommandType} by {UserId}", 
+                    _logger.LogDebug("? Command Audit: Successfully audited {CommandAction} {CommandType} by {UserId}", 
                         commandAction, commandType, currentUserId);
                 }
                 else
@@ -77,7 +87,7 @@ public class CommandAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResu
                     await _commandAuditService.LogCommandExecutionAsync(
                         currentUserId,
                         commandType,
-                        GetResourceIdentifier(request),
+                        resourceIdentifier,
                         $"{commandAction}_FAILED",
                         $"Command failed: {result.Error?.Message}",
                         cancellationToken);
@@ -94,7 +104,7 @@ public class CommandAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResu
                 await _commandAuditService.LogCommandExecutionAsync(
                     currentUserId,
                     commandType,
-                    GetResourceIdentifier(request),
+                    resourceIdentifier,
                     $"{commandAction}_ERROR",
                     $"Command exception: {ex.Message}",
                     cancellationToken);
@@ -107,52 +117,10 @@ public class CommandAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResu
         }
         else
         {
-            // For non-command requests, just execute without audit logging
-            _logger.LogDebug("?? Command Audit: Skipping audit for non-command request {CommandType}", commandType);
+            // Command auditing disabled or not an auditable command - just execute without audit logging
+            _logger.LogTrace("?? Command Audit: Skipping audit - Feature: {Enabled}, IsAuditable: {IsAuditable}", 
+                isCommandAuditEnabled, EntityInformationExtractor.IsAuditableCommand(request));
             return await next().ConfigureAwait(false);
         }
-    }
-
-    /// <summary>
-    /// Determines if the request is an auditable command
-    /// </summary>
-    private static bool IsAuditableCommand(TRequest request)
-    {
-        return request is ICreateCommand or IUpdateCommand or IDeleteCommand;
-    }
-
-    /// <summary>
-    /// Gets the command action type for audit logging
-    /// </summary>
-    private static string GetCommandAction(TRequest request)
-    {
-        return request switch
-        {
-            ICreateCommand => "CREATE",
-            IUpdateCommand => "UPDATE", 
-            IDeleteCommand => "DELETE",
-            _ => "UNKNOWN"
-        };
-    }
-
-    /// <summary>
-    /// Gets the resource identifier for the command
-    /// Uses enhanced audit interface if available, otherwise falls back to command type name
-    /// </summary>
-    private static string GetResourceIdentifier(TRequest request)
-    {
-        return request switch
-        {
-            // Check for enhanced audit command first
-            IEnhancedAuditCommand enhancedCmd => enhancedCmd.GetResourceIdentifier(),
-            
-            // For basic commands, use the command type name as resource identifier
-            ICreateCommand => request.GetType().Name.Replace("Command", "").Replace("Create", ""),
-            IUpdateCommand => request.GetType().Name.Replace("Command", "").Replace("Update", ""),
-            IDeleteCommand => request.GetType().Name.Replace("Command", "").Replace("Delete", ""),
-            
-            // Fallback
-            _ => request.GetType().Name
-        };
     }
 }
