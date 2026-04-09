@@ -80,12 +80,12 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
     /// <summary>
     /// Gets SMS Application User by ID
     /// </summary>
-    public async Task<Result<SMSApplicationUser>> GetSMSApplicationUserByIdAsync(SMSApplicationUserID id, CancellationToken ct = default)
+    public async Task<Result<SMSApplicationUser>> GetSMSApplicationUserByCodeAsync(SMSApplicationUserID id, CancellationToken ct = default)
     {
         try
         {
             _logger.LogInformation("Retrieving SMS Application User with ID: {Id}", id.Value);
-            return await _repository.GetByIdAsync(id);
+            return await _repository.GetByCodeAsync(id);
         }
         catch (Exception ex)
         {
@@ -97,10 +97,10 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
     /// <summary>
     /// Gets SMS Application User by ID (string overload for convenience)
     /// </summary>
-    public async Task<Result<SMSApplicationUser>> GetSMSApplicationUserByIdAsync(string id, CancellationToken ct = default)
+    public async Task<Result<SMSApplicationUser>> GetSMSApplicationUserByCodeAsync(string id, CancellationToken ct = default)
     {
         var typedId = new SMSApplicationUserID(id);
-        return await GetSMSApplicationUserByIdAsync(typedId, ct);
+        return await GetSMSApplicationUserByCodeAsync(typedId, ct);
     }
 
     /// <summary>
@@ -194,7 +194,7 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
             }
 
             // Return the updated user
-            return await _repository.GetByIdAsync(user.Code);
+            return await _repository.GetByCodeAsync(user.Code);
         }
         catch (Exception ex)
         {

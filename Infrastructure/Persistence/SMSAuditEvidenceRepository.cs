@@ -198,8 +198,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
             };
 
             // FIXED: Use correct parameter name to match stored procedure exactly - @pID parameter
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceId, evidence.Id.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceCode, evidence.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, evidence.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceAuditCode, evidence.AuditCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceFindingCode, evidence.FindingCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceTitle, evidence.Title));

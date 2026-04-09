@@ -398,16 +398,16 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
         }
     }
 
-    public async Task<Result<bool>> DeleteInvestigationAsync(InvestigationID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteInvestigationAsync(InvestigationID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_Investigation_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_Investigation_Delete} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_Investigation_Delete, sql)
@@ -415,7 +415,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

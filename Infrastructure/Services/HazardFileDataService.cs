@@ -69,14 +69,14 @@ public class HazardFileDataService : BaseDataService<HazardFileDataService>, IHa
         return _repo.UpdateAsync(hazardFile, ct);
     }
 
-    public Task<Result<bool>> DeactivateHazardFileAsync(int id, string reason, string deactivatedBy, CancellationToken ct = default)
+    public Task<Result<bool>> DeactivateHazardFileAsync(string code, string reason, string deactivatedBy, CancellationToken ct = default)
     {
-        return _repo.DeactivateAsync(id, reason, deactivatedBy, ct);
+        return _repo.DeactivateAsync(code, reason, deactivatedBy, ct);
     }
 
-    public Task<Result<bool>> ReactivateHazardFileAsync(int id, string reactivatedBy, CancellationToken ct = default)
+    public Task<Result<bool>> ReactivateHazardFileAsync(string code, string reactivatedBy, CancellationToken ct = default)
     {
-        return _repo.ReactivateAsync(id, reactivatedBy, ct);
+        return _repo.ReactivateAsync(code, reactivatedBy, ct);
     }
 
     public Task<Result<IEnumerable<HazardFile>>> SearchHazardFilesAsync(

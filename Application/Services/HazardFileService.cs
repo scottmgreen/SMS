@@ -82,16 +82,16 @@ public sealed class HazardFileService : IHazardFileService
         }
     }
 
-    public async Task<Result<bool>> DeactivateHazardFileAsync(int id, string reason, string deactivatedBy, CancellationToken ct = default)
+    public async Task<Result<bool>> DeactivateHazardFileAsync(string code, string reason, string deactivatedBy, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Deactivating hazard file with ID: {Id}", id);
-            var result = await _dataService.DeactivateHazardFileAsync(id, reason, deactivatedBy, ct).ConfigureAwait(false);
+            _logger.LogInformation("Deactivating hazard file with Code: {Code}", code);
+            var result = await _dataService.DeactivateHazardFileAsync(code, reason, deactivatedBy, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deactivated hazard file with ID: {Id}", id);
+                _logger.LogInformation("Successfully deactivated hazard file with Code: {Code}", code);
             }
             else
             {
@@ -102,21 +102,21 @@ public sealed class HazardFileService : IHazardFileService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deactivating hazard file with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error deactivating hazard file with Code: {Code}", code);
             return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.DeleteFailed);
         }
     }
 
-    public async Task<Result<bool>> ReactivateHazardFileAsync(int fileId, string reactivatedBy, CancellationToken ct = default)
+    public async Task<Result<bool>> ReactivateHazardFileAsync(string code, string reactivatedBy, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Reactivating hazard file with ID: {FileId}", fileId);
-            var result = await _dataService.ReactivateHazardFileAsync(fileId, reactivatedBy, ct).ConfigureAwait(false);
+            _logger.LogInformation("Reactivating hazard file with Code: {Code}", code);
+            var result = await _dataService.ReactivateHazardFileAsync(code, reactivatedBy, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully reactivated hazard file with ID: {FileId}", fileId);
+                _logger.LogInformation("Successfully reactivated hazard file with Code: {Code}", code);
             }
             else
             {
@@ -127,7 +127,7 @@ public sealed class HazardFileService : IHazardFileService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error reactivating hazard file with ID: {FileId}", fileId);
+            _logger.LogError(ex, "Unexpected error reactivating hazard file with Code: {Code}", code);
             return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.UpdateFailed);
         }
     }

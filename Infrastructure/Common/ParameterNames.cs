@@ -79,8 +79,8 @@ public static class ParameterNames
     /// <summary>
     /// Common parameters used across all entities
     /// </summary>
-    private static readonly Lazy<string> _pmId = new Lazy<string>(() => "@pID");
-    public static string pmId => _pmId.Value;
+    //private static readonly Lazy<string> _pmId = new Lazy<string>(() => "@pID");
+    //public static string pmId => _pmId.Value;
 
     private static readonly Lazy<string> _pmCreatedBy = new Lazy<string>(() => "@pCreatedBy");
     public static string pmCreatedBy => _pmCreatedBy.Value;
@@ -97,8 +97,8 @@ public static class ParameterNames
     /// <summary>
     /// SMS Application User parameters
     /// </summary>
-    private static readonly Lazy<string> _pmSMSApplicationUserId = new Lazy<string>(() => "@pID");
-    public static string pmSMSApplicationUserId => _pmSMSApplicationUserId.Value;
+    //private static readonly Lazy<string> _pmSMSApplicationUserId = new Lazy<string>(() => "@pID");
+    //public static string pmSMSApplicationUserId => _pmSMSApplicationUserId.Value;
 
     private static readonly Lazy<string> _pmSMSApplicationUserCode = new Lazy<string>(() => "@pCode");
     public static string pmSMSApplicationUserCode => _pmSMSApplicationUserCode.Value;
@@ -152,8 +152,8 @@ public static class ParameterNames
     /// <summary>
     /// SMS Organizational User parameters
     /// </summary>
-    private static readonly Lazy<string> _pmSMSOrganizationalUserId = new Lazy<string>(() => "@pID");
-    public static string pmSMSOrganizationalUserId => _pmSMSOrganizationalUserId.Value;
+    //private static readonly Lazy<string> _pmSMSOrganizationalUserId = new Lazy<string>(() => "@pID");
+    //public static string pmSMSOrganizationalUserId => _pmSMSOrganizationalUserId.Value;
 
     private static readonly Lazy<string> _pmSMSOrganizationalUserCode = new Lazy<string>(() => "@pUserCode");
     public static string pmSMSOrganizationalUserCode => _pmSMSOrganizationalUserCode.Value;
@@ -200,8 +200,8 @@ public static class ParameterNames
     /// <summary>
     /// SMS Stakeholder User parameters
     /// </summary>
-    private static readonly Lazy<string> _pmSMSStakeholderUserId = new Lazy<string>(() => "@pID");
-    public static string pmSMSStakeholderUserId => _pmSMSStakeholderUserId.Value;
+    //private static readonly Lazy<string> _pmSMSStakeholderUserId = new Lazy<string>(() => "@pID");
+    //public static string pmSMSStakeholderUserId => _pmSMSStakeholderUserId.Value;
 
     private static readonly Lazy<string> _pmSMSStakeholderUserCodeForAssignment = new Lazy<string>(() => "@pUserCode");
     public static string pmSMSStakeholderUserCodeForAssignment => _pmSMSStakeholderUserCodeForAssignment.Value;
@@ -543,8 +543,8 @@ public static class ParameterNames
     /// <summary>
     /// SMS User Role parameters - CORRECTED to match actual database schema
     /// </summary>
-    private static readonly Lazy<string> _pmSMSUserRoleId = new Lazy<string>(() => "@pID");
-    public static string pmSMSUserRoleId => _pmSMSUserRoleId.Value;
+    //private static readonly Lazy<string> _pmSMSUserRoleId = new Lazy<string>(() => "@pID");
+    //public static string pmSMSUserRoleId => _pmSMSUserRoleId.Value;
 
     private static readonly Lazy<string> _pmSMSUserRoleCode = new Lazy<string>(() => "@pCode");
     public static string pmSMSUserRoleCode => _pmSMSUserRoleCode.Value;
@@ -988,12 +988,7 @@ public static class ParameterNames
     /// <summary>
     /// Report Validation parameters (restored from accidental removal)
     /// </summary>
-    private static readonly Lazy<string> _pmReportValidationId = new Lazy<string>(() => "@pReportValidationID");
-    public static string pmReportValidationId => _pmReportValidationId.Value;
-
-    private static readonly Lazy<string> _pmReportValidationCode = new Lazy<string>(() => "@pReportValidationCode");
-    public static string pmReportValidationCode => _pmReportValidationCode.Value;
-
+    
     private static readonly Lazy<string> _pmReportValidationReportCode = new Lazy<string>(() => "@pReportValidationReportCode");
     public static string pmReportValidationReportCode => _pmReportValidationReportCode.Value;
 
@@ -1069,8 +1064,8 @@ public static class ParameterNames
     /// <summary>
     /// Hazard File parameters (missing)
     /// </summary>
-    private static readonly Lazy<string> _pmHazardFileId = new Lazy<string>(() => "@pID");
-    public static string pmHazardFileId => _pmHazardFileId.Value;
+    //private static readonly Lazy<string> _pmHazardFileId = new Lazy<string>(() => "@pID");
+    //public static string pmHazardFileId => _pmHazardFileId.Value;
 
     private static readonly Lazy<string> _pmHazardFileCode = new Lazy<string>(() => "@pCode");
     public static string pmHazardFileCode => _pmHazardFileCode.Value;
@@ -1273,11 +1268,11 @@ public static class ParameterNames
     /// <summary>
     /// NEW: Corrected Mitigation parameter IDs to match stored procedures (@pID not @pMitigationID)
     /// </summary>
-    private static readonly Lazy<string> _pmMitigationIdCorrected = new Lazy<string>(() => "@pID");
-    public static string pmMitigationIdCorrected => _pmMitigationIdCorrected.Value;
+    //private static readonly Lazy<string> _pmMitigationIdCorrected = new Lazy<string>(() => "@pID");
+    //public static string pmMitigationIdCorrected => _pmMitigationIdCorrected.Value;
 
-    private static readonly Lazy<string> _pmMitigationAssignmentIdCorrected = new Lazy<string>(() => "@pID");
-    public static string pmMitigationAssignmentIdCorrected => _pmMitigationAssignmentIdCorrected.Value;
+    //private static readonly Lazy<string> _pmMitigationAssignmentIdCorrected = new Lazy<string>(() => "@pID");
+    //public static string pmMitigationAssignmentIdCorrected => _pmMitigationAssignmentIdCorrected.Value;
 
     /// <summary>
     /// ENHANCED MITIGATION PARAMETERS - All comprehensive mitigation fields
@@ -1446,8 +1441,8 @@ public static class ParameterNames
     /// <summary>
     /// Safety Performance Indicator parameters
     /// </summary>
-    private static readonly Lazy<string> _pmSPIId = new Lazy<string>(() => "@pID");
-    public static string pmSPIId => _pmSPIId.Value;
+    //private static readonly Lazy<string> _pmSPIId = new Lazy<string>(() => "@pID");
+    //public static string pmSPIId => _pmSPIId.Value;
 
     private static readonly Lazy<string> _pmSPICode = new Lazy<string>(() => "@pCode");
     public static string pmSPICode => _pmSPICode.Value;
@@ -1553,8 +1548,8 @@ public static class ParameterNames
     /// </summary>
 
     // SMS Audit Plan parameters
-    private static readonly Lazy<string> _pmSMSAuditPlanId = new Lazy<string>(() => "@pID");
-    public static string pmSMSAuditPlanId => _pmSMSAuditPlanId.Value;
+    //private static readonly Lazy<string> _pmSMSAuditPlanId = new Lazy<string>(() => "@pID");
+    //public static string pmSMSAuditPlanId => _pmSMSAuditPlanId.Value;
 
     private static readonly Lazy<string> _pmSMSAuditPlanCode = new Lazy<string>(() => "@pCode");
     public static string pmSMSAuditPlanCode => _pmSMSAuditPlanCode.Value;
@@ -1614,8 +1609,8 @@ public static class ParameterNames
     public static string pmSMSAuditPlanNotes => _pmSMSAuditPlanNotes.Value;
 
     // SMS Audit parameters
-    private static readonly Lazy<string> _pmSMSAuditId = new Lazy<string>(() => "@pID");
-    public static string pmSMSAuditId => _pmSMSAuditId.Value;
+    //private static readonly Lazy<string> _pmSMSAuditId = new Lazy<string>(() => "@pID");
+    //public static string pmSMSAuditId => _pmSMSAuditId.Value;
 
     private static readonly Lazy<string> _pmSMSAuditCode = new Lazy<string>(() => "@pCode");
     public static string pmSMSAuditCode => _pmSMSAuditCode.Value;
@@ -1678,8 +1673,8 @@ public static class ParameterNames
     public static string pmSMSAuditNotes => _pmSMSAuditNotes.Value;
 
     // SMS Audit Finding parameters
-    private static readonly Lazy<string> _pmSMSAuditFindingId = new Lazy<string>(() => "@pID");
-    public static string pmSMSAuditFindingId => _pmSMSAuditFindingId.Value;
+    //private static readonly Lazy<string> _pmSMSAuditFindingId = new Lazy<string>(() => "@pID");
+    //public static string pmSMSAuditFindingId => _pmSMSAuditFindingId.Value;
 
     private static readonly Lazy<string> _pmSMSAuditFindingCode = new Lazy<string>(() => "@pCode");
     public static string pmSMSAuditFindingCode => _pmSMSAuditFindingCode.Value;
@@ -1733,8 +1728,8 @@ public static class ParameterNames
     public static string pmSMSAuditFindingNotes => _pmSMSAuditFindingNotes.Value;
 
     // SMS Audit Evidence parameters
-    private static readonly Lazy<string> _pmSMSAuditEvidenceId = new Lazy<string>(() => "@pID");
-    public static string pmSMSAuditEvidenceId => _pmSMSAuditEvidenceId.Value;
+    //private static readonly Lazy<string> _pmSMSAuditEvidenceId = new Lazy<string>(() => "@pID");
+    //public static string pmSMSAuditEvidenceId => _pmSMSAuditEvidenceId.Value;
 
     private static readonly Lazy<string> _pmSMSAuditEvidenceCode = new Lazy<string>(() => "@pCode");
     public static string pmSMSAuditEvidenceCode => _pmSMSAuditEvidenceCode.Value;

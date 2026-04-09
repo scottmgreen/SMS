@@ -76,16 +76,16 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
     /// <summary>
     /// Gets SMS Application User by ID
     /// </summary>
-    public async Task<Result<SMSApplicationUser>> GetSMSApplicationUserByIdAsync(string id, CancellationToken ct = default)
+    public async Task<Result<SMSApplicationUser>> GetSMSApplicationUserByCodeAsync(string code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Application User with ID: {Id}", id);
-            return await _dataService.GetSMSApplicationUserByIdAsync(id, ct).ConfigureAwait(false);
+            _logger.LogInformation("Retrieving SMS Application User with Code: {Code}", code);
+            return await _dataService.GetSMSApplicationUserByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Application User with ID: {Id}", id);
+            _logger.LogError(ex, "Unexpected error retrieving SMS Application User with Code: {Code}", code);
             return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -174,7 +174,7 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
             }
 
             // Business validation - check if user exists
-            var existingUserResult = await _dataService.GetSMSApplicationUserByIdAsync(user.Code, ct).ConfigureAwait(false);
+            var existingUserResult = await _dataService.GetSMSApplicationUserByCodeAsync(user.Code, ct).ConfigureAwait(false);
             if (existingUserResult.IsFailure)
             {
                 _logger.LogWarning("Cannot update non-existent SMS Application User with ID: {Id}", user.UserId);
@@ -212,7 +212,7 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
             _logger.LogInformation("Deleting (deactivating) SMS Application User with ID: {Id} using CQRS pipeline", userId);
 
             // Business validation - check if user exists
-            var existingUserResult = await _dataService.GetSMSApplicationUserByIdAsync(userId, ct).ConfigureAwait(false);
+            var existingUserResult = await _dataService.GetSMSApplicationUserByCodeAsync(userId, ct).ConfigureAwait(false);
             if (existingUserResult.IsFailure)
             {
                 _logger.LogWarning("Cannot delete non-existent SMS Application User with ID: {Id}", userId);
@@ -309,7 +309,7 @@ public sealed class SMSApplicationUserService : ISMSApplicationUserService
             _logger.LogInformation("Changing password for SMS Application User with ID: {Id}", userId);
 
             // Get the user first
-            var userResult = await _dataService.GetSMSApplicationUserByIdAsync(userId, ct).ConfigureAwait(false);
+            var userResult = await _dataService.GetSMSApplicationUserByCodeAsync(userId, ct).ConfigureAwait(false);
             if (userResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userResult.Error);

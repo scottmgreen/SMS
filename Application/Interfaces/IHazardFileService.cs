@@ -20,8 +20,8 @@ public interface IHazardFileService
     // Core CRUD Operations
     Task<Result<HazardFile>> CreateHazardFileAsync(HazardFile hazardFile, CancellationToken ct = default);
     Task<Result<HazardFile>> UpdateHazardFileAsync(HazardFile hazardFile, CancellationToken ct = default);
-    Task<Result<bool>> DeactivateHazardFileAsync(int id, string reason, string deactivatedBy, CancellationToken ct = default);
-    Task<Result<bool>> ReactivateHazardFileAsync(int fileId, string reactivatedBy, CancellationToken ct = default);
+    Task<Result<bool>> DeactivateHazardFileAsync(string code, string reason, string deactivatedBy, CancellationToken ct = default);
+    Task<Result<bool>> ReactivateHazardFileAsync(string code, string reactivatedBy, CancellationToken ct = default);
     Task<Result<bool>> SetFileConfidentialityAsync(string fileCode, bool isConfidential, string updatedBy, CancellationToken ct = default);
 
     // Query Operations

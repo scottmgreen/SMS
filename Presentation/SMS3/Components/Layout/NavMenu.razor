@@ -398,7 +398,7 @@
                 SessionTimerService.UpdateActivity();
             }
 
-            _logger.LogInformation("OnMenuClick called with value: {Value}", args.Value?.ToString());
+            //_logger.LogInformation("OnMenuClick called with value: {Text}", args.Text?.ToString());
             
             if (!string.IsNullOrEmpty(args.Value?.ToString()))
             {
@@ -416,7 +416,7 @@
             }
             else
             {
-                _logger.LogWarning("OnMenuClick called with empty or null value");
+                _logger.LogInformation("OnMenuClick called with value: {Text}", args.Text?.ToString());
             }
         }
         catch (Exception ex)

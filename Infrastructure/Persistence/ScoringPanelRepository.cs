@@ -225,8 +225,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, scoringPanel.Id.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelCode, scoringPanel.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, scoringPanel.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelHazardCode, scoringPanel.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelRiskAssessmentCode, scoringPanel.RiskAssessmentCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelSMSUserCode, scoringPanel.SMSUserCode));
@@ -244,8 +243,8 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
-
-            return await GetScoringPanelByCodeAsync((ScoringPanelID)scoringPanel.Id, ct).ConfigureAwait(false);
+            var code = new ScoringPanelID(scoringPanel.Code);
+            return await GetScoringPanelByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {

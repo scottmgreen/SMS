@@ -158,10 +158,9 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
                 CommandType = CommandType.StoredProcedure
             };
 
-            // Extract ID from the HazardFile (you may need to add this property or modify based on your ID strategy)
-            var id = ExtractIdFromHazardFile(hazardFile); // This method would need to be implemented
+                       
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileId, id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, hazardFile.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileFileName, hazardFile.FileName));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileDescription, hazardFile.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileCategory, hazardFile.Category ?? (object)DBNull.Value));
@@ -197,11 +196,11 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
         }
     }
 
-    public async Task<Result<bool>> DeactivateAsync(int id, string reason, string deactivatedBy, CancellationToken cancellationToken = default)
+    public async Task<Result<bool>> DeactivateAsync(string code, string reason, string deactivatedBy, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInfrastructureDeleteItem($"{_logHeader} {StoredProcs.pr_HazardFile_Deactivate} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logHeader} {StoredProcs.pr_HazardFile_Deactivate} Code:{code}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_HazardFile_Deactivate, sql)
@@ -209,7 +208,7 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileId, id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileInactiveReason, reason));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileInactiveBy, deactivatedBy));
 
@@ -226,11 +225,11 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
         }
     }
 
-    public async Task<Result<bool>> ReactivateAsync(int id, string reactivatedBy, CancellationToken cancellationToken = default)
+    public async Task<Result<bool>> ReactivateAsync(string code, string reactivatedBy, CancellationToken cancellationToken = default)
     {
         try
         {
-            _logger.LogInfrastructurePostItem($"{_logHeader} {StoredProcs.pr_HazardFile_Reactivate} ID:{id}", null);
+            _logger.LogInfrastructurePostItem($"{_logHeader} {StoredProcs.pr_HazardFile_Reactivate} Code:{code}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_HazardFile_Reactivate, sql)
@@ -238,7 +237,7 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileId, id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, reactivatedBy));
 
             await sql.OpenAsync(cancellationToken).ConfigureAwait(false);
@@ -544,18 +543,5 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
         }
     }
 
-    // Helper method - Extract ID from HazardFile code
-    private int ExtractIdFromHazardFile(HazardFile hazardFile)
-    {
-        try
-        {
-            // For now, return a default value since we're using string-based codes
-            // The stored procedure should handle ID generation
-            return 0; // Let the database handle ID assignment
-        }
-        catch
-        {
-            return 0;
-        }
-    }
+    
 }

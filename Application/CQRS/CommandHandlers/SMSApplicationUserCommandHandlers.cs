@@ -365,7 +365,7 @@ public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IR
             _logger.LogInformation("✅ Clean Architecture: Processing RecordSMSApplicationUserLoginCommand for UserID: {UserId}", request.UserId);
 
             // Get the existing user
-            var userResult = await _applicationUserService.GetSMSApplicationUserByIdAsync(request.UserId, cancellationToken);
+            var userResult = await _applicationUserService.GetSMSApplicationUserByCodeAsync(request.UserId, cancellationToken);
             if (userResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userResult.Error);

@@ -52,7 +52,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
             };
 
             // Add ALL parameters to match complete field set (except fldi_ID which is auto-generated)
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationCode, reportValidation.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, reportValidation.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationReportCode, reportValidation.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationDecision, reportValidation.ValidationDecision));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationStatus, reportValidation.Status.Value));
@@ -87,24 +87,24 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         }
     }
 
-    public async Task<Result<ReportValidation>> GetReportValidationByIdAsync(ReportValidationID id, CancellationToken ct = default)
+    public async Task<Result<ReportValidation>> GetReportValidationByIdAsync(ReportValidationID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_ReportValidation_GetById} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_ReportValidation_GetByCode} {code.Value}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_ReportValidation_GetById, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_ReportValidation_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             ReportValidation? response = null;
 
@@ -134,24 +134,24 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         }
     }
 
-    public async Task<Result<ReportValidation>> GetReportValidationByReportIdAsync(ReportID id, CancellationToken ct = default)
+    public async Task<Result<ReportValidation>> GetReportValidationByReportIdAsync(ReportID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_ReportValidation_GetById} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_ReportValidation_GetByCode} {code.Value}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_ReportValidation_GetByReportId, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_ReportValidation_GetByReportCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             ReportValidation? response = null;
 
@@ -237,7 +237,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
             };
 
             // Add ALL parameters to match complete field set (except fldi_ID which is never updated)
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationCode, reportValidation.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, reportValidation.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationReportCode, reportValidation.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationDecision, reportValidation.ValidationDecision));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationStatus, reportValidation.Status.Value));
@@ -267,16 +267,16 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         }
     }
 
-    public async Task<Result<bool>> DeleteReportValidationAsync(ReportValidationID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteReportValidationAsync(ReportValidationID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_ReportValidation_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_ReportValidation_Delete} Code:{code.Value}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_ReportValidation_Delete, sql)
@@ -284,7 +284,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

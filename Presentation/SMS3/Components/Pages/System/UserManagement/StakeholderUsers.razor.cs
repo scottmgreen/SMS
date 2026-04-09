@@ -109,7 +109,12 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task ShowCreateDialog()
     {
-        NewUser = new CreateStakeholderUserModel();
+        NewUser = new CreateStakeholderUserModel
+        {
+            IsActive = true,  // ADDED: Set default value
+            IsPOPEmployee = false,
+            TwoFactorEnabled = false
+        };
         ShowCreateModal = true;
         StateHasChanged();
     }
@@ -184,7 +189,12 @@ public partial class StakeholderUsers : ComponentBase
     private void CloseCreateModal()
     {
         ShowCreateModal = false;
-        NewUser = new CreateStakeholderUserModel();
+        NewUser = new CreateStakeholderUserModel
+        {
+            IsActive = true,  // ADDED: Set default value
+            IsPOPEmployee = false,
+            TwoFactorEnabled = false
+        };
         StateHasChanged();
     }
 

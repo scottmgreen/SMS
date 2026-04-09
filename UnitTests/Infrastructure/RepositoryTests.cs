@@ -177,7 +177,7 @@ public class InfrastructureCommonTests
     {
         // Assert
         StoredProcs.pr_Investigation_Insert.Should().Be("pr_Investigation_Insert");
-        StoredProcs.pr_Investigation_GetById.Should().Be("pr_Investigation_GetById");
+        StoredProcs.pr_Investigation_GetByCode.Should().Be("pr_Investigation_GetByCode");
         StoredProcs.pr_Investigation_GetAll.Should().Be("pr_Investigation_GetAll");
         StoredProcs.pr_Investigation_Update.Should().Be("pr_Investigation_Update");
         StoredProcs.pr_Investigation_Delete.Should().Be("pr_Investigation_Delete");
@@ -188,7 +188,7 @@ public class InfrastructureCommonTests
     {
         // Assert
         StoredProcs.pr_Interview_Insert.Should().Be("pr_Interview_Insert");
-        StoredProcs.pr_Interview_GetById.Should().Be("pr_Interview_GetById");
+        StoredProcs.pr_Interview_GetByCode.Should().Be("pr_Interview_GetByCode");
         StoredProcs.pr_Interview_GetAll.Should().Be("pr_Interview_GetAll");
         StoredProcs.pr_Interview_Update.Should().Be("pr_Interview_Update");
         StoredProcs.pr_Interview_Delete.Should().Be("pr_Interview_Delete");
@@ -243,7 +243,7 @@ public class InfrastructureCommonTests
     {
         // Assert
         StoredProcs.pr_ReportValidation_Insert.Should().Be("pr_ReportValidation_Insert");
-        StoredProcs.pr_ReportValidation_GetById.Should().Be("pr_ReportValidation_GetById");
+        StoredProcs.pr_ReportValidation_GetByCode.Should().Be("pr_ReportValidation_GetByCode");
         StoredProcs.pr_ReportValidation_GetAll.Should().Be("pr_ReportValidation_GetAll");
         StoredProcs.pr_ReportValidation_Update.Should().Be("pr_ReportValidation_Update");
         StoredProcs.pr_ReportValidation_Delete.Should().Be("pr_ReportValidation_Delete");
@@ -257,7 +257,7 @@ public class InfrastructureCommonTests
     public void ParameterNames_CommonParameters_HaveCorrectNames()
     {
         // Assert
-        ParameterNames.pmId.Should().Be("@pID");
+        ParameterNames.pmCode.Should().Be("@pCode");
         ParameterNames.pmCreatedBy.Should().Be("@pCreatedBy");
         ParameterNames.pmCreatedDate.Should().Be("@pCreatedDate");
         ParameterNames.pmUpdatedBy.Should().Be("@pUpdatedBy");

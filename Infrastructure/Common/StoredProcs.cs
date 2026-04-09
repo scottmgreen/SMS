@@ -41,8 +41,8 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_SMSApplicationUser_GetAll = new(() => "pr_SMSApplicationUser_GetAll");
         public static string pr_SMSApplicationUser_GetAll => _pr_SMSApplicationUser_GetAll.Value;
 
-        private static readonly Lazy<string> _pr_SMSApplicationUser_GetById = new(() => "pr_SMSApplicationUser_GetById");
-        public static string pr_SMSApplicationUser_GetById => _pr_SMSApplicationUser_GetById.Value;
+        private static readonly Lazy<string> _pr_SMSApplicationUser_GetByCode = new(() => "pr_SMSApplicationUser_GetByCode");
+        public static string pr_SMSApplicationUser_GetByCode => _pr_SMSApplicationUser_GetByCode.Value;
 
         private static readonly Lazy<string> _pr_SMSApplicationUser_GetByUserName = new(() => "pr_SMSApplicationUser_GetByUserName");
         public static string pr_SMSApplicationUser_GetByUserName => _pr_SMSApplicationUser_GetByUserName.Value;
@@ -162,8 +162,8 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_SMSStakeholderUser_GetAll = new(() => "pr_SMSStakeholderUser_GetAll");
         public static string pr_SMSStakeholderUser_GetAll => _pr_SMSStakeholderUser_GetAll.Value;
 
-        private static readonly Lazy<string> _pr_SMSStakeholderUser_GetById = new(() => "pr_SMSStakeholderUser_GetById");
-        public static string pr_SMSStakeholderUser_GetById => _pr_SMSStakeholderUser_GetById.Value;
+        private static readonly Lazy<string> _pr_SMSStakeholderUser_GetByCode = new(() => "pr_SMSStakeholderUser_GetByCode");
+        public static string pr_SMSStakeholderUser_GetByCode => _pr_SMSStakeholderUser_GetByCode.Value;
 
         private static readonly Lazy<string> _pr_SMSStakeholderUser_GetByUserName = new(() => "pr_SMSStakeholderUser_GetByUserName");
         public static string pr_SMSStakeholderUser_GetByUserName => _pr_SMSStakeholderUser_GetByUserName.Value;
@@ -360,13 +360,13 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_SMSUserRole_GetAll = new Lazy<string>(() => "pr_SMSUserRole_GetAll");
         public static string pr_SMSUserRole_GetAll => _pr_SMSUserRole_GetAll.Value;
 
-        private static readonly Lazy<string> _pr_SMSUserRole_GetById = new Lazy<string>(() => "pr_SMSUserRole_GetById");
-        public static string pr_SMSUserRole_GetById => _pr_SMSUserRole_GetById.Value;
+        private static readonly Lazy<string> _pr_SMSUserRole_GetByCode = new Lazy<string>(() => "pr_SMSUserRole_GetByCode");
+        public static string pr_SMSUserRole_GetByCode => _pr_SMSUserRole_GetByCode.Value;
 
-        private static readonly Lazy<string> _pr_SMSUserRole_GetByApplicationUserId = new Lazy<string>(() => "pr_SMSUserRole_GetByApplicationUserId");
+        private static readonly Lazy<string> _pr_SMSUserRole_GetByApplicationUserId = new Lazy<string>(() => "pr_SMSUserRole_GetByApplicationUserCode");
         public static string pr_SMSUserRole_GetByApplicationUserId => _pr_SMSUserRole_GetByApplicationUserId.Value;
 
-        private static readonly Lazy<string> _pr_SMSUserRole_GetByStakeholderUserId = new Lazy<string>(() => "pr_SMSUserRole_GetByStakeholderUserId");
+        private static readonly Lazy<string> _pr_SMSUserRole_GetByStakeholderUserId = new Lazy<string>(() => "pr_SMSUserRole_GetByStakeholderUserCode");
         public static string pr_SMSUserRole_GetByStakeholderUserId => _pr_SMSUserRole_GetByStakeholderUserId.Value;
 
         private static readonly Lazy<string> _pr_SMSUserRole_GetByRole = new Lazy<string>(() => "pr_SMSUserRole_GetByRole");
@@ -507,8 +507,8 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_Investigation_Insert = new Lazy<string>(() => "pr_Investigation_Insert");
         public static string pr_Investigation_Insert => _pr_Investigation_Insert.Value;
 
-        private static readonly Lazy<string> _pr_Investigation_GetById = new Lazy<string>(() => "pr_Investigation_GetById");
-        public static string pr_Investigation_GetById => _pr_Investigation_GetById.Value;
+        //private static readonly Lazy<string> _pr_Investigation_GetById = new Lazy<string>(() => "pr_Investigation_GetById");
+        //public static string pr_Investigation_GetById => _pr_Investigation_GetById.Value;
 
         private static readonly Lazy<string> _pr_Investigation_GetByCode = new Lazy<string>(() => "pr_Investigation_GetByCode");
         public static string pr_Investigation_GetByCode => _pr_Investigation_GetByCode.Value;
@@ -525,7 +525,7 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_Investigation_GetByStatus = new Lazy<string>(() => "pr_Investigation_GetByStatus");
         public static string pr_Investigation_GetByStatus => _pr_Investigation_GetByStatus.Value;
 
-        private static readonly Lazy<string> _pr_Investigation_Update = new Lazy<string>(() => "pr_Investigation_Update_Enhanced");
+        private static readonly Lazy<string> _pr_Investigation_Update = new Lazy<string>(() => "pr_Investigation_Update");
         public static string pr_Investigation_Update => _pr_Investigation_Update.Value;
 
         private static readonly Lazy<string> _pr_Investigation_Delete = new Lazy<string>(() => "pr_Investigation_Delete");
@@ -559,8 +559,8 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_Interview_Insert = new Lazy<string>(() => "pr_Interview_Insert");
         public static string pr_Interview_Insert => _pr_Interview_Insert.Value;
 
-        private static readonly Lazy<string> _pr_Interview_GetById = new Lazy<string>(() => "pr_Interview_GetById");
-        public static string pr_Interview_GetById => _pr_Interview_GetById.Value;
+        //private static readonly Lazy<string> _pr_Interview_GetById = new Lazy<string>(() => "pr_Interview_GetById");
+        //public static string pr_Interview_GetById => _pr_Interview_GetById.Value;
 
         private static readonly Lazy<string> _pr_Interview_GetByCode = new Lazy<string>(() => "pr_Interview_GetByCode");
         public static string pr_Interview_GetByCode => _pr_Interview_GetByCode.Value;
@@ -717,11 +717,11 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_ReportValidation_Insert = new Lazy<string>(() => "pr_ReportValidation_Insert");
         public static string pr_ReportValidation_Insert => _pr_ReportValidation_Insert.Value;
 
-        private static readonly Lazy<string> _pr_ReportValidation_GetById = new Lazy<string>(() => "pr_ReportValidation_GetById");
-        public static string pr_ReportValidation_GetById => _pr_ReportValidation_GetById.Value;
+        private static readonly Lazy<string> _pr_ReportValidation_GetByCode = new Lazy<string>(() => "pr_ReportValidation_GetByCode");
+        public static string pr_ReportValidation_GetByCode => _pr_ReportValidation_GetByCode.Value;
 
-        private static readonly Lazy<string> _pr_ReportValidation_GetByReportId = new Lazy<string>(() => "pr_ReportValidation_GetByReportId");
-        public static string pr_ReportValidation_GetByReportId => _pr_ReportValidation_GetByReportId.Value;
+        private static readonly Lazy<string> _pr_ReportValidation_GetByReportCode = new Lazy<string>(() => "pr_ReportValidation_GetByReportCode");
+        public static string pr_ReportValidation_GetByReportCode => _pr_ReportValidation_GetByReportCode.Value;
 
 
 
@@ -885,8 +885,8 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_SafetyPerformanceIndicator_Insert = new(() => "pr_SafetyPerformanceIndicator_Insert");
         public static string pr_SafetyPerformanceIndicator_Insert => _pr_SafetyPerformanceIndicator_Insert.Value;
 
-        private static readonly Lazy<string> _pr_SafetyPerformanceIndicator_GetById = new(() => "pr_SafetyPerformanceIndicator_GetById");
-        public static string pr_SafetyPerformanceIndicator_GetById => _pr_SafetyPerformanceIndicator_GetById.Value;
+        //private static readonly Lazy<string> _pr_SafetyPerformanceIndicator_GetByCode = new(() => "pr_SafetyPerformanceIndicator_GetById");
+        //public static string pr_SafetyPerformanceIndicator_GetById => _pr_SafetyPerformanceIndicator_GetById.Value;
 
         private static readonly Lazy<string> _pr_SafetyPerformanceIndicator_GetByCode = new(() => "pr_SafetyPerformanceIndicator_GetByCode");
         public static string pr_SafetyPerformanceIndicator_GetByCode => _pr_SafetyPerformanceIndicator_GetByCode.Value;
@@ -912,8 +912,8 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_SPIDataPoint_Insert = new(() => "pr_SPIDataPoint_Insert");
         public static string pr_SPIDataPoint_Insert => _pr_SPIDataPoint_Insert.Value;
 
-        private static readonly Lazy<string> _pr_SPIDataPoint_GetBySPIId = new(() => "pr_SPIDataPoint_GetBySPIId");
-        public static string pr_SPIDataPoint_GetBySPIId => _pr_SPIDataPoint_GetBySPIId.Value;
+        private static readonly Lazy<string> _pr_SPIDataPoint_GetBySPICode = new(() => "pr_SPIDataPoint_GetBySPICode");
+        public static string pr_SPIDataPoint_GetBySPICode => _pr_SPIDataPoint_GetBySPICode.Value;
 
         private static readonly Lazy<string> _pr_SPIDataPoint_Update = new(() => "pr_SPIDataPoint_Update");
         public static string pr_SPIDataPoint_Update => _pr_SPIDataPoint_Update.Value;

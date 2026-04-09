@@ -140,24 +140,24 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
         }
     }
 
-    public async Task<Result<SMSUserRole>> GetByIdAsync(string id)
+    public async Task<Result<SMSUserRole>> GetByIdAsync(string code)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(code))
             {
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSUserRole_GetById} ID:{id}", null);
+            _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSUserRole_GetByCode} ID:{code}", null);
 
             using var sql = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_GetById, sql)
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             SMSUserRole? userRole = null;
 
@@ -810,16 +810,16 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
         }
     }
 
-    public async Task<Result<bool>> DeleteAsync(string id)
+    public async Task<Result<bool>> DeleteAsync(string code)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(id))
+            if (string.IsNullOrWhiteSpace(code))
             {
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logHeader} {StoredProcs.pr_SMSUserRole_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logHeader} {StoredProcs.pr_SMSUserRole_Delete} Code:{code}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_Delete, sql)
@@ -827,7 +827,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);

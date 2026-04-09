@@ -139,24 +139,24 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
         }
     }
 
-    public async Task<Result<SMSStakeholderUser>> GetByCodeAsync(BaseUserID id)
+    public async Task<Result<SMSStakeholderUser>> GetByCodeAsync(BaseUserID code)
     {
         try
         {
-            if (id?.Value is null || string.IsNullOrWhiteSpace(id.Value))
+            if (code?.Value is null || string.IsNullOrWhiteSpace(code.Value))
             {
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSStakeholderUser_GetById} ID:{id.Value}", null);
+            _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSStakeholderUser_GetByCode} Code:{code.Value}", null);
 
             using var sql = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(StoredProcs.pr_SMSStakeholderUser_GetById, sql)
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSStakeholderUser_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             SMSStakeholderUser? user = null;
 
@@ -415,7 +415,6 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLastName, user.LastName.Value));
@@ -469,16 +468,16 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
         return await DeleteAsync(userId.Value);
     }
 
-    public async Task<Result<bool>> UpdatePasswordAsync(string userId, string hashedPassword)
+    public async Task<Result<bool>> UpdatePasswordAsync(string code, string hashedPassword)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(userId))
+            if (string.IsNullOrWhiteSpace(code))
             {
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSStakeholderUser_UpdatePassword} ID:{userId}", null);
+            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSStakeholderUser_UpdatePassword} Code:{code}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_SMSStakeholderUser_UpdatePassword, sql)
@@ -486,7 +485,7 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, userId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserPassword, hashedPassword));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
@@ -537,16 +536,16 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
     //    }
     //}
 
-    public async Task<Result<bool>> DeleteAsync(string userId)
+    public async Task<Result<bool>> DeleteAsync(string code)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(userId))
+            if (string.IsNullOrWhiteSpace(code))
             {
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logHeader} {StoredProcs.pr_SMSStakeholderUser_Delete} ID:{userId}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logHeader} {StoredProcs.pr_SMSStakeholderUser_Delete} Code:{code}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_SMSStakeholderUser_Delete, sql)
@@ -554,7 +553,7 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, userId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);

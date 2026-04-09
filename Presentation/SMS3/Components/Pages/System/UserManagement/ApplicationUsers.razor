@@ -80,8 +80,6 @@
                                         </div>
                                     </Template>
                                 </RadzenDataGridColumn>
-
-                                <!-- NEW: User Role Column -->
                                 <RadzenDataGridColumn TItem="SMSApplicationUser" Property="UserRole" Title="SMS Role/Permissions " Sortable="false">
                                     <Template Context="user">
                                         @if (user.UserRole != null)
@@ -94,7 +92,7 @@
                                         }
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSApplicationUser" Property="TwoFactorEnabled" Title="2FA Required" Width="140px">
+                                <RadzenDataGridColumn TItem="SMSApplicationUser" Property="TwoFactorEnabled" Title="2FA Required" Width="160px">
                                     <Template Context="user">
                                         <RadzenIcon Icon="@(user.TwoFactorEnabled ? "check_box" : "check_box_outline_blank")"
                                                     Style="@(user.TwoFactorEnabled ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />
@@ -106,9 +104,6 @@
                                                     Style="@(user.IsActive ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />
                                     </Template>
                                 </RadzenDataGridColumn>
-                                
-                                
-                              
                                 <RadzenDataGridColumn TItem="SMSApplicationUser" Title="Actions" Width="200px" Sortable="false" Filterable="false">
                                     <Template Context="user">
                                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
@@ -155,7 +150,7 @@
     </RadzenRow>
 </div>
 
-<!-- 🔥 NEW: Role Assignment Modal -->
+<!-- Role Assignment Modal -->
 @if (ShowRoleAssignmentModal)
 {
     <div class="modal-overlay">
@@ -167,19 +162,16 @@
                     </h5>
                 </div>
                 <div class="sms-modal-body">
-                    
+                    <RadzenStack>
                     <RadzenRow Gap="1rem">
-                        <RadzenColumn Size="12">
+                        <RadzenColumn Size="6">
                             <RadzenFormField Text="Current Role" Variant="Variant.Outlined">
                                 <RadzenTextBox Value="@(CurrentUserRoleCode ?? "No role assigned")"
                                                ReadOnly="true"
                                                Style="background-color: #f8f9fa;" />
                             </RadzenFormField>
                         </RadzenColumn>
-                    </RadzenRow>
-
-                    <RadzenRow Gap="1rem">
-                        <RadzenColumn Size="12">
+                        <RadzenColumn Size="6">
                             <RadzenFormField Text="Select Role" Variant="Variant.Outlined">
                                 <RadzenDropDown @bind-Value="@SelectedRoleCode"
                                                 Data="@AvailableRoles"
@@ -190,8 +182,10 @@
                                                 Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>
+                    
                     </RadzenRow>
-
+                    </RadzenStack>
+                    <br>
                     @if (!string.IsNullOrEmpty(SelectedRoleCode))
                     {
                         var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == SelectedRoleCode);
@@ -284,7 +278,7 @@
                         <div class="d-flex gap-2">
                             <RadzenButton Text="Cancel"
                                           Icon="cancel"
-                                          ButtonStyle="ButtonStyle.Secondary"
+                                          ButtonStyle="ButtonStyle.Danger"
                                           Size="ButtonSize.Medium"
                                           Click="@CloseRoleAssignmentModal" />
                             
@@ -305,92 +299,90 @@
 <!-- Edit User Modal -->
 @if (IsEditMode && CurrentUser != null)
 {
-    <div class="modal-overlay">
-        <div class="sms-modal-dialog sms-modal-lg">
-            <div class="sms-modal-content">
-                <div class="sms-modal-header sms-header-primary">
-                    <h5 class="sms-modal-title">
-                        <i class="fas fa-edit"></i> Edit User: @CurrentUser.DisplayName
-                    </h5>
+    <div class="modal-backdrop">
+        <div class="modal-dialog sms-modal-body">
+            <RadzenCard class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="edit" Style="margin-right: 0.5rem;" />
+                        Edit Application User - @CurrentUser.Code
+                    </RadzenText>
                 </div>
-                <div class="sms-modal-body">
-                    <RadzenTemplateForm Data="@editUser" Submit="@((EditUserModel model) => UpdateUser(model))">
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="First Name" Variant="Variant.Outlined">
-                                    <RadzenTextBox @bind-Value="@editUser.FirstName" Name="FirstName" />
-                                </RadzenFormField>
-                                <RadzenRequiredValidator Component="FirstName" Text="First name is required" />
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Last Name" Variant="Variant.Outlined">
-                                    <RadzenTextBox @bind-Value="@editUser.LastName" Name="LastName" />
-                                </RadzenFormField>
-                                <RadzenRequiredValidator Component="LastName" Text="Last name is required" />
-                            </RadzenColumn>
-                        </RadzenRow>
-                        <RadzenRow Gap="1rem" class="rz-mt-3">
-                            <RadzenColumn Size="12">
-                                <RadzenFormField Text="Username" Variant="Variant.Outlined">
-                                    <RadzenTextBox Value="@CurrentUser.UserName?.Value" Disabled="true" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);">
-                                Username cannot be changed after creation
-                            </RadzenText>
-                        </RadzenRow>
-                        <!-- NEW: Role Assignment in Edit Modal -->
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12">
-                                <RadzenFormField Text="Assign Role (Optional)" Variant="Variant.Outlined">
-                                    <RadzenDropDown @bind-Value="@EditUserRoleCode"
-                                                    Data="@AvailableRoles"
-                                                    TextProperty="Name"
-                                                    ValueProperty="Code"
-                                                    Placeholder="Select a role (optional)..."
-                                                    AllowClear="true"
-                                                    Style="width: 100%;" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                        </RadzenRow>
+                
+                <!-- Modal Body -->
+                <RadzenRow Gap=".5rem">
+                    <RadzenColumn Size="6" SizeMD="6">
+                        <RadzenStack Gap=".5rem">
+                            <RadzenFormField Text="Username" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenTextBox Value="@CurrentUser.UserName?.Value" ReadOnly="true"
+                                               Style="width: 100%; background-color: #f8f9fa;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow Gap=".5rem">
+                    <RadzenColumn Size="6" SizeMD="6">
+                        <RadzenStack Gap=".5rem">
+                            <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenTextBox @bind-Value="@editUser.FirstName" 
+                                               Placeholder="Enter first name" 
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
 
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="6">
-                                <RadzenFormField Text="Require 2FA" Variant="Variant.Outlined">
-                                    <div class="d-flex align-items-center p-2">
-                                        <RadzenCheckBox @bind-Value="@CurrentUser.TwoFactorEnabled" Name="TwoFactorEnabled" />
-                                        <RadzenLabel Text="Require 2FA" Component="TwoFactorEnabled" Style="width:120px;margin-left: 0.5rem; cursor: pointer;" />
-                                    </div>
-                                </RadzenFormField>
-                            </RadzenColumn>
-                            <RadzenColumn Size="6">
-                                <RadzenFormField Text="Active" Variant="Variant.Outlined">
-                                    <div class="d-flex align-items-center p-2">
-                                        <RadzenCheckBox @bind-Value="@CurrentUser.IsActive" Name="IsActive" />
-                                        <RadzenLabel Text="Active" Component="IsActive" Style="width:120px;margin-left: 0.5rem; cursor: pointer;" />
-                                    </div>
-                                </RadzenFormField>
-                            </RadzenColumn>
-                        </RadzenRow>
-                    </RadzenTemplateForm>
+                            <RadzenFormField Text="Assign Role (Optional)" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenDropDown @bind-Value="@EditUserRoleCode"
+                                                Data="@AvailableRoles"
+                                                TextProperty="Name"
+                                                ValueProperty="Code"
+                                                Style="width: 100%;" Placeholder="Select a role (optional)..." AllowClear="true" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                    <RadzenColumn Size="6" SizeMD="6">
+                        <RadzenStack Gap=".5rem">
+                            
+
+                            <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenTextBox @bind-Value="@editUser.LastName"
+                                               Placeholder="Enter last name"
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap=".5rem">
+                    <RadzenColumn Size="6">
+                        <RadzenStack Gap=".5rem">
+                        <RadzenFormField Text="Require 2FA" Variant="Variant.Outlined">
+                            <div class="d-flex align-items-center p-2">
+                                <RadzenCheckBox @bind-Value="@CurrentUser.TwoFactorEnabled" Name="TwoFactorEnabled" />
+                                <RadzenLabel Text="Require 2FA" Component="TwoFactorEnabled" Style="width:120px;margin-left: 0.5rem; cursor: pointer;" />
+                            </div>
+                        </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                    <RadzenColumn Size="6">
+                        <RadzenStack Gap=".5rem">
+                        <RadzenFormField Text="Active" Variant="Variant.Outlined">
+                            <div class="d-flex align-items-center p-2">
+                                <RadzenCheckBox @bind-Value="@CurrentUser.IsActive" Name="IsActive" />
+                                <RadzenLabel Text="Active" Component="IsActive" Style="width:120px;margin-left: 0.5rem; cursor: pointer;" />
+                            </div>
+                        </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+                
+                <!-- Modal Footer -->
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CancelEdit" />
+                    <RadzenButton Text="Update User" Icon="save" ButtonStyle="ButtonStyle.Primary" 
+                                  Click="@(() => UpdateUser(editUser))"
+                                  Style="background-color: #212e61; border-color: #212e61;" />
                 </div>
-                <div class="sms-modal-footer">
-                    <div class="d-flex justify-content-end align-items-center w-100">
-                        <div class="d-flex gap-2">
-                            <RadzenButton Text="Cancel"
-                                          Icon="cancel"
-                                          ButtonStyle="ButtonStyle.Secondary"
-                                          Size="ButtonSize.Medium"
-                                          Click="@CancelEdit" />
-                            <RadzenButton Text="Update User"
-                                          Icon="save"
-                                          ButtonStyle="ButtonStyle.Success"
-                                          Size="ButtonSize.Medium"
-                                          Click="@(() => UpdateUser(editUser))" />
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </RadzenCard>
         </div>
     </div>
 }
@@ -406,96 +398,98 @@
 <!-- Create User Modal -->
 @if (ShowCreateModal)
 {
-    <div class="modal-overlay">
-        <div class="sms-modal-dialog sms-modal-lg">
-            <div class="sms-modal-content">
-                <div class="sms-modal-header sms-header-primary">
-                    <h5 class="sms-modal-title">
-                        <i class="fas fa-user-plus"></i> Create Application User
-                    </h5>
+    <div class="modal-backdrop">
+        <div class="modal-dialog sms-modal-body">
+            <RadzenCard class="modal-content">
+                <!-- Modal Header -->
+                <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="person_add" Style="margin-right: 0.5rem;" />
+                        Create Application User
+                    </RadzenText>
                 </div>
-                <div class="sms-modal-body">
-                    <RadzenTemplateForm Data="@NewUser" Submit="@((CreateUserModel model) => CreateUser())">
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="First Name *" Variant="Variant.Outlined">
-                                    <RadzenTextBox @bind-Value="@NewUser.FirstName" Name="FirstName"
-                                                   Placeholder="Enter first name"
-                                                   Style="width: 100%;" />
-                                </RadzenFormField>
-                                <RadzenRequiredValidator Component="FirstName" Text="First name is required" />
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <RadzenFormField Text="Last Name *" Variant="Variant.Outlined">
-                                    <RadzenTextBox @bind-Value="@NewUser.LastName" Name="LastName"
-                                                   Placeholder="Enter last name"
-                                                   Style="width: 100%;" />
-                                </RadzenFormField>
-                                <RadzenRequiredValidator Component="LastName" Text="Last name is required" />
-                            </RadzenColumn>
-                        </RadzenRow>
+                
+                <!-- Modal Body -->
+                <RadzenRow Gap=".5rem">
+                    <RadzenColumn Size="6" SizeMD="6">
+                        <RadzenStack Gap=".5rem">
+                            <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenTextBox @bind-Value="@NewUser.FirstName" 
+                                               Placeholder="Enter first name" 
+                                               Style="width: 100%;min-width:100%" />
+                            </RadzenFormField>
 
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12">
-                                <RadzenFormField Text="Username *" Variant="Variant.Outlined">
-                                    <RadzenTextBox @bind-Value="@NewUser.UserName" Name="UserName"
-                                                   Placeholder="Enter username"
-                                                   Style="width: 100%;" />
-                                </RadzenFormField>
-                                <RadzenRequiredValidator Component="UserName" Text="Username is required" />
-                            </RadzenColumn>
-                        </RadzenRow>
+                            <RadzenFormField Text="Assign Role (Optional)" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenDropDown @bind-Value="@NewUser.UserRoleCode"
+                                                Data="@AvailableRoles"
+                                                TextProperty="Name"
+                                                ValueProperty="Code"
+                                                Style="width: 100%;" Placeholder="Select a role" AllowClear="true" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                    <RadzenColumn Size="6" SizeMD="6">
+                        <RadzenStack Gap=".5rem">
+                            <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenTextBox @bind-Value="@NewUser.LastName" 
+                                               Placeholder="Enter last name" 
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow Gap=".5rem">
+                    <RadzenColumn Size="6" SizeMD="6">
+                        <RadzenStack Gap=".5rem">
+                            <RadzenFormField Text="Username *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenTextBox @bind-Value="@NewUser.UserName"
+                                               Placeholder="Enter username"
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
 
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12">
-                                <RadzenFormField Text="Password *" Variant="Variant.Outlined">
-                                    <RadzenPassword @bind-Value="@NewUser.Password" Name="Password"
-                                                    Placeholder="Enter password"
-                                                    Style="width: 100%;" />
-                                </RadzenFormField>
-                                <RadzenRequiredValidator Component="Password" Text="Password is required" />
-                            </RadzenColumn>
-                        </RadzenRow>
-
-                        <!-- NEW: Role Assignment in Create Modal -->
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12">
-                                <RadzenFormField Text="Assign Role (Optional)" Variant="Variant.Outlined">
-                                    <RadzenDropDown @bind-Value="@NewUser.UserRoleCode"
-                                                    Data="@AvailableRoles"
-                                                    TextProperty="Name"
-                                                    ValueProperty="Code"
-                                                    Placeholder="Select a role (optional)..."
-                                                    AllowClear="true"
-                                                    Style="width: 100%;" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                        </RadzenRow>
-
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12">
-                                <RadzenFormField Text="Two-Factor Authentication" Variant="Variant.Outlined">
-                                    <div class="d-flex align-items-center p-2">
-                                        <RadzenCheckBox @bind-Value="@NewUser.TwoFactorEnabled" Name="NewUserTwoFactorEnabled" />
-                                        <RadzenLabel Text="Require 2FA for this user" Component="NewUserTwoFactorEnabled" Style="margin-left: 0.5rem; cursor: pointer;" />
-                                    </div>
-                                </RadzenFormField>
-                            </RadzenColumn>
-                        </RadzenRow>
-                    </RadzenTemplateForm>
+                    <RadzenColumn Size="6" SizeMD="6">
+                        <RadzenStack Gap=".5rem">
+                            <RadzenFormField Text="Password *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenPassword @bind-Value="@NewUser.Password" 
+                                                Placeholder="Enter password" 
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow Gap=".5rem">
+                    <RadzenColumn Size="6">
+                        <RadzenStack Gap=".5rem">
+                            <RadzenFormField Text="Require 2FA" Variant="Variant.Outlined">
+                                <div class="d-flex align-items-center p-2">
+                                    <RadzenCheckBox @bind-Value="@NewUser.TwoFactorEnabled" Name="NewUserTwoFactorEnabled" />
+                                    <RadzenLabel Text="Require 2FA" Component="NewUserTwoFactorEnabled" Style="width:120px;margin-left: 0.5rem; cursor: pointer;" />
+                                </div>
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                    <RadzenColumn Size="6">
+                        <RadzenStack Gap=".5rem">
+                            <RadzenFormField Text="Active" Variant="Variant.Outlined">
+                                <div class="d-flex align-items-center p-2">
+                                    <RadzenCheckBox @bind-Value="@NewIsActive" Name="NewIsActive" />
+                                    <RadzenLabel Text="Active" Component="NewIsActive" Style="width:120px;margin-left: 0.5rem; cursor: pointer;" />
+                                </div>
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
+                
+                <!-- Modal Footer -->
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
+                    <RadzenButton Text="Create User" Icon="save" ButtonStyle="ButtonStyle.Primary" 
+                                  Click="@CreateUser" Disabled="@(!IsCreateFormValid || IsSaving)"
+                                  Style="background-color: #212e61; border-color: #212e61;" />
                 </div>
-                <div class="sms-modal-footer">
-                    <div class="d-flex justify-content-end align-items-center w-100">
-                        
-                        <div class="d-flex gap-2">
-                            <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
-                            <RadzenButton Text="Create User" Icon="save" ButtonStyle="ButtonStyle.Primary"
-                                          Click="@CreateUser" Disabled="@(!IsCreateFormValid || IsSaving)"
-                                          Style="background-color: #212e61; border-color: #212e61;" />
-                        </div>
-                    </div>
-                </div>
-            </div>
+            </RadzenCard>
         </div>
     </div>
 }
@@ -504,7 +498,7 @@
 @if (ShowGroupsModal && !string.IsNullOrEmpty(GroupManagementUserCode))
 {
     <div class="modal-overlay">
-        <div class="sms-modal-dialog modal-xl">
+        <div class="sms-modal-dialog modal-lg">
             <div class="sms-modal-content">
                 <!-- Modal Header -->
                 <div class="sms-modal-header sms-header-primary">
@@ -520,9 +514,9 @@
                         <RadzenColumn Size="12" SizeMD="6">
                             <RadzenCard Style="height: 100%;">
                                 <RadzenCard Style="background-color: #e8f5e8; margin: -0.5rem -0.5rem 1rem -0.5rem; padding: 0.5rem;">
-                                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: #28a745;">
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #28a745;">
                                         <RadzenIcon Icon="groups" Style="margin-right: 0.5rem;" />
-                                        Current Groups (@UserCurrentGroups.Count)
+                                        Current Groups 
                                     </RadzenText>
                                 </RadzenCard>
                                 <div style="height: 400px; overflow-y: auto;">
@@ -568,9 +562,9 @@
                             <RadzenCard Style="height: 100%;">
                                 <RadzenCard Style="background-color: #e3f2fd; margin: -0.5rem -0.5rem 1rem -0.5rem; padding: 0.5rem;">
                                     <div class="d-flex justify-content-between align-items-center">
-                                        <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: #007bff;">
+                                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #007bff;">
                                             <RadzenIcon Icon="group_add" Style="margin-right: 0.5rem;" />
-                                            Available Groups (@AvailableGroups.Count)
+                                            Available Groups 
                                         </RadzenText>
                                         <RadzenButton Text="Assign Selected" Icon="group_add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                                       Click="@AssignMultipleGroups" Disabled="@(!SelectedGroups.Any(s => s.Value))" />
@@ -701,5 +695,42 @@
         border-top: 1px solid #e9ecef;
         border-radius: 0 0 0.5rem 0.5rem;
         background-color: #f8f9fa;
+    }
+
+    /* Modal Styles - Match OrganizationalUsers */
+    .modal-backdrop {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        z-index: 1050;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-dialog {
+        width: 90%;
+        max-width: 500px;
+        margin: 2rem;
+    }
+
+    .modal-dialog.modal-lg {
+        max-width: 800px;
+        width: 95%;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        border-radius: 6px 6px 0 0;
     }
 </style>

@@ -24,8 +24,8 @@ public interface IHazardFileDataService
     Task<Result<HazardFile>> GetHazardFileDataAsync(string code, CancellationToken ct = default);
     Task<Result<IEnumerable<HazardFile>>> GetActiveHazardFilesAsync(CancellationToken ct = default);
     Task<Result<HazardFile>> UpdateHazardFileAsync(HazardFile hazardFile, CancellationToken ct = default);
-    Task<Result<bool>> DeactivateHazardFileAsync(int id, string reason, string deactivatedBy, CancellationToken ct = default);
-    Task<Result<bool>> ReactivateHazardFileAsync(int id, string reactivatedBy, CancellationToken ct = default);
+    Task<Result<bool>> DeactivateHazardFileAsync(string code, string reason, string deactivatedBy, CancellationToken ct = default);
+    Task<Result<bool>> ReactivateHazardFileAsync(string code, string reactivatedBy, CancellationToken ct = default);
     Task<Result<IEnumerable<HazardFile>>> SearchHazardFilesAsync(
         string? hazardCode = null,
         string? reportCode = null,

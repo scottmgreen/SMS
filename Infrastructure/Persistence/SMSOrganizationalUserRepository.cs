@@ -315,16 +315,16 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         return await UpdatePasswordAsync(userId.Value, hashedPassword);
     }
 
-    public async Task<Result<bool>> UpdatePasswordAsync(string userId, string hashedPassword)
+    public async Task<Result<bool>> UpdatePasswordAsync(string code, string hashedPassword)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(userId))
+            if (string.IsNullOrWhiteSpace(code))
             {
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSOrganizationalUser_UpdatePassword} ID:{userId}", null);
+            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSOrganizationalUser_UpdatePassword} Code:{code}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalUser_UpdatePassword, sql)
@@ -332,7 +332,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, userId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPassword, hashedPassword));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
@@ -350,22 +350,22 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public async Task<Result<bool>> RecordLoginAsync(SMSOrganizationalUserID userId, DateTime loginDate)
+    public async Task<Result<bool>> RecordLoginAsync(SMSOrganizationalUserID code, DateTime loginDate)
     {
         // Convert BaseUserID to string for compatibility  
-        return await RecordLoginAsync(userId.Value, loginDate);
+        return await RecordLoginAsync(code.Value, loginDate);
     }
 
-    public async Task<Result<bool>> RecordLoginAsync(string userId, DateTime loginDate)
+    public async Task<Result<bool>> RecordLoginAsync(string code, DateTime loginDate)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(userId))
+            if (string.IsNullOrWhiteSpace(code))
             {
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSOrganizationalUser_RecordLogin} ID:{userId}", null);
+            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSOrganizationalUser_RecordLogin} Code:{code}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalUser_RecordLogin, sql)
@@ -373,7 +373,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, userId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserLoginDate, loginDate));
 
             await sql.OpenAsync().ConfigureAwait(false);

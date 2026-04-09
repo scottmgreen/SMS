@@ -1,4 +1,3 @@
-
 using Microsoft.Extensions.Options;
 
 using SMS_Shared.Configuration;
@@ -51,6 +50,7 @@ public partial class OrganizationalUsers : ComponentBase
     private string NewPosition { get; set; } = string.Empty;
     private string NewOrganizationLevelId { get; set; } =  string.Empty;
     private bool NewTwoFactorEnabled { get; set; } = false;
+    private bool NewIsActive { get; set; } = true; // ADDED: Missing property
     private SMSUserRole? NewSMSUserRole { get; set; }
 
     // Update form fields to use role ID instead of role name
@@ -273,7 +273,9 @@ public partial class OrganizationalUsers : ComponentBase
         NewPosition = string.Empty;
         NewOrganizationLevelId = string.Empty;
         NewTwoFactorEnabled = false;
+        NewIsActive = true; // ADDED: Reset new property
         NewSMSUserRole = null;
+        NewSMSUserRoleId = string.Empty; // ADDED: Reset role ID
         ShowCreateModal = true;
     }
 
@@ -288,7 +290,9 @@ public partial class OrganizationalUsers : ComponentBase
         NewPosition = string.Empty;
         NewOrganizationLevelId = string.Empty;
         NewTwoFactorEnabled = false;
+        NewIsActive = true; // ADDED: Reset new property
         NewSMSUserRole = null;
+        NewSMSUserRoleId = string.Empty; // ADDED: Reset role ID
     }
 
     private async Task CreateUser()
@@ -321,10 +325,6 @@ public partial class OrganizationalUsers : ComponentBase
                 }
             }
 
-
-
-
-
             // Create user entity
             var userCode = $"OU-0000";
             var userId = new SMSOrganizationalUserID(userCode);
@@ -338,9 +338,10 @@ public partial class OrganizationalUsers : ComponentBase
                 Department =  SMSDepartment.FromValue(NewDepartmentId),
                 Position = NewPosition,
                 OrganizationLevel = SMSOrganizationalLevel.FromName(NewOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel,
-                SMSUserRole = NewSMSUserRole,
+                SMSUserRole = selectedRole, // UPDATED: Use selectedRole instead of NewSMSUserRole
                 TwoFactorEnabled = NewTwoFactorEnabled,
-                IsActive = true
+                IsActive = NewIsActive, // UPDATED: Use NewIsActive property
+                SMSUserType = SMSUserType.Organizational // ADDED: Set correct user type
             };
 
             var command = new CreateSMSOrganizationalUserCommand(user);

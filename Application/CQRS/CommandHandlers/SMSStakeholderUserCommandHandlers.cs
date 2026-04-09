@@ -261,7 +261,7 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IR
             _logger.LogInformation("✅ Clean Architecture: Processing RecordSMSStakeholderUserLoginCommand for UserID: {UserId}", request.UserId);
 
             // Get the existing user and record login
-            var userResult = await _stakeholderUserService.GetSMSStakeholderUserByIdAsync(request.UserId, cancellationToken);
+            var userResult = await _stakeholderUserService.GetSMSStakeholderUserByCodeAsync(request.UserId, cancellationToken);
             if (userResult.IsFailure)
             {
                 return Result<bool>.Failure<bool>(userResult.Error);
@@ -387,7 +387,7 @@ public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
                 request.SMSStakeholderUserId.Value);
 
             // Get the user first - ✅ FIXED: Use correct method name
-            var userResult = await _stakeholderUserService.GetSMSStakeholderUserByIdAsync(request.SMSStakeholderUserId.Value, cancellationToken);
+            var userResult = await _stakeholderUserService.GetSMSStakeholderUserByCodeAsync(request.SMSStakeholderUserId.Value, cancellationToken);
             if (userResult.IsFailure)
             {
                 _logger.LogWarning("❌ CQRS: Cannot delete non-existent SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUserId.Value);

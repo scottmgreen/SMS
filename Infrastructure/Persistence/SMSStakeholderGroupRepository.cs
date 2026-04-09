@@ -100,7 +100,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, stakeholderGroup.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, stakeholderGroup.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupName, stakeholderGroup.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupDescription, stakeholderGroup.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupIsActive, stakeholderGroup.IsActive));
@@ -123,16 +123,16 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
     /// <summary>
     /// Deletes an SMS stakeholder group
     /// </summary>
-    public async Task<Result<bool>> DeleteAsync(string groupCode, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteAsync(string code, CancellationToken ct = default)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(groupCode))
+            if (string.IsNullOrWhiteSpace(code))
             {
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.CodeRequired);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_SMSStakeholderUserGroup_Delete} Code:{groupCode}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_SMSStakeholderUserGroup_Delete} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_SMSStakeholderUserGroup_Delete, sql)
@@ -140,7 +140,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, groupCode.Trim()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Trim()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

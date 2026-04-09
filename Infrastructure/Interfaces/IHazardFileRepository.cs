@@ -22,8 +22,8 @@ public interface IHazardFileRepository
     Task<Result<HazardFile>> GetByCodeAsync(string code, CancellationToken cancellationToken = default);
     Task<Result<HazardFile>> AddAsync(HazardFile hazardFile, CancellationToken cancellationToken = default);
     Task<Result<HazardFile>> UpdateAsync(HazardFile hazardFile, CancellationToken cancellationToken = default);
-    Task<Result<bool>> DeactivateAsync(int id, string reason, string deactivatedBy, CancellationToken cancellationToken = default);
-    Task<Result<bool>> ReactivateAsync(int id, string reactivatedBy, CancellationToken cancellationToken = default);
+    Task<Result<bool>> DeactivateAsync(string code, string reason, string deactivatedBy, CancellationToken cancellationToken = default);
+    Task<Result<bool>> ReactivateAsync(string code, string reactivatedBy, CancellationToken cancellationToken = default);
 
     // Query operations
     Task<Result<IEnumerable<HazardFile>>> GetByHazardCodeAsync(string hazardCode, bool includeFileData = false, string? category = null, CancellationToken cancellationToken = default);

@@ -127,90 +127,90 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
         }
     }
 
-    public async Task<Result<SMSApplicationUser>> GetByIdAsync(SMSApplicationUserID id)
+    //public async Task<Result<SMSApplicationUser>> GetByIdAsync(SMSApplicationUserID id)
+    //{
+    //    try
+    //    {
+    //        if (id?.Value is null || string.IsNullOrWhiteSpace(id.Value))
+    //        {
+    //            return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+    //        }
+
+    //        _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSApplicationUser_GetByCode} ID:{id.Value}", null);
+
+    //        using var sql = new SqlConnection(_connectionString);
+    //        using var cmd = new SqlCommand(StoredProcs.pr_SMSApplicationUser_GetByCode, sql)
+    //        {
+    //            CommandType = CommandType.StoredProcedure
+    //        };
+
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+
+    //        SMSApplicationUser? user = null;
+
+    //        await sql.OpenAsync().ConfigureAwait(false);
+    //        using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+    //        // Dataset 1: SMSApplicationUser data
+    //        if (await reader.ReadAsync().ConfigureAwait(false))
+    //        {
+    //            user = Mappers.MapToSMSApplicationUser(reader);
+    //        }
+
+    //        // Dataset 2: SMSUserRole data
+    //        if (user != null && await reader.NextResultAsync().ConfigureAwait(false) && await reader.ReadAsync().ConfigureAwait(false))
+    //        {
+    //            user.UserRole = Mappers.MapToSMSUserRole(reader);
+    //        }
+
+    //        // Dataset 3: SMSUserRolePermissions data (multiple rows)
+    //        if (user?.UserRole != null && await reader.NextResultAsync().ConfigureAwait(false))
+    //        {
+    //            var permissions = new List<SMSUserRolePermission>();
+    //            while (await reader.ReadAsync().ConfigureAwait(false))
+    //            {
+    //                var permission = Mappers.MapToSMSUserRolePermission(reader);
+    //                permissions.Add(permission);
+    //            }
+    //            user.UserRole.Permissions = permissions;
+    //        }
+
+    //        await sql.CloseAsync().ConfigureAwait(false);
+
+    //        if (user is not null)
+    //        {
+    //            return Result<SMSApplicationUser>.Success(user);
+    //        }
+    //        else
+    //        {
+    //            return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NotFound);
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureGetItemError($"{_logHeader} {ex.Message}", null);
+    //        return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.GeneralError.UnProcessableRequest);
+    //    }
+    //}
+
+    public async Task<Result<SMSApplicationUser>> GetByCodeAsync(string code)
     {
         try
         {
-            if (id?.Value is null || string.IsNullOrWhiteSpace(id.Value))
+            if (string.IsNullOrWhiteSpace(code))
             {
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSApplicationUser_GetById} ID:{id.Value}", null);
+            _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSApplicationUser_GetByCode} Code:{code}", null);
 
             using var sql = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(StoredProcs.pr_SMSApplicationUser_GetById, sql)
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSApplicationUser_GetByCode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
-
-            SMSApplicationUser? user = null;
-
-            await sql.OpenAsync().ConfigureAwait(false);
-            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
-
-            // Dataset 1: SMSApplicationUser data
-            if (await reader.ReadAsync().ConfigureAwait(false))
-            {
-                user = Mappers.MapToSMSApplicationUser(reader);
-            }
-
-            // Dataset 2: SMSUserRole data
-            if (user != null && await reader.NextResultAsync().ConfigureAwait(false) && await reader.ReadAsync().ConfigureAwait(false))
-            {
-                user.UserRole = Mappers.MapToSMSUserRole(reader);
-            }
-
-            // Dataset 3: SMSUserRolePermissions data (multiple rows)
-            if (user?.UserRole != null && await reader.NextResultAsync().ConfigureAwait(false))
-            {
-                var permissions = new List<SMSUserRolePermission>();
-                while (await reader.ReadAsync().ConfigureAwait(false))
-                {
-                    var permission = Mappers.MapToSMSUserRolePermission(reader);
-                    permissions.Add(permission);
-                }
-                user.UserRole.Permissions = permissions;
-            }
-
-            await sql.CloseAsync().ConfigureAwait(false);
-
-            if (user is not null)
-            {
-                return Result<SMSApplicationUser>.Success(user);
-            }
-            else
-            {
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NotFound);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureGetItemError($"{_logHeader} {ex.Message}", null);
-            return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
-
-    public async Task<Result<SMSApplicationUser>> GetByIdAsync(string id)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(id))
-            {
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
-            }
-
-            _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSApplicationUser_GetById} ID:{id}", null);
-
-            using var sql = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(StoredProcs.pr_SMSApplicationUser_GetById, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
-
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             SMSApplicationUser? user = null;
 
@@ -301,25 +301,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
         }
     }
 
-    public async Task<Result<SMSApplicationUser>> GetByCodeAsync(string code)
-    {
-        try
-        {
-            if (string.IsNullOrWhiteSpace(code))
-            {
-                return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
-            }
-
-            // For now, assuming Code and ID are the same - you can modify this if they're different
-            return await GetByIdAsync(code);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureGetItemError($"{_logHeader} {ex.Message}", null);
-            return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
-
+    
     public async Task<Result<SMSApplicationUser>> GetByUserNameAsync(string userName)
     {
         try
@@ -529,7 +511,6 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastName, user.LastName.Value));
@@ -565,16 +546,16 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
         }
     }
 
-    public async Task<Result<bool>> UpdatePasswordAsync(BaseUserID userId, string hashedPassword)
+    public async Task<Result<bool>> UpdatePasswordAsync(BaseUserID code, string hashedPassword)
     {
         try
         {
-            if (userId?.Value is null || string.IsNullOrWhiteSpace(userId.Value))
+            if (code?.Value is null || string.IsNullOrWhiteSpace(code.Value))
             {
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSApplicationUser_UpdatePassword} ID:{userId.Value}", null);
+            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSApplicationUser_UpdatePassword} ID:{code.Value}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_SMSApplicationUser_UpdatePassword, sql)
@@ -582,7 +563,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, userId.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserPassword, hashedPassword));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
@@ -600,16 +581,16 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
         }
     }
 
-    public async Task<Result<bool>> RecordLoginAsync(BaseUserID userId, DateTime loginDate)
+    public async Task<Result<bool>> RecordLoginAsync(BaseUserID code, DateTime loginDate)
     {
         try
         {
-            if (userId?.Value is null || string.IsNullOrWhiteSpace(userId.Value))
+            if (code?.Value is null || string.IsNullOrWhiteSpace(code.Value))
             {
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSApplicationUser_RecordLogin} ID:{userId.Value}", null);
+            _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSApplicationUser_RecordLogin} ID:{code.Value}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_SMSApplicationUser_RecordLogin, sql)
@@ -617,7 +598,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, userId.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLoginDate, loginDate));
 
             await sql.OpenAsync().ConfigureAwait(false);
@@ -783,16 +764,16 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
         }
     }
 
-    public async Task<Result<bool>> DeleteAsync(BaseUserID userId)
+    public async Task<Result<bool>> DeleteAsync(BaseUserID code)
     {
         try
         {
-            if (userId?.Value is null || string.IsNullOrWhiteSpace(userId.Value))
+            if (code?.Value is null || string.IsNullOrWhiteSpace(code.Value))
             {
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logHeader} {StoredProcs.pr_SMSApplicationUser_Delete} ID:{userId.Value}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logHeader} {StoredProcs.pr_SMSApplicationUser_Delete} ID:{code.Value}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_SMSApplicationUser_Delete, sql)
@@ -800,7 +781,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, userId.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);

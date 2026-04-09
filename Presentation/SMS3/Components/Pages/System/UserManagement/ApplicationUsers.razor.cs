@@ -370,7 +370,11 @@ public partial class ApplicationUsers : ComponentBase
 
     private async Task ShowCreateDialog()
     {
-        NewUser = new CreateUserModel();
+        NewUser = new CreateUserModel
+        {
+            TwoFactorEnabled = false
+        };
+        NewIsActive = true; // ADDED: Initialize the property
         ShowCreateModal = true;
         StateHasChanged();
     }
@@ -406,7 +410,7 @@ public partial class ApplicationUsers : ComponentBase
                 Password = Password.Create(NewUser.Password).Value,
                 UserRole = selectedRole, // ?? NEW: Assign role during creation
                 TwoFactorEnabled = NewUser.TwoFactorEnabled, // ?? NEW: Set 2FA requirement
-                IsActive = true,
+                IsActive = NewIsActive, // UPDATED: Use NewIsActive property
                 SMSUserType = SMSUserType.Application
                 // ? FIXED: Removed manual audit field assignments
                 // ? REMOVED: CreatedBy = CurrentUserService?.UserDisplayName,
@@ -444,7 +448,11 @@ public partial class ApplicationUsers : ComponentBase
     private void CloseCreateModal()
     {
         ShowCreateModal = false;
-        NewUser = new CreateUserModel();
+        NewUser = new CreateUserModel
+        {
+            TwoFactorEnabled = false
+        };
+        NewIsActive = true; // ADDED: Reset the property
         StateHasChanged();
     }
 
@@ -665,6 +673,9 @@ public partial class ApplicationUsers : ComponentBase
         public string? UserRoleCode { get; set; } // NEW: Role assignment during creation
         public bool TwoFactorEnabled { get; set; } = false; // NEW: 2FA requirement during creation
     }
+
+    // ADDED: Missing property for NewIsActive binding
+    private bool NewIsActive { get; set; } = true;
 
     #endregion
 

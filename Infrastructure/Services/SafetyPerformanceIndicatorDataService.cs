@@ -70,10 +70,10 @@ public class SafetyPerformanceIndicatorDataService : BaseDataService<SafetyPerfo
     /// <summary>
     /// Gets a Safety Performance Indicator by ID
     /// </summary>
-    public Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByIdAsync(SafetyPerformanceIndicatorID spiId, CancellationToken ct = default)
-    {
-        return _repo.GetSafetyPerformanceIndicatorByIdAsync(spiId, ct);
-    }
+    //public Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByIdAsync(SafetyPerformanceIndicatorID spiId, CancellationToken ct = default)
+    //{
+    //    return _repo.GetSafetyPerformanceIndicatorByIdAsync(spiId, ct);
+    //}
 
     /// <summary>
     /// Gets a Safety Performance Indicator by Code

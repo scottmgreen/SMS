@@ -72,7 +72,7 @@ public class GetSMSApplicationUserByCodeQueryHandler : BaseQueryBundle, IRequest
         try
         {
             _logger.LogInformation("Processing GetSMSApplicationUserByCodeQuery for Code: {UserCode}", request.UserCode);
-            var result = await _dataService.GetSMSApplicationUserByIdAsync(request.UserCode, ct); // Assuming Code and ID are the same
+            var result = await _dataService.GetSMSApplicationUserByCodeAsync(request.UserCode, ct); // Assuming Code and ID are the same
 
             if (result.IsSuccess)
             {

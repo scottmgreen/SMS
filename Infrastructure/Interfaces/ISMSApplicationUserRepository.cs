@@ -21,7 +21,6 @@ public interface ISMSApplicationUserRepository : IBaseUserRepository<SMSApplicat
 {
     // Additional SMS-specific methods not covered by base interface
     Task<Result<IEnumerable<SMSApplicationUser>>> GetByApplicationRoleAsync(string applicationRole);
-    Task<Result<SMSApplicationUser>> GetByIdAsync(SMSApplicationUserID id);
     Task<Result<IEnumerable<SMSApplicationUser>>> GetBySMSApplicationUserRoleAsync(string applicationRole);
 
     // 🔐 Two-Factor Authentication Methods

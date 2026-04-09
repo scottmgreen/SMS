@@ -95,7 +95,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
             SafetyPerformanceIndicatorID spiId = new(newCodeValue);
 
-            return await GetSafetyPerformanceIndicatorByIdAsync(spiId, ct).ConfigureAwait(false);
+            return await GetSafetyPerformanceIndicatorByCodeAsync(spiId.Value, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -114,7 +114,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_SafetyPerformanceIndicator_Update} ID:{spi.Id}", null);
+            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_SafetyPerformanceIndicator_Update} Code:{spi.Code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_SafetyPerformanceIndicator_Update, sql)
@@ -122,7 +122,6 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, spi.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPICode, spi.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIName, spi.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDescription, spi.Description));
@@ -150,8 +149,8 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
-
-            return await GetSafetyPerformanceIndicatorByIdAsync(new SafetyPerformanceIndicatorID(spi.Id.Value), ct).ConfigureAwait(false);
+            var spiCode = new SafetyPerformanceIndicatorID(spi.Code);
+            return await GetSafetyPerformanceIndicatorByCodeAsync(spiCode.Value, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -160,16 +159,16 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
         }
     }
 
-    public async Task<Result<bool>> DeleteSafetyPerformanceIndicatorAsync(SafetyPerformanceIndicatorID spiId, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteSafetyPerformanceIndicatorAsync(SafetyPerformanceIndicatorID code, CancellationToken ct = default)
     {
         try
         {
-            if (spiId is null)
+            if (code is null)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_SafetyPerformanceIndicator_Delete} ID:{spiId}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_SafetyPerformanceIndicator_Delete} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_SafetyPerformanceIndicator_Delete, sql)
@@ -177,7 +176,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, spiId.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -242,53 +241,53 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
         }
     }
 
-    public async Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByIdAsync(
-        SafetyPerformanceIndicatorID spiId, CancellationToken ct = default)
-    {
-        try
-        {
-            if (spiId is null)
-            {
-                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
-            }
+    //public async Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByIdAsync(
+    //    SafetyPerformanceIndicatorID spiId, CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        if (spiId is null)
+    //        {
+    //            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+    //        }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SafetyPerformanceIndicator_GetById} {spiId}", null);
+    //        _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_SafetyPerformanceIndicator_GetById} {spiId}", null);
 
-            using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_SafetyPerformanceIndicator_GetById, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
+    //        using SqlConnection sql = new(_connectionString);
+    //        using SqlCommand cmd = new(StoredProcs.pr_SafetyPerformanceIndicator_GetById, sql)
+    //        {
+    //            CommandType = CommandType.StoredProcedure
+    //        };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, spiId.Value));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, spiId.Value));
 
-            SafetyPerformanceIndicator? response = null;
+    //        SafetyPerformanceIndicator? response = null;
 
-            await sql.OpenAsync(ct).ConfigureAwait(false);
-            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
-            {
-                while (await reader.ReadAsync().ConfigureAwait(false))
-                {
-                    response = Mappers.MapToSafetyPerformanceIndicator(reader);
-                }
-            }
-            await sql.CloseAsync().ConfigureAwait(false);
+    //        await sql.OpenAsync(ct).ConfigureAwait(false);
+    //        using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+    //        {
+    //            while (await reader.ReadAsync().ConfigureAwait(false))
+    //            {
+    //                response = Mappers.MapToSafetyPerformanceIndicator(reader);
+    //            }
+    //        }
+    //        await sql.CloseAsync().ConfigureAwait(false);
 
-            if (response is not null)
-            {
-                return Result<SafetyPerformanceIndicator>.Success(response);
-            }
-            else
-            {
-                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
-            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
+    //        if (response is not null)
+    //        {
+    //            return Result<SafetyPerformanceIndicator>.Success(response);
+    //        }
+    //        else
+    //        {
+    //            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
+    //        }
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
+    //        return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.GeneralError.UnProcessableRequest);
+    //    }
+    //}
 
     public async Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByCodeAsync(
         string code, CancellationToken ct = default)
@@ -447,10 +446,10 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 return Result<List<SPIDataPoint>>.Failure<List<SPIDataPoint>>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SPIDataPoint_GetBySPIId} SPIId:{spiId}", null);
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SPIDataPoint_GetBySPICode} SPIId:{spiId}", null);
 
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_SPIDataPoint_GetBySPIId, sql)
+            using SqlCommand cmd = new(StoredProcs.pr_SPIDataPoint_GetBySPICode, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };
@@ -555,7 +554,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, dataPoint.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, dataPoint.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointValue, dataPoint.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointMeasurementDate, dataPoint.MeasurementDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointPeriod, dataPoint.Period));
@@ -580,12 +579,11 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
         }
     }
 
-    public async Task<Result<bool>> DeleteSPIDataPointAsync(
-        string dataPointId, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteSPIDataPointAsync(string code, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_SPIDataPoint_Delete} ID:{dataPointId}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_SPIDataPoint_Delete} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_SPIDataPoint_Delete, sql)
@@ -593,7 +591,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, dataPointId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

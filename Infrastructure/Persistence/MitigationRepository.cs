@@ -225,7 +225,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
             };
 
             // Primary Key
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationIdCorrected, mitigation.Id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, mitigation.Id.Value));
 
             // Core Properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationCode, mitigation.Code));
@@ -299,16 +299,16 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
         }
     }
 
-    public async Task<Result<bool>> DeleteMitigationAsync(MitigationID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteMitigationAsync(MitigationID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_Mitigation_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_Mitigation_Delete} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_Mitigation_Delete, sql)
@@ -316,7 +316,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

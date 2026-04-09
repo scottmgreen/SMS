@@ -83,7 +83,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
     /// <summary>
     /// Gets SMS Stakeholder User by ID
     /// </summary>
-    public async Task<Result<SMSStakeholderUser>> GetSMSStakeholderUserByIdAsync(string id, CancellationToken ct = default)
+    public async Task<Result<SMSStakeholderUser>> GetSMSStakeholderUserByCodeAsync(string id, CancellationToken ct = default)
     {
         try
         {

@@ -76,16 +76,16 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
         }
     }
 
-    public async Task<Result<MitigationAssignment>> GetMitigationAssignmentByIdAsync(MitigationAssignmentID id, CancellationToken ct = default)
+    public async Task<Result<MitigationAssignment>> GetMitigationAssignmentByIdAsync(MitigationAssignmentID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_MitigationAssignment_GetById} {id}", null);
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_MitigationAssignment_GetById} {code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_MitigationAssignment_GetById, sql)
@@ -93,7 +93,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             MitigationAssignment? response = null;
 
@@ -174,7 +174,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, mitigationAssignment.Id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, mitigationAssignment.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentCode, mitigationAssignment.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentMitigationCode, mitigationAssignment.MitigationCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentDepartmentCode, mitigationAssignment.DepartmentCode));
@@ -194,16 +194,16 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
         }
     }
 
-    public async Task<Result<bool>> DeleteMitigationAssignmentAsync(MitigationAssignmentID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteMitigationAssignmentAsync(MitigationAssignmentID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_MitigationAssignment_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_MitigationAssignment_Delete} ID:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_MitigationAssignment_Delete, sql)
@@ -211,7 +211,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

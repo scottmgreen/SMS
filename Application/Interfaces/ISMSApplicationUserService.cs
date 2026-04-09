@@ -20,7 +20,7 @@ public interface ISMSApplicationUserService
     Task<Result<bool>> DeleteSMSApplicationUserAsync(string userId, CancellationToken ct = default);
     Task<Result<IEnumerable<SMSApplicationUser>>> GetActiveSMSApplicationUsersAsync(CancellationToken ct = default);
     Task<Result<IEnumerable<SMSApplicationUser>>> GetAllSMSApplicationUsersAsync(CancellationToken ct = default);
-    Task<Result<SMSApplicationUser>> GetSMSApplicationUserByIdAsync(string id, CancellationToken ct = default);
+    Task<Result<SMSApplicationUser>> GetSMSApplicationUserByCodeAsync(string id, CancellationToken ct = default);
     Task<Result<SMSApplicationUser>> GetSMSApplicationUserByUserNameAsync(string userName, CancellationToken ct = default);
     Task<Result<IEnumerable<SMSApplicationUser>>> GetSMSApplicationUsersByRoleAsync(string applicationRole, CancellationToken ct = default);
     Task<Result<UserStatistics>> GetSMSApplicationUserStatisticsAsync(CancellationToken ct = default);

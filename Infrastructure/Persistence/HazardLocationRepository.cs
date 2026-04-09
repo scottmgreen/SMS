@@ -264,7 +264,6 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, hazardLocation.Id.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationCode, hazardLocation.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationHazardCode, hazardLocation.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationLatitude, hazardLocation.Latitude));
@@ -276,8 +275,8 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
-
-            return await GetHazardLocationByCodeAsync((HazardLocationID)hazardLocation.Id, ct).ConfigureAwait(false);
+            var hazloccode = new HazardLocationID(hazardLocation.Code);
+            return await GetHazardLocationByCodeAsync(hazloccode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -286,16 +285,16 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
         }
     }
 
-    public async Task<Result<bool>> DeleteHazardLocationAsync(HazardLocationID id, CancellationToken ct = default)
+    public async Task<Result<bool>> DeleteHazardLocationAsync(HazardLocationID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
                 return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_HazardLocation_Delete} ID:{id}", null);
+            _logger.LogInfrastructureDeleteItem($"{_logheader} {StoredProcs.pr_HazardLocation_Delete} Code:{code}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_HazardLocation_Delete, sql)
@@ -303,7 +302,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmId, id.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

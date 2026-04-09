@@ -60,22 +60,22 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     /// <summary>
     /// Gets safety performance indicator by ID
     /// </summary>
-    public async Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByIdAsync(SafetyPerformanceIndicatorID id, CancellationToken ct = default)
+    public async Task<Result<SafetyPerformanceIndicator>> GetSafetyPerformanceIndicatorByIdAsync(SafetyPerformanceIndicatorID code, CancellationToken ct = default)
     {
         try
         {
-            if (id is null)
+            if (code is null)
             {
-                _logger.LogError("GetSafetyPerformanceIndicatorByIdAsync received null ID");
+                _logger.LogError("GetSafetyPerformanceIndicatorByIdAsync received null Code");
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving safety performance indicator with ID: {Id}", id.Value);
-            return await _dataService.GetSafetyPerformanceIndicatorByIdAsync(id, ct);
+            _logger.LogInformation("Retrieving safety performance indicator with Code: {Code}", code.Value);
+            return await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(code.Value, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving safety performance indicator with ID: {Id}", id?.Value);
+            _logger.LogError(ex, "Unexpected error retrieving safety performance indicator with Code: {Code}", code?.Value);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
         }
     }

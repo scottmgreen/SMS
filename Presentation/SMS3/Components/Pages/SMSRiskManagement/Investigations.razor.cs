@@ -81,6 +81,7 @@ public partial class Investigations : ComponentBase
         await LoadInvestigationData();
         await LoadAvailableInvestigators();
         await LoadInterviews();
+        await LoadEvidenceFiles();
     }
 
     #endregion

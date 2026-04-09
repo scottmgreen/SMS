@@ -195,8 +195,7 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
             };
 
             // ? FIXED: Use correct ID parameter name for UPDATE operations
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingId, finding.Id.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingCode, finding.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, finding.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingAuditCode, finding.AuditCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingTitle, finding.Title));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingDescription, finding.Description));

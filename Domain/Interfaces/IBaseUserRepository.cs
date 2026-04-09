@@ -22,15 +22,15 @@ public interface IBaseUserRepository<T> where T : BaseUser
     /// </summary>
     Task<Result<IEnumerable<T>>> GetAllAsync();
 
-    /// <summary>
-    /// Gets a user by their unique ID (accepts any BaseUserID-derived type)
-    /// </summary>
-    Task<Result<T>> GetByIdAsync(BaseUserID id);
+    ///// <summary>
+    ///// Gets a user by their unique ID (accepts any BaseUserID-derived type)
+    ///// </summary>
+    //Task<Result<T>> GetByIdAsync(BaseUserID id);
 
-    /// <summary>
-    /// Gets a user by their unique ID (string overload for convenience)
-    /// </summary>
-    Task<Result<T>> GetByIdAsync(string id);
+    ///// <summary>
+    ///// Gets a user by their unique ID (string overload for convenience)
+    ///// </summary>
+    //Task<Result<T>> GetByIdAsync(string id);
 
     /// <summary>
     /// Gets a user by their code
