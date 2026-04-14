@@ -55,7 +55,7 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
             };
 
             // Add parameters
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingCode, finding.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, finding.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingAuditCode, finding.AuditCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingTitle, finding.Title));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingDescription, finding.Description));
@@ -113,7 +113,7 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             SMSAuditFinding? finding = null;
 
@@ -245,7 +245,7 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -277,7 +277,7 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, auditCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, auditCode));
 
             List<SMSAuditFinding> findings = new();
 

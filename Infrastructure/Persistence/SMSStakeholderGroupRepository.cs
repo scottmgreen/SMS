@@ -54,7 +54,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupCode, stakeholderGroup.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, stakeholderGroup.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupName, stakeholderGroup.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupDescription, stakeholderGroup.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, stakeholderGroup.CreatedBy));
@@ -213,7 +213,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserCode, userCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, userCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
 
             List<SMSStakeholderGroup> response = new();
@@ -310,7 +310,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserCodeForAssignment, userCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupCode, groupCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, groupCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedBy, assignedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.UtcNow));
 
@@ -351,7 +351,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserCodeForAssignment, userCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupCode, groupCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, groupCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -387,7 +387,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserCode, userCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, userCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -400,6 +400,51 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
         {
             _logger.LogInfrastructureDeleteItemError($"{_logheader} {ex.Message}", null);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.ClearGroupsFailed);
+        }
+    }
+
+    /// <summary>
+    /// Gets users by SMS Stakeholder Group code
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersByGroupCodeAsync(string groupCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderGroupError.CodeRequired);
+            }
+
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SMSStakeholderUserGroup_GetUsersByGroup} GroupCode:{groupCode}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_SMSStakeholderUserGroup_GetUsersByGroup, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, groupCode));
+            //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
+
+            List<SMSStakeholderUser> response = new();
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+            {
+                while (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    var user = Mappers.MapToSMSStakeholderUser(reader);
+                    response.Add(user);
+                }
+            }
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<IEnumerable<SMSStakeholderUser>>.Success((IEnumerable<SMSStakeholderUser>)response);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logheader} {ex.Message}", null);
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 }

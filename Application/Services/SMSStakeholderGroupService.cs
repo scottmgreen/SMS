@@ -8,265 +8,251 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
+using SMS_Domain.Entities;
+using SMS_Domain.Errors;
+using SMS_Infrastructure.Services;
+using SMS_Application.Interfaces;
 
 namespace SMS_Application.Services;
 
 /// <summary>
-/// Service for managing SMS stakeholder groups and user group memberships
+/// High-level application service for SMS Stakeholder Group business operations
+/// Provides business logic orchestration and cross-cutting concerns
 /// </summary>
-public class SMSStakeholderGroupService
+public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
 {
-    private readonly IMediator _mediator;
+    private readonly SMSStakeholderGroupDataService _dataService;
     private readonly ILogger<SMSStakeholderGroupService> _logger;
 
-    public SMSStakeholderGroupService(
-        IMediator mediator,
-        ILogger<SMSStakeholderGroupService> logger)
+    public SMSStakeholderGroupService(SMSStakeholderGroupDataService dataService, ILogger<SMSStakeholderGroupService> logger)
     {
-        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     /// <summary>
-    /// Creates a new stakeholder group
+    /// Creates a new SMS Stakeholder Group with business validation
     /// </summary>
-    public async Task<Result<SMSStakeholderGroup>> CreateStakeholderGroupAsync(
-        string groupName,
-        string? description = null,
-        string createdBy = "SYSTEM")
+    public async Task<Result<SMSStakeholderGroup>> CreateSMSStakeholderGroupAsync(SMSStakeholderGroup group, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Creating new stakeholder group: {GroupName}", groupName);
+            _logger.LogInformation("Creating SMS Stakeholder Group with code: {Code}", group?.Code);
 
-            if (string.IsNullOrWhiteSpace(groupName))
+            if (group is null)
             {
-                return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.GroupNameRequired);
+                _logger.LogError("CreateSMSStakeholderGroupAsync received null group");
+                return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NullOrEmpty);
             }
 
-            // Generate a code for the group (could be enhanced with proper code generation)
-            var code = $"SG-0000";
-            SMSStakeholderGroupID id = new(code);
-            SMSStakeholderGroup smsgroup = new SMSStakeholderGroup(id);
+            // Business validation - ensure group is active by default
+            if (!group.IsActive)
+            {
+                _logger.LogInformation("Activating group during creation: {Code}", group.Code);
+                group.IsActive = true;
+            }
 
-            smsgroup.Code = code;
-            smsgroup.Name = groupName;
-            smsgroup.Description = description;
-            smsgroup.CreatedBy = createdBy;
-
-            var command = new CreateSMSStakeholderGroupCommand(smsgroup);
-            var result = await _mediator.SendAsync(command, CancellationToken.None);
+            var result = await _dataService.CreateAsync(group, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created stakeholder group: {GroupName} with code: {Code}",
-                    groupName, code);
+                _logger.LogInformation("Successfully created SMS Stakeholder Group with code: {Code}", result.Value?.Code);
             }
             else
             {
-                _logger.LogError("Failed to create stakeholder group: {GroupName}, Error: {Error}",
-                    groupName, result.Error?.Message);
+                _logger.LogError("Failed to create SMS Stakeholder Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating stakeholder group: {GroupName}", groupName);
+            _logger.LogError(ex, "Unexpected error creating SMS Stakeholder Group");
             return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.CreateFailed);
         }
     }
 
     /// <summary>
-    /// Updates an existing stakeholder group
+    /// Gets SMS Stakeholder Group by code
     /// </summary>
-    public async Task<Result<SMSStakeholderGroup>> UpdateStakeholderGroupAsync(
-        string groupCode,
-        string groupName,
-        string? description = null,
-        string updatedBy = "SYSTEM")
+    public async Task<Result<SMSStakeholderGroup>> GetSMSStakeholderGroupByCodeAsync(string groupCode, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Updating stakeholder group: {GroupCode}", groupCode);
+            _logger.LogInformation("Retrieving SMS Stakeholder Group with code: {Code}", groupCode);
+            return await _dataService.GetByCodeAsync(groupCode, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder Group with code: {Code}", groupCode);
+            return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NotFound);
+        }
+    }
 
-            // First get the existing group
-            var getQuery = new GetSMSStakeholderGroupByCodeQuery(groupCode);
-            var getResult = await _mediator.SendAsync(getQuery, CancellationToken.None);
+    /// <summary>
+    /// Gets all SMS Stakeholder Groups
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSStakeholderGroup>>> GetAllSMSStakeholderGroupsAsync(CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Retrieving all SMS Stakeholder Groups");
+            return await _dataService.GetAllAsync(ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving all SMS Stakeholder Groups");
+            return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.SMSStakeholderGroupError.NotFound);
+        }
+    }
 
-            if (!getResult.IsSuccess || getResult.Value == null)
+    /// <summary>
+    /// Updates an existing SMS Stakeholder Group with business validation
+    /// </summary>
+    public async Task<Result<SMSStakeholderGroup>> UpdateSMSStakeholderGroupAsync(SMSStakeholderGroup group, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Updating SMS Stakeholder Group with code: {Code}", group?.Code);
+
+            if (group is null)
             {
+                _logger.LogError("UpdateSMSStakeholderGroupAsync received null group");
+                return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NullOrEmpty);
+            }
+
+            // Business validation - check if group exists
+            var existingGroupResult = await _dataService.GetByCodeAsync(group.Code, ct).ConfigureAwait(false);
+            if (existingGroupResult.IsFailure)
+            {
+                _logger.LogWarning("Cannot update non-existent SMS Stakeholder Group with code: {Code}", group.Code);
                 return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NotFound);
             }
 
-            var stakeholderGroup = getResult.Value;
-            stakeholderGroup.Name = groupName;
-            stakeholderGroup.Description = description;
-            stakeholderGroup.UpdatedBy = updatedBy;
-
-            var command = new UpdateSMSStakeholderGroupCommand(stakeholderGroup);
-            var result = await _mediator.SendAsync(command, CancellationToken.None);
+            var result = await _dataService.UpdateAsync(group, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated stakeholder group: {GroupCode}", groupCode);
+                _logger.LogInformation("Successfully updated SMS Stakeholder Group with code: {Code}", group.Code);
             }
             else
             {
-                _logger.LogError("Failed to update stakeholder group: {GroupCode}, Error: {Error}",
-                    groupCode, result.Error?.Message);
+                _logger.LogError("Failed to update SMS Stakeholder Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating stakeholder group: {GroupCode}", groupCode);
+            _logger.LogError(ex, "Unexpected error updating SMS Stakeholder Group with code: {Code}", group?.Code);
             return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.UpdateFailed);
         }
     }
 
     /// <summary>
-    /// Deletes a stakeholder group
+    /// Deletes an SMS Stakeholder Group with business validation
     /// </summary>
-    public async Task<Result<bool>> DeleteStakeholderGroupAsync(SMSStakeholderGroup groupCode)
+    public async Task<Result<bool>> DeleteSMSStakeholderGroupAsync(string groupCode, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Deleting stakeholder group: {GroupCode}", groupCode);
+            _logger.LogInformation("Deleting SMS Stakeholder Group with code: {Code}", groupCode);
 
-            var command = new DeleteSMSStakeholderGroupCommand(groupCode);
-            var result = await _mediator.SendAsync(command, CancellationToken.None);
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                _logger.LogError("DeleteSMSStakeholderGroupAsync received null or empty group code");
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.CodeRequired);
+            }
+
+            var result = await _dataService.DeleteAsync(groupCode, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted stakeholder group: {GroupCode}", groupCode);
+                _logger.LogInformation("Successfully deleted SMS Stakeholder Group with code: {Code}", groupCode);
             }
             else
             {
-                _logger.LogError("Failed to delete stakeholder group: {GroupCode}, Error: {Error}",
-                    groupCode, result.Error?.Message);
+                _logger.LogError("Failed to delete SMS Stakeholder Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting stakeholder group: {GroupCode}", groupCode);
+            _logger.LogError(ex, "Unexpected error deleting SMS Stakeholder Group with code: {Code}", groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.DeleteFailed);
         }
     }
 
     /// <summary>
-    /// Gets all stakeholder groups
+    /// Gets SMS Stakeholder Groups by user code
     /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderGroup>>> GetAllStakeholderGroupsAsync()
+    public async Task<Result<IEnumerable<SMSStakeholderGroup>>> GetSMSStakeholderGroupsByUserCodeAsync(string userCode, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving all stakeholder groups");
+            _logger.LogInformation("Retrieving SMS Stakeholder Groups for user: {UserCode}", userCode);
 
-            var query = new GetAllSMSStakeholderGroupsQuery();
-            var result = await _mediator.SendAsync(query, CancellationToken.None);
-
-            if (result.IsSuccess)
+            if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogInformation("Successfully retrieved {Count} stakeholder groups",
-                    result.Value?.Count() ?? 0);
-            }
-            else
-            {
-                _logger.LogError("Failed to retrieve stakeholder groups: {Error}", result.Error?.Message);
+                _logger.LogWarning("Invalid user code provided for group lookup");
+                return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
             }
 
-            return result;
+            return await _dataService.GetGroupsByUserCodeAsync(userCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving all stakeholder groups");
-            return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.GeneralError.UnProcessableRequest);
+            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder Groups for user: {UserCode}", userCode);
+            return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.SMSStakeholderGroupError.NotFound);
         }
     }
 
     /// <summary>
-    /// Gets a stakeholder group by code
+    /// Gets users by SMS Stakeholder Group code
     /// </summary>
-    public async Task<Result<SMSStakeholderGroup>> GetStakeholderGroupByCodeAsync(string groupCode)
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersByGroupCodeAsync(string groupCode, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("Retrieving stakeholder group: {GroupCode}", groupCode);
+            _logger.LogInformation("Retrieving users for SMS Stakeholder Group: {GroupCode}", groupCode);
 
-            var query = new GetSMSStakeholderGroupByCodeQuery(groupCode);
-            var result = await _mediator.SendAsync(query, CancellationToken.None);
-
-            if (result.IsSuccess)
+            if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogInformation("Successfully retrieved stakeholder group: {GroupCode}", groupCode);
-            }
-            else
-            {
-                _logger.LogWarning("Stakeholder group not found: {GroupCode}", groupCode);
+                _logger.LogWarning("Invalid group code provided for user lookup");
+                return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderGroupError.CodeRequired);
             }
 
-            return result;
+            return await _dataService.GetUsersByGroupCodeAsync(groupCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving stakeholder group: {GroupCode}", groupCode);
-            return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.GeneralError.UnProcessableRequest);
+            _logger.LogError(ex, "Unexpected error retrieving users for SMS Stakeholder Group: {GroupCode}", groupCode);
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderGroupError.NotFound);
         }
     }
 
     /// <summary>
-    /// Gets stakeholder groups for a specific user
-    /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderGroup>>> GetSMSStakeholderGroupsByUserCodeAsync(string userCode)
-    {
-        try
-        {
-            _logger.LogInformation("Retrieving stakeholder groups for user: {UserCode}", userCode);
-
-            var query = new GetSMSStakeholderGroupsByUserCodeQuery(userCode);
-            var result = await _mediator.SendAsync(query, CancellationToken.None);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully retrieved {Count} stakeholder groups for user: {UserCode}",
-                    result.Value?.Count() ?? 0, userCode);
-            }
-            else
-            {
-                _logger.LogError("Failed to retrieve stakeholder groups for user {UserCode}: {Error}",
-                    userCode, result.Error?.Message);
-            }
-
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error retrieving stakeholder groups for user: {UserCode}", userCode);
-            return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.GeneralError.UnProcessableRequest);
-        }
-    }
-
-    /// <summary>
-    /// Assigns a user to a stakeholder group
+    /// Assigns a user to an SMS Stakeholder Group
     /// </summary>
     public async Task<Result<bool>> AssignUserToGroupAsync(
         string userCode,
         SMSStakeholderGroupID groupCode,
-        string assignedBy = "SYSTEM")
+        string assignedBy = "SYSTEM",
+        CancellationToken ct = default)
     {
         try
         {
             _logger.LogInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
 
-            var command = new AssignUserToStakeholderGroupCommand(userCode, groupCode);
-            var result = await _mediator.SendAsync(command, CancellationToken.None);
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                _logger.LogWarning("Invalid user code provided for group assignment");
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
+            }
+
+            var result = await _dataService.AssignUserToGroupAsync(userCode, groupCode.Value, assignedBy, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -282,22 +268,27 @@ public class SMSStakeholderGroupService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
+            _logger.LogError(ex, "Unexpected error assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.AssignmentFailed);
         }
     }
 
     /// <summary>
-    /// Removes a user from a stakeholder group
+    /// Removes a user from an SMS Stakeholder Group
     /// </summary>
-    public async Task<Result<bool>> RemoveUserFromGroupAsync(string userCode, SMSStakeholderGroupID groupCode)
+    public async Task<Result<bool>> RemoveUserFromGroupAsync(string userCode, SMSStakeholderGroupID groupCode, CancellationToken ct = default)
     {
         try
         {
             _logger.LogInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
 
-            var command = new RemoveUserFromStakeholderGroupCommand(userCode, groupCode);
-            var result = await _mediator.SendAsync(command, CancellationToken.None);
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                _logger.LogWarning("Invalid user code provided for group removal");
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
+            }
+
+            var result = await _dataService.RemoveUserFromGroupAsync(userCode, groupCode.Value, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -313,7 +304,7 @@ public class SMSStakeholderGroupService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
+            _logger.LogError(ex, "Unexpected error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.RemovalFailed);
         }
     }
@@ -321,14 +312,19 @@ public class SMSStakeholderGroupService
     /// <summary>
     /// Clears all group memberships for a user
     /// </summary>
-    public async Task<Result<bool>> ClearUserGroupMembershipsAsync(string userCode)
+    public async Task<Result<bool>> ClearUserGroupMembershipsAsync(string userCode, CancellationToken ct = default)
     {
         try
         {
             _logger.LogInformation("Clearing all group memberships for user: {UserCode}", userCode);
 
-            var command = new ClearUserStakeholderGroupsCommand(userCode);
-            var result = await _mediator.SendAsync(command, CancellationToken.None);
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                _logger.LogWarning("Invalid user code provided for clearing group memberships");
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
+            }
+
+            var result = await _dataService.ClearUserGroupsAsync(userCode, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
@@ -344,7 +340,7 @@ public class SMSStakeholderGroupService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error clearing group memberships for user: {UserCode}", userCode);
+            _logger.LogError(ex, "Unexpected error clearing group memberships for user: {UserCode}", userCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.ClearGroupsFailed);
         }
     }
@@ -355,14 +351,21 @@ public class SMSStakeholderGroupService
     public async Task<Result<bool>> UpdateUserGroupMembershipsAsync(
         string userCode,
         IEnumerable<SMSStakeholderGroupID> groupCodes,
-        string assignedBy = "SYSTEM")
+        string assignedBy = "SYSTEM",
+        CancellationToken ct = default)
     {
         try
         {
             _logger.LogInformation("Updating group memberships for user: {UserCode}", userCode);
 
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                _logger.LogWarning("Invalid user code provided for updating group memberships");
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
+            }
+
             // Clear existing memberships first
-            var clearResult = await ClearUserGroupMembershipsAsync(userCode);
+            var clearResult = await ClearUserGroupMembershipsAsync(userCode, ct).ConfigureAwait(false);
             if (!clearResult.IsSuccess)
             {
                 return clearResult;
@@ -371,7 +374,7 @@ public class SMSStakeholderGroupService
             // Assign new memberships
             foreach (var groupCode in groupCodes)
             {
-                var assignResult = await AssignUserToGroupAsync(userCode, groupCode, assignedBy);
+                var assignResult = await AssignUserToGroupAsync(userCode, groupCode, assignedBy, ct).ConfigureAwait(false);
                 if (!assignResult.IsSuccess)
                 {
                     _logger.LogError("Failed to assign user {UserCode} to group {GroupCode} during batch update: {Error}",
@@ -385,8 +388,8 @@ public class SMSStakeholderGroupService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating group memberships for user: {UserCode}", userCode);
-            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+            _logger.LogError(ex, "Unexpected error updating group memberships for user: {UserCode}", userCode);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UpdateFailed);
         }
     }
 }

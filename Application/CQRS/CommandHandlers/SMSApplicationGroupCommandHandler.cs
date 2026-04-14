@@ -15,18 +15,18 @@ using Microsoft.Extensions.Logging;
 namespace SMS_Application.Messaging.CommandHandlers;
 
 /// <summary>
-/// Command handler for creating SMS stakeholder groups
+/// Command handler for creating SMS application groups
 /// </summary>
 public class CreateSMSApplicationGroupCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSApplicationGroupCommand, Result<SMSApplicationGroup>>
 {
-    private readonly SMSApplicationGroupDataService _applicationGroupDataService;
+    private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<CreateSMSApplicationGroupCommandHandler> _logger;
 
     public CreateSMSApplicationGroupCommandHandler(
-        SMSApplicationGroupDataService applicationGroupDataService,
+        SMSApplicationGroupService applicationGroupService,
         ILogger<CreateSMSApplicationGroupCommandHandler> logger)
     {
-        _applicationGroupDataService = applicationGroupDataService ?? throw new ArgumentNullException(nameof(applicationGroupDataService));
+        _applicationGroupService = applicationGroupService ?? throw new ArgumentNullException(nameof(applicationGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -38,19 +38,19 @@ public class CreateSMSApplicationGroupCommandHandler : BaseCommandBundle, IReque
 
             if (request?.ApplicationGroup == null)
             {
-                _logger.LogWarning("CreateSMSApplicationGroupCommand received with null stakeholder group");
+                _logger.LogWarning("CreateSMSApplicationGroupCommand received with null application group");
                 return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.NullOrEmpty);
             }
 
-            var result = await _applicationGroupDataService.CreateAsync(request.ApplicationGroup);
+            var result = await _applicationGroupService.CreateSMSApplicationGroupAsync(request.ApplicationGroup, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS stakeholder group: {GroupCode}", request.ApplicationGroup.Code);
+                _logger.LogInformation("Successfully created SMS application group: {GroupCode}", request.ApplicationGroup.Code);
             }
             else
             {
-                _logger.LogError("Failed to create SMS stakeholder group: {GroupCode}, Error: {Error}",
+                _logger.LogError("Failed to create SMS application group: {GroupCode}, Error: {Error}",
                     request.ApplicationGroup.Code, result.Error?.Message);
             }
 
@@ -71,18 +71,18 @@ public class CreateSMSApplicationGroupCommandHandler : BaseCommandBundle, IReque
 }
 
 /// <summary>
-/// Command handler for updating SMS stakeholder groups
+/// Command handler for updating SMS application groups
 /// </summary>
 public class UpdateSMSApplicationGroupCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationGroupCommand, Result<SMSApplicationGroup>>
 {
-    private readonly SMSApplicationGroupDataService _applicationGroupDataService;
+    private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<UpdateSMSApplicationGroupCommandHandler> _logger;
 
     public UpdateSMSApplicationGroupCommandHandler(
-        SMSApplicationGroupDataService applicationGroupDataService,
+        SMSApplicationGroupService applicationGroupService,
         ILogger<UpdateSMSApplicationGroupCommandHandler> logger)
     {
-        _applicationGroupDataService = applicationGroupDataService ?? throw new ArgumentNullException(nameof(applicationGroupDataService));
+        _applicationGroupService = applicationGroupService ?? throw new ArgumentNullException(nameof(applicationGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -94,19 +94,19 @@ public class UpdateSMSApplicationGroupCommandHandler : BaseCommandBundle, IReque
 
             if (request?.ApplicationGroup == null)
             {
-                _logger.LogWarning("UpdateSMSApplicationGroupCommand received with null stakeholder group");
+                _logger.LogWarning("UpdateSMSApplicationGroupCommand received with null application group");
                 return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.NullOrEmpty);
             }
 
-            var result = await _applicationGroupDataService.UpdateAsync(request.ApplicationGroup);
+            var result = await _applicationGroupService.UpdateSMSApplicationGroupAsync(request.ApplicationGroup, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS stakeholder group: {GroupCode}", request.ApplicationGroup.Code);
+                _logger.LogInformation("Successfully updated SMS application group: {GroupCode}", request.ApplicationGroup.Code);
             }
             else
             {
-                _logger.LogError("Failed to update SMS stakeholder group: {GroupCode}, Error: {Error}",
+                _logger.LogError("Failed to update SMS application group: {GroupCode}, Error: {Error}",
                     request.ApplicationGroup.Code, result.Error?.Message);
             }
 
@@ -127,18 +127,18 @@ public class UpdateSMSApplicationGroupCommandHandler : BaseCommandBundle, IReque
 }
 
 /// <summary>
-/// Command handler for deleting SMS stakeholder groups
+/// Command handler for deleting SMS application groups
 /// </summary>
 public class DeleteSMSApplicationGroupCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSApplicationGroupCommand, Result<bool>>
 {
-    private readonly SMSApplicationGroupDataService _applicationGroupDataService;
+    private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<DeleteSMSApplicationGroupCommandHandler> _logger;
 
     public DeleteSMSApplicationGroupCommandHandler(
-        SMSApplicationGroupDataService applicationGroupDataService,
+        SMSApplicationGroupService applicationGroupService,
         ILogger<DeleteSMSApplicationGroupCommandHandler> logger)
     {
-        _applicationGroupDataService = applicationGroupDataService ?? throw new ArgumentNullException(nameof(applicationGroupDataService));
+        _applicationGroupService = applicationGroupService ?? throw new ArgumentNullException(nameof(applicationGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -154,15 +154,15 @@ public class DeleteSMSApplicationGroupCommandHandler : BaseCommandBundle, IReque
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.CodeRequired);
             }
 
-            var result = await _applicationGroupDataService.DeleteAsync(request.GroupCode);
+            var result = await _applicationGroupService.DeleteSMSApplicationGroupAsync(request.GroupCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS stakeholder group: {GroupCode}", request.GroupCode);
+                _logger.LogInformation("Successfully deleted SMS application group: {GroupCode}", request.GroupCode);
             }
             else
             {
-                _logger.LogError("Failed to delete SMS stakeholder group: {GroupCode}, Error: {Error}",
+                _logger.LogError("Failed to delete SMS application group: {GroupCode}, Error: {Error}",
                     request.GroupCode, result.Error?.Message);
             }
 
@@ -182,18 +182,18 @@ public class DeleteSMSApplicationGroupCommandHandler : BaseCommandBundle, IReque
 }
 
 /// <summary>
-/// Command handler for assigning users to stakeholder groups
+/// Command handler for assigning users to application groups
 /// </summary>
 public class AssignUserToApplicationGroupCommandHandler : BaseCommandBundle, IRequestHandler<AssignUserToApplicationGroupCommand, Result<bool>>
 {
-    private readonly SMSApplicationGroupDataService _applicationGroupDataService;
+    private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<AssignUserToApplicationGroupCommandHandler> _logger;
 
     public AssignUserToApplicationGroupCommandHandler(
-        SMSApplicationGroupDataService applicationGroupDataService,
+        SMSApplicationGroupService applicationGroupService,
         ILogger<AssignUserToApplicationGroupCommandHandler> logger)
     {
-        _applicationGroupDataService = applicationGroupDataService ?? throw new ArgumentNullException(nameof(applicationGroupDataService));
+        _applicationGroupService = applicationGroupService ?? throw new ArgumentNullException(nameof(applicationGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -210,7 +210,7 @@ public class AssignUserToApplicationGroupCommandHandler : BaseCommandBundle, IRe
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
-            var result = await _applicationGroupDataService.AssignUserToGroupAsync(request.UserCode, request.GroupCode, request.AssignedBy);
+            var result = await _applicationGroupService.AssignUserToGroupAsync(request.UserCode, request.GroupCode, request.AssignedBy);
 
             if (result.IsSuccess)
             {
@@ -239,18 +239,18 @@ public class AssignUserToApplicationGroupCommandHandler : BaseCommandBundle, IRe
 }
 
 /// <summary>
-/// Command handler for removing users from stakeholder groups
+/// Command handler for removing users from application groups
 /// </summary>
 public class RemoveUserFromApplicationGroupCommandHandler : BaseCommandBundle, IRequestHandler<RemoveUserFromApplicationGroupCommand, Result<bool>>
 {
-    private readonly SMSApplicationGroupDataService _applicationGroupDataService;
+    private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<RemoveUserFromApplicationGroupCommandHandler> _logger;
 
     public RemoveUserFromApplicationGroupCommandHandler(
-        SMSApplicationGroupDataService applicationGroupDataService,
+        SMSApplicationGroupService applicationGroupService,
         ILogger<RemoveUserFromApplicationGroupCommandHandler> logger)
     {
-        _applicationGroupDataService = applicationGroupDataService ?? throw new ArgumentNullException(nameof(applicationGroupDataService));
+        _applicationGroupService = applicationGroupService ?? throw new ArgumentNullException(nameof(applicationGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -267,7 +267,7 @@ public class RemoveUserFromApplicationGroupCommandHandler : BaseCommandBundle, I
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
-            var result = await _applicationGroupDataService.RemoveUserFromGroupAsync(request.UserCode, request.GroupCode);
+            var result = await _applicationGroupService.RemoveUserFromGroupAsync(request.UserCode, request.GroupCode);
 
             if (result.IsSuccess)
             {
@@ -296,18 +296,18 @@ public class RemoveUserFromApplicationGroupCommandHandler : BaseCommandBundle, I
 }
 
 /// <summary>
-/// Command handler for clearing all user group memberships
+/// Command handler for clearing all user application group memberships
 /// </summary>
 public class ClearUserApplicationGroupsCommandHandler : BaseCommandBundle, IRequestHandler<ClearUserApplicationGroupsCommand, Result<bool>>
 {
-    private readonly SMSApplicationGroupDataService _applicationGroupDataService;
+    private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<ClearUserApplicationGroupsCommandHandler> _logger;
 
     public ClearUserApplicationGroupsCommandHandler(
-        SMSApplicationGroupDataService applicationGroupDataService,
+        SMSApplicationGroupService applicationGroupService,
         ILogger<ClearUserApplicationGroupsCommandHandler> logger)
     {
-        _applicationGroupDataService = applicationGroupDataService ?? throw new ArgumentNullException(nameof(applicationGroupDataService));
+        _applicationGroupService = applicationGroupService ?? throw new ArgumentNullException(nameof(applicationGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -323,7 +323,7 @@ public class ClearUserApplicationGroupsCommandHandler : BaseCommandBundle, IRequ
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
-            var result = await _applicationGroupDataService.ClearUserGroupsAsync(request.UserCode);
+            var result = await _applicationGroupService.ClearUserGroupsAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {

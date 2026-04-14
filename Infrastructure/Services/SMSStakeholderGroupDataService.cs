@@ -305,4 +305,27 @@ public sealed class SMSStakeholderGroupDataService : BaseDataService<SMSStakehol
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.ClearGroupsFailed);
         }
     }
+
+    /// <summary>
+    /// Gets users by SMS Stakeholder Group code
+    /// </summary>
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersByGroupCodeAsync(string groupCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                _logger.LogError("GetUsersByGroupCodeAsync received null or empty group code");
+                return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderGroupError.CodeRequired);
+            }
+
+            _logger.LogInformation("Retrieving users for SMS Stakeholder Group: {GroupCode}", groupCode);
+            return await _repository.GetUsersByGroupCodeAsync(groupCode, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error retrieving users for SMS Stakeholder Group: {GroupCode}", groupCode);
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderGroupError.NotFound);
+        }
+    }
 }

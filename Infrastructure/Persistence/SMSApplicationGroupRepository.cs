@@ -217,7 +217,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserCode, userCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, userCode));
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
 
             List<SMSApplicationGroup> response = new();

@@ -50,7 +50,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             };
 
             // ✅ CORRECTED: Updated parameters to match the fixed stored procedure exactly
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessment.Code ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessment.Code ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentName, riskAssessment.Name ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentDescription, riskAssessment.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentHazardCode, riskAssessment.HazardCode ?? (object)DBNull.Value));
@@ -235,7 +235,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             };
 
             // Core parameters (required)
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessment.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessment.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentName, riskAssessment.Name ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentDescription, riskAssessment.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentHazardCode, riskAssessment.HazardCode ?? (object)DBNull.Value));
@@ -329,7 +329,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessmentId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessmentId));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLeadAssessorId, leadAssessorId));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemDescription, systemDescription));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemBoundaries, systemBoundaries));
@@ -376,7 +376,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessmentId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessmentId));
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisMethod, riskAnalysisMethod));
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskCriteria, riskCriteria));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
@@ -415,7 +415,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessmentId.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessmentId.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalSeverityScore, finalSeverityScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalLikelihoodScore, finalLikelihoodScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, finalRiskLevel));
@@ -452,7 +452,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessmentId.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessmentId.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -491,7 +491,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCode, riskAssessmentId.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessmentId.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCurrentStep, currentStep));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedSteps, completedSteps));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletionPercentage, completionPercentage));

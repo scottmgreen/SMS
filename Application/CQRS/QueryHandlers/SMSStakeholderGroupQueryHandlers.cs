@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSStakeholderGroupQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -15,155 +15,197 @@ using SMS_Application.Messaging.Queries;
 namespace SMS_Application.Messaging.QueryHandlers;
 
 /// <summary>
-/// Query Handlers for SMS Stakeholder Group operations
+/// Query handler for getting all SMS stakeholder groups
 /// </summary>
-public class SMSStakeholderGroupQueryHandlers
+public class GetAllSMSStakeholderGroupsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSStakeholderGroupsQuery, Result<IEnumerable<SMSStakeholderGroup>>>
 {
-    /// <summary>
-    /// Query handler for getting all SMS stakeholder groups
-    /// FIXED: Uses DataService directly to prevent circular mediator calls
-    /// </summary>
-    public class GetAllSMSStakeholderGroupsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSStakeholderGroupsQuery, Result<IEnumerable<SMSStakeholderGroup>>>
+    private readonly SMSStakeholderGroupService _stakeholderGroupService;
+    private readonly ILogger<GetAllSMSStakeholderGroupsQueryHandler> _logger;
+
+    public GetAllSMSStakeholderGroupsQueryHandler(
+        SMSStakeholderGroupService stakeholderGroupService,
+        ILogger<GetAllSMSStakeholderGroupsQueryHandler> logger)
     {
-        private readonly SMSStakeholderGroupDataService _dataService;
-        private readonly ILogger<GetAllSMSStakeholderGroupsQueryHandler> _logger;
-
-        public GetAllSMSStakeholderGroupsQueryHandler(
-            SMSStakeholderGroupDataService dataService,
-            ILogger<GetAllSMSStakeholderGroupsQueryHandler> logger)
-        {
-            _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        }
-
-        public async Task<Result<IEnumerable<SMSStakeholderGroup>>> HandleAsync(GetAllSMSStakeholderGroupsQuery request, CancellationToken ct = default)
-        {
-            try
-            {
-                _logger.LogInformation("Processing GetAllSMSStakeholderGroupsQuery");
-
-                // FIXED: Call DataService directly instead of Application Service to avoid circular mediator calls
-                var result = await _dataService.GetAllAsync(ct);
-
-                if (result.IsSuccess)
-                {
-                    _logger.LogInformation("Successfully retrieved {Count} SMS stakeholder groups", result.Value?.Count() ?? 0);
-                }
-                else
-                {
-                    _logger.LogApplicationError("Failed to retrieve SMS stakeholder groups: {Error}", ApplicationEventIds.Error, null);
-                }
-
-                return result;
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogWarning("GetAllSMSStakeholderGroupsQuery operation was cancelled");
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogApplicationError("Error processing GetAllSMSStakeholderGroupsQuery", ApplicationEventIds.Error, ex);
-                return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.GeneralError.UnProcessableRequest);
-            }
-        }
+        _stakeholderGroupService = stakeholderGroupService ?? throw new ArgumentNullException(nameof(stakeholderGroupService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    /// <summary>
-    /// Query handler for getting an SMS stakeholder group by code
-    /// </summary>
-    public class GetSMSStakeholderGroupByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderGroupByCodeQuery, Result<SMSStakeholderGroup>>
+    public async Task<Result<IEnumerable<SMSStakeholderGroup>>> HandleAsync(GetAllSMSStakeholderGroupsQuery request, CancellationToken ct = default)
     {
-        private readonly SMSStakeholderGroupDataService _dataService;
-        private readonly ILogger<GetSMSStakeholderGroupByCodeQueryHandler> _logger;
-
-        public GetSMSStakeholderGroupByCodeQueryHandler(
-            SMSStakeholderGroupDataService dataService,
-            ILogger<GetSMSStakeholderGroupByCodeQueryHandler> logger)
+        try
         {
-            _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger.LogInformation("Processing GetAllSMSStakeholderGroupsQuery");
+
+            var result = await _stakeholderGroupService.GetAllSMSStakeholderGroupsAsync(ct);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully retrieved {Count} SMS stakeholder groups", result.Value?.Count() ?? 0);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to retrieve SMS stakeholder groups: {Error}", ApplicationEventIds.Error, null);
+            }
+
+            return result;
         }
-
-        public async Task<Result<SMSStakeholderGroup>> HandleAsync(GetSMSStakeholderGroupByCodeQuery request, CancellationToken ct = default)
+        catch (OperationCanceledException)
         {
-            try
-            {
-                _logger.LogInformation("Processing GetSMSStakeholderGroupByCodeQuery for group: {GroupCode}", request.GroupCode);
-
-                var result = await _dataService.GetByCodeAsync(request.GroupCode, ct);
-
-                if (result.IsSuccess)
-                {
-                    _logger.LogInformation("Successfully retrieved SMS stakeholder group: {GroupCode}", request.GroupCode);
-                }
-                else
-                {
-                    _logger.LogWarning("SMS stakeholder group not found: {GroupCode}", request.GroupCode);
-                }
-
-                return result;
-            }
-            catch (OperationCanceledException)
-            {
-                _logger.LogWarning("GetSMSStakeholderGroupByCodeQuery operation was cancelled");
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogApplicationError("Error processing GetSMSStakeholderGroupByCodeQuery for group: {GroupCode}", ApplicationEventIds.Error, ex);
-                return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.GeneralError.UnProcessableRequest);
-            }
+            _logger.LogWarning("GetAllSMSStakeholderGroupsQuery operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Error processing GetAllSMSStakeholderGroupsQuery", ApplicationEventIds.Error, ex);
+            return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
+}
 
-    /// <summary>
-    /// Query handler for getting SMS stakeholder groups by user code
-    /// </summary>
-    public class GetSMSStakeholderGroupsByUserCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderGroupsByUserCodeQuery, Result<IEnumerable<SMSStakeholderGroup>>>
+/// <summary>
+/// Query handler for getting an SMS stakeholder group by code
+/// </summary>
+public class GetSMSStakeholderGroupByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderGroupByCodeQuery, Result<SMSStakeholderGroup>>
+{
+    private readonly SMSStakeholderGroupService _stakeholderGroupService;
+    private readonly ILogger<GetSMSStakeholderGroupByCodeQueryHandler> _logger;
+
+    public GetSMSStakeholderGroupByCodeQueryHandler(
+        SMSStakeholderGroupService stakeholderGroupService,
+        ILogger<GetSMSStakeholderGroupByCodeQueryHandler> logger)
     {
-        private readonly SMSStakeholderGroupDataService _dataService;
-        private readonly ILogger<GetSMSStakeholderGroupsByUserCodeQueryHandler> _logger;
+        _stakeholderGroupService = stakeholderGroupService ?? throw new ArgumentNullException(nameof(stakeholderGroupService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
 
-        public GetSMSStakeholderGroupsByUserCodeQueryHandler(
-            SMSStakeholderGroupDataService dataService,
-            ILogger<GetSMSStakeholderGroupsByUserCodeQueryHandler> logger)
+    public async Task<Result<SMSStakeholderGroup>> HandleAsync(GetSMSStakeholderGroupByCodeQuery request, CancellationToken ct = default)
+    {
+        try
         {
-            _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+            _logger.LogInformation("Processing GetSMSStakeholderGroupByCodeQuery for group: {GroupCode}", request.GroupCode);
+
+            var result = await _stakeholderGroupService.GetSMSStakeholderGroupByCodeAsync(request.GroupCode, ct);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully retrieved SMS stakeholder group: {GroupCode}", request.GroupCode);
+            }
+            else
+            {
+                _logger.LogWarning("SMS stakeholder group not found: {GroupCode}", request.GroupCode);
+            }
+
+            return result;
         }
-
-        public async Task<Result<IEnumerable<SMSStakeholderGroup>>> HandleAsync(GetSMSStakeholderGroupsByUserCodeQuery request, CancellationToken ct = default)
+        catch (OperationCanceledException)
         {
-            try
-            {
-                _logger.LogInformation("Processing GetSMSStakeholderGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
+            _logger.LogWarning("GetSMSStakeholderGroupByCodeQuery operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Error processing GetSMSStakeholderGroupByCodeQuery for group: {GroupCode}", ApplicationEventIds.Error, ex);
+            return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+}
 
-                var result = await _dataService.GetGroupsByUserCodeAsync(request.UserCode, ct);
+/// <summary>
+/// Query handler for getting SMS stakeholder groups by user code
+/// </summary>
+public class GetSMSStakeholderGroupsByUserCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderGroupsByUserCodeQuery, Result<IEnumerable<SMSStakeholderGroup>>>
+{
+    private readonly SMSStakeholderGroupService _stakeholderGroupService;
+    private readonly ILogger<GetSMSStakeholderGroupsByUserCodeQueryHandler> _logger;
 
-                if (result.IsSuccess)
-                {
-                    _logger.LogInformation("Successfully retrieved {Count} SMS stakeholder groups for user: {UserCode}",
-                        result.Value?.Count() ?? 0, request.UserCode);
-                }
-                else
-                {
-                    _logger.LogApplicationError("Failed to retrieve SMS stakeholder groups for user {UserCode}: {Error}",
-                        ApplicationEventIds.Error, null);
-                }
+    public GetSMSStakeholderGroupsByUserCodeQueryHandler(
+        SMSStakeholderGroupService stakeholderGroupService,
+        ILogger<GetSMSStakeholderGroupsByUserCodeQueryHandler> logger)
+    {
+        _stakeholderGroupService = stakeholderGroupService ?? throw new ArgumentNullException(nameof(stakeholderGroupService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
 
-                return result;
-            }
-            catch (OperationCanceledException)
+    public async Task<Result<IEnumerable<SMSStakeholderGroup>>> HandleAsync(GetSMSStakeholderGroupsByUserCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetSMSStakeholderGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
+
+            var result = await _stakeholderGroupService.GetSMSStakeholderGroupsByUserCodeAsync(request.UserCode, ct);
+
+            if (result.IsSuccess)
             {
-                _logger.LogWarning("GetSMSStakeholderGroupsByUserCodeQuery operation was cancelled");
-                throw;
+                _logger.LogInformation("Successfully retrieved {Count} SMS stakeholder groups for user: {UserCode}",
+                    result.Value?.Count() ?? 0, request.UserCode);
             }
-            catch (Exception ex)
+            else
             {
-                _logger.LogApplicationError("Error processing GetSMSStakeholderGroupsByUserCodeQuery for user: {UserCode}", ApplicationEventIds.Error, ex);
-                return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.GeneralError.UnProcessableRequest);
+                _logger.LogApplicationError("Failed to retrieve SMS stakeholder groups for user {UserCode}: {Error}",
+                    ApplicationEventIds.Error, null);
             }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("GetSMSStakeholderGroupsByUserCodeQuery operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Error processing GetSMSStakeholderGroupsByUserCodeQuery for user: {UserCode}", ApplicationEventIds.Error, ex);
+            return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+}
+
+/// <summary>
+/// Query handler for getting users by stakeholder group code
+/// </summary>
+public class GetUsersByStakeholderGroupCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetUsersByStakeholderGroupCodeQuery, Result<IEnumerable<SMSStakeholderUser>>>
+{
+    private readonly SMSStakeholderGroupService _stakeholderGroupService;
+    private readonly ILogger<GetUsersByStakeholderGroupCodeQueryHandler> _logger;
+
+    public GetUsersByStakeholderGroupCodeQueryHandler(
+        SMSStakeholderGroupService stakeholderGroupService,
+        ILogger<GetUsersByStakeholderGroupCodeQueryHandler> logger)
+    {
+        _stakeholderGroupService = stakeholderGroupService ?? throw new ArgumentNullException(nameof(stakeholderGroupService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<IEnumerable<SMSStakeholderUser>>> HandleAsync(GetUsersByStakeholderGroupCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogInformation("Processing GetUsersByStakeholderGroupCodeQuery for group: {GroupCode}", request.GroupCode);
+
+            var result = await _stakeholderGroupService.GetUsersByGroupCodeAsync(request.GroupCode, ct);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("Successfully retrieved {Count} users for stakeholder group: {GroupCode}",
+                    result.Value?.Count() ?? 0, request.GroupCode);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to retrieve users for stakeholder group {GroupCode}: {Error}",
+                    ApplicationEventIds.Error, null);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("GetUsersByStakeholderGroupCodeQuery operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Error processing GetUsersByStakeholderGroupCodeQuery for group: {GroupCode}", ApplicationEventIds.Error, ex);
+            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 }

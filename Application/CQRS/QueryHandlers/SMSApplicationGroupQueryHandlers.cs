@@ -21,14 +21,14 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// </summary>
 public class GetAllSMSApplicationGroupsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSApplicationGroupsQuery, Result<IEnumerable<SMSApplicationGroup>>>
 {
-    private readonly SMSApplicationGroupService _applicationGroupDataService;
+    private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<GetAllSMSApplicationGroupsQueryHandler> _logger;
 
     public GetAllSMSApplicationGroupsQueryHandler(
-        SMSApplicationGroupService applicationGroupDataService,
+        SMSApplicationGroupService applicationGroupService,
         ILogger<GetAllSMSApplicationGroupsQueryHandler> logger)
     {
-        _applicationGroupDataService = applicationGroupDataService ?? throw new ArgumentNullException(nameof(applicationGroupDataService));
+        _applicationGroupService = applicationGroupService ?? throw new ArgumentNullException(nameof(applicationGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -38,7 +38,7 @@ public class GetAllSMSApplicationGroupsQueryHandler : BaseQueryBundle, IRequestH
         {
             _logger.LogInformation("Processing GetAllSMSApplicationGroupsQuery");
 
-            var result = await _applicationGroupDataService.GetAllSMSApplicationGroupsAsync();
+            var result = await _applicationGroupService.GetAllSMSApplicationGroupsAsync();
 
             if (result.IsSuccess)
             {
@@ -69,14 +69,14 @@ public class GetAllSMSApplicationGroupsQueryHandler : BaseQueryBundle, IRequestH
 /// </summary>
 public class GetSMSApplicationGroupByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationGroupByCodeQuery, Result<SMSApplicationGroup>>
 {
-    private readonly SMSApplicationGroupDataService _applicationGroupDataService;
+    private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<GetSMSApplicationGroupByCodeQueryHandler> _logger;
 
     public GetSMSApplicationGroupByCodeQueryHandler(
-        SMSApplicationGroupDataService applicationGroupDataService,
+        SMSApplicationGroupService applicationGroupService,
         ILogger<GetSMSApplicationGroupByCodeQueryHandler> logger)
     {
-        _applicationGroupDataService = applicationGroupDataService ?? throw new ArgumentNullException(nameof(applicationGroupDataService));
+        _applicationGroupService = applicationGroupService ?? throw new ArgumentNullException(nameof(applicationGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -86,7 +86,7 @@ public class GetSMSApplicationGroupByCodeQueryHandler : BaseQueryBundle, IReques
         {
             _logger.LogInformation("Processing GetSMSApplicationGroupByCodeQuery for group: {GroupCode}", request.GroupCode);
 
-            var result = await _applicationGroupDataService.GetByCodeAsync(request.GroupCode);
+            var result = await _applicationGroupService.GetSMSApplicationGroupByCodeAsync(request.GroupCode);
 
             if (result.IsSuccess)
             {
@@ -117,14 +117,14 @@ public class GetSMSApplicationGroupByCodeQueryHandler : BaseQueryBundle, IReques
 /// </summary>
 public class GetSMSApplicationGroupsByUserCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationGroupsByUserCodeQuery, Result<IEnumerable<SMSApplicationGroup>>>
 {
-    private readonly SMSApplicationGroupDataService _applicationGroupDataService;
+    private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<GetSMSApplicationGroupsByUserCodeQueryHandler> _logger;
 
     public GetSMSApplicationGroupsByUserCodeQueryHandler(
-        SMSApplicationGroupDataService applicationGroupDataService,
+        SMSApplicationGroupService applicationGroupService,
         ILogger<GetSMSApplicationGroupsByUserCodeQueryHandler> logger)
     {
-        _applicationGroupDataService = applicationGroupDataService ?? throw new ArgumentNullException(nameof(applicationGroupDataService));
+        _applicationGroupService = applicationGroupService ?? throw new ArgumentNullException(nameof(applicationGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -134,7 +134,7 @@ public class GetSMSApplicationGroupsByUserCodeQueryHandler : BaseQueryBundle, IR
         {
             _logger.LogInformation("Processing GetSMSApplicationGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
 
-            var result = await _applicationGroupDataService.GetGroupsByUserCodeAsync(request.UserCode);
+            var result = await _applicationGroupService.GetSMSApplicationGroupsByUserCodeAsync(request.UserCode);
 
             if (result.IsSuccess)
             {
@@ -167,14 +167,14 @@ public class GetSMSApplicationGroupsByUserCodeQueryHandler : BaseQueryBundle, IR
 /// </summary>
 public class GetUsersByApplicationGroupCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetUsersByApplicationGroupCodeQuery, Result<IEnumerable<SMSApplicationUser>>>
 {
-    private readonly SMSApplicationGroupDataService _applicationGroupDataService;
+    private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<GetUsersByApplicationGroupCodeQueryHandler> _logger;
 
     public GetUsersByApplicationGroupCodeQueryHandler(
-        SMSApplicationGroupDataService applicationGroupDataService,
+        SMSApplicationGroupService applicationGroupService,
         ILogger<GetUsersByApplicationGroupCodeQueryHandler> logger)
     {
-        _applicationGroupDataService = applicationGroupDataService ?? throw new ArgumentNullException(nameof(applicationGroupDataService));
+        _applicationGroupService = applicationGroupService ?? throw new ArgumentNullException(nameof(applicationGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -184,23 +184,20 @@ public class GetUsersByApplicationGroupCodeQueryHandler : BaseQueryBundle, IRequ
         {
             _logger.LogInformation("Processing GetUsersByApplicationGroupCodeQuery for group: {GroupCode}", request.GroupCode);
 
-            // Use the new GetByCodeWithMembersAsync method to get both group and members
-            var result = await _applicationGroupDataService.GetByCodeWithMembersAsync(request.GroupCode);
+            var result = await _applicationGroupService.GetUsersByGroupCodeAsync(request.GroupCode);
 
             if (result.IsSuccess)
             {
-                var members = result.Value.Members;
                 _logger.LogInformation("Successfully retrieved {Count} users for application group: {GroupCode}",
-                    members?.Count ?? 0, request.GroupCode);
-
-                return Result<IEnumerable<SMSApplicationUser>>.Success((IEnumerable<SMSApplicationUser>)members);
+                    result.Value?.Count() ?? 0, request.GroupCode);
             }
             else
             {
                 _logger.LogApplicationError("Failed to retrieve users for application group {GroupCode}: {Error}",
                     ApplicationEventIds.Error, null);
-                return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(result.Error);
             }
+
+            return result;
         }
         catch (OperationCanceledException)
         {

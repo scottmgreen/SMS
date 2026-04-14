@@ -19,14 +19,14 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// </summary>
 public class GetAllSMSOrganizationalGroupsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSOrganizationalGroupsQuery, Result<IEnumerable<SMSOrganizationalGroup>>>
 {
-    private readonly SMSOrganizationalGroupService _organizationalGroupDataService;
+    private readonly SMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<GetAllSMSOrganizationalGroupsQueryHandler> _logger;
 
     public GetAllSMSOrganizationalGroupsQueryHandler(
-        SMSOrganizationalGroupService organizationalGroupDataService,
+        SMSOrganizationalGroupService organizationalGroupService,
         ILogger<GetAllSMSOrganizationalGroupsQueryHandler> logger)
     {
-        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _organizationalGroupService = organizationalGroupService ?? throw new ArgumentNullException(nameof(organizationalGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -36,7 +36,7 @@ public class GetAllSMSOrganizationalGroupsQueryHandler : BaseQueryBundle, IReque
         {
             _logger.LogInformation("Processing GetAllSMSOrganizationalGroupsQuery");
 
-            var result = await _organizationalGroupDataService.GetAllSMSOrganizationalGroupsAsync(ct);
+            var result = await _organizationalGroupService.GetAllSMSOrganizationalGroupsAsync(ct);
 
             if (result.IsSuccess)
             {
@@ -67,14 +67,14 @@ public class GetAllSMSOrganizationalGroupsQueryHandler : BaseQueryBundle, IReque
 /// </summary>
 public class GetSMSOrganizationalGroupByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalGroupByCodeQuery, Result<SMSOrganizationalGroup>>
 {
-    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly SMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<GetSMSOrganizationalGroupByCodeQueryHandler> _logger;
 
     public GetSMSOrganizationalGroupByCodeQueryHandler(
-        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        SMSOrganizationalGroupService organizationalGroupService,
         ILogger<GetSMSOrganizationalGroupByCodeQueryHandler> logger)
     {
-        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _organizationalGroupService = organizationalGroupService ?? throw new ArgumentNullException(nameof(organizationalGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -84,7 +84,7 @@ public class GetSMSOrganizationalGroupByCodeQueryHandler : BaseQueryBundle, IReq
         {
             _logger.LogInformation("Processing GetSMSOrganizationalGroupByCodeQuery for group: {GroupCode}", request.GroupCode);
 
-            var result = await _organizationalGroupDataService.GetByCodeAsync(request.GroupCode, ct);
+            var result = await _organizationalGroupService.GetSMSOrganizationalGroupByCodeAsync(request.GroupCode, ct);
 
             if (result.IsSuccess)
             {
@@ -115,14 +115,14 @@ public class GetSMSOrganizationalGroupByCodeQueryHandler : BaseQueryBundle, IReq
 /// </summary>
 public class GetSMSOrganizationalGroupsByUserCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalGroupsByUserCodeQuery, Result<IEnumerable<SMSOrganizationalGroup>>>
 {
-    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly SMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<GetSMSOrganizationalGroupsByUserCodeQueryHandler> _logger;
 
     public GetSMSOrganizationalGroupsByUserCodeQueryHandler(
-        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        SMSOrganizationalGroupService organizationalGroupService,
         ILogger<GetSMSOrganizationalGroupsByUserCodeQueryHandler> logger)
     {
-        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _organizationalGroupService = organizationalGroupService ?? throw new ArgumentNullException(nameof(organizationalGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -132,7 +132,7 @@ public class GetSMSOrganizationalGroupsByUserCodeQueryHandler : BaseQueryBundle,
         {
             _logger.LogInformation("Processing GetSMSOrganizationalGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
 
-            var result = await _organizationalGroupDataService.GetGroupsByUserCodeAsync(request.UserCode, ct);
+            var result = await _organizationalGroupService.GetSMSOrganizationalGroupsByUserCodeAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {
@@ -165,14 +165,14 @@ public class GetSMSOrganizationalGroupsByUserCodeQueryHandler : BaseQueryBundle,
 /// </summary>
 public class GetUsersByOrganizationalGroupCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetUsersByOrganizationalGroupCodeQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
-    private readonly SMSOrganizationalGroupDataService _organizationalGroupDataService;
+    private readonly SMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<GetUsersByOrganizationalGroupCodeQueryHandler> _logger;
 
     public GetUsersByOrganizationalGroupCodeQueryHandler(
-        SMSOrganizationalGroupDataService organizationalGroupDataService,
+        SMSOrganizationalGroupService organizationalGroupService,
         ILogger<GetUsersByOrganizationalGroupCodeQueryHandler> logger)
     {
-        _organizationalGroupDataService = organizationalGroupDataService ?? throw new ArgumentNullException(nameof(organizationalGroupDataService));
+        _organizationalGroupService = organizationalGroupService ?? throw new ArgumentNullException(nameof(organizationalGroupService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -182,7 +182,7 @@ public class GetUsersByOrganizationalGroupCodeQueryHandler : BaseQueryBundle, IR
         {
             _logger.LogInformation("Processing GetUsersByOrganizationalGroupCodeQuery for group: {GroupCode}", request.GroupCode);
 
-            var result = await _organizationalGroupDataService.GetUsersByGroupCodeAsync(request.GroupCode, ct);
+            var result = await _organizationalGroupService.GetUsersByGroupCodeAsync(request.GroupCode, ct);
 
             if (result.IsSuccess)
             {

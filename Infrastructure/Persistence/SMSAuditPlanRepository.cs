@@ -55,7 +55,7 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
             };
 
             // Add parameters - CORRECTED to match stored procedure exactly
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanCode, auditPlan.Code)); // Keep original pattern
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, auditPlan.Code)); // Keep original pattern
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanName, auditPlan.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanDescription, auditPlan.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanAuditType, auditPlan.AuditType));
@@ -117,7 +117,7 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             SMSAuditPlan? auditPlan = null;
 
@@ -199,7 +199,7 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
             };
 
             // Add parameters - COMPLETE LIST to match stored procedure
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanCode, auditPlan.Code.Trim()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, auditPlan.Code.Trim()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanName, auditPlan.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanDescription, auditPlan.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanAuditType, auditPlan.AuditType));
@@ -294,7 +294,7 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

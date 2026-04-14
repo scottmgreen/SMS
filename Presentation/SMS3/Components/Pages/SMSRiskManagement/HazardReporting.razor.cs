@@ -28,6 +28,15 @@ public partial class HazardReporting : ComponentBase, IDisposable
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
 
+    #region Route Parameters
+
+    /// <summary>
+    /// Optional hazard code parameter for editing existing hazards
+    /// </summary>
+    [Parameter] public string? HazardCode { get; set; }
+
+    #endregion
+
     #region Properties and Fields
 
     /// <summary>
@@ -248,12 +257,39 @@ public partial class HazardReporting : ComponentBase, IDisposable
     #region Edit Mode Methods
 
     /// <summary>
-    /// Check if we're in edit mode based on query parameters
+    /// Check if we're in edit mode based on route parameters or query parameters
     /// </summary>
     private async Task CheckForEditModeAsync()
     {
         try
         {
+            // Check if we have a route parameter (HazardCode)
+            if (!string.IsNullOrEmpty(HazardCode))
+            {
+                // Special case: "new" means create mode
+                if (HazardCode.Equals("new", StringComparison.OrdinalIgnoreCase))
+                {
+                    IsEditMode = false;
+                    EditHazardCode = null;
+                    EditingHazard = null;
+                    EditReportCode = null;
+                    EditingReport = null;
+                    _logger.LogInformation("Create mode detected via route parameter 'new'");
+                    return;
+                }
+
+                // Otherwise, treat as edit mode
+                IsEditMode = true;
+                EditHazardCode = HazardCode;
+
+                _logger.LogInformation("Edit mode detected for hazard: {HazardCode} (via route parameter)", HazardCode);
+
+                // Load the existing hazard data
+                await LoadHazardForEditingAsync(HazardCode);
+                return;
+            }
+
+            // Fallback to existing query parameter logic for backward compatibility
             var uri = new Uri(_navigation.Uri);
             var queryParams = Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
 
@@ -263,7 +299,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 IsEditMode = true;
                 EditReportCode = reportCode;
 
-                _logger.LogInformation("Edit mode detected for report: {ReportCode}", reportCode);
+                _logger.LogInformation("Edit mode detected for report: {ReportCode} (via query parameter)", reportCode);
 
                 // Load the existing report data
                 await LoadReportForEditingAsync(reportCode);
@@ -273,6 +309,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 IsEditMode = false;
                 EditReportCode = null;
                 EditingReport = null;
+                EditHazardCode = null;
+                EditingHazard = null;
             }
         }
         catch (Exception ex)
@@ -280,7 +318,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             _logger.LogError(ex, "Error checking for edit mode");
             IsEditMode = false;
             await _notificationHelper.ShowErrorAsync( "Unable to determine edit mode. Defaulting to create mode.", 5000);
-            
+
         }
     }
 
@@ -431,6 +469,135 @@ public partial class HazardReporting : ComponentBase, IDisposable
             
             // Redirect back to reports on failure
             _navigation.NavigateToSecure("/SMSRiskManagement/Reports");
+        }
+        finally
+        {
+            IsLoading = false;
+            // Force a complete UI refresh after loading
+            await InvokeAsync(StateHasChanged);
+
+            // Add a small delay and refresh again to ensure binding
+            await Task.Delay(100);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    /// <summary>
+    /// Load hazard data directly for editing (when using HazardCode route parameter)
+    /// </summary>
+    private async Task LoadHazardForEditingAsync(string hazardCode)
+    {
+        try
+        {
+            IsLoading = true;
+            StateHasChanged();
+
+            _logger.LogInformation("Loading hazard {HazardCode} directly for editing", hazardCode);
+
+            // Get the hazard details
+            var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazardCode));
+            var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
+
+            if (hazardResult.IsFailure || hazardResult.Value == null)
+            {
+                throw new InvalidOperationException($"Hazard {hazardCode} not found");
+            }
+
+            EditingHazard = hazardResult.Value;
+            EditHazardCode = hazardCode;
+
+            // Get the associated report
+            if (!string.IsNullOrEmpty(EditingHazard.ReportCode))
+            {
+                var reportQuery = new GetReportByCodeQuery(new ReportID(EditingHazard.ReportCode));
+                var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
+
+                if (reportResult.IsSuccess && reportResult.Value != null)
+                {
+                    EditingReport = reportResult.Value;
+                    EditReportCode = EditingReport.Code;
+                }
+            }
+
+            _logger.LogInformation("Found hazard {HazardCode} with type: {HazardType}", EditingHazard.Code, EditingHazard.HazardType);
+
+            // Try to determine category from hazard type
+            var hazardType = HazardType.FromValue(EditingHazard.HazardType ?? "");
+            var category = hazardType != null ? HazardCategory.FromValue(hazardType.Category) : null;
+
+            _logger.LogInformation("Determined category: {Category} from hazard type: {HazardType}", 
+                category?.Value ?? "NULL", EditingHazard.HazardType);
+
+            // STEP 1: Set the category first
+            SelectedHazardCategory = category?.Value;
+
+            // STEP 2: Populate form with hazard data and report data (if available)
+            HazardReport = new HazardReportForm
+            {
+                HazardCategory = category?.Value,
+                HazardType = hazardType?.Value,
+                Description = EditingHazard.Description,
+                Location = EditingHazard.LocationArea,
+
+                // Use report data if available, otherwise use defaults
+                IncidentDateTime = EditingReport?.IncidentDateTime ?? DateTime.Now,
+                SubmittedBy = EditingReport?.SubmittedBy ?? CurrentUserService?.UserDisplayName ?? "Unknown User",
+                SubmittedDate = EditingReport?.SubmittedDate ?? DateTime.Now,
+                SubmittingDepartment = EditingReport?.SubmittingDepartment ?? "",
+                SubmittingDepartmentJobFunction = EditingReport?.SubmittingDepartmentJobFunction ?? "",
+                ReportContactName = EditingReport?.ReportContactName ?? "",
+                ReportContactCell = EditingReport?.ReportContactCell ?? "",
+                ReportContactEmail = EditingReport?.ReportContactEmail ?? "",
+                IsAnonymous = EditingReport?.IsAnonymous ?? false
+            };
+
+            // STEP 3: Load the hazard types for the category
+            if (category != null)
+            {
+                _logger.LogInformation("Loading hazard types for category: {Category}", category.Value);
+                await LoadHazardTypesForCategory(category.Value, preserveSelectedType: true);
+                _logger.LogInformation("Loaded {Count} hazard types for category {Category}. Current type: {Type}",
+                    HazardTypeOptions.Count, category.Value, HazardReport.HazardType);
+            }
+            else
+            {
+                _logger.LogWarning("No category found for hazard type: {HazardType}", hazardType);
+                HazardTypeOptions.Clear();
+            }
+
+            // STEP 4: Handle geographic location data
+            if (EditingHazard.HazardLocation != null)
+            {
+                SelectedGeoLocation = new GeoLocationData
+                {
+                    Latitude = EditingHazard.HazardLocation.Latitude ?? 0,
+                    Longitude = EditingHazard.HazardLocation.Longitude ?? 0,
+                    Description = EditingHazard.HazardLocation.Description ?? string.Empty,
+                    SelectedDateTime = DateTime.UtcNow
+                };
+
+                SelectedLatitude = SelectedGeoLocation.Latitude;
+                SelectedLongitude = SelectedGeoLocation.Longitude;
+                LocationDescription = SelectedGeoLocation.Description ?? "";
+
+                HazardReport.Location = "MAP_LOCATION";
+
+                _logger.LogInformation("Loaded geographic location: {Lat}, {Lng}",
+                    SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
+            }
+
+            _logger.LogInformation("Successfully loaded hazard {HazardCode} for editing - Category: {Category}, Type: {Type}",
+                hazardCode, SelectedHazardCategory, HazardReport.HazardType);
+
+            await _notificationHelper.ShowInfoAsync($"Loaded hazard {hazardCode} for editing.", 5000);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading hazard for editing: {HazardCode}", hazardCode);
+            await _notificationHelper.ShowErrorAsync("Failed to load hazard for editing. Redirecting to Hazards page.", 5000);
+
+            // Redirect back to hazards listing on failure
+            _navigation.NavigateToSecure("/Listings/HazardListing");
         }
         finally
         {

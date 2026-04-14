@@ -58,7 +58,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPICode, spi.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, spi.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIName, spi.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDescription, spi.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIIndicatorType, spi.IndicatorType.Value));
@@ -122,7 +122,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPICode, spi.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, spi.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIName, spi.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDescription, spi.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIIndicatorType, spi.IndicatorType.Value));
@@ -307,7 +307,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPICode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             SafetyPerformanceIndicator? response = null;
 

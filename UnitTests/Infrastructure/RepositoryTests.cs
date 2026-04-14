@@ -279,7 +279,7 @@ public class InfrastructureCommonTests
     public void ParameterNames_AirportSharedDatasetParameters_HaveCorrectNames()
     {
         // Assert
-        ParameterNames.pmAirportSharedDatasetCode.Should().Be("@pCode");
+        ParameterNames.pmCode.Should().Be("@pCode");
         ParameterNames.pmPrivateNarrative.Should().Be("@pPrivateNarrative");
         ParameterNames.pmSharedNarrative.Should().Be("@pSharedNarrative");
         ParameterNames.pmLocationArea.Should().Be("@pLocationArea");

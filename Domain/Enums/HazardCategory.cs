@@ -26,7 +26,7 @@ public abstract class HazardCategory : BaseEnum<HazardCategory>
     public int SortOrder { get; }
 
     #region Hazard Categories
-
+    public static readonly HazardCategory Default = new DefaultCategory();
     /// <summary>Aircraft and operational incidents requiring investigation and reporting</summary>
     public static readonly HazardCategory Incident = new IncidentCategory();
 
@@ -63,7 +63,13 @@ public abstract class HazardCategory : BaseEnum<HazardCategory>
     #endregion
 
     #region Implementations
-
+    private sealed class DefaultCategory : HazardCategory
+    {
+        public DefaultCategory() : base("DEFAULT", "Default",
+            "To Be Determined by SMS Staff", 0)
+        {
+        }
+    }
     private sealed class IncidentCategory : HazardCategory
     {
         public IncidentCategory() : base("INCIDENT", "Incident",

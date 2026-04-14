@@ -1,5 +1,8 @@
 using Microsoft.Extensions.Options;
 
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Messaging.Queries;
+
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -81,6 +84,24 @@ public partial class OrganizationalUsers : ComponentBase
     // Delete confirmation fields
     private string DeleteUserId { get; set; } = string.Empty;
     private string DeleteUserDisplayName { get; set; } = string.Empty;
+
+    // Role Assignment Properties
+    private bool ShowRoleAssignmentModal { get; set; }
+    private string RoleAssignmentUserCode { get; set; } = string.Empty;
+    private string RoleAssignmentUserDisplayName { get; set; } = string.Empty;
+    private string? CurrentUserRoleCode { get; set; }
+    private string? SelectedRoleCode { get; set; }
+    private List<SMSUserRole> AvailableRoles { get; set; } = new();
+
+    // Dynamically get all unique modules from available roles' permissions
+    private IEnumerable<string> SMSModules =>
+        AvailableRoles
+            .Where(role => role.Permissions != null)
+            .SelectMany(role => role.Permissions)
+            .Where(permission => !string.IsNullOrWhiteSpace(permission.SMSModule))
+            .Select(permission => permission.SMSModule!)
+            .Distinct()
+            .OrderBy(module => module);
 
     // Group Management Properties
     private string GroupManagementUserCode { get; set; } = string.Empty;
@@ -243,12 +264,19 @@ public partial class OrganizationalUsers : ComponentBase
                 groupsResult.Value?.ToList() ?? new List<SMSOrganizationalGroup>() :
                 new List<SMSOrganizationalGroup>();
 
+            // Load User Roles for role assignment
+            var userRolesQuery = new GetAllSMSUserRolesQuery();
+            var userRolesResult = await _mediator.SendAsync(userRolesQuery, CancellationToken.None);
+            AvailableRoles = userRolesResult.IsSuccess ?
+                userRolesResult.Value?.ToList() ?? new List<SMSUserRole>() :
+                new List<SMSUserRole>();
+
 
             // Load SMS User Roles for dropdown
             await LoadSMSRoleOptions();
 
-            _logger.LogInformation("Loaded {UserCount} organizational users and {GroupCount} organizational groups",
-                OrganizationalUsersList.Count, AllOrganizationalGroups.Count);
+            _logger.LogInformation("Loaded {UserCount} organizational users, {GroupCount} organizational groups, and {RoleCount} user roles",
+                OrganizationalUsersList.Count, AllOrganizationalGroups.Count, AvailableRoles.Count);
 
             StateHasChanged();
         }
@@ -588,6 +616,165 @@ public partial class OrganizationalUsers : ComponentBase
         {
             _logger.LogError(ex, "Error deleting organizational user: {UserId}", DeleteUserId);
             ShowErrorAsyncNotification("Error deleting organizational user. Please try again.");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    #endregion
+
+    #region Role Assignment Methods
+
+    private bool IsPermissionGranted(SMSUserRole role, string module, string action)
+    {
+        if (role?.Permissions == null) return false;
+
+        var permission = role.Permissions.FirstOrDefault(p => p.SMSModule == module);
+        return action switch
+        {
+            "Create" => permission?.Create == true,
+            "Read" => permission?.Read == true,
+            "Update" => permission?.Update == true,
+            "Delete" => permission?.Delete == true,
+            _ => false
+        };
+    }
+
+    private void OpenRoleAssignmentModal(string userCode, string userDisplayName, string? currentRoleCode = null)
+    {
+        RoleAssignmentUserCode = userCode;
+        RoleAssignmentUserDisplayName = userDisplayName;
+        CurrentUserRoleCode = currentRoleCode;
+        SelectedRoleCode = currentRoleCode;
+        ShowRoleAssignmentModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseRoleAssignmentModal()
+    {
+        ShowRoleAssignmentModal = false;
+        RoleAssignmentUserCode = string.Empty;
+        RoleAssignmentUserDisplayName = string.Empty;
+        CurrentUserRoleCode = null;
+        SelectedRoleCode = null;
+        StateHasChanged();
+    }
+
+    private async Task AssignUserRole()
+    {
+        if (string.IsNullOrEmpty(RoleAssignmentUserCode) || string.IsNullOrEmpty(SelectedRoleCode))
+        {
+            ShowErrorAsyncNotification("Invalid user or role selection.");
+            return;
+        }
+
+        try
+        {
+            IsSaving = true;
+            StateHasChanged();
+
+            // Get the user
+            var userQuery = new GetSMSOrganizationalUserByCodeQuery(RoleAssignmentUserCode);
+            var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
+
+            if (userResult.IsFailure || userResult.Value == null)
+            {
+                ShowErrorAsyncNotification("User not found.");
+                return;
+            }
+
+            var user = userResult.Value;
+
+            // Get the selected role
+            var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == SelectedRoleCode);
+            if (selectedRole == null)
+            {
+                ShowErrorAsyncNotification("Selected role not found.");
+                return;
+            }
+
+            user.SMSUserType = SMSUserType.Organizational;
+            user.UserRole = selectedRole;
+
+            // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
+            var updateCommand = new UpdateSMSOrganizationalUserCommand(user);
+            var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
+
+            if (updateResult.IsSuccess)
+            {
+                ShowSuccessAsyncNotification($"Role '{selectedRole.Name}' successfully assigned to {RoleAssignmentUserDisplayName}.");
+
+                // Refresh data and close modal
+                await LoadDataAsync();
+                CloseRoleAssignmentModal();
+            }
+            else
+            {
+                ShowErrorAsyncNotification($"Failed to assign role: {updateResult.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error assigning role to user {UserCode}", RoleAssignmentUserCode);
+            ShowErrorAsyncNotification("An error occurred while assigning the role. Please try again.");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RemoveUserRole()
+    {
+        if (string.IsNullOrEmpty(RoleAssignmentUserCode))
+        {
+            ShowErrorAsyncNotification("Invalid user selection.");
+            return;
+        }
+
+        try
+        {
+            IsSaving = true;
+            StateHasChanged();
+
+            // Get the user
+            var userQuery = new GetSMSOrganizationalUserByCodeQuery(RoleAssignmentUserCode);
+            var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
+
+            if (userResult.IsFailure || userResult.Value == null)
+            {
+                ShowErrorAsyncNotification("User not found.");
+                return;
+            }
+
+            var user = userResult.Value;
+            user.UserRole = null;
+
+            // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
+            var updateCommand = new UpdateSMSOrganizationalUserCommand(user);
+            var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
+
+            if (updateResult.IsSuccess)
+            {
+                ShowSuccessAsyncNotification($"Role successfully removed from {RoleAssignmentUserDisplayName}.");
+
+                // Refresh data and close modal
+                await LoadDataAsync();
+                CloseRoleAssignmentModal();
+            }
+            else
+            {
+                ShowErrorAsyncNotification($"Failed to remove role: {updateResult.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing role from user {UserCode}", RoleAssignmentUserCode);
+            ShowErrorAsyncNotification("An error occurred while removing the role. Please try again.");
         }
         finally
         {

@@ -44,14 +44,27 @@ public partial class StakeholderUsers : ComponentBase
     private SMSStakeholderUser? CurrentEditUser { get; set; }
 
     // Role Assignment Modal Properties
+    private bool ShowRoleAssignmentModal { get; set; }
+    private string RoleAssignmentUserCode { get; set; } = string.Empty;
+    private string RoleAssignmentUserDisplayName { get; set; } = string.Empty;
+    private string? CurrentUserRoleCode { get; set; }
+    private string? SelectedRoleCode { get; set; }
+
+    // Legacy properties for compatibility
     private bool ShowRoleModal { get; set; }
     private string RoleUserCode { get; set; } = string.Empty;
     private string RoleUserDisplayName { get; set; } = string.Empty;
     private string CurrentRoleCode { get; set; } = string.Empty;
-    private static readonly string[] SMSModules =
-    {
-        "SMS_Assurance", "SMS_Policy", "SMS_Promotion", "SMS_RiskManagement", "SMS_System"
-    };
+
+    // Dynamically get all unique modules from available roles' permissions
+    private IEnumerable<string> SMSModules =>
+        UserRoles
+            .Where(role => role.Permissions != null)
+            .SelectMany(role => role.Permissions)
+            .Where(permission => !string.IsNullOrWhiteSpace(permission.SMSModule))
+            .Select(permission => permission.SMSModule!)
+            .Distinct()
+            .OrderBy(module => module);
     // Component References
     private RadzenDataGrid<SMSStakeholderUser>? usersGrid;
 
@@ -335,20 +348,7 @@ public partial class StakeholderUsers : ComponentBase
             await DeleteUser(userId);
         }
     }
-    private bool IsPermissionGranted(SMSUserRole role, string module, string action)
-    {
-        if (role?.Permissions == null) return false;
 
-        var permission = role.Permissions.FirstOrDefault(p => p.SMSModule == module);
-        return action switch
-        {
-            "Create" => permission?.Create == true,
-            "Read" => permission?.Read == true,
-            "Update" => permission?.Update == true,
-            "Delete" => permission?.Delete == true,
-            _ => false
-        };
-    }
     private async Task DeleteUser(string userId)
     {
         try
@@ -430,38 +430,59 @@ public partial class StakeholderUsers : ComponentBase
 
     #region Role Assignment
 
-    private async Task ShowRoleDialog(string userId, string displayName, string? currentRoleCode)
+    private bool IsPermissionGranted(SMSUserRole role, string module, string action)
     {
-        RoleUserCode = userId;
-        RoleUserDisplayName = displayName;
-        CurrentRoleCode = currentRoleCode ?? "";
-        ShowRoleModal = true;
+        if (role?.Permissions == null) return false;
+
+        var permission = role.Permissions.FirstOrDefault(p => p.SMSModule == module);
+        return action switch
+        {
+            "Create" => permission?.Create == true,
+            "Read" => permission?.Read == true,
+            "Update" => permission?.Update == true,
+            "Delete" => permission?.Delete == true,
+            _ => false
+        };
+    }
+
+    private void OpenRoleAssignmentModal(string userCode, string userDisplayName, string? currentRoleCode = null)
+    {
+        RoleAssignmentUserCode = userCode;
+        RoleAssignmentUserDisplayName = userDisplayName;
+        CurrentUserRoleCode = currentRoleCode;
+        SelectedRoleCode = currentRoleCode;
+        ShowRoleAssignmentModal = true;
         StateHasChanged();
     }
 
-    private void CloseRoleModal()
+    private void CloseRoleAssignmentModal()
     {
-        ShowRoleModal = false;
-        RoleUserCode = string.Empty;
-        RoleUserDisplayName = string.Empty;
-        CurrentRoleCode = string.Empty;
+        ShowRoleAssignmentModal = false;
+        RoleAssignmentUserCode = string.Empty;
+        RoleAssignmentUserDisplayName = string.Empty;
+        CurrentUserRoleCode = null;
+        SelectedRoleCode = null;
         StateHasChanged();
     }
 
-    private async Task AssignRoleFromModal(string? userRoleCode)
+    private async Task AssignUserRole()
     {
-        await AssignRole(RoleUserCode, RoleUserDisplayName, userRoleCode);
-        CloseRoleModal();
-    }
+        if (string.IsNullOrEmpty(RoleAssignmentUserCode) || string.IsNullOrEmpty(SelectedRoleCode))
+        {
+            ShowErrorAsyncNotification("Invalid user or role selection.");
+            return;
+        }
 
-    private async Task AssignRole(string userId, string displayName, string? userRoleCode)
-    {
         try
         {
-            var getUserQuery = new GetSMSStakeholderUserByCodeQuery(userId);
-            var userResult = await _mediator.SendAsync(getUserQuery, CancellationToken.None);
+            IsSaving = true;
+            StateHasChanged();
 
-            if (userResult.IsFailure)
+            // Get the user
+            var userQuery = new GetSMSStakeholderUserByCodeQuery(RoleAssignmentUserCode);
+            var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
+
+            if (userResult.IsFailure || userResult.Value == null)
             {
                 ShowErrorAsyncNotification("User not found.");
                 return;
@@ -469,51 +490,118 @@ public partial class StakeholderUsers : ComponentBase
 
             var user = userResult.Value;
 
-            // ? FIXED: Only set business fields - let pipeline handle audit fields
-            if (!string.IsNullOrWhiteSpace(userRoleCode))
+            // Get the selected role
+            var selectedRole = UserRoles.FirstOrDefault(r => r.Code == SelectedRoleCode);
+            if (selectedRole == null)
             {
-                var roleQuery = new GetSMSUserRoleByIdQuery(userRoleCode);
-                var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
-                if (roleResult.IsSuccess && roleResult.Value != null)
-                {
-                    user.UserRole = roleResult.Value;
-                    ShowSuccessAsyncNotification($"Role '{roleResult.Value.Name}' assigned to {displayName} successfully.");
-                }
-                else
-                {
-                    ShowErrorAsyncNotification("Selected role not found.");
-                    return;
-                }
+                ShowErrorAsyncNotification("Selected role not found.");
+                return;
             }
-            else
-            {
-                // Clear role
-                user.UserRole = null;
-                ShowSuccessAsyncNotification($"Role removed from {displayName} successfully.");
-            }
-            
-            // ? REMOVED: Manual audit field assignment
-            // user.UpdatedBy = CurrentUserService?.UserDisplayName;
-            
+
+            user.SMSUserType = SMSUserType.Stakeholder;
+            user.UserRole = selectedRole;
+
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSStakeholderUserCommand(user);
-            var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
+            var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
-            if (result.IsSuccess)
+            if (updateResult.IsSuccess)
             {
+                ShowSuccessAsyncNotification($"Role '{selectedRole.Name}' successfully assigned to {RoleAssignmentUserDisplayName}.");
+
+                // Refresh data and close modal
                 await LoadDataAsync();
+                CloseRoleAssignmentModal();
             }
             else
             {
-                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to update user role.");
+                ShowErrorAsyncNotification($"Failed to assign role: {updateResult.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning role to user: {UserId}", userId);
-            ShowErrorAsyncNotification("Error assigning role. Please try again.");
+            _logger.LogError(ex, "Error assigning role to user {UserCode}", RoleAssignmentUserCode);
+            ShowErrorAsyncNotification("An error occurred while assigning the role. Please try again.");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
         }
     }
+
+    private async Task RemoveUserRole()
+    {
+        if (string.IsNullOrEmpty(RoleAssignmentUserCode))
+        {
+            ShowErrorAsyncNotification("Invalid user selection.");
+            return;
+        }
+
+        try
+        {
+            IsSaving = true;
+            StateHasChanged();
+
+            // Get the user
+            var userQuery = new GetSMSStakeholderUserByCodeQuery(RoleAssignmentUserCode);
+            var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
+
+            if (userResult.IsFailure || userResult.Value == null)
+            {
+                ShowErrorAsyncNotification("User not found.");
+                return;
+            }
+
+            var user = userResult.Value;
+            user.UserRole = null;
+
+            // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
+            var updateCommand = new UpdateSMSStakeholderUserCommand(user);
+            var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
+
+            if (updateResult.IsSuccess)
+            {
+                ShowSuccessAsyncNotification($"Role successfully removed from {RoleAssignmentUserDisplayName}.");
+
+                // Refresh data and close modal
+                await LoadDataAsync();
+                CloseRoleAssignmentModal();
+            }
+            else
+            {
+                ShowErrorAsyncNotification($"Failed to remove role: {updateResult.Error?.Message}");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error removing role from user {UserCode}", RoleAssignmentUserCode);
+            ShowErrorAsyncNotification("An error occurred while removing the role. Please try again.");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    // Legacy methods for compatibility
+    private async Task ShowRoleDialog(string userId, string displayName, string? currentRoleCode)
+    {
+        OpenRoleAssignmentModal(userId, displayName, currentRoleCode);
+    }
+
+    private void CloseRoleModal()
+    {
+        CloseRoleAssignmentModal();
+    }
+
+    private async Task AssignRoleFromModal(string? userRoleCode)
+    {
+        SelectedRoleCode = userRoleCode;
+        await AssignUserRole();
+    }
+
     private readonly List<StatusOption> IsActiveOptions = StatusOptions.ActiveInactiveOptions;
 
     private readonly List<StatusOption> IsPOPEmployeeOptions = StatusOptions.YesNoOptions;

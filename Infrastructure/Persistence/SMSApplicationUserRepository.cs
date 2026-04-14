@@ -452,7 +452,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserCode, user.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastName, user.LastName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserUserName, user.UserName.Value));
@@ -511,7 +511,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserCode, user.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastName, user.LastName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserUserName, user.UserName.Value));

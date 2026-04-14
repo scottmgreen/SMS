@@ -355,7 +355,7 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserCode, user.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLastName, user.LastName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserUserName, user.UserName.Value));
@@ -415,7 +415,7 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserCode, user.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLastName, user.LastName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserUserName, user.UserName.Value));
@@ -867,7 +867,7 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupCode, groupCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, groupCode));
 
             var users = new List<SMSStakeholderUser>();
             var userRoles = new Dictionary<string, SMSUserRole>();

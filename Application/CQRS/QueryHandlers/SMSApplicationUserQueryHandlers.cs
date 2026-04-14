@@ -20,12 +20,12 @@ namespace SMS_Application.Messaging.QueryHandlers;
 
 public class GetAllSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSApplicationUsersQuery, Result<IEnumerable<SMSApplicationUser>>>
 {
-    private readonly SMSApplicationUserService _dataService;
+    private readonly SMSApplicationUserService _applicationUserService;
     private readonly ILogger<GetAllSMSApplicationUsersQueryHandler> _logger;
 
-    public GetAllSMSApplicationUsersQueryHandler(SMSApplicationUserService dataService, ILogger<GetAllSMSApplicationUsersQueryHandler> logger)
+    public GetAllSMSApplicationUsersQueryHandler(SMSApplicationUserService applicationUserService, ILogger<GetAllSMSApplicationUsersQueryHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -34,7 +34,7 @@ public class GetAllSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequestHa
         try
         {
             _logger.LogInformation("Processing GetAllSMSApplicationUsersQuery");
-            var result = await _dataService.GetAllSMSApplicationUsersAsync(ct);
+            var result = await _applicationUserService.GetAllSMSApplicationUsersAsync(ct);
 
             if (result.IsSuccess)
             {
@@ -58,12 +58,12 @@ public class GetAllSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequestHa
 
 public class GetSMSApplicationUserByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationUserByCodeQuery, Result<SMSApplicationUser>>
 {
-    private readonly SMSApplicationUserDataService _dataService;
+    private readonly SMSApplicationUserService _applicationUserService;
     private readonly ILogger<GetSMSApplicationUserByCodeQueryHandler> _logger;
 
-    public GetSMSApplicationUserByCodeQueryHandler(SMSApplicationUserDataService dataService, ILogger<GetSMSApplicationUserByCodeQueryHandler> logger)
+    public GetSMSApplicationUserByCodeQueryHandler(SMSApplicationUserService applicationUserService, ILogger<GetSMSApplicationUserByCodeQueryHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -72,7 +72,7 @@ public class GetSMSApplicationUserByCodeQueryHandler : BaseQueryBundle, IRequest
         try
         {
             _logger.LogInformation("Processing GetSMSApplicationUserByCodeQuery for Code: {UserCode}", request.UserCode);
-            var result = await _dataService.GetSMSApplicationUserByCodeAsync(request.UserCode, ct); // Assuming Code and ID are the same
+            var result = await _applicationUserService.GetSMSApplicationUserByCodeAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {
@@ -95,12 +95,12 @@ public class GetSMSApplicationUserByCodeQueryHandler : BaseQueryBundle, IRequest
 
 public class GetSMSApplicationUserByUserNameQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationUserByUserNameQuery, Result<SMSApplicationUser>>
 {
-    private readonly SMSApplicationUserDataService _dataService;
+    private readonly SMSApplicationUserService _applicationUserService;
     private readonly ILogger<GetSMSApplicationUserByUserNameQueryHandler> _logger;
 
-    public GetSMSApplicationUserByUserNameQueryHandler(SMSApplicationUserDataService dataService, ILogger<GetSMSApplicationUserByUserNameQueryHandler> logger)
+    public GetSMSApplicationUserByUserNameQueryHandler(SMSApplicationUserService applicationUserService, ILogger<GetSMSApplicationUserByUserNameQueryHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -110,8 +110,7 @@ public class GetSMSApplicationUserByUserNameQueryHandler : BaseQueryBundle, IReq
         {
             _logger.LogInformation("Processing GetSMSApplicationUserByUserNameQuery for UserName: {UserName}", request.UserName);
 
-            // FIXED: Call the direct method instead of filtering all users
-            var result = await _dataService.GetSMSApplicationUserByUserNameAsync(request.UserName, ct);
+            var result = await _applicationUserService.GetSMSApplicationUserByUserNameAsync(request.UserName, ct);
 
             if (result.IsSuccess)
             {
@@ -134,12 +133,12 @@ public class GetSMSApplicationUserByUserNameQueryHandler : BaseQueryBundle, IReq
 
 public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetActiveSMSApplicationUsersQuery, Result<IEnumerable<SMSApplicationUser>>>
 {
-    private readonly SMSApplicationUserDataService _dataService;
+    private readonly SMSApplicationUserService _applicationUserService;
     private readonly ILogger<GetActiveSMSApplicationUsersQueryHandler> _logger;
 
-    public GetActiveSMSApplicationUsersQueryHandler(SMSApplicationUserDataService dataService, ILogger<GetActiveSMSApplicationUsersQueryHandler> logger)
+    public GetActiveSMSApplicationUsersQueryHandler(SMSApplicationUserService applicationUserService, ILogger<GetActiveSMSApplicationUsersQueryHandler> logger)
     {
-        _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -148,7 +147,7 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IReques
         try
         {
             _logger.LogInformation("Processing GetActiveSMSApplicationUsersQuery");
-            var result = await _dataService.GetActiveSMSApplicationUsersAsync(ct);
+            var result = await _applicationUserService.GetActiveSMSApplicationUsersAsync(ct);
 
             if (result.IsSuccess)
             {

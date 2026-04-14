@@ -53,7 +53,7 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
             };
 
             // Add ALL parameters to match stored procedure exactly (except fldi_ID)
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, audit.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, audit.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditName, audit.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditDescription, audit.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditAuditPlanCode, audit.AuditPlanCode));
@@ -113,7 +113,7 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             SMSAudit? audit = null;
 
@@ -195,7 +195,7 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
             };
 
             // Add parameters
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, audit.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, audit.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditName, audit.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditDescription, audit.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditAuditPlanCode, audit.AuditPlanCode));
@@ -245,7 +245,7 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -277,7 +277,7 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, auditCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, auditCode));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

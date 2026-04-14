@@ -94,7 +94,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationCode, hazardLocation.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, hazardLocation.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationHazardCode, hazardLocation.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationLatitude, hazardLocation.Latitude));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationLongitude, hazardLocation.Longitude));
@@ -264,7 +264,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationCode, hazardLocation.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, hazardLocation.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationHazardCode, hazardLocation.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationLatitude, hazardLocation.Latitude));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationLongitude, hazardLocation.Longitude));

@@ -58,7 +58,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
             };
 
             // Add all parameters - REQUIRED ReportID first
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetCode, airportSharedDataset.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, airportSharedDataset.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetReportCode, airportSharedDataset.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetHazardCode, airportSharedDataset.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPrivateNarrative, airportSharedDataset.PrivateNarrative));
@@ -134,7 +134,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetCode, code.Value.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value.ToString()));
 
             AirportSharedDataset? response = null;
 
@@ -222,7 +222,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
             };
 
             // Add all parameters for update
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetCode, airportSharedDataset.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, airportSharedDataset.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetReportCode, airportSharedDataset.ReportCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAirportSharedDatasetHazardCode, airportSharedDataset.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPrivateNarrative, airportSharedDataset.PrivateNarrative));

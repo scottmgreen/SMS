@@ -85,7 +85,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             SMSOrganizationalGroup? group = null;
 
@@ -132,7 +132,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupCode, group.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, group.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupName, group.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupDescription, group.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupGroupType, group.GroupType));
@@ -179,7 +179,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupCode, group.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, group.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupName, group.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupDescription, group.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupGroupType, group.GroupType));
@@ -218,7 +218,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);

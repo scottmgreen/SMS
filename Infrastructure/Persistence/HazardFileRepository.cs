@@ -52,7 +52,7 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             HazardFile? hazardFile = null;
 
@@ -100,7 +100,7 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
             };
 
             // Add parameters
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileCode, hazardFile.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, hazardFile.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileHazardCode, hazardFile.HazardCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileReportCode, hazardFile.ReportCode ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileFileName, hazardFile.FileName));
@@ -389,7 +389,7 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             HazardFile? hazardFile = null;
 

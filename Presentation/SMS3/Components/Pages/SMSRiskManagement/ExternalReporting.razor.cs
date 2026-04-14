@@ -159,9 +159,9 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
     /// <summary>
     /// Check if form has minimum required fields for preview
+    /// Note: HazardType and HazardCategory are automatically set to defaults for external reporting
     /// </summary>
     public bool IsFormValidForPreview =>
-        !string.IsNullOrEmpty(HazardReport.HazardType) && !string.IsNullOrEmpty(HazardReport.HazardCategory) &&
         !string.IsNullOrEmpty(HazardReport.SubmittedBy) && !string.IsNullOrEmpty(HazardReport.Description) && 
         !string.IsNullOrEmpty(HazardReport.IncidentDateTime.ToString());
 
@@ -190,7 +190,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     /// <summary>
     /// Page title
     /// </summary>
-    public string PageTitle => "Submit External Report";
+    public string PageTitle => "Hazard Report Submission Form";
 
     /// <summary>
     /// Page subtitle
@@ -1061,12 +1061,13 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
     /// <summary>
     /// Initialize dropdown options using centralized helpers
+    /// For External Reporting, we set default values and don't show the dropdowns
     /// </summary>
     private void InitializeDropdownOptions()
     {
-        var (categories, types, _) = DropdownHelper.InitializeHazardReportingDropdowns();
-        HazardCategoryOptions = categories;
-        HazardTypeOptions = types; // Empty initially
+        // For external reporting, we only set default values - no dropdown options needed
+        HazardCategoryOptions = new List<DropdownOption>();
+        HazardTypeOptions = new List<DropdownOption>();
     }
 
     /// <summary>
@@ -1079,7 +1080,10 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         {
             SubmittedBy = "Anonymous Reporter",
             SubmittedDate = new DateTime(theDate.Year, theDate.Month, theDate.Day,theDate.Hour, theDate.Minute, 0),
-            IsAnonymous = false // Always true for confidential reporting
+            IsAnonymous = false, // Always true for confidential reporting
+            // Set default values for external reporting
+            HazardCategory = HazardCategory.Default.Value,
+            HazardType = HazardType.Default.Value
         };
 
         SelectedGeoLocation = new GeoLocationData
@@ -1094,9 +1098,8 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         SelectedFiles = new List<IBrowserFile>().AsReadOnly();
         AttachedFiles.Clear();
 
-        // Reset dropdown selections
-        SelectedHazardCategory = null;
-        HazardTypeOptions.Clear();
+        // Set default selections for external reporting
+        SelectedHazardCategory = HazardCategory.Default.Value;
 
         ShowPreview = false;
         ShowMapModal = false;

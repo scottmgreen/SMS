@@ -46,10 +46,7 @@ public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
                 return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NullOrEmpty);
             }
 
-            var result = await _stakeholderGroupService.CreateStakeholderGroupAsync(
-                request.StakeholderGroup.Name,
-                request.StakeholderGroup.Description,
-                request.StakeholderGroup.CreatedBy ?? "SYSTEM");
+            var result = await _stakeholderGroupService.CreateSMSStakeholderGroupAsync(request.StakeholderGroup, ct);
 
             if (result.IsSuccess)
             {
@@ -105,11 +102,7 @@ public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
                 return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NullOrEmpty);
             }
 
-            var result = await _stakeholderGroupService.UpdateStakeholderGroupAsync(
-                request.StakeholderGroup.Code,
-                request.StakeholderGroup.Name,
-                request.StakeholderGroup.Description,
-                request.StakeholderGroup.UpdatedBy ?? "SYSTEM");
+            var result = await _stakeholderGroupService.UpdateSMSStakeholderGroupAsync(request.StakeholderGroup, ct);
 
             if (result.IsSuccess)
             {
@@ -165,7 +158,7 @@ public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.CodeRequired);
             }
 
-            var result = await _stakeholderGroupService.DeleteStakeholderGroupAsync(request.StakeholderGroup);
+            var result = await _stakeholderGroupService.DeleteSMSStakeholderGroupAsync(request.StakeholderGroup.Code, ct);
 
             if (result.IsSuccess)
             {
@@ -229,8 +222,7 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IRe
             }
             else
             {
-                _logger.LogApplicationError("Failed to assign user {UserCode} to group {GroupCode}, Error: {Error}",
-                    ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("Failed to assign user {UserCode} to group {GroupCode}, Error: {Error}", ApplicationEventIds.Error, null);
             }
 
             return result;
@@ -242,8 +234,7 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IRe
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Error processing AssignUserToStakeholderGroupCommand for user: {UserCode} to group: {GroupCode}",
-                ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("Error processing AssignUserToStakeholderGroupCommand for user: {UserCode} to group: {GroupCode}",ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.AssignmentFailed);
         }
     }

@@ -13,6 +13,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.Listings;
 
@@ -29,7 +30,8 @@ public partial class HazardListing : ComponentBase
     [Inject] private ILogger<HazardListing> _logger { get; set; } = default!;
     [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
-    
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+
     #endregion
 
     #region Properties
@@ -413,9 +415,9 @@ public partial class HazardListing : ComponentBase
 
             if (confirmed == true)
             {
-                // TODO: Implement navigation to hazard edit form
-                ShowSuccessAsyncNotification($"Edit hazard {hazard.Code} - Navigation coming soon!");
-                _logger.LogInformation("Edit confirmed for hazard: {HazardCode}", hazard.Code);
+                // Navigate to HazardReporting page with the hazard code as route parameter
+                _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting/{hazard.Code}");
+                _logger.LogInformation("Navigating to edit hazard: {HazardCode}", hazard.Code);
             }
         }
         catch (Exception ex)

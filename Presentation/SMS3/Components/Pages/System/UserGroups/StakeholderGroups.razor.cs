@@ -435,7 +435,7 @@ public partial class StakeholderGroups : ComponentBase
         try
         {
             // Get users in this group
-            var groupMembersQuery = new GetSMSStakeholderUsersByGroupCodeQuery(groupCode);
+            var groupMembersQuery = new GetUsersByStakeholderGroupCodeQuery(groupCode);
             var membersResult = await Mediator.SendAsync(groupMembersQuery, CancellationToken.None);
             GroupMembers = membersResult.IsSuccess ?
                 membersResult.Value?.ToList() ?? new List<SMSStakeholderUser>() :

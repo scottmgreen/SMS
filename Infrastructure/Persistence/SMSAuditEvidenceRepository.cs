@@ -55,7 +55,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
             };
 
             // Add parameters
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceCode, evidence.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, evidence.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceAuditCode, evidence.AuditCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceFindingCode, evidence.FindingCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceTitle, evidence.Title));
@@ -116,7 +116,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             SMSAuditEvidence? evidence = null;
 
@@ -253,7 +253,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -285,7 +285,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditCode, auditCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, auditCode));
             cmd.Parameters.Add(DataAccess.Parameter("@pIncludeArchived", includeArchived));
 
             List<SMSAuditEvidence> evidenceList = new();
@@ -322,7 +322,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingCode, findingCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, findingCode));
             cmd.Parameters.Add(DataAccess.Parameter("@pIncludeArchived", includeArchived));
 
             List<SMSAuditEvidence> evidenceList = new();
@@ -359,7 +359,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceCode, code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
             cmd.Parameters.Add(DataAccess.Parameter("@pArchivedBy", archivedBy));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

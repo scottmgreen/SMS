@@ -199,6 +199,30 @@ public class GetContractorStakeholdersQuery : BaseQueryBundle, IRequest<Result<I
 }
 
 /// <summary>
+/// Query to get SMS stakeholder users by group code
+/// </summary>
+public class GetSMSStakeholderUsersByGroupCodeQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSStakeholderUser>>>
+{
+    /// <summary>
+    /// The group code to filter by
+    /// </summary>
+    public string GroupCode { get; set; }
+
+    /// <summary>
+    /// Initializes a new instance of the GetSMSStakeholderUsersByGroupCodeQuery class.
+    /// </summary>
+    /// <param name="groupCode">The group code to filter by</param>
+    /// <exception cref="ArgumentException">Thrown when groupCode is null or empty</exception>
+    public GetSMSStakeholderUsersByGroupCodeQuery(string groupCode)
+    {
+        if (string.IsNullOrWhiteSpace(groupCode))
+            throw new ArgumentException("Group code cannot be null or empty", nameof(groupCode));
+
+        GroupCode = groupCode;
+    }
+}
+
+/// <summary>
 /// Query to get stakeholders requiring AOA access
 /// </summary>
 public class GetStakeholdersRequiringAOAAccessQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSStakeholderUser>>>
@@ -342,29 +366,5 @@ public class GetStakeholderOrganizationStatisticsQuery : BaseQueryBundle, IReque
     /// </summary>
     public GetStakeholderOrganizationStatisticsQuery()
     {
-    }
-}
-
-/// <summary>
-/// Query to get SMS stakeholder users by group code
-/// </summary>
-public class GetSMSStakeholderUsersByGroupCodeQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSStakeholderUser>>>
-{
-    /// <summary>
-    /// The group code to filter by
-    /// </summary>
-    public string GroupCode { get; set; }
-
-    /// <summary>
-    /// Initializes a new instance of the GetSMSStakeholderUsersByGroupCodeQuery class.
-    /// </summary>
-    /// <param name="groupCode">The group code to filter by</param>
-    /// <exception cref="ArgumentException">Thrown when groupCode is null or empty</exception>
-    public GetSMSStakeholderUsersByGroupCodeQuery(string groupCode)
-    {
-        if (string.IsNullOrWhiteSpace(groupCode))
-            throw new ArgumentException("Group code cannot be null or empty", nameof(groupCode));
-
-        GroupCode = groupCode;
     }
 }

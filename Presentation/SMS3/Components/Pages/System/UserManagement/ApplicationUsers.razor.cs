@@ -50,10 +50,15 @@ public partial class ApplicationUsers : ComponentBase
     private string? SelectedRoleCode { get; set; }
     private List<SMSUserRole> AvailableRoles { get; set; } = new();
 
-    private static readonly string[] SMSModules =
-    {
-        "SMS_Assurance", "SMS_Policy", "SMS_Promotion", "SMS_RiskManagement", "SMS_System"
-    };
+    // Dynamically get all unique modules from available roles' permissions
+    private IEnumerable<string> SMSModules =>
+        AvailableRoles
+            .Where(role => role.Permissions != null)
+            .SelectMany(role => role.Permissions)
+            .Where(permission => !string.IsNullOrWhiteSpace(permission.SMSModule))
+            .Select(permission => permission.SMSModule!)
+            .Distinct()
+            .OrderBy(module => module);
 
     // Group Management Properties
     private bool ShowGroupsModal { get; set; } = false;

@@ -692,7 +692,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleCode, userRole.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, userRole.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRoleName, userRole.Name.Trim()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, userRole.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, userRole.CreatedDate));
@@ -720,7 +720,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                         CommandType = CommandType.StoredProcedure
                     };
 
-                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionCode, permission.Code));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, permission.Code));
                     permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionSMSUserRoleCode, newCodeValue));
                     permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionModule, permission.SMSModule));
                     permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionCreate, permission.Create));
@@ -771,7 +771,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleCode, userRole.Code));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, userRole.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRoleName, userRole.Name));
 
 
@@ -787,7 +787,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                         CommandType = CommandType.StoredProcedure
                     };
 
-                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionCode, permission.Code));
+                    permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, permission.Code));
                     permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionSMSUserRoleCode, permission.SMSUserRoleCode));
                     permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionModule, permission.SMSModule));
                     permCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRolePermissionCreate, permission.Create));

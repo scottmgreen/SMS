@@ -2,8 +2,24 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using SMS_Domain.Enums;
 
 namespace SMS3.Components.Pages.System.UserGroups;
+
+// Simple dropdown option class for UI binding
+public class DropdownOption
+{
+    public string Value { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
+
+    public DropdownOption() { }
+
+    public DropdownOption(string value, string text)
+    {
+        Value = value;
+        Text = text;
+    }
+}
 
 public partial class OrganizationalGroups : ComponentBase
 {
@@ -157,12 +173,17 @@ public partial class OrganizationalGroups : ComponentBase
             // Set edit form values
             EditGroupName = CurrentGroup.Name ?? string.Empty;
             EditDescription = CurrentGroup.Description ?? string.Empty;
-            EditGroupType = CurrentGroup.GroupType ?? string.Empty;
-            EditAuthorityLevel = CurrentGroup.AuthorityLevel ?? string.Empty;
+            EditGroupType = CurrentGroup.GroupType.ToUpper() ?? string.Empty;
+            EditAuthorityLevel = CurrentGroup.AuthorityLevel.ToUpper() ?? string.Empty;
             EditIsActive = CurrentGroup.IsActive;
+
+            // Debug logging to help identify binding issues
+            _logger.LogInformation("Edit Modal - GroupType: {GroupType}, AuthorityLevel: {AuthorityLevel}", 
+                EditGroupType, EditAuthorityLevel);
 
             // Open edit modal
             ShowEditModal = true;
+            StateHasChanged(); // Force UI refresh
         }
         catch (Exception ex)
         {
@@ -189,8 +210,8 @@ public partial class OrganizationalGroups : ComponentBase
         CurrentGroup = null;
         EditGroupName = string.Empty;
         EditDescription = string.Empty;
-        EditGroupType = string.Empty;
-        EditAuthorityLevel = string.Empty;
+        EditGroupType = string.Empty; // This will select the default "-- Select --" option
+        EditAuthorityLevel = string.Empty; // This will select the default "-- Select --" option
         EditIsActive = true;
     }
 
@@ -629,24 +650,39 @@ public partial class OrganizationalGroups : ComponentBase
         // Initialize group type options
         GroupTypeOptions = new List<DropdownOption>
         {
+            new("", "-- Select Group Type --"), // Add empty option for default
             new("DEPARTMENT", "Department"),
             new("COMMITTEE", "Committee"),
-            new("TEAM", "Team"),
+            new("TEAM", "Management Team"),
             new("DIVISION", "Division"),
             new("EXECUTIVE", "Executive"),
             new("FUNCTIONAL", "Functional Group")
         };
 
-        // Initialize authority level options
+        // Initialize authority level options from SMSOrganizationalLevel enum
         AuthorityLevelOptions = new List<DropdownOption>
         {
-            new("EXECUTIVE", "Executive Level"),
-            new("SENIOR", "Senior Management"),
-            new("MIDDLE", "Middle Management"),
-            new("SUPERVISOR", "Supervisory"),
-            new("OPERATIONAL", "Operational"),
-            new("ADVISORY", "Advisory Only")
+            new("", "-- Select Authority Level --") // Add empty option for default
         };
+
+        // Get all organizational levels from the enum and sort by authority level (highest first)
+        var organizationalLevels = SMSOrganizationalLevel.GetAllValues()
+            .Where(level => level != SMSOrganizationalLevel.UnassignedLevel) // Exclude unassigned
+            .OrderByDescending(level => level.AuthorityLevel)
+            .ToList();
+
+        // Add each organizational level to the dropdown options
+        foreach (var level in organizationalLevels)
+        {
+            // Format: "Name (Category - Level X)" for better clarity
+            var displayText = $"{level.Name} ({level.Category} - Level {level.AuthorityLevel})";
+            AuthorityLevelOptions.Add(new DropdownOption(level.Value, displayText));
+        }
+
+        // Debug log to show what organizational levels were loaded
+        _logger.LogInformation("Loaded {Count} organizational levels for dropdown: {Levels}",
+            organizationalLevels.Count,
+            string.Join(", ", organizationalLevels.Select(l => $"{l.Name} (Level {l.AuthorityLevel})")));
     }
 
     #endregion

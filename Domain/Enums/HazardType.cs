@@ -30,6 +30,7 @@ public abstract class HazardType : BaseEnum<HazardType>
     public bool RequiresRegulatoryReporting { get; }
 
     #region Incident Types
+    public static readonly HazardType Default = new DefaultType();
 
     /// <summary>Aircraft incident per 49 CFR 830.2</summary>
     public static readonly HazardType AircraftIncident = new AircraftIncidentType();
@@ -242,7 +243,15 @@ public abstract class HazardType : BaseEnum<HazardType>
     #endregion
 
     #region Incident Implementations
-
+    private sealed class DefaultType : HazardType
+    {
+        public DefaultType() : base("DEFAULT_TYPE", "Default Type",
+            "Default", "DEFAULT",
+            "To Be Determined by SMS Staff",
+            false)
+        {
+        }
+    }
     private sealed class AircraftIncidentType : HazardType
     {
         public AircraftIncidentType() : base("AIRCRAFT_INCIDENT", "Aircraft Incident",
