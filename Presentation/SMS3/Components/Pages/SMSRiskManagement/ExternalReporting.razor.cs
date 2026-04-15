@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.JSInterop;
 
+using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
@@ -50,7 +51,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     /// <summary>
     /// Geographic location data
     /// </summary>
-    public GeoLocationData SelectedGeoLocation { get; set; } = new();
+    public HazardLocation SelectedGeoLocation { get; set; } = new();
 
     /// <summary>
     /// File selection for attachments
@@ -487,8 +488,8 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                         (double)SelectedGeoLocation.Latitude, (double)SelectedGeoLocation.Longitude,
                         SelectedGeoLocation.Description);
 
-                    SelectedLatitude = SelectedGeoLocation.Latitude;
-                    SelectedLongitude = SelectedGeoLocation.Longitude;
+                    SelectedLatitude = SelectedGeoLocation.Latitude ?? 0;
+                    SelectedLongitude = SelectedGeoLocation.Longitude ?? 0;
                     LocationDescription = SelectedGeoLocation.Description ?? "";
 
                     _logger.LogInformation("Existing location restored in confidential reporting: {Lat}, {Lng}",
@@ -528,12 +529,12 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             return;
         }
 
-        SelectedGeoLocation = new GeoLocationData
+        SelectedGeoLocation = new HazardLocation
         {
             Latitude = SelectedLatitude,
             Longitude = SelectedLongitude,
             Description = LocationDescription,
-            SelectedDateTime = DateTime.UtcNow
+            DateSelected = DateTime.UtcNow
         };
 
         HazardReport.Location = "MAP_LOCATION";
@@ -552,7 +553,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         SelectedLatitude = 0;
         SelectedLongitude = 0;
         LocationDescription = string.Empty;
-        SelectedGeoLocation = new GeoLocationData();
+        SelectedGeoLocation = new HazardLocation();
         HazardReport.Location = "";
 
         if (_mapModule != null)
@@ -1086,12 +1087,12 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             HazardType = HazardType.Default.Value
         };
 
-        SelectedGeoLocation = new GeoLocationData
+        SelectedGeoLocation = new HazardLocation
         {
             Latitude = 0,
             Longitude = 0,
             Description = "Not set",
-            SelectedDateTime = DateTime.UtcNow
+            DateSelected = DateTime.UtcNow
         };
 
         // Initialize empty file collections

@@ -1,5 +1,6 @@
 using Microsoft.JSInterop;
 
+using SMS_Domain.Entities;
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
 
@@ -39,7 +40,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     public decimal SelectedLatitude { get; set; }
     public decimal SelectedLongitude { get; set; }
     public string LocationDescription { get; set; } = string.Empty;
-    public GeoLocationData SelectedGeoLocation { get; set; } = new();
+    public HazardLocation SelectedGeoLocation { get; set; } = new();
 
     // Location computed properties - EXACTLY like HazardReporting
     public string SelectedLatitudeText => SelectedLatitude != 0 ? SelectedLatitude.ToString("F6") : "";
@@ -98,7 +99,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         // Ensure SelectedGeoLocation is properly initialized
         if (SelectedGeoLocation == null)
         {
-            SelectedGeoLocation = new GeoLocationData();
+            SelectedGeoLocation = new HazardLocation();
         }
         
         // Create DotNet reference for JavaScript callbacks - EXACTLY like HazardReporting
@@ -172,12 +173,12 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             SelectedLongitude = location.Longitude ?? 0;
             LocationDescription = location.Description ?? string.Empty;
 
-            SelectedGeoLocation = new GeoLocationData
+            SelectedGeoLocation = new HazardLocation
             {
                 Latitude = location.Latitude ?? 0,
                 Longitude = location.Longitude ?? 0,
                 Description = location.Description,
-                SelectedDateTime = DateTime.UtcNow
+                DateSelected = DateTime.UtcNow
             };
 
             Logger?.LogInformation("Populated location data for editing: {Lat}, {Lng}", 
@@ -630,7 +631,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         SelectedLatitude = 0;
         SelectedLongitude = 0;
         LocationDescription = string.Empty;
-        SelectedGeoLocation = new GeoLocationData();
+        SelectedGeoLocation = new HazardLocation();
         ShowMapModal = false;
         
         // Reset dropdown options
@@ -671,8 +672,8 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                         SelectedGeoLocation.Description);
 
                     // Update the form fields to match the restored location
-                    SelectedLatitude = SelectedGeoLocation.Latitude;
-                    SelectedLongitude = SelectedGeoLocation.Longitude;
+                    SelectedLatitude = SelectedGeoLocation.Latitude ?? 0;
+                    SelectedLongitude = SelectedGeoLocation.Longitude ?? 0;
                     LocationDescription = SelectedGeoLocation.Description ?? "";
 
                     Logger?.LogInformation("Existing location restored: {Lat}, {Lng}",
@@ -710,12 +711,12 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         }
 
         // Set the geolocation data - EXACTLY like HazardReporting
-        SelectedGeoLocation = new GeoLocationData
+        SelectedGeoLocation = new HazardLocation
         {
             Latitude = SelectedLatitude,
             Longitude = SelectedLongitude,
             Description = LocationDescription,
-            SelectedDateTime = DateTime.UtcNow
+            DateSelected = DateTime.UtcNow
         };
 
         // IMPORTANT: Verify that the location is now considered valid
@@ -736,7 +737,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         SelectedLatitude = 0;
         SelectedLongitude = 0;
         LocationDescription = string.Empty;
-        SelectedGeoLocation = new GeoLocationData();
+        SelectedGeoLocation = new HazardLocation();
 
         if (_mapModule != null)
         {

@@ -29,18 +29,6 @@ public class HazardReportForm
 }
 
 /// <summary>
-/// Geographic location data for map integration
-/// </summary>
-public class GeoLocationData
-{
-    public decimal Latitude { get; set; }
-    public decimal Longitude { get; set; }
-    public string Description { get; set; } = string.Empty;
-    public DateTime SelectedDateTime { get; set; } = DateTime.UtcNow;
-    public bool IsValid => Latitude != 0 && Longitude != 0;
-}
-
-/// <summary>
 /// File attachment information 
 /// </summary>
 public class AttachedFile

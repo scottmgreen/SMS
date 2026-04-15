@@ -113,6 +113,25 @@ else
                             <br><strong>Note:</strong> Confidential reports may take longer to process due to additional security measures.
                         </RadzenAlert>
                     }
+
+                    @* DEFAULT VALUES VALIDATION ALERT *@
+                    @if (HasDefaultHazardClassification && IsEditMode)
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.Medium" Variant="Variant.Flat" 
+                                     class="rz-mb-3 default-validation-alert">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                @* <RadzenIcon Icon="error" Style="font-size: 1.5rem; color: #dc3545;" /> *@
+                                <div>
+                                    <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #721c24;">
+                                        <strong>⚠️ DEFAULT HAZARD CLASSIFICATION DETECTED</strong>
+                                    </RadzenText>
+                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: #721c24;">
+                                        This hazard was submitted with default classification values. Please update the Hazard Category and Type to proper values before proceeding.
+                                    </RadzenText>
+                                </div>
+                            </RadzenStack>
+                        </RadzenAlert>
+                    }
                     <RadzenTemplateForm Data="@HazardReport" Submit="@HandleFormSubmit" TItem="HazardReportForm">
                         <RadzenRow>
                             <RadzenColumn Size="3">
@@ -254,7 +273,8 @@ else
                                 </RadzenFormField>
                             </RadzenColumn>
                             <RadzenColumn Size="3">
-                                <RadzenFormField Text="Hazard Category *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                <RadzenFormField Text="Hazard Category *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false" 
+                                                 class="@(IsHazardCategoryDefault ? "validation-error-field" : "")">
                                     <RadzenDropDown @bind-Value="@HazardReport.HazardCategory"
                                                   Data="@HazardCategoryOptions" 
                                                   TextProperty="Text" 
@@ -263,12 +283,22 @@ else
                                                   Name="HazardCategory"
                                                   Change="@(async (object value) => await OnHazardCategoryChanged(value?.ToString()))"
                                                   AllowClear="true"
+                                                  class="@(IsHazardCategoryDefault ? "default-validation-dropdown" : "")"
                                                   Style="width: 100%; min-width: 100%;" />
                                 </RadzenFormField>
                                 <RadzenRequiredValidator Component="HazardCategory" Text="Hazard category is required" />
+                                @if (IsHazardCategoryDefault)
+                                {
+                                    <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.ExtraSmall" Variant="Variant.Outlined" 
+                                                 class="rz-mt-1 default-validation-alert">
+                                        @* <RadzenIcon Icon="warning" Style="font-size: 0.9rem;" /> *@
+                                        <strong>Default category detected!</strong> Please select a proper hazard category.
+                                    </RadzenAlert>
+                                }
                             </RadzenColumn>
                             <RadzenColumn Size="3">
-                                <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false"
+                                                 class="@(IsHazardTypeDefault ? "validation-error-field" : "")">
                                     <RadzenDropDown @bind-Value="@HazardReport.HazardType" 
                                                   Data="@HazardTypeOptions" 
                                                   TextProperty="Text" 
@@ -278,9 +308,18 @@ else
                                                   Change="@(async (object value) => await OnHazardTypeChanged(value?.ToString()))"
                                                   Disabled="@(HazardTypeOptions.Count == 0)"
                                                   AllowClear="true"
+                                                  class="@(IsHazardTypeDefault ? "default-validation-dropdown" : "")"
                                                   Style="width: 100%; min-width: 100%;" />
                                 </RadzenFormField>
                                 <RadzenRequiredValidator Component="HazardType" Text="Hazard type is required" />
+                                @if (IsHazardTypeDefault)
+                                {
+                                    <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.ExtraSmall" Variant="Variant.Outlined" 
+                                                 class="rz-mt-1 default-validation-alert">
+                                        @* <RadzenIcon Icon="warning" Style="font-size: 0.9rem;" /> *@
+                                        <strong>Default type detected!</strong> Please select a proper hazard type.
+                                    </RadzenAlert>
+                                }
                                 @if (HazardTypeOptions.Count == 0 && string.IsNullOrEmpty(SelectedHazardCategory))
                                 {
                                     <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-info rz-mt-1">
@@ -815,6 +854,29 @@ else
 .sms-header-warning {
     background-color: #fa9a46; /* SMS Orange Accent */
     color: #212e61; /* SMS Blue Dark Bold */
+}
+
+/* =============================================================================
+   DEFAULT VALUE VALIDATION STYLES
+   ============================================================================= */
+
+/* Default validation dropdown styling */
+.default-validation-dropdown {
+    border: 2px solid #dc3545 !important;
+    background-color: #fff5f5 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+/* Enhanced alert styling for default validation */
+.default-validation-alert {
+    border-left: 5px solid #dc3545;
+    background: linear-gradient(135deg, #f8f9fa 0%, #fff5f5 100%);
+}
+
+/* Form field error state enhancement */
+.validation-error-field .rz-dropdown {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
 }
 
 .sms-header-primary {

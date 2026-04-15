@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.JSInterop;
 
+using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 
 using SMS_Shared.Configuration;
@@ -47,7 +48,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// <summary>
     /// Geographic location data
     /// </summary>
-    public GeoLocationData SelectedGeoLocation { get; set; } = new();
+    public HazardLocation SelectedGeoLocation { get; set; } = new();
 
     /// <summary>
     /// File selection for attachments
@@ -197,6 +198,13 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
     public string PageTitle => IsEditMode ? $"Edit Report - {EditReportCode}" : "Submit Hazard Report";
     public string PageSubtitle => IsEditMode ? "Modify existing hazard report information" : "Report safety hazards and incidents for SMS processing and risk assessment";
+
+    /// <summary>
+    /// Visual validation helpers for default values requiring attention
+    /// </summary>
+    public bool IsHazardCategoryDefault => HazardReport?.HazardCategory == HazardCategory.Default.Value;
+    public bool IsHazardTypeDefault => HazardReport?.HazardType == HazardType.Default.Value;
+    public bool HasDefaultHazardClassification => IsHazardCategoryDefault || IsHazardTypeDefault;
 
     // Airport coordinates //GOLDKEY
     private double AirportCenterLatitude => 45.58808;
@@ -412,16 +420,17 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 // STEP 4: Handle geographic location data
                 if (primaryHazard.HazardLocation != null)
                 {
-                    SelectedGeoLocation = new GeoLocationData
+                    SelectedGeoLocation = new HazardLocation
                     {
                         Latitude = primaryHazard.HazardLocation.Latitude ?? 0,
                         Longitude = primaryHazard.HazardLocation.Longitude ?? 0,
                         Description = primaryHazard.HazardLocation.Description ?? string.Empty,
-                        SelectedDateTime = DateTime.UtcNow
+                        DateSelected = DateTime.UtcNow,
+                        IsValid = (primaryHazard.HazardLocation.Latitude ?? 0) != 0 && (primaryHazard.HazardLocation.Longitude ?? 0) != 0
                     };
 
-                    SelectedLatitude = SelectedGeoLocation.Latitude;
-                    SelectedLongitude = SelectedGeoLocation.Longitude;
+                    SelectedLatitude = SelectedGeoLocation.Latitude ?? 0;
+                    SelectedLongitude = SelectedGeoLocation.Longitude ?? 0;
                     LocationDescription = SelectedGeoLocation.Description ?? "";
 
                     HazardReport.Location = "MAP_LOCATION";
@@ -506,6 +515,28 @@ public partial class HazardReporting : ComponentBase, IDisposable
             EditingHazard = hazardResult.Value;
             EditHazardCode = hazardCode;
 
+            // **CRITICAL FIX**: Load the associated HazardLocation separately since MapToHazard doesn't include it
+            try 
+            {
+                var locationQuery = new GetHazardLocationsByHazardCodeQuery(hazardCode);
+                var locationResult = await _mediator.SendAsync(locationQuery, CancellationToken.None);
+
+                if (locationResult.IsSuccess && locationResult.Value?.Any() == true)
+                {
+                    EditingHazard.HazardLocation = locationResult.Value.FirstOrDefault();
+                    _logger.LogInformation("Successfully loaded HazardLocation for hazard {HazardCode}: Lat={Lat}, Lng={Lng}", 
+                        hazardCode, EditingHazard.HazardLocation?.Latitude, EditingHazard.HazardLocation?.Longitude);
+                }
+                else
+                {
+                    _logger.LogWarning("No HazardLocation found for hazard {HazardCode}", hazardCode);
+                }
+            }
+            catch (Exception locationEx)
+            {
+                _logger.LogWarning(locationEx, "Failed to load HazardLocation for hazard {HazardCode}, continuing without location data", hazardCode);
+            }
+
             // Get the associated report
             if (!string.IsNullOrEmpty(EditingHazard.ReportCode))
             {
@@ -568,22 +599,22 @@ public partial class HazardReporting : ComponentBase, IDisposable
             // STEP 4: Handle geographic location data
             if (EditingHazard.HazardLocation != null)
             {
-                SelectedGeoLocation = new GeoLocationData
+                SelectedGeoLocation = new HazardLocation
                 {
                     Latitude = EditingHazard.HazardLocation.Latitude ?? 0,
                     Longitude = EditingHazard.HazardLocation.Longitude ?? 0,
                     Description = EditingHazard.HazardLocation.Description ?? string.Empty,
-                    SelectedDateTime = DateTime.UtcNow
+                    DateSelected = DateTime.UtcNow,
+                    IsValid = (EditingHazard.HazardLocation.Latitude ?? 0) != 0 && (EditingHazard.HazardLocation.Longitude ?? 0) != 0
                 };
 
-                SelectedLatitude = SelectedGeoLocation.Latitude;
-                SelectedLongitude = SelectedGeoLocation.Longitude;
+                SelectedLatitude = SelectedGeoLocation.Latitude ?? 0;
+                SelectedLongitude = SelectedGeoLocation.Longitude ?? 0;
                 LocationDescription = SelectedGeoLocation.Description ?? "";
 
                 HazardReport.Location = "MAP_LOCATION";
 
-                _logger.LogInformation("Loaded geographic location: {Lat}, {Lng}",
-                    SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
+                _logger.LogInformation("Loaded geographic location: {Lat}, {Lng}",SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
             }
 
             _logger.LogInformation("Successfully loaded hazard {HazardCode} for editing - Category: {Category}, Type: {Type}",
@@ -818,8 +849,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     await _mapModule.InvokeVoidAsync("setLocationFromCoordinates",(double)SelectedGeoLocation.Latitude, (double)SelectedGeoLocation.Longitude,SelectedGeoLocation.Description);
 
                     // Update the form fields to match the restored location
-                    SelectedLatitude = SelectedGeoLocation.Latitude;
-                    SelectedLongitude = SelectedGeoLocation.Longitude;
+                    SelectedLatitude = SelectedGeoLocation.Latitude ?? 0;
+                    SelectedLongitude = SelectedGeoLocation.Longitude ?? 0;
                     LocationDescription = SelectedGeoLocation.Description ?? "";
 
                     _logger.LogInformation("Existing location restored: {Lat}, {Lng}", SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
@@ -859,13 +890,13 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         // Set the geolocation data
-        SelectedGeoLocation = new GeoLocationData
+        SelectedGeoLocation = new HazardLocation
         {
             Latitude = SelectedLatitude,
             Longitude = SelectedLongitude,
             Description = LocationDescription,// string.IsNullOrEmpty(LocationDescription) ? 
                                               //$"Map Location ({SelectedLatitude:F6}, {SelectedLongitude:F6})" : LocationDescription,
-            SelectedDateTime = DateTime.UtcNow
+            DateSelected = DateTime.UtcNow
         };
 
         // Update the form location to indicate map location is selected
@@ -886,7 +917,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         SelectedLatitude = 0;
         SelectedLongitude = 0;
         LocationDescription = string.Empty;
-        SelectedGeoLocation = new GeoLocationData();
+        SelectedGeoLocation = new HazardLocation();
         HazardReport.Location = "";
 
         if (_mapModule != null)
@@ -991,7 +1022,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             // In create mode, clear form and redirect to Report Processing
             // Clear all form data after successful submission
             HazardReport = new HazardReportForm();
-            SelectedGeoLocation = new GeoLocationData();
+            SelectedGeoLocation = new HazardLocation();
 
             // Clear files properly
             SelectedFiles = new List<IBrowserFile>().AsReadOnly();
@@ -1651,12 +1682,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
             IncidentDateTime = new DateTime(theDate.Year, theDate.Month, theDate.Day, theDate.Hour, theDate.Minute, 0),
         };
 
-        SelectedGeoLocation = new GeoLocationData
+        SelectedGeoLocation = new HazardLocation
         {
             Latitude = 0,
             Longitude = 0,
             Description = "Not set",
-            SelectedDateTime = DateTime.UtcNow
+            DateSelected = DateTime.UtcNow
         };
 
         // Initialize empty file collections
@@ -1789,7 +1820,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             // Clear all form data
             HazardReport = new HazardReportForm();
-            SelectedGeoLocation = new GeoLocationData();
+            SelectedGeoLocation = new HazardLocation();
 
             // Clear files
             SelectedFiles = new List<IBrowserFile>().AsReadOnly();
