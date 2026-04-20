@@ -28,6 +28,7 @@ public partial class TechnicalAssessment : ComponentBase
     [Inject] private ILogger<TechnicalAssessment> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
     
 
 
@@ -1224,12 +1225,28 @@ public partial class TechnicalAssessment : ComponentBase
         // Apply all steps to ensure everything is saved - ENHANCED: Use async method
         await ApplyCurrentStepToAssessmentAsync();
 
+        // Capture completion details for SPI automation
+        var completedDate = DateTime.UtcNow;
+        var assessmentStartDate = TechRiskAssessment.CreatedDate ?? DateTime.UtcNow.AddDays(-7); // Default to 7 days ago if no start date
+        var targetCompletionDate = assessmentStartDate.AddDays(14); // Assume 14-day target for technical assessments
+        var completedBy = CurrentUserService?.UserDisplayName ?? "Unknown User";
+        var finalRiskLevel = GetAssessmentFinalRiskLevel(); // Get the determined risk level
+
         // Update risk assessment - pipeline will automatically set UpdatedBy/UpdatedDate
         var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
         await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
         var cmd = new UpdateReportStatusCommand(ReportId, ReportStatus.ValidationCompleted, CurrentUserService?.UserDisplayName);
         var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
+
+        // NEW: SPI AUTOMATION - Trigger risk assessment completion event 🎯
+        await TriggerRiskAssessmentSPIAutomation(
+            TechRiskAssessment.Code,
+            assessmentStartDate,
+            completedDate,
+            targetCompletionDate,
+            completedBy,
+            finalRiskLevel);
     }
 
    
@@ -1458,6 +1475,258 @@ public partial class TechnicalAssessment : ComponentBase
             _logger.LogError(ex, "Error deleting hazard");
             await _notificationHelper.ShowErrorAsync("Error deleting hazard");
         }
+    }
+
+    #endregion
+
+    #region SPI Automation Integration
+
+    /// <summary>
+    /// Triggers SPI automation when risk assessment is completed
+    /// Updates Risk Assessment Completion Rate and High Risk Exposure SPIs
+    /// </summary>
+    private async Task TriggerRiskAssessmentSPIAutomation(string assessmentCode, DateTime startDate, 
+        DateTime completedDate, DateTime targetDate, string completedBy, string riskLevel)
+    {
+        try
+        {
+            _logger.LogInformation("🎯 SPI Automation: Triggering risk assessment completion events for {AssessmentCode}", assessmentCode);
+
+            // Trigger Risk Assessment Completion Rate SPI
+            await _spiCoordinator.OnRiskAssessmentCompleted(
+                assessmentId: TechRiskAssessment?.Id?.Value ?? assessmentCode,
+                assessmentCode: assessmentCode,
+                startDate: startDate,
+                completedDate: completedDate,
+                targetCompletionDate: targetDate,
+                completedBy: completedBy,
+                hazardId: HazardId ?? "",
+                reportId: ReportId ?? "",
+                riskLevel: riskLevel,
+                riskScore: GetAssessmentRiskScore(),
+                assessmentType: "Technical");
+
+            // If this is a high risk assessment, also trigger High Risk Exposure SPI
+            _logger.LogInformation("🔍 Checking if {RiskLevel} is high risk for SPI automation", riskLevel);
+            if (IsHighRiskLevel(riskLevel))
+            {
+                _logger.LogInformation("🔴 HIGH RISK DETECTED! Triggering High Risk Exposure SPI for {RiskLevel}", riskLevel);
+
+                await _spiCoordinator.OnHighRiskIdentified(
+                    assessmentId: assessmentCode,
+                    hazardId: HazardId ?? "",
+                    riskLevel: riskLevel,
+                    riskScore: GetAssessmentRiskScore(),
+                    identifiedDate: completedDate,
+                    identifiedBy: completedBy,
+                    reportId: ReportId ?? "",
+                    riskDescription: $"Technical assessment identified {riskLevel} risk level",
+                    impactArea: TechRiskAssessment?.SystemDescription ?? "");
+
+                _logger.LogInformation("✅ SPI Automation: High risk SPI automation completed for {AssessmentCode} - Level: {RiskLevel}", 
+                    assessmentCode, riskLevel);
+            }
+            else
+            {
+                _logger.LogInformation("ℹ️ Risk level {RiskLevel} is not considered high risk - skipping High Risk Exposure SPI", riskLevel);
+            }
+
+            _logger.LogInformation("✅ SPI Automation: Successfully processed risk assessment completion events for {AssessmentCode}", assessmentCode);
+        }
+        catch (Exception spiEx)
+        {
+            // Don't fail the assessment completion if SPI automation fails
+            _logger.LogWarning(spiEx, "⚠️ SPI Automation: Failed to process risk assessment completion events for {AssessmentCode} - continuing with assessment", assessmentCode);
+        }
+    }
+
+    /// <summary>
+    /// Gets the final risk level determined by the assessment
+    /// Uses the highest risk level found across all hazards based on matrix codes
+    /// </summary>
+    private string GetAssessmentFinalRiskLevel()
+    {
+        try
+        {
+            if (ReportHazards?.Any() != true)
+            {
+                _logger.LogInformation("🔍 No hazards found, defaulting to Low risk");
+                return RiskLevel.Low.Value; // Default to low risk if no hazards
+            }
+
+            // Get the highest risk level from all assessed hazards using matrix codes
+            var highestRisk = RiskLevel.Low; // Start with lowest
+
+            foreach (var hazard in ReportHazards)
+            {
+                _logger.LogInformation("🔍 Analyzing hazard {HazardCode}: Initial={InitialMatrix}, Residual={ResidualMatrix}", 
+                    hazard.Code, hazard.InitialRiskMatrixCode, hazard.ResidualRiskMatrixCode);
+
+                // Check both initial and residual matrix codes to determine risk levels
+                var initialRisk = GetRiskLevelFromMatrixCode(hazard.InitialRiskMatrixCode);
+                var residualRisk = GetRiskLevelFromMatrixCode(hazard.ResidualRiskMatrixCode);
+
+                _logger.LogInformation("🔍 Risk levels for {HazardCode}: Initial={InitialRisk}, Residual={ResidualRisk}", 
+                    hazard.Code, initialRisk.Value, residualRisk.Value);
+
+                // Use the higher of initial or residual risk
+                var hazardMaxRisk = GetHigherRiskLevel(initialRisk, residualRisk);
+                highestRisk = GetHigherRiskLevel(highestRisk, hazardMaxRisk);
+
+                _logger.LogInformation("🔍 Hazard {HazardCode} max risk: {MaxRisk}, Overall highest: {HighestRisk}", 
+                    hazard.Code, hazardMaxRisk.Value, highestRisk.Value);
+            }
+
+            _logger.LogInformation("📊 Assessment {AssessmentCode} final risk level determined: {RiskLevel}", 
+                TechRiskAssessment?.Code, highestRisk.Value);
+
+            return highestRisk.Value;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Error determining assessment risk level, defaulting to Medium");
+            return RiskLevel.Medium.Value;
+        }
+    }
+
+    /// <summary>
+    /// Gets the overall risk score for the assessment
+    /// </summary>
+    private decimal GetAssessmentRiskScore()
+    {
+        try
+        {
+            if (ReportHazards?.Any() != true)
+                return 0m;
+
+            // Calculate average risk score across all hazards
+            var totalScore = 0m;
+            var scoredHazards = 0;
+
+            foreach (var hazard in ReportHazards)
+            {
+                // Use residual score if available, otherwise initial score
+                if (hazard.ResidualAverageScore.HasValue)
+                {
+                    totalScore += hazard.ResidualAverageScore.Value;
+                    scoredHazards++;
+                }
+                else if (hazard.InitialAverageScore.HasValue)
+                {
+                    totalScore += hazard.InitialAverageScore.Value;
+                    scoredHazards++;
+                }
+            }
+
+            return scoredHazards > 0 ? totalScore / scoredHazards : 0m;
+        }
+        catch
+        {
+            return 0m;
+        }
+    }
+
+    /// <summary>
+    /// Checks if a risk level is considered high risk for SPI tracking
+    /// </summary>
+    private static bool IsHighRiskLevel(string riskLevel)
+    {
+        return string.Equals(riskLevel, RiskLevel.Critical.Value, StringComparison.OrdinalIgnoreCase) ||
+               string.Equals(riskLevel, RiskLevel.High.Value, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Gets risk level from a matrix code string
+    /// Properly handles aviation matrix codes like "4E", "3C", etc.
+    /// </summary>
+    private RiskLevel GetRiskLevelFromMatrixCode(string? matrixCode)
+    {
+        if (string.IsNullOrEmpty(matrixCode))
+        {
+            _logger.LogDebug("🔍 Empty matrix code, returning Low risk");
+            return RiskLevel.Low;
+        }
+
+        var code = matrixCode.ToUpperInvariant().Trim();
+        _logger.LogDebug("🔍 Parsing matrix code: '{MatrixCode}' -> '{CleanCode}'", matrixCode, code);
+
+        // Handle aviation matrix codes (e.g., "4E", "3C", "5D")
+        if (TryParseAviationMatrixCode(code, out int severity, out int likelihood))
+        {
+            var riskLevel = GetRiskLevelFromSeverityLikelihood(severity, likelihood);
+            _logger.LogDebug("🔍 Aviation matrix: {Code} -> Severity:{Severity}, Likelihood:{Likelihood} -> {RiskLevel}", 
+                code, severity, likelihood, riskLevel.Value);
+            return riskLevel;
+        }
+
+        // Handle text-based risk levels
+        var textRisk = code switch
+        {
+            var c when c.Contains("CRITICAL") || c.Contains("RED") => RiskLevel.Critical,
+            var c when c.Contains("HIGH") || c.Contains("ORANGE") => RiskLevel.High,
+            var c when c.Contains("MEDIUM") || c.Contains("YELLOW") => RiskLevel.Medium,
+            var c when c.Contains("LOW") || c.Contains("GREEN") => RiskLevel.Low,
+            _ => RiskLevel.Low
+        };
+
+        _logger.LogDebug("🔍 Text-based matrix: {Code} -> {RiskLevel}", code, textRisk.Value);
+        return textRisk;
+    }
+
+    /// <summary>
+    /// Tries to parse aviation matrix code like "4E" into severity and likelihood
+    /// </summary>
+    private static bool TryParseAviationMatrixCode(string code, out int severity, out int likelihood)
+    {
+        severity = 0;
+        likelihood = 0;
+
+        if (code.Length < 2) return false;
+
+        // Extract severity (first part - number)
+        if (!int.TryParse(code[0].ToString(), out severity) || severity < 1 || severity > 5)
+            return false;
+
+        // Extract likelihood (second part - letter or number)
+        var likelihoodChar = code[1];
+        likelihood = likelihoodChar switch
+        {
+            'A' or '1' => 1,
+            'B' or '2' => 2,
+            'C' or '3' => 3,
+            'D' or '4' => 4,
+            'E' or '5' => 5,
+            _ => 0
+        };
+
+        return likelihood > 0;
+    }
+
+    /// <summary>
+    /// Gets risk level based on aviation matrix severity and likelihood values
+    /// Based on the aviation matrix color mapping in RiskLevel enum
+    /// </summary>
+    private static RiskLevel GetRiskLevelFromSeverityLikelihood(int severity, int likelihood)
+    {
+        // Get the color from the aviation matrix
+        var color = RiskLevel.GetAviationMatrixColor(severity, likelihood);
+
+        return color switch
+        {
+            "#dc3545" => RiskLevel.Critical,  // Red = Critical
+            "#fd7e14" => RiskLevel.High,      // Orange = High  
+            "#ffc107" => RiskLevel.Medium,    // Yellow = Medium
+            "#28a745" => RiskLevel.Low,       // Green = Low
+            _ => RiskLevel.Low                // Default
+        };
+    }
+
+    /// <summary>
+    /// Returns the higher of two risk levels based on authority level
+    /// </summary>
+    private static RiskLevel GetHigherRiskLevel(RiskLevel level1, RiskLevel level2)
+    {
+        return level1.RequiredAuthorityLevel >= level2.RequiredAuthorityLevel ? level1 : level2;
     }
 
     #endregion

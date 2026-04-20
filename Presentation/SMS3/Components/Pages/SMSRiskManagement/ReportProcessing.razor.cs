@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Components.Web;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
+using SMS_Application.Services;
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Interfaces;
@@ -76,11 +77,23 @@ public class ReportProcessingSummary
 
     public string DisplayId => !string.IsNullOrEmpty(HazardId) ? HazardId : ReportId;
 
+    // NEW: Default hazard classification detection
+    public bool HasDefaultHazardCategory => HazardCategory == SMS_Domain.Enums.HazardCategory.Default.Value;
+    public bool HasDefaultHazardType => HazardType == SMS_Domain.Enums.HazardType.Default.Value; 
+    public bool RequiresHazardClassificationUpdate => HasDefaultHazardCategory || HasDefaultHazardType;
+
     // ENHANCED: Smart validation URL based on validation type and assessment progress
     public string SmartUrl
     {
         get
         {
+            // NEW: Handle reports with default hazard classifications first
+            if (RequiresHazardClassificationUpdate)
+            {
+                // Redirect to HazardReporting for hazard editing
+                return $"/SMSRiskManagement/HazardReporting/{HazardId}";
+            }
+
             // VALIDATION TAB: Reports without ReportValidation record
             if (StatusCategory == ProcessingStatusCategory.Validation)
             {
@@ -126,14 +139,42 @@ public class ReportProcessingSummary
     {
         get
         {
+            // NEW: Handle reports with default hazard classifications first
+            if (RequiresHazardClassificationUpdate)
+            {
+                return "Validate Report";
+            }
+
             return StatusCategory switch
             {
-                ProcessingStatusCategory.Validation => "Start Validation",
+                ProcessingStatusCategory.Validation => "Start Processing",
                 ProcessingStatusCategory.RiskAssessment => GetRiskAssessmentButtonText(),
                 ProcessingStatusCategory.Investigation => HasInvestigation ? "Continue Investigation" : "Start Investigation",
                 ProcessingStatusCategory.Mitigation => "View Mitigation",
                 ProcessingStatusCategory.Closed => "View Closed",
                 _ => "Process"
+            };
+        }
+    }
+
+    // NEW: Button style for default hazard classification
+    public string ActionButtonStyle
+    {
+        get
+        {
+            if (RequiresHazardClassificationUpdate)
+            {
+                return "ButtonStyle.Warning"; // Orange for defaults requiring attention
+            }
+
+            return StatusCategory switch
+            {
+                ProcessingStatusCategory.Validation => "ButtonStyle.Primary",
+                ProcessingStatusCategory.RiskAssessment => "ButtonStyle.Success", 
+                ProcessingStatusCategory.Investigation => "ButtonStyle.Info",
+                ProcessingStatusCategory.Mitigation => "ButtonStyle.Secondary",
+                ProcessingStatusCategory.Closed => "ButtonStyle.Light",
+                _ => "ButtonStyle.Primary"
             };
         }
     }
@@ -195,7 +236,8 @@ public partial class ReportProcessing : ComponentBase
     [Inject] private IMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportProcessing> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
-    
+    [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
+
     [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
@@ -215,6 +257,11 @@ public partial class ReportProcessing : ComponentBase
     private bool ShowBulkApprovalDialog { get; set; } = false;
     private ReportProcessingSummary? SelectedReportForApproval { get; set; }
     private bool IsProcessingApproval { get; set; } = false;
+
+    // NEW: Description modal dialog properties
+    private bool ShowDescriptionModal { get; set; } = false;
+    private string SelectedDescription { get; set; } = string.Empty;
+    private string SelectedReportId { get; set; } = string.Empty;
 
 
     private string BasicTextStyle = "font-size:smaller;font-weight: 600";
@@ -312,13 +359,20 @@ public partial class ReportProcessing : ComponentBase
             if (reportsResult.IsSuccess)
             {
                 reports = reportsResult.Value ?? new List<Report>();
-                _logger.LogWarning("? Successfully loaded {Count} reports from database", reports.Count);
+                _logger.LogWarning("🔍 DIAGNOSTIC: Successfully loaded {Count} reports from database", reports.Count);
+
+                // Log details of first few reports for debugging
+                foreach (var report in reports.Take(3))
+                {
+                    _logger.LogWarning("🔍 Report: {Code} | Status: {Status} | Stage: {Stage} | SubmittedBy: {SubmittedBy}", 
+                        report.Code, report.Status, report.Stage, report.SubmittedBy);
+                }
 
 
             }
             else
             {
-                _logger.LogError("? Failed to retrieve reports: {Error}", reportsResult.Error?.Message);
+                _logger.LogError("❌ DIAGNOSTIC: Failed to retrieve reports: {Error}", reportsResult.Error?.Message);
             }
 
             
@@ -510,6 +564,7 @@ public partial class ReportProcessing : ComponentBase
                             // Use PRIMARY hazard info for display
                             HazardId = primaryHazard.Code,
                             HazardType = primaryHazard.HazardType ?? "Unknown",
+                            HazardCategory = primaryHazard.HazardCategory ?? "Unknown", // NEW: Added for default detection
                             HazardDescription = primaryHazard.Description ?? "No description",
                             Location = primaryHazard.HazardLocation?.Description ?? primaryHazard.LocationArea ?? "Not specified",
                             SubmittedBy = report.SubmittedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
@@ -544,6 +599,13 @@ public partial class ReportProcessing : ComponentBase
                             AssignedTo = DetermineAssignedTo(report, primaryHazard, riskAssessment, reportValidation, investigation),
                             ValidationUrl = GetValidationUrl(report, primaryHazard, reportValidation)
                         };
+
+                        // NEW: Log when default hazard classification is detected
+                        if (summary.RequiresHazardClassificationUpdate)
+                        {
+                            _logger.LogWarning("⚠️ DEFAULT CLASSIFICATION DETECTED - Report {ReportId}, Hazard {HazardId}: Category='{Category}', Type='{Type}'",
+                                summary.ReportId, summary.HazardId, summary.HazardCategory, summary.HazardType);
+                        }
 
                         summaries.Add(summary);
                         
@@ -606,6 +668,13 @@ public partial class ReportProcessing : ComponentBase
                         AssignedTo = DetermineAssignedTo(report, primaryHazard, null, reportValidation, investigation),
                         ValidationUrl = GetValidationUrl(report, primaryHazard, reportValidation)
                     };
+
+                    // NEW: Log when default hazard classification is detected
+                    if (summary.RequiresHazardClassificationUpdate)
+                    {
+                        _logger.LogWarning("⚠️ DEFAULT CLASSIFICATION DETECTED - Report {ReportId}, Hazard {HazardId}: Category='{Category}', Type='{Type}'",
+                            summary.ReportId, summary.HazardId, summary.HazardCategory, summary.HazardType);
+                    }
 
                     summaries.Add(summary);
                 }
@@ -1413,12 +1482,16 @@ public partial class ReportProcessing : ComponentBase
     {
         RenderReportIdColumn(builder);
         RenderHazardIdColumn(builder);
+
+        // NEW: Add hazard classification indicator column
+        RenderHazardCategoryTypeColumn(builder);
+
         RenderHazardDescriptionColumn(builder);
         //Status
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
         builder.AddAttribute(31, "Property", "ReportStatus");
         builder.AddAttribute(32, "Title", "Status");
-        builder.AddAttribute(33, "Width", "175px");
+        builder.AddAttribute(33, "Width", "150px");
         builder.AddAttribute(34, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
@@ -1428,26 +1501,26 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
-        // Stage Column
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
-        builder.AddAttribute(41, "Property", "ReportStage");
-        builder.AddAttribute(42, "Title", "Stage");
-        builder.AddAttribute(43, "Width", "120px");
-        builder.AddAttribute(44, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", "font-size:smaller");
-                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.ReportStage.ToUpper()) ? report.ReportStage.ToUpper() : "Not Specified");
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+        // Stage Column DON"T THINK WE NEED THIS FOR NOW
+        //////////builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
+        //////////builder.AddAttribute(41, "Property", "ReportStage");
+        //////////builder.AddAttribute(42, "Title", "Stage");
+        //////////builder.AddAttribute(43, "Width", "120px");
+        //////////builder.AddAttribute(44, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+        //////////    (templateBuilder =>
+        //////////    {
+        //////////        templateBuilder.OpenComponent<RadzenText>(0);
+        //////////        templateBuilder.AddAttribute(1, "style", "font-size:smaller");
+        //////////        templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.ReportStage.ToUpper()) ? report.ReportStage.ToUpper() : "Not Specified");
+        //////////        templateBuilder.CloseComponent();
+        //////////    })));
+        //////////builder.CloseComponent();
 
         // Reported By Column (FIXED: Ensure proper data binding)
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(60);
         builder.AddAttribute(61, "Property", "SubmittedBy");
         builder.AddAttribute(62, "Title", "Submitted By");
-        builder.AddAttribute(63, "Width", "150px");
+        builder.AddAttribute(63, "Width", "120px");
         builder.AddAttribute(64, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
@@ -1461,22 +1534,62 @@ public partial class ReportProcessing : ComponentBase
            RenderValidationActionColumn(builder);
     }
 
+    private void RenderHazardCategoryTypeColumn(RenderTreeBuilder builder)
+    {
+        // NEW: Hazard Classification Status Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(7);
+        builder.AddAttribute(8, "Title", "Category / Type");
+        builder.AddAttribute(9, "Width", "375px");
+        builder.AddAttribute(10, "Sortable", false);
+        builder.AddAttribute(11, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                if (report.RequiresHazardClassificationUpdate)
+                {
+                    // Show orange warning badge for default values
+                    templateBuilder.OpenComponent<RadzenBadge>(0);
+                    templateBuilder.AddAttribute(1, "BadgeStyle", BadgeStyle.Warning);
+                    //templateBuilder.AddAttribute(2, "Text", "DEFAULTS");
+                    templateBuilder.AddAttribute(2, "Text", $"Category: {report.HazardCategory}, Type: {report.HazardType}");
+                    templateBuilder.AddAttribute(3, "Title", $"Category: {report.HazardCategory}, Type: {report.HazardType}");
+                    templateBuilder.CloseComponent();
+                }
+                else
+                {
+                    // Show green success badge for properly classified
+                    templateBuilder.OpenComponent<RadzenBadge>(10);
+                    templateBuilder.AddAttribute(11, "BadgeStyle", BadgeStyle.Success);
+                    //templateBuilder.AddAttribute(12, "Text", "CLASSIFIED");
+                    templateBuilder.AddAttribute(12, "Text", $"Category: {report.HazardCategory}, Type: {report.HazardType}");
+                    templateBuilder.AddAttribute(13, "Title", $"Category: {report.HazardCategory}, Type: {report.HazardType}");
+                    templateBuilder.CloseComponent();
+                }
+            })));
+        builder.CloseComponent();
+    }
+
     private void RenderValidationActionColumn(RenderTreeBuilder builder)
     {
-        // Actions Column
+        // Actions Column - NEW: Enhanced to handle default hazard classification scenario
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(80);
         builder.AddAttribute(81, "Title", "Actions");
-        builder.AddAttribute(82, "Width", "150px");
+        builder.AddAttribute(82, "Width", "170px"); // Slightly wider for "Validate Report" text
         builder.AddAttribute(83, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
+                // NEW: Determine button properties based on default hazard classification
+                var buttonText = report.ActionButtonText;
+                var buttonStyle = report.RequiresHazardClassificationUpdate ? ButtonStyle.Warning : ButtonStyle.Success;
+                var buttonIcon = report.RequiresHazardClassificationUpdate ? "warning" : "check_circle";
+                var navigationUrl = report.SmartUrl;
+
                 templateBuilder.OpenComponent<RadzenButton>(0);
-                templateBuilder.AddAttribute(1, "Text", "Start Validation");
-                templateBuilder.AddAttribute(2, "Icon", "check_circle");
-                templateBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Success);
+                templateBuilder.AddAttribute(1, "Text", buttonText);
+                templateBuilder.AddAttribute(2, "Icon", buttonIcon);
+                templateBuilder.AddAttribute(3, "ButtonStyle", buttonStyle);
                 templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
                 templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                    (args) => _navigation.NavigateTo($"/SMSRiskManagement/ReportValidation/{report.ReportId}")));
+                    (args) => _navigation.NavigateToSecure(navigationUrl)));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -1488,7 +1601,7 @@ public partial class ReportProcessing : ComponentBase
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(0);
         builder.AddAttribute(1, "Property", "ReportId");
         builder.AddAttribute(2, "Title", "Report ID");
-        builder.AddAttribute(3, "Width", "150px");
+        builder.AddAttribute(3, "Width", "100px");
         builder.AddAttribute(4, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
                 {
@@ -1523,7 +1636,7 @@ public partial class ReportProcessing : ComponentBase
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(5);
         builder.AddAttribute(6, "Property", "HazardId");
         builder.AddAttribute(7, "Title", "Hazard ID");
-        builder.AddAttribute(8, "Width", "150px");
+        builder.AddAttribute(8, "Width", "100px");
         builder.AddAttribute(9, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
@@ -1541,7 +1654,7 @@ public partial class ReportProcessing : ComponentBase
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(10);
         builder.AddAttribute(11, "Property", "RiskAssessmentId");
         builder.AddAttribute(12, "Title", "Risk Assessment ID");
-        builder.AddAttribute(13, "Width", "150px");
+        builder.AddAttribute(13, "Width", "100px");
         builder.AddAttribute(14, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
@@ -1556,17 +1669,24 @@ public partial class ReportProcessing : ComponentBase
 
     private void RenderHazardDescriptionColumn(RenderTreeBuilder builder, bool includeActions = true)
     {
-        // Description Column
+        // Description Column - NEW: Changed to button for modal dialog
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(10);
-        builder.AddAttribute(11, "Property", "HazardDescription");
-        builder.AddAttribute(12, "Title", "Description");
-        builder.AddAttribute(13, "Width", "300px");
+        builder.AddAttribute(11, "Title", "Description");
+        builder.AddAttribute(12, "Width", "100px");
+        builder.AddAttribute(13, "Sortable", false);
         builder.AddAttribute(14, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
-                templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
-                templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.HazardDescription) ? report.HazardDescription : "Not Specified");
+                templateBuilder.OpenComponent<RadzenButton>(0);
+                templateBuilder.AddAttribute(1, "Text", "Description");
+                templateBuilder.AddAttribute(2, "Icon", "description");
+                templateBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Base);
+                templateBuilder.AddAttribute(4, "Variant", Variant.Text);
+                templateBuilder.AddAttribute(5, "Size", ButtonSize.ExtraSmall);
+                templateBuilder.AddAttribute(6, "Title", "Click to view full description");
+                templateBuilder.AddAttribute(7, "Class", "description-button");
+                templateBuilder.AddAttribute(8, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                    (args) => ShowDescriptionDialog(report)));
                 templateBuilder.CloseComponent();
             }
              )));
@@ -1749,6 +1869,12 @@ public partial class ReportProcessing : ComponentBase
 
     private ButtonStyle GetAssessmentButtonStyle(ReportProcessingSummary report)
     {
+        // NEW: Handle default hazard classification first
+        if (report.RequiresHazardClassificationUpdate)
+        {
+            return ButtonStyle.Warning; // Orange for defaults requiring attention
+        }
+
         if (report.StatusCategory == ProcessingStatusCategory.Validation)
         {
             return ButtonStyle.Success;
@@ -1848,12 +1974,15 @@ public partial class ReportProcessing : ComponentBase
                                 if (updateResult.IsSuccess)
                                 {
                                     successCount++;
-                                    _logger.LogInformation("Approved mitigation: {Code} for hazard {HazardCode}", mitigation.Code, hazard.Code);
+                                    _logger.LogInformation("✅ Approved mitigation: {Code} for hazard {HazardCode}", mitigation.Code, hazard.Code);
+
+                                    // NEW: SPI AUTOMATION - Trigger mitigation completion SPI 🎯
+                                    await TriggerMitigationApprovalSPIAutomation(mitigation, approverCode);
                                 }
                                 else
                                 {
                                     errorCount++;
-                                    _logger.LogError("Failed to approve mitigation {Code}: {Error}", mitigation.Code, updateResult.Error?.Message);
+                                    _logger.LogError("❌ Failed to approve mitigation {Code}: {Error}", mitigation.Code, updateResult.Error?.Message);
                                 }
                             }
                             catch (Exception ex)
@@ -2093,7 +2222,83 @@ public partial class ReportProcessing : ComponentBase
         SelectedApprover = null;
         StateHasChanged();
     }
-    
+
+    #endregion
+
+    #region Description Modal Methods
+
+    /// <summary>
+    /// Show description modal with full hazard description
+    /// </summary>
+    private void ShowDescriptionDialog(ReportProcessingSummary report)
+    {
+        try
+        {
+            SelectedDescription = report.HazardDescription ?? "No description available";
+            SelectedReportId = report.ReportId ?? "Unknown";
+            ShowDescriptionModal = true;
+            StateHasChanged();
+
+            _logger.LogInformation("Showing description modal for report {ReportId}", report.ReportId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing description modal for report {ReportId}", report.ReportId);
+            _notificationHelper.ShowErrorAsync("Error showing description details");
+        }
+    }
+
+    /// <summary>
+    /// Close description modal
+    /// </summary>
+    private void CloseDescriptionModal()
+    {
+        ShowDescriptionModal = false;
+        SelectedDescription = string.Empty;
+        SelectedReportId = string.Empty;
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region SPI Automation Integration
+
+    /// <summary>
+    /// Triggers SPI automation when mitigations are approved
+    /// Updates Mitigation Implementation Rate SPI based on completion timing
+    /// </summary>
+    private async Task TriggerMitigationApprovalSPIAutomation(Mitigation mitigation, string approverCode)
+    {
+        try
+        {
+            _logger.LogInformation("🎯 SPI Automation: Triggering mitigation approval events for {MitigationCode}", mitigation.Code);
+
+            // Determine target completion date and actual completion date  
+            var targetDate = mitigation.TargetDate ?? DateTime.UtcNow.AddDays(30); // Default 30 days if no target
+            var completedDate = DateTime.UtcNow; // Approval date = completion date
+            var completedBy = approverCode ?? CurrentUserService?.UserDisplayName ?? "Unknown";
+
+            // Trigger Mitigation Implementation Rate SPI
+            await _spiCoordinator.OnMitigationCompleted(
+                mitigationId: mitigation.Code,
+                mitigationCode: mitigation.Code,
+                hazardId: mitigation.HazardCode ?? "",
+                targetCompletionDate: targetDate,
+                completedDate: completedDate,
+                completedBy: completedBy,
+                reportId: "", // Could be enhanced to include report ID
+                completionNotes: $"Bulk approved by {completedBy}",
+                effectivenessRating: "Approved");
+
+            _logger.LogInformation("✅ SPI Automation: Successfully processed mitigation approval events for {MitigationCode}", mitigation.Code);
+        }
+        catch (Exception spiEx)
+        {
+            // Don't fail the mitigation approval if SPI automation fails
+            _logger.LogWarning(spiEx, "⚠️ SPI Automation: Failed to process mitigation approval events for {MitigationCode} - continuing with approval", mitigation.Code);
+        }
+    }
+
     #endregion
 
     public class ApproverOption

@@ -1,0 +1,136 @@
+@page "/SMSAssurance/SPIInitialization"
+@using SMS3.Components.Shared
+@using Radzen.Blazor
+
+<PageTitle>SPI Initialization - SMS3</PageTitle>
+
+<PageHeader Title="Safety Performance Indicator Initialization"
+           Subtitle="Set up default SPIs with automated calculation configurations for SMS performance monitoring"
+           Icon="fas fa-cog" />
+
+<RadzenCard>
+    <div style="max-width: 800px; margin: 0 auto; padding: 2rem;">
+
+        @if (!InitializationComplete)
+        {
+            <!-- Initialization Information -->
+            <RadzenText TextStyle="TextStyle.H6" Style="margin-bottom: 1rem;">Initialize Default SPIs</RadzenText>
+
+            <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 1.5rem;">
+                This will create the following default Safety Performance Indicators with automated calculation configurations:
+            </RadzenText>
+
+            <RadzenDataList Data="@GetDefaultSPIList()" TItem="string" Style="margin-bottom: 2rem;">
+                <Template>
+                    <div style="padding: 0.5rem 0;">
+                        <RadzenIcon Icon="check_circle" Style="color: var(--rz-success); margin-right: 0.5rem;" />
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@context</RadzenText>
+                    </div>
+                </Template>
+            </RadzenDataList>
+
+            <RadzenAlert AlertStyle="AlertStyle.Info" Icon="info" Style="margin-bottom: 1.5rem;">
+                <RadzenText TextStyle="TextStyle.Body2">
+                    <strong>Note:</strong> These SPIs will be automatically populated with data from:
+                    <br />• External Reporting submissions (Hazard Report Rate)
+                    <br />• Risk Assessment completions (Completion Rate, High Risk Exposure)
+                    <br />• Mitigation activities (Implementation Rate, Closure Rate)
+                    <br />• Hazard closure events (Average Closure Time)
+                </RadzenText>
+            </RadzenAlert>
+
+            <!-- Status Message -->
+            @if (!string.IsNullOrEmpty(StatusMessage))
+            {
+                <RadzenAlert AlertStyle="@GetAlertStyle()" Icon="@GetAlertIcon()" Style="margin-bottom: 1.5rem;">
+                    <RadzenText TextStyle="TextStyle.Body2">@StatusMessage</RadzenText>
+                </RadzenAlert>
+            }
+
+            <!-- Action Buttons -->
+            <div style="text-align: center;">
+                <RadzenButton Text="@GetButtonText()"
+                             Icon="@GetButtonIcon()"
+                             ButtonStyle="ButtonStyle.Primary"
+                             Size="ButtonSize.Large"
+                             Click="@InitializeDefaultSPIs"
+                             Disabled="@IsInitializing"
+                             Style="min-width: 200px;" />
+            </div>
+        }
+        else
+        {
+            <!-- Success State -->
+            <div style="text-align: center;">
+                <RadzenIcon Icon="check_circle" Style="font-size: 4rem; color: var(--rz-success); margin-bottom: 1rem;" />
+
+                <RadzenText TextStyle="TextStyle.H5" Style="color: var(--rz-success); margin-bottom: 1rem;">
+                    Initialization Complete!
+                </RadzenText>
+
+                <RadzenText TextStyle="TextStyle.Body1" Style="margin-bottom: 2rem;">
+                    Default Safety Performance Indicators have been created and are ready for automated data collection.
+                </RadzenText>
+
+                <RadzenButton Text="View SPI Dashboard"
+                             Icon="dashboard"
+                             ButtonStyle="ButtonStyle.Success"
+                             Size="ButtonSize.Large"
+                             Click="@NavigateToDashboard"
+                             Style="min-width: 200px;" />
+            </div>
+        }
+
+    </div>
+</RadzenCard>
+
+@code {
+    private List<string> GetDefaultSPIList()
+    {
+        return new List<string>
+        {
+            "Hazard Report Rate - Daily count of hazard submissions (automated)",
+            "Risk Assessment Completion Rate - Percentage completed on time (automated)",
+            "Mitigation Implementation Rate - Effectiveness score based on timing (automated)",
+            "Corrective Action Closure Rate - Percentage closed on time (automated)",
+            "High Risk Exposure Count - Daily count of critical/high risks (automated)",
+            "Average Hazard Closure Time - Days from submission to closure (automated)"
+        };
+    }
+
+    private AlertStyle GetAlertStyle()
+    {
+        if (StatusMessage.StartsWith("?"))
+            return AlertStyle.Success;
+        else if (StatusMessage.StartsWith("?") || StatusMessage.StartsWith("??"))
+            return AlertStyle.Danger;
+        else
+            return AlertStyle.Info;
+    }
+
+    private string GetAlertIcon()
+    {
+        if (StatusMessage.StartsWith("?"))
+            return "check_circle";
+        else if (StatusMessage.StartsWith("?") || StatusMessage.StartsWith("??"))
+            return "error";
+        else
+            return "info";
+    }
+
+    private string GetButtonText()
+    {
+        if (IsInitializing)
+            return "Initializing...";
+        else
+            return "Initialize Default SPIs";
+    }
+
+    private string GetButtonIcon()
+    {
+        if (IsInitializing)
+            return "hourglass_empty";
+        else
+            return "play_circle_filled";
+    }
+}

@@ -33,6 +33,7 @@ public abstract class ReportStatus : BaseEnum<ReportStatus>
     public static readonly ReportStatus ValidationRevised  = new ReportValidationRevisedStatus();
     public static readonly ReportStatus ValidationCompleted = new ReportValidationCompletedStatus();
     public static readonly ReportStatus NeedsValidation  = new ReportNeedsValidationStatus();
+    public static readonly ReportStatus ReadyForProcessing = new ReportReadyForProcessingStatus();
     public static readonly ReportStatus Unknown = new ReportUnknownStatus();
     #endregion
 
@@ -64,6 +65,12 @@ public abstract class ReportStatus : BaseEnum<ReportStatus>
     private sealed class ReportNeedsValidationStatus : ReportStatus
     {
         public ReportNeedsValidationStatus() : base("REPORT_NEEDS_VALIDATION", "REPORT_NEEDS_VALIDATION")
+        {
+        }
+    }
+    private sealed class ReportReadyForProcessingStatus : ReportStatus
+    {
+        public ReportReadyForProcessingStatus() : base("READY_FOR_PROCESSING", "READY_FOR_PROCESSING")
         {
         }
     }

@@ -1,5 +1,6 @@
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using SMS_Domain.Entities; // Add explicit domain entities
 
 namespace SMS3.Components.Pages.SMSAssurance;
 
@@ -14,7 +15,7 @@ public partial class SPIDashboard : ComponentBase
 
     #region Component State
     private bool IsLoading { get; set; } = true;
-    private SPIDashboardData? DashboardData { get; set; }
+    private SMS_Domain.Entities.SPIDashboard? DashboardData { get; set; }
 
     // Filter State
     private string? SelectedSPIType { get; set; } = "All";
@@ -23,8 +24,8 @@ public partial class SPIDashboard : ComponentBase
     private string? SelectedTrendSPI { get; set; }
 
     // Chart Data
-    private List<SPIDataPointSummary>? TrendData { get; set; }
-    private List<SPIDataPointSummary>? TrendTargetData { get; set; }
+    private List<SMS_Domain.Entities.SPIDataPointSummary>? TrendData { get; set; }
+    private List<SMS_Domain.Entities.SPIDataPointSummary>? TrendTargetData { get; set; }
     private List<CategoryDataPoint>? CategoryData { get; set; }
     #endregion
 
@@ -94,14 +95,14 @@ public partial class SPIDashboard : ComponentBase
             {
                 _logger.LogError("Failed to load SPI Dashboard data: {Error}", result.Error?.Message);
                 await _notificationHelper.ShowErrorAsync("Failed to load SPI dashboard data");
-                DashboardData = new SPIDashboardData(); // Initialize empty
+                DashboardData = new SMS_Domain.Entities.SPIDashboard();
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading SPI Dashboard data");
             await _notificationHelper.ShowErrorAsync("Error loading SPI dashboard data");
-            DashboardData = new SPIDashboardData();
+            DashboardData = new SMS_Domain.Entities.SPIDashboard();
         }
         finally
         {
@@ -155,7 +156,7 @@ public partial class SPIDashboard : ComponentBase
                 // Only include target data if targets exist and are valid
                 TrendTargetData = trendAnalysis.DataPoints
                     .Where(dp => dp.Target.HasValue && dp.Target.Value >= 0 && dp.MeasurementDate != default)
-                    .Select(dp => new SPIDataPointSummary
+                    .Select(dp => new SMS_Domain.Entities.SPIDataPointSummary
                     {
                         Period = dp.Period,
                         MeasurementDate = dp.MeasurementDate,
@@ -253,9 +254,9 @@ public partial class SPIDashboard : ComponentBase
         return new List<string> { SelectedDepartment };
     }
 
-    private List<SPIDashboardCard> GetFilteredSPICards()
+    private List<SMS_Domain.Entities.SPIDashboardCard> GetFilteredSPICards()
     {
-        if (DashboardData?.SPICards == null) return new List<SPIDashboardCard>();
+        if (DashboardData?.SPICards == null) return new List<SMS_Domain.Entities.SPIDashboardCard>();
 
         var filtered = DashboardData.SPICards.AsEnumerable();
 
@@ -379,16 +380,15 @@ public partial class SPIDashboard : ComponentBase
         };
     }
 
-    private string GetSPICardStyle(SPIDashboardCard spiCard)
+    private string GetSPICardStyle(SMS_Domain.Entities.SPIDashboardCard spiCard)
     {
         var styleClass = "spi-card";
 
-        if (spiCard.IsOverThreshold)
+        if (spiCard.PerformanceStatus == "Critical")
             styleClass += " critical";
-        else if (spiCard.IsAtWarningLevel)
+        else if (spiCard.PerformanceStatus == "Warning")
             styleClass += " warning";
-        else if (spiCard.CurrentValue.HasValue && spiCard.TargetValue.HasValue &&
-                 spiCard.CurrentValue.Value >= spiCard.TargetValue.Value)
+        else if (spiCard.PerformanceStatus == "Meeting")
             styleClass += " compliant";
 
         return styleClass;
@@ -406,7 +406,7 @@ public partial class SPIDashboard : ComponentBase
         };
     }
 
-    private string GetPerformanceText(SPIDashboardCard spiCard)
+    private string GetPerformanceText(SMS_Domain.Entities.SPIDashboardCard spiCard)
     {
         if (!spiCard.CurrentValue.HasValue || !spiCard.TargetValue.HasValue)
             return "";
@@ -421,7 +421,7 @@ public partial class SPIDashboard : ComponentBase
         return $"{percentage:F1}% of target";
     }
 
-    private double GetProgressValue(SPIDashboardCard spiCard)
+    private double GetProgressValue(SMS_Domain.Entities.SPIDashboardCard spiCard)
     {
         if (!spiCard.CurrentValue.HasValue || !spiCard.TargetValue.HasValue || spiCard.TargetValue.Value == 0)
             return 0;
@@ -430,7 +430,7 @@ public partial class SPIDashboard : ComponentBase
         return Math.Min(Math.Max(progress, 0), 100); // Clamp between 0 and 100
     }
 
-    private ProgressBarStyle GetProgressStyle(SPIDashboardCard spiCard)
+    private ProgressBarStyle GetProgressStyle(SMS_Domain.Entities.SPIDashboardCard spiCard)
     {
         var progress = GetProgressValue(spiCard);
 
@@ -440,7 +440,7 @@ public partial class SPIDashboard : ComponentBase
         return ProgressBarStyle.Danger;
     }
 
-    private string GetLastUpdateText(SPIDashboardCard spiCard)
+    private string GetLastUpdateText(SMS_Domain.Entities.SPIDashboardCard spiCard)
     {
         if (!spiCard.LastMeasurementDate.HasValue) return "No data";
 

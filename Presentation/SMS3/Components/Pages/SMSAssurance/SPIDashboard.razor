@@ -175,7 +175,7 @@ else
     }
 
     <!-- SPI Performance Cards Grid -->
-    <RadzenRow Gap="1rem" class="rz-my-4">
+    <RadzenRow Gap="1rem" class="rz-my-6">
         @if (DashboardData?.SPICards?.Any() == true)
         {
             @foreach (var spiCard in GetFilteredSPICards())
@@ -205,7 +205,7 @@ else
                             
                             <!-- Current Value Display -->
                             <div class="text-center">
-                                <RadzenText TextStyle="TextStyle.H3" Style="margin: 0; font-weight: 700;">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 700;">
                                     @(spiCard.CurrentValue?.ToString("F1") ?? "No Data")
                                 </RadzenText>
                                 @if (!string.IsNullOrEmpty(spiCard.MeasurementUnit))

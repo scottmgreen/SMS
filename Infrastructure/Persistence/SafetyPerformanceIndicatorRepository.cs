@@ -454,7 +454,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointSPIId, spiId));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, spiId));
 
             List<SPIDataPoint> response = new();
 

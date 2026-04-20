@@ -126,7 +126,7 @@ public class GetSafetyPerformanceIndicatorByCodeQuery : BaseEventBundle, IReques
 // SPI DASHBOARD QUERIES WITH AUDIT TRACKING
 // =============================================
 
-public class GetSPIDashboardDataQuery : BaseEventBundle, IRequest<Result<SPIDashboardData>>, IReadQuery
+public class GetSPIDashboardDataQuery : BaseEventBundle, IRequest<Result<SPIDashboard>>, IReadQuery
 {
     public DateTime? StartDate { get; set; }
     public DateTime? EndDate { get; set; }
@@ -393,127 +393,21 @@ public class GetSPIReviewScheduleQuery : BaseEventBundle, IRequest<Result<List<S
 // MISSING DTO CLASSES THAT WERE REMOVED - RESTORED
 // =============================================
 
+// NOTE: Domain entities are now properly located in Domain\Entities\SPIDashboard.cs
+// The following types are available:
+// - SPIDashboard (aggregate root for dashboard data)
+// - SPIDashboardCard (individual SPI performance card)
+// - SPIPerformanceSummary (performance summary aggregate)
+// - SPIAlert (SPI alert entity)
+// - SPITrendAnalysis (trend analysis value object)
+// - SPIDataPointSummary (individual data point summary)
+
 /// <summary>
-/// Complete SPI Dashboard data aggregation
+/// Additional query-specific DTOs that don't belong in domain
 /// </summary>
-public class SPIDashboardData
-{
-    public List<SPIDashboardCard> SPICards { get; set; } = new();
-    public List<SPITrendAnalysis> TrendAnalysis { get; set; } = new();
-    public List<SPIAlert> ActiveAlerts { get; set; } = new();
-    public SPIPerformanceSummary PerformanceSummary { get; set; } = new();
-    public DateTime LastUpdateDate { get; set; }
-    public int TotalSPIs { get; set; }
-    public int ActiveSPIs { get; set; }
-    public int SPIsOverThreshold { get; set; }
-    public int SPIsRequiringReview { get; set; }
-}
 
 /// <summary>
-/// Individual SPI dashboard card data
-/// </summary>
-public class SPIDashboardCard
-{
-    public string SPIId { get; set; } = string.Empty;
-    public string Code { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string IndicatorType { get; set; } = string.Empty;
-    public string Status { get; set; } = string.Empty;
-    public string MeasurementUnit { get; set; } = string.Empty;
-    public string MeasurementFrequency { get; set; } = string.Empty;
-
-    // Current Values
-    public decimal? CurrentValue { get; set; }
-    public decimal? TargetValue { get; set; }
-    public decimal? WarningThreshold { get; set; }
-    public decimal? CriticalThreshold { get; set; }
-
-    // Performance Indicators
-    public string TrendDirection { get; set; } = string.Empty;
-    public decimal? PercentageToTarget { get; set; }
-    public bool IsOverThreshold { get; set; }
-    public bool IsAtWarningLevel { get; set; }
-    public bool RequiresReview { get; set; }
-
-    // Timing
-    public DateTime? LastMeasurementDate { get; set; }
-    public DateTime? NextReviewDate { get; set; }
-
-    // Ownership
-    public string ResponsibleDepartment { get; set; } = string.Empty;
-    public string DataOwner { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// SPI Alert for queries
-/// </summary>
-public class SPIAlert
-{
-    public string SPIId { get; set; } = string.Empty;
-    public string SPIName { get; set; } = string.Empty;
-    public string AlertType { get; set; } = string.Empty; // Warning, Critical, Target
-    public decimal CurrentValue { get; set; }
-    public decimal? ThresholdValue { get; set; }
-    public string AlertMessage { get; set; } = string.Empty;
-    public DateTime AlertDate { get; set; }
-    public string TrendDirection { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// SPI trend analysis over time
-/// </summary>
-public class SPITrendAnalysis
-{
-    public string SPIId { get; set; } = string.Empty;
-    public string SPIName { get; set; } = string.Empty;
-    public List<SPIDataPointSummary> DataPoints { get; set; } = new();
-    public string OverallTrend { get; set; } = string.Empty;
-    public decimal? TrendSlope { get; set; }
-    public decimal? VariabilityIndex { get; set; }
-    public int ConsecutivePeriodsAboveTarget { get; set; }
-    public int ConsecutivePeriodsBelowTarget { get; set; }
-}
-
-/// <summary>
-/// Summarized data point for trending
-/// </summary>
-public class SPIDataPointSummary
-{
-    public string Period { get; set; } = string.Empty;
-    public DateTime MeasurementDate { get; set; }
-    public decimal Value { get; set; }
-    public decimal? Target { get; set; }
-    public bool IsAboveWarning { get; set; }
-    public bool IsAboveCritical { get; set; }
-}
-
-/// <summary>
-/// Performance summary across multiple SPIs
-/// </summary>
-public class SPIPerformanceSummary
-{
-    public DateTime StartDate { get; set; }
-    public DateTime EndDate { get; set; }
-    public int TotalSPIs { get; set; }
-    public int SPIsMeetingTarget { get; set; }
-    public int SPIsAboveWarning { get; set; }
-    public int SPIsAboveCritical { get; set; }
-    public decimal OverallComplianceRate { get; set; }
-
-    // By Type and Department
-    public Dictionary<string, int> SPIsByType { get; set; } = new();
-    public Dictionary<string, int> SPIsByDepartment { get; set; } = new();
-    public Dictionary<string, decimal> AverageValuesByType { get; set; } = new();
-
-    // Trends
-    public int SPIsImproving { get; set; }
-    public int SPIsStable { get; set; }
-    public int SPIsDeclining { get; set; }
-}
-
-/// <summary>
-/// SPI compliance status
+/// SPI compliance status for reporting
 /// </summary>
 public class SPIComplianceStatus
 {
@@ -528,7 +422,7 @@ public class SPIComplianceStatus
 }
 
 /// <summary>
-/// SPI review schedule item
+/// SPI review schedule item for management
 /// </summary>
 public class SPIReviewItem
 {

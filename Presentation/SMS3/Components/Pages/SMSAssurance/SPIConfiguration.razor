@@ -106,7 +106,7 @@
                         </Template>
                     </RadzenDataGridColumn>
                     
-                    <RadzenDataGridColumn TItem="SafetyPerformanceIndicator" Property="Name" Title="Name" Sortable="true">
+                    <RadzenDataGridColumn TItem="SafetyPerformanceIndicator" Property="Name" Title="Name" Width="475px" Sortable="true">
                         <Template Context="spi">
                             <RadzenStack Gap="0.25rem">
                                 <RadzenText TextStyle="TextStyle.Body1"><strong>@spi.Name</strong></RadzenText>
@@ -120,7 +120,7 @@
                         </Template>
                     </RadzenDataGridColumn>
                     
-                    <RadzenDataGridColumn TItem="SafetyPerformanceIndicator" Property="IndicatorType" Title="Type" Width="140px" Sortable="true">
+                    <RadzenDataGridColumn TItem="SafetyPerformanceIndicator" Property="IndicatorType" Title="Type" Width="350px" Sortable="true">
                         <Template Context="spi">
                             <RadzenBadge BadgeStyle="@GetTypeBadgeStyle(spi.IndicatorType)" 
                                          Text="@GetTypeDisplayName(spi.IndicatorType)" 

@@ -11,6 +11,8 @@
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Pipelines;
 using SMS_Application.Services; // Add this for SecurityFeatureService
+using SMS_Application.EventHandlers; // NEW: For SPI event handlers
+using SMS_Application.BackgroundServices; // NEW: For SPI background services
 
 namespace SMS_Application.Configuration
 {
@@ -91,6 +93,18 @@ namespace SMS_Application.Configuration
             services.AddScoped<SafetyPerformanceIndicatorService>();
             services.AddScoped<HazardFileService>();
 
+            // NEW: SPI Automation Services - Event-driven safety performance indicators
+            services.AddScoped<ISPIAutomationService, SPIAutomationService>();
+            services.AddScoped<SPIEventCoordinator>();
+
+            // NEW: SPI Event Handlers - Automated SPI calculations from SMS events
+            services.AddScoped<HazardEventSPIHandler>();
+            services.AddScoped<RiskAssessmentEventSPIHandler>();
+            services.AddScoped<MitigationEventSPIHandler>();
+
+            // NEW: SPI Initialization Service - Default SPI setup
+            services.AddScoped<SPIInitializationService>();
+
             // Application Service Interfaces - Clean Architecture Pattern (Only existing interfaces)
             services.AddScoped<IHazardService, HazardService>();
             services.AddScoped<IHazardFileService, HazardFileService>();
@@ -116,6 +130,9 @@ namespace SMS_Application.Configuration
 
             // 🔧 COMMAND AUDIT SERVICES - CONSISTENT: ADDED FOR COMPLETE CQRS AUDIT COVERAGE!
             services.AddScoped<ICommandAccessAuditService, CommandAccessAuditService>();
+
+            // NEW: SPI Background Services - Scheduled automation calculations
+            services.AddHostedService<SPICalculationBackgroundService>();
 
             #endregion
 

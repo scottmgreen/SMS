@@ -893,6 +893,13 @@ public static class DomainErrors
         public static Error InsufficientData => new Error("SPI.InsufficientData", "Insufficient data points for trend analysis.");
         public static Error AlertConfigurationFailed => new Error("SPI.AlertConfigurationFailed", "Failed to configure SPI alerts.");
         public static Error DataValidationFailed => new Error("SPI.DataValidationFailed", "Data validation failed for the SPI measurement.");
+
+        // NEW: SPI Automation Errors
+        public static Error AutomationFailed => new Error("SPI.AutomationFailed", "Failed to execute automated SPI calculation.");
+        public static Error EventProcessingFailed => new Error("SPI.EventProcessingFailed", "Failed to process SPI automation event.");
+        public static Error CalculationServiceUnavailable => new Error("SPI.CalculationServiceUnavailable", "SPI calculation service is currently unavailable.");
+        public static Error BackgroundJobFailed => new Error("SPI.BackgroundJobFailed", "SPI background calculation job failed.");
+        public static Error DataSourceQueryFailed => new Error("SPI.DataSourceQueryFailed", "Failed to query data source for SPI calculation.");
     }
 
     /// <summary>

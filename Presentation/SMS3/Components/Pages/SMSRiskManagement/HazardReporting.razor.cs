@@ -1,6 +1,7 @@
 ﻿
 using Microsoft.JSInterop;
 
+using SMS_Application.Services;
 using SMS_Domain.Entities;
 using SMS_Domain.Errors;
 
@@ -23,7 +24,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
     [Inject] private IMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<HazardReporting> _logger { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
-    
+    [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
+
     [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
@@ -1193,7 +1195,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingReport.ReportContactName = HazardReport.ReportContactName;
         EditingReport.ReportContactCell = HazardReport.ReportContactCell;
         EditingReport.ReportContactEmail = HazardReport.ReportContactEmail;
-        EditingReport.Status = ReportStatus.Updated;
+        EditingReport.Status = ReportStatus.ReadyForProcessing;
         EditingReport.UpdatedDate = DateTime.UtcNow;
         EditingReport.UpdatedBy = CurrentUserService.UserCode;
 
@@ -1279,7 +1281,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
             Description = HazardReport.Description,
             Stage = "INITIAL",
-            Status = ReportStatus.NeedsValidation, //needs validation
+            Status = ReportStatus.ReadyForProcessing, //needs validation
             CreatedBy = CurrentUserService.UserDisplayName,
             CreatedDate = DateTime.UtcNow
         };
@@ -1324,12 +1326,34 @@ public partial class HazardReporting : ComponentBase, IDisposable
         // Handle location for confidential hazard AFTER NEW Hazard Has Been Recorded !! 
         await UpdateHazardLocation(createdHazard);
 
+        GeneratedHazardId = createdHazard.Code;
+        GeneratedReportId = createdHazard.ReportCode;
+
         _logger.LogInformation("✅ Hazard created with Code: {HazardCode}, linked to Report: {ReportCode}", createdHazard.Code, actualReportCode);
+
+        // NEW: SPI AUTOMATION - Notify hazard creation for internal reports 🎯
+        try
+        {
+            await _spiCoordinator.OnHazardCreated(
+                hazardId: createdHazard.Code,
+                hazardCode: createdHazard.Code,
+                createdDate: createdHazard.CreatedDate ?? DateTime.UtcNow,
+                createdBy: createdHazard.CreatedBy ?? "INTERNAL_USER",
+                reportId: actualReportCode,
+                hazardType: createdHazard.HazardType ?? "",
+                hazardCategory: createdHazard.HazardCategory ?? "");
+
+            _logger.LogInformation("✅ SPI Automation: Internal hazard creation event processed for {HazardCode}", createdHazard.Code);
+        }
+        catch (Exception spiEx)
+        {
+            // Don't fail the entire submission if SPI automation fails
+            _logger.LogWarning(spiEx, "⚠️ SPI Automation: Failed to process hazard creation event for {HazardCode} - continuing with submission", createdHazard.Code);
+        }
+
         Result<HazardReportTracking> createdtrackingcodeResult = await GenerateTracking(createdHazard);
         var createdTracking = createdtrackingcodeResult.Value;
         GeneratedTrackingId = createdTracking.TrackingCode;
-        GeneratedHazardId = createdHazard.Code;
-        GeneratedReportId = createdHazard.ReportCode;
 
         // ===============================
         // STEP 3: Process files for new hazard

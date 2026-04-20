@@ -105,3 +105,39 @@ public class GetReportValidationByReportIdQuery : BaseQueryBundle, IRequest<Resu
         return "GetByReport";
     }
 }
+
+/// <summary>
+/// Query to get validated reports (SMS_RISK) by date range for SPI automation
+/// </summary>
+public class GetValidatedSMSRisksByDateQuery : BaseQueryBundle, IRequest<Result<List<ReportValidation>>>, IReadQuery
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
+    public GetValidatedSMSRisksByDateQuery(DateTime fromDate, DateTime? toDate = null)
+    {
+        FromDate = fromDate.Date; // Ensure we start at beginning of day
+        ToDate = (toDate ?? fromDate).Date.AddDays(1).AddTicks(-1); // End of day
+    }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"ReportValidation:SMSRisks:{FromDate:yyyy-MM-dd}:{ToDate:yyyy-MM-dd}";
+    }
+
+    public string GetAccessType()
+    {
+        return "GetValidatedSMSRisksByDate";
+    }
+}
