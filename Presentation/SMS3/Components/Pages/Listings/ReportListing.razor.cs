@@ -540,6 +540,41 @@ public partial class ReportListing : ComponentBase
                 AssociatedHazards = hazardsResult.Value.ToList();
                 _logger.LogInformation("Loaded {Count} hazards for report {ReportCode}",
                     AssociatedHazards.Count, reportCode);
+
+                // 🔧 ENHANCED: Load HazardLocation for each hazard to ensure map data is available
+                foreach (var hazard in AssociatedHazards)
+                {
+                    try
+                    {
+                        if (!string.IsNullOrEmpty(hazard.Code))
+                        {
+                            var locationQuery = new GetHazardLocationsByHazardCodeQuery(hazard.Code);
+                            var locationResult = await __mediator.SendAsync(locationQuery, CancellationToken.None);
+
+                            if (locationResult.IsSuccess && locationResult.Value?.Any() == true)
+                            {
+                                hazard.HazardLocation = locationResult.Value.FirstOrDefault();
+                                _logger.LogInformation("✅ Loaded location for hazard {HazardCode}: Lat={Lat}, Lng={Lng}, Desc={Desc}",
+                                    hazard.Code,
+                                    hazard.HazardLocation?.Latitude,
+                                    hazard.HazardLocation?.Longitude,
+                                    hazard.HazardLocation?.Description);
+                            }
+                            else
+                            {
+                                _logger.LogInformation("ℹ️ No location found for hazard {HazardCode}", hazard.Code);
+                            }
+                        }
+                    }
+                    catch (Exception locationEx)
+                    {
+                        _logger.LogWarning(locationEx, "Failed to load location for hazard {HazardCode}", hazard.Code);
+                    }
+                }
+
+                // Log summary of locations loaded
+                var hazardsWithLocation = AssociatedHazards.Count(h => h.HazardLocation?.Latitude.HasValue == true && h.HazardLocation?.Longitude.HasValue == true);
+                _logger.LogInformation("📍 Location summary: {WithLocation}/{Total} hazards have valid coordinates", hazardsWithLocation, AssociatedHazards.Count);
             }
             else
             {
@@ -744,11 +779,7 @@ public partial class ReportListing : ComponentBase
     }
 
 
-
-
-#endregion
-
-    public async Task OnResetReportAsync(Report report)
+public async Task OnResetReportAsync(Report report)
     {
         if (report == null)
         {
@@ -887,4 +918,134 @@ public partial class ReportListing : ComponentBase
     {
         return "THIS ACTION CANNOT BE UNDONE!";
     }
+
+    #endregion
+
+    #region Map Functionality (Added to match HazardLocationListing)
+
+    /// <summary>
+    /// View location map in a modal (similar to HazardLocationListing.ViewLocationMap)
+    /// </summary>
+    /// <param name="hazard">Hazard with location to view</param>
+    public async Task ViewHazardLocationMap(Hazard hazard)
+    {
+        if (hazard?.HazardLocation == null || !HasValidCoordinates(hazard.HazardLocation))
+        {
+            await _notificationHelper.ShowWarningAsync("No valid location coordinates available for this hazard");
+            return;
+        }
+
+        try
+        {
+            _logger.LogInformation("Opening location map for hazard: {HazardCode}", hazard.Code);
+
+            var title = $"Location Map - {hazard.Code}";
+            var subtitle = $"Hazard: {hazard.Name ?? "Unnamed Hazard"}";
+
+            await _dialogService.OpenAsync(title, ds =>
+            {
+                var content = new RenderFragment(builder =>
+                {
+                    builder.OpenElement(0, "div");
+                    builder.AddAttribute(1, "style", "width: 100%; height: 100%;");
+
+                    // Add subtitle if available
+                    if (!string.IsNullOrEmpty(subtitle))
+                    {
+                        builder.OpenElement(2, "div");
+                        builder.AddAttribute(3, "class", "mb-3 text-muted");
+                        builder.AddAttribute(4, "style", "font-size: 0.9rem;");
+                        builder.AddContent(5, subtitle);
+                        builder.CloseElement();
+                    }
+
+                    // Add HazardLocationDisplay component (same as HazardLocationListing)
+                    builder.OpenComponent<SMS3.Components.Shared.HazardLocationDisplay>(10);
+                    builder.AddAttribute(11, "Hazard", hazard);
+                    builder.AddAttribute(12, "Title", "");
+                    builder.AddAttribute(13, "MapHeight", "400px");
+                    builder.AddAttribute(14, "ShowCoordinates", true);
+                    builder.AddAttribute(15, "ShowLocationDetails", true);
+                    builder.AddAttribute(16, "ShowZoomControls", true);
+                    builder.AddAttribute(17, "ShowLayerControls", false);
+                    builder.AddAttribute(18, "ZoomLevel", 18);
+                    builder.CloseComponent();
+
+                    // Add location details
+                    builder.OpenElement(20, "div");
+                    builder.AddAttribute(21, "class", "mt-3 p-3 bg-light rounded");
+                    builder.AddAttribute(22, "style", "border-left: 4px solid #007bff;");
+
+                    builder.OpenElement(23, "h6");
+                    builder.AddAttribute(24, "class", "text-primary mb-2");
+                    builder.AddContent(25, "📋 Location Details");
+                    builder.CloseElement();
+
+                    builder.OpenElement(26, "div");
+                    builder.AddAttribute(27, "class", "row");
+
+                    // Left column
+                    builder.OpenElement(28, "div");
+                    builder.AddAttribute(29, "class", "col-md-6");
+
+                    builder.AddMarkupContent(30, $"<strong>Hazard Code:</strong> {hazard.Code}<br/>");
+                    builder.AddMarkupContent(31, $"<strong>Report Code:</strong> {hazard.ReportCode}<br/>");
+                    if (hazard.HazardLocation.Latitude.HasValue && hazard.HazardLocation.Longitude.HasValue)
+                    {
+                        builder.AddMarkupContent(32, $"<strong>Coordinates:</strong> {hazard.HazardLocation.Latitude:F6}, {hazard.HazardLocation.Longitude:F6}<br/>");
+                    }
+
+                    builder.CloseElement(); // col-md-6
+
+                    // Right column
+                    builder.OpenElement(35, "div");
+                    builder.AddAttribute(36, "class", "col-md-6");
+
+                    builder.AddMarkupContent(37, $"<strong>Created:</strong> {hazard.HazardLocation.CreatedDate:yyyy-MM-dd HH:mm}<br/>");
+                    builder.AddMarkupContent(38, $"<strong>Created By:</strong> {hazard.HazardLocation.CreatedBy ?? "Unknown"}<br/>");
+                    if (!string.IsNullOrEmpty(hazard.HazardLocation.Description))
+                    {
+                        builder.AddMarkupContent(39, $"<strong>Description:</strong> {hazard.HazardLocation.Description}");
+                    }
+
+                    builder.CloseElement(); // col-md-6
+                    builder.CloseElement(); // row
+                    builder.CloseElement(); // details container
+                    builder.CloseElement(); // main div
+                });
+
+                return content;
+            },
+            new DialogOptions() 
+            { 
+                Width = "1200px", 
+                Height = "900px", 
+                Resizable = true, 
+                Draggable = true,
+                CloseDialogOnOverlayClick = false
+            });
+
+            await _notificationHelper.ShowInfoAsync($"Opened location map for {hazard.Code}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error opening location map for hazard {HazardCode}", hazard.Code);
+            await _notificationHelper.ShowErrorAsync("Error opening location map");
+        }
+    }
+
+    /// <summary>
+    /// Check if hazard location has valid coordinates
+    /// </summary>
+    /// <param name="location">HazardLocation to check</param>
+    /// <returns>True if has valid coordinates</returns>
+    private bool HasValidCoordinates(HazardLocation? location)
+    {
+        return location?.Latitude.HasValue == true && 
+               location?.Longitude.HasValue == true && 
+               location.Latitude.Value != 0 && 
+               location.Longitude.Value != 0;
+    }
+
+    #endregion
 }

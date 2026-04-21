@@ -1415,7 +1415,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     }
 
     /// <summary>
-    /// Update hazard location (common for both CREATE and EDIT modes) - FIXED: Create new HazardLocation properly
+    /// Update hazard location (common for both CREATE and EDIT modes) - FIXED: Always create new HazardLocation since no default is created
     /// </summary>
     private async Task UpdateHazardLocation(Hazard hazard)
     {
@@ -1431,66 +1431,35 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             try
             {
-                // Check if HazardLocation already exists for this hazard
-                var hazardLocationResult = await _mediator.SendAsync(new GetHazardLocationsByHazardCodeQuery(hazard.Code), CancellationToken.None);
-
-                HazardLocation? hazardLocation = null;
-
-                if (hazardLocationResult.IsSuccess && hazardLocationResult.Value.Any())
+                // 🔧 FIXED: Always create new location since CreateHazardCommandHandler no longer auto-creates default locations
+                var hazardLocationCode = "HL-0000"; // Database will generate actual code
+                var newHazardLocation = new HazardLocation(new HazardLocationID(hazardLocationCode))
                 {
-                    // UPDATE existing HazardLocation
-                    hazardLocation = hazardLocationResult.Value.FirstOrDefault();
-                    if (hazardLocation != null)
-                    {
-                        hazardLocation.HazardCode = hazard.Code;
-                        hazardLocation.Latitude = SelectedGeoLocation.Latitude;
-                        hazardLocation.Longitude = SelectedGeoLocation.Longitude;
-                        hazardLocation.Description = SelectedGeoLocation.Description ?? "Map selected location";
-                        hazardLocation.UpdatedBy = CurrentUserService?.UserDisplayName;
-                        hazardLocation.UpdatedDate = DateTime.UtcNow;
-                        hazard.HazardLocation = hazardLocation;
-                        
-                        var locationUpdateResult = await _mediator.SendAsync(new UpdateHazardLocationCommand(hazardLocation), CancellationToken.None);
+                    Code = hazardLocationCode,
+                    HazardCode = hazard.Code,
+                    Latitude = SelectedGeoLocation.Latitude,
+                    Longitude = SelectedGeoLocation.Longitude,
+                    Description = SelectedGeoLocation.Description ?? "Map selected location",
+                    CreatedBy = CurrentUserService?.UserDisplayName,
+                    CreatedDate = DateTime.UtcNow,
+                    IsValid = true
+                };
 
-                        if (locationUpdateResult.IsSuccess)
-                        {
-                            _logger.LogInformation("✅ HazardLocation updated with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
-                                hazardLocation.Code, SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
-                        }
-                    }
+                // Create the new HazardLocation
+                var createLocationCommand = new CreateHazardLocationCommand(newHazardLocation);
+                var locationCreateResult = await _mediator.SendAsync(createLocationCommand, CancellationToken.None);
+
+                if (locationCreateResult.IsSuccess)
+                {
+                    var createdLocation = locationCreateResult.Value;
+                    hazard.HazardLocation = createdLocation;
+
+                    _logger.LogInformation("✅ HazardLocation created with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
+                        createdLocation.Code, SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
                 }
                 else
                 {
-                    // CREATE new HazardLocation
-                    var hazardLocationCode = $"HL-{hazard.Code}-{DateTime.UtcNow:yyyyMMdd}";
-                    var newHazardLocation = new HazardLocation(new HazardLocationID(hazardLocationCode))
-                    {
-                        Code = hazardLocationCode,
-                        HazardCode = hazard.Code,
-                        Latitude = SelectedGeoLocation.Latitude,
-                        Longitude = SelectedGeoLocation.Longitude,
-                        Description = SelectedGeoLocation.Description ?? "Map selected location",
-                        CreatedBy = CurrentUserService?.UserDisplayName,
-                        CreatedDate = DateTime.UtcNow,
-                        IsValid = true
-                    };
-
-                    // Create the new HazardLocation
-                    var createLocationCommand = new CreateHazardLocationCommand(newHazardLocation);
-                    var locationCreateResult = await _mediator.SendAsync(createLocationCommand, CancellationToken.None);
-
-                    if (locationCreateResult.IsSuccess)
-                    {
-                        var createdLocation = locationCreateResult.Value;
-                        hazard.HazardLocation = createdLocation;
-
-                        _logger.LogInformation("✅ HazardLocation created with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
-                            createdLocation.Code, SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
-                    }
-                    else
-                    {
-                        _logger.LogError("❌ Failed to create HazardLocation: {Error}", locationCreateResult.Error?.Message);
-                    }
+                    _logger.LogError("❌ Failed to create HazardLocation: {Error}", locationCreateResult.Error?.Message);
                 }
 
                 // Set coordinate information in hazard fields for backward compatibility
@@ -1502,7 +1471,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             }
             catch (Exception locationEx)
             {
-                _logger.LogWarning(locationEx, "Failed to create/update hazard location, but continuing with hazard update");
+                _logger.LogWarning(locationEx, "Failed to create hazard location, but continuing with hazard creation");
 
                 // Set location in hazard fields as fallback
                 hazard.LocationArea = $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}";

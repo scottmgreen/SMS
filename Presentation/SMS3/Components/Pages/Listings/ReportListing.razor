@@ -248,15 +248,29 @@
                                                 @if (hazard.HazardLocation != null && hazard.HazardLocation.Latitude.HasValue && hazard.HazardLocation.Longitude.HasValue)
                                                 {
                                                     <div class="text-center">
+                                                        @* ?? DEBUG: Add debug info to see if map should render *@
+                                                        @* <div class="text-muted small mb-1">
+                                                            Debug: Lat=@hazard.HazardLocation.Latitude.Value.ToString("F6"), Lng=@hazard.HazardLocation.Longitude.Value.ToString("F6")
+                                                        </div> *@
                                                         <ReadOnlyLocationMap Latitude="@(hazard.HazardLocation.Latitude.Value)"
                                                                            Longitude="@(hazard.HazardLocation.Longitude.Value)"
                                                                            LocationDescription="@(hazard.HazardLocation.Description ?? hazard.Code)"
                                                                            MapHeight="200px"
-                                                                           ShowZoomControls="false" />
+                                                                           ShowZoomControls="false"
+                                                                           ShowLocationDetails="false"
+                                                                           ZoomLevel="16" />
                                                         <small class="text-muted d-block mt-1">
                                                             <i class="fas fa-map-marker-alt"></i> 
                                                             @hazard.HazardLocation.Latitude.Value.ToString("F6"), @hazard.HazardLocation.Longitude.Value.ToString("F6")
                                                         </small>
+                                                        @* Add View Map button for larger map view *@
+                                                        <RadzenButton ButtonStyle="ButtonStyle.Base" 
+                                                                    Size="ButtonSize.ExtraSmall"
+                                                                    Text="View Map"
+                                                                    Icon="map"
+                                                                    Class="mt-2"
+                                                                    Click="@(() => ViewHazardLocationMap(hazard))"
+                                                                    title="Open full-size location map" />
                                                     </div>
                                                 }
                                                 else
@@ -268,6 +282,12 @@
                                                         {
                                                             <small>@hazard.LocationArea</small>
                                                         }
+                                                        @* ?? DEBUG: Show what location data is available *@
+                                                        @* <div class="text-muted small mt-1">
+                                                            Debug: Location=@((hazard.HazardLocation == null ? "null" : "exists")),
+                                                            Lat=@(hazard.HazardLocation?.Latitude?.ToString() ?? "null"),
+                                                            Lng=@(hazard.HazardLocation?.Longitude?.ToString() ?? "null")
+                                                        </div> *@
                                                     </div>
                                                 }
                                             </RadzenColumn>

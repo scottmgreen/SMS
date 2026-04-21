@@ -65,7 +65,7 @@ public abstract class HazardCategory : BaseEnum<HazardCategory>
     #region Implementations
     private sealed class DefaultCategory : HazardCategory
     {
-        public DefaultCategory() : base("DEFAULT", "Default",
+        public DefaultCategory() : base("DEFAULT_CATEGORY", "Default",
             "To Be Determined by SMS Staff", 0)
         {
         }

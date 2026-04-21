@@ -246,6 +246,40 @@ public class GetSPIPerformanceSummaryQuery : BaseEventBundle, IRequest<Result<SP
     }
 }
 
+public class GetSPIDataPointsBySPICodeQuery : BaseEventBundle, IRequest<Result<List<SPIDataPoint>>>, IReadQuery
+{
+    public string SPICode { get; set; }
+    public DateTime? FromDate { get; set; }
+    public DateTime? ToDate { get; set; }
+    public int? MaxResults { get; set; }
+
+    // Audit properties for query tracking
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
+    public GetSPIDataPointsBySPICodeQuery(string spiCode)
+    {
+        SPICode = spiCode ?? throw new ArgumentNullException(nameof(spiCode));
+    }
+
+    // IReadQuery implementation
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"SPI:DataPoints:{SPICode}";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", ""); // GetSPIDataPointsBySPICode
+    }
+}
+
 public class GetSPIAlertsQuery : BaseEventBundle, IRequest<Result<List<SPIAlert>>>, IReadQuery
 {
     public List<string>? SPIIds { get; set; }
@@ -390,49 +424,10 @@ public class GetSPIReviewScheduleQuery : BaseEventBundle, IRequest<Result<List<S
 }
 
 // =============================================
-// MISSING DTO CLASSES THAT WERE REMOVED - RESTORED
+// END OF QUERY DEFINITIONS
 // =============================================
-
-// NOTE: Domain entities are now properly located in Domain\Entities\SPIDashboard.cs
-// The following types are available:
-// - SPIDashboard (aggregate root for dashboard data)
-// - SPIDashboardCard (individual SPI performance card)
-// - SPIPerformanceSummary (performance summary aggregate)
-// - SPIAlert (SPI alert entity)
-// - SPITrendAnalysis (trend analysis value object)
-// - SPIDataPointSummary (individual data point summary)
-
-/// <summary>
-/// Additional query-specific DTOs that don't belong in domain
-/// </summary>
-
-/// <summary>
-/// SPI compliance status for reporting
-/// </summary>
-public class SPIComplianceStatus
-{
-    public string SPIId { get; set; } = string.Empty;
-    public string SPIName { get; set; } = string.Empty;
-    public bool InCompliance { get; set; }
-    public string ComplianceStatus { get; set; } = string.Empty; // Compliant, Warning, Critical, No Data
-    public decimal? CurrentValue { get; set; }
-    public decimal? ComplianceThreshold { get; set; }
-    public DateTime? LastMeasurementDate { get; set; }
-    public int DaysWithoutData { get; set; }
-}
-
-/// <summary>
-/// SPI review schedule item for management
-/// </summary>
-public class SPIReviewItem
-{
-    public string SPIId { get; set; } = string.Empty;
-    public string SPIName { get; set; } = string.Empty;
-    public string ResponsibleDepartment { get; set; } = string.Empty;
-    public string ReviewAuthority { get; set; } = string.Empty;
-    public DateTime? NextReviewDate { get; set; }
-    public DateTime? LastReviewDate { get; set; }
-    public bool IsOverdue { get; set; }
-    public int DaysOverdue { get; set; }
-    public string Priority { get; set; } = string.Empty; // High, Medium, Low
-}
+//
+// Note: SPIComplianceStatus and SPIReviewItem classes have been moved to 
+// Domain\Entities\SPIManagementSupport\ following Domain-Driven Design principles
+// These are domain entities, not DTOs, and belong in the domain layer
+//

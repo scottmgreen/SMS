@@ -398,9 +398,18 @@ public partial class SPIConfiguration
 
     private async Task ViewDataPoints(SafetyPerformanceIndicator spi)
     {
-        // Navigate to data points page or show data points dialog
-        // For now, show a placeholder notification
-        ShowInfoAsyncNotification("Data points management will be available in the next release.");
+        try
+        {
+            // Navigate to SPI Dashboard with specific SPI filter - this works with your existing infrastructure
+            var url = $"/SMSAssurance/SPIDashboard?spiCode={Uri.EscapeDataString(spi.Code)}";
+            _navigation.NavigateTo(url);
+
+            ShowInfoAsyncNotification($"Opening SPI Dashboard for {spi.Name} - View automated data points created by the system");
+        }
+        catch (Exception ex)
+        {
+            ShowErrorAsyncNotification($"Failed to navigate to data points: {ex.Message}");
+        }
     }
     #endregion
 

@@ -31,9 +31,9 @@ public partial class SafetyPolicy : ComponentBase
         {
             new()
             {
-                Name = "SMS Policy Overview",
-                Description = "14 CFR Part 139 - Comprehensive safety management system overview",
-                FileName = "14 CFR Part 139.pdf",
+                Name = "Implementation Plan",
+                Description = "PDX SMS Implementation Plan Signed 7182024",
+                FileName = "PDX SMS Implementation Plan Signed 7182024.pdf",
                 Category = "policies",
                 Type = "Policy",
                 Size = "2.1 MB",
@@ -43,9 +43,9 @@ public partial class SafetyPolicy : ComponentBase
             },
             new()
             {
-                Name = "Regulatory Compliance",
-                Description = "FAA Final Rule - Regulatory compliance requirements and procedures",
-                FileName = "FAA Final Rule.pdf",
+                Name = "Approval Letter",
+                Description = "PDX SMS IP Approval Letter 7182024",
+                FileName = "PDX SMS IP Approval Letter 7182024.pdf",
                 Category = "policies",
                 Type = "Regulation",
                 Size = "1.8 MB",
@@ -55,27 +55,15 @@ public partial class SafetyPolicy : ComponentBase
             },
             new()
             {
-                Name = "Emergency Procedures",
-                Description = "Emergency response procedures and crisis management protocols",
-                FileName = "part-139-cert-alert-23-02-SMS-rule.pdf",
+                Name = "PDX SMS Manual 2025",
+                Description = "PDX SMS Manual 2025",
+                FileName = "PDX SMS Manual 2025.pdf",
                 Category = "policies",
                 Type = "Procedure",
                 Size = "3.2 MB",
                 LastModified = DateTime.Now.AddDays(-7),
                 Icon = "picture_as_pdf",
                 Color = "var(--rz-warning)"
-            },
-            new()
-            {
-                Name = "Safety Training Manual",
-                Description = "Safety training procedures and educational materials for staff",
-                FileName = "safety-training-manual.pdf",
-                Category = "manuals",
-                Type = "Manual",
-                Size = "4.5 MB",
-                LastModified = DateTime.Now.AddDays(-45),
-                Icon = "picture_as_pdf",
-                Color = "var(--rz-success)"
             }
         };
     }

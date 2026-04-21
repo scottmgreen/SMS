@@ -286,6 +286,9 @@ namespace SMS3.Api.Services
 
         private async Task<Result<HazardLocation>> CreateHazardLocationAsync(PDXSMSReportApiRequest request, string hazardCode)
         {
+            // TODO: Add check to prevent duplicate location creation
+            // Check if hazard location already exists for this hazard code
+
             var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
             {
                 HazardCode = hazardCode,
@@ -293,6 +296,9 @@ namespace SMS3.Api.Services
                 Longitude = request.Longitude,
                 Description = request.LocationDescription
             };
+
+            _logger.LogInformation("??? Creating hazard location for {HazardCode}: Lat={Latitude}, Lon={Longitude}, Desc='{Description}'", 
+                hazardCode, request.Latitude, request.Longitude, request.LocationDescription);
 
             return await _mediator.SendAsync(new CreateHazardLocationCommand(hazardLocation), CancellationToken.None);
         }

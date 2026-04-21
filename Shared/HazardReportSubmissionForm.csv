@@ -1,0 +1,86 @@
+Date Created,Hazard ID,PIN # (Concat),Hazard Category,Hazard Type,"If Other, please specify:",Detailed Description,Date and Time of Incident,Upload an Image or File,Location,Location (AOA),Location (AOA) - WKT,Location (Bag Road or Baggage Make-up Area),Location (Bag Road or Baggage Make-up Area) - WKT,Hazard Report Status,First Name,Last Name,Company,Email Address,Phone Number
+4/13/2026 6:01,HZ-2026-015,041320264210,Incident,Incursion,,"At 0430 AF1 was notified by Tower that there was a white transit van on the runway 28L and it was headed towards maintenance off of 28L at C8.  When I was on the VSR trying to find the van, tower notified me to turn into the sky chef's area.  Once I got into the sky chefs parking, I was approached by Teresa.  At that point I asked Teresa if she was the one who was driving the van that was on 28L and she confirmed that it was her and that she got lost and didn't know where she was at.  She apologizes several times and I asked her if she was ok and if there was anything that made her feel confused.  She told me that it was the rain and lighting that got here confused where she was at.  I notified her and her supervisor that her driving privileges on the airfield were suspended until further notice",4/13/2026 4:30,,Air Operations Area (AOA),"45.5805564831504,-122.5842046737671",POINT (-122.5842046737671 45.5805564831504),,,2026-04-15: Safety Validation -,,,,,
+4/9/2026 7:50,HZ-2026-007,040920263225,Other,,Damage - Infrastructure,"Additional damage occurred on D15 jetbridge on 4/8/26 at 1952. From camera D3_683, The jetbridge can be seen being lowered to accommodate the E175 aircraft type. During the process, the wheel and castor at the bottom right hand side of the stair can be seen shearing/bending prior to aircraft arrival. 4/9/26, building maintenance has taken it out of service for repair. 2 aircraft were serviced while the wheel was broken. Maintenance had mentioned that it was damaged previously but was still functional.",3/8/2026 19:52,,Air Operations Area (AOA),"45.591759053159635,-122.59712219238283",POINT (-122.59712219238283 45.591759053159635),,,2026-04-15: Safety Validation -,,,,,
+4/9/2026 12:45,HZ-2026-009,04092026918,General Hazard,,,Power cable on gate D6 has 2 loops unattached. The mechanism is in the “up” position and the rest of the cable is on the ground,,Photo-2026-04-09T19-44-52-515Z.jpg,Air Operations Area (AOA),"45.59038043844868,-122.59511653456248",POINT (-122.59511653456248 45.59038043844868),,,"2026-04-15: Investigation - Hazard report review complete, investigator assigned.",,,,,
+4/10/2026 16:30,HZ-2026-011,041020262728,FOD,Metal,,"Half of a broken black and silver pen with metal components.
+
+Note: phone images not supported. Cannot attch.",4/10/2026 16:26,,Air Operations Area (AOA),"45.59000926820791,-122.59549006819728",POINT (-122.59549006819728 45.59000926820791),,,2026-04-14: - Captured FOD report as data point. Low Risk.,,,,,
+4/1/2026 17:24,HZ-2026-001,040120262940,Non-Standard Operation,UAS Missions,,"The TWY K/A contractor is requesting to operate a UAS on a weekly/bi-weekly frequency in support of the project. I am waiting for a workplan and schedule of the project.  I am recommending an SRA to investigate the risks and determine whether or not this permit request should be approved.
+
+The attached map shows the general location of where the contractor is requesting to fly. (Depicted by the red polygon).  A full mission plan may be required in preparation for an SRA.",,Initial Map.png,Air Operations Area (AOA),"45.59401631621417,-122.59798049926759",POINT (-122.59798049926759 45.59401631621417),,,,,,,,
+4/13/2026 14:06,HZ-2026-016,041320262205,Incident,Surface Incident (non-movement),,At approximately 0830 Scott Huntley with LSG Sky Chefs exited the VSR at the east end of the southeast cargo ramp. After exiting the pavement Mr. Huntley struck a sign.,4/13/2026 8:36,,Air Operations Area (AOA),"45.58110746609977,-122.57936328649522",POINT (-122.57936328649522 45.58110746609977),,,04/13/2026 14:35: Status - Request Submitted,,,,,
+4/12/2026 10:11,HZ-2026-014,041220263442,General Hazard,,,I was honking and turning the cart around before Alaska/Horizon Tug driver turned the corner in a fast speed. He was impatience and I was rushing to turn. I backed up twice becuase he moved forward after barely stopping to even give me a chance to turn. I was concerned I was going to get hit as he kept moving forward. This Happened at around 0837 to 0840 am on April12th Sunday,,,Bag Road or Baggage Make-Up Area,,,,,04/12/2026 11:02: Status - Request Submitted,,,,,
+4/12/2026 10:05,HZ-2026-013,041220261891,General Hazard,,,I was honking and turning the cart around before Alaska/Horizon Tug driver turned the corner in a fast speed. He was impatience and I was rushing to turn. I backed up twice becuase he moved forward after barely stopping to even give me a chance to turn. I was concerned I was going to get hit as he kept moving forward.,,,Bag Road or Baggage Make-Up Area,,,,,04/12/2026 11:02: Status - Request Submitted,,,,,
+4/11/2026 11:34,HZ-2026-012,041120262667,General Hazard,,,The power cord on the jetway for gate C15 is stowed yet resting on the ground.,,Photo-2026-04-11T18-33-46-938Z.jpg,Air Operations Area (AOA),"45.589319344520874,-122.59842295149866",POINT (-122.59842295149866 45.589319344520874),,,04/11/2026 12:32: Status - Request Submitted,,,,,
+4/9/2026 13:30,HZ-2026-010,040920262271,General Hazard,,,"At this flex gate, the safety envelope markings currently show a solid line for narrow-body aircraft and a dotted line for widebody aircraft. This setup has led to confusion among ground handlers, with some positioning equipment outside the narrow-body safety line when a widebody is expected.
+
+This inconsistency has already resulted in damage to both an aircraft and a belt loader.
+
+To eliminate ambiguity and improve safety, it is recommended to remove the narrow-body safety line and designate the widebody envelope as the single solid reference line. This approach ensures that all ground equipment remains clear of the largest required safety envelope, regardless of whether a narrow-body or widebody aircraft is assigned to the gate.
+
+Implementing this change will standardize positioning practices and reduce the risk of future incidents.
+
+Sincerely,
+Danger",,,Air Operations Area (AOA),"45.5901871115395,-122.60009407997133",POINT (-122.60009407997133 45.5901871115395),,,04/09/2026 14:21: Status - Request Submitted,,,,,
+4/9/2026 10:18,HZ-2026-008,040920263617,General Hazard,,,"Was taking the Fire Walk last week and noticed the large hole in the drainage grates. I'm sure they we're purpose built with this design in mind, but it seems to present a significant subsurface tripping hazard.",,84c4f7b9-823a-4dd4-afb5-e2a6a936c934.jpg,Air Operations Area (AOA),"45.58985207112635,-122.59433269500734",POINT (-122.59433269500734 45.58985207112635),,,04/09/2026 11:07: Status - Request Submitted,,,,,
+4/3/2026 13:56,HZ-2026-004,040320263271,Operational Change,"New or modified procedures, policies, agreements, plans, or regulations",,"Need to evaluate the feasibility of closing four E gates for TWY K Project in 2027. United is being asked if they can accommodate the change by modifying the way they taxi in and out of the gate. Safety assessment is being requested by airside planning and United.
+
+•	Closure of four gates (E3 – E6)
+•	The tow-in / push-back operation on gate E2
+•	Re-positioning of  aircraft to/from remote RON at the North Ramp.",,4 Gate Closure Option.pdf,Air Operations Area (AOA),"45.59037161762655,-122.59098529815675",POINT (-122.59098529815675 45.59037161762655),,,"2026-04-07: Investigation - Safety investigator has been assigned, hazard summary in development for risk assessment.",,,,,
+4/5/2026 5:55,HZ-2026-006,0405202649,Incident,Other,Near runway incursion on Rwy10L with vehicle and aircraft.,"This morning at 0819L AF1 (Danny Gilliland) was conducting a runway inspection on runway 28R. He was cleared onto the runway by ATC and began the inspection. Approximately 1 minute later ATC cleared a Pilatus PC12 to take off on runway 28R. AF1 informed ATC he was still on the runway while simultaneously exiting at the closest taxiway, A3. ATC canceled the takeoff clearance and the PC-12 held short of the runway. It does not appear that an actual incursion occurred, but this was a serious situation that could have had tragic consequences.  
+
+A factor that may have contributed: It appears aircraft on the same runway were using both 118.7 and 123.775. A challenger that departed prior to AF1 requesting the runway was on 118.7 the Pilatus was on 123.775. AF1 switched from 123.775 to 118.7 since the challengers was on that frequency and believed split runway frequencies were being used. ATC was simulcasting on both frequencies so they may not have been aware that AF1 and the Pilatus could not here each other.
+
+On 118.7: AF1 requests clearance to inspect 28R from K1; file 081830DA at 00:19 (time: 0819L)
+
+On 118.7/123.775: Tower clears AF1 onto 28R, file 081830DA at 00:24 (time: 0819L)
+
+On 118.7/123.775: Tower clears Pilatus N726KP to take off on 28R; file 081958DA (time: 0820L)
+
+On 118.7 AF1 informs Tower (twice) he is still on the runway; file 081958DA at 00:16 (time: 0820L)
+
+On 118.7/123.775: Tower cancels takeoff clearance for Pilatus N726KP; file 081958DA at 00:20 (time: 0820L)
+
+On 123.775: Pilatus N726KP acknowledges canceled take off clearance;  file 081958DA (time: 0820L)
+
+Statement from Danny Gilliliand:
+
+“This morning, during my inspection of RWY 10L/28R (around 0818 to 0821), the Tower controller cleared an aircraft to take off while I was on the runway.
+
+Prior to my inspection, I monitored tower frequency 123.775 to discern if we were using combined tower frequency or if I should switch to 118.7. A departing aircraft was told by ATC to contact departure, and I did not hear it respond on 123.775, leading me to switch to 118.7 to contact tower for my inspection clearance. Tower cleared me onto the runway for inspection at roughly 0818 or 0819. While halfway down the runway, I heard the controller clear an aircraft for takeoff. I immediately broadcast my position on frequency and began heading for the exit at TWY A3. Due to no response from ATC (likely stepped on by the aircraft responding to the takeoff clearance), I broadcasted my location on the runway a second time before exiting the runway. The controller cancelled the aircraft’s takeoff clearance prior to it entering the runway and cleared me back onto the runway to continue my inspection. I had the controller confirm the instruction before acknowledging and proceeding back on.
+
+I do not believe that any actual runway incursion occurred, but due to the nature of the incident I believe it is worth investigating.”
+
+Although the situation was corrected quickly, this situation had the serious potential for a terrible outcome. In light of that and to avoid a reoccurrence this should be reviewed with a safety lens.",3/31/2026 8:20,,Air Operations Area (AOA),"45.591804099195976,-122.58772373199464",POINT (-122.58772373199464 45.591804099195976),,,04/05/2026 06:50: Status - Request Submitted,,,,,
+4/3/2026 14:28,HZ-2026-005,040320261221,Safety Review,Procedural review request,,"ADM received a call from DL Ops with a safety concern at gate D15. While DL was preparing to push their RON aircraft for departure, McGee/AS personnel showed up on the ramp. As soon as the aircraft was moving the AS/McGee individuals started moving equipment on the ramp. As the DL tug and wing walkers were returning to the gate the AS personnel were already marshalling the AS aircraft into the gate. This rush to use the gate before personnel and equipment are out of the way appears unsafe. Especially so because they are creating pressure on another carrier to changes their procedures.
+ 
+Although the DL aircraft was late, it was only 7 minutes late. The rushed actions of AS do not seem justified with such a short delay and when other gates could have been used such as D10. AS taxied an aircraft from RON to D10 at 0555.  
+ 
+Camera D3_683 – FIS at 0558 shows the DL aircraft push and subsequent actions.",3/31/2026 14:09,,Air Operations Area (AOA),"45.59199629525727,-122.59702563285828",POINT (-122.59702563285828 45.59199629525727),,,04/03/2026 15:04: Status - Request Submitted,,,,,
+4/3/2026 13:33,HZ-2026-003,040320262866,Incident,Surface Incident (non-movement),,Wide vehicle accident. It appears the Menzies tanker is wider than the VSR and ends up clipping the Alaska lav truck as there was traffic coming at him in the other lane. This occurred at 06:21:28 on the C23 apron cam.,4/3/2026 6:21,,Air Operations Area (AOA),"45.59027101212585,-122.60071635246278",POINT (-122.60071635246278 45.59027101212585),,,04/03/2026 14:29: Status - Request Submitted,,,,,
+4/3/2026 13:12,HZ-2026-002,04032026564,Incident,Surface Incident (movement),,"During a RWY inspection of RWY 10L/28R (around 0818 to 0821) by AOS, the Tower controller cleared an aircraft to take off while he was on the runway. 
+
+Prior to his inspection, he monitored tower frequency 123.775 to discern if they were using combined tower frequency or if he should switch to 118.7. A departing aircraft was told by ATC to contact departure, and he did not hear it respond on 123.775, leading him to switch to 118.7 to contact tower for his inspection clearance. Tower cleared him onto the runway for inspection at roughly 0818 or 0819. While halfway down the runway, he heard the controller clear an aircraft for takeoff. He immediately broadcast his position on frequency and began heading for the exit at TWY A3. Due to no response from ATC (likely stepped on by the aircraft responding to the takeoff clearance), he broadcasted his location on the runway a second time before exiting the runway. The controller cancelled the aircraft’s takeoff clearance prior to it entering the runway and cleared him back onto the runway to continue his inspection. He had the controller confirm the instruction before acknowledging and proceeding back on.
+
+He does not believe that any actual runway incursion occurred.
+
+Follow-up statement from supervisor:
+
+This morning at 0819L AF1 was conducting a runway inspection on runway 28R. He was cleared onto the runway by ATC and began the inspection. Approximately 1 minute later ATC cleared a Pilatus PC12 to take off on runway 28R. AF1 informed ATC he was still on the runway while simultaneously exiting at the closest taxiway, A3. ATC canceled the takeoff clearance and the PC-12 held short of the runway. It does not appear that an actual incursion occurred, but this was a serious situation that could have had tragic consequences.  
+
+A factor that may have contributed: It appears aircraft on the same runway were using both 118.7 and 123.775. A challenger that departed prior to AF1 requesting the runway was on 118.7 the Pilatus was on 123.775. AF1 switched from 123.775 to 118.7 since the challengers was on that frequency and believed split runway frequencies were being used. ATC was simulcasting on both frequencies so they may not have been aware that AF1 and the Pilatus could not here each other. 
+
+On 118.7: AF1 requests clearance to inspect 28R from K1; file 081830DA at 00:19 (time: 0819L)
+
+On 118.7/123.775: Tower clears AF1 onto 28R, file 081830DA at 00:24 (time: 0819L)
+
+On 118.7/123.775: Tower clears Pilatus N726KP to take off on 28R; file 081958DA (time: 0820L)
+
+On 118.7 AF1 informs Tower (twice) he is still on the runway; file 081958DA at 00:16 (time: 0820L)
+
+On 118.7/123.775: Tower cancels takeoff clearance for Pilatus N726KP; file 081958DA at 00:20 (time: 0820L)
+
+On 123.775: Pilatus N726KP acknowledges canceled take off clearance;  file 081958DA (time: 0820L)
+
+Although the situation was corrected quickly, this situation had the serious potential for a terrible outcome. In light of that and to avoid a reoccurrence this should be reviewed with a safety lens.",3/31/2026 8:18,,Air Operations Area (AOA),"45.58622111852574,-122.57373332977296",POINT (-122.57373332977296 45.58622111852574),,,04/03/2026 14:03: Status - Request Submitted,,,,,

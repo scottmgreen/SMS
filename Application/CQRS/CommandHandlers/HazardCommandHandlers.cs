@@ -64,29 +64,12 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
 
             hazard = hazardResult.Value;
 
-            // ✅ FIXED: Create hazard location using IMediator -> ensures AuditPipeline consistency
-            var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
-            {
-                HazardCode = hazard.Code,
-                Latitude = 0,
-                Longitude = 0,
-                Description = "Map selected location"
-            };
+            // 🔧 FIXED: DO NOT auto-create default location here
+            // Location creation should be handled by the calling service (UI/API) based on actual data
+            // This prevents duplicate location entries and allows proper coordinate handling
+            _logger.LogInformation("✅ Hazard created without auto-location - Code: {HazardCode}. Location will be handled by calling service.", hazard.Code);
 
-            var createLocationCommand = new CreateHazardLocationCommand(hazardLocation);
-            var createdLocationResult = await _mediator.SendAsync(createLocationCommand, ct);  // 🔧 FIXED: Use IMediator instead of direct service call
-            
-            if (createdLocationResult.IsSuccess)
-            {
-                hazard.HazardLocation = createdLocationResult.Value;
-                _logger.LogInformation("✅ HazardLocation created via IMediator with audit trail for Hazard: {HazardCode}", hazard.Code);
-            }
-            else
-            {
-                _logger.LogWarning("⚠️ Failed to create HazardLocation via IMediator for Hazard: {HazardCode}", hazard.Code);
-            }
-
-            _logger.LogApplicationInformation(ApplicationEventIds.Information, "✅ CQRS Consistent: Hazard and sub-entities saved with complete audit trail - {Code}", hazard.Code);
+            _logger.LogApplicationInformation(ApplicationEventIds.Information, "✅ CQRS Consistent: Hazard saved with complete audit trail - {Code}", hazard.Code);
             return Result<Hazard>.Success(hazardResult.Value);
         }
         catch (Exception ex)

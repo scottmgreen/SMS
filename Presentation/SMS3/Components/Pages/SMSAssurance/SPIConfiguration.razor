@@ -26,7 +26,7 @@
 
 <RadzenStack Gap="1rem">
     <!-- Filters Card -->
-    <RadzenCard Variant="Variant.Outlined">
+    @* <RadzenCard Variant="Variant.Outlined">
         <RadzenText TextStyle="TextStyle.H6" class="mb-3">Filters</RadzenText>
         <RadzenRow Gap="1rem">
             <RadzenColumn Size="12" SizeMD="3">
@@ -72,7 +72,7 @@
                 </RadzenFormField>
             </RadzenColumn>
         </RadzenRow>
-    </RadzenCard>
+    </RadzenCard> *@
 
     <!-- SPI Data Grid -->
     <RadzenCard Variant="Variant.Outlined">
@@ -113,7 +113,7 @@
                                 @if (!string.IsNullOrEmpty(spi.Description))
                                 {
                                     <RadzenText TextStyle="TextStyle.Caption" class="rz-color-secondary">
-                                        @TruncateText(spi.Description, 50)
+                                        @TruncateText(spi.Description, 200)
                                     </RadzenText>
                                 }
                             </RadzenStack>
@@ -171,7 +171,7 @@
                                               Icon="edit" 
                                               ToolTip="Edit SPI"
                                               Click="@(() => EditSPI(spi))" />
-                                <RadzenButton ButtonStyle="ButtonStyle.Info" 
+                                <RadzenButton ButtonStyle="ButtonStyle.Base" 
                                               Variant="Variant.Flat" 
                                               Size="ButtonSize.ExtraSmall" 
                                               Icon="bar_chart" 
