@@ -1,0 +1,745 @@
+﻿# GitHub Copilot Chat Session
+**Date:** 2025-11-04  
+**Project:** PDXSMS_V2 - SMS Safety Management System  
+**Session Type:** Development Session
+**Commits:** 2 commits made this day
+
+## ?? Likely Discussion Topics
+Based on your Git activity, you probably discussed:
+
+- **Repository Pattern Implementation**
+- **Risk Assessment & Hazard Management**
+- **Mapping & Location Features**
+- **User Management System**
+- **API & Service Layer Development**
+- **Blazor UI Components**
+- **Security & Authentication**
+## ?? Development Activity Summary
+**Total Commits:** 2  
+**Files Modified:** 665  
+**Development Intensity:** High
+
+## Git Commit History for This Day:
+- **e7116de** - FULL INITIAL DATABASE INTEGRATION TESTED!
+- **246ed88** - Clean AND Working with Datbase Integration Tests.
+## ?? Files Modified:
+- `Infrastructure/Common/FieldNames.cs`
+- `Infrastructure/Common/Mappers.cs`
+- `Infrastructure/Common/ParameterNames.cs`
+- `Infrastructure/Persistence/AirportSharedDatasetRepository.cs`
+- `Infrastructure/Persistence/InterviewRepository.cs`
+- `Infrastructure/Persistence/InvestigationRepository.cs`
+- `Infrastructure/Persistence/MitigationAssignmentRepository.cs`
+- `Infrastructure/Persistence/MitigationRepository.cs`
+- `Infrastructure/Persistence/ReportRepository.cs`
+- `Infrastructure/Persistence/ReportValidationRepository.cs`
+- `Infrastructure/Persistence/RiskAnalysisRepository.cs`
+- `Infrastructure/Persistence/RiskAssessmentRepository.cs`
+- `Infrastructure/Persistence/ScoringPanelRepository.cs`
+- `PDXSMS_UnitTests/Infrastructure/AirportSharedDatasetDatabaseIntegrationTests.cs`
+- `PDXSMS_UnitTests/Infrastructure/DatabaseTestBase.cs`
+- `PDXSMS_UnitTests/Infrastructure/IntegrationTestsSuiteStatus.md`
+- `PDXSMS_UnitTests/Infrastructure/InterviewDatabaseIntegrationTests.cs`
+- `PDXSMS_UnitTests/Infrastructure/InvestigationDatabaseIntegrationTests.cs`
+- `PDXSMS_UnitTests/Infrastructure/MitigationDatabaseIntegrationTests.cs`
+- `PDXSMS_UnitTests/Infrastructure/ReportDatabaseIntegrationTests.cs`
+- `PDXSMS_UnitTests/Infrastructure/RepositoryUnitTests.cs`
+- `PDXSMS_UnitTests/Infrastructure/ScoringPanelDatabaseIntegrationTests.cs`
+- `PDXSMS_UnitTests/Infrastructure/TestIdGenerationGuide.md`
+- `Application/Application.csproj`
+- `Application/Common/ApplicationEventIds.cs`
+- `Application/Common/ApplicationLogMessages.cs`
+- `Application/Common/BaseCommandBundle.cs`
+- `Application/Common/BaseEventBundle.cs`
+- `Application/Common/BaseLoggingPipeline.cs`
+- `Application/Common/BaseQueryBundle.cs`
+- `Application/Common/BaseState.cs`
+- `Application/Configuration/DependencyInjection.cs`
+- `Application/Configuration/ServiceCollectionExtensions.cs`
+- `Application/Interfaces/IBaseMachine.cs`
+- `Application/Interfaces/IBaseRequest.cs`
+- `Application/Interfaces/IBaseState.cs`
+- `Application/Interfaces/IBaseStrategy.cs`
+- `Application/Interfaces/IMediator.cs`
+- `Application/Interfaces/IMessenger.cs`
+- `Application/Interfaces/IPipeline.cs`
+- `Application/Interfaces/IRequest.cs`
+- `Application/Interfaces/IRequestHandler.cs`
+- `Application/Messaging/CircuitHandlers/BaseCircuitHandler.cs`
+- `Application/Messaging/CircuitHandlers/SMS_CircuitHandler.cs`
+- `Application/Messaging/CircuitHandlers/SMS_DashboardCircuitHandler.cs`
+- `Application/Messaging/CommandHandlers/AddAuditLogEntryCommandHandler.cs`
+- `Application/Messaging/CommandHandlers/AirportSharedDatasetCommandHandlers.cs`
+- `Application/Messaging/CommandHandlers/HazardCommandHandlers.cs`
+- `Application/Messaging/CommandHandlers/InterviewCommandHandlers.cs`
+- `Application/Messaging/CommandHandlers/InvestigationCommandHandlers.cs`
+- `Application/Messaging/CommandHandlers/MitigationAssignmentCommandHandlers.cs`
+- `Application/Messaging/CommandHandlers/MitigationCommandHandlers.cs`
+- `Application/Messaging/CommandHandlers/ReportCommandHandlers.cs`
+- `Application/Messaging/CommandHandlers/ReportValidationCommandHandlers.cs`
+- `Application/Messaging/CommandHandlers/RiskAnalysisCommandHandlers.cs`
+- `Application/Messaging/CommandHandlers/RiskAssessmentCommandHandlers.cs`
+- `Application/Messaging/CommandHandlers/ScoringPanelCommandHandlers.cs`
+- `Application/Messaging/Commands/AddAuditLogEntryCommand.cs`
+- `Application/Messaging/Commands/AirportSharedDatasetCommands.cs`
+- `Application/Messaging/Commands/HazardCommands.cs`
+- `Application/Messaging/Commands/InterviewCommands.cs`
+- `Application/Messaging/Commands/InvestigationCommands.cs`
+- `Application/Messaging/Commands/MitigationAssignmentCommands.cs`
+- `Application/Messaging/Commands/MitigationCommands.cs`
+- `Application/Messaging/Commands/ReportCommands.cs`
+- `Application/Messaging/Commands/ReportValidationCommands.cs`
+- `Application/Messaging/Commands/RiskAnalysisCommands.cs`
+- `Application/Messaging/Commands/RiskAssessmentCommands.cs`
+- `Application/Messaging/Commands/ScoringPanelCommands.cs`
+- `Application/Messaging/Pipelines/AuditLogPipeline.cs`
+- `Application/Messaging/Pipelines/LoggingPipeline.cs`
+- `Application/Messaging/Queries/AirportSharedDatasetQueries.cs`
+- `Application/Messaging/Queries/HazardQueries.cs`
+- `Application/Messaging/Queries/InterviewQueries.cs`
+- `Application/Messaging/Queries/InvestigationQueries.cs`
+- `Application/Messaging/Queries/MitigationAssignmentQueries.cs`
+- `Application/Messaging/Queries/MitigationQueries.cs`
+- `Application/Messaging/Queries/ReportQueries.cs`
+- `Application/Messaging/Queries/ReportValidationQueries.cs`
+- `Application/Messaging/Queries/RiskAnalysisQueries.cs`
+- `Application/Messaging/Queries/RiskAssessmentQueries.cs`
+- `Application/Messaging/Queries/ScoringPanelQueries.cs`
+- `Application/Messaging/QueryHandlers/AirportSharedDatasetQueryHandlers.cs`
+- `Application/Messaging/QueryHandlers/HazardQueryHandlers.cs`
+- `Application/Messaging/QueryHandlers/InterviewQueryHandlers.cs`
+- `Application/Messaging/QueryHandlers/InvestigationQueryHandlers.cs`
+- `Application/Messaging/QueryHandlers/MitigationAssignmentQueryHandlers.cs`
+- `Application/Messaging/QueryHandlers/MitigationQueryHandlers.cs`
+- `Application/Messaging/QueryHandlers/ReportQueryHandlers.cs`
+- `Application/Messaging/QueryHandlers/ReportValidationQueryHandlers.cs`
+- `Application/Messaging/QueryHandlers/RiskAnalysisQueryHandlers.cs`
+- `Application/Messaging/QueryHandlers/RiskAssessmentQueryHandlers.cs`
+- `Application/Messaging/QueryHandlers/ScoringPanelQueryHandlers.cs`
+- `Application/Services/DashboardService.cs`
+- `Application/Services/HazardService.cs`
+- `Application/Services/InterviewService.cs`
+- `Application/Services/InvestigationService.cs`
+- `Application/Services/MediatorService.cs`
+- `Application/Services/MessengerService.cs`
+- `Application/Services/MitigationAssignmentService.cs`
+- `Application/Services/MitigationService.cs`
+- `Application/Services/ReportService.cs`
+- `Application/Services/ReportValidationService.cs`
+- `Application/Services/RiskAnalysisService.cs`
+- `Application/Services/RiskAssessmentService.cs`
+- `Application/Services/ScoringPanelService.cs`
+- `Application/Services/SystemService.cs`
+- `Application/States/CourseFailState.cs`
+- `CBT3.sln`
+- `CBT3_Application/CBT3_Application.csproj`
+- `CBT3_Application/Common/BaseMachine.cs`
+- `CBT3_Application/Interfaces/IBaseStrategy.cs`
+- `CBT3_Application/Messaging/CommandHandlers/AddTraineeCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/AddTrainingLogEntryCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/CourseCompletionCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/FinishTrainingSessionCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/MachineResumeCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/MachineStartCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/MachineStateChangeCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/MachineStateExitCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/StartLessonQuizCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/StartTrainingSessionCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/SubmitAnswerCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/SubmitAnswersCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/SubmitFirstNameCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/SubmitFirstUPIDCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/SubmitFirstYearOfBirthCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/SubmitLastNameCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/SubmitSecondUPIDCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/SubmitSecondYearOfBirthCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/TrainingSessionCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/UpdateTrainingSessionCommandHandler.cs`
+- `CBT3_Application/Messaging/CommandHandlers/UpdateTrainingStationCommandHandler.cs`
+- `CBT3_Application/Messaging/Commands/AddTraineeCommand.cs`
+- `CBT3_Application/Messaging/Commands/AddTrainingLogEntryCommand.cs`
+- `CBT3_Application/Messaging/Commands/CourseCompletionCommand.cs`
+- `CBT3_Application/Messaging/Commands/FinishTrainingSessionCommand.cs`
+- `CBT3_Application/Messaging/Commands/MachineResumeCommand.cs`
+- `CBT3_Application/Messaging/Commands/MachineStartCommand.cs`
+- `CBT3_Application/Messaging/Commands/MachineStateChangeCommand.cs`
+- `CBT3_Application/Messaging/Commands/MachineStateExitCommand.cs`
+- `CBT3_Application/Messaging/Commands/StartLessonQuizCommand.cs`
+- `CBT3_Application/Messaging/Commands/StartTrainingSessionCommand.cs`
+- `CBT3_Application/Messaging/Commands/SubmitAnswerCommand.cs`
+- `CBT3_Application/Messaging/Commands/SubmitAnswersCommand.cs`
+- `CBT3_Application/Messaging/Commands/SubmitFirstNameCommand.cs`
+- `CBT3_Application/Messaging/Commands/SubmitFirstUPIDCommand.cs`
+- `CBT3_Application/Messaging/Commands/SubmitFirstYearOfBirthCommand.cs`
+- `CBT3_Application/Messaging/Commands/SubmitLastNameCommand.cs`
+- `CBT3_Application/Messaging/Commands/SubmitSecondUPIDCommand.cs`
+- `CBT3_Application/Messaging/Commands/SubmitSecondYearOfBirthCommand.cs`
+- `CBT3_Application/Messaging/Commands/SubmitSubscribeToEmailNewsletterCommand.cs`
+- `CBT3_Application/Messaging/Commands/SubmitSubscribeToOperationalTextsCommand.cs`
+- `CBT3_Application/Messaging/Commands/SubmitSubscribeToTextNewsletterCommand.cs`
+- `CBT3_Application/Messaging/Commands/TrainingSessionCommand.cs`
+- `CBT3_Application/Messaging/Commands/UpdateTrainingSessionCommand.cs`
+- `CBT3_Application/Messaging/Commands/UpdateTrainingStationCommand.cs`
+- `CBT3_Application/Messaging/Queries/GetCourseCodesQuery.cs`
+- `CBT3_Application/Messaging/Queries/GetCourseQuery.cs`
+- `CBT3_Application/Messaging/Queries/GetCoursesQuery.cs`
+- `CBT3_Application/Messaging/Queries/GetMismatchedTrainingRecordsQuery.cs`
+- `CBT3_Application/Messaging/Queries/GetTraineeQuery.cs`
+- `CBT3_Application/Messaging/Queries/GetTrainingRecordsQuery.cs`
+- `CBT3_Application/Messaging/Queries/GetTrainingStationQuery.cs`
+- `CBT3_Application/Messaging/Queries/GetTrainingStationsQuery.cs`
+- `CBT3_Application/Messaging/QueryHandlers/GetCourseCodesQueryHandler.cs`
+- `CBT3_Application/Messaging/QueryHandlers/GetCourseQueryHandler.cs`
+- `CBT3_Application/Messaging/QueryHandlers/GetCoursesQueryHandler.cs`
+- `CBT3_Application/Messaging/QueryHandlers/GetMismatchedTrainingRecordsQueryHandler.cs`
+- `CBT3_Application/Messaging/QueryHandlers/GetTraineeQueryHandler.cs`
+- `CBT3_Application/Messaging/QueryHandlers/GetTrainingRecordsQueryHandler.cs`
+- `CBT3_Application/Messaging/QueryHandlers/GetTrainingStationQueryHandler.cs`
+- `CBT3_Application/Messaging/QueryHandlers/GetTrainingStationsQueryHandler.cs`
+- `CBT3_Application/Services/CourseMachineService.cs`
+- `CBT3_Application/Services/DashboardService.cs`
+- `CBT3_Application/Services/LessonQuizService.cs`
+- `CBT3_Application/Services/RegistrationService.cs`
+- `CBT3_Application/Services/TrainingService.cs`
+- `CBT3_Application/States/CourseFailState.cs`
+- `CBT3_Application/States/CourseFinishState.cs`
+- `CBT3_Application/States/CoursePassState.cs`
+- `CBT3_Application/States/CourseStartState.cs`
+- `CBT3_Application/States/LessonQuizState.cs`
+- `CBT3_Application/States/LessonState.cs`
+- `CBT3_Application/States/LessonTextState.cs`
+- `CBT3_Application/States/LessonVideoState.cs`
+- `CBT3_ConsoleApp/CBT3_ConsoleApp.csproj`
+- `CBT3_ConsoleApp/Program.cs`
+- `CBT3_Domain/CBT3_Domain.csproj`
+- `CBT3_Domain/Entities/Answer.cs`
+- `CBT3_Domain/Entities/AnswerID.cs`
+- `CBT3_Domain/Entities/Course.cs`
+- `CBT3_Domain/Entities/CourseID.cs`
+- `CBT3_Domain/Entities/Lesson.cs`
+- `CBT3_Domain/Entities/LessonID.cs`
+- `CBT3_Domain/Entities/LessonPage.cs`
+- `CBT3_Domain/Entities/LessonPageID.cs`
+- `CBT3_Domain/Entities/LessonQuiz.cs`
+- `CBT3_Domain/Entities/LessonQuizID.cs`
+- `CBT3_Domain/Entities/Question.cs`
+- `CBT3_Domain/Entities/QuestionID.cs`
+- `CBT3_Domain/Entities/QuestionPool.cs`
+- `CBT3_Domain/Entities/QuestionPoolID.cs`
+- `CBT3_Domain/Entities/Trainee.cs`
+- `CBT3_Domain/Entities/TraineeID.cs`
+- `CBT3_Domain/Entities/TrainingLogEntry.cs`
+- `CBT3_Domain/Entities/TrainingLogEntryID.cs`
+- `CBT3_Domain/Entities/TrainingRecord.cs`
+- `CBT3_Domain/Entities/TrainingSession.cs`
+- `CBT3_Domain/Entities/TrainingSessionID.cs`
+- `CBT3_Domain/Entities/TrainingStation.cs`
+- `CBT3_Domain/Enums/MachineState.cs`
+- `CBT3_Domain/Enums/PageType.cs`
+- `CBT3_Domain/Enums/QuestionType.cs`
+- `CBT3_Domain/Enums/QuizState.cs`
+- `CBT3_Domain/Enums/TrainingStationStatus.cs`
+- `CBT3_Domain/Enums/TrainingStatus.cs`
+- `CBT3_Domain/Errors/DomainErrors.cs`
+- `CBT3_Domain/Events/DomainEvents/AskQuestionEvent.cs`
+- `CBT3_Domain/Events/DomainEvents/CourseStateEvent.cs`
+- `CBT3_Domain/Events/DomainEvents/LessonQuizFinishedEvent.cs`
+- `CBT3_Domain/Events/DomainEvents/LessonQuizStartedEvent.cs`
+- `CBT3_Domain/Events/DomainEvents/MCQuestionAnsweredEvent.cs`
+- `CBT3_Domain/Events/DomainEvents/TFQuestionAnsweredEvent.cs`
+- `CBT3_Domain/Events/SystemEvents/LessonPageEvent.cs`
+- `CBT3_Domain/Events/SystemEvents/MachinePauseEvent.cs`
+- `CBT3_Domain/Interfaces/IAnswer.cs`
+- `CBT3_Domain/Interfaces/IBaseLessonPage.cs`
+- `CBT3_Domain/Interfaces/ICourse.cs`
+- `CBT3_Domain/Interfaces/ILesson.cs`
+- `CBT3_Domain/Interfaces/ILessonPage.cs`
+- `CBT3_Domain/Interfaces/ILessonQuiz.cs`
+- `CBT3_Domain/Interfaces/IQuestion.cs`
+- `CBT3_Domain/Interfaces/IQuestionPool.cs`
+- `CBT3_Domain/Interfaces/IRecord.cs`
+- `CBT3_Domain/Interfaces/ITrainee.cs`
+- `CBT3_Domain/Interfaces/ITrainingSession.cs`
+- `CBT3_Domain/Interfaces/ITrainingStation.cs`
+- `CBT3_Domain/ValueObjects/SubscribeToEmailNewsletter.cs`
+- `CBT3_Domain/ValueObjects/SubscribeToOperationalTexts.cs`
+- `CBT3_Domain/ValueObjects/SubscribeToTextNewsletter.cs`
+- `CBT3_Domain/ValueObjects/UPID.cs`
+- `CBT3_Domain/ValueObjects/YearOfBirth.cs`
+- `CBT3_Infrastructure/CBT3_Infrastructure.csproj`
+- `CBT3_Infrastructure/Common/FieldNames.cs`
+- `CBT3_Infrastructure/Common/Mappers.cs`
+- `CBT3_Infrastructure/Common/ParameterNames.cs`
+- `CBT3_Infrastructure/Common/StoredProcs.cs`
+- `CBT3_Infrastructure/Configuration/ServiceCollectionExtensions.cs`
+- `CBT3_Infrastructure/Interfaces/IDashboard.cs`
+- `CBT3_Infrastructure/Persistence/CourseRepository.cs`
+- `CBT3_Infrastructure/Persistence/DashboardRepository.cs`
+- `CBT3_Infrastructure/Persistence/SystemRepository.cs`
+- `CBT3_Infrastructure/Persistence/TrainingRepository.cs`
+- `CBT3_Infrastructure/Services/CourseDataService.cs`
+- `CBT3_Infrastructure/Services/DashboardDataService.cs`
+- `CBT3_Infrastructure/Services/TrainingDataService.cs`
+- `CBT3_Presentation/CBT3_ConsoleApp/CBT3_App.cs`
+- `CBT3_Presentation/CBT3_ConsoleApp/CBT3_ConsoleApp.csproj`
+- `CBT3_Presentation/CBT3_ConsoleApp/CBT3_ConsoleHelper.cs`
+- `CBT3_Presentation/CBT3_ConsoleApp/CBT3_EventHandlers.cs`
+- `CBT3_Presentation/CBT3_ConsoleApp/CBT3_ServiceProvider.cs`
+- `CBT3_Presentation/CBT3_ConsoleApp/Program.cs`
+- `CBT3_Presentation/CBT_UI/CBT3_App.cs`
+- `CBT3_Presentation/CBT_UI/CBT_UI.csproj`
+- `CBT3_Presentation/CBT_UI/Components/App.razor`
+- `CBT3_Presentation/CBT_UI/Components/Layout/MainLayout.razor`
+- `CBT3_Presentation/CBT_UI/Components/Layout/MainLayout.razor.css`
+- `CBT3_Presentation/CBT_UI/Components/Layout/NavMenu.razor`
+- `CBT3_Presentation/CBT_UI/Components/Layout/NavMenu.razor.css`
+- `CBT3_Presentation/CBT_UI/Components/Pages/CoursePlayer.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/CoursePlayer.razor.cs`
+- `CBT3_Presentation/CBT_UI/Components/Pages/CourseSelection.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/CourseSelection.razor.cs`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Error.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/InstructionPage.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Registration.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Registration.razor.cs`
+- `CBT3_Presentation/CBT_UI/Components/Pages/SIDACourseSelection.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/CascadingAppState.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/LessonQuizComponent.cs`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/LessonQuizComponent.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/LessonQuizComponent.razor.css`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/PT_CUSTOM_01.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/PT_CUSTOM_02.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/PT_CUSTOM_03.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/PT_CUSTOM_04.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/PT_CUSTOM_05.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/PT_CUSTOM_06.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/PT_CUSTOM_07.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/SessionToolbar.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/TraineeCourseToolbar.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Shared/VideoComponent.razor`
+- `CBT3_Presentation/CBT_UI/Components/Pages/Splash.razor`
+- `CBT3_Presentation/CBT_UI/Components/Routes.razor`
+- `CBT3_Presentation/CBT_UI/Components/_Imports.razor`
+- `CBT3_Presentation/CBT_UI/DependencyInjection.cs`
+- `CBT3_Presentation/CBT_UI/Program.cs`
+- `CBT3_Presentation/CBT_UI/Properties/launchSettings.json`
+- `CBT3_Presentation/CBT_UI/appsettings.Development.json`
+- `CBT3_Presentation/CBT_UI/wwwroot/app.css`
+- `CBT3_Presentation/CBT_UI/wwwroot/audio/AUD_LOGIN_ENTER_BIRTH_YEAR.mp3`
+- `CBT3_Presentation/CBT_UI/wwwroot/audio/AUD_LOGIN_ENTER_FULL_NAME.mp3`
+- `CBT3_Presentation/CBT_UI/wwwroot/audio/AUD_LOGIN_ENTER_UPID_7.mp3`
+- `CBT3_Presentation/CBT_UI/wwwroot/audio/AUD_LOGIN_REENTER_BIRTH_YEAR.mp3`
+- `CBT3_Presentation/CBT_UI/wwwroot/audio/AUD_LOGIN_REENTER_UPID_7.mp3`
+- `CBT3_Presentation/CBT_UI/wwwroot/audio/AUD_SET_HEADPHONE_LEVELS.mp3`
+- `CBT3_Presentation/CBT_UI/wwwroot/bootstrap/bootstrap.min.css`
+- `CBT3_Presentation/CBT_UI/wwwroot/bootstrap/bootstrap.min.css.map`
+- `CBT3_Presentation/CBT_UI/wwwroot/cbt.js`
+- `CBT3_Presentation/CBT_UI/wwwroot/favicon.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/10L.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/Annotate_Complete.ico`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/Apollo CSM.ico`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/DragFlag.ico`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/Flag_Green.ico`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/Flag_Red.ico`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP01_Q1_A.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP01_Q1_B.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP01_Q1_C.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP01_Q1_D.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP01_Q3_BACKGROUND.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP01_Q3_C_ICON.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP01_Q3_DHS_ICON.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP01_Q3_D_ICON.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP01_Q3_E_ICON.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP01_Q3_M_ICON.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP01_Q3_STAR_ICON.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP01_Q3_SUV_ICON.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP03_Q1_BACK.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP03_Q1_BACKGROUND.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP03_Q1_CAR.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP03_Q1_HOOD.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP03_Q1_LEFT.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP03_Q1_RIGHT.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP03_Q1_TOP.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP03_Q2_100FT.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP03_Q2_25FT.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP03_Q2_50FT.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP03_Q2_75FT.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP03_Q3_SUV.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP04_Q3_DIAGRAM_500.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L1_QP04_Q4_BADGE.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP02_Q1_MAN_STANDING.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP02_Q1_TRAILER.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP02_Q1_TRUCK.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP04_Q1_MAP.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP04_Q2_Q3_AIRCRAFT_PARKING_AREAS.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP04_Q2_Q3_AIRCRAFT_RAMPS.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP04_Q2_Q3_RUNWAYS.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP04_Q2_Q3_TAXIWAYS.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP04_Q2_Q3_VEHICLE_SERVICE_ROADS.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP05_Q2_CHECKERED.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP05_Q2_RED.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP05_Q2_WHITE.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP05_Q2_YELLOW.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP05_Q3_BLACK_WHITE.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP05_Q3_BLACK_YELLOW.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP05_Q3_DIAGRAM.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP05_Q3_RED_WHITE.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP05_Q3_WHITE_RED.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP06_Q1_DIAGRAM.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP06_Q2_AIRPLANE.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP06_Q3_AIRPLANE_FRONT_VIEW.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP06_Q3_CART.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP06_Q3_MAN_STANDING.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP08_Q1_A.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP08_Q1_B.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP08_Q1_DIAGRAM.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP08_Q2_CAR.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP09_Q1_Q2_WING_WALKER.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L2_QP11_Q1_DIAGRAM_500.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP01_Q1_DIAGRAM.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP01_Q2_A.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP01_Q2_B.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP01_Q2_C.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP01_Q3_DIAGRAM.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP02_Q1_DIAGRAM.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP02_Q2_A.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP02_Q2_B.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP02_Q2_C.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP02_Q2_D.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP03_Q1_3MPH.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP03_Q1_Q3_10MPH.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP03_Q1_Q3_5MPH.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP03_Q1_Q3_8MPH.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP03_Q3_20MPH.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP04_Q1_Q3_Q4_15MPH.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP04_Q1_Q3_Q4_20MPH.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP04_Q1_Q3_Q4_25MPH.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP04_Q1_Q3_Q4_35MPH.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP04_Q2_BACKGROUND.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP05_Q1_FOG.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP05_Q2_VISIBILITY.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L3_QP07_Q2_FOG.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L4_QP01_Q1_HANDS_FREE.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L4_QP01_Q1_HEADSET.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L4_QP01_Q1_MP3_PLAYER.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L4_QP01_Q1_TABLET.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1100_L4_QP02_Q2_MAP.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L1_QP01_Q2_2DASH_2SOLID_WHITE.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L1_QP01_Q2_2SOLID_WHITE.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L1_QP01_Q2_2SOLID_YELLOW.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L1_QP01_Q2_DASH_1SOLID_YELLOW.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L1_QP02_Q1_DIAGRAM.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L1_QP02_Q2_DIAGRAM.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L2_QP01_Q3_1SOLID_1DASH_WHITE_RED.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L2_QP01_Q3_2DASH_2SOLID_YELLOW.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L2_QP01_Q3_2SOLID_WHITE.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L2_QP01_Q3_2SOLID_YELLOW.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L2_QP03_Q2_A - Copy.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L2_QP03_Q2_A.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L2_QP03_Q2_B.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L2_QP03_Q2_C.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L2_QP03_Q2_D.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP03_Q2_A.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP03_Q2_B.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP03_Q2_C.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP03_Q2_D.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP03_Q3_A.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP03_Q3_B.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP03_Q3_C.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP03_Q3_D.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP04_Q2_2DASH_2SOLID_YELLOW.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP04_Q2_2DASH_YELLOW_1SOLID_WHITE.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP04_Q2_ILS_POFZ.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP04_Q2_RED_LADDER.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP05_Q3_A.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP05_Q3_B.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP05_Q3_C.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP05_Q3_D.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP06_Q3_A.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP06_Q3_B.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP06_Q3_DIRECTION_SIGN_C.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_C1200_L3_QP06_Q3_DISTANCE_REMAINING_SIGN_D.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_PDX_04_0000_A_062218.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/IMG_PDX_04_0000_B_062218.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/Lunar Module (LEM).ico`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/Mercury Capsule.ico`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/PauseButton.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/SecurityNotice_A.jpg`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/SecurityNotice_B.jpg`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/Thumbs.db`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/_10L.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/_10R.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/_21.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/_28L.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/_28R.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/_3.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/a.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/aircraft_ready_to_move_background.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/airfield.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/b.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/background_opening.jpg`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/background_opening.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/backspace.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/blue.jpg`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/button_grey_fastforward.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/button_grey_pause.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/button_grey_play.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/button_grey_rewind.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/e.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/empty_button.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/enter.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/favicon.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/fod_newspaper.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/fod_paper_bag.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/fod_plastic_bottle.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/fod_reflector_parts.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/fod_screw.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/fod_wrench.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/gray.jpg`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/icons8-prize-94.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/icons8-unlucky-94.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/incursion_a.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/incursion_b.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/incursion_background.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/mostdangerous_a.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/mostdangerous_b.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/mostdangerous_background.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/mostdangerous_c.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/mostdangerous_d.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/mostdangerous_e.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/p4.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/purple.jpg`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/red.jpg`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/signlocation_background.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/signlocation_background2.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/steelplate_background.jpg`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/target.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/vehicleentry_background.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/victor.png`
+- `CBT3_Presentation/CBT_UI/wwwroot/images/whiskey.png`
+- `CBT3_Presentation/CBT_UI_Dashboard/CBT_UI_Dashboard.csproj`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/App.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/CBTDialog.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/CBTTrainingStation.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/Layout/MainLayout.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/Layout/MainLayout.razor.css`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/Layout/NavMenu.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/Layout/NavMenu.razor.css`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/Pages/Counter.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/Pages/Error.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/Pages/History.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/Pages/Home.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/Pages/Mismatches.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/Pages/RealTime.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/Pages/Weather.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/Routes.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/Components/_Imports.razor`
+- `CBT3_Presentation/CBT_UI_Dashboard/DependencyInjection.cs`
+- `CBT3_Presentation/CBT_UI_Dashboard/Program.cs`
+- `CBT3_Presentation/CBT_UI_Dashboard/Properties/launchSettings.json`
+- `CBT3_Presentation/CBT_UI_Dashboard/appsettings.Development.json`
+- `CBT3_Presentation/CBT_UI_Dashboard/appsettings.json`
+- `CBT3_Presentation/CBT_UI_Dashboard/wwwroot/app.css`
+- `CBT3_Presentation/CBT_UI_Dashboard/wwwroot/bootstrap/bootstrap.min.css`
+- `CBT3_Presentation/CBT_UI_Dashboard/wwwroot/bootstrap/bootstrap.min.css.map`
+- `CBT3_Presentation/CBT_UI_Dashboard/wwwroot/favicon.png`
+- `CBT3_UnitTests/Application/Services/CourseMachineServiceTests.cs`
+- `CBT3_UnitTests/Application/Services/DashboardServiceTests.cs`
+- `CBT3_UnitTests/Application/Services/LessonQuizServiceTests.cs`
+- `CBT3_UnitTests/Application/Services/RegistrationServiceTests.cs`
+- `CBT3_UnitTests/Application/Services/SystemServiceTests.cs`
+- `CBT3_UnitTests/Application/Services/TrainingServiceTests.cs`
+- `CBT3_UnitTests/CBT3_UnitTests.csproj`
+- `CBT3_UnitTests/GlobalUsings.cs`
+- `CBT3_UnitTests/Infrastructure/Services/CourseDataServiceTests.cs`
+- `CBT3_UnitTests/Infrastructure/Services/DashboardDataServiceTests.cs`
+- `CBT3_UnitTests/Infrastructure/Services/TrainingDataServiceTests.cs`
+- `CBT3_UnitTests/TestFile.txt`
+- `CBT3_UnitTests/appsettings.json`
+- `CBT_Browser/CBT_Browser.csproj`
+- `CBT_Browser/Program.cs`
+- `CBT_Browser/Properties/Resources.Designer.cs`
+- `CBT_Browser/Properties/Resources.resx`
+- `CBT_Browser/Resources/background_opening.jpg`
+- `CBT_Browser/SettingsHelper.cs`
+- `CBT_Browser/appsettings.json`
+- `CBT_Browser/ctlNumberPad.Designer.cs`
+- `CBT_Browser/ctlNumberPad.cs`
+- `CBT_Browser/ctlNumberPad.resx`
+- `CBT_Browser/frmAdmin.Designer.cs`
+- `CBT_Browser/frmAdmin.cs`
+- `CBT_Browser/frmAdmin.resx`
+- `CBT_Browser/frmMain.Designer.cs`
+- `CBT_Browser/frmMain.cs`
+- `CBT_Browser/frmMain.resx`
+- `Domain/Common/BaseAggregateRoot.cs`
+- `Domain/Common/BaseAuditableEntity.cs`
+- `Domain/Common/BaseDataService.cs`
+- `Domain/Common/BaseDomainEvent.cs`
+- `Domain/Common/BaseEntity.cs`
+- `Domain/Common/BaseEnum.cs`
+- `Domain/Common/BaseID.cs`
+- `Domain/Common/BaseResult.cs`
+- `Domain/Common/BaseValueObject.cs`
+- `Domain/Common/Error.cs`
+- `Domain/Common/ResultExtensions.cs`
+- `Domain/Domain.csproj`
+- `Domain/Entities/AirportSharedDataset.cs`
+- `Domain/Entities/AirportSharedDatasetID.cs`
+- `Domain/Entities/AuditLogEntry.cs`
+- `Domain/Entities/AuditLogEntryID.cs`
+- `Domain/Entities/Hazard.cs`
+- `Domain/Entities/HazardID.cs`
+- `Domain/Entities/Interview.cs`
+- `Domain/Entities/InterviewID.cs`
+- `Domain/Entities/Investigation.cs`
+- `Domain/Entities/InvestigationID.cs`
+- `Domain/Entities/Mitigation.cs`
+- `Domain/Entities/MitigationAssignment.cs`
+- `Domain/Entities/MitigationAssignmentID.cs`
+- `Domain/Entities/MitigationID.cs`
+- `Domain/Entities/Report.cs`
+- `Domain/Entities/ReportID.cs`
+- `Domain/Entities/ReportValidation.cs`
+- `Domain/Entities/ReportValidationID.cs`
+- `Domain/Entities/RiskAnalysis.cs`
+- `Domain/Entities/RiskAnalysisID.cs`
+- `Domain/Entities/RiskAssessment.cs`
+- `Domain/Entities/RiskAssessmentID.cs`
+- `Domain/Entities/ScoringPanel.cs`
+- `Domain/Entities/ScoringPanelID.cs`
+- `Domain/Enums/CourseState.cs`
+- `Domain/Enums/CourseType.cs`
+- `Domain/Errors/DomainErrors.cs`
+- `Domain/Exceptions/DomainException.cs`
+- `Domain/Interfaces/IAuditableEntity.cs`
+- `Domain/Interfaces/IBaseDomainEvent.cs`
+- `Domain/Interfaces/IBaseEntity.cs`
+- `Domain/Interfaces/IHazard.cs`
+- `Domain/Interfaces/IInterview.cs`
+- `Domain/Interfaces/IInvestigation.cs`
+- `Domain/Interfaces/IMitigation.cs`
+- `Domain/Interfaces/IMitigationAssignment.cs`
+- `Domain/Interfaces/IReport.cs`
+- `Domain/Interfaces/IReportValidation.cs`
+- `Domain/Interfaces/IRiskAnalysis.cs`
+- `Domain/Interfaces/IRiskAssessment.cs`
+- `Domain/Interfaces/IScoringPanel.cs`
+- `Domain/ValueObjects/FirstName.cs`
+- `Domain/ValueObjects/LastName.cs`
+- `Domain/ValueObjects/URL.cs`
+- `Infrastructure/Common/BaseRepository.cs`
+- `Infrastructure/Common/DataAccess.cs`
+- `Infrastructure/Common/InfrastructureEventIds.cs`
+- `Infrastructure/Common/InfrastructureLogMessages.cs`
+- `Infrastructure/Common/SQLCommandFactory.cs`
+- `Infrastructure/Common/StoredProcs.cs`
+- `Infrastructure/Configuration/CircuitUserTrackingMiddleware.cs`
+- `Infrastructure/Configuration/ConnectionInfoMiddleware.cs`
+- `Infrastructure/Configuration/DependencyInjection.cs`
+- `Infrastructure/Configuration/LogSupport.cs`
+- `Infrastructure/Configuration/LoggerMiddleware.cs`
+- `Infrastructure/Configuration/ServiceCollectionExtensions.cs`
+- `Infrastructure/Configuration/UserDetails.cs`
+- `Infrastructure/Configuration/UserDetailsFactory.cs`
+- `Infrastructure/Infrastructure.csproj`
+- `Infrastructure/Interfaces/IAirportSharedDatasetDataService.cs`
+- `Infrastructure/Interfaces/IBaseRepository.cs`
+- `Infrastructure/Interfaces/IConnectionService.cs`
+- `Infrastructure/Interfaces/IHazardDataService.cs`
+- `Infrastructure/Interfaces/ILogSupport.cs`
+- `Infrastructure/Interfaces/IReportDataService.cs`
+- `Infrastructure/Interfaces/IUserDetailsFactory.cs`
+- `Infrastructure/Persistence/HazardRepository.cs`
+- `Infrastructure/Persistence/SystemRepository.cs`
+- `Infrastructure/Services/AirportSharedDatasetDataService.cs`
+- `Infrastructure/Services/ConnectionService.cs`
+- `Infrastructure/Services/FileService.cs`
+- `Infrastructure/Services/HazardDataService.cs`
+- `Infrastructure/Services/InterviewDataService.cs`
+- `Infrastructure/Services/InvestigationDataService.cs`
+- `Infrastructure/Services/MitigationAssignmentDataService.cs`
+- `Infrastructure/Services/MitigationDataService.cs`
+- `Infrastructure/Services/ReportDataService.cs`
+- `Infrastructure/Services/ReportValidationDataService.cs`
+- `Infrastructure/Services/RiskAnalysisDataService.cs`
+- `Infrastructure/Services/RiskAssessmentDataService.cs`
+- `Infrastructure/Services/ScoringPanelDataService.cs`
+- `Infrastructure/Services/SystemDataService.cs`
+- `Infrastructure/appsettings.json`
+- `Mediator/CBT3_Mediator.csproj`
+- `Mediator/IMediator.cs`
+- `Mediator/IRequest.cs`
+- `Mediator/IRequestHandler.cs`
+- `PDXSMS_UnitTests/Application/CommandHandlerTests.cs`
+- `PDXSMS_UnitTests/Application/QueryHandlerTests.cs`
+- `PDXSMS_UnitTests/Application/TestInterfaces.cs`
+- `PDXSMS_UnitTests/Domain/EntityTests.cs`
+- `PDXSMS_UnitTests/Domain/ValueObjectTests.cs`
+- `PDXSMS_UnitTests/Infrastructure/DataServiceTests.cs`
+- `PDXSMS_UnitTests/Infrastructure/DatabaseIntegrationTestCollection.cs`
+- `PDXSMS_UnitTests/Infrastructure/DatabaseIntegrationTestsSummary.cs`
+- `PDXSMS_UnitTests/Infrastructure/HazardDatabaseIntegrationTests.cs`
+- `PDXSMS_UnitTests/PDXSMS_UnitTests.csproj`
+- `PDXSMS_UnitTests/UnitTest1.cs`
+- `PDXSMS_UnitTests/appsettings.json`
+- `PDXSMS_V2.sln`
+- `Shared/Common/LinqExtensions.cs`
+- `Shared/Common/LogMessages.cs`
+- `Shared/Common/LoggingEventIds.cs`
+- `Shared/Configuration/DependencyInjection.cs`
+- `Shared/Shared.csproj`
+## ?? Potential Copilot Conversations
+Based on the changes above, you likely had conversations about:
+
+### Architecture & Design:
+- Repository pattern implementation
+- Clean architecture principles  
+- Dependency injection setup
+- Service layer design
+
+### Feature Development:
+- User management system design
+- Risk assessment workflow
+- Hazard reporting implementation
+- Location/mapping functionality
+
+### Problem Solving:
+- Data mapping strategies
+- Entity relationship setup
+- Query optimization
+- Bug fixes and debugging
+
+## ?? Template for Your Actual Conversation
+*Replace this section with your actual Copilot conversation if you have it:*
+
+### Session Overview:
+- **Primary Goal:** [What were you trying to accomplish?]
+- **Key Questions Asked:** [What did you ask Copilot about?]
+- **Solutions Provided:** [What solutions did Copilot suggest?]
+
+### Technical Details:
+- **Code Generated:** [Any significant code that was generated]
+- **Architectural Decisions:** [Any important design decisions made]
+- **Learning Moments:** [What did you learn during this session?]
+
+### Conversation Content:
+`
+[If you have the actual conversation, paste it here]
+
+Otherwise, document what you remember:
+- What problems you were solving
+- What approaches Copilot suggested
+- What code patterns were discussed
+- Any architectural insights gained
+`
+
+## ?? Related Work
+- **Previous Session:** [Link to related earlier conversation]
+- **Next Session:** [Link to follow-up conversation]
+- **Documentation:** [Link to any docs created]
+
+## ??? Tags
+Tags: Repository Pattern Implementation, Risk Assessment & Hazard Management, Mapping & Location Features, User Management System, API & Service Layer Development, Blazor UI Components, Security & Authentication, git-analysis, development-session, 2025-11-04
+
+---
+*This template was generated from Git history analysis. Fill in with actual conversation details if available.*

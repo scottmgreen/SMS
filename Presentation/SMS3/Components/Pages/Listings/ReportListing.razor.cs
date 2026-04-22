@@ -15,6 +15,11 @@ using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 
+// NEW: EventBus Testing Imports
+using SMS_Application.Interfaces;
+using SMS_Application.Testing;
+using SMS_Domain.Events;
+
 namespace SMS3.Components.Pages.Listings;
 
 /// <summary>
@@ -33,6 +38,10 @@ public partial class ReportListing : ComponentBase
     [Inject] private NavigationManager _navigation { get; set; } = default!;
 
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+
+    // NEW: EventBus Testing Dependencies
+    [Inject] private EventBusTestingUtility _eventBusTestingUtility { get; set; } = default!;
+    [Inject] private IEventBus _eventBus { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -74,6 +83,11 @@ public partial class ReportListing : ComponentBase
     /// </summary>
     public int TotalFilesCount => AssociatedHazards
         .Sum(h => h.HazardFileIds?.Count ?? 0);
+
+    // NEW: EventBus Testing Properties
+    private bool IsEventBusTestRunning { get; set; } = false;
+    private string EventBusTestMessage { get; set; } = string.Empty;
+    private string EventBusTestError { get; set; } = string.Empty;
     #endregion
     
     #region Lifecycle Methods
@@ -1045,6 +1059,139 @@ public async Task OnResetReportAsync(Report report)
                location?.Longitude.HasValue == true && 
                location.Latitude.Value != 0 && 
                location.Longitude.Value != 0;
+    }
+
+    #endregion
+
+    #region EventBus Testing Methods
+
+    /// <summary>
+    /// Test EventBus Phase 1 implementation with SPI threshold event
+    /// Demonstrates integration with existing SMS infrastructure
+    /// </summary>
+    private async Task TestEventBusAsync()
+    {
+        if (IsEventBusTestRunning) return;
+
+        try
+        {
+            IsEventBusTestRunning = true;
+            EventBusTestError = string.Empty;
+            EventBusTestMessage = "🚀 Testing EventBus Phase 1 implementation...";
+            StateHasChanged();
+
+            _logger.LogInformation("Starting EventBus test from Reports listing page");
+
+            // Initialize EventBus subscriptions
+            _eventBusTestingUtility.RegisterTestSubscriptions();
+
+            // Test SPI threshold exceeded event with real stakeholder data
+            var testResult = await _eventBusTestingUtility.TestSPIThresholdEventAsync(
+                spiCode: "TEST-REPORTS-SPI",
+                currentValue: 18.5m,
+                thresholdValue: 15.0m,
+                severity: SPISeverityLevel.High
+            );
+
+            if (testResult.IsSuccess)
+            {
+                EventBusTestMessage = "✅ EventBus test completed successfully! " +
+                                    "Event published and handlers executed. Check application logs for detailed execution flow.";
+
+                await _notificationHelper.ShowSuccessAsync("EventBus test completed successfully!");
+                _logger.LogInformation("EventBus test completed successfully from Reports listing");
+            }
+            else
+            {
+                EventBusTestError = $"❌ EventBus test failed: {testResult.Error.Message}";
+                await _notificationHelper.ShowErrorAsync($"EventBus test failed: {testResult.Error.Message}");
+                _logger.LogWarning("EventBus test failed: {Error}", testResult.Error.Message);
+            }
+
+            // Get EventBus health information
+            var healthInfo = await _eventBusTestingUtility.GetEventBusHealthAsync();
+            if (healthInfo.ContainsKey("Status") && healthInfo["Status"].ToString() == "Healthy")
+            {
+                var subscriptionCount = healthInfo.ContainsKey("SubscriptionCount") ? healthInfo["SubscriptionCount"].ToString() : "0";
+                var handlerCount = healthInfo.ContainsKey("TotalHandlers") ? healthInfo["TotalHandlers"].ToString() : "0";
+
+                EventBusTestMessage += $" | EventBus Health: {subscriptionCount} event types, {handlerCount} handlers registered.";
+                _logger.LogInformation("EventBus health check: {SubscriptionCount} event types, {HandlerCount} handlers", 
+                    subscriptionCount, handlerCount);
+            }
+        }
+        catch (Exception ex)
+        {
+            EventBusTestError = $"❌ EventBus test exception: {ex.Message}";
+            await _notificationHelper.ShowErrorAsync($"EventBus test failed: {ex.Message}");
+            _logger.LogError(ex, "Error during EventBus test from Reports listing");
+        }
+        finally
+        {
+            IsEventBusTestRunning = false;
+            StateHasChanged();
+        }
+    }
+
+    /// <summary>
+    /// Clear EventBus test results
+    /// </summary>
+    private void ClearEventBusTestResults()
+    {
+        EventBusTestMessage = string.Empty;
+        EventBusTestError = string.Empty;
+        StateHasChanged();
+    }
+
+    /// <summary>
+    /// Test multiple EventBus execution modes
+    /// </summary>
+    private async Task TestEventBusExecutionModesAsync()
+    {
+        if (IsEventBusTestRunning) return;
+
+        try
+        {
+            IsEventBusTestRunning = true;
+            EventBusTestError = string.Empty;
+            EventBusTestMessage = "🔄 Testing EventBus execution modes...";
+            StateHasChanged();
+
+            _logger.LogInformation("Testing EventBus execution modes from Reports listing");
+
+            var results = await _eventBusTestingUtility.TestExecutionModesAsync("TEST-MODES-REPORTS");
+
+            var successCount = results.Values.Count(r => r.IsSuccess);
+            var totalCount = results.Count;
+
+            if (successCount == totalCount)
+            {
+                EventBusTestMessage = $"✅ All {totalCount} execution modes tested successfully! " +
+                                    "In Phase 1, Queued and Manual modes fall back to Immediate execution.";
+                await _notificationHelper.ShowSuccessAsync($"All {totalCount} execution modes tested successfully!");
+            }
+            else
+            {
+                var failedModes = results.Where(r => !r.Value.IsSuccess)
+                                        .Select(r => $"{r.Key}: {r.Value.Error.Message}");
+                EventBusTestError = $"❌ {totalCount - successCount}/{totalCount} modes failed: {string.Join("; ", failedModes)}";
+                await _notificationHelper.ShowWarningAsync($"{successCount}/{totalCount} execution modes succeeded");
+            }
+
+            _logger.LogInformation("EventBus execution modes test completed: {SuccessCount}/{TotalCount} successful", 
+                successCount, totalCount);
+        }
+        catch (Exception ex)
+        {
+            EventBusTestError = $"❌ Execution modes test exception: {ex.Message}";
+            await _notificationHelper.ShowErrorAsync($"Execution modes test failed: {ex.Message}");
+            _logger.LogError(ex, "Error during EventBus execution modes test");
+        }
+        finally
+        {
+            IsEventBusTestRunning = false;
+            StateHasChanged();
+        }
     }
 
     #endregion
