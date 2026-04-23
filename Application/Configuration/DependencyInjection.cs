@@ -8,13 +8,15 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using System.Reflection;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Pipelines;
 using SMS_Application.Services; // Add this for SecurityFeatureService
 using SMS_Application.EventHandlers; // NEW: For SPI event handlers
 using SMS_Application.BackgroundServices; // NEW: For SPI background services
 using SMS_Domain.Events; // NEW: For EventBus domain events
-using SMS_Application.Testing; // NEW: For EventBus testing utilities
 
 // NEW: Phase 3 - Additional event handler imports
 using SMS_Application.EventHandlers.Integration;
@@ -36,9 +38,14 @@ namespace SMS_Application.Configuration
         /// Adds application services to the specified <see cref="IServiceCollection"/>.
         /// </summary>
         /// <param name="services">The service collection to add services to.</param>
+        /// <param name="configuration">Configuration to bind settings from appsettings.</param>
         /// <returns>The updated service collection.</returns>
-        public static IServiceCollection AddApplicationServices(this IServiceCollection services)
+        public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
         {
+            // Configure SMTP email settings from appsettings
+            services.Configure<SmtpEmailConfiguration>(
+                configuration.GetSection("SmtpEmailConfiguration"));
+
             // 🔥 CLEANER: Use the Assembly class itself instead of a random handler
             var applicationAssembly = Assembly.GetExecutingAssembly(); // Gets current assembly (Application)
 
@@ -102,25 +109,28 @@ namespace SMS_Application.Configuration
             services.AddScoped<ISPIAutomationService, SPIAutomationService>();
             services.AddScoped<SPIEventCoordinator>();
 
-            // NEW: EventBus Services - Phase 1: Low-risk event-driven workflows
-            services.AddScoped<IEventBus, EventBusService>();
-
-            // NEW: EventBus Testing Utility - For testing Phase 1 implementation
-            services.AddScoped<EventBusTestingUtility>();
+            // NEW: EventBus Services - Phase 1: SINGLETON for consistent handler registration
+            services.AddSingleton<IEventBus, EventBusService>();
 
             // NEW: SPI Event Handlers - Automated SPI calculations from SMS events
             services.AddScoped<HazardEventSPIHandler>();
             services.AddScoped<RiskAssessmentEventSPIHandler>();
             services.AddScoped<MitigationEventSPIHandler>();
 
+            // NEW: Email Services - SMTP (real email delivery)
+            services.AddTransient<IEmailService, SmtpEmailService>();
+
             // NEW: EventBus Event Handlers - SPI threshold and workflow notifications
-            services.AddScoped<SPIThresholdEventHandler>();
+            services.AddTransient<SPIThresholdEventHandler>();
+
+            // NEW: EventBus SPI Automation Handler - Unified pub/sub SPI processing
+            services.AddTransient<SPIAutomationEventHandler>();
 
             // NEW: Phase 3 - Domain Event Handlers for complete workflow automation
-            services.AddScoped<HazardCreatedEventHandler>();
+            services.AddTransient<HazardCreatedEventHandler>();
 
             // NEW: Phase 3 - Integration Event Handlers for external system coordination
-            services.AddScoped<EmailNotificationEventHandler>();
+            services.AddTransient<EmailNotificationEventHandler>();
 
             // NEW: SPI Initialization Service - Default SPI setup
             services.AddScoped<SPIInitializationService>();

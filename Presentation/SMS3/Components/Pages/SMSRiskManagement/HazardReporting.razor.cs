@@ -1384,25 +1384,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             _logger.LogWarning(eventEx, "⚠️ Phase 3: EventBus integration failed for {HazardCode} - continuing with submission", createdHazard.Code);
         }
 
-        // LEGACY: Keep existing SPI automation for backward compatibility during transition
-        try
-        {
-            await _spiCoordinator.OnHazardCreated(
-                hazardId: createdHazard.Code,
-                hazardCode: createdHazard.Code,
-                createdDate: createdHazard.CreatedDate ?? DateTime.UtcNow,
-                createdBy: createdHazard.CreatedBy ?? "INTERNAL_USER",
-                reportId: actualReportCode,
-                hazardType: createdHazard.HazardType ?? "",
-                hazardCategory: createdHazard.HazardCategory ?? "");
-
-            _logger.LogInformation("✅ SPI Automation: Internal hazard creation event processed for {HazardCode}", createdHazard.Code);
-        }
-        catch (Exception spiEx)
-        {
-            // Don't fail the entire submission if SPI automation fails
-            _logger.LogWarning(spiEx, "⚠️ SPI Automation: Failed to process hazard creation event for {HazardCode} - continuing with submission", createdHazard.Code);
-        }
+        // NOTE: SPI automation now handled by EventBus SPIAutomationEventHandler - no direct calls needed
 
         Result<HazardReportTracking> createdtrackingcodeResult = await GenerateTracking(createdHazard);
         var createdTracking = createdtrackingcodeResult.Value;

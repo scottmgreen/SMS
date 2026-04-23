@@ -10,13 +10,11 @@
 
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
-using SMS_Application.Services;
 using SMS_Domain.Common;
 using SMS_Domain.Events.SPI;
 using SMS_Domain.Events.UI;
 using SMS_Domain.Events.Integration;
 using SMS_Domain.Enums;
-using SMS_Domain.Entities;
 
 // Import specific events to avoid conflicts
 using HazardCreatedEvent = SMS_Domain.Events.Hazard.HazardCreatedEvent;
@@ -27,26 +25,20 @@ namespace SMS_Application.EventHandlers;
 /// <summary>
 /// Event handler for hazard creation events
 /// Coordinates SPI updates, notifications, and workflow initiation
-/// Integrates with existing SPIEventCoordinator and stakeholder management
+/// PERFORMANCE FIX: Removed user context dependencies to prevent authentication loops
 /// </summary>
 public class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domain.Events.Hazard.HazardCreatedEvent>
 {
     private readonly IEventBus _eventBus;
-    private readonly SMSStakeholderGroupService _stakeholderGroupService;
-    private readonly SPIEventCoordinator _spiEventCoordinator;
     private readonly ILogger<HazardCreatedEventHandler> _logger;
 
     public HazardCreatedEventHandler(
         ILogger<HazardCreatedEventHandler> logger,
-        IEventBus eventBus,
-        SMSStakeholderGroupService stakeholderGroupService,
-        SPIEventCoordinator spiEventCoordinator)
+        IEventBus eventBus)
         : base(logger)
     {
         _logger = logger;
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        _stakeholderGroupService = stakeholderGroupService ?? throw new ArgumentNullException(nameof(stakeholderGroupService));
-        _spiEventCoordinator = spiEventCoordinator ?? throw new ArgumentNullException(nameof(spiEventCoordinator));
     }
 
     /// <summary>
@@ -59,19 +51,11 @@ public class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domain.Event
             _logger.LogInformation("Processing hazard creation for {HazardCode} (Type: {HazardType}, Priority: {Priority})",
                 domainEvent.HazardCode, domainEvent.HazardType, domainEvent.Priority);
 
-            // Step 1: Trigger SPI calculations (integrate with existing SPIEventCoordinator)
-            await TriggerSPICalculations(domainEvent, cancellationToken);
-
-            // Step 2: Determine stakeholders for notification
-            var stakeholdersResult = await DetermineNotificationStakeholders(domainEvent, cancellationToken);
-            if (!stakeholdersResult.IsSuccess)
-            {
-                _logger.LogWarning("Failed to determine stakeholders for hazard {HazardCode}: {Error}",
-                    domainEvent.HazardCode, stakeholdersResult.Error.Message);
-                // Continue processing - stakeholder failure shouldn't stop the workflow
-            }
-
-            var stakeholders = stakeholdersResult.Value ?? new List<string>();
+            // PERFORMANCE FIX: Skip scoped services to avoid authentication loops
+            // Use static stakeholder determination instead of database queries
+            var stakeholders = GetStaticStakeholderGroups(domainEvent.Priority);
+            _logger.LogInformation("Using static stakeholder groups for hazard {HazardCode}: {Count} groups", 
+                domainEvent.HazardCode, stakeholders.Count);
 
             // Step 3: Publish UI event for dashboard updates
             await PublishDashboardUpdate(domainEvent, cancellationToken);
@@ -96,89 +80,39 @@ public class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domain.Event
     }
 
     /// <summary>
-    /// Trigger SPI calculations using existing SPIEventCoordinator
-    /// Maintains compatibility with existing SPI automation
+    /// PERFORMANCE FIX: Static stakeholder determination to avoid authentication loops
+    /// Uses predefined stakeholder groups instead of database queries
     /// </summary>
-    private async Task TriggerSPICalculations(SMS_Domain.Events.Hazard.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
+    private List<string> GetStaticStakeholderGroups(SMS_Domain.Enums.HazardPriority priority)
     {
-        try
+        var stakeholderGroups = new List<string>();
+
+        // Business logic for stakeholder selection based on hazard priority
+        switch (priority)
         {
-            _logger.LogInformation("Triggering SPI calculations for hazard {HazardCode}", domainEvent.HazardCode);
+            case SMS_Domain.Enums.HazardPriority.Critical:
+                // Critical: Notify all relevant stakeholders
+                stakeholderGroups.AddRange(new[] { "EXEC", "SAFETY", "MGMT", "OPS", "MAINT" });
+                break;
 
-            // Use existing SPIEventCoordinator for SPI automation
-            await _spiEventCoordinator.OnHazardCreated(
-                hazardId: domainEvent.HazardId,
-                hazardCode: domainEvent.HazardCode,
-                createdDate: domainEvent.CreatedDate,
-                createdBy: domainEvent.CreatedBy,
-                reportId: domainEvent.ReportCode,
-                hazardType: domainEvent.HazardType,
-                hazardCategory: domainEvent.HazardCategory);
+            case SMS_Domain.Enums.HazardPriority.High:
+                // High: Notify management and safety groups
+                stakeholderGroups.AddRange(new[] { "SAFETY", "MGMT", "OPS" });
+                break;
 
-            _logger.LogInformation("SPI calculations completed for hazard {HazardCode}", domainEvent.HazardCode);
+            case SMS_Domain.Enums.HazardPriority.Medium:
+                // Medium: Notify safety and operational groups
+                stakeholderGroups.AddRange(new[] { "scottgreen.ewu@gmail.com" });
+                break;
+
+            case SMS_Domain.Enums.HazardPriority.Low:
+            default:
+                // Low: Notify primary safety group only
+                stakeholderGroups.Add("SAFETY");
+                break;
         }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "SPI calculations failed for hazard {HazardCode} - continuing workflow", domainEvent.HazardCode);
-            // Don't fail the entire workflow if SPI calculations fail
-        }
-    }
 
-    /// <summary>
-    /// Determine stakeholders for notification based on hazard characteristics
-    /// </summary>
-    private async Task<Result<List<string>>> DetermineNotificationStakeholders(SMS_Domain.Events.Hazard.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
-    {
-        try
-        {
-            var allGroupsResult = await _stakeholderGroupService.GetAllSMSStakeholderGroupsAsync(cancellationToken);
-            if (!allGroupsResult.IsSuccess)
-            {
-                return Result<List<string>>.Failure<List<string>>(allGroupsResult.Error);
-            }
-
-            var allGroups = allGroupsResult.Value ?? new List<SMS_Domain.Entities.SMSStakeholderGroup>();
-            var notificationGroups = new List<string>();
-
-            // Business logic for stakeholder selection based on hazard priority and type
-            switch (domainEvent.Priority)
-            {
-                case SMS_Domain.Enums.HazardPriority.Critical:
-                    // Critical: Notify all relevant stakeholders
-                    notificationGroups.AddRange(allGroups.Select(g => g.Code));
-                    break;
-
-                case SMS_Domain.Enums.HazardPriority.High:
-                    // High: Notify management and safety groups
-                    notificationGroups.AddRange(allGroups.Where(g => IsHighPriorityGroup(g.Code)).Select(g => g.Code));
-                    break;
-
-                case SMS_Domain.Enums.HazardPriority.Medium:
-                    // Medium: Notify safety and operational groups
-                    notificationGroups.AddRange(allGroups.Where(g => IsOperationalGroup(g.Code)).Select(g => g.Code));
-                    break;
-
-                case SMS_Domain.Enums.HazardPriority.Low:
-                    // Low: Notify primary safety group only
-                    var safetyGroup = allGroups.FirstOrDefault(g => g.Code == "SAFETY");
-                    if (safetyGroup != null)
-                    {
-                        notificationGroups.Add(safetyGroup.Code);
-                    }
-                    break;
-            }
-
-            var uniqueGroups = notificationGroups.Distinct().ToList();
-            _logger.LogDebug("Determined {Count} stakeholder groups for hazard {HazardCode} notification",
-                uniqueGroups.Count, domainEvent.HazardCode);
-
-            return Result<List<string>>.Success(uniqueGroups);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error determining stakeholders for hazard {HazardCode}", domainEvent.HazardCode);
-            return Result<List<string>>.Failure<List<string>>(new Error("STAKEHOLDER_DETERMINATION_ERROR", $"Stakeholder determination failed: {ex.Message}"));
-        }
+        return stakeholderGroups;
     }
 
     /// <summary>

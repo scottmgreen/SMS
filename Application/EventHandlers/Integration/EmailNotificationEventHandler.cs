@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------
 // <copyright file="EmailNotificationEventHandler.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -9,7 +9,9 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using SMS_Application.Interfaces;
+using SMS_Application.Services;
 using SMS_Domain.Events.Integration;
 using SMS_Domain.Common;
 
@@ -22,44 +24,114 @@ namespace SMS_Application.EventHandlers.Integration;
 /// </summary>
 public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNotificationEvent>
 {
+    private readonly IEmailService _emailService;
     private readonly ILogger<EmailNotificationEventHandler> _logger;
-    // TODO: Add actual email service when available
-    // private readonly IEmailService _emailService;
+    private readonly bool _useSimulation;
 
     public EmailNotificationEventHandler(
-        ILogger<EmailNotificationEventHandler> logger)
+        ILogger<EmailNotificationEventHandler> logger,
+        IEmailService emailService,
+        IOptions<SmtpEmailConfiguration> smtpConfig)
         : base(logger)
     {
         _logger = logger;
+        _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+
+        // Use configuration-based simulation setting
+        _useSimulation = smtpConfig?.Value?.UseSimulation ?? false;
+
+        _logger.LogInformation("📧 Email handler initialized with UseSimulation: {UseSimulation}", _useSimulation);
     }
 
     /// <summary>
     /// Processes email notification events for external delivery
-    /// Phase 3: Implements reliable email delivery with retry logic
+    /// Phase 3: Implements both real and simulated email delivery
     /// </summary>
     protected override async Task<Result> ProcessIntegrationEventAsync(EmailNotificationEvent integrationEvent, CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogInformation("?? Processing email notification: '{Subject}' to {RecipientCount} recipients (Priority: {Priority})",
+            _logger.LogInformation("📧 Processing email notification: '{Subject}' to {RecipientCount} recipients (Priority: {Priority})",
                 integrationEvent.Subject, integrationEvent.ToRecipients.Count, integrationEvent.Priority);
 
-            // Phase 3: Simulate email processing - replace with actual email service integration
-            await SimulateEmailDelivery(integrationEvent, cancellationToken);
+            // Validate email event before processing
+            if (!ValidateEmailEvent(integrationEvent))
+            {
+                return Result.Failure(new Error("INVALID_EMAIL_EVENT", "Email event validation failed"));
+            }
 
-            // TODO: Replace with actual email service implementation
-            // var emailResult = await _emailService.SendEmailAsync(integrationEvent, cancellationToken);
-            // if (!emailResult.IsSuccess) return emailResult;
+            Result deliveryResult;
 
-            _logger.LogInformation("? Email notification sent successfully: '{Subject}' to {RecipientCount} recipients",
-                integrationEvent.Subject, integrationEvent.ToRecipients.Count);
+            if (_useSimulation)
+            {
+                // Use simulation for development/testing
+                deliveryResult = await SimulateEmailDelivery(integrationEvent, cancellationToken);
+            }
+            else
+            {
+                // Use real email delivery for production
+                deliveryResult = await SendRealEmail(integrationEvent, cancellationToken);
+            }
 
-            return Result.Success();
+            if (deliveryResult.IsSuccess)
+            {
+                _logger.LogInformation("✅ Email notification sent successfully: '{Subject}' to {RecipientCount} recipients",integrationEvent.Subject, integrationEvent.ToRecipients.Count);
+            }
+            else
+            {
+                _logger.LogError("❌ Email notification failed: '{Subject}' - {Error}", integrationEvent.Subject, deliveryResult.Error.Message);
+            }
+
+            return deliveryResult;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Failed to process email notification: '{Subject}'", integrationEvent.Subject);
+            _logger.LogError(ex, "❌ Failed to process email notification: '{Subject}'", integrationEvent.Subject);
             return Result.Failure(new Error("EMAIL_NOTIFICATION_FAILED", $"Email notification failed: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// Sends real email using configured email service
+    /// </summary>
+    private async Task<Result> SendRealEmail(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
+    {
+        try
+        {
+            _logger.LogInformation("📤 REAL EMAIL: Sending '{Subject}' via {ServiceType}", emailEvent.Subject, _emailService.GetType().Name);
+
+            var deliveryResult = await _emailService.SendEmailAsync(emailEvent, cancellationToken);
+
+            if (deliveryResult.IsSuccess)
+            {
+                var result = deliveryResult.Value;
+                _logger.LogInformation("✅ REAL EMAIL: Delivered successfully - MessageId: {MessageId}, Status: {Status}", 
+                    result.MessageId, result.DeliveryStatus);
+
+                // Log delivery details
+                if (result.SuccessfulRecipients.Any())
+                {
+                    _logger.LogInformation("📧 Successful recipients: [{Recipients}]", 
+                        string.Join(", ", result.SuccessfulRecipients));
+                }
+
+                if (result.FailedRecipients.Any())
+                {
+                    _logger.LogWarning("⚠️ Failed recipients: [{Recipients}]", 
+                        string.Join(", ", result.FailedRecipients));
+                }
+
+                return Result.Success();
+            }
+            else
+            {
+                return Result.Failure(deliveryResult.Error);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ REAL EMAIL: Delivery failed for '{Subject}'", emailEvent.Subject);
+            return Result.Failure(new Error("REAL_EMAIL_FAILED", $"Real email delivery failed: {ex.Message}"));
         }
     }
 
@@ -67,7 +139,7 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
     /// Phase 3: Simulates email delivery for testing and development
     /// Replace this with actual email service integration
     /// </summary>
-    private async Task SimulateEmailDelivery(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
+    private async Task<Result> SimulateEmailDelivery(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
     {
         try
         {
@@ -124,11 +196,13 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
                 // Async modes - just queue for delivery
                 _logger.LogInformation("?? Email queued for delivery: {Subject}", emailEvent.Subject);
             }
+
+            return Result.Success();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error simulating email delivery for: {Subject}", emailEvent.Subject);
-            throw;
+            return Result.Failure(new Error("SIMULATION_FAILED", $"Email simulation failed: {ex.Message}"));
         }
     }
 

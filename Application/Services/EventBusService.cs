@@ -98,12 +98,15 @@ public sealed class EventBusService : IEventBus
 
     /// <summary>
     /// Publishes a domain event with specified execution mode
-    /// Routes to existing domain event processing infrastructure
+    /// Supports immediate, queued, or manual execution for different workflow scenarios
     /// </summary>
     public async Task<Result> PublishDomainEventAsync<T>(T domainEvent, EventExecutionMode mode, CancellationToken cancellationToken = default) where T : IBaseDomainEvent
     {
         // Route to existing domain event implementation
-        return await PublishAsync(domainEvent, mode, cancellationToken);
+        _logger.LogDebug("?? PublishDomainEventAsync called for {EventType} with mode {Mode}", typeof(T).FullName, mode);
+        var result = await PublishAsync(domainEvent, mode, cancellationToken);
+        _logger.LogDebug("?? PublishDomainEventAsync result: {IsSuccess}", result.IsSuccess);
+        return result;
     }
     #endregion
 
@@ -230,13 +233,13 @@ public sealed class EventBusService : IEventBus
             if (!_eventHandlerMappings[eventType].Contains(handlerType))
             {
                 _eventHandlerMappings[eventType].Add(handlerType);
-                _logger.LogInformation("Subscribed handler {HandlerType} to event {EventType}", 
-                    handlerType.Name, eventType.Name);
+                _logger.LogInformation("Subscribed handler {HandlerType} to event {EventTypeFullName}", 
+                    handlerType.Name, eventType.FullName);
             }
             else
             {
-                _logger.LogWarning("Handler {HandlerType} already subscribed to event {EventType}", 
-                    handlerType.Name, eventType.Name);
+                _logger.LogWarning("Handler {HandlerType} already subscribed to event {EventTypeFullName}", 
+                    handlerType.Name, eventType.FullName);
             }
         }
     }
@@ -329,11 +332,17 @@ public sealed class EventBusService : IEventBus
     {
         var eventType = typeof(T);
 
+        _logger.LogDebug("?? Looking up handlers for event type: {EventTypeFullName} (Name: {EventTypeName})", 
+            eventType.FullName, eventType.Name);
+
         lock (_lock)
         {
+            _logger.LogDebug("?? Registered event types: {RegisteredTypes}", 
+                string.Join(", ", _eventHandlerMappings.Keys.Select(k => k.FullName)));
+
             if (!_eventHandlerMappings.ContainsKey(eventType) || !_eventHandlerMappings[eventType].Any())
             {
-                _logger.LogInformation("No handlers registered for event type {EventType}", eventType.Name);
+                _logger.LogWarning("No handlers registered for event type {EventTypeFullName}", eventType.FullName);
                 return Result.Success(); // Not an error - just no handlers
             }
         }

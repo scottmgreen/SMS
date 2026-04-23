@@ -19,6 +19,9 @@ using Microsoft.Extensions.Logging;
 using SMS_Application.EventHandlers.Integration;
 using SMS_Domain.Events.Integration;
 
+// Import Hazard event handlers
+using HazardCreatedEventHandler = SMS_Application.EventHandlers.HazardCreatedEventHandler;
+
 namespace SMS_Application.Configuration;
 
 /// <summary>
@@ -104,6 +107,10 @@ public static class EventBusExtensions
         try
         {
             logger.LogInformation("Registering Phase 3 Domain Event Handlers...");
+
+            // Register SPI automation handler for unified pub/sub SPI processing
+            eventBus.Subscribe<SMS_Domain.Events.Hazard.HazardCreatedEvent, SPIAutomationEventHandler>();
+            logger.LogInformation("Registered SPIAutomationEventHandler for HazardCreatedEvent (SPI automation)");
 
             // Register hazard workflow event handlers
             eventBus.Subscribe<SMS_Domain.Events.Hazard.HazardCreatedEvent, HazardCreatedEventHandler>();

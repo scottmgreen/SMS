@@ -13,6 +13,9 @@ using SMS_Application.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using SMS_Application.Interfaces;
 
+// EventBus initialization
+using SMS_Application.Configuration;
+
 namespace SMS3;
 public class Program
 {
@@ -40,7 +43,7 @@ public class Program
         builder.Services.AddSharedServices(builder.Configuration);
 
         // **🚀 REGISTER APPLICATION SERVICES EARLY - Need SecurityFeatureService**
-        builder.Services.AddApplicationServices();
+        builder.Services.AddApplicationServices(builder.Configuration);
 
         // **🔐 PRESENTATION AUTHENTICATION SERVICES - Centralized authentication registration**
         // Replaces lines 45-194 with organized extension method maintaining exact same loading sequence
@@ -113,6 +116,9 @@ public class Program
         app.MapAuthenticationStatusEndpoints(); // 🎯 NEW: Development diagnostics endpoints
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
+
+        // 🚀 Initialize EventBus subscriptions - CRITICAL for Phase 3 workflow automation
+        app.InitializeEventBus();
 
         app.Run();
     }

@@ -359,14 +359,14 @@ public partial class ReportProcessing : ComponentBase
             if (reportsResult.IsSuccess)
             {
                 reports = reportsResult.Value ?? new List<Report>();
-                _logger.LogWarning("🔍 DIAGNOSTIC: Successfully loaded {Count} reports from database", reports.Count);
+                //_logger.LogWarning("🔍 DIAGNOSTIC: Successfully loaded {Count} reports from database", reports.Count);
 
                 // Log details of first few reports for debugging
-                foreach (var report in reports.Take(3))
-                {
-                    _logger.LogWarning("🔍 Report: {Code} | Status: {Status} | Stage: {Stage} | SubmittedBy: {SubmittedBy}", 
-                        report.Code, report.Status, report.Stage, report.SubmittedBy);
-                }
+                //foreach (var report in reports.Take(3))
+                //{
+                //    _logger.LogWarning("🔍 Report: {Code} | Status: {Status} | Stage: {Stage} | SubmittedBy: {SubmittedBy}", 
+                //        report.Code, report.Status, report.Stage, report.SubmittedBy);
+                //}
 
 
             }
@@ -382,7 +382,7 @@ public partial class ReportProcessing : ComponentBase
             if (hazardsResult.IsSuccess)
             {
                 hazards = hazardsResult.Value ?? new List<Hazard>();
-                _logger.LogWarning("? Successfully loaded {Count} hazards from database", hazards.Count);
+                //_logger.LogWarning("? Successfully loaded {Count} hazards from database", hazards.Count);
             }
             else
             {
@@ -397,13 +397,13 @@ public partial class ReportProcessing : ComponentBase
             if (reportValidationsResult.IsSuccess && reportValidationsResult.Value != null)
             {
                 reportValidations = reportValidationsResult.Value.ToList();
-                _logger.LogWarning("? Successfully loaded {Count} report validations", reportValidations.Count);
+                //_logger.LogWarning("? Successfully loaded {Count} report validations", reportValidations.Count);
 
                 // Log which reports have been validated for debugging
-                foreach (var validation in reportValidations.Take(3))
-                {
-                    _logger.LogWarning("?? Validation: Report {ReportCode} | Decision: {Decision} | Type: {Type}",validation.ReportCode, validation.ValidationDecision, validation.ValidationType);
-                }
+                //foreach (var validation in reportValidations.Take(3))
+                //{
+                //    _logger.LogWarning("?? Validation: Report {ReportCode} | Decision: {Decision} | Type: {Type}",validation.ReportCode, validation.ValidationDecision, validation.ValidationType);
+                //}
             }
             else
             {
@@ -416,7 +416,7 @@ public partial class ReportProcessing : ComponentBase
             if (riskAssessmentsResult.IsSuccess)
             {
                 riskAssessments = riskAssessmentsResult.Value ?? new List<RiskAssessment>();
-                _logger.LogInformation("Loaded {Count} risk assessments", riskAssessments.Count);
+                //_logger.LogInformation("Loaded {Count} risk assessments", riskAssessments.Count);
             }
             else
             {
@@ -429,7 +429,7 @@ public partial class ReportProcessing : ComponentBase
             if (investigationsResult.IsSuccess && investigationsResult.Value != null)
             {
                 investigations = investigationsResult.Value.ToList();
-                _logger.LogInformation("Loaded {Count} investigations", investigations.Count);
+                //_logger.LogInformation("Loaded {Count} investigations", investigations.Count);
             }
             else
             {
@@ -442,7 +442,7 @@ public partial class ReportProcessing : ComponentBase
             if (interviewsResult.IsSuccess && interviewsResult.Value != null)
             {
                 interviews = interviewsResult.Value.ToList();
-                _logger.LogInformation("Loaded {Count} interviews", interviews.Count);
+                //_logger.LogInformation("Loaded {Count} interviews", interviews.Count);
             }
             else
             {
@@ -700,20 +700,20 @@ public partial class ReportProcessing : ComponentBase
         ClosedReferred = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Closed).ToList();
 
         // ✅ ADD DEBUG LOGGING to see what's being categorized
-        _logger.LogWarning("📊 CATEGORIZATION RESULTS:");
-        _logger.LogWarning("   📋 Pending Validation: {Count}", PendingValidation.Count);
-        _logger.LogWarning("   📊 Pending Risk Assessment: {Count}", PendingRiskAssessment.Count);
-        _logger.LogWarning("   🔍 Pending Investigation: {Count}", PendingInvestigation.Count);
-        _logger.LogWarning("   🛠️ In Mitigation: {Count}", PendingMitigation.Count);
-        _logger.LogWarning("   ✅ Closed/Referred: {Count}", ClosedReferred.Count);
+        //_logger.LogWarning("📊 CATEGORIZATION RESULTS:");
+        //_logger.LogWarning("   📋 Pending Validation: {Count}", PendingValidation.Count);
+        //_logger.LogWarning("   📊 Pending Risk Assessment: {Count}", PendingRiskAssessment.Count);
+        //_logger.LogWarning("   🔍 Pending Investigation: {Count}", PendingInvestigation.Count);
+        //_logger.LogWarning("   🛠️ In Mitigation: {Count}", PendingMitigation.Count);
+        //_logger.LogWarning("   ✅ Closed/Referred: {Count}", ClosedReferred.Count);
 
         // ✅ LOG EACH REPORT'S CATEGORIZATION
-        foreach (var report in reports)
-        {
-            _logger.LogWarning("   📄 Report {ReportId}-{HazardId}: {Category} (HasRA: {HasRA}, RAStatus: {RAStatus}, RAStep: {RAStep}, MitigationCount: {MC})",
-                report.ReportId, report.HazardId, report.StatusCategory, 
-                report.HasRiskAssessment, report.RiskAssessmentStatus, report.CurrentAssessmentStep, report.MitigationCount);
-        }
+        //foreach (var report in reports)
+        //{
+        //    _logger.LogWarning("   📄 Report {ReportId}-{HazardId}: {Category} (HasRA: {HasRA}, RAStatus: {RAStatus}, RAStep: {RAStep}, MitigationCount: {MC})",
+        //        report.ReportId, report.HazardId, report.StatusCategory, 
+        //        report.HasRiskAssessment, report.RiskAssessmentStatus, report.CurrentAssessmentStep, report.MitigationCount);
+        //}
     }
 
     #endregion
@@ -722,8 +722,8 @@ public partial class ReportProcessing : ComponentBase
 
     private ProcessingStatusCategory DetermineStatusCategory(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation, Investigation? investigation)
     {
-        _logger.LogWarning("?? CATEGORIZING Report: {ReportCode} | HasValidation: {HasValidation} | ValidationType: {ValidationType} | ValidationDecision: {ValidationDecision} | HasRiskAssessment: {HasRA} | HasInvestigation: {HasInv} | InvStatus: {InvStatus} | InvDecision: {InvDecision}",
-            report.Code, reportValidation != null, reportValidation?.ValidationType ?? "NULL", reportValidation?.ValidationDecision ?? "NULL", riskAssessment != null, investigation != null, investigation?.Status ?? "NULL", investigation?.DecisionType ?? "NULL");
+        //_logger.LogWarning("?? CATEGORIZING Report: {ReportCode} | HasValidation: {HasValidation} | ValidationType: {ValidationType} | ValidationDecision: {ValidationDecision} | HasRiskAssessment: {HasRA} | HasInvestigation: {HasInv} | InvStatus: {InvStatus} | InvDecision: {InvDecision}",
+         //   report.Code, reportValidation != null, reportValidation?.ValidationType ?? "NULL", reportValidation?.ValidationDecision ?? "NULL", riskAssessment != null, investigation != null, investigation?.Status ?? "NULL", investigation?.DecisionType ?? "NULL");
 
         // CRITICAL DESIGN CONCEPT: 
         // 1. If Investigation exists and is active -> INVESTIGATION tab (HIGHEST PRIORITY)
@@ -763,22 +763,22 @@ public partial class ReportProcessing : ComponentBase
         // No validation record = needs validation
         if (reportValidation == null)
         {
-            _logger.LogWarning("? Report {ReportId} -> VALIDATION (no validation record)", report.Code);
+            //_logger.LogWarning("? Report {ReportId} -> VALIDATION (no validation record)", report.Code);
             return ProcessingStatusCategory.Validation;
         }
 
         // ENHANCED: Check if validation was reset (ValidationType or ValidationDecision is null) - THIS SHOULD CATCH IT!
         if (string.IsNullOrEmpty(reportValidation.ValidationType) || string.IsNullOrEmpty(reportValidation.ValidationDecision))
         {
-            _logger.LogWarning("? Report {ReportId} -> VALIDATION (reset validation - ValidationType: {ValidationType}, ValidationDecision: {ValidationDecision}) ? EXPECTED PATH",
-                report.Code, reportValidation.ValidationType ?? "NULL", reportValidation.ValidationDecision ?? "NULL");
+            //_logger.LogWarning("? Report {ReportId} -> VALIDATION (reset validation - ValidationType: {ValidationType}, ValidationDecision: {ValidationDecision}) ? EXPECTED PATH",
+            //    report.Code, reportValidation.ValidationType ?? "NULL", reportValidation.ValidationDecision ?? "NULL");
             return ProcessingStatusCategory.Validation;
         }
 
         // Has validation with decision but no risk assessment = validated, needs risk assessment
         if (riskAssessment == null)
         {
-            _logger.LogWarning("? Report {ReportId} -> RISK ASSESSMENT (validated but no assessment)", report.Code);
+            //_logger.LogWarning("? Report {ReportId} -> RISK ASSESSMENT (validated but no assessment)", report.Code);
             return ProcessingStatusCategory.RiskAssessment;
         }
 
@@ -796,13 +796,13 @@ public partial class ReportProcessing : ComponentBase
                 _ => ProcessingStatusCategory.RiskAssessment
             };
 
-            _logger.LogWarning("? Report {ReportId} -> {Category} (assessment step {Step})",
-                report.Code, category, riskAssessment.CurrentStep);
+            //_logger.LogWarning("? Report {ReportId} -> {Category} (assessment step {Step})",
+            //    report.Code, category, riskAssessment.CurrentStep);
             return category;
         }
         else if (riskAssessment.Status == RiskAssessmentStatus.AssessmentComplete)
         {
-            _logger.LogWarning("? Report {ReportId} -> MITIGATION (assessment complete)", report.Code);
+            //_logger.LogWarning("? Report {ReportId} -> MITIGATION (assessment complete)", report.Code);
             return ProcessingStatusCategory.Mitigation;
         }
 
@@ -810,7 +810,7 @@ public partial class ReportProcessing : ComponentBase
         // This handles cases where risk assessment might be missing but mitigations exist
         if (hazard != null)
         {
-            _logger.LogWarning("? Report {ReportId} -> Checking if should be MITIGATION (no clear RA status but hazard exists)", report.Code);
+            //_logger.LogWarning("? Report {ReportId} -> Checking if should be MITIGATION (no clear RA status but hazard exists)", report.Code);
             
             // ✅ ENHANCED: If this is being called from CreateReportSummariesAsync, check mitigation count
             // For now, let's assume any report with an associated hazard that has made it this far
