@@ -15,10 +15,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-// NEW: Phase 3 - Event handler imports for complete workflow automation
-using SMS_Application.EventHandlers.Integration;
-using SMS_Domain.Events.Integration;
-
 // Import Hazard event handlers
 using HazardCreatedEventHandler = SMS_Application.EventHandlers.HazardCreatedEventHandler;
 
@@ -109,11 +105,11 @@ public static class EventBusExtensions
             logger.LogInformation("Registering Phase 3 Domain Event Handlers...");
 
             // Register SPI automation handler for unified pub/sub SPI processing
-            eventBus.Subscribe<SMS_Domain.Events.Hazard.HazardCreatedEvent, SPIAutomationEventHandler>();
+            eventBus.Subscribe<SMS_Domain.Events.HazardCreatedEvent, SPIAutomationEventHandler>();
             logger.LogInformation("Registered SPIAutomationEventHandler for HazardCreatedEvent (SPI automation)");
 
             // Register hazard workflow event handlers
-            eventBus.Subscribe<SMS_Domain.Events.Hazard.HazardCreatedEvent, HazardCreatedEventHandler>();
+            eventBus.Subscribe<SMS_Domain.Events.HazardCreatedEvent, HazardCreatedEventHandler>();
             logger.LogInformation("Registered HazardCreatedEventHandler for HazardCreatedEvent");
 
             // TODO: Register additional domain event handlers as they're implemented

@@ -1,0 +1,544 @@
+@page "/SMSSystem/UserRoles/UserRoles"
+
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+@using SMS_Application.Messaging.Commands
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+
+<PageTitle>User Role Management - SMS3</PageTitle>
+<PageHeader Title="User Role Management"
+            Subtitle="@($"Roles/Permissions ({@UserRolesList.Count()})")"
+            Icon="fas fa-user-tie">
+            <AdditionalContent>
+                <div class="d-flex justify-content-end align-items-center w-100">
+                    <div class="d-flex gap-2">
+                        <RadzenButton Text="Add Role" Icon="add" ButtonStyle="ButtonStyle.Success"
+                              Click="@ShowCreateDialog" />
+                    </div>
+                </div>
+            </AdditionalContent>
+
+</PageHeader>
+
+
+<div class="container-fluid">
+    <!-- Messages -->
+    @if (!string.IsNullOrEmpty(SuccessMessage))
+    {
+        <RadzenRow Gap="1rem" class="rz-mb-3">
+            <RadzenColumn Size="12">
+                <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter">
+                    <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
+                    @SuccessMessage
+                </RadzenAlert>
+            </RadzenColumn>
+        </RadzenRow>
+    }
+
+    @if (!string.IsNullOrEmpty(ErrorMessage))
+    {
+        <RadzenRow Gap="1rem" class="rz-mb-3">
+            <RadzenColumn Size="12">
+                <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+                    <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
+                    @ErrorMessage
+                </RadzenAlert>
+            </RadzenColumn>
+        </RadzenRow>
+    }
+
+    <!-- Roles DataGrid -->
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12">
+            <RadzenCard Variant="Variant.Outlined">
+                <RadzenCard>
+                    @if (UserRolesList.Any())
+                    {
+                        <RadzenDataGrid @ref="rolesGrid" Data="@UserRolesList" TItem="SMSUserRole" 
+                                      AllowFiltering="true" AllowSorting="true" AllowPaging="true" 
+                                      PageSize="10" ShowPagingSummary="true" 
+                                      FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="SMSUserRole" Property="Name" Title="Role" Width="250px">
+                                    <Template Context="role">
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0">
+                                            <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">
+                                                @role.Name
+                                            </RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                                @role.Code
+                                            </RadzenText>
+                                        </RadzenStack>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="SMSUserRole" Title="Permissions Summary" Width="500px" Sortable="false">
+                                    <Template Context="role">
+                                        @{
+                                            var totalPermissions = GetTotalPermissions(role);
+                                            var maxPermissions = SMSModules.Length * 4;
+                                            var percentage = maxPermissions > 0 ? (double)totalPermissions / maxPermissions * 100 : 0;
+                                        }
+                                        <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                <RadzenProgressBar Value="@percentage" ShowValue="false" Style="width: 425px;" />
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
+                                                    @totalPermissions / @maxPermissions permissions
+                                                </RadzenText>
+                                            </RadzenStack>
+                                           
+                                        </RadzenStack>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                
+                                <RadzenDataGridColumn TItem="SMSUserRole" Title="Actions" Width="200px" Sortable="false" Filterable="false">
+                                    <Template Context="role">
+                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
+                                                        Click="@(() => EditRole(role.Code))" 
+                                                        title="Edit Role" />
+                                            <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
+                                                        Click="@(() => ShowPermissionsDialog(role))" 
+                                                        title="View Permissions" />
+                                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
+                                                        Click="@(() => ShowDeleteDialog(role.Code, role.Name))" 
+                                                        title="Delete Role" />
+                                        </RadzenStack>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                    else
+                    {
+                        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+                            <RadzenIcon Icon="admin_panel_settings" Style="font-size: 4rem; color: var(--rz-text-disabled-color);" />
+                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-text-disabled-color);">
+                                No User Roles Found
+                            </RadzenText>
+                            <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-disabled-color);">
+                                Click "Add Role" to create your first user role.
+                            </RadzenText>
+                            <RadzenButton Text="Add First Role" Icon="add" ButtonStyle="ButtonStyle.Success" 
+                                        Click="@ShowCreateDialog" />
+                        </RadzenStack>
+                    }
+                </RadzenCard>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</div>
+
+<!-- Create Role Modal -->
+@if (ShowCreateModal)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-xl">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <h5 class="sms-modal-title">
+                        <i class="fas fa-user-plus"></i> Create User Role
+                    </h5>
+                </div>
+                <div class="sms-modal-body">
+                    <RadzenTemplateForm Data="@NewRole" Submit="@((CreateRoleModel model) => CreateRole())">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12">
+                                <RadzenFormField Text="Role Name *" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@NewRole.RoleName" Name="RoleName" 
+                                                   Placeholder="Enter role name (e.g., Safety Manager, Report Viewer)" 
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenRequiredValidator Component="RoleName" Text="Role name is required" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <br />
+                        <!-- Permission Matrix -->
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12">
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" class="rz-mb-3">
+                                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                        <RadzenIcon Icon="security" Style="margin-right: 0.5rem;" />
+                                        Module Permissions
+                                    </RadzenText>
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                        <RadzenButton Text="Select All" Icon="check_box" Size="ButtonSize.Small" 
+                                                    Click="@(() => ToggleAllCreatePermissions(true))" />
+                                        <RadzenButton Text="Clear All" Icon="check_box_outline_blank" Size="ButtonSize.Small" Variant="Variant.Outlined"
+                                                    Click="@(() => ToggleAllCreatePermissions(false))" />
+                                    </RadzenStack>
+                                </RadzenStack>
+                                
+                                <RadzenDataGrid Data="@SMSModules" TItem="string" AllowPaging="false" class="permission-grid">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="string" Title="Module" Width="25%">
+                                            <Template Context="module">
+                                                <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@module</RadzenText>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="string" Title="Create" Width="15%">
+                                            <Template Context="module">
+                                                <div class="d-flex justify-content-center">
+                                                    <RadzenCheckBox @bind-Value="@NewRole.CreatePermissions[module]" Name="@($"create_{module}")" />
+                                                </div>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="string" Title="Read" Width="15%">
+                                            <Template Context="module">
+                                                <div class="d-flex justify-content-center">
+                                                    <RadzenCheckBox @bind-Value="@NewRole.ReadPermissions[module]" Name="@($"read_{module}")" />
+                                                </div>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="string" Title="Update" Width="15%">
+                                            <Template Context="module">
+                                                <div class="d-flex justify-content-center">
+                                                    <RadzenCheckBox @bind-Value="@NewRole.UpdatePermissions[module]" Name="@($"update_{module}")" />
+                                                </div>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="string" Title="Delete" Width="15%">
+                                            <Template Context="module">
+                                                <div class="d-flex justify-content-center">
+                                                    <RadzenCheckBox @bind-Value="@NewRole.DeletePermissions[module]" Name="@($"delete_{module}")" />
+                                                </div>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="string" Title="Actions" Width="15%">
+                                            <Template Context="module">
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                                                    <RadzenButton Text="All" Size="ButtonSize.ExtraSmall" ButtonStyle="ButtonStyle.Primary" 
+                                                                Click="@(() => ToggleCreateModulePermissions(module, true))" />
+                                                    <RadzenButton Text="None" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" 
+                                                                Click="@(() => ToggleCreateModulePermissions(module, false))" />
+                                                </RadzenStack>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenTemplateForm>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end align-items-center w-100">
+                        <div class="d-flex gap-2">
+                            <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
+                            <RadzenButton Text="Create Role" Icon="save" ButtonStyle="ButtonStyle.Primary" 
+                                          Click="@CreateRole" Disabled="@(!IsCreateFormValid || IsSaving)"
+                                          Style="background-color: #212e61; border-color: #212e61;" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Edit Role Modal -->
+@if (ShowEditModal && CurrentEditRole != null)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-xl">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <h5 class="sms-modal-title">
+                        <i class="fas fa-edit"></i> Edit Role: @CurrentEditRole.Name
+                    </h5>
+                </div>
+                <div class="sms-modal-body">
+                    <RadzenTemplateForm Data="@editRole" Submit="@((EditRoleModel model) => UpdateRole())">
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12">
+                                <RadzenFormField Text="Role Name *" Variant="Variant.Outlined">
+                                    <RadzenTextBox @bind-Value="@editRole.RoleName" Name="RoleName" 
+                                                   Placeholder="Enter role name" 
+                                                   Style="width: 100%;" />
+                                </RadzenFormField>
+                                <RadzenRequiredValidator Component="RoleName" Text="Role name is required" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                        <br />
+                        <!-- Permission Matrix -->
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12">
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" class="rz-mb-3">
+                                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">
+                                        <RadzenIcon Icon="security" Style="margin-right: 0.5rem;" />
+                                        Module Permissions
+                                    </RadzenText>
+                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                                        <RadzenButton Text="Select All" Icon="check_box" Size="ButtonSize.Small" 
+                                                    Click="@(() => ToggleAllEditPermissions(true))" />
+                                        <RadzenButton Text="Clear All" Icon="check_box_outline_blank" Size="ButtonSize.Small" Variant="Variant.Outlined"
+                                                    Click="@(() => ToggleAllEditPermissions(false))" />
+                                    </RadzenStack>
+                                </RadzenStack>
+
+                                <RadzenDataGrid Data="@SMSModules" TItem="string" AllowPaging="false" class="permission-grid" Style="height: 700px; overflow-y:auto">
+                                    <Columns>
+                                        <RadzenDataGridColumn TItem="string" Title="Module" Width="25%">
+                                            <Template Context="module">
+                                                <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@module</RadzenText>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="string" Title="Create" Width="15%">
+                                            <Template Context="module">
+                                                <div class="d-flex justify-content-center">
+                                                    <RadzenCheckBox @bind-Value="@editRole.CreatePermissions[module]" Name="@($"create_{module}")" />
+                                                </div>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="string" Title="Read" Width="15%">
+                                            <Template Context="module">
+                                                <div class="d-flex justify-content-center">
+                                                    <RadzenCheckBox @bind-Value="@editRole.ReadPermissions[module]" Name="@($"read_{module}")" />
+                                                </div>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="string" Title="Update" Width="15%">
+                                            <Template Context="module">
+                                                <div class="d-flex justify-content-center">
+                                                    <RadzenCheckBox @bind-Value="@editRole.UpdatePermissions[module]" Name="@($"update_{module}")" />
+                                                </div>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="string" Title="Delete" Width="15%">
+                                            <Template Context="module">
+                                                <div class="d-flex justify-content-center">
+                                                    <RadzenCheckBox @bind-Value="@editRole.DeletePermissions[module]" Name="@($"delete_{module}")" />
+                                                </div>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                        <RadzenDataGridColumn TItem="string" Title="Actions" Width="15%">
+                                            <Template Context="module">
+                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem" JustifyContent="JustifyContent.Center">
+                                                    <RadzenButton Text="All" Size="ButtonSize.ExtraSmall" ButtonStyle="ButtonStyle.Primary" 
+                                                                Click="@(() => ToggleEditModulePermissions(module, true))" />
+                                                    <RadzenButton Text="None" Size="ButtonSize.ExtraSmall" Variant="Variant.Outlined" 
+                                                                Click="@(() => ToggleEditModulePermissions(module, false))" />
+                                                </RadzenStack>
+                                            </Template>
+                                        </RadzenDataGridColumn>
+                                    </Columns>
+                                </RadzenDataGrid>
+                            </RadzenColumn>
+                        </RadzenRow>
+                    </RadzenTemplateForm>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end align-items-center w-100">
+                        <div class="d-flex gap-2">
+                            <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
+                            <RadzenButton Text="Update Role" Icon="save" ButtonStyle="ButtonStyle.Warning" 
+                                          Click="@UpdateRole" Disabled="@(!IsEditFormValid || IsSaving)"
+                                          Style="background-color: #f39c12; border-color: #f39c12;" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- View Permissions Modal -->
+@if (ShowPermissionsModal && ViewRole != null)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-lg">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <h5 class="sms-modal-title">
+                        <i class="fas fa-eye"></i> View Permissions: @ViewRole.Name
+                    </h5>
+                </div>
+                <div class="sms-modal-body">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0 0 1rem 0; text-align: center;">
+                        Code: @ViewRole.Code
+                    </RadzenText>
+
+                    @if (ViewRole.Permissions?.Any() == true)
+                    {
+                        <RadzenDataGrid Data="@SMSModules" TItem="string" AllowPaging="false" class="permission-view-grid" Style="height: 700px; overflow-y:auto">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="string" Title="Module" Width="30%">
+                                    <Template Context="module">
+                                        <RadzenText TextStyle="TextStyle.Body1" Style="font-weight: 600;">@module</RadzenText>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="string" Title="Create" Width="17.5%">
+                                    <Template Context="module">
+                                        <div class="text-center">
+                                            @if (IsPermissionGranted(module, "Create"))
+                                            {
+                                                <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" />
+                                                <div><small class="text-success">Granted</small></div>
+                                            }
+                                            else
+                                            {
+                                                <RadzenIcon Icon="cancel" Style="color: var(--rz-text-disabled-color);" />
+                                                <div><small class="text-muted">Denied</small></div>
+                                            }
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="string" Title="Read" Width="17.5%">
+                                    <Template Context="module">
+                                        <div class="text-center">
+                                            @if (IsPermissionGranted(module, "Read"))
+                                            {
+                                                <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" />
+                                                <div><small class="text-success">Granted</small></div>
+                                            }
+                                            else
+                                            {
+                                                <RadzenIcon Icon="cancel" Style="color: var(--rz-text-disabled-color);" />
+                                                <div><small class="text-muted">Denied</small></div>
+                                            }
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="string" Title="Update" Width="17.5%">
+                                    <Template Context="module">
+                                        <div class="text-center">
+                                            @if (IsPermissionGranted(module, "Update"))
+                                            {
+                                                <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" />
+                                                <div><small class="text-success">Granted</small></div>
+                                            }
+                                            else
+                                            {
+                                                <RadzenIcon Icon="cancel" Style="color: var(--rz-text-disabled-color);" />
+                                                <div><small class="text-muted">Denied</small></div>
+                                            }
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                                <RadzenDataGridColumn TItem="string" Title="Delete" Width="17.5%">
+                                    <Template Context="module">
+                                        <div class="text-center">
+                                            @if (IsPermissionGranted(module, "Delete"))
+                                            {
+                                                <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" />
+                                                <div><small class="text-success">Granted</small></div>
+                                            }
+                                            else
+                                            {
+                                                <RadzenIcon Icon="cancel" Style="color: var(--rz-text-disabled-color);" />
+                                                <div><small class="text-muted">Denied</small></div>
+                                            }
+                                        </div>
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+
+                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" class="rz-mt-3">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenIcon Icon="info" />
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                    Total: @GetViewRoleTotalPermissions() of @GetMaxPermissions() possible permissions granted
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenAlert>
+                    }
+                    else
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
+                            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenIcon Icon="warning" Style="font-size: 2rem;" />
+                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">No Permissions Defined</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">This role has no module permissions assigned.</RadzenText>
+                            </RadzenStack>
+                        </RadzenAlert>
+                    }
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end align-items-center w-100">
+                        <RadzenButton Text="Close" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@ClosePermissionsModal" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+/* Modal Overlay and Dialog */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    padding: 1rem;
+}
+
+.sms-modal-dialog {
+    position: relative;
+    margin: 0 auto;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+}
+
+.sms-modal-lg {
+    max-width: 800px;
+    width: 100%;
+}
+
+.sms-modal-xl {
+    max-width: 1200px;
+    width: 100%;
+}
+
+.sms-modal-content {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+}
+
+.sms-modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.sms-header-primary {
+    background-color: #212e61; /* SMS Blue Dark Bold */
+    color: white;
+}
+
+.sms-modal-title {
+    margin: 0;
+    font-weight: 600;
+}
+
+.sms-modal-body {
+    padding: 1.5rem;
+}
+
+.sms-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 0.5rem 0.5rem;
+    background-color: #f8f9fa;
+}
+
+/* Permission Grid Styling */
+.permission-grid {
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+}
+
+.permission-view-grid {
+    border: 1px solid #e9ecef;
+    border-radius: 0.375rem;
+}
+</style>

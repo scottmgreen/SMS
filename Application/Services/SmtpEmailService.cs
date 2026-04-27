@@ -13,7 +13,7 @@ using System.Net.Mail;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SMS_Application.Interfaces;
-using SMS_Domain.Events.Integration;
+using SMS_Domain.Events;
 using SMS_Domain.Common;
 
 namespace SMS_Application.Services;
@@ -158,8 +158,6 @@ public class SmtpEmailService : IEmailService
 
         // Create directory if it doesn't exist
         Directory.CreateDirectory(@"C:\temp\sms_emails");
-
-        return smtpClient;
 
         return smtpClient;
     }

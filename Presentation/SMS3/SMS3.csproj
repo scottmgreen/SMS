@@ -63,7 +63,6 @@
 
   <ItemGroup>
     <Folder Include="Components\Pages\SMSPromotion\" />
-    <Folder Include="Components\Pages\Testing\" />
     <Folder Include="Components\Shared\Testing\" />
     <Folder Include="logs\" />
     <Folder Include="wwwroot\uploads\" />

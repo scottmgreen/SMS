@@ -1,0 +1,119 @@
+@page "/SMSListing/AirportSharedDatasets"
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+@using SMS_Application.Interfaces
+@using SMS_Application.Messaging.Queries
+@using SMS_Domain.Entities
+@using SMS_Domain.ValueObjects
+@using SMS_Shared.Common
+
+<PageTitle>Airport Shared Datasets</PageTitle>
+
+<!-- SMS Page Header using reusable component -->
+<PageHeader Title="Airport Shared Datasets"
+           Subtitle="Manage and view ADAM (Airport Data Aggregation and Monitoring) datasets"
+           Icon="fas fa-database" />
+
+<RadzenDataGrid @ref="datasetsGrid" 
+                Data="@datasets" 
+                Count="@totalCount" 
+                LoadData="@LoadData"
+                AllowPaging="true" 
+                AllowSorting="true" 
+                AllowFiltering="true"
+                PageSize="25"
+                PagerHorizontalAlign="HorizontalAlign.Left"
+                ShowPagingSummary="true"
+                FilterMode="FilterMode.Advanced"
+                SelectionMode="DataGridSelectionMode.Single"
+                Style="height: calc(100vh - 200px)">
+    
+    <Columns>
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="Code" Title="Dataset Code" Width="150px" />
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="ReportCode" Title="Report Code" Width="120px">
+            <Template Context="dataset">
+                @if (!string.IsNullOrEmpty(dataset.ReportCode))
+                {
+                    <RadzenLink Path="@($"/SMSRiskManagement/ReportDetails/{dataset.ReportCode}")" Text="@dataset.ReportCode" />
+                }
+                else
+                {
+                    <span class="text-muted">-</span>
+                }
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="HazardCode" Title="Hazard Code" Width="120px">
+            <Template Context="dataset">
+                @if (!string.IsNullOrEmpty(dataset.HazardCode))
+                {
+                    <RadzenLink Path="@($"/SMSRiskManagement/HazardDetails/{dataset.HazardCode}")" Text="@dataset.HazardCode" />
+                }
+                else
+                {
+                    <span class="text-muted">-</span>
+                }
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="LocationArea" Title="Location" Width="150px">
+            <Template Context="dataset">
+                @if (!string.IsNullOrEmpty(dataset.LocationArea))
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Info" Text="@dataset.LocationArea" />
+                }
+                else if (!string.IsNullOrEmpty(dataset.LocationOther))
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@dataset.LocationOther" />
+                }
+                else
+                {
+                    <span class="text-muted">-</span>
+                }
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="TriggeringEvent" Title="Event" Width="120px" />
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="Weather" Title="Weather" Width="120px" />
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="CreatedBy" Title="Created By" Width="150px" />
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy HH:mm}" />
+        
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Title="Actions" Width="220px" Sortable="false" Filterable="false">
+            <Template Context="dataset">
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" 
+                                Tooltip="View Dataset Details"
+                                Click="@(() => ViewDataset(dataset))" />
+                    
+                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
+                                Tooltip="Edit Dataset"
+                                Click="@(() => EditDataset(dataset))" />
+                    
+                    <RadzenButton Icon="download" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" 
+                                Tooltip="Export Dataset"
+                                Click="@(() => ExportDataset(dataset))" />
+                                
+                    <RadzenButton Icon="content_copy" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" 
+                                Tooltip="Duplicate Dataset"
+                                Click="@(() => DuplicateDataset(dataset))" />
+                    
+                    <RadzenButton Icon="history" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small" 
+                                Tooltip="View History"
+                                Click="@(() => ViewHistory(dataset))" />
+                    
+                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
+                                Tooltip="Delete Dataset"
+                                Click="@(() => DeleteDataset(dataset))" />
+                </RadzenStack>
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+<!-- Confirmation Dialog -->
+<RadzenDialog />
+
+<style>
+    .text-muted {
+        color: var(--rz-text-disabled-color);
+        font-style: italic;
+    }
+</style>

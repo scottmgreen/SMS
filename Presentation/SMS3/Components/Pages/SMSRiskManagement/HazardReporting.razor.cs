@@ -13,7 +13,7 @@ using SMS3.Configuration.Extensions;
 
 // NEW: EventBus integration for Phase 3 workflow automation
 using SMS_Application.Interfaces;
-using SMS_Domain.Events.Hazard;
+using SMS_Domain.Events;
 using SMS_Domain.Enums;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;

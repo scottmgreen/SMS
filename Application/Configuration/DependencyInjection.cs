@@ -18,9 +18,6 @@ using SMS_Application.EventHandlers; // NEW: For SPI event handlers
 using SMS_Application.BackgroundServices; // NEW: For SPI background services
 using SMS_Domain.Events; // NEW: For EventBus domain events
 
-// NEW: Phase 3 - Additional event handler imports
-using SMS_Application.EventHandlers.Integration;
-
 namespace SMS_Application.Configuration
 {
     /// <summary>

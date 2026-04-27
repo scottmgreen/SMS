@@ -8,7 +8,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Domain.Events.Integration;
+using SMS_Domain.Events;
 using SMS_Domain.Common;
 
 namespace SMS_Application.Interfaces;
