@@ -5,7 +5,7 @@
 @using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
 @using SMS_Shared.Common
-@inject IMediator Mediator
+@inject IBaseMediator Mediator
 @inject ILogger<HazardDetails> Logger
 
 <div class="hazard-details-container">
@@ -251,7 +251,7 @@
     /// </summary>
     private bool HasLocationData(Hazard hazard)
     {
-        if (hazard == null) return false;
+        if (hazard is null) return false;
 
         // Check if we have coordinates in LocationArea
         if (!string.IsNullOrEmpty(hazard.LocationArea))
@@ -267,6 +267,6 @@
         // Check if we have any location description
         return !string.IsNullOrEmpty(hazard.LocationArea) || 
                !string.IsNullOrEmpty(hazard.LocationSubArea) || 
-               hazard.HazardLocation != null;
+               hazard.HazardLocation is not null;
     }
 }}}

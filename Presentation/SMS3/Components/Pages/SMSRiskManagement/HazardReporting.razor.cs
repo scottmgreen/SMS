@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.JSInterop;
 
 using SMS_Application.Services;
@@ -26,7 +26,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 {
     #region Dependencies
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<HazardReporting> _logger { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
@@ -36,7 +36,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     [Inject] private NavigationManager _navigation { get; set; } = default!;
 
     // NEW: EventBus integration for Phase 3 workflow automation
-    [Inject] private IEventBus _eventBus { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     #endregion
 
     #region Route Parameters
@@ -356,7 +356,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             var reportQuery = new GetReportByCodeQuery(new ReportID(reportCode));
             var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
-            if (reportResult.IsFailure || reportResult.Value == null)
+            if (reportResult.IsFailure || reportResult.Value is null)
             {
                 throw new InvalidOperationException($"Report {reportCode} not found");
             }
@@ -380,7 +380,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
                 // Try to determine category from hazard type
                 var hazardType = HazardType.FromValue(primaryHazard.HazardType ?? "");
-                var category = hazardType != null ? HazardCategory.FromValue(hazardType.Category) : null;
+                var category = hazardType is not null ? HazardCategory.FromValue(hazardType.Category) : null;
 
                 _logger.LogInformation("Determined category: {Category} from hazard type: {HazardType}", category?.Value ?? "NULL", primaryHazard.HazardType);
 
@@ -410,7 +410,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
 
                 // STEP 3: Load the hazard types for the category (this will populate HazardTypeOptions)
-                if (category != null)
+                if (category is not null)
                 {
                     _logger.LogInformation("Loading hazard types for category: {Category}", category.Value);
 
@@ -428,7 +428,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 }
 
                 // STEP 4: Handle geographic location data
-                if (primaryHazard.HazardLocation != null)
+                if (primaryHazard.HazardLocation is not null)
                 {
                     SelectedGeoLocation = new HazardLocation
                     {
@@ -517,7 +517,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazardCode));
             var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
-            if (hazardResult.IsFailure || hazardResult.Value == null)
+            if (hazardResult.IsFailure || hazardResult.Value is null)
             {
                 throw new InvalidOperationException($"Hazard {hazardCode} not found");
             }
@@ -553,7 +553,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 var reportQuery = new GetReportByCodeQuery(new ReportID(EditingHazard.ReportCode));
                 var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
-                if (reportResult.IsSuccess && reportResult.Value != null)
+                if (reportResult.IsSuccess && reportResult.Value is not null)
                 {
                     EditingReport = reportResult.Value;
                     EditReportCode = EditingReport.Code;
@@ -564,7 +564,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
             // Try to determine category from hazard type
             var hazardType = HazardType.FromValue(EditingHazard.HazardType ?? "");
-            var category = hazardType != null ? HazardCategory.FromValue(hazardType.Category) : null;
+            var category = hazardType is not null ? HazardCategory.FromValue(hazardType.Category) : null;
 
             _logger.LogInformation("Determined category: {Category} from hazard type: {HazardType}", 
                 category?.Value ?? "NULL", EditingHazard.HazardType);
@@ -593,7 +593,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             };
 
             // STEP 3: Load the hazard types for the category
-            if (category != null)
+            if (category is not null)
             {
                 _logger.LogInformation("Loading hazard types for category: {Category}", category.Value);
                 await LoadHazardTypesForCategory(category.Value, preserveSelectedType: true);
@@ -607,7 +607,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             }
 
             // STEP 4: Handle geographic location data
-            if (EditingHazard.HazardLocation != null)
+            if (EditingHazard.HazardLocation is not null)
             {
                 SelectedGeoLocation = new HazardLocation
                 {
@@ -664,7 +664,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         var category = HazardCategory.FromValue(categoryValue);
-        if (category != null)
+        if (category is not null)
         {
             // Store the current selected type if we want to preserve it
             var currentSelectedType = preserveSelectedType ? HazardReport.HazardType : null;
@@ -737,7 +737,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     public async Task OnInputFileChange(UploadChangeEventArgs args)
     {
         var newFiles = args.Files; // Allow up to 10 files at once
-        _logger.LogInformation("🔄 OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
+        _logger.LogInformation("?? OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
 
         if (newFiles?.Any() == true)
         {
@@ -756,7 +756,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
                     if (isDuplicate)
                     {
-                        _logger.LogInformation("⚠️ Skipped duplicate file: {FileName}", newFile.Name);
+                        _logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
                         continue;
                     }
 
@@ -780,11 +780,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     };
 
                     successfullyProcessedFiles.Add(attachedFile);
-                    _logger.LogInformation("✅ Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
+                    _logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "❌ Error processing file: {FileName}", newFile.Name);
+                    _logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
                     failedFiles.Add(newFile.Name);
                 }
             }
@@ -816,11 +816,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 await _notificationHelper.ShowErrorAsync($"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
             }
 
-            _logger.LogInformation("📁 File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
+            _logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
         }
         else
         {
-            _logger.LogInformation("⚠️ No files provided to OnInputFileChange");
+            _logger.LogInformation("?? No files provided to OnInputFileChange");
         }
 
         StateHasChanged();
@@ -842,7 +842,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         await Task.Delay(500);
 
         // Always try to initialize the map when modal opens
-        if (_mapModule != null)
+        if (_mapModule is not null)
         {
             try
             {
@@ -930,7 +930,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         SelectedGeoLocation = new HazardLocation();
         HazardReport.Location = "";
 
-        if (_mapModule != null)
+        if (_mapModule is not null)
         {
             try
             {
@@ -983,12 +983,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
             return;
         }
 
-        _logger.LogInformation("🚀 Preparing for submission with {Count} cached files ready", AttachedFiles?.Count ?? 0);
+        _logger.LogInformation("?? Preparing for submission with {Count} cached files ready", AttachedFiles?.Count ?? 0);
         if (AttachedFiles?.Any() == true)
         {
             foreach (var file in AttachedFiles)
             {
-                _logger.LogInformation("📄 Cached file ready for submission: {FileName} ({Size} bytes, {DataSize} bytes cached)", file.FileName, file.Size, file.Data?.Length ?? 0);
+                _logger.LogInformation("?? Cached file ready for submission: {FileName} ({Size} bytes, {DataSize} bytes cached)", file.FileName, file.Size, file.Data?.Length ?? 0);
             }
         }
 
@@ -1148,7 +1148,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             ShowSubmissionConfirmation = false;
             StateHasChanged();
 
-            if (IsEditMode && EditingReport != null && EditingHazard != null)
+            if (IsEditMode && EditingReport is not null && EditingHazard is not null)
             {
                 // ===============================
                 // EDIT MODE - Update existing report and hazard
@@ -1169,7 +1169,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error during hazard report submission in {Mode} mode",
+            _logger.LogError(ex, "? Error during hazard report submission in {Mode} mode",
                 IsEditMode ? "EDIT" : "CREATE");
 
             ShowSubmissionConfirmation = false;
@@ -1215,7 +1215,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             throw new Exception($"Failed to update report: {reportUpdateResult.Error?.Message}");
         }
 
-        _logger.LogInformation("✅ Report {ReportCode} updated successfully", EditReportCode);
+        _logger.LogInformation("? Report {ReportCode} updated successfully", EditReportCode);
 
         // ===============================
         // STEP 2: Update the existing Hazard
@@ -1240,7 +1240,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         var updatedHazard = hazardUpdateResult.Value;
-        _logger.LogInformation("✅ Hazard {HazardCode} updated successfully", EditHazardCode);
+        _logger.LogInformation("? Hazard {HazardCode} updated successfully", EditHazardCode);
 
         // ===============================
         // STEP 3: Handle file updates (if any new files)
@@ -1256,7 +1256,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         ShowSubmissionConfirmation = false;
         ShowFinalSuccessConfirmation = true;
 
-        _logger.LogInformation("✅ EDIT mode completed - Report: {ReportCode}, Hazard: {HazardCode}",
+        _logger.LogInformation("? EDIT mode completed - Report: {ReportCode}, Hazard: {HazardCode}",
             updatedHazard.ReportCode, updatedHazard.Code);
 
         await _notificationHelper.ShowSuccessAsync( $"Report {updatedHazard.ReportCode} and hazard {updatedHazard.Code} have been updated.", 5000);
@@ -1302,7 +1302,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         var actualReportCode = reportResult.Value.Code;
-        _logger.LogInformation("✅ Report created with Code: {ReportCode}", actualReportCode);
+        _logger.LogInformation("? Report created with Code: {ReportCode}", actualReportCode);
 
         // ===============================
         // STEP 2: Create new Hazard
@@ -1337,12 +1337,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
         GeneratedHazardId = createdHazard.Code;
         GeneratedReportId = createdHazard.ReportCode;
 
-        _logger.LogInformation("✅ Hazard created with Code: {HazardCode}, linked to Report: {ReportCode}", createdHazard.Code, actualReportCode);
+        _logger.LogInformation("? Hazard created with Code: {HazardCode}, linked to Report: {ReportCode}", createdHazard.Code, actualReportCode);
 
-        // NEW: PHASE 3 - EventBus Integration for Complete Workflow Automation 🚀
+        // NEW: PHASE 3 - EventBus Integration for Complete Workflow Automation ??
         try
         {
-            _logger.LogInformation("🚀 Phase 3: Publishing HazardCreatedEvent for complete workflow automation");
+            _logger.LogInformation("?? Phase 3: Publishing HazardCreatedEvent for complete workflow automation");
 
             // Determine hazard priority based on type/category
             var hazardPriority = DetermineHazardPriority(createdHazard.HazardType, createdHazard.HazardCategory);
@@ -1370,18 +1370,18 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
             if (eventResult.IsSuccess)
             {
-                _logger.LogInformation("✅ Phase 3: HazardCreatedEvent published successfully for {HazardCode} - Complete workflow initiated", createdHazard.Code);
+                _logger.LogInformation("? Phase 3: HazardCreatedEvent published successfully for {HazardCode} - Complete workflow initiated", createdHazard.Code);
             }
             else
             {
-                _logger.LogWarning("⚠️ Phase 3: Failed to publish HazardCreatedEvent for {HazardCode}: {Error} - continuing with submission", 
+                _logger.LogWarning("?? Phase 3: Failed to publish HazardCreatedEvent for {HazardCode}: {Error} - continuing with submission", 
                     createdHazard.Code, eventResult.Error.Message);
             }
         }
         catch (Exception eventEx)
         {
             // Don't fail the entire submission if EventBus fails
-            _logger.LogWarning(eventEx, "⚠️ Phase 3: EventBus integration failed for {HazardCode} - continuing with submission", createdHazard.Code);
+            _logger.LogWarning(eventEx, "?? Phase 3: EventBus integration failed for {HazardCode} - continuing with submission", createdHazard.Code);
         }
 
         // NOTE: SPI automation now handled by EventBus SPIAutomationEventHandler - no direct calls needed
@@ -1405,7 +1405,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         ShowSubmissionConfirmation = false;
         ShowFinalSuccessConfirmation = true;
 
-        _logger.LogInformation("✅ CREATE mode completed - Report: {ReportCode}, Hazard: {HazardCode} Tracking: { TrackingCode} ", createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
+        _logger.LogInformation("? CREATE mode completed - Report: {ReportCode}, Hazard: {HazardCode} Tracking: { TrackingCode} ", createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
         await _notificationHelper.ShowSuccessAsync( $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}.", 5000);
 
@@ -1431,12 +1431,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
             if (createdTrackingResult.IsSuccess)
             {
-                _logger.LogInformation("✅ Tracking code generated: {TrackingCode} for Hazard: {HazardCode}", 
+                _logger.LogInformation("? Tracking code generated: {TrackingCode} for Hazard: {HazardCode}", 
                     createdTrackingResult.Value.TrackingCode, createdHazard.Code);
             }
             else
             {
-                _logger.LogError("❌ Failed to generate tracking code for Hazard: {HazardCode}. Error: {Error}", 
+                _logger.LogError("? Failed to generate tracking code for Hazard: {HazardCode}. Error: {Error}", 
                     createdHazard.Code, createdTrackingResult.Error?.Message);
             }
 
@@ -1444,7 +1444,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Exception generating tracking code for Hazard: {HazardCode}", createdHazard.Code);
+            _logger.LogError(ex, "? Exception generating tracking code for Hazard: {HazardCode}", createdHazard.Code);
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.CreateFailed);
         }
     }
@@ -1466,7 +1466,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             try
             {
-                // 🔧 FIXED: Always create new location since CreateHazardCommandHandler no longer auto-creates default locations
+                // ?? FIXED: Always create new location since CreateHazardCommandHandler no longer auto-creates default locations
                 var hazardLocationCode = "HL-0000"; // Database will generate actual code
                 var newHazardLocation = new HazardLocation(new HazardLocationID(hazardLocationCode))
                 {
@@ -1489,12 +1489,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     var createdLocation = locationCreateResult.Value;
                     hazard.HazardLocation = createdLocation;
 
-                    _logger.LogInformation("✅ HazardLocation created with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
+                    _logger.LogInformation("? HazardLocation created with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
                         createdLocation.Code, SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
                 }
                 else
                 {
-                    _logger.LogError("❌ Failed to create HazardLocation: {Error}", locationCreateResult.Error?.Message);
+                    _logger.LogError("? Failed to create HazardLocation: {Error}", locationCreateResult.Error?.Message);
                 }
 
                 // Set coordinate information in hazard fields for backward compatibility
@@ -1527,7 +1527,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             if (AttachedFiles?.Any() == true)
             {
-                _logger.LogInformation("📎 Processing {Count} cached files for Hazard: {HazardCode}",
+                _logger.LogInformation("?? Processing {Count} cached files for Hazard: {HazardCode}",
                     AttachedFiles.Count, hazard.Code);
 
                 foreach (var attachedFile in AttachedFiles.Where(f => f?.Data?.Length > 0))
@@ -1562,30 +1562,30 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             var createdFileId = hazardFileResult.Value.Code;
                             hazard.AddHazardFile(new HazardFileID(createdFileId));
 
-                            _logger.LogInformation("✅ Created HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}",
+                            _logger.LogInformation("? Created HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}",
                                 attachedFile.FileName, createdFileId, hazard.Code);
                         }
                         else
                         {
-                            _logger.LogError("❌ Failed to create HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}",
+                            _logger.LogError("? Failed to create HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}",
                                 attachedFile.FileName, hazard.Code, hazardFileResult.Error?.Message);
                         }
                     }
                     catch (Exception fileEx)
                     {
-                        _logger.LogError(fileEx, "❌ Exception creating HazardFile: {FileName} for Hazard: {HazardCode}",
+                        _logger.LogError(fileEx, "? Exception creating HazardFile: {FileName} for Hazard: {HazardCode}",
                             attachedFile.FileName, hazard.Code);
                     }
                 }
             }
             else
             {
-                _logger.LogInformation("📎 No files to process for Hazard: {HazardCode}", hazard.Code);
+                _logger.LogInformation("?? No files to process for Hazard: {HazardCode}", hazard.Code);
             }
         }
         catch (Exception fileEx)
         {
-            _logger.LogError(fileEx, "📎 Error processing files, but continuing with hazard operation");
+            _logger.LogError(fileEx, "?? Error processing files, but continuing with hazard operation");
         }
     }
 
@@ -1627,7 +1627,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         if (!string.IsNullOrEmpty(hazardTypeValue))
         {
             var hazardType = HazardType.FromValue(hazardTypeValue);
-            if (hazardType != null)
+            if (hazardType is not null)
             {
                 _logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}",hazardType.Name, hazardType.RequiresRegulatoryReporting);
 
@@ -1852,7 +1852,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             var selectedFileToRemove = selectedFilesList.FirstOrDefault(sf =>
                 sf.Name == fileToRemove.FileName && sf.Size == fileToRemove.Size);
 
-            if (selectedFileToRemove != null)
+            if (selectedFileToRemove is not null)
             {
                 selectedFilesList.Remove(selectedFileToRemove);
                 SelectedFiles = selectedFilesList.AsReadOnly();

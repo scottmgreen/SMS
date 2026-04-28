@@ -23,12 +23,12 @@ namespace SMS_Application.Services;
 public class SPIAutomationService : ISPIAutomationService
 {
     private readonly SafetyPerformanceIndicatorService _spiService;
-    private readonly IMediator _mediator;
+    private readonly IBaseMediator _mediator;
     private readonly ILogger<SPIAutomationService> _logger;
 
     public SPIAutomationService(
         SafetyPerformanceIndicatorService spiService,
-        IMediator mediator,
+        IBaseMediator mediator,
         ILogger<SPIAutomationService> logger)
     {
         _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));

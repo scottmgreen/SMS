@@ -12,7 +12,7 @@
 @using SMS_Shared.Common
 @using global::System.Text.Json
 
-@inject IMediator Mediator
+@inject IBaseMediator Mediator
 @inject ILogger<HazardMitigationPanel> Logger
 @inject NotificationService NotificationService
 
@@ -845,7 +845,7 @@
             var hazardQuery = new GetHazardByCodeQuery(new HazardID(Hazard.Code));
             var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
 
-            if (hazardResult.IsSuccess && hazardResult.Value != null)
+            if (hazardResult.IsSuccess && hazardResult.Value is not null)
             {
                 var currentHazard = hazardResult.Value;
                 var originalStatus = currentHazard.Status?.ToString();

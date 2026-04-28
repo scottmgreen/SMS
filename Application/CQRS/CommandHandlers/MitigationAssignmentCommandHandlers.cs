@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // MITIGATION ASSIGNMENT COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequestHandler<CreateMitigationAssignmentCommand, Result<MitigationAssignment>>
+public class CreateMitigationAssignmentCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateMitigationAssignmentCommand, Result<MitigationAssignment>>
 {
     private readonly MitigationAssignmentService _mitigationAssignmentService;
     private readonly ILogger<CreateMitigationAssignmentCommandHandler> _logger;
@@ -69,7 +69,7 @@ public class CreateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
     }
 }
 
-public class UpdateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequestHandler<UpdateMitigationAssignmentCommand, Result<MitigationAssignment>>
+public class UpdateMitigationAssignmentCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateMitigationAssignmentCommand, Result<MitigationAssignment>>
 {
     private readonly MitigationAssignmentService _mitigationAssignmentService;
     private readonly ILogger<UpdateMitigationAssignmentCommandHandler> _logger;
@@ -120,7 +120,7 @@ public class UpdateMitigationAssignmentCommandHandler : BaseCommandBundle, IRequ
     }
 }
 
-public class DeleteMitigationAssignmentCommandHandler : BaseCommandBundle, IRequestHandler<DeleteMitigationAssignmentCommand, Result<bool>>
+public class DeleteMitigationAssignmentCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteMitigationAssignmentCommand, Result<bool>>
 {
     private readonly MitigationAssignmentService _mitigationAssignmentService;
     private readonly ILogger<DeleteMitigationAssignmentCommandHandler> _logger;

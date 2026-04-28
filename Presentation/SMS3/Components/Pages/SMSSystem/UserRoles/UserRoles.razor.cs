@@ -6,7 +6,7 @@ namespace SMS3.Components.Pages.SMSSystem.UserRoles;
 
 public partial class UserRoles : ComponentBase
 {
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<UserRoles> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -30,12 +30,13 @@ public partial class UserRoles : ComponentBase
         }
 
         // Alternative approach if permissions have a Module property
-        var allModules = UserRolesList
+        var allModules = (UserRolesList ?? new List<SMSUserRole>())
             .SelectMany(role => role.Permissions ?? new List<SMSUserRolePermission>())
             .Select(permission => permission.SMSModule) // Assuming Permission has a Module property
             .Where(module => !string.IsNullOrWhiteSpace(module))
             .Distinct()
             .OrderBy(module => module)
+            .OfType<string>() // Ensure non-nullable string array
             .ToArray();
 
         SMSModules = allModules;
@@ -244,7 +245,7 @@ public partial class UserRoles : ComponentBase
             // Populate edit form with permission matrices
             editRole = new EditRoleModel
             {
-                RoleName = CurrentEditRole.Name,
+                RoleName = CurrentEditRole?.Name ?? "",
                 CreatePermissions = SMSModules.ToDictionary(m => m, m => GetPermissionValue(m, "create")),
                 ReadPermissions = SMSModules.ToDictionary(m => m, m => GetPermissionValue(m, "read")),
                 UpdatePermissions = SMSModules.ToDictionary(m => m, m => GetPermissionValue(m, "update")),
@@ -271,7 +272,7 @@ public partial class UserRoles : ComponentBase
 
         try
         {
-            if (CurrentEditRole == null)
+            if (CurrentEditRole is null)
             {
                 await _notificationHelper.ShowErrorAsync("No role selected for update.");
                 return;
@@ -286,7 +287,7 @@ public partial class UserRoles : ComponentBase
             foreach (var module in SMSModules)
             {
                 var existingPermission = CurrentEditRole.Permissions?.FirstOrDefault(p => p.SMSModule == module);
-                if (existingPermission != null)
+                if (existingPermission is not null)
                 {
                     existingPermission.Create = editRole.CreatePermissions.ContainsKey(module) && editRole.CreatePermissions[module];
                     existingPermission.Read = editRole.ReadPermissions.ContainsKey(module) && editRole.ReadPermissions[module];
@@ -434,7 +435,7 @@ public partial class UserRoles : ComponentBase
 
     private bool IsPermissionGranted(string module, string action)
     {
-        if (ViewRole?.Permissions == null) return false;
+        if (ViewRole?.Permissions is null) return false;
 
         var permission = ViewRole.Permissions.FirstOrDefault(p => p.SMSModule == module);
         return action switch
@@ -458,10 +459,10 @@ public partial class UserRoles : ComponentBase
     }
     private bool GetPermissionValue(string module, string permissionType)
     {
-        if (CurrentEditRole?.Permissions == null) return false;
+        if (CurrentEditRole?.Permissions is null) return false;
 
         var permission = CurrentEditRole.Permissions.FirstOrDefault(p => p.SMSModule == module);
-        if (permission == null) return false;
+        if (permission is null) return false;
 
         return permissionType.ToLower() switch
         {

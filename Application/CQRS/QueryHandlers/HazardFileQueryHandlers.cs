@@ -20,7 +20,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // HAZARD FILE QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class GetHazardFileByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardFileByCodeQuery, Result<HazardFile>>
+public class GetHazardFileByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardFileByCodeQuery, Result<HazardFile>>
 {
     private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardFileByCodeQueryHandler> _logger;
@@ -47,7 +47,7 @@ public class GetHazardFileByCodeQueryHandler : BaseQueryBundle, IRequestHandler<
     }
 }
 
-public class GetHazardFilesByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardFilesByHazardCodeQuery, Result<IEnumerable<HazardFile>>>
+public class GetHazardFilesByHazardCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardFilesByHazardCodeQuery, Result<IEnumerable<HazardFile>>>
 {
     private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardFilesByHazardCodeQueryHandler> _logger;
@@ -74,7 +74,7 @@ public class GetHazardFilesByHazardCodeQueryHandler : BaseQueryBundle, IRequestH
     }
 }
 
-public class GetHazardFilesByReportCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardFilesByReportCodeQuery, Result<IEnumerable<HazardFile>>>
+public class GetHazardFilesByReportCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardFilesByReportCodeQuery, Result<IEnumerable<HazardFile>>>
 {
     private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardFilesByReportCodeQueryHandler> _logger;
@@ -101,7 +101,7 @@ public class GetHazardFilesByReportCodeQueryHandler : BaseQueryBundle, IRequestH
     }
 }
 
-public class GetHazardFileDataQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardFileDataQuery, Result<HazardFile>>
+public class GetHazardFileDataQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardFileDataQuery, Result<HazardFile>>
 {
     private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardFileDataQueryHandler> _logger;
@@ -128,7 +128,7 @@ public class GetHazardFileDataQueryHandler : BaseQueryBundle, IRequestHandler<Ge
     }
 }
 
-public class GetActiveHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler<GetActiveHazardFilesQuery, Result<IEnumerable<HazardFile>>>
+public class GetActiveHazardFilesQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetActiveHazardFilesQuery, Result<IEnumerable<HazardFile>>>
 {
     private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetActiveHazardFilesQueryHandler> _logger;
@@ -155,7 +155,7 @@ public class GetActiveHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler
     }
 }
 
-public class SearchHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler<SearchHazardFilesQuery, Result<IEnumerable<HazardFile>>>
+public class SearchHazardFilesQueryHandler : BaseQueryBundle, IBaseRequestHandler<SearchHazardFilesQuery, Result<IEnumerable<HazardFile>>>
 {
     private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<SearchHazardFilesQueryHandler> _logger;
@@ -185,7 +185,7 @@ public class SearchHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler<Se
     }
 }
 
-public class GetHazardPhotosQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardPhotosQuery, Result<IEnumerable<HazardFile>>>
+public class GetHazardPhotosQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardPhotosQuery, Result<IEnumerable<HazardFile>>>
 {
     private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardPhotosQueryHandler> _logger;
@@ -212,7 +212,7 @@ public class GetHazardPhotosQueryHandler : BaseQueryBundle, IRequestHandler<GetH
     }
 }
 
-public class GetHazardDocumentsQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardDocumentsQuery, Result<IEnumerable<HazardFile>>>
+public class GetHazardDocumentsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardDocumentsQuery, Result<IEnumerable<HazardFile>>>
 {
     private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardDocumentsQueryHandler> _logger;
@@ -239,7 +239,7 @@ public class GetHazardDocumentsQueryHandler : BaseQueryBundle, IRequestHandler<G
     }
 }
 
-public class GetHazardVideosQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardVideosQuery, Result<IEnumerable<HazardFile>>>
+public class GetHazardVideosQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardVideosQuery, Result<IEnumerable<HazardFile>>>
 {
     private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetHazardVideosQueryHandler> _logger;
@@ -266,7 +266,7 @@ public class GetHazardVideosQueryHandler : BaseQueryBundle, IRequestHandler<GetH
     }
 }
 
-public class GetConfidentialHazardFilesQueryHandler : BaseQueryBundle, IRequestHandler<GetConfidentialHazardFilesQuery, Result<IEnumerable<HazardFile>>>
+public class GetConfidentialHazardFilesQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetConfidentialHazardFilesQuery, Result<IEnumerable<HazardFile>>>
 {
     private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<GetConfidentialHazardFilesQueryHandler> _logger;

@@ -18,7 +18,7 @@
         <span class="ms-3">Loading audit details...</span>
     </div>
 }
-else if (Audit == null)
+else if (Audit is null)
 {
     <RadzenCard Variant="Variant.Outlined" Style="text-align: center; padding: 2rem;">
         <RadzenStack Orientation="Orientation.Vertical" Gap="1rem" AlignItems="AlignItems.Center">
@@ -625,7 +625,7 @@ else
                                                       Icon="event" 
                                                       Variant="Variant.Filled" 
                                                       PointStyle="PointStyle.Success">
-                                        <Template>
+                                        <ChildContent>
                                             <RadzenStack Gap="0.5rem">
                                                 <RadzenText TextStyle="TextStyle.H6">Audit Created</RadzenText>
                                                 <RadzenText TextStyle="TextStyle.Body2">
@@ -636,7 +636,7 @@ else
                                                     <RadzenText TextStyle="TextStyle.Caption">@Audit.CreatedDate?.ToString("d")</RadzenText>
                                                 </RadzenStack>
                                             </RadzenStack>
-                                        </Template>
+                                        </ChildContent>
                                     </RadzenTimelineItem>
 
                                     <!-- Audit Started -->
@@ -646,7 +646,7 @@ else
                                                           Icon="play_arrow" 
                                                           Variant="Variant.Filled" 
                                                           PointStyle="PointStyle.Primary">
-                                            <Template>
+                                            <ChildContent>
                                                 <RadzenStack Gap="0.5rem">
                                                     <RadzenText TextStyle="TextStyle.H6">Audit Started</RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Body2">
@@ -654,7 +654,7 @@ else
                                                     </RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Caption">@Audit.ActualStartDate.Value.ToString("MM/dd/yyyy")</RadzenText>
                                                 </RadzenStack>
-                                            </Template>
+                                            </ChildContent>
                                         </RadzenTimelineItem>
                                     }
 
@@ -665,7 +665,7 @@ else
                                                           Icon="@GetSeverityIcon(finding.Severity)" 
                                                           Variant="Variant.Filled" 
                                                           PointStyle="@GetSeverityPointStyle(finding.Severity)">
-                                            <Template>
+                                            <ChildContent>
                                                 <RadzenStack Gap="0.5rem">
                                                     <RadzenText TextStyle="TextStyle.H6">Finding Discovered</RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Body2">
@@ -677,7 +677,7 @@ else
                                                         <RadzenText TextStyle="TextStyle.Caption">@finding.DiscoveredDate.ToString("MM/dd/yyyy")</RadzenText>
                                                     </RadzenStack>
                                                 </RadzenStack>
-                                            </Template>
+                                            </ChildContent>
                                         </RadzenTimelineItem>
 
                                         <!-- Corrective Actions Timeline -->
@@ -687,7 +687,7 @@ else
                                                               Icon="assignment" 
                                                                Variant="Variant.Filled" 
                                                               PointStyle="PointStyle.Info">
-                                                <Template>
+                                                <ChildContent>
                                                     <RadzenStack Gap="0.5rem">
                                                         <RadzenText TextStyle="TextStyle.H6">Corrective Action Assigned</RadzenText>
                                                         <RadzenText TextStyle="TextStyle.Body2">
@@ -701,7 +701,7 @@ else
                                                             }
                                                         </RadzenStack>
                                                     </RadzenStack>
-                                                </Template>
+                                                </ChildContent>
                                             </RadzenTimelineItem>
                                         }
 
@@ -712,7 +712,7 @@ else
                                                               Icon="task_alt" 
                                                               Variant="Variant.Filled" 
                                                               PointStyle="PointStyle.Success">
-                                                <Template>
+                                                <ChildContent>
                                                     <RadzenStack Gap="0.5rem">
                                                         <RadzenText TextStyle="TextStyle.H6">Finding Resolved</RadzenText>
                                                         <RadzenText TextStyle="TextStyle.Body2">
@@ -720,7 +720,7 @@ else
                                                         </RadzenText>
                                                         <RadzenText TextStyle="TextStyle.Caption">@finding.ActualResolutionDate.Value.ToString("MM/dd/yyyy")</RadzenText>
                                                     </RadzenStack>
-                                                </Template>
+                                                </ChildContent>
                                             </RadzenTimelineItem>
                                         }
                                     }
@@ -732,7 +732,7 @@ else
                                                           Icon="attach_file" 
                                                           Variant="Variant.Filled" 
                                                           PointStyle="PointStyle.Secondary">
-                                            <Template>
+                                            <ChildContent>
                                                 <RadzenStack Gap="0.5rem">
                                                     <RadzenText TextStyle="TextStyle.H6">Evidence Collected</RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Body2">
@@ -744,7 +744,7 @@ else
                                                         <RadzenText TextStyle="TextStyle.Caption">@evidence.CollectionDate.ToString("MM/dd/yyyy")</RadzenText>
                                                     </RadzenStack>
                                                 </RadzenStack>
-                                            </Template>
+                                            </ChildContent>
                                         </RadzenTimelineItem>
                                     }
 
@@ -755,7 +755,7 @@ else
                                                           Icon="check_circle" 
                                                           Variant="Variant.Filled" 
                                                           PointStyle="PointStyle.Success">
-                                            <Template>
+                                            <ChildContent>
                                                 <RadzenStack Gap="0.5rem">
                                                     <RadzenText TextStyle="TextStyle.H6">Audit Completed</RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Body2">
@@ -767,7 +767,7 @@ else
                                                         <RadzenText TextStyle="TextStyle.Caption">@Audit.ActualEndDate.Value.ToString("MM/dd/yyyy")</RadzenText>
                                                     </RadzenStack>
                                                 </RadzenStack>
-                                            </Template>
+                                            </ChildContent>
                                         </RadzenTimelineItem>
                                     }
 
@@ -778,7 +778,7 @@ else
                                                           Icon="schedule" 
                                                           Variant="Variant.Outlined" 
                                                           PointStyle="PointStyle.Light">
-                                            <Template>
+                                            <ChildContent>
                                                 <RadzenStack Gap="0.5rem">
                                                     <RadzenText TextStyle="TextStyle.H6">Scheduled Completion</RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Body2">
@@ -786,7 +786,7 @@ else
                                                     </RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Caption">@Audit.ScheduledEndDate.ToString("d")</RadzenText>
                                                 </RadzenStack>
-                                            </Template>
+                                            </ChildContent>
                                         </RadzenTimelineItem>
                                     }
                                 </RadzenTimeline>

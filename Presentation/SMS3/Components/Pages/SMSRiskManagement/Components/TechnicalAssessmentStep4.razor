@@ -177,7 +177,7 @@
     [Parameter] public RiskAssessmentID? RiskAssessmentId { get; set; }
     [Parameter] public int CurrentStep { get; set; } = 4;
 
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<TechnicalAssessmentStep4> Logger { get; set; } = default!;
 
     private bool _isInitialized = false;
@@ -272,7 +272,7 @@
             var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazardCode));
             var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
 
-            if (hazardResult.IsSuccess && hazardResult.Value != null)
+            if (hazardResult.IsSuccess && hazardResult.Value is not null)
             {
                 var hazard = hazardResult.Value;
 
@@ -454,7 +454,7 @@
     /// </summary>
     private string GetCurrentRiskAssessmentId()
     {
-        if (RiskAssessmentId != null && !string.IsNullOrEmpty(RiskAssessmentId.Value))
+        if (RiskAssessmentId is not null && !string.IsNullOrEmpty(RiskAssessmentId.Value))
         {
             return RiskAssessmentId.Value;
         }

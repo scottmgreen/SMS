@@ -18,7 +18,7 @@ namespace SMS_Application.CQRS.QueryHandlers;
 /// <summary>
 /// Handler for retrieving comprehensive SPI dashboard data
 /// </summary>
-public class GetSPIDashboardDataQueryHandler : IRequestHandler<GetSPIDashboardDataQuery, Result<SPIDashboard>>
+public class GetSPIDashboardDataQueryHandler : IBaseRequestHandler<GetSPIDashboardDataQuery, Result<SPIDashboard>>
 {
     private readonly SafetyPerformanceIndicatorService _spiService;
     private readonly ILogger<GetSPIDashboardDataQueryHandler> _logger;

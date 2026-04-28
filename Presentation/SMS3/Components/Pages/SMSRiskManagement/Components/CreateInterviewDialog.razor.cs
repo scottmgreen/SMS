@@ -6,7 +6,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 public partial class CreateInterviewDialog : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<CreateInterviewDialog> Logger { get; set; } = default!;
@@ -68,7 +68,7 @@ public partial class CreateInterviewDialog : ComponentBase
     public async Task OnWitnessInterviewTypeChanged(string? departmentValue)
     {
         Model.InterviewTypeId = departmentValue;
-        Model.Type = InterviewType.FromValue(Model.InterviewTypeId);
+        Model.Type = InterviewType.FromValue(Model.InterviewTypeId ?? "");
 
     }
     #endregion

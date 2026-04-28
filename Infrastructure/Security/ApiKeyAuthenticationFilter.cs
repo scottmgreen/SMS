@@ -95,7 +95,7 @@ public class ApiKeyAuthenticationFilter : IEndpointFilter
     /// <summary>
     /// Validate the provided API key
     /// </summary>
-    private async Task<bool> ValidateApiKeyAsync(string apiKey, HttpContext context)
+    private Task<bool> ValidateApiKeyAsync(string apiKey, HttpContext context)
     {
         try
         {
@@ -106,18 +106,18 @@ public class ApiKeyAuthenticationFilter : IEndpointFilter
                 // Store source system info for logging
                 var sourceSystem = GetSourceSystemForApiKey(apiKey);
                 context.Items["SourceSystem"] = sourceSystem;
-                return true;
+                return Task.FromResult(true);
             }
 
             // Method 2: Database validation (if you want to store API keys in database)
             // return await ValidateApiKeyFromDatabaseAsync(apiKey, context);
 
-            return false;
+            return Task.FromResult(false);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error validating API key");
-            return false;
+            return Task.FromResult(false);
         }
     }
 

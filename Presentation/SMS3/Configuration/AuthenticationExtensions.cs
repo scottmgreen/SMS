@@ -131,7 +131,7 @@ public static class AuthenticationExtensions
 
         // **?? EXPLICIT PROTOCOL CONFIGURATION - NO SQUISHY AUTO-DETECTION**
         var masterProtocolConfig = configuration.GetSection("MasterProtocol");
-        var explicitProtocol = masterProtocolConfig.GetValue<string>("Protocol", "HTTP");
+        var explicitProtocol = masterProtocolConfig.GetValue<string>("Protocol", "HTTP") ?? "HTTP";
         var forceEverywhere = masterProtocolConfig.GetValue<bool>("ForceProtocolEverywhere", true);
         var allowMixed = masterProtocolConfig.GetValue<bool>("AllowMixedMode", false);
 

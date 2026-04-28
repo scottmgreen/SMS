@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 /// SMS Audit Command Handlers following established patterns
 /// </summary>
 
-public class CreateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSAuditCommand, Result<SMSAudit>>
+public class CreateSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateSMSAuditCommand, Result<SMSAudit>>
 {
     private readonly SMSAuditService _auditService;
     private readonly ILogger<CreateSMSAuditCommandHandler> _logger;
@@ -95,7 +95,7 @@ public class CreateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<C
     }
 }
 
-public class StartSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<StartSMSAuditCommand, Result<SMSAudit>>
+public class StartSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandler<StartSMSAuditCommand, Result<SMSAudit>>
 {
     private readonly SMSAuditService _auditService;
     private readonly ILogger<StartSMSAuditCommandHandler> _logger;
@@ -166,7 +166,7 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<St
     }
 }
 
-public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<CompleteSMSAuditCommand, Result<SMSAudit>>
+public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandler<CompleteSMSAuditCommand, Result<SMSAudit>>
 {
     private readonly SMSAuditService _auditService;
     private readonly SMSAuditPlanService _auditPlanService; // Add this
@@ -334,7 +334,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler
     }
 }
 
-public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandler<AddSMSAuditFindingCommand, Result<SMSAuditFinding>>
+public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseRequestHandler<AddSMSAuditFindingCommand, Result<SMSAuditFinding>>
 {
     private readonly SMSAuditService _auditService;
     private readonly ILogger<AddSMSAuditFindingCommandHandler> _logger;
@@ -418,7 +418,7 @@ public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandl
     }
 }
 
-public class UpdateSMSAuditCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSAuditCommand, Result<SMSAudit>>
+public class UpdateSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSAuditCommand, Result<SMSAudit>>
 {
     private readonly SMSAuditService _auditService;
     private readonly ILogger<UpdateSMSAuditCommandHandler> _logger;

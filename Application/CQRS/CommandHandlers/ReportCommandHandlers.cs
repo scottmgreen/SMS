@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // REPORT COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateReportCommandHandler : BaseCommandBundle, IRequestHandler<CreateReportCommand, Result<Report>>
+public class CreateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateReportCommand, Result<Report>>
 {
     private readonly ReportService _reportService;
     private readonly ILogger<CreateReportCommandHandler> _logger;
@@ -69,7 +69,7 @@ public class CreateReportCommandHandler : BaseCommandBundle, IRequestHandler<Cre
     }
 }
 
-public class UpdateReportCommandHandler : BaseCommandBundle, IRequestHandler<UpdateReportCommand, Result<Report>>
+public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateReportCommand, Result<Report>>
 {
     private readonly ReportService _reportService;
     private readonly ILogger<UpdateReportCommandHandler> _logger;
@@ -119,7 +119,7 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IRequestHandler<Upd
     }
 }
 
-public class DeleteReportCommandHandler : BaseCommandBundle, IRequestHandler<DeleteReportCommand, Result<bool>>
+public class DeleteReportCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteReportCommand, Result<bool>>
 {
     private readonly ReportService _reportService;
     private readonly ILogger<DeleteReportCommandHandler> _logger;
@@ -169,7 +169,7 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IRequestHandler<Del
     }
 }
 
-public class UpdateReportStatusCommandHandler : BaseCommandBundle, IRequestHandler<UpdateReportStatusCommand, Result<bool>>
+public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateReportStatusCommand, Result<bool>>
 {
     private readonly ReportService _reportService;
     private readonly ILogger<UpdateReportStatusCommandHandler> _logger;

@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // RISK ANALYSIS COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandler<CreateRiskAnalysisCommand, Result<RiskAnalysis>>
+public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateRiskAnalysisCommand, Result<RiskAnalysis>>
 {
     private readonly IRiskAnalysisService _riskAnalysisService;
     private readonly ILogger<CreateRiskAnalysisCommandHandler> _logger;
@@ -69,7 +69,7 @@ public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
     }
 }
 
-public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandler<UpdateRiskAnalysisCommand, Result<RiskAnalysis>>
+public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateRiskAnalysisCommand, Result<RiskAnalysis>>
 {
     private readonly IRiskAnalysisService _riskAnalysisService;
     private readonly ILogger<UpdateRiskAnalysisCommandHandler> _logger;
@@ -120,7 +120,7 @@ public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandl
     }
 }
 
-public class DeleteRiskAnalysisCommandHandler : BaseCommandBundle, IRequestHandler<DeleteRiskAnalysisCommand, Result<bool>>
+public class DeleteRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteRiskAnalysisCommand, Result<bool>>
 {
     private readonly IRiskAnalysisService _riskAnalysisService;
     private readonly ILogger<DeleteRiskAnalysisCommandHandler> _logger;

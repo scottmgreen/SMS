@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.JSInterop;
 
 using SMS_Domain.Entities;
@@ -22,7 +22,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class ExternalReporting : ComponentBase, IDisposable
 {
     #region Dependencies
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private ILogger<ExternalReporting> _logger { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -475,7 +475,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         // Give DOM time to render the modal
         await Task.Delay(300);
 
-        if (_mapModule != null)
+        if (_mapModule is not null)
         {
             try
             {
@@ -560,7 +560,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         SelectedGeoLocation = new HazardLocation();
         HazardReport.Location = "";
 
-        if (_mapModule != null)
+        if (_mapModule is not null)
         {
             try
             {
@@ -656,7 +656,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
         StateHasChanged();
 
-        // 🔐 SECURE NAVIGATION - Navigate to home page for anonymous users
+        // ?? SECURE NAVIGATION - Navigate to home page for anonymous users
         _navigation.NavigateToSecure("/", forceLoad: true);
     }
 
@@ -754,7 +754,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             _logger.LogInformation("? Confidential hazard created with Code: {HazardCode}, linked to Report: {ReportCode}",
                 createdHazard.Code, actualReportCode);
 
-            // NEW: SPI AUTOMATION - Notify hazard creation for external reports 🎯
+            // NEW: SPI AUTOMATION - Notify hazard creation for external reports ??
             try
             {
                 await _spiCoordinator.OnHazardCreated(
@@ -766,12 +766,12 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                     hazardType: createdHazard.HazardType,
                     hazardCategory: createdHazard.HazardCategory);
 
-                _logger.LogInformation("✅ SPI Automation: External hazard creation event processed for {HazardCode}", createdHazard.Code);
+                _logger.LogInformation("? SPI Automation: External hazard creation event processed for {HazardCode}", createdHazard.Code);
             }
             catch (Exception spiEx)
             {
                 // Don't fail the entire submission if SPI automation fails
-                _logger.LogWarning(spiEx, "⚠️ SPI Automation: Failed to process hazard creation event for {HazardCode} - continuing with submission", createdHazard.Code);
+                _logger.LogWarning(spiEx, "?? SPI Automation: Failed to process hazard creation event for {HazardCode} - continuing with submission", createdHazard.Code);
             }
 
             // ===============================
@@ -834,12 +834,12 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
             if (createdTrackingResult.IsSuccess)
             {
-                _logger.LogInformation("✅ Confidential tracking code generated: {TrackingCode} for Hazard: {HazardCode}", 
+                _logger.LogInformation("? Confidential tracking code generated: {TrackingCode} for Hazard: {HazardCode}", 
                     createdTrackingResult.Value.TrackingCode, createdHazard.Code);
             }
             else
             {
-                _logger.LogError("❌ Failed to generate confidential tracking code for Hazard: {HazardCode}. Error: {Error}", 
+                _logger.LogError("? Failed to generate confidential tracking code for Hazard: {HazardCode}. Error: {Error}", 
                     createdHazard.Code, createdTrackingResult.Error?.Message);
             }
 
@@ -847,7 +847,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Exception generating confidential tracking code for Hazard: {HazardCode}", createdHazard.Code);
+            _logger.LogError(ex, "? Exception generating confidential tracking code for Hazard: {HazardCode}", createdHazard.Code);
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.CreateFailed);
         }
     }
@@ -875,7 +875,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                 if (hazardLocationResult.IsSuccess && hazardLocationResult.Value.Any())
                 {
                     var hazardLocation = hazardLocationResult.Value.FirstOrDefault();
-                    if (hazardLocation != null)
+                    if (hazardLocation is not null)
                     {
                         hazardLocation.HazardCode = hazard.Code;
                         hazardLocation.Latitude = SelectedGeoLocation.Latitude;
@@ -888,7 +888,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
                         if (locationUpdateResult.IsSuccess)
                         {
-                            _logger.LogInformation("✅ HazardLocation updated with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
+                            _logger.LogInformation("? HazardLocation updated with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
                                 hazardLocation.Code, SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
                         }
                     }
@@ -1152,7 +1152,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         if (!string.IsNullOrEmpty(hazardTypeValue))
         {
             var hazardType = HazardType.FromValue(hazardTypeValue);
-            if (hazardType != null)
+            if (hazardType is not null)
             {
                 _logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}",
                     hazardType.Name, hazardType.RequiresRegulatoryReporting);
@@ -1176,7 +1176,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         if (!string.IsNullOrEmpty(hazardTypeValue))
         {
             var hazardType = HazardType.FromValue(hazardTypeValue);
-            if (hazardType != null)
+            if (hazardType is not null)
             {
                 _logger.LogInformation("Hazard type changed to: {HazardType}, requires regulatory: {RequiresRegulatory}", hazardType.Name, hazardType.RequiresRegulatoryReporting);
 
@@ -1244,7 +1244,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             var selectedFileToRemove = selectedFilesList.FirstOrDefault(sf =>
                 sf.Name == fileToRemove.FileName && sf.Size == fileToRemove.Size);
 
-            if (selectedFileToRemove != null)
+            if (selectedFileToRemove is not null)
             {
                 selectedFilesList.Remove(selectedFileToRemove);
                 SelectedFiles = selectedFilesList.AsReadOnly();
@@ -1292,7 +1292,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
         var baseUri = _navigation.BaseUri.TrimEnd('/');
 
-        // 🔐 SECURE URL GENERATION - Generate encrypted tracking URL
+        // ?? SECURE URL GENERATION - Generate encrypted tracking URL
         //var secureTrackingUrl = _navigation.GenerateSecureUrl(
         var secureTrackingUrl = _navigation.GenerateUrl(
             "/ExternalReporting/TrackStatus", 

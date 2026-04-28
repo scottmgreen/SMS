@@ -8,10 +8,10 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 /// </summary>
 public class Step4Model
 {
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
-    public Step4Model(IMediator mediator, ICurrentUserService currentUserService)
+    public Step4Model(IBaseMediator mediator, ICurrentUserService currentUserService)
     {
         Mediator = mediator;
         CurrentUserService = currentUserService;
@@ -51,7 +51,7 @@ public class Step4Model
                         ? PanelScores[hazardId].FirstOrDefault(s => s.MemberId == memberId)
                         : null;
 
-                    if (existingScore == null || !existingScore.IsComplete)
+                    if (existingScore is null || !existingScore.IsComplete)
                     {
                         allExpectedScores.Add(new PanelMemberScoreData
                         {
@@ -82,7 +82,7 @@ public class Step4Model
 
     private async Task SaveStep4RiskAssessmentAsync(RiskAssessment assessment, List<Hazard> availableHazards)
     {
-        if (Mediator == null || assessment == null || availableHazards == null) return;
+        if (Mediator is null || assessment is null || availableHazards is null || string.IsNullOrEmpty(assessment.Code)) return;
 
         try
         {
@@ -168,12 +168,12 @@ public class Step4Model
 
     public void LoadFromAssessment(RiskAssessment assessment)
     {
-        if (assessment == null) return;
+        if (assessment is null) return;
     }
 
-    public async Task LoadExistingScoringPanelsAsync(IMediator mediator, List<Hazard> availableHazards)
+    public async Task LoadExistingScoringPanelsAsync(IBaseMediator mediator, List<Hazard> availableHazards)
     {
-        if (mediator == null || availableHazards == null) return;
+        if (mediator is null || availableHazards is null) return;
 
         foreach (var hazard in availableHazards)
         {
@@ -196,7 +196,7 @@ public class Step4Model
 
                     foreach (var panel in result.Value)
                     {
-                        if (!HazardPanelMembers[hazard.Code].Contains(panel.SMSUserCode))
+                        if (!string.IsNullOrEmpty(panel.SMSUserCode) && !HazardPanelMembers[hazard.Code].Contains(panel.SMSUserCode))
                         {
                             HazardPanelMembers[hazard.Code].Add(panel.SMSUserCode);
                         }
@@ -206,7 +206,7 @@ public class Step4Model
                             var existingScore = PanelScores[hazard.Code]
                                 .FirstOrDefault(s => s.MemberId == panel.SMSUserCode);
 
-                            if (existingScore != null)
+                            if (existingScore is not null)
                             {
                                 existingScore.SeverityScore = panel.Severity.Value;
                                 existingScore.LikelihoodScore = panel.Likelihood.Value;

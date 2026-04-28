@@ -19,7 +19,7 @@ public partial class AuditEvidenceDialog : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<AuditEvidenceDialog> _logger { get; set; } = default!;
     [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -45,7 +45,7 @@ public partial class AuditEvidenceDialog : ComponentBase
                 CollectedBy = "CURRENT_USER" // TODO: Get from auth context
             };
         }
-        else if (Evidence != null)
+        else if (Evidence is not null)
         {
             ViewModel = new EvidenceViewModel
             {

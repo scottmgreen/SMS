@@ -21,7 +21,7 @@ namespace SMS_Application.Messaging.Pipelines;
 /// Provides comprehensive audit trail for data access operations
 /// UPDATED: Now respects EnableQueryAudit feature flag to reduce chattiness
 /// </summary>
-public class QueryAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
+public class QueryAuditPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResult>
     where TRequest : IRequest<TResult>
     where TResult : Result
 {

@@ -19,7 +19,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // REPORT QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class GetReportByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetReportByCodeQuery, Result<Report>>
+public class GetReportByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetReportByCodeQuery, Result<Report>>
 {
     private readonly ReportService _reportService;
     private readonly ILogger<GetReportByCodeQueryHandler> _logger;
@@ -46,7 +46,7 @@ public class GetReportByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetR
     }
 }
 
-public class GetAllReportsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllReportsQuery, Result<List<Report>>>
+public class GetAllReportsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllReportsQuery, Result<List<Report>>>
 {
     private readonly ReportService _reportService;
     private readonly ILogger<GetAllReportsQueryHandler> _logger;

@@ -38,11 +38,11 @@ public interface ICommandAccessAuditService
 /// </summary>
 public class CommandAccessAuditService : ICommandAccessAuditService
 {
-    private readonly SystemService _systemService;
+    private readonly SMSSystemService _systemService;
     private readonly ILogger<CommandAccessAuditService> _logger;
 
     public CommandAccessAuditService(
-        SystemService systemService,
+        SMSSystemService systemService,
         ILogger<CommandAccessAuditService> logger)
     {
         _systemService = systemService ?? throw new ArgumentNullException(nameof(systemService));

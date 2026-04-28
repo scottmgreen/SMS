@@ -23,12 +23,12 @@ namespace SMS_Application.EventHandlers;
 /// </summary>
 public class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domain.Events.HazardCreatedEvent>
 {
-    private readonly IEventBus _eventBus;
+    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<HazardCreatedEventHandler> _logger;
 
     public HazardCreatedEventHandler(
         ILogger<HazardCreatedEventHandler> logger,
-        IEventBus eventBus)
+        IBaseEventBus eventBus)
         : base(logger)
     {
         _logger = logger;

@@ -22,7 +22,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// <summary>
 /// Query handler for getting all SMS Audit Plans
 /// </summary>
-public class GetAllSMSAuditPlansQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSAuditPlansQuery, Result<List<SMSAuditPlan>>>
+public class GetAllSMSAuditPlansQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllSMSAuditPlansQuery, Result<List<SMSAuditPlan>>>
 {
     private readonly SMSAuditPlanDataService _dataService;
     private readonly ILogger<GetAllSMSAuditPlansQueryHandler> _logger;
@@ -89,7 +89,7 @@ public class GetAllSMSAuditPlansQueryHandler : BaseQueryBundle, IRequestHandler<
 /// <summary>
 /// Query handler for getting SMS Audit Plan by Code
 /// </summary>
-public class GetSMSAuditPlanByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditPlanByCodeQuery, Result<SMSAuditPlan>>
+public class GetSMSAuditPlanByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditPlanByCodeQuery, Result<SMSAuditPlan>>
 {
     private readonly SMSAuditPlanDataService _dataService;
     private readonly ILogger<GetSMSAuditPlanByCodeQueryHandler> _logger;
@@ -123,7 +123,7 @@ public class GetSMSAuditPlanByCodeQueryHandler : BaseQueryBundle, IRequestHandle
 /// <summary>
 /// Query handler for getting SMS Audit Plans by Type
 /// </summary>
-public class GetSMSAuditPlansByTypeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditPlansByTypeQuery, Result<List<SMSAuditPlan>>>
+public class GetSMSAuditPlansByTypeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditPlansByTypeQuery, Result<List<SMSAuditPlan>>>
 {
     private readonly SMSAuditPlanDataService _dataService;
     private readonly ILogger<GetSMSAuditPlansByTypeQueryHandler> _logger;
@@ -157,7 +157,7 @@ public class GetSMSAuditPlansByTypeQueryHandler : BaseQueryBundle, IRequestHandl
 /// <summary>
 /// Query handler for getting SMS Audit Plans by Department
 /// </summary>
-public class GetSMSAuditPlansByDepartmentQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditPlansByDepartmentQuery, Result<List<SMSAuditPlan>>>
+public class GetSMSAuditPlansByDepartmentQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditPlansByDepartmentQuery, Result<List<SMSAuditPlan>>>
 {
     private readonly SMSAuditPlanDataService _dataService;
     private readonly ILogger<GetSMSAuditPlansByDepartmentQueryHandler> _logger;
@@ -191,7 +191,7 @@ public class GetSMSAuditPlansByDepartmentQueryHandler : BaseQueryBundle, IReques
 /// <summary>
 /// Query handler for getting SMS Audit Plans requiring approval
 /// </summary>
-public class GetSMSAuditPlansRequiringApprovalQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditPlansRequiringApprovalQuery, Result<List<SMSAuditPlan>>>
+public class GetSMSAuditPlansRequiringApprovalQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditPlansRequiringApprovalQuery, Result<List<SMSAuditPlan>>>
 {
     private readonly SMSAuditPlanDataService _dataService;
     private readonly ILogger<GetSMSAuditPlansRequiringApprovalQueryHandler> _logger;
@@ -225,7 +225,7 @@ public class GetSMSAuditPlansRequiringApprovalQueryHandler : BaseQueryBundle, IR
 /// <summary>
 /// Query handler for getting SMS Audit Calendar data
 /// </summary>
-public class GetSMSAuditCalendarQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditCalendarQuery, Result<SMSAuditCalendarData>>
+public class GetSMSAuditCalendarQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditCalendarQuery, Result<SMSAuditCalendarData>>
 {
     private readonly SMSAuditPlanDataService _dataService;
     private readonly ILogger<GetSMSAuditCalendarQueryHandler> _logger;

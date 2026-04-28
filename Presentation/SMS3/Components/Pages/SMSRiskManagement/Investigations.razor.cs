@@ -1,4 +1,4 @@
-﻿
+
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
@@ -17,7 +17,7 @@ public partial class Investigations : ComponentBase
 
     #region Injected Services
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     
     [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
@@ -108,7 +108,7 @@ public partial class Investigations : ComponentBase
             var investigationQuery = new GetInvestigationByCodeQuery(new InvestigationID(InvestigationId));
             var investigationResult = await _mediator.SendAsync(investigationQuery, CancellationToken.None);
 
-            if (investigationResult.IsSuccess && investigationResult.Value != null)
+            if (investigationResult.IsSuccess && investigationResult.Value is not null)
             {
 
                 InvestigationEntity = investigationResult.Value;
@@ -151,7 +151,7 @@ public partial class Investigations : ComponentBase
 
             var usersResult = await _mediator.SendAsync(usersQuery, CancellationToken.None);
 
-            if (usersResult.IsSuccess && usersResult.Value != null)
+            if (usersResult.IsSuccess && usersResult.Value is not null)
             {
                 AvailableInvestigators = usersResult.Value.ToList();
                 _logger.LogInformation("Loaded {Count} available investigators", AvailableInvestigators.Count);
@@ -163,7 +163,7 @@ public partial class Investigations : ComponentBase
                 if (!string.IsNullOrEmpty(InvestigationEntity?.AssignedInvestigatorId))
                 {
                     var assignedInvestigator = AvailableInvestigators.FirstOrDefault(i => i.UserName == InvestigationEntity.AssignedInvestigatorId);
-                    if (assignedInvestigator != null)
+                    if (assignedInvestigator is not null)
                     {
                         _logger.LogInformation("Found assigned investigator: {Name} ({Code})", assignedInvestigator.DisplayName, assignedInvestigator.Code);
                     }
@@ -187,7 +187,7 @@ public partial class Investigations : ComponentBase
             var interviewsQuery = new GetAllInterviewsQuery();
             var interviewsResult = await _mediator.SendAsync(interviewsQuery, CancellationToken.None);
 
-            if (interviewsResult.IsSuccess && interviewsResult.Value != null)
+            if (interviewsResult.IsSuccess && interviewsResult.Value is not null)
             {
                 Interviews = interviewsResult.Value
                     .Where(i => i.InvestigationCode.Trim() == InvestigationEntity?.Code)
@@ -206,14 +206,14 @@ public partial class Investigations : ComponentBase
     {
         try
         {
-            if (InvestigationEntity?.HazardCode != null)
+            if (InvestigationEntity?.HazardCode is not null)
             {
                 // Load ALL files for this hazard, not just those with HazardCategory = "Evidence"
                 // This will include both files uploaded during initial reporting and investigation
                 var filesQuery = new GetHazardFilesByHazardCodeQuery(InvestigationEntity.HazardCode, false, null);
                 var filesResult = await _mediator.SendAsync(filesQuery, CancellationToken.None);
 
-                if (filesResult.IsSuccess && filesResult.Value != null)
+                if (filesResult.IsSuccess && filesResult.Value is not null)
                 {
                     EvidenceFiles = filesResult.Value
                         .Where(f => f.IsActive) // Only show active files
@@ -244,7 +244,7 @@ public partial class Investigations : ComponentBase
     {
         try
         {
-            if (InvestigationEntity == null) return;
+            if (InvestigationEntity is null) return;
 
             IsSaving = true;
             StateHasChanged();
@@ -288,7 +288,7 @@ public partial class Investigations : ComponentBase
 
     private async Task CompleteInvestigation()
     {
-        if (InvestigationEntity == null) return;
+        if (InvestigationEntity is null) return;
 
         try
         {
@@ -338,7 +338,7 @@ public partial class Investigations : ComponentBase
 
     private async Task HandleInvestigationCompletion()
     {
-        if (InvestigationEntity?.DecisionType == null) return;
+        if (InvestigationEntity?.DecisionType is null) return;
 
         var nextStepMessage = "Next Step...";
 
@@ -351,7 +351,7 @@ public partial class Investigations : ComponentBase
                 // Navigate back to validation workflow
                 if (!string.IsNullOrEmpty(InvestigationEntity.HazardCode))
                 {
-                    // 🔐 SECURE NAVIGATION - Navigate to Report Validation with encrypted URL
+                    // ?? SECURE NAVIGATION - Navigate to Report Validation with encrypted URL
                     _navigation.NavigateToSecure($"/SMSRiskManagement/ReportValidation/{InvestigationEntity.ReportCode}");
                 }
                 break;
@@ -361,7 +361,7 @@ public partial class Investigations : ComponentBase
     
     private async Task HandleSave()
     {
-        if (InvestigationEntity == null) return;
+        if (InvestigationEntity is null) return;
 
         try
         {
@@ -428,7 +428,7 @@ public partial class Investigations : ComponentBase
 
     private async Task HandleReturnToValidation()
     {
-        if (InvestigationEntity == null) return;
+        if (InvestigationEntity is null) return;
 
         try
         {
@@ -464,11 +464,11 @@ public partial class Investigations : ComponentBase
                 var hazardQuery = new GetAllHazardsQuery();
                 var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
-                if (hazardResult.IsSuccess && hazardResult.Value != null)
+                if (hazardResult.IsSuccess && hazardResult.Value is not null)
                 {
                     var hazard = hazardResult.Value.FirstOrDefault(h => h.Code == InvestigationEntity.HazardCode);
 
-                    if (hazard != null && !string.IsNullOrEmpty(hazard.ReportCode))
+                    if (hazard is not null && !string.IsNullOrEmpty(hazard.ReportCode))
                     {
                         
                         await ResetReportValidation(hazard.ReportCode);
@@ -504,7 +504,7 @@ public partial class Investigations : ComponentBase
             await _dialogService.Alert(message, "Returned to Validation", new AlertOptions() { OkButtonText = "OK" });
 
             // Navigate to validations listing to show where the report went
-            // 🔐 SECURE NAVIGATION - Navigate to Report Validation with encrypted URL
+            // ?? SECURE NAVIGATION - Navigate to Report Validation with encrypted URL
             _navigation.NavigateToSecure($"/SMSRiskManagement/ReportValidation/{InvestigationEntity.ReportCode}");
         }
         catch (Exception ex)
@@ -524,7 +524,7 @@ public partial class Investigations : ComponentBase
             var queryHazard = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
             var hazardResult = await _mediator.SendAsync(queryHazard, CancellationToken.None);
 
-            if (hazardResult != null) 
+            if (hazardResult is not null) 
             {
                 var hazards = hazardResult.Value;
                 foreach (Hazard hazard in hazards) 
@@ -543,7 +543,7 @@ public partial class Investigations : ComponentBase
 
             var validationQuery = new GetReportValidationByReportIdQuery(reportId);
             var validationResult = await _mediator.SendAsync(validationQuery, CancellationToken.None);
-            if (validationResult.IsSuccess && validationResult.Value != null)
+            if (validationResult.IsSuccess && validationResult.Value is not null)
             {
                 var validation = validationResult.Value;
                 var cmd = new ResetReportValidationCommand(new ReportValidationID(validation.Code));
@@ -589,7 +589,7 @@ public partial class Investigations : ComponentBase
             var reportQuery = new GetReportByCodeQuery(new ReportID(reportCode));
             var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
-            if (reportResult.IsSuccess && reportResult.Value != null)
+            if (reportResult.IsSuccess && reportResult.Value is not null)
             {
                 var report = reportResult.Value;
 
@@ -674,11 +674,11 @@ public partial class Investigations : ComponentBase
         }
 
         message += "This action will:\n" +
-                   "✓ Complete and close this investigation\n" +
-                   "✓ Reset the report validation status\n" +
-                   "✓ Clear any validation history\n" +
-                   "✓ Return the report to the validation workflow\n" +
-                   "✓ Require re-validation of the entire report";
+                   "? Complete and close this investigation\n" +
+                   "? Reset the report validation status\n" +
+                   "? Clear any validation history\n" +
+                   "? Return the report to the validation workflow\n" +
+                   "? Require re-validation of the entire report";
 
         return message;
     }
@@ -745,7 +745,7 @@ public partial class Investigations : ComponentBase
 
     private void EditDecision()
     {
-        if (InvestigationEntity == null) return;
+        if (InvestigationEntity is null) return;
 
         // Clear the decision date to allow editing
         InvestigationEntity.DecisionDate = null;
@@ -826,7 +826,7 @@ public partial class Investigations : ComponentBase
     /// <returns>True if all interviews are complete, false otherwise</returns>
     private bool CanCompleteInvestigation()
     {
-        if (InvestigationEntity == null) return false;
+        if (InvestigationEntity is null) return false;
         
         // Must have decision recorded
         if (!InvestigationEntity.HasDecision) return false;
@@ -862,7 +862,7 @@ public partial class Investigations : ComponentBase
     {
         var baseSubtitle = "Conduct comprehensive investigations into safety incidents and hazard reports";
         
-        if (InvestigationEntity == null) 
+        if (InvestigationEntity is null) 
             return baseSubtitle;
 
         var total = Interviews.Count;
@@ -871,9 +871,9 @@ public partial class Investigations : ComponentBase
 
         var incomplete = GetIncompleteInterviewsCount();
         if (incomplete > 0)
-            return $"{baseSubtitle} • {incomplete} of {total} interview(s) still pending completion";
+            return $"{baseSubtitle} � {incomplete} of {total} interview(s) still pending completion";
         
-        return $"{baseSubtitle} • All {total} interview(s) completed - Ready to close";
+        return $"{baseSubtitle} � All {total} interview(s) completed - Ready to close";
     }
 
     /// <summary>
@@ -890,7 +890,7 @@ public partial class Investigations : ComponentBase
     /// </summary>
     private void NavigateToListings()
     {
-        // 🔐 SECURE NAVIGATION - Navigate to Investigations listing with encrypted URL
+        // ?? SECURE NAVIGATION - Navigate to Investigations listing with encrypted URL
         _navigation.NavigateToSecure("/Listings/Investigations");
     }
     #endregion

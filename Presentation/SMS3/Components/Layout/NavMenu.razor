@@ -90,31 +90,31 @@
                             <RadzenMenuItem Text="Listings" Icon="list" class="sms-menu-item">
                                 @if (CurrentUserService.CanRead("SMS_Listings_Reports"))
                                 {
-                                    <RadzenMenuItem Text="Reports" Value='"/Listings/Reports"' Icon="assignment"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Reports" Value='"/SMSListings/Reports"' Icon="assignment"></RadzenMenuItem>
                                 }
                                 @if (CurrentUserService.CanRead("SMS_Listings_Hazards"))
                                 {
-                                    <RadzenMenuItem Text="Hazards" Value='"/Listings/Hazards"' Icon="warning"></RadzenMenuItem> 
+                                    <RadzenMenuItem Text="Hazards" Value='"/SMSListings/Hazards"' Icon="warning"></RadzenMenuItem> 
                                 }
                                 @if (CurrentUserService.CanRead("SMS_Listings_RiskAssessments"))
                                 {
-                                    <RadzenMenuItem Text="Risk Assessments" Value='"/Listings/RiskAssessments"' Icon="assessment"></RadzenMenuItem> 
+                                    <RadzenMenuItem Text="Risk Assessments" Value='"/SMSListings/RiskAssessments"' Icon="assessment"></RadzenMenuItem> 
                                 }
                                 @if (CurrentUserService.CanRead("SMS_Listings_Mitigations"))
                                 {
-                                    <RadzenMenuItem Text="Mitigations" Value='"/Listings/Mitigations"' Icon="security"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Mitigations" Value='"/SMSListings/Mitigations"' Icon="security"></RadzenMenuItem>
                                 }
                                 @if (CurrentUserService.CanRead("SMS_Listings_Investigations"))
                                 {
-                                    <RadzenMenuItem Text="Investigations" Value='"/Listings/Investigations"' Icon="search"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Investigations" Value='"/SMSListings/Investigations"' Icon="search"></RadzenMenuItem>
                                 }
                                 @if (CurrentUserService.CanRead("SMS_Listings_HazardLocations"))
                                 {
-                                    <RadzenMenuItem Text="Hazard Locations" Value='"/Listings/HazardLocations"' Icon="place"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Hazard Locations" Value='"/SMSListings/HazardLocations"' Icon="place"></RadzenMenuItem>
                                 }
                                 @if (CurrentUserService.CanRead("SMS_Listings_HazardFiles"))
                                 {
-                                    <RadzenMenuItem Text="Hazard Files" Value='"/Listings/HazardFiles"' Icon="attach_file"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Hazard Files" Value='"/SMSListings/HazardFiles"' Icon="attach_file"></RadzenMenuItem>
                                 }
                                 
                             </RadzenMenuItem>
@@ -171,21 +171,21 @@
                                 <RadzenMenuItem Text="System" Icon="settings" class="sms-menu-item">
                                     <!-- User Management -->
                                     <RadzenMenuItem Text="User Management" Icon="people">
-                                        <RadzenMenuItem Text="Application Users" Value='"/System/UserManagement/ApplicationUsers"' Icon="person"></RadzenMenuItem>
-                                        <RadzenMenuItem Text="Stakeholder Users" Value='"/System/UserManagement/StakeholderUsers"' Icon="group"></RadzenMenuItem>
-                                        <RadzenMenuItem Text="Organizational Users" Value='"/System/UserManagement/OrganizationalUsers"' Icon="corporate_fare"></RadzenMenuItem>
+                                        <RadzenMenuItem Text="Application Users" Value='"/SMSSystem/UserManagement/ApplicationUsers"' Icon="person"></RadzenMenuItem>
+                                        <RadzenMenuItem Text="Stakeholder Users" Value='"/SMSSystem/UserManagement/StakeholderUsers"' Icon="group"></RadzenMenuItem>
+                                        <RadzenMenuItem Text="Organizational Users" Value='"/SMSSystem/UserManagement/OrganizationalUsers"' Icon="corporate_fare"></RadzenMenuItem>
                                     </RadzenMenuItem>
 
                                     <!-- User Groups -->
                                     <RadzenMenuItem Text="User Groups" Icon="groups">
-                                        <RadzenMenuItem Text="Application Groups" Value='"/System/UserGroups/ApplicationGroups"' Icon="corporate_fare" ></RadzenMenuItem>
-                                        <RadzenMenuItem Text="Stakeholder Groups" Value='"/System/UserGroups/StakeholderGroups"' Icon="diversity_3" ></RadzenMenuItem>
-                                        <RadzenMenuItem Text="Organizational Groups" Value='"/System/UserGroups/OrganizationalGroups"' Icon="diversity_3" ></RadzenMenuItem>
+                                        <RadzenMenuItem Text="Application Groups" Value='"/SMSSystem/UserGroups/ApplicationGroups"' Icon="corporate_fare" ></RadzenMenuItem>
+                                        <RadzenMenuItem Text="Stakeholder Groups" Value='"/SMSSystem/UserGroups/StakeholderGroups"' Icon="diversity_3" ></RadzenMenuItem>
+                                        <RadzenMenuItem Text="Organizational Groups" Value='"/SMSSystem/UserGroups/OrganizationalGroups"' Icon="diversity_3" ></RadzenMenuItem>
                                     </RadzenMenuItem>
 
                                     <!-- User Roles -->
                                     <RadzenMenuItem Text="User Roles" Icon="admin_panel_settings">
-                                        <RadzenMenuItem Text="User Roles" Value='"/System/UserRoles/UserRoles"' Icon="badge"></RadzenMenuItem>
+                                        <RadzenMenuItem Text="User Roles" Value='"/SMSSystem/UserRoles/UserRoles"' Icon="badge"></RadzenMenuItem>
                                     </RadzenMenuItem>
                                 </RadzenMenuItem>
                             </RadzenMenu>
@@ -399,11 +399,11 @@
             }
 
             //_logger.LogInformation("OnMenuClick called with value: {Text}", args.Text?.ToString());
-            
+
             if (!string.IsNullOrEmpty(args.Value?.ToString()))
             {
                 var value = args.Value.ToString();
-                if (value.StartsWith("/"))
+                if (!string.IsNullOrEmpty(value) && value.StartsWith("/"))
                 {
                     _logger.LogInformation("Navigating to secure URL: {Url}", value);
                     // 🔐 SECURE NAVIGATION - All URLs automatically encrypted

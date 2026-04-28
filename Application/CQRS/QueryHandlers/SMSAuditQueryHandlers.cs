@@ -23,7 +23,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// <summary>
 /// Query handler for getting all SMS Audits
 /// </summary>
-public class GetAllSMSAuditsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSAuditsQuery, Result<List<SMSAudit>>>
+public class GetAllSMSAuditsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllSMSAuditsQuery, Result<List<SMSAudit>>>
 {
     private readonly SMSAuditService _dataService;
     private readonly ILogger<GetAllSMSAuditsQueryHandler> _logger;
@@ -96,7 +96,7 @@ public class GetAllSMSAuditsQueryHandler : BaseQueryBundle, IRequestHandler<GetA
 /// <summary>
 /// Query handler for getting SMS Audit by Code
 /// </summary>
-public class GetSMSAuditByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditByCodeQuery, Result<SMSAudit>>
+public class GetSMSAuditByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditByCodeQuery, Result<SMSAudit>>
 {
     private readonly SMSAuditDataService _dataService;
     private readonly ILogger<GetSMSAuditByCodeQueryHandler> _logger;
@@ -130,7 +130,7 @@ public class GetSMSAuditByCodeQueryHandler : BaseQueryBundle, IRequestHandler<Ge
 /// <summary>
 /// Query handler for getting SMS Audits by Plan
 /// </summary>
-public class GetSMSAuditsByPlanQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditsByPlanQuery, Result<List<SMSAudit>>>
+public class GetSMSAuditsByPlanQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditsByPlanQuery, Result<List<SMSAudit>>>
 {
     private readonly SMSAuditDataService _dataService;
     private readonly ILogger<GetSMSAuditsByPlanQueryHandler> _logger;
@@ -164,7 +164,7 @@ public class GetSMSAuditsByPlanQueryHandler : BaseQueryBundle, IRequestHandler<G
 /// <summary>
 /// Query handler for getting SMS Audits by Status
 /// </summary>
-public class GetSMSAuditsByStatusQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditsByStatusQuery, Result<List<SMSAudit>>>
+public class GetSMSAuditsByStatusQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditsByStatusQuery, Result<List<SMSAudit>>>
 {
     private readonly SMSAuditDataService _dataService;
     private readonly ILogger<GetSMSAuditsByStatusQueryHandler> _logger;
@@ -198,7 +198,7 @@ public class GetSMSAuditsByStatusQueryHandler : BaseQueryBundle, IRequestHandler
 /// <summary>
 /// Query handler for getting SMS Audits by Auditor
 /// </summary>
-public class GetSMSAuditsByAuditorQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditsByAuditorQuery, Result<List<SMSAudit>>>
+public class GetSMSAuditsByAuditorQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditsByAuditorQuery, Result<List<SMSAudit>>>
 {
     private readonly SMSAuditDataService _dataService;
     private readonly ILogger<GetSMSAuditsByAuditorQueryHandler> _logger;
@@ -237,7 +237,7 @@ public class GetSMSAuditsByAuditorQueryHandler : BaseQueryBundle, IRequestHandle
 /// <summary>
 /// Query handler for getting Overdue SMS Audits
 /// </summary>
-public class GetOverdueSMSAuditsQueryHandler : BaseQueryBundle, IRequestHandler<GetOverdueSMSAuditsQuery, Result<List<SMSAudit>>>
+public class GetOverdueSMSAuditsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetOverdueSMSAuditsQuery, Result<List<SMSAudit>>>
 {
     private readonly SMSAuditDataService _dataService;
     private readonly ILogger<GetOverdueSMSAuditsQueryHandler> _logger;
@@ -271,7 +271,7 @@ public class GetOverdueSMSAuditsQueryHandler : BaseQueryBundle, IRequestHandler<
 /// <summary>
 /// Query handler for getting SMS Audit Execution Dashboard
 /// </summary>
-public class GetSMSAuditExecutionDashboardQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditExecutionDashboardQuery, Result<SMSAuditExecutionDashboard>>
+public class GetSMSAuditExecutionDashboardQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditExecutionDashboardQuery, Result<SMSAuditExecutionDashboard>>
 {
     private readonly SMSAuditDataService _dataService;
     private readonly ILogger<GetSMSAuditExecutionDashboardQueryHandler> _logger;
@@ -321,7 +321,7 @@ public class GetSMSAuditExecutionDashboardQueryHandler : BaseQueryBundle, IReque
 /// <summary>
 /// Query handler for getting SMS Audit Findings by Audit Code
 /// </summary>
-public class GetSMSAuditFindingsByAuditCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditFindingsByAuditCodeQuery, Result<List<SMSAuditFinding>>>
+public class GetSMSAuditFindingsByAuditCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditFindingsByAuditCodeQuery, Result<List<SMSAuditFinding>>>
 {
     private readonly SMSAuditFindingDataService _dataService;
     private readonly ILogger<GetSMSAuditFindingsByAuditCodeQueryHandler> _logger;
@@ -373,7 +373,7 @@ public class GetSMSAuditFindingsByAuditCodeQueryHandler : BaseQueryBundle, IRequ
 /// <summary>
 /// Query handler for getting all SMS Audit Findings
 /// </summary>
-public class GetAllSMSAuditFindingsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSAuditFindingsQuery, Result<List<SMSAuditFinding>>>
+public class GetAllSMSAuditFindingsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllSMSAuditFindingsQuery, Result<List<SMSAuditFinding>>>
 {
     private readonly SMSAuditFindingDataService _dataService;
     private readonly ILogger<GetAllSMSAuditFindingsQueryHandler> _logger;
@@ -407,7 +407,7 @@ public class GetAllSMSAuditFindingsQueryHandler : BaseQueryBundle, IRequestHandl
 /// <summary>
 /// Query handler for getting SMS Audit Finding by Code
 /// </summary>
-public class GetSMSAuditFindingByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditFindingByCodeQuery, Result<SMSAuditFinding>>
+public class GetSMSAuditFindingByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditFindingByCodeQuery, Result<SMSAuditFinding>>
 {
     private readonly SMSAuditFindingDataService _dataService;
     private readonly ILogger<GetSMSAuditFindingByCodeQueryHandler> _logger;
@@ -441,7 +441,7 @@ public class GetSMSAuditFindingByCodeQueryHandler : BaseQueryBundle, IRequestHan
 /// <summary>
 /// Query handler for getting overdue SMS Audit Findings
 /// </summary>
-public class GetOverdueSMSAuditFindingsQueryHandler : BaseQueryBundle, IRequestHandler<GetOverdueSMSAuditFindingsQuery, Result<List<SMSAuditFinding>>>
+public class GetOverdueSMSAuditFindingsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetOverdueSMSAuditFindingsQuery, Result<List<SMSAuditFinding>>>
 {
     private readonly SMSAuditFindingDataService _dataService;
     private readonly ILogger<GetOverdueSMSAuditFindingsQueryHandler> _logger;
@@ -479,7 +479,7 @@ public class GetOverdueSMSAuditFindingsQueryHandler : BaseQueryBundle, IRequestH
 /// <summary>
 /// Query handler for getting SMS Audit Evidence by Audit Code
 /// </summary>
-public class GetSMSAuditEvidenceByAuditCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditEvidenceByAuditCodeQuery, Result<List<SMSAuditEvidence>>>
+public class GetSMSAuditEvidenceByAuditCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditEvidenceByAuditCodeQuery, Result<List<SMSAuditEvidence>>>
 {
     private readonly SMSAuditEvidenceDataService _dataService;
     private readonly ILogger<GetSMSAuditEvidenceByAuditCodeQueryHandler> _logger;
@@ -526,7 +526,7 @@ public class GetSMSAuditEvidenceByAuditCodeQueryHandler : BaseQueryBundle, IRequ
 /// <summary>
 /// Query handler for getting all SMS Audit Evidence
 /// </summary>
-public class GetAllSMSAuditEvidenceQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSAuditEvidenceQuery, Result<List<SMSAuditEvidence>>>
+public class GetAllSMSAuditEvidenceQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllSMSAuditEvidenceQuery, Result<List<SMSAuditEvidence>>>
 {
     private readonly SMSAuditEvidenceDataService _dataService;
     private readonly ILogger<GetAllSMSAuditEvidenceQueryHandler> _logger;
@@ -560,7 +560,7 @@ public class GetAllSMSAuditEvidenceQueryHandler : BaseQueryBundle, IRequestHandl
 /// <summary>
 /// Query handler for getting SMS Audit Evidence by Code
 /// </summary>
-public class GetSMSAuditEvidenceByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditEvidenceByCodeQuery, Result<SMSAuditEvidence>>
+public class GetSMSAuditEvidenceByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditEvidenceByCodeQuery, Result<SMSAuditEvidence>>
 {
     private readonly SMSAuditEvidenceDataService _dataService;
     private readonly ILogger<GetSMSAuditEvidenceByCodeQueryHandler> _logger;
@@ -594,7 +594,7 @@ public class GetSMSAuditEvidenceByCodeQueryHandler : BaseQueryBundle, IRequestHa
 /// <summary>
 /// Query handler for getting SMS Audit Evidence by Finding Code
 /// </summary>
-public class GetSMSAuditEvidenceByFindingCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditEvidenceByFindingCodeQuery, Result<List<SMSAuditEvidence>>>
+public class GetSMSAuditEvidenceByFindingCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditEvidenceByFindingCodeQuery, Result<List<SMSAuditEvidence>>>
 {
     private readonly SMSAuditEvidenceDataService _dataService;
     private readonly ILogger<GetSMSAuditEvidenceByFindingCodeQueryHandler> _logger;
@@ -628,7 +628,7 @@ public class GetSMSAuditEvidenceByFindingCodeQueryHandler : BaseQueryBundle, IRe
 /// <summary>
 /// Query handler for getting SMS Audit Checklist Items by Audit Code
 /// </summary>
-public class GetSMSAuditChecklistItemsByAuditCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSAuditChecklistItemsByAuditCodeQuery, Result<List<SMSAuditChecklistItem>>>
+public class GetSMSAuditChecklistItemsByAuditCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSAuditChecklistItemsByAuditCodeQuery, Result<List<SMSAuditChecklistItem>>>
 {
     private readonly ILogger<GetSMSAuditChecklistItemsByAuditCodeQueryHandler> _logger;
 

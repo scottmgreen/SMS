@@ -12,7 +12,7 @@ namespace SMS3.Components.Pages;
 
 public partial class Login : ComponentBase
 {
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private ILogger<Login> Logger { get; set; } = default!;
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
@@ -37,7 +37,7 @@ public partial class Login : ComponentBase
 
             var authResult = await AuthenticationService.AuthenticateAsync(model.Username, model.Password, CancellationToken.None);
 
-            if (authResult.IsSuccess && authResult.User != null)
+            if (authResult.IsSuccess && authResult.User is not null)
             {
                 Logger.LogInformation("✅ Authentication successful for user: {Username}, Type: {UserType}", model.Username, authResult.UserType.Value);
                 Logger.LogInformation("🔐 2FA Enabled: {TwoFactorEnabled}", authResult.User.TwoFactorEnabled);
@@ -66,7 +66,7 @@ public partial class Login : ComponentBase
                         // Verify the user was stored before navigation
                         Logger.LogInformation("🔐 Verifying pending 2FA user was stored...");
                         var storedUser = SessionService.GetPending2FAUser();
-                        if (storedUser == null)
+                        if (storedUser is null)
                         {
                             Logger.LogError("❌ FAILED to store pending 2FA user - session storage verification failed");
                             ErrorMessage = "Failed to initiate 2FA process. Please try again.";
@@ -139,7 +139,7 @@ public partial class Login : ComponentBase
         try
         {
             var httpContext = HttpContextAccessor.HttpContext;
-            if (httpContext != null)
+            if (httpContext is not null)
             {
                 // Check for forwarded IP first (load balancer/proxy scenarios)
                 var forwardedFor = httpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault();

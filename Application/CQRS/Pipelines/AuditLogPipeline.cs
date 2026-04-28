@@ -16,20 +16,20 @@ namespace SMS_Application.Messaging.Pipelines;
 
 /// <summary>
 /// Enhanced pipeline for comprehensive audit logging of business actions
-/// Integrates with CurrentUserService and SystemService for reliable audit trails
+/// Integrates with CurrentUserService and SMSSystemService for reliable audit trails
 /// UPDATED: Now respects EnableBusinessAuditLog feature flag to prevent duplicate logging
 /// </summary>
-public class AuditLogPipeline<TRequest, TResult> : IPipeline<TRequest, TResult> 
+public class AuditLogPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResult> 
     where TRequest : IRequest<TResult> 
     where TResult : Result
 {
-    private readonly SystemService _systemService;
+    private readonly SMSSystemService _systemService;
     private readonly ICurrentUserService _currentUserService;
     private readonly IFeatureManager _featureManager;
     private readonly ILogger<AuditLogPipeline<TRequest, TResult>> _logger;
 
     public AuditLogPipeline(
-        SystemService systemService,
+        SMSSystemService systemService,
         ICurrentUserService currentUserService,
         IFeatureManager featureManager,
         ILogger<AuditLogPipeline<TRequest, TResult>> logger)

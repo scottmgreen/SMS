@@ -13,7 +13,7 @@ public partial class SPIDetail : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<SPIDetail> _logger { get; set; } = default!;
     
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
@@ -71,7 +71,7 @@ public partial class SPIDetail : ComponentBase
             var query = new GetSafetyPerformanceIndicatorByCodeQuery(SPICode, includeDataPoints: true);
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 SPI = result.Value;
                 DataPoints = SPI.DataPoints?.OrderByDescending(dp => dp.MeasurementDate).ToList() ?? new List<SPIDataPoint>();
@@ -120,7 +120,7 @@ public partial class SPIDetail : ComponentBase
     #region Data Point Management
     private async Task ShowAddDataPointDialog()
     {
-        if (SPI == null) return;
+        if (SPI is null) return;
 
         IsEditingDataPoint = false; // Ensure we're not in edit mode
         CurrentDataPoint = null; // Clear any previous data point
@@ -161,6 +161,12 @@ public partial class SPIDetail : ComponentBase
 
     private async Task EditDataPoint(SPIDataPoint dataPoint)
     {
+        if (dataPoint is null)
+        {
+            _logger?.LogWarning("EditDataPoint called with null dataPoint");
+            return;
+        }
+
         IsEditingDataPoint = true; // Set this flag so we know we're editing
         CurrentDataPoint = dataPoint; // Store the current data point being edited
 
@@ -181,8 +187,8 @@ public partial class SPIDetail : ComponentBase
 
         var parameters = new Dictionary<string, object>
         {
-            { "SPI", SPI },
-            { "DataPoint", dataPoint },
+            { "SPI", SPI ?? throw new InvalidOperationException("SPI cannot be null") },
+            { "DataPoint", dataPoint ?? new SPIDataPoint(new("DP-0000")) },
             { "IsEditMode", true },
             { "OnSave", EventCallback.Factory.Create<SPIDataPoint>(this, OnDataPointSaved) },
             { "OnCancel", EventCallback.Factory.Create(this, OnDataPointDialogCanceled) }
@@ -244,12 +250,12 @@ public partial class SPIDetail : ComponentBase
     {
         try
         {
-            if (SPI == null) return;
+            if (SPI is null) return;
 
             _logger.LogInformation("Saving data point for SPI {SPICode}: Value={Value}, Date={Date}",
                 SPI.Code, savedDataPoint.Value, savedDataPoint.MeasurementDate);
 
-            if (IsEditingDataPoint && CurrentDataPoint != null)
+            if (IsEditingDataPoint && CurrentDataPoint is not null)
             {
                 // Update existing data point
                 var updateCommand = new UpdateSPIDataPointCommand(savedDataPoint);
@@ -321,9 +327,9 @@ public partial class SPIDetail : ComponentBase
 
     private string GetCurrentValueStyle()
     {
-        if (SPI?.GetCurrentValue() == null) return "color: #6c757d;";
+        if (SPI?.GetCurrentValue() is null) return "color: #6c757d;";
 
-        var currentValue = SPI.GetCurrentValue().Value;
+        var currentValue = SPI.GetCurrentValue();
 
         if (SPI.CriticalThreshold.HasValue && currentValue >= SPI.CriticalThreshold.Value)
             return "color: #dc3545; font-weight: bold;";
@@ -367,7 +373,7 @@ public partial class SPIDetail : ComponentBase
 
     private string GetDataPointValueStyle(SPIDataPoint dataPoint)
     {
-        if (SPI == null) return "";
+        if (SPI is null) return "";
 
         if (SPI.CriticalThreshold.HasValue && dataPoint.Value >= SPI.CriticalThreshold.Value)
             return "color: #dc3545; font-weight: bold;";

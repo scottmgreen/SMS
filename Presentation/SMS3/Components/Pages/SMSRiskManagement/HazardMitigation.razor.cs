@@ -1,4 +1,4 @@
-﻿
+
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 
@@ -11,7 +11,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class HazardMitigation : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ILogger<HazardMitigation> _logger { get; set; } = default!;
@@ -46,7 +46,7 @@ public partial class HazardMitigation : ComponentBase
 
     
 
-    // ✅ UPDATED: Replace hardcoded department list with SMSDepartment enum
+    // ? UPDATED: Replace hardcoded department list with SMSDepartment enum
     private List<string> Departments => SMSDepartment.GetAllDepartments()
         .Select(d => d.Name)
         .OrderBy(name => name)
@@ -84,7 +84,7 @@ public partial class HazardMitigation : ComponentBase
                     TargetDate = DateTime.Now.AddMonths(3)
                 };
 
-                // 📋 AUDIT: Set creation audit fields
+                // ?? AUDIT: Set creation audit fields
                 CurrentMitigation.CreatedBy = GetCurrentUserId();
                 CurrentMitigation.CreatedDate = DateTime.UtcNow;
             }
@@ -116,7 +116,7 @@ public partial class HazardMitigation : ComponentBase
             var mitigationQuery = new GetMitigationByCodeQuery(new MitigationID(MitigationCode));
             var mitigationResult = await _mediator.SendAsync(mitigationQuery, CancellationToken.None);
 
-            if (mitigationResult.IsSuccess && mitigationResult.Value != null)
+            if (mitigationResult.IsSuccess && mitigationResult.Value is not null)
             {
                 CurrentMitigation = mitigationResult.Value;
                 _logger.LogInformation("Successfully loaded existing hazard mitigation: {Code}", MitigationCode);
@@ -187,7 +187,7 @@ public partial class HazardMitigation : ComponentBase
         var mitigationCode = $"MIT-{DateTime.Now:yyyyMMdd}-{Random.Shared.Next(1000, 9999)}";
         CurrentMitigation.Code = mitigationCode;
 
-        // 📋 AUDIT: Set creation audit fields with current user
+        // ?? AUDIT: Set creation audit fields with current user
         CurrentMitigation.CreatedBy = GetCurrentUserId();
         CurrentMitigation.CreatedDate = DateTime.UtcNow;
 
@@ -211,7 +211,7 @@ public partial class HazardMitigation : ComponentBase
 
     private async Task UpdateExistingMitigation()
     {
-        // 📋 AUDIT: Set update audit fields with current user
+        // ?? AUDIT: Set update audit fields with current user
         CurrentMitigation.UpdatedBy = GetCurrentUserId();
         CurrentMitigation.UpdatedDate = DateTime.UtcNow;
 

@@ -14,7 +14,7 @@ public partial class AuditFindingDialog : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<AuditFindingDialog> _logger { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -39,7 +39,7 @@ public partial class AuditFindingDialog : ComponentBase
                 Status = "Open"
             };
         }
-        else if (Finding != null)
+        else if (Finding is not null)
         {
             ViewModel = new FindingViewModel
             {

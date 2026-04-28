@@ -27,7 +27,7 @@ public static class SecureNavigationExtensions
         bool forceLoad = false)
     {
         var secureRoutingService = ServiceLocator.Current?.GetService<ISecureRoutingService>();
-        if (secureRoutingService != null)
+        if (secureRoutingService is not null)
         {
             var encryptedUrl = secureRoutingService.EncryptUrl(url);
             navigationManager.NavigateTo(encryptedUrl, forceLoad);
@@ -78,7 +78,7 @@ public static class SecureNavigationExtensions
         string url)
     {
         var secureRoutingService = ServiceLocator.Current?.GetService<ISecureRoutingService>();
-        if (secureRoutingService != null)
+        if (secureRoutingService is not null)
         {
             return secureRoutingService.EncryptUrl(url);
         }
@@ -128,7 +128,7 @@ public static class SecureNavigationExtensions
         var url = $"{baseRoute}/{parameterValue}";
         
         var secureRoutingService = ServiceLocator.Current?.GetService<ISecureRoutingService>();
-        if (secureRoutingService != null)
+        if (secureRoutingService is not null)
         {
             var encryptedUrl = secureRoutingService.EncryptUrl(url);
             navigationManager.NavigateTo(encryptedUrl, forceLoad);

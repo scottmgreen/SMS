@@ -5,7 +5,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 public partial class CompleteInterviewDialog : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ILogger<CompleteInterviewDialog> _logger { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -23,7 +23,7 @@ public partial class CompleteInterviewDialog : ComponentBase
     #region Lifecycle
     protected override void OnInitialized()
     {
-        if (Interview != null)
+        if (Interview is not null)
         {
             // Pre-populate with existing data if any
             Model = new CompleteInterviewModel

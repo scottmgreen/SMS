@@ -13,7 +13,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class AirportSharedDataset : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!; 
     [Inject] private ILogger<AirportSharedDataset> _logger { get; set; } = default!;
@@ -35,7 +35,7 @@ public partial class AirportSharedDataset : ComponentBase
     public SMS_Domain.Entities.AirportSharedDataset? ExistingDataset { get; set; } // Store existing dataset for updates
 
     // Edit mode detection - we're in edit mode if we have both ReportId and HazardId and an existing dataset
-    public bool IsEditMode => ExistingDataset != null;
+    public bool IsEditMode => ExistingDataset is not null;
     #endregion
 
     #region Dropdown Options
@@ -134,13 +134,13 @@ public partial class AirportSharedDataset : ComponentBase
             var datasetsQuery = new GetAllAirportSharedDatasetsQuery();
             var datasetsResult = await _mediator.SendAsync(datasetsQuery, CancellationToken.None);
 
-            if (datasetsResult.IsSuccess && datasetsResult.Value != null)
+            if (datasetsResult.IsSuccess && datasetsResult.Value is not null)
             {
                 ExistingDataset = datasetsResult.Value.FirstOrDefault(d =>
                     d.HazardCode == HazardId &&
                     (string.IsNullOrEmpty(d.ReportCode) || d.ReportCode == ReportId));
 
-                if (ExistingDataset != null)
+                if (ExistingDataset is not null)
                 {
                     _logger.LogInformation("Found existing dataset {DatasetCode} for Report: {ReportId}, Hazard: {HazardId}",
                         ExistingDataset.Code, ReportId, HazardId);
@@ -252,8 +252,8 @@ public partial class AirportSharedDataset : ComponentBase
             var dataset = new SMS_Domain.Entities.AirportSharedDataset(datasetId)
             {
                 Code = datasetId.Value,
-                ReportCode = ReportId,
-                HazardCode = HazardId,
+                ReportCode = ReportId ?? "",
+                HazardCode = HazardId ?? "",
                 PrivateNarrative = Model.PrivateNarrative,
                 SharedNarrative = Model.SharedNarrative,
                 LocationArea = Model.Location == "Other" ? null : Model.Location,

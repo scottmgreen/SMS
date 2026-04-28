@@ -20,7 +20,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // INTERVIEW QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class GetInterviewByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetInterviewByCodeQuery, Result<Interview>>
+public class GetInterviewByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetInterviewByCodeQuery, Result<Interview>>
 {
     private readonly IInterviewService _interviewService;
     private readonly ILogger<GetInterviewByCodeQueryHandler> _logger;
@@ -47,7 +47,7 @@ public class GetInterviewByCodeQueryHandler : BaseQueryBundle, IRequestHandler<G
     }
 }
 
-public class GetAllInterviewsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllInterviewsQuery, Result<List<Interview>>>
+public class GetAllInterviewsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllInterviewsQuery, Result<List<Interview>>>
 {
     private readonly IInterviewService _interviewService;
     private readonly ILogger<GetAllInterviewsQueryHandler> _logger;

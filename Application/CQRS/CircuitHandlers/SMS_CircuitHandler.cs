@@ -31,7 +31,7 @@ public class SMS_CircuitHandler : BaseCircuitHandler
     public SMS_CircuitHandler(
         ILogger<SMS_CircuitHandler> logger,
         ILogSupport logsupport,
-        IMediator mediator,
+        IBaseMediator mediator,
         IHttpContextAccessor httpContextAccessor)
         : base(logger, logsupport, mediator, httpContextAccessor)
     {

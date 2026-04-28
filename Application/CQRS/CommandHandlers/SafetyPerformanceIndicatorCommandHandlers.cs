@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // SAFETY PERFORMANCE INDICATOR COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle, IRequestHandler<CreateSafetyPerformanceIndicatorCommand, Result<SafetyPerformanceIndicator>>
+public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateSafetyPerformanceIndicatorCommand, Result<SafetyPerformanceIndicator>>
 {
     private readonly ISafetyPerformanceIndicatorService _spiService;
     private readonly ILogger<CreateSafetyPerformanceIndicatorCommandHandler> _logger;
@@ -99,7 +99,7 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
     }
 }
 
-public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSafetyPerformanceIndicatorCommand, Result<bool>>
+public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSafetyPerformanceIndicatorCommand, Result<bool>>
 {
     private readonly ISafetyPerformanceIndicatorService _spiService;
     private readonly ILogger<DeleteSafetyPerformanceIndicatorCommandHandler> _logger;

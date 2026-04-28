@@ -18,7 +18,7 @@ public partial class SPIDataPointDialog : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<SPIDataPointDialog> _logger { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -46,7 +46,7 @@ public partial class SPIDataPointDialog : ComponentBase
     #region Initialization
     private void InitializeDataPoint()
     {
-        if (DataPoint != null)
+        if (DataPoint is not null)
         {
             // Edit mode - clone existing data point
             currentDataPoint = new SPIDataPoint(new SPIDataPointID(DataPoint.Code))
@@ -85,7 +85,7 @@ public partial class SPIDataPointDialog : ComponentBase
 
     private void UpdatePeriod()
     {
-        if (SPI != null)
+        if (SPI is not null)
         {
             currentDataPoint.Period = GetPeriodFromDate(currentDataPoint.MeasurementDate);
         }
@@ -93,7 +93,7 @@ public partial class SPIDataPointDialog : ComponentBase
 
     private string GetPeriodFromDate(DateTime date)
     {
-        if (SPI == null) return string.Empty;
+        if (SPI is null) return string.Empty;
 
         return SPI.MeasurementFrequency.Value switch
         {

@@ -12,7 +12,7 @@
 
 namespace SMS_Application.Messaging.CommandHandlers;
 
-public class AddAuditLogEntryCommandHandler : BaseCommandBundle, IRequestHandler<AddAuditLogEntryCommand, Result<bool>>
+public class AddAuditLogEntryCommandHandler : BaseCommandBundle, IBaseRequestHandler<AddAuditLogEntryCommand, Result<bool>>
 {
     public AddAuditLogEntryCommandHandler(SystemDataService dataService)
     {

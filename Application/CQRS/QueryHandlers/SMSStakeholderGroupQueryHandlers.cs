@@ -17,7 +17,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// <summary>
 /// Query handler for getting all SMS stakeholder groups
 /// </summary>
-public class GetAllSMSStakeholderGroupsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSStakeholderGroupsQuery, Result<IEnumerable<SMSStakeholderGroup>>>
+public class GetAllSMSStakeholderGroupsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllSMSStakeholderGroupsQuery, Result<IEnumerable<SMSStakeholderGroup>>>
 {
     private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<GetAllSMSStakeholderGroupsQueryHandler> _logger;
@@ -65,7 +65,7 @@ public class GetAllSMSStakeholderGroupsQueryHandler : BaseQueryBundle, IRequestH
 /// <summary>
 /// Query handler for getting an SMS stakeholder group by code
 /// </summary>
-public class GetSMSStakeholderGroupByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderGroupByCodeQuery, Result<SMSStakeholderGroup>>
+public class GetSMSStakeholderGroupByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSStakeholderGroupByCodeQuery, Result<SMSStakeholderGroup>>
 {
     private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<GetSMSStakeholderGroupByCodeQueryHandler> _logger;
@@ -113,7 +113,7 @@ public class GetSMSStakeholderGroupByCodeQueryHandler : BaseQueryBundle, IReques
 /// <summary>
 /// Query handler for getting SMS stakeholder groups by user code
 /// </summary>
-public class GetSMSStakeholderGroupsByUserCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderGroupsByUserCodeQuery, Result<IEnumerable<SMSStakeholderGroup>>>
+public class GetSMSStakeholderGroupsByUserCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSStakeholderGroupsByUserCodeQuery, Result<IEnumerable<SMSStakeholderGroup>>>
 {
     private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<GetSMSStakeholderGroupsByUserCodeQueryHandler> _logger;
@@ -163,7 +163,7 @@ public class GetSMSStakeholderGroupsByUserCodeQueryHandler : BaseQueryBundle, IR
 /// <summary>
 /// Query handler for getting users by stakeholder group code
 /// </summary>
-public class GetUsersByStakeholderGroupCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetUsersByStakeholderGroupCodeQuery, Result<IEnumerable<SMSStakeholderUser>>>
+public class GetUsersByStakeholderGroupCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetUsersByStakeholderGroupCodeQuery, Result<IEnumerable<SMSStakeholderUser>>>
 {
     private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<GetUsersByStakeholderGroupCodeQueryHandler> _logger;

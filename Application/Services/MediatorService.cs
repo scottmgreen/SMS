@@ -17,7 +17,7 @@
 namespace SMS_Application.Services
 {
 
-    public sealed class Mediator : IMediator
+    public sealed class Mediator : IBaseMediator
     {
         private readonly IServiceProvider _serviceProvider;
         public Mediator(IServiceProvider serviceProvider)
@@ -27,11 +27,11 @@ namespace SMS_Application.Services
         public async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request, CancellationToken cancellation)
         {
 
-            var behaviors = _serviceProvider.GetServices<IPipeline<IRequest<TResponse>, TResponse>>().ToList();
+            var behaviors = _serviceProvider.GetServices<IBasePipeline<IRequest<TResponse>, TResponse>>().ToList();
 
-            var handlerType = typeof(IRequestHandler<,>).MakeGenericType(request.GetType(), typeof(TResponse));
+            var handlerType = typeof(IBaseRequestHandler<,>).MakeGenericType(request.GetType(), typeof(TResponse));
             var handler = _serviceProvider.GetRequiredService(handlerType);
-            var methodInfo = handlerType.GetMethod(nameof(IRequestHandler<IRequest<TResponse>, TResponse>.HandleAsync));
+            var methodInfo = handlerType.GetMethod(nameof(IBaseRequestHandler<IRequest<TResponse>, TResponse>.HandleAsync));
 
             if (!behaviors.Any())
             {
@@ -56,7 +56,7 @@ namespace SMS_Application.Services
 
         //public async Task SendAsync<TRequest>(TRequest request, CancellationToken cancellation) where TRequest : class, IRequest
         //{
-        //    var handler = _serviceProvider.GetRequiredService<IRequestHandler<TRequest>>();
+        //    var handler = _serviceProvider.GetRequiredService<IBaseRequestHandler<TRequest>>();
         //    await handler.HandleAsync(request, cancellation);
         //}
 

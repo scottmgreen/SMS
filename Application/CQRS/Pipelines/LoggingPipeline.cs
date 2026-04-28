@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.Pipelines;
 /// Single-responsibility logging pipeline for request/response monitoring and performance tracking
 /// Does NOT handle audit logging - that's handled by separate audit pipelines
 /// </summary>
-public class LoggingPipeline<TRequest, TResult> : IPipeline<TRequest, TResult> 
+public class LoggingPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResult> 
     where TRequest : IRequest<TResult> 
     where TResult : Result
 {

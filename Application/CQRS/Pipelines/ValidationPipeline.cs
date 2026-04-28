@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.Pipelines;
 /// Validation pipeline for comprehensive input validation and business rule enforcement
 /// Validates commands before execution and provides detailed validation feedback
 /// </summary>
-public class ValidationPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
+public class ValidationPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResult>
     where TRequest : IRequest<TResult>
     where TResult : Result
 {

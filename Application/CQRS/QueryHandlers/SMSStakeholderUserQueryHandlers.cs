@@ -17,7 +17,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// <summary>
 /// Query handler for getting all SMS stakeholder users
 /// </summary>
-public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSStakeholderUsersQuery, Result<IEnumerable<SMSStakeholderUser>>>
+public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllSMSStakeholderUsersQuery, Result<IEnumerable<SMSStakeholderUser>>>
 {
     private readonly SMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<GetAllSMSStakeholderUsersQueryHandler> _logger;
@@ -57,7 +57,7 @@ public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHa
 /// <summary>
 /// Query handler for getting SMS stakeholder user by code
 /// </summary>
-public class GetSMSStakeholderUserByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUserByCodeQuery, Result<SMSStakeholderUser>>
+public class GetSMSStakeholderUserByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSStakeholderUserByCodeQuery, Result<SMSStakeholderUser>>
 {
     private readonly SMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<GetSMSStakeholderUserByCodeQueryHandler> _logger;
@@ -97,7 +97,7 @@ public class GetSMSStakeholderUserByCodeQueryHandler : BaseQueryBundle, IRequest
 /// <summary>
 /// Query handler for getting SMS stakeholder user by username
 /// </summary>
-public class GetSMSStakeholderUserByUserNameQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUserByUserNameQuery, Result<SMSStakeholderUser>>
+public class GetSMSStakeholderUserByUserNameQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSStakeholderUserByUserNameQuery, Result<SMSStakeholderUser>>
 {
     private readonly SMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<GetSMSStakeholderUserByUserNameQueryHandler> _logger;
@@ -145,7 +145,7 @@ public class GetSMSStakeholderUserByUserNameQueryHandler : BaseQueryBundle, IReq
 /// <summary>
 /// Query handler for getting active SMS stakeholder users
 /// </summary>
-public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetActiveSMSStakeholderUsersQuery, Result<IEnumerable<SMSStakeholderUser>>>
+public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetActiveSMSStakeholderUsersQuery, Result<IEnumerable<SMSStakeholderUser>>>
 {
     private readonly SMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<GetActiveSMSStakeholderUsersQueryHandler> _logger;
@@ -185,7 +185,7 @@ public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IReques
 /// <summary>
 /// Query handler for getting SMS stakeholder users by type
 /// </summary>
-public class GetSMSStakeholderUsersByTypeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUsersByTypeQuery, Result<IEnumerable<SMSStakeholderUser>>>
+public class GetSMSStakeholderUsersByTypeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSStakeholderUsersByTypeQuery, Result<IEnumerable<SMSStakeholderUser>>>
 {
     private readonly SMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<GetSMSStakeholderUsersByTypeQueryHandler> _logger;
@@ -218,7 +218,7 @@ public class GetSMSStakeholderUsersByTypeQueryHandler : BaseQueryBundle, IReques
 /// <summary>
 /// Query handler for getting SMS stakeholder users by organization
 /// </summary>
-public class GetSMSStakeholderUsersByOrganizationQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSStakeholderUsersByOrganizationQuery, Result<IEnumerable<SMSStakeholderUser>>>
+public class GetSMSStakeholderUsersByOrganizationQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSStakeholderUsersByOrganizationQuery, Result<IEnumerable<SMSStakeholderUser>>>
 {
     private readonly SMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<GetSMSStakeholderUsersByOrganizationQueryHandler> _logger;
@@ -258,7 +258,7 @@ public class GetSMSStakeholderUsersByOrganizationQueryHandler : BaseQueryBundle,
 /// <summary>
 /// Query handler for validating SMS stakeholder user credentials
 /// </summary>
-public class ValidateSMSStakeholderUsersCredentialsQueryHandler : BaseQueryBundle, IRequestHandler<ValidateSMSStakeholderUserCredentialsQuery, Result<bool>>
+public class ValidateSMSStakeholderUsersCredentialsQueryHandler : BaseQueryBundle, IBaseRequestHandler<ValidateSMSStakeholderUserCredentialsQuery, Result<bool>>
 {
     private readonly SMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<ValidateSMSStakeholderUsersCredentialsQueryHandler> _logger;

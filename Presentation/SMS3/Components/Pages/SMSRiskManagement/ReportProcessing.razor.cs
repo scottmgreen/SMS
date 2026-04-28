@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
@@ -212,7 +212,7 @@ public class MitigationSummary
     public string MitigationCode { get; set; } = string.Empty;
     public string MitigationName { get; set; } = string.Empty;
     public string HazardCode { get; set; } = string.Empty;
-    public RiskLevel HazardRiskLevel { get; set; }
+    public RiskLevel HazardRiskLevel { get; set; } = default!;
     public string HazardDescription { get; set; } = string.Empty;
     public MitigationStatus Status { get; set; } 
     public string AssignedTo { get; set; } = string.Empty;
@@ -233,7 +233,7 @@ public class MitigationSummary
 /// </summary>
 public partial class ReportProcessing : ComponentBase
 {
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportProcessing> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
@@ -272,7 +272,7 @@ public partial class ReportProcessing : ComponentBase
 
     #region Data Loading
     /// <summary>
-    /// 🚀 Load organizational users who can approve mitigations
+    /// ?? Load organizational users who can approve mitigations
     /// </summary>
     private async Task LoadAvailableApprovers()
     {
@@ -281,12 +281,12 @@ public partial class ReportProcessing : ComponentBase
             var usersQuery = new GetAllSMSOrganizationalUsersQuery(); // You may need to adjust this query name
             var usersResult = await _mediator.SendAsync(usersQuery, CancellationToken.None);
 
-            if (usersResult.IsSuccess && usersResult.Value != null)
+            if (usersResult.IsSuccess && usersResult.Value is not null)
             {
                 AvailableApprovers = usersResult.Value
                 .Where(u => u.IsActive &&
                            (u.AuthorityLevel.HasValue || // Has integer authority level
-                            u.OrganizationLevel != null || // Has organization level enum
+                            u.OrganizationLevel is not null || // Has organization level enum
                             !string.IsNullOrEmpty(u.RiskApprovalAuthority))) // Has risk approval authority string
                 .ToList();
 
@@ -359,12 +359,12 @@ public partial class ReportProcessing : ComponentBase
             if (reportsResult.IsSuccess)
             {
                 reports = reportsResult.Value ?? new List<Report>();
-                //_logger.LogWarning("🔍 DIAGNOSTIC: Successfully loaded {Count} reports from database", reports.Count);
+                //_logger.LogWarning("?? DIAGNOSTIC: Successfully loaded {Count} reports from database", reports.Count);
 
                 // Log details of first few reports for debugging
                 //foreach (var report in reports.Take(3))
                 //{
-                //    _logger.LogWarning("🔍 Report: {Code} | Status: {Status} | Stage: {Stage} | SubmittedBy: {SubmittedBy}", 
+                //    _logger.LogWarning("?? Report: {Code} | Status: {Status} | Stage: {Stage} | SubmittedBy: {SubmittedBy}", 
                 //        report.Code, report.Status, report.Stage, report.SubmittedBy);
                 //}
 
@@ -372,7 +372,7 @@ public partial class ReportProcessing : ComponentBase
             }
             else
             {
-                _logger.LogError("❌ DIAGNOSTIC: Failed to retrieve reports: {Error}", reportsResult.Error?.Message);
+                _logger.LogError("? DIAGNOSTIC: Failed to retrieve reports: {Error}", reportsResult.Error?.Message);
             }
 
             
@@ -394,7 +394,7 @@ public partial class ReportProcessing : ComponentBase
             // CRITICAL: Get all report validations to determine which reports have been validated
             var reportValidationsQuery = new GetAllReportValidationsQuery();
             var reportValidationsResult = await _mediator.SendAsync(reportValidationsQuery, CancellationToken.None);
-            if (reportValidationsResult.IsSuccess && reportValidationsResult.Value != null)
+            if (reportValidationsResult.IsSuccess && reportValidationsResult.Value is not null)
             {
                 reportValidations = reportValidationsResult.Value.ToList();
                 //_logger.LogWarning("? Successfully loaded {Count} report validations", reportValidations.Count);
@@ -426,7 +426,7 @@ public partial class ReportProcessing : ComponentBase
             // NEW: Get all investigations
             var investigationsQuery = new GetAllInvestigationsQuery();
             var investigationsResult = await _mediator.SendAsync(investigationsQuery, CancellationToken.None);
-            if (investigationsResult.IsSuccess && investigationsResult.Value != null)
+            if (investigationsResult.IsSuccess && investigationsResult.Value is not null)
             {
                 investigations = investigationsResult.Value.ToList();
                 //_logger.LogInformation("Loaded {Count} investigations", investigations.Count);
@@ -439,7 +439,7 @@ public partial class ReportProcessing : ComponentBase
             // NEW: Get all interviews
             var interviewsQuery = new GetAllInterviewsQuery();
             var interviewsResult = await _mediator.SendAsync(interviewsQuery, CancellationToken.None);
-            if (interviewsResult.IsSuccess && interviewsResult.Value != null)
+            if (interviewsResult.IsSuccess && interviewsResult.Value is not null)
             {
                 interviews = interviewsResult.Value.ToList();
                 //_logger.LogInformation("Loaded {Count} interviews", interviews.Count);
@@ -481,7 +481,7 @@ public partial class ReportProcessing : ComponentBase
                     continue;
                 }
 
-                // ✅ FIXED: Get unique risk assessments for this report (not one per hazard)
+                // ? FIXED: Get unique risk assessments for this report (not one per hazard)
                 var uniqueRiskAssessments = riskAssessments
                     .Where(ra => reportHazards.Any(h => h.Code?.Trim() == ra.HazardCode?.Trim()))
                     .GroupBy(ra => ra.Code) // Group by assessment code to get unique assessments
@@ -493,7 +493,7 @@ public partial class ReportProcessing : ComponentBase
 
                 if (uniqueRiskAssessments.Any())
                 {
-                    // ✅ FIXED: Create ONE summary per unique RiskAssessment (not per hazard)
+                    // ? FIXED: Create ONE summary per unique RiskAssessment (not per hazard)
                     foreach (var riskAssessment in uniqueRiskAssessments)
                     {
                         // Find the primary hazard for this assessment
@@ -504,13 +504,13 @@ public partial class ReportProcessing : ComponentBase
                         var investigation = investigations.FirstOrDefault(inv => inv.HazardCode?.Trim() == primaryHazard.Code?.Trim());
 
                         // Find matching interviews for this investigation
-                        var investigationInterviews = investigation != null ?
+                        var investigationInterviews = investigation is not null ?
                             interviews.Where(iv => iv.InvestigationCode?.Trim() == investigation.Code?.Trim()).ToList() :
                             new List<Interview>();
 
-                        // ✅ Load mitigations for ALL hazards in this report (since one assessment covers all)
+                        // ? Load mitigations for ALL hazards in this report (since one assessment covers all)
                         var allReportMitigations = new List<MitigationSummary>();
-                        var processedMitigationCodes = new HashSet<string>(); // ✅ Track processed mitigations
+                        var processedMitigationCodes = new HashSet<string>(); // ? Track processed mitigations
                         try
                         {
                             foreach (var hazard in reportHazards)
@@ -536,7 +536,7 @@ public partial class ReportProcessing : ComponentBase
 
                                         }).ToList();
 
-                                    // ✅ Track mitigation codes to prevent duplicates
+                                    // ? Track mitigation codes to prevent duplicates
                                     foreach (var mitigation in hazardMitigations)
                                     {
                                         processedMitigationCodes.Add(mitigation.MitigationCode);
@@ -551,7 +551,7 @@ public partial class ReportProcessing : ComponentBase
                             _logger.LogError(ex, "Error loading mitigations for report {ReportCode}", report.Code);
                         }
 
-                        // ✅ Create ONE summary for this RiskAssessment covering all hazards
+                        // ? Create ONE summary for this RiskAssessment covering all hazards
                         var summary = new ReportProcessingSummary
                         {
                             ReportId = report.Code ?? "Unknown",
@@ -590,7 +590,7 @@ public partial class ReportProcessing : ComponentBase
                             InvestigationNotes = investigation?.InvestigationNotes,
                             InterviewCount = investigationInterviews.Count,
 
-                            // ✅ ALL mitigations from ALL hazards in this report
+                            // ? ALL mitigations from ALL hazards in this report
                             AllMitigations = allReportMitigations,
 
                             // Status determination
@@ -603,7 +603,7 @@ public partial class ReportProcessing : ComponentBase
                         // NEW: Log when default hazard classification is detected
                         if (summary.RequiresHazardClassificationUpdate)
                         {
-                            _logger.LogWarning("⚠️ DEFAULT CLASSIFICATION DETECTED - Report {ReportId}, Hazard {HazardId}: Category='{Category}', Type='{Type}'",
+                            _logger.LogWarning("?? DEFAULT CLASSIFICATION DETECTED - Report {ReportId}, Hazard {HazardId}: Category='{Category}', Type='{Type}'",
                                 summary.ReportId, summary.HazardId, summary.HazardCategory, summary.HazardType);
                         }
 
@@ -618,7 +618,7 @@ public partial class ReportProcessing : ComponentBase
                     // No risk assessments - create summary with first hazard for other processing categories
                     var primaryHazard = reportHazards.First();
                     var investigation = investigations.FirstOrDefault(inv => inv.HazardCode?.Trim() == primaryHazard.Code?.Trim());
-                    var investigationInterviews = investigation != null ?
+                    var investigationInterviews = investigation is not null ?
                         interviews.Where(iv => iv.InvestigationCode?.Trim() == investigation.Code?.Trim()).ToList() :
                         new List<Interview>();
 
@@ -672,7 +672,7 @@ public partial class ReportProcessing : ComponentBase
                     // NEW: Log when default hazard classification is detected
                     if (summary.RequiresHazardClassificationUpdate)
                     {
-                        _logger.LogWarning("⚠️ DEFAULT CLASSIFICATION DETECTED - Report {ReportId}, Hazard {HazardId}: Category='{Category}', Type='{Type}'",
+                        _logger.LogWarning("?? DEFAULT CLASSIFICATION DETECTED - Report {ReportId}, Hazard {HazardId}: Category='{Category}', Type='{Type}'",
                             summary.ReportId, summary.HazardId, summary.HazardCategory, summary.HazardType);
                     }
 
@@ -699,18 +699,18 @@ public partial class ReportProcessing : ComponentBase
 
         ClosedReferred = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Closed).ToList();
 
-        // ✅ ADD DEBUG LOGGING to see what's being categorized
-        //_logger.LogWarning("📊 CATEGORIZATION RESULTS:");
-        //_logger.LogWarning("   📋 Pending Validation: {Count}", PendingValidation.Count);
-        //_logger.LogWarning("   📊 Pending Risk Assessment: {Count}", PendingRiskAssessment.Count);
-        //_logger.LogWarning("   🔍 Pending Investigation: {Count}", PendingInvestigation.Count);
-        //_logger.LogWarning("   🛠️ In Mitigation: {Count}", PendingMitigation.Count);
-        //_logger.LogWarning("   ✅ Closed/Referred: {Count}", ClosedReferred.Count);
+        // ? ADD DEBUG LOGGING to see what's being categorized
+        //_logger.LogWarning("?? CATEGORIZATION RESULTS:");
+        //_logger.LogWarning("   ?? Pending Validation: {Count}", PendingValidation.Count);
+        //_logger.LogWarning("   ?? Pending Risk Assessment: {Count}", PendingRiskAssessment.Count);
+        //_logger.LogWarning("   ?? Pending Investigation: {Count}", PendingInvestigation.Count);
+        //_logger.LogWarning("   ??? In Mitigation: {Count}", PendingMitigation.Count);
+        //_logger.LogWarning("   ? Closed/Referred: {Count}", ClosedReferred.Count);
 
-        // ✅ LOG EACH REPORT'S CATEGORIZATION
+        // ? LOG EACH REPORT'S CATEGORIZATION
         //foreach (var report in reports)
         //{
-        //    _logger.LogWarning("   📄 Report {ReportId}-{HazardId}: {Category} (HasRA: {HasRA}, RAStatus: {RAStatus}, RAStep: {RAStep}, MitigationCount: {MC})",
+        //    _logger.LogWarning("   ?? Report {ReportId}-{HazardId}: {Category} (HasRA: {HasRA}, RAStatus: {RAStatus}, RAStep: {RAStep}, MitigationCount: {MC})",
         //        report.ReportId, report.HazardId, report.StatusCategory, 
         //        report.HasRiskAssessment, report.RiskAssessmentStatus, report.CurrentAssessmentStep, report.MitigationCount);
         //}
@@ -723,7 +723,7 @@ public partial class ReportProcessing : ComponentBase
     private ProcessingStatusCategory DetermineStatusCategory(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation, Investigation? investigation)
     {
         //_logger.LogWarning("?? CATEGORIZING Report: {ReportCode} | HasValidation: {HasValidation} | ValidationType: {ValidationType} | ValidationDecision: {ValidationDecision} | HasRiskAssessment: {HasRA} | HasInvestigation: {HasInv} | InvStatus: {InvStatus} | InvDecision: {InvDecision}",
-         //   report.Code, reportValidation != null, reportValidation?.ValidationType ?? "NULL", reportValidation?.ValidationDecision ?? "NULL", riskAssessment != null, investigation != null, investigation?.Status ?? "NULL", investigation?.DecisionType ?? "NULL");
+         //   report.Code, reportValidation is not null, reportValidation?.ValidationType ?? "NULL", reportValidation?.ValidationDecision ?? "NULL", riskAssessment is not null, investigation is not null, investigation?.Status ?? "NULL", investigation?.DecisionType ?? "NULL");
 
         // CRITICAL DESIGN CONCEPT: 
         // 1. If Investigation exists and is active -> INVESTIGATION tab (HIGHEST PRIORITY)
@@ -734,7 +734,7 @@ public partial class ReportProcessing : ComponentBase
         // 6. If RiskAssessment complete -> MITIGATION tab
 
         // HIGHEST PRIORITY: Check for active investigation first - but exclude completed investigations that returned to validation
-        if (investigation != null)
+        if (investigation is not null)
         {
             // FIXED: Use more robust status checking to handle different status formats
             var investigationStatus = InvestigationStatus.FromValue(investigation.Status);
@@ -761,7 +761,7 @@ public partial class ReportProcessing : ComponentBase
         }
 
         // No validation record = needs validation
-        if (reportValidation == null)
+        if (reportValidation is null)
         {
             //_logger.LogWarning("? Report {ReportId} -> VALIDATION (no validation record)", report.Code);
             return ProcessingStatusCategory.Validation;
@@ -776,7 +776,7 @@ public partial class ReportProcessing : ComponentBase
         }
 
         // Has validation with decision but no risk assessment = validated, needs risk assessment
-        if (riskAssessment == null)
+        if (riskAssessment is null)
         {
             //_logger.LogWarning("? Report {ReportId} -> RISK ASSESSMENT (validated but no assessment)", report.Code);
             return ProcessingStatusCategory.RiskAssessment;
@@ -806,13 +806,13 @@ public partial class ReportProcessing : ComponentBase
             return ProcessingStatusCategory.Mitigation;
         }
 
-        // ✅ NEW: Check if this report-hazard has mitigations - if so, it should be in Mitigation tab
+        // ? NEW: Check if this report-hazard has mitigations - if so, it should be in Mitigation tab
         // This handles cases where risk assessment might be missing but mitigations exist
-        if (hazard != null)
+        if (hazard is not null)
         {
             //_logger.LogWarning("? Report {ReportId} -> Checking if should be MITIGATION (no clear RA status but hazard exists)", report.Code);
             
-            // ✅ ENHANCED: If this is being called from CreateReportSummariesAsync, check mitigation count
+            // ? ENHANCED: If this is being called from CreateReportSummariesAsync, check mitigation count
             // For now, let's assume any report with an associated hazard that has made it this far
             // should be in mitigation phase unless explicitly in another category
             // This is a temporary fix - you might want to add mitigation count checking here
@@ -848,19 +848,19 @@ public partial class ReportProcessing : ComponentBase
     private string? DetermineAssignedTo(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation, Investigation? investigation)
     {
         // NEW: Use Investigation assigned investigator if available
-        if (investigation != null && !string.IsNullOrEmpty(investigation.AssignedInvestigatorId))
+        if (investigation is not null && !string.IsNullOrEmpty(investigation.AssignedInvestigatorId))
         {
             return investigation.AssignedInvestigatorId;
         }
 
         // Use RiskAssessment lead assessor if available
-        if (riskAssessment != null && !string.IsNullOrEmpty(riskAssessment.LeadAssessorId))
+        if (riskAssessment is not null && !string.IsNullOrEmpty(riskAssessment.LeadAssessorId))
         {
             return riskAssessment.LeadAssessorId;
         }
 
         // Use ReportValidation validator if available
-        if (reportValidation != null && !string.IsNullOrEmpty(reportValidation.ValidatedBy))
+        if (reportValidation is not null && !string.IsNullOrEmpty(reportValidation.ValidatedBy))
         {
             return reportValidation.ValidatedBy;
         }
@@ -881,7 +881,7 @@ public partial class ReportProcessing : ComponentBase
     private string GetValidationUrl(Report report, Hazard? hazard, SMS_Domain.Entities.ReportValidation? reportValidation)
     {
         // If no validation exists, go to report validation
-        if (reportValidation == null)
+        if (reportValidation is null)
         {
             return $"/SMSRiskManagement/ReportValidation/{report.Code}";
         }
@@ -1021,7 +1021,7 @@ public partial class ReportProcessing : ComponentBase
                 return;
             }
 
-            // 🎯 NEW: Render detailed mitigation view instead of simple data grid
+            // ?? NEW: Render detailed mitigation view instead of simple data grid
             RenderDetailedMitigationView(builder);
         };
     }
@@ -1038,7 +1038,7 @@ public partial class ReportProcessing : ComponentBase
                 RenderReportMitigationCard(stackBuilder, report);
             }
         }));
-        builder.CloseComponent(); // ✅ FIXED: Close RadzenStack
+        builder.CloseComponent(); // ? FIXED: Close RadzenStack
     }
 
     private void RenderReportMitigationCard(RenderTreeBuilder builder, ReportProcessingSummary report)
@@ -1061,7 +1061,7 @@ public partial class ReportProcessing : ComponentBase
                 {
                     // Left side - Report/Hazard info
                     headerBuilder.OpenComponent<RadzenColumn>(0);
-                    headerBuilder.AddAttribute(1, "Size", 8); // ✅ FIXED: Use int instead of string
+                    headerBuilder.AddAttribute(1, "Size", 8); // ? FIXED: Use int instead of string
                     headerBuilder.AddAttribute(2, "ChildContent", (RenderFragment)(leftBuilder =>
                     {
                         leftBuilder.OpenComponent<RadzenStack>(0);
@@ -1072,13 +1072,13 @@ public partial class ReportProcessing : ComponentBase
                             infoBuilder.AddAttribute(1, "TextStyle", TextStyle.H6);
                             infoBuilder.AddAttribute(2, "Style", "color: #212e61; margin: 0;");
                             infoBuilder.AddAttribute(3, "Text", $"Report {report.ReportId} - Hazard {report.HazardId}");
-                            infoBuilder.CloseComponent(); // ✅ Close RadzenText
+                            infoBuilder.CloseComponent(); // ? Close RadzenText
 
                             infoBuilder.OpenComponent<RadzenText>(5);
                             infoBuilder.AddAttribute(6, "TextStyle", TextStyle.Body2);
                             infoBuilder.AddAttribute(7, "Style", "color: var(--rz-text-secondary-color);");
                             infoBuilder.AddAttribute(8, "Text", report.HazardDescription);
-                            infoBuilder.CloseComponent(); // ✅ Close RadzenText
+                            infoBuilder.CloseComponent(); // ? Close RadzenText
 
                             infoBuilder.OpenComponent<RadzenStack>(10);
                             infoBuilder.AddAttribute(11, "Orientation", Orientation.Horizontal);
@@ -1089,19 +1089,19 @@ public partial class ReportProcessing : ComponentBase
                                 badgeBuilder.OpenComponent<RadzenBadge>(0);
                                 badgeBuilder.AddAttribute(1, "Text", $"{report.MitigationCount} Mitigations");
                                 badgeBuilder.AddAttribute(2, "BadgeStyle", BadgeStyle.Base);
-                                badgeBuilder.CloseComponent(); // ✅ Close RadzenBadge
+                                badgeBuilder.CloseComponent(); // ? Close RadzenBadge
 
                                 
                             }));
-                            infoBuilder.CloseComponent(); // ✅ Close RadzenStack
+                            infoBuilder.CloseComponent(); // ? Close RadzenStack
                         }));
-                        leftBuilder.CloseComponent(); // ✅ Close RadzenStack
+                        leftBuilder.CloseComponent(); // ? Close RadzenStack
                     }));
-                    headerBuilder.CloseComponent(); // ✅ Close RadzenColumn
+                    headerBuilder.CloseComponent(); // ? Close RadzenColumn
 
                     // Right side - Bulk Approve button
                     headerBuilder.OpenComponent<RadzenColumn>(10);
-                    headerBuilder.AddAttribute(11, "Size", 4); // ✅ FIXED: Use int instead of string
+                    headerBuilder.AddAttribute(11, "Size", 4); // ? FIXED: Use int instead of string
                     headerBuilder.AddAttribute(12, "Style", "text-align: right;");
                     headerBuilder.AddAttribute(13, "ChildContent", (RenderFragment)(rightBuilder =>
                     {
@@ -1115,12 +1115,12 @@ public partial class ReportProcessing : ComponentBase
                             rightBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
                                 (args) => ShowBulkApprovalConfirmation(report)));
                             rightBuilder.AddAttribute(6, "Disabled", IsProcessingApproval || GetApprovableMitigationCount(report) == 0);
-                            rightBuilder.CloseComponent(); // ✅ Close RadzenButton
+                            rightBuilder.CloseComponent(); // ? Close RadzenButton
                         }
                     }));
-                    headerBuilder.CloseComponent(); // ✅ Close RadzenColumn
+                    headerBuilder.CloseComponent(); // ? Close RadzenColumn
                 }));
-                stackBuilder.CloseComponent(); // ✅ Close RadzenRow
+                stackBuilder.CloseComponent(); // ? Close RadzenRow
 
                 // Mitigations List
                 if (report.HasMitigations && report.AllMitigations.Any())
@@ -1133,7 +1133,7 @@ public partial class ReportProcessing : ComponentBase
                     {
                         RenderMitigationDetailColumns(mitigationColumnsBuilder, report);
                     }));
-                    stackBuilder.CloseComponent(); // ✅ Close RadzenDataGrid
+                    stackBuilder.CloseComponent(); // ? Close RadzenDataGrid
                 }
                 else
                 {
@@ -1142,12 +1142,12 @@ public partial class ReportProcessing : ComponentBase
                     stackBuilder.AddAttribute(32, "Icon", "info");
                     stackBuilder.AddAttribute(33, "ShowIcon", true);
                     stackBuilder.AddAttribute(34, "Text", "No mitigations found for this report-hazard combination.");
-                    stackBuilder.CloseComponent(); // ✅ Close RadzenAlert
+                    stackBuilder.CloseComponent(); // ? Close RadzenAlert
                 }
             }));
-            cardBuilder.CloseComponent(); // ✅ Close RadzenStack (inner)
+            cardBuilder.CloseComponent(); // ? Close RadzenStack (inner)
         }));
-        builder.CloseComponent(); // ✅ Close RadzenCard
+        builder.CloseComponent(); // ? Close RadzenCard
     }
 
     private void RenderMitigationDetailColumns(RenderTreeBuilder builder, ReportProcessingSummary report)
@@ -1229,7 +1229,7 @@ public partial class ReportProcessing : ComponentBase
                     templateBuilder.CloseComponent(); 
                 }
             })));
-        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+        builder.CloseComponent(); // ? Close RadzenDataGridColumn
 
         builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(50);
         builder.AddAttribute(51, "Property", "AssignedDepartment");
@@ -1241,9 +1241,9 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.OpenComponent<RadzenText>(0);
                 templateBuilder.AddAttribute(1, "style", BasicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.AssignedDepartment) ? mitigation.AssignedDepartment : "Not assigned");
-                templateBuilder.CloseComponent(); // ✅ Close RadzenText
+                templateBuilder.CloseComponent(); // ? Close RadzenText
             })));
-        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+        builder.CloseComponent(); // ? Close RadzenDataGridColumn
 
         // Responsible Party Column
         builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(60);
@@ -1256,9 +1256,9 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.OpenComponent<RadzenText>(0);
                 templateBuilder.AddAttribute(1, "style", BasicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.AssignedTo) ? mitigation.AssignedTo : "Not assigned");
-                templateBuilder.CloseComponent(); // ✅ Close RadzenText
+                templateBuilder.CloseComponent(); // ? Close RadzenText
             })));
-        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+        builder.CloseComponent(); // ? Close RadzenDataGridColumn
 
         // Actions Column - Individual Edit buttons
         builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(70);
@@ -1281,7 +1281,7 @@ public partial class ReportProcessing : ComponentBase
                     actionBuilder.AddAttribute(4, "Size", ButtonSize.Small);
                     actionBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
                         (args) => NavigateToMitigationEdit(mitigation)));
-                    actionBuilder.CloseComponent(); // ✅ Close RadzenButton
+                    actionBuilder.CloseComponent(); // ? Close RadzenButton
 
                    
                     // View Button
@@ -1292,11 +1292,11 @@ public partial class ReportProcessing : ComponentBase
                     actionBuilder.AddAttribute(14, "Size", ButtonSize.Small);
                     actionBuilder.AddAttribute(15, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
                         (args) => ViewMitigationDetails(mitigation)));
-                    actionBuilder.CloseComponent(); // ✅ Close RadzenButton
+                    actionBuilder.CloseComponent(); // ? Close RadzenButton
                 }));
-                templateBuilder.CloseComponent(); // ✅ Close RadzenStack
+                templateBuilder.CloseComponent(); // ? Close RadzenStack
             })));
-        builder.CloseComponent(); // ✅ Close RadzenDataGridColumn
+        builder.CloseComponent(); // ? Close RadzenDataGridColumn
     }
 
     // Helper methods for mitigation actions
@@ -1327,7 +1327,7 @@ public partial class ReportProcessing : ComponentBase
             var mitigationQuery = new GetMitigationByCodeQuery(new MitigationID(mitigation.MitigationCode));
             var mitigationResult = await _mediator.SendAsync(mitigationQuery, CancellationToken.None);
 
-            if (mitigationResult.IsSuccess && mitigationResult.Value != null)
+            if (mitigationResult.IsSuccess && mitigationResult.Value is not null)
             {
                 var fullMitigation = mitigationResult.Value;
                 fullMitigation.Status = MitigationStatus.Approved;
@@ -1405,7 +1405,7 @@ public partial class ReportProcessing : ComponentBase
         return authorizedApprovers;
     }
     /// <summary>
-    /// 🚀 Get count of unique hazards in the report
+    /// ?? Get count of unique hazards in the report
     /// </summary>
     private int GetUniqueHazardCount(ReportProcessingSummary report)
     {
@@ -1415,12 +1415,12 @@ public partial class ReportProcessing : ComponentBase
             .Count();
     }
     /// <summary>
-    /// 🚀 Get approver details for display with enhanced information
+    /// ?? Get approver details for display with enhanced information
     /// </summary>
     private ApproverOption GetApproverDetails(string approverCode)
     {
         var approver = AvailableApprovers.FirstOrDefault(a => a.Code == approverCode);
-        if (approver == null)
+        if (approver is null)
             return new ApproverOption { Code = approverCode, DisplayName = "Unknown" };
 
         return new ApproverOption
@@ -1916,7 +1916,7 @@ public partial class ReportProcessing : ComponentBase
             var hazardsQuery = new GetAllHazardsQuery();
             var hazardsResult = await _mediator.SendAsync(hazardsQuery, CancellationToken.None);
 
-            if (!hazardsResult.IsSuccess || hazardsResult.Value == null)
+            if (!hazardsResult.IsSuccess || hazardsResult.Value is null)
             {
                 ShowErrorAsyncNotification("Failed to load hazard data");
                 return;
@@ -1945,7 +1945,7 @@ public partial class ReportProcessing : ComponentBase
 
                     if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
                     {
-                        // ✅ FIXED: Filter for PENDING_APPROVAL using enum value
+                        // ? FIXED: Filter for PENDING_APPROVAL using enum value
                         var pendingMitigations = mitigationResult.Value
                             .Where(m => !string.IsNullOrEmpty(m.Code) &&
                                        !processedMitigationCodes.Contains(m.Code) &&
@@ -1963,7 +1963,7 @@ public partial class ReportProcessing : ComponentBase
                             {
                                 processedMitigationCodes.Add(mitigation.Code);
 
-                                // ✅ Update mitigation status using enum value
+                                // ? Update mitigation status using enum value
                                 mitigation.Status = MitigationStatus.Approved; 
                                 mitigation.UpdatedDate = DateTime.UtcNow;
                                 mitigation.UpdatedBy = CurrentUserService?.UserDisplayName;
@@ -1974,15 +1974,15 @@ public partial class ReportProcessing : ComponentBase
                                 if (updateResult.IsSuccess)
                                 {
                                     successCount++;
-                                    _logger.LogInformation("✅ Approved mitigation: {Code} for hazard {HazardCode}", mitigation.Code, hazard.Code);
+                                    _logger.LogInformation("? Approved mitigation: {Code} for hazard {HazardCode}", mitigation.Code, hazard.Code);
 
-                                    // NEW: SPI AUTOMATION - Trigger mitigation completion SPI 🎯
+                                    // NEW: SPI AUTOMATION - Trigger mitigation completion SPI ??
                                     await TriggerMitigationApprovalSPIAutomation(mitigation, approverCode);
                                 }
                                 else
                                 {
                                     errorCount++;
-                                    _logger.LogError("❌ Failed to approve mitigation {Code}: {Error}", mitigation.Code, updateResult.Error?.Message);
+                                    _logger.LogError("? Failed to approve mitigation {Code}: {Error}", mitigation.Code, updateResult.Error?.Message);
                                 }
                             }
                             catch (Exception ex)
@@ -2058,30 +2058,30 @@ public partial class ReportProcessing : ComponentBase
     }
 
     /// <summary>
-    /// 🚀 KEY METHOD: Get the highest risk level across ALL hazards in the report
+    /// ?? KEY METHOD: Get the highest risk level across ALL hazards in the report
     /// This considers Critical > High > Medium > Low priority
     /// </summary>
     private string GetHighestRiskLevelAcrossAllHazards(ReportProcessingSummary report)
     {
         if (!report.HasMitigations || !report.AllMitigations.Any())
-            return RiskLevel.Low.Name; // ✅ Use enum instead of "Low"
+            return RiskLevel.Low.Name; // ? Use enum instead of "Low"
 
         var riskLevels = report.AllMitigations
-            .Select(m => m.HazardRiskLevel?.Name ?? RiskLevel.Low.Name) // ✅ Use enum instead of "Low"
+            .Select(m => m.HazardRiskLevel?.Name ?? RiskLevel.Low.Name) // ? Use enum instead of "Low"
             .Distinct()
             .ToList();
 
-        // 🚀 CRITICAL BUSINESS LOGIC: Prioritize risk levels using enum values
+        // ?? CRITICAL BUSINESS LOGIC: Prioritize risk levels using enum values
         if (riskLevels.Any(r => r.Equals(RiskLevel.Critical.Name, StringComparison.OrdinalIgnoreCase))) return RiskLevel.Critical.Name;
         if (riskLevels.Any(r => r.Equals(RiskLevel.High.Name, StringComparison.OrdinalIgnoreCase))) return RiskLevel.High.Name;
         if (riskLevels.Any(r => r.Equals(RiskLevel.Medium.Name, StringComparison.OrdinalIgnoreCase))) return RiskLevel.Medium.Name;
         //if (riskLevels.Any(r => r.Equals(RiskLevel.Low.Name, StringComparison.OrdinalIgnoreCase))) return RiskLevel.Low.Name;
 
-        return RiskLevel.Low.Name; // ✅ Use enum instead of "Low"
+        return RiskLevel.Low.Name; // ? Use enum instead of "Low"
     }
 
     /// <summary>
-    /// 🚀 BUSINESS RULES: Determine if a user can approve mitigations for a given risk level
+    /// ?? BUSINESS RULES: Determine if a user can approve mitigations for a given risk level
     /// Uses SMSOrganizationalLevel enum and integer AuthorityLevel with proper enum lookups
     /// </summary>
     private bool CanApproveRiskLevel(SMSOrganizationalUser user, string riskLevel)
@@ -2090,7 +2090,7 @@ public partial class ReportProcessing : ComponentBase
         var riskLevelEnum = RiskLevel.GetAllValues()
             .FirstOrDefault(rl => rl.Name.Equals(riskLevel, StringComparison.OrdinalIgnoreCase));
 
-        if (riskLevelEnum == null)
+        if (riskLevelEnum is null)
             return false;
 
         // Primary check: User's integer AuthorityLevel
@@ -2106,7 +2106,7 @@ public partial class ReportProcessing : ComponentBase
         }
 
         // Tertiary check: Specific role-based approval using RiskLevel's ApproverRoles
-        if (user.OrganizationLevel != null && riskLevelEnum.ApproverRoles.Contains(user.OrganizationLevel.Value))
+        if (user.OrganizationLevel is not null && riskLevelEnum.ApproverRoles.Contains(user.OrganizationLevel.Value))
         {
             return true;
         }
@@ -2126,7 +2126,7 @@ public partial class ReportProcessing : ComponentBase
     /// </summary>
     private BadgeStyle GetRiskLevelBadgeStyle(RiskLevel? riskLevel)
     {
-        if (riskLevel == null)
+        if (riskLevel is null)
             return BadgeStyle.Secondary;
 
         return riskLevel.BootstrapClass switch
@@ -2170,11 +2170,11 @@ public partial class ReportProcessing : ComponentBase
     }
 
     /// <summary>
-    /// 🚀 ENHANCED: Updated bulk approval logic with proper enum-based approver validation
+    /// ?? ENHANCED: Updated bulk approval logic with proper enum-based approver validation
     /// </summary>
     private async Task ProcessBulkApprovalConfirmation()
     {
-        if (SelectedReportForApproval == null)
+        if (SelectedReportForApproval is null)
         {
             ShowErrorAsyncNotification("No report selected for approval.");
             return;
@@ -2186,11 +2186,11 @@ public partial class ReportProcessing : ComponentBase
             return;
         }
 
-        // 🚀 CRITICAL: Verify approver has authority for the highest risk level using enum
+        // ?? CRITICAL: Verify approver has authority for the highest risk level using enum
         var highestRiskLevel = GetHighestRiskLevelAcrossAllHazards(SelectedReportForApproval);
         var approver = AvailableApprovers.FirstOrDefault(a => a.Code == SelectedApprover);
 
-        if (approver == null || !CanApproveRiskLevel(approver, highestRiskLevel))
+        if (approver is null || !CanApproveRiskLevel(approver, highestRiskLevel))
         {
             var riskLevelDisplay = highestRiskLevel switch
             {
@@ -2213,7 +2213,7 @@ public partial class ReportProcessing : ComponentBase
     }
 
     /// <summary>
-    /// 🚀 ENHANCED: Updated bulk approval logic with approver validation
+    /// ?? ENHANCED: Updated bulk approval logic with approver validation
     /// </summary>
     private async Task CloseBulkApprovalConfirmation()
     {
@@ -2271,7 +2271,7 @@ public partial class ReportProcessing : ComponentBase
     {
         try
         {
-            _logger.LogInformation("🎯 SPI Automation: Triggering mitigation approval events for {MitigationCode}", mitigation.Code);
+            _logger.LogInformation("?? SPI Automation: Triggering mitigation approval events for {MitigationCode}", mitigation.Code);
 
             // Determine target completion date and actual completion date  
             var targetDate = mitigation.TargetDate ?? DateTime.UtcNow.AddDays(30); // Default 30 days if no target
@@ -2290,12 +2290,12 @@ public partial class ReportProcessing : ComponentBase
                 completionNotes: $"Bulk approved by {completedBy}",
                 effectivenessRating: "Approved");
 
-            _logger.LogInformation("✅ SPI Automation: Successfully processed mitigation approval events for {MitigationCode}", mitigation.Code);
+            _logger.LogInformation("? SPI Automation: Successfully processed mitigation approval events for {MitigationCode}", mitigation.Code);
         }
         catch (Exception spiEx)
         {
             // Don't fail the mitigation approval if SPI automation fails
-            _logger.LogWarning(spiEx, "⚠️ SPI Automation: Failed to process mitigation approval events for {MitigationCode} - continuing with approval", mitigation.Code);
+            _logger.LogWarning(spiEx, "?? SPI Automation: Failed to process mitigation approval events for {MitigationCode} - continuing with approval", mitigation.Code);
         }
     }
 

@@ -25,11 +25,11 @@ public abstract class BaseCircuitHandler : CircuitHandler
     protected string HostName { get; set; }
     protected string IPAddress { get; set; }
     protected string ConnectionId { get; set; }
-    protected IMediator Mediator;
+    protected IBaseMediator Mediator;
 
     private static readonly ConcurrentDictionary<string, Circuit> _activeCircuits = new();
 
-    public BaseCircuitHandler(ILogger<SMS_CircuitHandler> logger, ILogSupport logsupport, IMediator mediator, IHttpContextAccessor httpContextAccessor = null)
+    public BaseCircuitHandler(ILogger<SMS_CircuitHandler> logger, ILogSupport logsupport, IBaseMediator mediator, IHttpContextAccessor httpContextAccessor = null)
     {
         _logger = logger;
         _logsupport = logsupport;

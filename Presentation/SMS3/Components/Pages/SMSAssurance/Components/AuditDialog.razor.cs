@@ -13,7 +13,7 @@ public partial class AuditDialog : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<AuditDialog> _logger { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -78,7 +78,7 @@ public partial class AuditDialog : ComponentBase
 
     private void InitializeFormData()
     {
-        if (Audit != null)
+        if (Audit is not null)
         {
             Code = Audit.Code;
             Name = Audit.Name;

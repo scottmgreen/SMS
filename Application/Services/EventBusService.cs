@@ -21,7 +21,7 @@ namespace SMS_Application.Services;
 /// Provides event-driven workflow capabilities while maintaining consistency with
 /// existing SMS service patterns, logging, and error handling approaches
 /// </summary>
-public sealed class EventBusService : IEventBus
+public sealed class EventBusService : IBaseEventBus
 {
     private readonly ILogger<EventBusService> _logger;
     private readonly IServiceProvider _serviceProvider;
@@ -218,7 +218,7 @@ public sealed class EventBusService : IEventBus
     #endregion
 
     #region Subscription Management
-    public void Subscribe<T, THandler>() where T : IBaseDomainEvent where THandler : class, IGenericEventHandler<T>
+    public void Subscribe<T, THandler>() where T : IBaseDomainEvent where THandler : class, IBaseEventHandler<T>
     {
         lock (_lock)
         {
@@ -248,7 +248,7 @@ public sealed class EventBusService : IEventBus
     /// Registers a UI event handler for a specific UI event type
     /// Supports dynamic subscription for UI component event handling
     /// </summary>
-    public void SubscribeUI<T, THandler>() where T : IUIEvent where THandler : class, IGenericEventHandler<T>
+    public void SubscribeUI<T, THandler>() where T : IUIEvent where THandler : class, IBaseEventHandler<T>
     {
         lock (_lock)
         {
@@ -278,7 +278,7 @@ public sealed class EventBusService : IEventBus
     /// Registers an integration event handler for a specific integration event type
     /// Supports external system integration and notification handling
     /// </summary>
-    public void SubscribeIntegration<T, THandler>() where T : IIntegrationEvent where THandler : class, IGenericEventHandler<T>
+    public void SubscribeIntegration<T, THandler>() where T : IIntegrationEvent where THandler : class, IBaseEventHandler<T>
     {
         lock (_lock)
         {
@@ -354,7 +354,7 @@ public sealed class EventBusService : IEventBus
         {
             try
             {
-                var handler = _serviceProvider.GetService(handlerType) as IGenericEventHandler<T>;
+                var handler = _serviceProvider.GetService(handlerType) as IBaseEventHandler<T>;
                 if (handler != null)
                 {
                     _logger.LogDebug("Executing handler {HandlerType} for event {EventType} (ID: {EventId})", 
@@ -449,7 +449,7 @@ public sealed class EventBusService : IEventBus
         {
             try
             {
-                var handler = _serviceProvider.GetService(handlerType) as IGenericEventHandler<T>;
+                var handler = _serviceProvider.GetService(handlerType) as IBaseEventHandler<T>;
                 if (handler != null)
                 {
                     _logger.LogDebug("Executing UI handler {HandlerType} for event {EventType}", 
@@ -519,7 +519,7 @@ public sealed class EventBusService : IEventBus
         {
             try
             {
-                var handler = _serviceProvider.GetService(handlerType) as IGenericEventHandler<T>;
+                var handler = _serviceProvider.GetService(handlerType) as IBaseEventHandler<T>;
                 if (handler != null)
                 {
                     _logger.LogInformation("Executing integration handler {HandlerType} for event {EventType} to {TargetSystem}", 

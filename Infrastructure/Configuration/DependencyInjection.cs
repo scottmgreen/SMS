@@ -34,7 +34,7 @@ public static class DependencyInjection
         services.AddScoped<FileService>();
 
         // System Services
-        services.AddScoped<SystemRepository>();
+        services.AddScoped<SMSSystemRepository>();
         services.AddScoped<SystemDataService>();
 
         // SMS User Repositories - INTERFACE BINDINGS

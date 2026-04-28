@@ -20,7 +20,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // AIRPORT SHARED DATASET QUERY HANDLERS
 // =============================================
 
-public class GetAirportSharedDatasetByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetAirportSharedDatasetByCodeQuery, Result<AirportSharedDataset>>
+public class GetAirportSharedDatasetByIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAirportSharedDatasetByCodeQuery, Result<AirportSharedDataset>>
 {
     private readonly AirportSharedDatasetDataService _airportSharedDatasetDataService;
     private readonly ILogger<GetAirportSharedDatasetByIdQueryHandler> _logger;
@@ -47,7 +47,7 @@ public class GetAirportSharedDatasetByIdQueryHandler : BaseQueryBundle, IRequest
     }
 }
 
-public class GetAllAirportSharedDatasetsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllAirportSharedDatasetsQuery, Result<List<AirportSharedDataset>>>
+public class GetAllAirportSharedDatasetsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllAirportSharedDatasetsQuery, Result<List<AirportSharedDataset>>>
 {
     private readonly AirportSharedDatasetDataService _airportSharedDatasetDataService;
     private readonly ILogger<GetAllAirportSharedDatasetsQueryHandler> _logger;

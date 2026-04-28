@@ -1,4 +1,4 @@
-﻿
+
 namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 /// <summary>
@@ -6,10 +6,10 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 /// </summary>
 public class Step5Model
 {
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
-    public Step5Model(IMediator mediator, ICurrentUserService currentUserService)
+    public Step5Model(IBaseMediator mediator, ICurrentUserService currentUserService)
     {
         Mediator = mediator;
         CurrentUserService = currentUserService;
@@ -57,7 +57,7 @@ public class Step5Model
         {
             HazardCode = hazardCode,
             RiskAssessmentCode = riskAssessmentCode,
-            AssessmentType = RiskAnalysisType.Initial, // ✅ FIXED: Start as Initial, not Residual
+            AssessmentType = RiskAnalysisType.Initial, // ? FIXED: Start as Initial, not Residual
             InitialWorstCredibleOutcome = string.Empty,
             InitialRootCause = string.Empty,
             InitialAdditionalComments = string.Empty,
@@ -73,7 +73,7 @@ public class Step5Model
     
     public async Task LoadRiskAnalysisAsync(List<Hazard> availableHazards, string riskAssessmentCode)
     {
-        if (Mediator == null || availableHazards == null) return;
+        if (Mediator is null || availableHazards is null) return;
 
         try
         {
@@ -85,7 +85,7 @@ public class Step5Model
             var allAnalysisQuery = new GetAllRiskAnalysisQuery();
             var allAnalysisResult = await Mediator.SendAsync(allAnalysisQuery, CancellationToken.None);
 
-            if (!allAnalysisResult.IsSuccess || allAnalysisResult.Value == null)
+            if (!allAnalysisResult.IsSuccess || allAnalysisResult.Value is null)
             {
                 Console.WriteLine("Step5: Failed to load RiskAnalysis entities or none found");
                 return;
@@ -93,8 +93,8 @@ public class Step5Model
 
             // Find existing RiskAnalysis entities for our hazards and risk assessment
             var existingAnalyses = allAnalysisResult.Value
-                .Where(ra => hazardCodes.Contains(ra.HazardCode) &&
-                            ra.RiskAssessmentCode.Trim() == riskAssessmentCode.Trim())
+                .Where(ra => !string.IsNullOrEmpty(ra.HazardCode) && hazardCodes.Contains(ra.HazardCode) &&
+                            !string.IsNullOrEmpty(ra.RiskAssessmentCode) && ra.RiskAssessmentCode.Trim() == riskAssessmentCode.Trim())
                 .ToList();
 
             Console.WriteLine($"Step5: Found {existingAnalyses.Count} existing RiskAnalysis entities");
@@ -102,9 +102,9 @@ public class Step5Model
             // Load the existing analyses into Step 5's dictionary
             foreach (var analysis in existingAnalyses)
             {
-                // ✅ CRITICAL: Use the SAME RiskAnalysis entity from Step 3
+                // ? CRITICAL: Use the SAME RiskAnalysis entity from Step 3
                 // This preserves both Initial properties (from Step 3) and allows Residual properties (for Step 5)
-                HazardResidualRiskAnalyses[analysis.HazardCode] = analysis;
+                HazardResidualRiskAnalyses[analysis.HazardCode ?? ""] = analysis;
 
                 Console.WriteLine($"Step5: Loaded RiskAnalysis for {analysis.HazardCode} - Code: {analysis.Code}");
                 Console.WriteLine($"  - Initial properties: WorstOutcome='{analysis.InitialWorstCredibleOutcome?.Substring(0, Math.Min(50, analysis.InitialWorstCredibleOutcome?.Length ?? 0))}...'");
@@ -113,7 +113,7 @@ public class Step5Model
 
             // For hazards without existing RiskAnalysis, create placeholder entities
             var hazardsWithoutAnalysis = availableHazards
-                .Where(h => !HazardResidualRiskAnalyses.ContainsKey(h.Code))
+                .Where(h => !string.IsNullOrEmpty(h.Code) && !HazardResidualRiskAnalyses.ContainsKey(h.Code))
                 .ToList();
 
             if (hazardsWithoutAnalysis.Any())
@@ -139,12 +139,15 @@ public class Step5Model
 
     public async Task LoadFromAssessmentAsync(RiskAssessment assessment, List<Hazard> availableHazards)
     {
-        if (assessment == null) return;
+        if (assessment is null) return;
 
-        if (Mediator != null && availableHazards?.Any() == true)
+        if (Mediator is not null && availableHazards?.Any() == true)
         {
-            // ✅ CRITICAL: Load RiskAnalysis entities from Step 3 FIRST
-            await LoadRiskAnalysisAsync(availableHazards, assessment.Code);
+            // ? CRITICAL: Load RiskAnalysis entities from Step 3 FIRST
+            if (!string.IsNullOrEmpty(assessment.Code))
+            {
+                await LoadRiskAnalysisAsync(availableHazards, assessment.Code);
+            }
 
             // Then load mitigations
             await LoadMitigationEntitiesAsync(availableHazards);
@@ -160,7 +163,7 @@ public class Step5Model
     
     public async Task ApplyToAssessmentAsync(RiskAssessment assessment, List<Hazard> availableHazards)
     {
-        if (Mediator == null || assessment == null || availableHazards == null) return;
+        if (Mediator is null || assessment is null || availableHazards is null) return;
 
         try
         {
@@ -181,10 +184,16 @@ public class Step5Model
                 var analysis = analysisKvp.Value;
                 var hazardCode = analysisKvp.Key;
 
+                if (string.IsNullOrEmpty(assessment.Code))
+                {
+                    Console.WriteLine($"Assessment code is null, skipping hazard {hazardCode}");
+                    continue;
+                }
+
                 var existingQuery = new GetRiskAnalysisByHazardAndAssessmentQuery(hazardCode, assessment.Code);
                 var existingResult = await Mediator.SendAsync(existingQuery, CancellationToken.None);
 
-                if (existingResult.IsSuccess && existingResult.Value != null)
+                if (existingResult.IsSuccess && existingResult.Value is not null)
                 {
                     var existingAnalysis = existingResult.Value;
 
@@ -207,16 +216,16 @@ public class Step5Model
                     if (updateResult.IsSuccess)
                     {
                         HazardResidualRiskAnalyses[hazardCode] = updateResult.Value;
-                        Console.WriteLine($"✅ Updated RiskAnalysis {existingAnalysis.Code} for {hazardCode} - PRESERVED Initial properties");
+                        Console.WriteLine($"? Updated RiskAnalysis {existingAnalysis.Code} for {hazardCode} - PRESERVED Initial properties");
                     }
                     else
                     {
-                        Console.WriteLine($"❌ Failed to update RiskAnalysis for {hazardCode}: {updateResult.Error?.Message}");
+                        Console.WriteLine($"? Failed to update RiskAnalysis for {hazardCode}: {updateResult.Error?.Message}");
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"❌ Could not load existing RiskAnalysis for {hazardCode} to preserve Initial properties");
+                    Console.WriteLine($"? Could not load existing RiskAnalysis for {hazardCode} to preserve Initial properties");
                 }
             }
             catch (Exception ex)
@@ -231,9 +240,9 @@ public class Step5Model
     {
         try
         {
-            if (HazardMitigations == null)
+            if (HazardMitigations is null)
                 HazardMitigations = new Dictionary<string, List<Mitigation>>();
-            if (SavedMitigationStrategies == null)
+            if (SavedMitigationStrategies is null)
                 SavedMitigationStrategies = new Dictionary<string, List<string>>();
 
             foreach (var hazard in availableHazards)

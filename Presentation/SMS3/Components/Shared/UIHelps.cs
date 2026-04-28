@@ -1,4 +1,4 @@
-﻿using SMS_Domain.Enums;
+using SMS_Domain.Enums;
 using Radzen;
 using Microsoft.FeatureManagement;
 
@@ -148,7 +148,7 @@ public static class DropdownHelper
             return new List<DropdownOption>();
 
         var category = HazardCategory.FromValue(categoryValue);
-        if (category == null)
+        if (category is null)
             return new List<DropdownOption>();
 
         return HazardType.GetByCategory(category)

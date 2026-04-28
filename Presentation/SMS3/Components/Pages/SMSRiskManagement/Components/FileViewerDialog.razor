@@ -39,7 +39,7 @@
 
             <!-- Modal Body -->
             <div class="file-viewer-body">
-                @if (ViewingFile != null && !string.IsNullOrEmpty(FileDataUrl))
+                @if (ViewingFile is not null && !string.IsNullOrEmpty(FileDataUrl))
                 {
                     @if (IsImageFile(ViewingFile))
                     {
@@ -144,7 +144,7 @@
             <!-- Modal Footer -->
             <div class="file-viewer-footer">
                 <div class="file-metadata">
-                    @if (ViewingFile != null)
+                    @if (ViewingFile is not null)
                     {
                         <small>
                             <strong>Uploaded:</strong> @ViewingFile.UploadedDate?.ToString("dddd, MMMM dd, yyyy 'at' h:mm tt") by @ViewingFile.UploadedBy

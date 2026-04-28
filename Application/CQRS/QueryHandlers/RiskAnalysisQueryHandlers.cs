@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // RISK ANALYSIS QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class GetRiskAnalysisByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAnalysisByCodeQuery, Result<RiskAnalysis>>
+public class GetRiskAnalysisByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetRiskAnalysisByCodeQuery, Result<RiskAnalysis>>
 {
     private readonly RiskAnalysisService _riskAnalysisService;
     private readonly ILogger<GetRiskAnalysisByCodeQueryHandler> _logger;
@@ -45,7 +45,7 @@ public class GetRiskAnalysisByCodeQueryHandler : BaseQueryBundle, IRequestHandle
     }
 }
 
-public class GetRiskAnalysisByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAnalysisByIdQuery, Result<RiskAnalysis>>
+public class GetRiskAnalysisByIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetRiskAnalysisByIdQuery, Result<RiskAnalysis>>
 {
     private readonly RiskAnalysisService _riskAnalysisService;
     private readonly ILogger<GetRiskAnalysisByIdQueryHandler> _logger;
@@ -72,7 +72,7 @@ public class GetRiskAnalysisByIdQueryHandler : BaseQueryBundle, IRequestHandler<
     }
 }
 
-public class GetRiskAnalysisByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAnalysisByHazardCodeQuery, Result<RiskAnalysis>>
+public class GetRiskAnalysisByHazardCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetRiskAnalysisByHazardCodeQuery, Result<RiskAnalysis>>
 {
     private readonly RiskAnalysisService _riskAnalysisService;
     private readonly ILogger<GetRiskAnalysisByHazardCodeQueryHandler> _logger;
@@ -100,7 +100,7 @@ public class GetRiskAnalysisByHazardCodeQueryHandler : BaseQueryBundle, IRequest
     }
 }
 
-public class GetRiskAnalysisByHazardAndAssessmentQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAnalysisByHazardAndAssessmentQuery, Result<RiskAnalysis>>
+public class GetRiskAnalysisByHazardAndAssessmentQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetRiskAnalysisByHazardAndAssessmentQuery, Result<RiskAnalysis>>
 {
     private readonly RiskAnalysisService _riskAnalysisService;
     private readonly ILogger<GetRiskAnalysisByHazardAndAssessmentQueryHandler> _logger;
@@ -169,7 +169,7 @@ public class GetRiskAnalysisByHazardAndAssessmentQueryHandler : BaseQueryBundle,
     }
 }
 
-public class GetAllRiskAnalysisQueryHandler : BaseQueryBundle, IRequestHandler<GetAllRiskAnalysisQuery, Result<List<RiskAnalysis>>>
+public class GetAllRiskAnalysisQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllRiskAnalysisQuery, Result<List<RiskAnalysis>>>
 {
     private readonly RiskAnalysisService _riskAnalysisService;
     private readonly ILogger<GetAllRiskAnalysisQueryHandler> _logger;

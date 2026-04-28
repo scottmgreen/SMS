@@ -54,7 +54,7 @@
         if (!string.IsNullOrEmpty(args.Value?.ToString()))
         {
             var value = args.Value.ToString();
-            if (value.StartsWith("/"))
+            if (!string.IsNullOrEmpty(value) && value.StartsWith("/"))
             {
                 // ?? SECURE NAVIGATION - All anonymous menu URLs automatically encrypted
                 Navigation.NavigateToSecure(value);

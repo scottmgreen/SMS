@@ -17,7 +17,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// <summary>
 /// Query handler for getting all SMS organizational users
 /// </summary>
-public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSOrganizationalUsersQuery, Result<IEnumerable<SMSOrganizationalUser>>>
+public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllSMSOrganizationalUsersQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
     private readonly SMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<GetAllSMSOrganizationalUsersQueryHandler> _logger;
@@ -57,7 +57,7 @@ public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReques
 /// <summary>
 /// Query handler for getting SMS organizational user by code
 /// </summary>
-public class GetSMSOrganizationalUserByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUserByCodeQuery, Result<SMSOrganizationalUser>>
+public class GetSMSOrganizationalUserByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSOrganizationalUserByCodeQuery, Result<SMSOrganizationalUser>>
 {
     private readonly SMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<GetSMSOrganizationalUserByCodeQueryHandler> _logger;
@@ -97,7 +97,7 @@ public class GetSMSOrganizationalUserByCodeQueryHandler : BaseQueryBundle, IRequ
 /// <summary>
 /// Query handler for getting SMS organizational user by username
 /// </summary>
-public class GetSMSOrganizationalUserByUserNameQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUserByUserNameQuery, Result<SMSOrganizationalUser>>
+public class GetSMSOrganizationalUserByUserNameQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSOrganizationalUserByUserNameQuery, Result<SMSOrganizationalUser>>
 {
     private readonly SMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<GetSMSOrganizationalUserByUserNameQueryHandler> _logger;
@@ -145,7 +145,7 @@ public class GetSMSOrganizationalUserByUserNameQueryHandler : BaseQueryBundle, I
 /// <summary>
 /// Query handler for getting active SMS organizational users
 /// </summary>
-public class GetActiveSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetActiveSMSOrganizationalUsersQuery, Result<IEnumerable<SMSOrganizationalUser>>>
+public class GetActiveSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetActiveSMSOrganizationalUsersQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
     private readonly SMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<GetActiveSMSOrganizationalUsersQueryHandler> _logger;
@@ -185,7 +185,7 @@ public class GetActiveSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IReq
 /// <summary>
 /// Query handler for getting SMS organizational users by department
 /// </summary>
-public class GetSMSOrganizationalUsersByDepartmentQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUsersByDepartmentQuery, Result<IEnumerable<SMSOrganizationalUser>>>
+public class GetSMSOrganizationalUsersByDepartmentQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSOrganizationalUsersByDepartmentQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
     private readonly SMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<GetSMSOrganizationalUsersByDepartmentQueryHandler> _logger;
@@ -225,7 +225,7 @@ public class GetSMSOrganizationalUsersByDepartmentQueryHandler : BaseQueryBundle
 /// <summary>
 /// Query handler for getting SMS organizational users by position
 /// </summary>
-public class GetSMSOrganizationalUsersByPositionQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUsersByPositionQuery, Result<IEnumerable<SMSOrganizationalUser>>>
+public class GetSMSOrganizationalUsersByPositionQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSOrganizationalUsersByPositionQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
     private readonly SMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<GetSMSOrganizationalUsersByPositionQueryHandler> _logger;
@@ -265,7 +265,7 @@ public class GetSMSOrganizationalUsersByPositionQueryHandler : BaseQueryBundle, 
 /// <summary>
 /// Query handler for getting SMS organizational users by organization level
 /// </summary>
-public class GetSMSOrganizationalUsersByOrganizationLevelQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUsersByOrganizationLevelQuery, Result<IEnumerable<SMSOrganizationalUser>>>
+public class GetSMSOrganizationalUsersByOrganizationLevelQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSOrganizationalUsersByOrganizationLevelQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
     private readonly SMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<GetSMSOrganizationalUsersByOrganizationLevelQueryHandler> _logger;
@@ -305,7 +305,7 @@ public class GetSMSOrganizationalUsersByOrganizationLevelQueryHandler : BaseQuer
 /// <summary>
 /// Query handler for checking if SMS organizational username exists
 /// </summary>
-public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle, IRequestHandler<CheckSMSOrganizationalUserNameExistsQuery, Result<bool>>
+public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle, IBaseRequestHandler<CheckSMSOrganizationalUserNameExistsQuery, Result<bool>>
 {
     private readonly SMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<CheckSMSOrganizationalUserNameExistsQueryHandler> _logger;
@@ -345,7 +345,7 @@ public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle,
 /// <summary>
 /// Query handler for getting SMS organizational user statistics
 /// </summary>
-public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalUserStatisticsQuery, Result<Dictionary<string, object>>>
+public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSOrganizationalUserStatisticsQuery, Result<Dictionary<string, object>>>
 {
     private readonly SMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<GetSMSOrganizationalUserStatisticsQueryHandler> _logger;
@@ -394,7 +394,7 @@ public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, I
 /// <summary>
 /// Query handler for validating SMS organizational user credentials
 /// </summary>
-public class ValidateSMSOrganizationalUserCredentialsQueryHandler : BaseQueryBundle, IRequestHandler<ValidateSMSOrganizationalUserCredentialsQuery, Result<bool>>
+public class ValidateSMSOrganizationalUserCredentialsQueryHandler : BaseQueryBundle, IBaseRequestHandler<ValidateSMSOrganizationalUserCredentialsQuery, Result<bool>>
 {
     private readonly SMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<ValidateSMSOrganizationalUserCredentialsQueryHandler> _logger;

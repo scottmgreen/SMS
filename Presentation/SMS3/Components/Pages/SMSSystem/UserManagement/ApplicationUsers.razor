@@ -79,7 +79,7 @@
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="SMSApplicationUser" Property="UserRole" Title="SMS Role/Permissions " Sortable="false">
                                     <Template Context="user">
-                                        @if (user.UserRole != null)
+                                        @if (user.UserRole is not null)
                                         {
                                             @user.UserRole.Name 
                                         }
@@ -291,7 +291,7 @@
 }
 
 <!-- Edit User Modal -->
-@if (IsEditMode && CurrentUser != null)
+@if (IsEditMode && CurrentUser is not null)
 {
     <div class="modal-backdrop">
         <div class="modal-dialog sms-modal-body">

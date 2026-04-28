@@ -5,7 +5,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 public partial class UploadEvidenceDialog : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<UploadEvidenceDialog> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;

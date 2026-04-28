@@ -17,7 +17,7 @@ using SMS_Application.Messaging.CommandHandlers;
 // HAZARD LOCATION COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateHazardLocationCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardLocationCommand, Result<HazardLocation>>
+public class CreateHazardLocationCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateHazardLocationCommand, Result<HazardLocation>>
 {
     private readonly HazardLocationService _hazardLocationService;
     private readonly ILogger<CreateHazardLocationCommandHandler> _logger;
@@ -68,7 +68,7 @@ public class CreateHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
     }
 }
 
-public class UpdateHazardLocationCommandHandler : BaseCommandBundle, IRequestHandler<UpdateHazardLocationCommand, Result<HazardLocation>>
+public class UpdateHazardLocationCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateHazardLocationCommand, Result<HazardLocation>>
 {
     private readonly HazardLocationService _hazardLocationService;
     private readonly ILogger<UpdateHazardLocationCommandHandler> _logger;
@@ -119,7 +119,7 @@ public class UpdateHazardLocationCommandHandler : BaseCommandBundle, IRequestHan
     }
 }
 
-public class DeleteHazardLocationCommandHandler : BaseCommandBundle, IRequestHandler<DeleteHazardLocationCommand, Result<bool>>
+public class DeleteHazardLocationCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteHazardLocationCommand, Result<bool>>
 {
     private readonly HazardLocationService _hazardLocationService;
     private readonly ILogger<DeleteHazardLocationCommandHandler> _logger;

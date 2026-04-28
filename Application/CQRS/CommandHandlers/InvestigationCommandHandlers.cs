@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // INVESTIGATION COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateInvestigationCommandHandler : BaseCommandBundle, IRequestHandler<CreateInvestigationCommand, Result<Investigation>>
+public class CreateInvestigationCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateInvestigationCommand, Result<Investigation>>
 {
     private readonly InvestigationService _investigationService;
     private readonly ILogger<CreateInvestigationCommandHandler> _logger;
@@ -69,7 +69,7 @@ public class CreateInvestigationCommandHandler : BaseCommandBundle, IRequestHand
     }
 }
 
-public class UpdateInvestigationCommandHandler : BaseCommandBundle, IRequestHandler<UpdateInvestigationCommand, Result<Investigation>>
+public class UpdateInvestigationCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateInvestigationCommand, Result<Investigation>>
 {
     private readonly InvestigationService _investigationService;
     private readonly ILogger<UpdateInvestigationCommandHandler> _logger;
@@ -120,7 +120,7 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IRequestHand
     }
 }
 
-public class DeleteInvestigationCommandHandler : BaseCommandBundle, IRequestHandler<DeleteInvestigationCommand, Result<bool>>
+public class DeleteInvestigationCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteInvestigationCommand, Result<bool>>
 {
     private readonly InvestigationService _investigationService;
     private readonly ILogger<DeleteInvestigationCommandHandler> _logger;

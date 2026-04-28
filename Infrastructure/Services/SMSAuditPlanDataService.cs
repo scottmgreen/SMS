@@ -156,7 +156,7 @@ public class SMSAuditPlanDataService : BaseDataService<SMSAuditPlanDataService>
     /// <summary>
     /// Gets SMS Audit Calendar data for dashboard
     /// </summary>
-    public async Task<Result<SMSAuditCalendarEvent>> GetAuditCalendarDataAsync(DateTime startDate, DateTime endDate,
+    public Task<Result<SMSAuditCalendarEvent>> GetAuditCalendarDataAsync(DateTime startDate, DateTime endDate,
         string? departmentFilter = null, string? auditTypeFilter = null, string? auditorFilter = null, CancellationToken ct = default)
     {
         // This method would need to be implemented based on specific business requirements
@@ -175,6 +175,6 @@ public class SMSAuditPlanDataService : BaseDataService<SMSAuditPlanDataService>
             ResponsibleDepartment = departmentFilter ?? "All Departments"
         };
 
-        return Result<SMSAuditCalendarEvent>.Success(calendarData);
+        return Task.FromResult(Result<SMSAuditCalendarEvent>.Success(calendarData));
     }
 }

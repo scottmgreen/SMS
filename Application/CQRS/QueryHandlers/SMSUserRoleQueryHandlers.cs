@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // SMS USER ROLE QUERY HANDLERS
 // =============================================
 
-public class GetAllSMSUserRolesQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSUserRolesQuery, Result<IEnumerable<SMSUserRole>>>
+public class GetAllSMSUserRolesQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllSMSUserRolesQuery, Result<IEnumerable<SMSUserRole>>>
 {
     private readonly SMSUserRoleService _userRoleDataService;
     private readonly ILogger<GetAllSMSUserRolesQueryHandler> _logger;
@@ -61,7 +61,7 @@ public class GetAllSMSUserRolesQueryHandler : BaseQueryBundle, IRequestHandler<G
     }
 }
 
-public class GetAllActiveSMSUserRolesQueryHandler : BaseQueryBundle, IRequestHandler<GetAllActiveSMSUserRolesQuery, Result<IEnumerable<SMSUserRole>>>
+public class GetAllActiveSMSUserRolesQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllActiveSMSUserRolesQuery, Result<IEnumerable<SMSUserRole>>>
 {
     private readonly SMSUserRoleDataService _userRoleDataService;
     private readonly ILogger<GetAllActiveSMSUserRolesQueryHandler> _logger;
@@ -104,7 +104,7 @@ public class GetAllActiveSMSUserRolesQueryHandler : BaseQueryBundle, IRequestHan
     }
 }
 
-public class GetSMSUserRoleByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSUserRoleByIdQuery, Result<SMSUserRole>>
+public class GetSMSUserRoleByIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSUserRoleByIdQuery, Result<SMSUserRole>>
 {
     private readonly SMSUserRoleDataService _userRoleDataService;
     private readonly ILogger<GetSMSUserRoleByIdQueryHandler> _logger;
@@ -153,7 +153,7 @@ public class GetSMSUserRoleByIdQueryHandler : BaseQueryBundle, IRequestHandler<G
     }
 }
 
-public class GetSMSUserRolesByRoleValueQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSUserRolesByRoleValueQuery, Result<IEnumerable<SMSUserRole>>>
+public class GetSMSUserRolesByRoleValueQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSUserRolesByRoleValueQuery, Result<IEnumerable<SMSUserRole>>>
 {
     private readonly SMSUserRoleDataService _userRoleDataService;
     private readonly ILogger<GetSMSUserRolesByRoleValueQueryHandler> _logger;
@@ -199,7 +199,7 @@ public class GetSMSUserRolesByRoleValueQueryHandler : BaseQueryBundle, IRequestH
     }
 }
 
-public class GetSMSUserRolesByDepartmentQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSUserRolesByDepartmentQuery, Result<IEnumerable<SMSUserRole>>>
+public class GetSMSUserRolesByDepartmentQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSUserRolesByDepartmentQuery, Result<IEnumerable<SMSUserRole>>>
 {
     private readonly SMSUserRoleDataService _userRoleDataService;
     private readonly ILogger<GetSMSUserRolesByDepartmentQueryHandler> _logger;
@@ -245,7 +245,7 @@ public class GetSMSUserRolesByDepartmentQueryHandler : BaseQueryBundle, IRequest
     }
 }
 
-public class GetSMSUserRolesByUserTypeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSUserRolesByUserTypeQuery, Result<IEnumerable<SMSUserRole>>>
+public class GetSMSUserRolesByUserTypeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSUserRolesByUserTypeQuery, Result<IEnumerable<SMSUserRole>>>
 {
     private readonly SMSUserRoleDataService _userRoleDataService;
     private readonly ILogger<GetSMSUserRolesByUserTypeQueryHandler> _logger;

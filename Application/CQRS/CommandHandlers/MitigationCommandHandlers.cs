@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // MITIGATION COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateMitigationCommandHandler : BaseCommandBundle, IRequestHandler<CreateMitigationCommand, Result<Mitigation>>
+public class CreateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateMitigationCommand, Result<Mitigation>>
 {
     private readonly IMitigationService _mitigationService;
     private readonly ILogger<CreateMitigationCommandHandler> _logger;
@@ -69,7 +69,7 @@ public class CreateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
     }
 }
 
-public class UpdateMitigationCommandHandler : BaseCommandBundle, IRequestHandler<UpdateMitigationCommand, Result<Mitigation>>
+public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateMitigationCommand, Result<Mitigation>>
 {
     private readonly IMitigationService _mitigationService;
     private readonly ILogger<UpdateMitigationCommandHandler> _logger;
@@ -119,7 +119,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IRequestHandler
     }
 }
 
-public class DeleteMitigationCommandHandler : BaseCommandBundle, IRequestHandler<DeleteMitigationCommand, Result<bool>>
+public class DeleteMitigationCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteMitigationCommand, Result<bool>>
 {
     private readonly IMitigationService _mitigationService;
     private readonly ILogger<DeleteMitigationCommandHandler> _logger;

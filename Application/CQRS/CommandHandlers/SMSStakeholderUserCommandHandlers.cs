@@ -20,7 +20,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // SMS STAKEHOLDER USER COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateSMSStakeholderUserCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSStakeholderUserCommand, Result<SMSStakeholderUser>>
+public class CreateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateSMSStakeholderUserCommand, Result<SMSStakeholderUser>>
 {
     private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<CreateSMSStakeholderUserCommandHandler> _logger;
@@ -71,7 +71,7 @@ public class CreateSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
     }
 }
 
-public class UpdateSMSStakeholderUserCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSStakeholderUserCommand, Result<SMSStakeholderUser>>
+public class UpdateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSStakeholderUserCommand, Result<SMSStakeholderUser>>
 {
     private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<UpdateSMSStakeholderUserCommandHandler> _logger;
@@ -121,7 +121,7 @@ public class UpdateSMSStakeholderUserCommandHandler : BaseCommandBundle, IReques
     }
 }
 
-public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSStakeholderUserPasswordCommand, Result<bool>>
+public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSStakeholderUserPasswordCommand, Result<bool>>
 {
     private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<UpdateSMSStakeholderUserPasswordCommandHandler> _logger;
@@ -188,7 +188,7 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
     }
 }
 
-public class AuthenticateSMSStakeholderUserCommandHandler : BaseCommandBundle, IRequestHandler<AuthenticateSMSStakeholderUserCommand, Result<bool>>
+public class AuthenticateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<AuthenticateSMSStakeholderUserCommand, Result<bool>>
 {
     private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<AuthenticateSMSStakeholderUserCommandHandler> _logger;
@@ -237,7 +237,7 @@ public class AuthenticateSMSStakeholderUserCommandHandler : BaseCommandBundle, I
     }
 }
 
-public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IRequestHandler<RecordSMSStakeholderUserLoginCommand, Result<bool>>
+public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IBaseRequestHandler<RecordSMSStakeholderUserLoginCommand, Result<bool>>
 {
     private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<RecordSMSStakeholderUserLoginCommandHandler> _logger;
@@ -301,7 +301,7 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IR
 /// ✅ NEW: Command handler for deactivating SMS Stakeholder Users using CQRS/Mediator pattern
 /// Implements proper CQRS pattern with audit pipeline support for soft delete operations
 /// </summary>
-public class DeactivateSMSStakeholderUserCommandHandler : BaseCommandBundle, IRequestHandler<DeactivateSMSStakeholderUserCommand, Result<SMSStakeholderUser>>
+public class DeactivateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeactivateSMSStakeholderUserCommand, Result<SMSStakeholderUser>>
 {
     private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<DeactivateSMSStakeholderUserCommandHandler> _logger;
@@ -357,15 +357,15 @@ public class DeactivateSMSStakeholderUserCommandHandler : BaseCommandBundle, IRe
     }
 }
 
-public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSStakeholderUserCommand, Result<bool>>
+public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSMSStakeholderUserCommand, Result<bool>>
 {
     private readonly ISMSStakeholderUserService _stakeholderUserService;
-    private readonly IMediator _mediator;
+    private readonly IBaseMediator _mediator;
     private readonly ILogger<DeleteSMSStakeholderUserCommandHandler> _logger;
 
     public DeleteSMSStakeholderUserCommandHandler(
         ISMSStakeholderUserService stakeholderUserService, 
-        IMediator mediator,
+        IBaseMediator mediator,
         ILogger<DeleteSMSStakeholderUserCommandHandler> logger)
     {
         _stakeholderUserService = stakeholderUserService ?? throw new ArgumentNullException(nameof(stakeholderUserService));

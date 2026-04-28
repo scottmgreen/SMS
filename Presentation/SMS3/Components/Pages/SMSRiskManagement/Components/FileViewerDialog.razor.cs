@@ -33,7 +33,7 @@ public partial class FileViewerDialog : ComponentBase
     #region Lifecycle Methods
     protected override async Task OnParametersSetAsync()
     {
-        if (ViewingFile != null)
+        if (ViewingFile is not null)
         {
             await LoadFileForViewing();
         }
@@ -43,7 +43,7 @@ public partial class FileViewerDialog : ComponentBase
     #region File Loading
     private async Task LoadFileForViewing()
     {
-        if (ViewingFile?.FileData == null || ViewingFile.FileData.Length == 0)
+        if (ViewingFile?.FileData is null || ViewingFile.FileData.Length == 0)
         {
             Logger.LogWarning("File data is null or empty for file: {FileName}", ViewingFile?.FileName);
             ShowErrorAsyncNotification("File data is not available for viewing");
@@ -242,7 +242,7 @@ public partial class FileViewerDialog : ComponentBase
 
     private async Task OpenInNewTab()
     {
-        if (ViewingFile == null || string.IsNullOrEmpty(FileDataUrl))
+        if (ViewingFile is null || string.IsNullOrEmpty(FileDataUrl))
         {
             ShowErrorAsyncNotification("File is not ready for viewing");
             return;
@@ -265,7 +265,7 @@ public partial class FileViewerDialog : ComponentBase
 
     private async Task DownloadFile()
     {
-        if (ViewingFile == null || ViewingFile.FileData == null)
+        if (ViewingFile is null || ViewingFile.FileData is null)
         {
             ShowErrorAsyncNotification("File is not available for download");
             return;

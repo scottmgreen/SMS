@@ -88,7 +88,7 @@
                         <RadzenText Text="Loading assessment data..." />
                     </RadzenStack>
                 }
-                else if (TechRiskAssessment == null)
+                else if (TechRiskAssessment is null)
                 {
                     <RadzenAlert AlertStyle="AlertStyle.Danger" Icon="error" Title="Assessment Not Found">
                         The requested assessment could not be loaded. Please check the assessment ID and try again.
@@ -132,7 +132,7 @@
                                                      AvailableAssessors="@AvailableAssessors"
                                                      CurrentStep="@CurrentStep"
                                                      CurrentRiskAssessment="@TechRiskAssessment"
-                                                     RiskAssessmentId="@(TechRiskAssessment?.Id != null ? new RiskAssessmentID(TechRiskAssessment.Id.Value) : null)" />
+                                                     RiskAssessmentId="@(TechRiskAssessment?.Id is not null ? new RiskAssessmentID(TechRiskAssessment.Id.Value) : null)" />
                             break;
                         case 5:
                             <TechnicalAssessmentStep5 Step4="@Step4"
@@ -154,7 +154,7 @@
         </RadzenCard>
 
         <!-- Navigation Buttons -->
-        @if (TechRiskAssessment != null && !IsLoading)
+        @if (TechRiskAssessment is not null && !IsLoading)
         {
             <RadzenCard Style="margin-top: 1rem;">
                 <RadzenCard>

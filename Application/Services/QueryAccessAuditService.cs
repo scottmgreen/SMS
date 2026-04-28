@@ -35,11 +35,11 @@ public interface IQueryAccessAuditService
 /// </summary>
 public class QueryAccessAuditService : IQueryAccessAuditService
 {
-    private readonly SystemService _systemService;
+    private readonly SMSSystemService _systemService;
     private readonly ILogger<QueryAccessAuditService> _logger;
 
     public QueryAccessAuditService(
-        SystemService systemService,
+        SMSSystemService systemService,
         ILogger<QueryAccessAuditService> logger)
     {
         _systemService = systemService ?? throw new ArgumentNullException(nameof(systemService));

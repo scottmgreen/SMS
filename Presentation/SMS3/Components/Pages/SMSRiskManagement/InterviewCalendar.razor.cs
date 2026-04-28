@@ -1,4 +1,4 @@
-﻿using SMS_Shared.Configuration;
+using SMS_Shared.Configuration;
 
 using SMS3.Components.Pages.SMSAssurance.Components;
 using SMS3.Components.Shared.UIHelpers;
@@ -8,7 +8,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class InterviewCalendar : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<InterviewCalendar> _logger { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     
@@ -60,7 +60,7 @@ public partial class InterviewCalendar : ComponentBase
             var query = new GetAllInterviewsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 Interviews = result.Value.ToList();
                 _logger.LogInformation("Loaded {Count} interviews for calendar", Interviews.Count);
@@ -95,7 +95,7 @@ public partial class InterviewCalendar : ComponentBase
         await LoadInterviewsAsync();
 
         // Reload the scheduler
-        if (scheduler != null)
+        if (scheduler is not null)
         {
             await scheduler.Reload();
         }
@@ -277,7 +277,7 @@ public partial class InterviewCalendar : ComponentBase
                          $"Location: {interviewItem.Location}";
 
             if (interviewItem.IsConfidential)
-                tooltip += "\\n🔒 CONFIDENTIAL";
+                tooltip += "\\n?? CONFIDENTIAL";
 
             args.Attributes["title"] = tooltip;
 
@@ -328,7 +328,7 @@ public partial class InterviewCalendar : ComponentBase
         {
             var draggedAppointment = SchedulerData.FirstOrDefault(x => x == args.Appointment.Data);
 
-            if (draggedAppointment != null)
+            if (draggedAppointment is not null)
             {
                 LogEvent($"AppointmentMove: Interview={draggedAppointment.InterviewCode} moved to {args.SlotDate:yyyy-MM-dd HH:mm}");
 
@@ -365,7 +365,7 @@ public partial class InterviewCalendar : ComponentBase
         {
             // Find the actual interview
             var interview = Interviews.FirstOrDefault(i => i.Code == appointmentData.InterviewCode);
-            if (interview != null)
+            if (interview is not null)
             {
                 // Update duration if needed
                 var newDuration = (int)(appointmentData.End - appointmentData.Start).TotalMinutes;
@@ -408,7 +408,7 @@ public partial class InterviewCalendar : ComponentBase
     {
         try
         {
-            if (scheduler != null)
+            if (scheduler is not null)
             {
                 scheduler.CurrentDate = DateTime.Today;
                 await scheduler.Reload();
@@ -494,7 +494,7 @@ public partial class InterviewCalendar : ComponentBase
             var interviewQuery = new GetInterviewByCodeQuery(new InterviewID(interviewItem.InterviewCode));
             var interviewResult = await _mediator.SendAsync(interviewQuery, CancellationToken.None);
 
-            if (interviewResult.IsSuccess && interviewResult.Value != null)
+            if (interviewResult.IsSuccess && interviewResult.Value is not null)
             {
                 SelectedInterview = interviewResult.Value;
             }
@@ -502,7 +502,7 @@ public partial class InterviewCalendar : ComponentBase
             {
                 // Find the interview from the loaded interviews as fallback
                 SelectedInterview = Interviews.FirstOrDefault(i => i.Code == interviewItem.InterviewCode);
-                if (SelectedInterview == null)
+                if (SelectedInterview is null)
                 {
                     ShowErrorAsyncNotification($"Interview {interviewItem.InterviewCode} not found");
                     return;
@@ -707,8 +707,8 @@ public class InterviewSchedulerItem
     public string Text { get; set; } = string.Empty;
     public DateTime Start { get; set; }
     public DateTime End { get; set; }
-    public InterviewType InterviewType { get; set; }
-    public InterviewStatus InterviewStatus { get; set; }
+    public InterviewType InterviewType { get; set; } = default!;
+    public InterviewStatus InterviewStatus { get; set; } = default!;
     public string PersonInterviewed { get; set; } = string.Empty;
     public string InvestigationCode { get; set; } = string.Empty;
     public string Investigator { get; set; } = string.Empty;

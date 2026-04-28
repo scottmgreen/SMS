@@ -19,7 +19,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// <summary>
 /// Query handler for getting all SMS application groups
 /// </summary>
-public class GetAllSMSApplicationGroupsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSApplicationGroupsQuery, Result<IEnumerable<SMSApplicationGroup>>>
+public class GetAllSMSApplicationGroupsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllSMSApplicationGroupsQuery, Result<IEnumerable<SMSApplicationGroup>>>
 {
     private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<GetAllSMSApplicationGroupsQueryHandler> _logger;
@@ -67,7 +67,7 @@ public class GetAllSMSApplicationGroupsQueryHandler : BaseQueryBundle, IRequestH
 /// <summary>
 /// Query handler for getting an SMS application group by code
 /// </summary>
-public class GetSMSApplicationGroupByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationGroupByCodeQuery, Result<SMSApplicationGroup>>
+public class GetSMSApplicationGroupByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSApplicationGroupByCodeQuery, Result<SMSApplicationGroup>>
 {
     private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<GetSMSApplicationGroupByCodeQueryHandler> _logger;
@@ -115,7 +115,7 @@ public class GetSMSApplicationGroupByCodeQueryHandler : BaseQueryBundle, IReques
 /// <summary>
 /// Query handler for getting SMS application groups by user code
 /// </summary>
-public class GetSMSApplicationGroupsByUserCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationGroupsByUserCodeQuery, Result<IEnumerable<SMSApplicationGroup>>>
+public class GetSMSApplicationGroupsByUserCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSApplicationGroupsByUserCodeQuery, Result<IEnumerable<SMSApplicationGroup>>>
 {
     private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<GetSMSApplicationGroupsByUserCodeQueryHandler> _logger;
@@ -165,7 +165,7 @@ public class GetSMSApplicationGroupsByUserCodeQueryHandler : BaseQueryBundle, IR
 /// <summary>
 /// Query handler for getting users by application group code
 /// </summary>
-public class GetUsersByApplicationGroupCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetUsersByApplicationGroupCodeQuery, Result<IEnumerable<SMSApplicationUser>>>
+public class GetUsersByApplicationGroupCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetUsersByApplicationGroupCodeQuery, Result<IEnumerable<SMSApplicationUser>>>
 {
     private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<GetUsersByApplicationGroupCodeQueryHandler> _logger;

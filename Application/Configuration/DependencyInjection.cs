@@ -107,7 +107,7 @@ namespace SMS_Application.Configuration
             services.AddScoped<SPIEventCoordinator>();
 
             // NEW: EventBus Services - Phase 1: SINGLETON for consistent handler registration
-            services.AddSingleton<IEventBus, EventBusService>();
+            services.AddSingleton<IBaseEventBus, EventBusService>();
 
             // NEW: SPI Event Handlers - Automated SPI calculations from SMS events
             services.AddScoped<HazardEventSPIHandler>();
@@ -149,8 +149,8 @@ namespace SMS_Application.Configuration
             // Supporting Application Services
             services.AddScoped<HazardLocationService>();
             services.AddScoped<AirportSharedDatasetService>();
-            services.AddScoped<SystemService>();
-            services.AddScoped<MessengerService>();
+            services.AddScoped<SMSSystemService>();
+            
 
             // 🔍 QUERY AUDIT SERVICES - FIXED: ADDED MISSING SERVICE REGISTRATION!
             services.AddScoped<IQueryAccessAuditService, QueryAccessAuditService>();

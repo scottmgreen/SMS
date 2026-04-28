@@ -24,7 +24,7 @@ public partial class TechnicalAssessment : ComponentBase
     // Keep query parameters for backward compatibility
     // [SupplyParameterFromQuery(Name = "reportId")] public string? ReportId { get; set; }
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<TechnicalAssessment> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
@@ -71,7 +71,7 @@ public partial class TechnicalAssessment : ComponentBase
     public string AssessmentName => GetCurrentAssessmentName();
     public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.UserName.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
 
-    public string LeadInvestigatorName => AvailableInvestigators.FirstOrDefault()?.DisplayName;
+    public string LeadInvestigatorName => AvailableInvestigators.FirstOrDefault()?.DisplayName ?? "Not Assigned";
 
     // CRITICAL: Make this a property that can trigger change detection
     public List<Hazard> ReportedHazards { get; private set; } = new();
@@ -174,7 +174,7 @@ public partial class TechnicalAssessment : ComponentBase
             // ✅ FIRST: Refresh ReportHazards to include any newly added hazards from Step 2
             await LoadReportHazardsAsync();
 
-            if (TechRiskAssessment != null && ReportHazards?.Any() == true)
+            if (TechRiskAssessment is not null && ReportHazards?.Any() == true)
             {
                 await Step3.LoadFromAssessmentAsync(TechRiskAssessment, ReportHazards);
             }
@@ -246,7 +246,7 @@ public partial class TechnicalAssessment : ComponentBase
         }
 
         // Validate that we found assessments
-        if (TechRiskAssessment == null)
+        if (TechRiskAssessment is null)
         {
             throw new InvalidOperationException($"No Technical Risk Assessment found. HazardId: {HazardId}, ReportId: {ReportId}");
         }
@@ -265,6 +265,12 @@ public partial class TechnicalAssessment : ComponentBase
     private async Task LoadAssessmentsByHazardCodeAsync()
     {
         _logger.LogInformation("Loading assessments for HazardId: {HazardId}", HazardId);
+
+        if (string.IsNullOrEmpty(HazardId))
+        {
+            _logger.LogWarning("HazardId is null or empty, cannot load assessments");
+            return;
+        }
 
         var getAllAssessmentsQuery = new GetRiskAssessmentsByHazardCodeQuery(new HazardID(HazardId));
         var allAssessmentsResult = await _mediator.SendAsync(getAllAssessmentsQuery, CancellationToken.None);
@@ -294,8 +300,12 @@ public partial class TechnicalAssessment : ComponentBase
         {
             var anlysis = allAllAnalysisResult.Value.ToList();
 
-            TechRiskAnalysis = anlysis.FirstOrDefault(x => x.HazardCode == HazardId & x.RiskAssessmentCode.Trim() == TechRiskAssessment.Code);
-            
+            TechRiskAnalysis = anlysis.FirstOrDefault(x => x.HazardCode == HazardId && 
+                                                           !string.IsNullOrEmpty(x.RiskAssessmentCode) && 
+                                                           TechRiskAssessment?.Code != null && 
+                                                           !string.IsNullOrEmpty(TechRiskAssessment.Code) && 
+                                                           x.RiskAssessmentCode.Trim() == TechRiskAssessment.Code);
+
             _logger.LogInformation("Found {Count} Risk Analysis for hazard {HazardId}", anlysis.Count, HazardId);
         }
         else
@@ -316,7 +326,7 @@ public partial class TechnicalAssessment : ComponentBase
                 await LoadAssessmentsByReportCodeAsync();
 
                 // If no assessments found, create them
-                if (TechRiskAssessment == null && !string.IsNullOrEmpty(HazardId))
+                if (TechRiskAssessment is null && !string.IsNullOrEmpty(HazardId))
                 {
                     await CreateAssessmentsForReport();
                 }
@@ -379,6 +389,12 @@ public partial class TechnicalAssessment : ComponentBase
     {
         _logger.LogInformation("Loading assessments via ReportId: {ReportId}", ReportId);
 
+        if (string.IsNullOrEmpty(ReportId))
+        {
+            _logger.LogWarning("ReportId is null or empty, cannot load assessments");
+            return;
+        }
+
         // First, find hazards for this report
         var reportHazardQuery = new GetHazardsByReportCodeQuery(new ReportID(ReportId));
         var reportHazardResult = await _mediator.SendAsync(reportHazardQuery, CancellationToken.None);
@@ -399,7 +415,7 @@ public partial class TechnicalAssessment : ComponentBase
                     var assessments = assessmentsResult.Value.ToList();
 
                     // Take the first Technical assessment we find
-                    if (TechRiskAssessment == null)
+                    if (TechRiskAssessment is null)
                     {
                         TechRiskAssessment = assessments.FirstOrDefault(x => x.RiskAssessmentCategory == RiskAssessmentCategory.Technical);
                         HazardId = hazard.Code; // Update HazardId for consistency
@@ -408,7 +424,7 @@ public partial class TechnicalAssessment : ComponentBase
                     _logger.LogInformation("Found assessments via hazard {HazardCode}", hazard.Code);
 
                     // If we found what we need, no need to check other hazards
-                    if (TechRiskAssessment != null) break;
+                    if (TechRiskAssessment is not null) break;
                 }
             }
         }
@@ -430,7 +446,7 @@ public partial class TechnicalAssessment : ComponentBase
                 var hazardQuery = new GetHazardByCodeQuery(new HazardID(HazardId));
                 var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
-                if (hazardResult.IsSuccess && hazardResult.Value != null)
+                if (hazardResult.IsSuccess && hazardResult.Value is not null)
                 {
                     allHazards.Add(hazardResult.Value);
                     PrimaryHazard = hazardResult.Value;
@@ -466,7 +482,7 @@ public partial class TechnicalAssessment : ComponentBase
                         var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazardIdString));
                         var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
-                        if (hazardResult.IsSuccess && hazardResult.Value != null
+                        if (hazardResult.IsSuccess && hazardResult.Value is not null
                             && !allHazards.Any(h => h.Code == hazardResult.Value.Code))
                         {
                             allHazards.Add(hazardResult.Value);
@@ -495,7 +511,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     private async Task LoadStepDataFromAssessment()
     {
-        if (TechRiskAssessment == null) return;
+        if (TechRiskAssessment is null) return;
 
         try
         {
@@ -634,7 +650,7 @@ public partial class TechnicalAssessment : ComponentBase
             // ✅ FIRST: Refresh ReportHazards to include any newly added hazards from Step 2
             await LoadReportHazardsAsync();
 
-            if (TechRiskAssessment != null && ReportHazards?.Any() == true)
+            if (TechRiskAssessment is not null && ReportHazards?.Any() == true)
             {
                 await Step3.LoadFromAssessmentAsync(TechRiskAssessment, ReportHazards);
             }
@@ -756,7 +772,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     private async Task<(bool success, string message)> SaveCurrentStepAsync()
     {
-        if (TechRiskAssessment == null)
+        if (TechRiskAssessment is null)
         {
             return (false, "Assessment not loaded");
         }
@@ -797,7 +813,7 @@ public partial class TechnicalAssessment : ComponentBase
                 _ => ReportStatus.RiskAssessmentInProgress
             };
 
-            var cmd = new UpdateReportStatusCommand(ReportId, status, CurrentUserService?.UserDisplayName);
+            var cmd = new UpdateReportStatusCommand(ReportId ?? "", status, CurrentUserService?.UserDisplayName ?? "System");
             var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
 
 
@@ -860,7 +876,7 @@ public partial class TechnicalAssessment : ComponentBase
             var hazardQuery = new GetHazardByCodeQuery(new HazardID(HazardId));
             var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
-            if (hazardResult.IsSuccess && hazardResult.Value != null)
+            if (hazardResult.IsSuccess && hazardResult.Value is not null)
             {
                 var hazard = hazardResult.Value;
 
@@ -959,7 +975,7 @@ public partial class TechnicalAssessment : ComponentBase
             }
 
             // Filter panels by risk assessment code
-            var filteredPanels = result.Value
+            var filteredPanels = (result.Value ?? new List<ScoringPanel>())
                 .Where(p => p.RiskAssessmentCode.Trim() == targetAssessmentCode)
                 .ToList();
 
@@ -1043,7 +1059,7 @@ public partial class TechnicalAssessment : ComponentBase
         try
         {
             // Get existing panels for the current assessment
-            var existingPanels = allPanels
+            var existingPanels = (allPanels ?? Enumerable.Empty<ScoringPanel>())
                 .Where(p => p.RiskAssessmentCode.Trim() == targetAssessmentCode)
                 .ToList();
 
@@ -1220,7 +1236,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     private async Task CompleteAssessmentProcess()
     {
-        if (TechRiskAssessment == null) return;
+        if (TechRiskAssessment is null) return;
 
         // Apply all steps to ensure everything is saved - ENHANCED: Use async method
         await ApplyCurrentStepToAssessmentAsync();
@@ -1236,12 +1252,12 @@ public partial class TechnicalAssessment : ComponentBase
         var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
         await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
-        var cmd = new UpdateReportStatusCommand(ReportId, ReportStatus.ValidationCompleted, CurrentUserService?.UserDisplayName);
+        var cmd = new UpdateReportStatusCommand(ReportId ?? "", ReportStatus.ValidationCompleted, CurrentUserService?.UserDisplayName ?? "System");
         var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
 
         // NEW: SPI AUTOMATION - Trigger risk assessment completion event 🎯
         await TriggerRiskAssessmentSPIAutomation(
-            TechRiskAssessment.Code,
+            TechRiskAssessment?.Code ?? "",
             assessmentStartDate,
             completedDate,
             targetCompletionDate,
@@ -1351,7 +1367,7 @@ public partial class TechnicalAssessment : ComponentBase
             }
 
             // ✅ FIXED: Also update the assessment's IdentifiedHazardIds list
-            if (TechRiskAssessment != null && !TechRiskAssessment.IdentifiedHazardIds.Contains(newHazard.Code))
+            if (TechRiskAssessment is not null && !TechRiskAssessment.IdentifiedHazardIds.Contains(newHazard.Code))
             {
                 TechRiskAssessment.AddIdentifiedHazard(newHazard.Code, newHazard.Description ?? string.Empty);
                 _logger.LogInformation("Added hazard {HazardCode} to assessment's IdentifiedHazardIds", newHazard.Code);
@@ -1383,7 +1399,7 @@ public partial class TechnicalAssessment : ComponentBase
             var updateCommand = new UpdateHazardCommand(updatedHazard);
             var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 // Update local collection
                 var existingIndex = ReportHazards.FindIndex(h => h.Code == updatedHazard.Code);
@@ -1443,7 +1459,7 @@ public partial class TechnicalAssessment : ComponentBase
                 }
 
                 // ✅ FIXED: Also remove from assessment's IdentifiedHazardIds
-                if (TechRiskAssessment != null)
+                if (TechRiskAssessment is not null)
                 {
                     // Clear and re-add all remaining hazards
                     TechRiskAssessment.ClearIdentifiedHazards();

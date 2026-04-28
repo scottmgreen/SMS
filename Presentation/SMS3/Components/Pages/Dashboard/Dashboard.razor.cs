@@ -8,7 +8,7 @@ namespace SMS3.Components.Pages.Dashboard;
 public partial class Dashboard : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<Dashboard> Logger { get; set; } = default!;
     [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     
@@ -86,7 +86,7 @@ public partial class Dashboard : ComponentBase
             var query = new GetDashboardStatisticsQuery();
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 Statistics = result.Value;
                 Logger.LogInformation("Dashboard statistics loaded successfully - Reports: {Reports}, Hazards: {Hazards}, Assessments: {Assessments}",
@@ -122,7 +122,7 @@ public partial class Dashboard : ComponentBase
     #region Data Processing Methods
     private int GetFilteredCount(string filterType)
     {
-        if (Statistics == null) return 0;
+        if (Statistics is null) return 0;
 
         return filterType switch
         {
@@ -135,7 +135,7 @@ public partial class Dashboard : ComponentBase
 
     private int GetActiveCount()
     {
-        if (Statistics == null) return 0;
+        if (Statistics is null) return 0;
 
         return Statistics.ReportsByStatus.Where(kvp => !IsCompletedStatus(kvp.Key)).Sum(kvp => kvp.Value) +
                Statistics.HazardsByStatus.Where(kvp => !IsCompletedStatus(kvp.Key)).Sum(kvp => kvp.Value) +
@@ -146,7 +146,7 @@ public partial class Dashboard : ComponentBase
 
     private int GetPendingCount()
     {
-        if (Statistics == null) return 0;
+        if (Statistics is null) return 0;
 
         return Statistics.ReportsByStatus.Where(kvp => IsPendingStatus(kvp.Key)).Sum(kvp => kvp.Value) +
                Statistics.HazardsByStatus.Where(kvp => IsPendingStatus(kvp.Key)).Sum(kvp => kvp.Value) +
@@ -157,7 +157,7 @@ public partial class Dashboard : ComponentBase
 
     private int GetCompletedCount()
     {
-        if (Statistics == null) return 0;
+        if (Statistics is null) return 0;
 
         return Statistics.ReportsByStatus.Where(kvp => IsCompletedStatus(kvp.Key)).Sum(kvp => kvp.Value) +
                Statistics.HazardsByStatus.Where(kvp => IsCompletedStatus(kvp.Key)).Sum(kvp => kvp.Value) +
@@ -168,7 +168,7 @@ public partial class Dashboard : ComponentBase
 
     private List<DataPoint> GetStatusDistribution()
     {
-        if (Statistics == null) return new List<DataPoint>();
+        if (Statistics is null) return new List<DataPoint>();
 
         var statusCounts = new Dictionary<string, int>();
 

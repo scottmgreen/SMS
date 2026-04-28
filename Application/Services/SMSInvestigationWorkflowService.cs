@@ -25,11 +25,11 @@ namespace SMS_Application.Services;
 /// </summary>
 public class SMSInvestigationWorkflowService : ISMSInvestigationWorkflowService
 {
-    private readonly IMediator _mediator;
+    private readonly IBaseMediator _mediator;
     private readonly ILogger<SMSInvestigationWorkflowService> _logger;
 
     public SMSInvestigationWorkflowService(
-        IMediator mediator,
+        IBaseMediator mediator,
         ILogger<SMSInvestigationWorkflowService> logger)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));

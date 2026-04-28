@@ -21,12 +21,12 @@ namespace SMS_Application.Services;
 public sealed class RiskAssessmentService : IRiskAssessmentService
 {
     private readonly RiskAssessmentDataService _dataService;
-    private readonly IMediator _mediator;
+    private readonly IBaseMediator _mediator;
     private readonly ILogger<RiskAssessmentService> _logger;
 
     public RiskAssessmentService(
         RiskAssessmentDataService dataService,
-        IMediator mediator,
+        IBaseMediator mediator,
         ILogger<RiskAssessmentService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));

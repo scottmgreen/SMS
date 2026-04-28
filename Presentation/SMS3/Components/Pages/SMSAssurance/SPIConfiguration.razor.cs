@@ -7,7 +7,7 @@ namespace SMS3.Components.Pages.SMSAssurance;
 public partial class SPIConfiguration
 {
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
@@ -91,7 +91,7 @@ public partial class SPIConfiguration
             var query = new GetAllSafetyPerformanceIndicatorsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 allSPIs = result.Value.ToList();
                 ApplyFilters();

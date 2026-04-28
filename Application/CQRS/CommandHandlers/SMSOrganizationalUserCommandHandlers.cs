@@ -20,7 +20,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // SMS ORGANIZATIONAL USER COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSOrganizationalUserCommand, Result<SMSOrganizationalUser>>
+public class CreateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateSMSOrganizationalUserCommand, Result<SMSOrganizationalUser>>
 {
     private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<CreateSMSOrganizationalUserCommandHandler> _logger;
@@ -71,7 +71,7 @@ public class CreateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IReq
     }
 }
 
-public class UpdateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSOrganizationalUserCommand, Result<SMSOrganizationalUser>>
+public class UpdateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSOrganizationalUserCommand, Result<SMSOrganizationalUser>>
 {
     private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<UpdateSMSOrganizationalUserCommandHandler> _logger;
@@ -125,7 +125,7 @@ public class UpdateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IReq
 /// ✅ NEW: Command handler for deactivating SMS Organizational Users using CQRS/Mediator pattern
 /// Implements proper CQRS pattern with audit pipeline support for soft delete operations
 /// </summary>
-public class DeactivateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IRequestHandler<DeactivateSMSOrganizationalUserCommand, Result<SMSOrganizationalUser>>
+public class DeactivateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeactivateSMSOrganizationalUserCommand, Result<SMSOrganizationalUser>>
 {
     private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<DeactivateSMSOrganizationalUserCommandHandler> _logger;
@@ -181,7 +181,7 @@ public class DeactivateSMSOrganizationalUserCommandHandler : BaseCommandBundle, 
     }
 }
 
-public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSOrganizationalUserPasswordCommand, Result<bool>>
+public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSOrganizationalUserPasswordCommand, Result<bool>>
 {
     private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<UpdateSMSOrganizationalUserPasswordCommandHandler> _logger;
@@ -248,7 +248,7 @@ public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBund
     }
 }
 
-public class AuthenticateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IRequestHandler<AuthenticateSMSOrganizationalUserCommand, Result<bool>>
+public class AuthenticateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<AuthenticateSMSOrganizationalUserCommand, Result<bool>>
 {
     private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<AuthenticateSMSOrganizationalUserCommandHandler> _logger;
@@ -297,7 +297,7 @@ public class AuthenticateSMSOrganizationalUserCommandHandler : BaseCommandBundle
     }
 }
 
-public class RecordSMSOrganizationalUserLoginCommandHandler : BaseCommandBundle, IRequestHandler<RecordSMSOrganizationalUserLoginCommand, Result<bool>>
+public class RecordSMSOrganizationalUserLoginCommandHandler : BaseCommandBundle, IBaseRequestHandler<RecordSMSOrganizationalUserLoginCommand, Result<bool>>
 {
     private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<RecordSMSOrganizationalUserLoginCommandHandler> _logger;
@@ -357,15 +357,15 @@ public class RecordSMSOrganizationalUserLoginCommandHandler : BaseCommandBundle,
     }
 }
 
-public class DeleteSMSOrganizationalUserCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSOrganizationalUserCommand, Result<bool>>
+public class DeleteSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSMSOrganizationalUserCommand, Result<bool>>
 {
     private readonly ISMSOrganizationalUserService _organizationalUserService;
-    private readonly IMediator _mediator;
+    private readonly IBaseMediator _mediator;
     private readonly ILogger<DeleteSMSOrganizationalUserCommandHandler> _logger;
 
     public DeleteSMSOrganizationalUserCommandHandler(
         ISMSOrganizationalUserService organizationalUserService, 
-        IMediator mediator,
+        IBaseMediator mediator,
         ILogger<DeleteSMSOrganizationalUserCommandHandler> logger)
     {
         _organizationalUserService = organizationalUserService ?? throw new ArgumentNullException(nameof(organizationalUserService));

@@ -22,7 +22,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 /// <summary>
 /// Command handler for creating SMS organizational groups
 /// </summary>
-public class CreateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSOrganizationalGroupCommand, Result<SMSOrganizationalGroup>>
+public class CreateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateSMSOrganizationalGroupCommand, Result<SMSOrganizationalGroup>>
 {
     private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<CreateSMSOrganizationalGroupCommandHandler> _logger;
@@ -70,7 +70,7 @@ public class CreateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
 /// <summary>
 /// Command handler for updating SMS organizational groups
 /// </summary>
-public class UpdateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSOrganizationalGroupCommand, Result<SMSOrganizationalGroup>>
+public class UpdateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSOrganizationalGroupCommand, Result<SMSOrganizationalGroup>>
 {
     private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<UpdateSMSOrganizationalGroupCommandHandler> _logger;
@@ -118,7 +118,7 @@ public class UpdateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
 /// <summary>
 /// Command handler for deleting SMS organizational groups
 /// </summary>
-public class DeleteSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSOrganizationalGroupCommand, Result<bool>>
+public class DeleteSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSMSOrganizationalGroupCommand, Result<bool>>
 {
     private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<DeleteSMSOrganizationalGroupCommandHandler> _logger;
@@ -166,7 +166,7 @@ public class DeleteSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IRe
 /// <summary>
 /// Command handler for assigning users to organizational groups
 /// </summary>
-public class AssignUserToOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<AssignUserToOrganizationalGroupCommand, Result<bool>>
+public class AssignUserToOrganizationalGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<AssignUserToOrganizationalGroupCommand, Result<bool>>
 {
     private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<AssignUserToOrganizationalGroupCommandHandler> _logger;
@@ -216,7 +216,7 @@ public class AssignUserToOrganizationalGroupCommandHandler : BaseCommandBundle, 
 /// <summary>
 /// Command handler for removing users from organizational groups
 /// </summary>
-public class RemoveUserFromOrganizationalGroupCommandHandler : BaseCommandBundle, IRequestHandler<RemoveUserFromOrganizationalGroupCommand, Result<bool>>
+public class RemoveUserFromOrganizationalGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<RemoveUserFromOrganizationalGroupCommand, Result<bool>>
 {
     private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<RemoveUserFromOrganizationalGroupCommandHandler> _logger;
@@ -266,7 +266,7 @@ public class RemoveUserFromOrganizationalGroupCommandHandler : BaseCommandBundle
 /// <summary>
 /// Command handler for clearing user organizational group memberships
 /// </summary>
-public class ClearUserOrganizationalGroupsCommandHandler : BaseCommandBundle, IRequestHandler<ClearUserOrganizationalGroupsCommand, Result<bool>>
+public class ClearUserOrganizationalGroupsCommandHandler : BaseCommandBundle, IBaseRequestHandler<ClearUserOrganizationalGroupsCommand, Result<bool>>
 {
     private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<ClearUserOrganizationalGroupsCommandHandler> _logger;

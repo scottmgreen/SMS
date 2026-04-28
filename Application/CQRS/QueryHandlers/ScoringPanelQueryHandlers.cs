@@ -19,7 +19,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // SCORING PANEL QUERY HANDLERS
 // =============================================
 
-public class GetScoringPanelByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetScoringPanelByIdQuery, Result<ScoringPanel>>
+public class GetScoringPanelByIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetScoringPanelByIdQuery, Result<ScoringPanel>>
 {
     private readonly IScoringPanelService _scoringPanelService;
     private readonly ILogger<GetScoringPanelByIdQueryHandler> _logger;
@@ -46,7 +46,7 @@ public class GetScoringPanelByIdQueryHandler : BaseQueryBundle, IRequestHandler<
     }
 }
 
-public class GetAllScoringPanelsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllScoringPanelsQuery, Result<List<ScoringPanel>>>
+public class GetAllScoringPanelsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllScoringPanelsQuery, Result<List<ScoringPanel>>>
 {
     private readonly IScoringPanelService _scoringPanelService;
     private readonly ILogger<GetAllScoringPanelsQueryHandler> _logger;
@@ -73,7 +73,7 @@ public class GetAllScoringPanelsQueryHandler : BaseQueryBundle, IRequestHandler<
     }
 }
 
-public class GetScoringPanelsByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetScoringPanelsByHazardCodeQuery, Result<List<ScoringPanel>>>
+public class GetScoringPanelsByHazardCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetScoringPanelsByHazardCodeQuery, Result<List<ScoringPanel>>>
 {
     private readonly IScoringPanelService _scoringPanelService;
     private readonly ILogger<GetScoringPanelsByHazardCodeQueryHandler> _logger;

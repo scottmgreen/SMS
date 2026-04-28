@@ -353,6 +353,7 @@
             return CurrentUserService.Permissions
                 .Select(p => p.SMSModule)
                 .Where(module => !string.IsNullOrWhiteSpace(module))
+                .Cast<string>() // Ensure non-nullable after null filtering
                 .Distinct()
                 .OrderBy(module => module)
                 .ToArray();

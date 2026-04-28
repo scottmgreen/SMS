@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // AIRPORT SHARED DATASET COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequestHandler<CreateAirportSharedDatasetCommand, Result<AirportSharedDataset>>
+public class CreateAirportSharedDatasetCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateAirportSharedDatasetCommand, Result<AirportSharedDataset>>
 {
     private readonly AirportSharedDatasetService _airportSharedDatasetService;
     private readonly ILogger<CreateAirportSharedDatasetCommandHandler> _logger;
@@ -85,7 +85,7 @@ public class CreateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
     }
 }
 
-public class UpdateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequestHandler<UpdateAirportSharedDatasetCommand, Result<AirportSharedDataset>>
+public class UpdateAirportSharedDatasetCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateAirportSharedDatasetCommand, Result<AirportSharedDataset>>
 {
     private readonly AirportSharedDatasetService _airportSharedDatasetService;
     private readonly ILogger<UpdateAirportSharedDatasetCommandHandler> _logger;
@@ -151,7 +151,7 @@ public class UpdateAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequ
     }
 }
 
-public class DeleteAirportSharedDatasetCommandHandler : BaseCommandBundle, IRequestHandler<DeleteAirportSharedDatasetCommand, Result<bool>>
+public class DeleteAirportSharedDatasetCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteAirportSharedDatasetCommand, Result<bool>>
 {
     private readonly AirportSharedDatasetService _airportSharedDatasetService;
     private readonly ILogger<DeleteAirportSharedDatasetCommandHandler> _logger;

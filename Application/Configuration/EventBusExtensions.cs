@@ -37,8 +37,8 @@ public static class EventBusExtensions
         try
         {
             using var scope = app.ApplicationServices.CreateScope();
-            var eventBus = scope.ServiceProvider.GetRequiredService<IEventBus>();
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<IEventBus>>();
+            var eventBus = scope.ServiceProvider.GetRequiredService<IBaseEventBus>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<IBaseEventBus>>();
 
             logger.LogInformation("Initializing EventBus subscriptions for Phase 3 complete workflow automation...");
 
@@ -72,7 +72,7 @@ public static class EventBusExtensions
     /// Registers SPI-related event handlers with the EventBus
     /// Phase 1: Basic SPI threshold and workflow event handling
     /// </summary>
-    private static void RegisterSPIEventHandlers(IEventBus eventBus, ILogger logger)
+    private static void RegisterSPIEventHandlers(IBaseEventBus eventBus, ILogger logger)
     {
         try
         {
@@ -98,7 +98,7 @@ public static class EventBusExtensions
     /// NEW: Phase 3 - Registers Domain Event Handlers for complete workflow automation
     /// Handles business workflow events like hazard creation, status changes, escalations
     /// </summary>
-    private static void RegisterDomainEventHandlers(IEventBus eventBus, ILogger logger)
+    private static void RegisterDomainEventHandlers(IBaseEventBus eventBus, ILogger logger)
     {
         try
         {
@@ -131,7 +131,7 @@ public static class EventBusExtensions
     /// NEW: Phase 3 - Registers Integration Event Handlers for external system coordination
     /// Handles external notifications, email delivery, audit logging, and third-party integrations
     /// </summary>
-    private static void RegisterIntegrationEventHandlers(IEventBus eventBus, ILogger logger)
+    private static void RegisterIntegrationEventHandlers(IBaseEventBus eventBus, ILogger logger)
     {
         try
         {
@@ -175,7 +175,7 @@ public static class EventBusExtensions
     /// </summary>
     /// <param name="eventBus">The EventBus instance</param>
     /// <returns>Dictionary containing health information</returns>
-    public static async Task<Dictionary<string, object>> GetEventBusHealthAsync(this IEventBus eventBus)
+    public static async Task<Dictionary<string, object>> GetEventBusHealthAsync(this IBaseEventBus eventBus)
     {
         try
         {

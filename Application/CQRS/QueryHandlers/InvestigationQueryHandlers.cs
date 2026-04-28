@@ -19,7 +19,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // INVESTIGATION QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class GetInvestigationByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetInvestigationByCodeQuery, Result<Investigation>>
+public class GetInvestigationByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetInvestigationByCodeQuery, Result<Investigation>>
 {
     private readonly InvestigationService _investigationService;
     private readonly ILogger<GetInvestigationByCodeQueryHandler> _logger;
@@ -46,7 +46,7 @@ public class GetInvestigationByCodeQueryHandler : BaseQueryBundle, IRequestHandl
     }
 }
 
-public class GetAllInvestigationsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllInvestigationsQuery, Result<List<Investigation>>>
+public class GetAllInvestigationsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllInvestigationsQuery, Result<List<Investigation>>>
 {
     private readonly InvestigationService _investigationService;
     private readonly ILogger<GetAllInvestigationsQueryHandler> _logger;

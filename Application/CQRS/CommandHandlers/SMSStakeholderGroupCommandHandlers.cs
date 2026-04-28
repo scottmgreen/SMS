@@ -21,7 +21,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 /// <summary>
 /// Command handler for creating SMS stakeholder groups
 /// </summary>
-public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSStakeholderGroupCommand, Result<SMSStakeholderGroup>>
+public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateSMSStakeholderGroupCommand, Result<SMSStakeholderGroup>>
 {
     private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<CreateSMSStakeholderGroupCommandHandler> _logger;
@@ -77,7 +77,7 @@ public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
 /// <summary>
 /// Command handler for updating SMS stakeholder groups
 /// </summary>
-public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSStakeholderGroupCommand, Result<SMSStakeholderGroup>>
+public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSStakeholderGroupCommand, Result<SMSStakeholderGroup>>
 {
     private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<UpdateSMSStakeholderGroupCommandHandler> _logger;
@@ -133,7 +133,7 @@ public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
 /// <summary>
 /// Command handler for deleting SMS stakeholder groups
 /// </summary>
-public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSStakeholderGroupCommand, Result<bool>>
+public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSMSStakeholderGroupCommand, Result<bool>>
 {
     private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<DeleteSMSStakeholderGroupCommandHandler> _logger;
@@ -188,7 +188,7 @@ public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IReque
 /// <summary>
 /// Command handler for assigning users to stakeholder groups
 /// </summary>
-public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IRequestHandler<AssignUserToStakeholderGroupCommand, Result<bool>>
+public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<AssignUserToStakeholderGroupCommand, Result<bool>>
 {
     private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<AssignUserToStakeholderGroupCommandHandler> _logger;
@@ -243,7 +243,7 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IRe
 /// <summary>
 /// Command handler for removing users from stakeholder groups
 /// </summary>
-public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, IRequestHandler<RemoveUserFromStakeholderGroupCommand, Result<bool>>
+public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<RemoveUserFromStakeholderGroupCommand, Result<bool>>
 {
     private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<RemoveUserFromStakeholderGroupCommandHandler> _logger;
@@ -300,7 +300,7 @@ public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, I
 /// <summary>
 /// Command handler for clearing all user group memberships
 /// </summary>
-public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IRequestHandler<ClearUserStakeholderGroupsCommand, Result<bool>>
+public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IBaseRequestHandler<ClearUserStakeholderGroupsCommand, Result<bool>>
 {
     private readonly SMSStakeholderGroupService _stakeholderGroupService;
     private readonly ILogger<ClearUserStakeholderGroupsCommandHandler> _logger;

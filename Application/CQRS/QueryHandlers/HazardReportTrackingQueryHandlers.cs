@@ -20,7 +20,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // HAZARD REPORT TRACKING QUERY HANDLERS
 // =============================================
 
-public class GetHazardReportTrackingByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardReportTrackingByIdQuery, Result<HazardReportTracking>>
+public class GetHazardReportTrackingByIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardReportTrackingByIdQuery, Result<HazardReportTracking>>
 {
     private readonly HazardReportTrackingService _service;
     private readonly ILogger<GetHazardReportTrackingByIdQueryHandler> _logger;
@@ -60,7 +60,7 @@ public class GetHazardReportTrackingByIdQueryHandler : BaseQueryBundle, IRequest
     }
 }
 
-public class GetAllHazardReportTrackingQueryHandler : BaseQueryBundle, IRequestHandler<GetAllHazardReportTrackingQuery, Result<List<HazardReportTracking>>>
+public class GetAllHazardReportTrackingQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllHazardReportTrackingQuery, Result<List<HazardReportTracking>>>
 {
     private readonly HazardReportTrackingService _service;
     private readonly ILogger<GetAllHazardReportTrackingQueryHandler> _logger;
@@ -94,7 +94,7 @@ public class GetAllHazardReportTrackingQueryHandler : BaseQueryBundle, IRequestH
     }
 }
 
-public class GetHazardReportTrackingByTrackingCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardReportTrackingByTrackingCodeQuery, Result<HazardReportTrackingDetails>>
+public class GetHazardReportTrackingByTrackingCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardReportTrackingByTrackingCodeQuery, Result<HazardReportTrackingDetails>>
 {
     private readonly HazardReportTrackingService _service;
     private readonly ILogger<GetHazardReportTrackingByTrackingCodeQueryHandler> _logger;
@@ -134,7 +134,7 @@ public class GetHazardReportTrackingByTrackingCodeQueryHandler : BaseQueryBundle
     }
 }
 
-public class GetHazardReportTrackingByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardReportTrackingByHazardCodeQuery, Result<List<HazardReportTracking>>>
+public class GetHazardReportTrackingByHazardCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardReportTrackingByHazardCodeQuery, Result<List<HazardReportTracking>>>
 {
     private readonly HazardReportTrackingService _service;
     private readonly ILogger<GetHazardReportTrackingByHazardCodeQueryHandler> _logger;
@@ -174,7 +174,7 @@ public class GetHazardReportTrackingByHazardCodeQueryHandler : BaseQueryBundle, 
     }
 }
 
-public class GetHazardReportTrackingByReportCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardReportTrackingByReportCodeQuery, Result<List<HazardReportTracking>>>
+public class GetHazardReportTrackingByReportCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardReportTrackingByReportCodeQuery, Result<List<HazardReportTracking>>>
 {
     private readonly HazardReportTrackingService _service;
     private readonly ILogger<GetHazardReportTrackingByReportCodeQueryHandler> _logger;

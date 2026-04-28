@@ -17,7 +17,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 /// <summary>
 /// Command handler for creating SMS application groups
 /// </summary>
-public class CreateSMSApplicationGroupCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSApplicationGroupCommand, Result<SMSApplicationGroup>>
+public class CreateSMSApplicationGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateSMSApplicationGroupCommand, Result<SMSApplicationGroup>>
 {
     private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<CreateSMSApplicationGroupCommandHandler> _logger;
@@ -73,7 +73,7 @@ public class CreateSMSApplicationGroupCommandHandler : BaseCommandBundle, IReque
 /// <summary>
 /// Command handler for updating SMS application groups
 /// </summary>
-public class UpdateSMSApplicationGroupCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationGroupCommand, Result<SMSApplicationGroup>>
+public class UpdateSMSApplicationGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSApplicationGroupCommand, Result<SMSApplicationGroup>>
 {
     private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<UpdateSMSApplicationGroupCommandHandler> _logger;
@@ -129,7 +129,7 @@ public class UpdateSMSApplicationGroupCommandHandler : BaseCommandBundle, IReque
 /// <summary>
 /// Command handler for deleting SMS application groups
 /// </summary>
-public class DeleteSMSApplicationGroupCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSApplicationGroupCommand, Result<bool>>
+public class DeleteSMSApplicationGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSMSApplicationGroupCommand, Result<bool>>
 {
     private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<DeleteSMSApplicationGroupCommandHandler> _logger;
@@ -184,7 +184,7 @@ public class DeleteSMSApplicationGroupCommandHandler : BaseCommandBundle, IReque
 /// <summary>
 /// Command handler for assigning users to application groups
 /// </summary>
-public class AssignUserToApplicationGroupCommandHandler : BaseCommandBundle, IRequestHandler<AssignUserToApplicationGroupCommand, Result<bool>>
+public class AssignUserToApplicationGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<AssignUserToApplicationGroupCommand, Result<bool>>
 {
     private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<AssignUserToApplicationGroupCommandHandler> _logger;
@@ -241,7 +241,7 @@ public class AssignUserToApplicationGroupCommandHandler : BaseCommandBundle, IRe
 /// <summary>
 /// Command handler for removing users from application groups
 /// </summary>
-public class RemoveUserFromApplicationGroupCommandHandler : BaseCommandBundle, IRequestHandler<RemoveUserFromApplicationGroupCommand, Result<bool>>
+public class RemoveUserFromApplicationGroupCommandHandler : BaseCommandBundle, IBaseRequestHandler<RemoveUserFromApplicationGroupCommand, Result<bool>>
 {
     private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<RemoveUserFromApplicationGroupCommandHandler> _logger;
@@ -298,7 +298,7 @@ public class RemoveUserFromApplicationGroupCommandHandler : BaseCommandBundle, I
 /// <summary>
 /// Command handler for clearing all user application group memberships
 /// </summary>
-public class ClearUserApplicationGroupsCommandHandler : BaseCommandBundle, IRequestHandler<ClearUserApplicationGroupsCommand, Result<bool>>
+public class ClearUserApplicationGroupsCommandHandler : BaseCommandBundle, IBaseRequestHandler<ClearUserApplicationGroupsCommand, Result<bool>>
 {
     private readonly SMSApplicationGroupService _applicationGroupService;
     private readonly ILogger<ClearUserApplicationGroupsCommandHandler> _logger;

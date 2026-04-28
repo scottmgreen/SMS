@@ -7,7 +7,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class MitigationCalendar : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<MitigationCalendar> _logger { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -56,7 +56,7 @@ public partial class MitigationCalendar : ComponentBase
             var query = new GetAllMitigationsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 Mitigations = result.Value.ToList();
                 _logger.LogInformation("Loaded {Count} mitigations for calendar", Mitigations.Count);
@@ -91,7 +91,7 @@ public partial class MitigationCalendar : ComponentBase
         await LoadMitigationsAsync();
 
         // Reload the scheduler
-        if (scheduler != null)
+        if (scheduler is not null)
         {
             await scheduler.Reload();
         }
@@ -151,7 +151,7 @@ public partial class MitigationCalendar : ComponentBase
 
     private async Task OnAppointmentSelect(SchedulerAppointmentSelectEventArgs<MitigationSchedulerItem> args)
     {
-        if (_handlingAppointmentClick || args.Data?.MitigationCode == null)
+        if (_handlingAppointmentClick || args.Data?.MitigationCode is null)
         {
             return;
         }
@@ -163,7 +163,7 @@ public partial class MitigationCalendar : ComponentBase
 
             // Find the actual mitigation from the loaded list
             SelectedMitigation = Mitigations.FirstOrDefault(m => m.Code == args.Data.MitigationCode);
-            if (SelectedMitigation != null)
+            if (SelectedMitigation is not null)
             {
                 ShowDetailsModal = true;
                 StateHasChanged();
@@ -289,7 +289,7 @@ public partial class MitigationCalendar : ComponentBase
         {
             var draggedAppointment = SchedulerData.FirstOrDefault(x => x == args.Appointment.Data);
 
-            if (draggedAppointment != null)
+            if (draggedAppointment is not null)
             {
                 _logger.LogInformation("AppointmentMove: Mitigation={MitigationCode} moved to {SlotDate:yyyy-MM-dd HH:mm}", 
                     draggedAppointment.MitigationCode, args.SlotDate);
@@ -327,7 +327,7 @@ public partial class MitigationCalendar : ComponentBase
         {
             // Find the actual mitigation
             var mitigation = Mitigations.FirstOrDefault(m => m.Code == appointmentData.MitigationCode);
-            if (mitigation != null)
+            if (mitigation is not null)
             {
                 // Update target date directly
                 mitigation.TargetDate = appointmentData.Start;
@@ -360,7 +360,7 @@ public partial class MitigationCalendar : ComponentBase
     {
         try
         {
-            if (scheduler != null)
+            if (scheduler is not null)
             {
                 scheduler.CurrentDate = DateTime.Today;
                 await scheduler.Reload();
@@ -414,7 +414,7 @@ public partial class MitigationCalendar : ComponentBase
             var mitigationQuery = new GetMitigationByCodeQuery(new MitigationID(mitigationItem.MitigationCode));
             var mitigationResult = await _mediator.SendAsync(mitigationQuery, CancellationToken.None);
 
-            if (mitigationResult.IsSuccess && mitigationResult.Value != null)
+            if (mitigationResult.IsSuccess && mitigationResult.Value is not null)
             {
                 SelectedMitigation = mitigationResult.Value;
             }
@@ -422,7 +422,7 @@ public partial class MitigationCalendar : ComponentBase
             {
                 // Find the mitigation from the loaded mitigations as fallback
                 SelectedMitigation = Mitigations.FirstOrDefault(m => m.Code == mitigationItem.MitigationCode);
-                if (SelectedMitigation == null)
+                if (SelectedMitigation is null)
                 {
                     await _notificationHelper.ShowErrorAsync($"Mitigation {mitigationItem.MitigationCode} not found");
                     return;

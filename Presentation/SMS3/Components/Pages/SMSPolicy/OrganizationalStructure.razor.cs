@@ -5,7 +5,7 @@ namespace SMS3.Components.Pages.SMSPolicy;
 
 public partial class OrganizationalStructure : ComponentBase
 {
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<OrganizationalStructure> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
@@ -140,7 +140,7 @@ public partial class OrganizationalStructure : ComponentBase
 
     private async Task AssignUserToLevel()
     {
-        if (SelectedLevelForAssignment == null || string.IsNullOrEmpty(SelectedUserForAssignment))
+        if (SelectedLevelForAssignment is null || string.IsNullOrEmpty(SelectedUserForAssignment))
         {
             await _notificationHelper.ShowErrorAsync("Please select a user to assign.");
             return;
@@ -153,7 +153,7 @@ public partial class OrganizationalStructure : ComponentBase
 
             // Find the user
             var user = UnassignedUsers.FirstOrDefault(u => u.Code == SelectedUserForAssignment);
-            if (user == null)
+            if (user is null)
             {
                 await _notificationHelper.ShowErrorAsync("Selected user not found.");
                 return;
@@ -560,7 +560,7 @@ public partial class OrganizationalStructure : ComponentBase
         // Get a representative level from this category from the Domain enum
         var levelInCategory = SMSOrganizationalLevel.GetLevelsByCategory(category).FirstOrDefault();
         
-        if (levelInCategory == null)
+        if (levelInCategory is null)
         {
             return BadgeStyle.Light; // Fallback for unknown categories
         }

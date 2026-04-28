@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // RISK ASSESSMENT COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHandler<CreateRiskAssessmentCommand, Result<RiskAssessment>>
+public class CreateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateRiskAssessmentCommand, Result<RiskAssessment>>
 {
     private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<CreateRiskAssessmentCommandHandler> _logger;
@@ -69,7 +69,7 @@ public class CreateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
     }
 }
 
-public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHandler<UpdateRiskAssessmentCommand, Result<RiskAssessment>>
+public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateRiskAssessmentCommand, Result<RiskAssessment>>
 {
     private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<UpdateRiskAssessmentCommandHandler> _logger;
@@ -120,7 +120,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
     }
 }
 
-public class DeleteRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHandler<DeleteRiskAssessmentCommand, Result<bool>>
+public class DeleteRiskAssessmentCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteRiskAssessmentCommand, Result<bool>>
 {
     private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<DeleteRiskAssessmentCommandHandler> _logger;
@@ -174,7 +174,7 @@ public class DeleteRiskAssessmentCommandHandler : BaseCommandBundle, IRequestHan
 // STEP-SPECIFIC COMMAND HANDLERS FOR STEPS 1-5 - Clean Architecture Pattern
 // =============================================
 
-public class SaveStep1CommandHandler : BaseCommandBundle, IRequestHandler<SaveStep1Command, Result<RiskAssessment>>
+public class SaveStep1CommandHandler : BaseCommandBundle, IBaseRequestHandler<SaveStep1Command, Result<RiskAssessment>>
 {
     private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<SaveStep1CommandHandler> _logger;
@@ -247,7 +247,7 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
     }
 }
 
-public class SaveStep4CommandHandler : BaseCommandBundle, IRequestHandler<SaveStep4Command, Result<RiskAssessment>>
+public class SaveStep4CommandHandler : BaseCommandBundle, IBaseRequestHandler<SaveStep4Command, Result<RiskAssessment>>
 {
     private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<SaveStep4CommandHandler> _logger;
@@ -313,7 +313,7 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
     }
 }
 
-public class SaveStep5CommandHandler : BaseCommandBundle, IRequestHandler<SaveStep5Command, Result<RiskAssessment>>
+public class SaveStep5CommandHandler : BaseCommandBundle, IBaseRequestHandler<SaveStep5Command, Result<RiskAssessment>>
 {
     private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<SaveStep5CommandHandler> _logger;
@@ -376,7 +376,7 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IRequestHandler<SaveSt
     }
 }
 
-public class UpdateProgressCommandHandler : BaseCommandBundle, IRequestHandler<UpdateProgressCommand, Result<RiskAssessment>>
+public class UpdateProgressCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateProgressCommand, Result<RiskAssessment>>
 {
     private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly ILogger<UpdateProgressCommandHandler> _logger;

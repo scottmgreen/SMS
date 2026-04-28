@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // HAZARD REPORT TRACKING COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateHazardReportTrackingCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardReportTrackingCommand, Result<HazardReportTracking>>
+public class CreateHazardReportTrackingCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateHazardReportTrackingCommand, Result<HazardReportTracking>>
 {
     private readonly HazardReportTrackingService _hazardReportTrackingService;
     private readonly ILogger<CreateHazardReportTrackingCommandHandler> _logger;
@@ -69,7 +69,7 @@ public class CreateHazardReportTrackingCommandHandler : BaseCommandBundle, IRequ
     }
 }
 
-public class UpdateHazardReportTrackingCommandHandler : BaseCommandBundle, IRequestHandler<UpdateHazardReportTrackingCommand, Result<HazardReportTracking>>
+public class UpdateHazardReportTrackingCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateHazardReportTrackingCommand, Result<HazardReportTracking>>
 {
     private readonly HazardReportTrackingService _hazardReportTrackingService;
     private readonly ILogger<UpdateHazardReportTrackingCommandHandler> _logger;
@@ -119,7 +119,7 @@ public class UpdateHazardReportTrackingCommandHandler : BaseCommandBundle, IRequ
     }
 }
 
-public class DeleteHazardReportTrackingCommandHandler : BaseCommandBundle, IRequestHandler<DeleteHazardReportTrackingCommand, Result<bool>>
+public class DeleteHazardReportTrackingCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteHazardReportTrackingCommand, Result<bool>>
 {
     private readonly HazardReportTrackingService _hazardReportTrackingService;
     private readonly ILogger<DeleteHazardReportTrackingCommandHandler> _logger;
@@ -169,7 +169,7 @@ public class DeleteHazardReportTrackingCommandHandler : BaseCommandBundle, IRequ
     }
 }
 
-public class CreateHazardReportWithTrackingCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardReportWithTrackingCommand, Result<HazardReportTrackingResult>>
+public class CreateHazardReportWithTrackingCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateHazardReportWithTrackingCommand, Result<HazardReportTrackingResult>>
 {
     private readonly HazardReportTrackingService _service;
     private readonly ILogger<CreateHazardReportWithTrackingCommandHandler> _logger;

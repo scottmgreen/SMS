@@ -19,7 +19,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // SMS APPLICATION USER COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSApplicationUserCommand, Result<SMSApplicationUser>>
+public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateSMSApplicationUserCommand, Result<SMSApplicationUser>>
 {
     private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<CreateSMSApplicationUserCommandHandler> _logger;
@@ -70,7 +70,7 @@ public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
     }
 }
 
-public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationUserCommand, Result<SMSApplicationUser>>
+public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSApplicationUserCommand, Result<SMSApplicationUser>>
 {
     private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<UpdateSMSApplicationUserCommandHandler> _logger;
@@ -120,7 +120,7 @@ public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
     }
 }
 
-public class DeactivateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<DeactivateSMSApplicationUserCommand, Result<SMSApplicationUser>>
+public class DeactivateSMSApplicationUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeactivateSMSApplicationUserCommand, Result<SMSApplicationUser>>
 {
     private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<DeactivateSMSApplicationUserCommandHandler> _logger;
@@ -175,7 +175,7 @@ public class DeactivateSMSApplicationUserCommandHandler : BaseCommandBundle, IRe
     }
 }
 
-public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSApplicationUserCommand, Result<bool>>
+public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSMSApplicationUserCommand, Result<bool>>
 {
     private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<DeleteSMSApplicationUserCommandHandler> _logger;
@@ -225,7 +225,7 @@ public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IReques
     }
 }
 
-public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSApplicationUserPasswordCommand, Result<bool>>
+public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSApplicationUserPasswordCommand, Result<bool>>
 {
     private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<UpdateSMSApplicationUserPasswordCommandHandler> _logger;
@@ -292,7 +292,7 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
     }
 }
 
-public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, IRequestHandler<AuthenticateSMSApplicationUserCommand, Result<bool>>
+public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<AuthenticateSMSApplicationUserCommand, Result<bool>>
 {
     private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<AuthenticateSMSApplicationUserCommandHandler> _logger;
@@ -341,7 +341,7 @@ public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, I
     }
 }
 
-public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IRequestHandler<RecordSMSApplicationUserLoginCommand, Result<bool>>
+public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IBaseRequestHandler<RecordSMSApplicationUserLoginCommand, Result<bool>>
 {
     private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<RecordSMSApplicationUserLoginCommandHandler> _logger;

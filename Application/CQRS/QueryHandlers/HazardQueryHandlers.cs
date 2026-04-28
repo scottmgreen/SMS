@@ -19,7 +19,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // HAZARD QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class GetHazardByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardByCodeQuery, Result<Hazard>>
+public class GetHazardByIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardByCodeQuery, Result<Hazard>>
 {
     private readonly HazardService _hazardService;
     private readonly ILogger<GetHazardByIdQueryHandler> _logger;
@@ -46,7 +46,7 @@ public class GetHazardByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHaz
     }
 }
 
-public class GetAllHazardsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllHazardsQuery, Result<List<Hazard>>>
+public class GetAllHazardsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllHazardsQuery, Result<List<Hazard>>>
 {
     private readonly HazardService _hazardService;
     private readonly ILogger<GetAllHazardsQueryHandler> _logger;
@@ -73,7 +73,7 @@ public class GetAllHazardsQueryHandler : BaseQueryBundle, IRequestHandler<GetAll
     }
 }
 
-//public class GetHazardsByReportIdQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardsByReportCodeQuery, Result<List<Hazard>>>
+//public class GetHazardsByReportIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardsByReportCodeQuery, Result<List<Hazard>>>
 //{
 //    private readonly HazardService _hazardService;
 //    private readonly ILogger<GetHazardsByReportIdQueryHandler> _logger;
@@ -101,7 +101,7 @@ public class GetAllHazardsQueryHandler : BaseQueryBundle, IRequestHandler<GetAll
 //    }
 //}
 
-public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardsByReportCodeQuery, Result<List<Hazard>>>
+public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardsByReportCodeQuery, Result<List<Hazard>>>
 {
     private readonly HazardService _hazardService;
     private readonly ILogger<GetHazardsByReportCodeQueryHandler> _logger;

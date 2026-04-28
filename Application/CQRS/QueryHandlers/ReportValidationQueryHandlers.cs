@@ -20,7 +20,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // REPORT VALIDATION QUERY HANDLERS
 // =============================================
 
-public class GetReportValidationByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetReportValidationByIdQuery, Result<ReportValidation>>
+public class GetReportValidationByIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetReportValidationByIdQuery, Result<ReportValidation>>
 {
     private readonly ReportValidationDataService _reportValidationDataService;
     private readonly ILogger<GetReportValidationByIdQueryHandler> _logger;
@@ -48,7 +48,7 @@ public class GetReportValidationByIdQueryHandler : BaseQueryBundle, IRequestHand
 }
 
 
-public class GetReportValidationByReportIdQueryHandler : BaseQueryBundle, IRequestHandler<GetReportValidationByReportIdQuery, Result<ReportValidation>>
+public class GetReportValidationByReportIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetReportValidationByReportIdQuery, Result<ReportValidation>>
 {
     private readonly ReportValidationDataService _reportValidationDataService;
     private readonly ILogger<GetReportValidationByReportIdQueryHandler> _logger;
@@ -75,7 +75,7 @@ public class GetReportValidationByReportIdQueryHandler : BaseQueryBundle, IReque
     }
 }
 
-public class GetAllReportValidationsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllReportValidationsQuery, Result<List<ReportValidation>>>
+public class GetAllReportValidationsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllReportValidationsQuery, Result<List<ReportValidation>>>
 {
     private readonly ReportValidationDataService _reportValidationDataService;
     private readonly ILogger<GetAllReportValidationsQueryHandler> _logger;
@@ -105,7 +105,7 @@ public class GetAllReportValidationsQueryHandler : BaseQueryBundle, IRequestHand
 /// <summary>
 /// Query handler for getting validated SMS risks by date range
 /// </summary>
-public class GetValidatedSMSRisksByDateQueryHandler : BaseQueryBundle, IRequestHandler<GetValidatedSMSRisksByDateQuery, Result<List<ReportValidation>>>
+public class GetValidatedSMSRisksByDateQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetValidatedSMSRisksByDateQuery, Result<List<ReportValidation>>>
 {
     private readonly ReportValidationDataService _reportValidationDataService;
     private readonly ILogger<GetValidatedSMSRisksByDateQueryHandler> _logger;

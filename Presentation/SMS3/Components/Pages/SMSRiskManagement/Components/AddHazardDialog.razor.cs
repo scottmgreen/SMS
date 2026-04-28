@@ -20,7 +20,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
     [Inject] ICurrentUserService CurrentUserService { get; set; }
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AddHazardDialog>? Logger { get; set; }
 
     // Form properties
@@ -97,7 +97,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         InitializeDropdownOptions();
         
         // Ensure SelectedGeoLocation is properly initialized
-        if (SelectedGeoLocation == null)
+        if (SelectedGeoLocation is null)
         {
             SelectedGeoLocation = new HazardLocation();
         }
@@ -111,7 +111,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     protected override async Task OnParametersSetAsync()
     {
         // When parameters change, check if we need to populate edit form
-        if (IsEditMode && EditingHazard != null && IsVisible)
+        if (IsEditMode && EditingHazard is not null && IsVisible)
         {
             await PopulateFormForEdit();
         }
@@ -150,7 +150,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     /// </summary>
     private async Task PopulateFormForEdit()
     {
-        if (EditingHazard == null) return;
+        if (EditingHazard is null) return;
 
         Logger?.LogInformation("Populating form for editing hazard: {HazardCode}", EditingHazard.Code);
 
@@ -166,7 +166,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         }
 
         // Populate location data if available - EXACTLY like HazardReporting
-        if (EditingHazard.HazardLocation != null)
+        if (EditingHazard.HazardLocation is not null)
         {
             var location = EditingHazard.HazardLocation;
             SelectedLatitude = location.Latitude ?? 0;
@@ -245,7 +245,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         }
 
         var category = HazardCategory.FromValue(categoryValue);
-        if (category != null)
+        if (category is not null)
         {
             // Filter hazard types by selected category
             HazardTypeOptions = HazardType.GetByCategory(category)
@@ -274,7 +274,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         if (!string.IsNullOrEmpty(hazardTypeValue))
         {
             var hazardType = HazardType.FromValue(hazardTypeValue);
-            if (hazardType != null)
+            if (hazardType is not null)
             {
                 Logger?.LogInformation("Hazard type changed to: {HazardType}", hazardType.Name);
             }
@@ -362,7 +362,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     /// </summary>
     private async Task UpdateHazard()
     {
-        if (EditingHazard == null)
+        if (EditingHazard is null)
         {
             Logger?.LogError("Cannot update hazard: EditingHazard is null");
             return;
@@ -424,7 +424,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         // Set properties using the selected category and type
         hazard.Code = "HZ-0000";
         hazard.Name = $"{NewHazardCategory} - {NewHazardType}";
-        hazard.Description = NewHazardDescription.Trim();
+        hazard.Description = NewHazardDescription?.Trim() ?? "";
         hazard.HazardCategory = NewHazardCategory;
         hazard.HazardType = NewHazardType;
         hazard.IsInitialHazard = false;
@@ -455,7 +455,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         
         RiskAnalysis riskAnalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"));
         riskAnalysis.HazardCode = createdHazard.Code;
-        riskAnalysis.RiskAssessmentCode = RiskAssessmentId;
+        riskAnalysis.RiskAssessmentCode = RiskAssessmentId ?? "";
         var createRiskAnalysis = new CreateRiskAnalysisCommand(riskAnalysis);
         var riskAnalysisResult = await Mediator.SendAsync(createRiskAnalysis, CancellationToken.None);
         if (!riskAnalysisResult.IsSuccess)
@@ -575,7 +575,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             {
                 // UPDATE existing HazardLocation
                 hazardLocation = hazardLocationResult.Value.FirstOrDefault();
-                if (hazardLocation != null)
+                if (hazardLocation is not null)
                 {
                     hazardLocation.HazardCode = hazard.Code;
                     hazardLocation.Latitude = SelectedGeoLocation.Latitude;
@@ -652,7 +652,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         await Task.Delay(300);
 
         // Always try to initialize the map when modal opens - EXACTLY like HazardReporting
-        if (_mapModule != null)
+        if (_mapModule is not null)
         {
             try
             {
@@ -739,7 +739,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         LocationDescription = string.Empty;
         SelectedGeoLocation = new HazardLocation();
 
-        if (_mapModule != null)
+        if (_mapModule is not null)
         {
             try
             {

@@ -3,7 +3,7 @@
 @using SMS_Application.Interfaces
 @using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
-@inject IMediator Mediator
+@inject IBaseMediator Mediator
 @inject ILogger<HazardLocationDisplay> Logger
 
 @* 
@@ -87,7 +87,7 @@ else
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
-        if (Hazard != null && !string.IsNullOrEmpty(Hazard.Code))
+        if (Hazard is not null && !string.IsNullOrEmpty(Hazard.Code))
         {
             await LoadHazardLocationAsync();
         }
@@ -100,7 +100,7 @@ else
     protected override async Task OnParametersSetAsync()
     {
         // Reload location data if Hazard parameter changes
-        if (Hazard != null && !string.IsNullOrEmpty(Hazard.Code))
+        if (Hazard is not null && !string.IsNullOrEmpty(Hazard.Code))
         {
             await LoadHazardLocationAsync();
         }
@@ -118,7 +118,7 @@ else
     /// </summary>
     private async Task LoadHazardLocationAsync()
     {
-        if (Hazard == null || string.IsNullOrEmpty(Hazard.Code))
+        if (Hazard is null || string.IsNullOrEmpty(Hazard.Code))
         {
             IsLoading = false;
             return;

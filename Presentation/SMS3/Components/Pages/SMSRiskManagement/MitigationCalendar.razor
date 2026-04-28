@@ -121,7 +121,7 @@
 </RadzenRow>
 
 <!-- Mitigation Details Modal -->
-@if (ShowDetailsModal && SelectedMitigation != null)
+@if (ShowDetailsModal && SelectedMitigation is not null)
 {
     <div class="modal-overlay" @onclick="@PreventBackgroundClick" @onclick:stopPropagation="true">
         <div class="sms-modal-dialog sms-modal-xxl" @onclick:stopPropagation="true">

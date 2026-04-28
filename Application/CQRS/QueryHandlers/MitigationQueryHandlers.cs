@@ -20,7 +20,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // MITIGATION QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class GetMitigationByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetMitigationByCodeQuery, Result<Mitigation>>
+public class GetMitigationByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetMitigationByCodeQuery, Result<Mitigation>>
 {
     private readonly IMitigationService _mitigationService;
     private readonly ILogger<GetMitigationByCodeQueryHandler> _logger;
@@ -70,7 +70,7 @@ public class GetMitigationByCodeQueryHandler : BaseQueryBundle, IRequestHandler<
     }
 }
 
-public class GetAllMitigationsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllMitigationsQuery, Result<List<Mitigation>>>
+public class GetAllMitigationsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllMitigationsQuery, Result<List<Mitigation>>>
 {
     private readonly IMitigationService _mitigationService;
     private readonly ILogger<GetAllMitigationsQueryHandler> _logger;
@@ -116,7 +116,7 @@ public class GetAllMitigationsQueryHandler : BaseQueryBundle, IRequestHandler<Ge
 /// <summary>
 /// Handler for getting mitigations by hazard code
 /// </summary>
-public class GetMitigationsByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetMitigationsByHazardCodeQuery, Result<List<Mitigation>>>
+public class GetMitigationsByHazardCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetMitigationsByHazardCodeQuery, Result<List<Mitigation>>>
 {
     private readonly IMitigationService _mitigationService;
     private readonly ILogger<GetMitigationsByHazardCodeQueryHandler> _logger;

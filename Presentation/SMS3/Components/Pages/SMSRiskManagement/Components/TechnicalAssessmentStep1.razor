@@ -21,7 +21,7 @@
                             <RadzenColumn Size="2" >
                                 <RadzenStack Gap="0.5rem">
                                     <RadzenFormField Text="Lead Assessor *" Variant="Variant.Outlined">
-                                        @if (AvailableAssessors != null && AvailableAssessors.Any())
+                                        @if (AvailableAssessors is not null && AvailableAssessors.Any())
                                         {
                                             <RadzenDropDown @bind-Value="@Step1.LeadAssessor" 
                                                             Data="@AvailableAssessors"
@@ -206,7 +206,7 @@
                                                     @foreach (var groupId in Step1.SelectedStakeholderGroupIds)
                                                     {
                                                         var group = StakeholderGroups?.FirstOrDefault(g => g.Code == groupId);
-                                                        if (group != null)
+                                                        if (!ReferenceEquals(group, null))
                                                         {
                                                             <RadzenBadge Text="@group.Name" BadgeStyle="BadgeStyle.Primary" Style="margin: 0.2rem;" />
                                                         }
@@ -224,7 +224,7 @@
                                     <RadzenCard>
                                         <RadzenStack Gap="0.5rem">
                                             <RadzenText TextStyle="TextStyle.H6" Text="Available Stakeholder Groups" Style="margin-bottom: 0.5rem; color: var(--rz-secondary);" />
-                                            @if (StakeholderGroups != null && StakeholderGroups.Any())
+                                            @if (StakeholderGroups is not null && StakeholderGroups.Any())
                                             {
                                                 <RadzenDataGrid Data="@StakeholderGroups" TItem="SMSStakeholderGroup" AllowFiltering="false" AllowPaging="false" Style="height: 300px;">
                                                     <Columns>
@@ -232,7 +232,7 @@
                                                         <RadzenDataGridColumn TItem="SMSStakeholderGroup" Property="Description" Title="Description" Width="60%" />
                                                         <RadzenDataGridColumn TItem="SMSStakeholderGroup" Title="Action" Width="20%">
                                                             <Template Context="group">
-                                                                @if (Step1.SelectedStakeholderGroupIds != null && !Step1.SelectedStakeholderGroupIds.Contains(group.Code))
+                                                                @if (Step1.SelectedStakeholderGroupIds is not null && !Step1.SelectedStakeholderGroupIds.Contains(group.Code))
                                                                 {
                                                                     <RadzenButton Text="Add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" 
                                                                                   Click="@(() => AddStakeholderGroup(group.Code))" />
@@ -269,7 +269,7 @@
                                                     @foreach (var stakeholderId in Step1.SelectedIndividualStakeholderIds)
                                                     {
                                                         var stakeholder = AvailableStakeholders?.FirstOrDefault(s => s.Code == stakeholderId);
-                                                        if (stakeholder != null)
+                                                        if (!ReferenceEquals(stakeholder, null))
                                                         {
                                                             <RadzenBadge Text="@stakeholder.DisplayName" BadgeStyle="BadgeStyle.Primary" Style="margin: 0.2rem;" />
                                                         }
@@ -287,7 +287,7 @@
                                     <RadzenCard>
                                         <RadzenStack Gap="0.5rem">
                                             <RadzenText TextStyle="TextStyle.H6" Text="Available Individual Stakeholders" Style="margin-bottom: 0.5rem; color: var(--rz-secondary);" />
-                                            @if (AvailableStakeholders != null && AvailableStakeholders.Any())
+                                            @if (AvailableStakeholders is not null && AvailableStakeholders.Any())
                                             {
                                                 <RadzenDataGrid Data="@AvailableStakeholders" TItem="SMSStakeholderUser" AllowFiltering="false" AllowPaging="false" Style="height: 300px;">
                                                     <Columns>
@@ -295,7 +295,7 @@
                                                         <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="Organization" Title="Organization" Width="60%" />
                                                         <RadzenDataGridColumn TItem="SMSStakeholderUser" Title="Action" Width="20%">
                                                             <Template Context="stakeholder">
-                                                                @if (Step1.SelectedIndividualStakeholderIds != null && !Step1.SelectedIndividualStakeholderIds.Contains(stakeholder.Code))
+                                                                @if (Step1.SelectedIndividualStakeholderIds is not null && !Step1.SelectedIndividualStakeholderIds.Contains(stakeholder.Code))
                                                                 {
                                                                     <RadzenButton Text="Add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" 
                                                                                   Click="@(() => AddIndividualStakeholder(stakeholder.Code))" />
@@ -377,7 +377,7 @@
         }
 
         var selectedAssessor = AvailableAssessors?.FirstOrDefault(a => a.UserName.Value == Step1.LeadAssessor);
-        if (selectedAssessor != null)
+        if (!ReferenceEquals(selectedAssessor, null))
         {
             return $"Selected: {selectedAssessor.DisplayName} ✓";
         }

@@ -7,7 +7,7 @@ namespace SMS3.Components.Pages.SMSAssurance;
 public partial class AuditCalendar : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<AuditCalendar> _logger { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -42,7 +42,7 @@ public partial class AuditCalendar : ComponentBase
             var query = new GetAllSMSAuditPlansQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 AuditPlans = result.Value.ToList();
                 _logger.LogInformation("Loaded {Count} audit plans for calendar", AuditPlans.Count);
@@ -81,7 +81,7 @@ public partial class AuditCalendar : ComponentBase
         await LoadAuditPlansAsync();
 
         // Reload the scheduler
-        if (scheduler != null)
+        if (scheduler is not null)
         {
             await scheduler.Reload();
         }
@@ -213,10 +213,10 @@ public partial class AuditCalendar : ComponentBase
 
             // Find the actual audit plan
             var auditPlan = AuditPlans.FirstOrDefault(a => a.Code == args.Data.AuditPlanCode);
-            if (auditPlan != null)
+            if (auditPlan is not null)
             {
                 // Create a copy for editing like Radzen sample
-                var copy = new SMSAuditPlan(new SMSAuditPlanID(auditPlan.Code), auditPlan.CreatedBy)
+                var copy = new SMSAuditPlan(new SMSAuditPlanID(auditPlan.Code), auditPlan.CreatedBy ?? "System")
                 {
                     Code = auditPlan.Code,
                     Name = auditPlan.Name,
@@ -307,7 +307,7 @@ public partial class AuditCalendar : ComponentBase
         {
             var draggedAppointment = SchedulerData.FirstOrDefault(x => x == args.Appointment.Data);
 
-            if (draggedAppointment != null)
+            if (draggedAppointment is not null)
             {
                 console?.Log($"AppointmentMove: AuditPlan={draggedAppointment.AuditPlanCode} moved to {args.SlotDate:yyyy-MM-dd HH:mm}");
 
@@ -346,7 +346,7 @@ public partial class AuditCalendar : ComponentBase
         {
             // Find the actual audit plan
             var auditPlan = AuditPlans.FirstOrDefault(a => a.Code == appointmentData.AuditPlanCode);
-            if (auditPlan != null)
+            if (auditPlan is not null)
             {
                 // Update the planned dates
                 auditPlan.PlannedStartDate = appointmentData.Start;
@@ -386,7 +386,7 @@ public partial class AuditCalendar : ComponentBase
     {
         try
         {
-            if (scheduler != null)
+            if (scheduler is not null)
             {
                 scheduler.CurrentDate = DateTime.Today;
                 await scheduler.Reload();

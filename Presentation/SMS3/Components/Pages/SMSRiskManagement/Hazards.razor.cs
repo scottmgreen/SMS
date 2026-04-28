@@ -7,7 +7,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 
 public partial class Hazards : ComponentBase
 {
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<Hazards> _logger { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     
@@ -86,7 +86,7 @@ public partial class Hazards : ComponentBase
             var query = new GetAllHazardsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 AllHazards = result.Value.ToList();
                 await _notificationHelper.ShowSuccessAsync($"Successfully loaded {AllHazards.Count} hazards");
@@ -206,7 +206,7 @@ public partial class Hazards : ComponentBase
             _expandedRows.Clear();
 
             // Refresh the data list to apply new page size
-            if (hazardsDataList != null)
+            if (hazardsDataList is not null)
             {
                 await hazardsDataList.Reload();
             }

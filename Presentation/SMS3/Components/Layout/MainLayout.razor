@@ -41,7 +41,7 @@
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private IWebHostEnvironment Environment { get; set; } = default!;
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<MainLayout> Logger { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()

@@ -23,17 +23,17 @@ namespace SMS_Application.Messaging.CommandHandlers;
 /// Command handler for creating hazards using CQRS/Mediator pattern
 /// Ensures ALL sub-operations go through AuditPipeline for complete audit trail consistency
 /// </summary>
-public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardCommand, Result<Hazard>>
+public class CreateHazardCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateHazardCommand, Result<Hazard>>
 {
     private readonly HazardService _hazardService;
-    private readonly IMediator _mediator;  // 🔧 ADD: IMediator for consistent sub-operations
+    private readonly IBaseMediator _mediator;  // 🔧 ADD: IBaseMediator for consistent sub-operations
     private readonly ILogger<CreateHazardCommandHandler> _logger;
     private readonly ILogSupport _logsupport;
     private readonly string _logheader = string.Empty;
 
     public CreateHazardCommandHandler(
         HazardService hazardService,
-        IMediator mediator,  // 🔧 ADD: IMediator injection
+        IBaseMediator mediator,  // 🔧 ADD: IBaseMediator injection
         ILogSupport logsupport,
         ILogger<CreateHazardCommandHandler> logger)
     {
@@ -80,7 +80,7 @@ public class CreateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Cre
     }
 }
 
-public class UpdateHazardCommandHandler : BaseCommandBundle, IRequestHandler<UpdateHazardCommand, Result<Hazard>>
+public class UpdateHazardCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateHazardCommand, Result<Hazard>>
 {
     private readonly HazardService _hazardService;
     private readonly ILogger<UpdateHazardCommandHandler> _logger;
@@ -131,7 +131,7 @@ public class UpdateHazardCommandHandler : BaseCommandBundle, IRequestHandler<Upd
     }
 }
 
-public class ResetHazardScoresCommandHandler : BaseCommandBundle, IRequestHandler<ResetHazardScoresCommand, Result<Hazard>>
+public class ResetHazardScoresCommandHandler : BaseCommandBundle, IBaseRequestHandler<ResetHazardScoresCommand, Result<Hazard>>
 {
     private readonly HazardService _hazardService;
     private readonly ILogger<ResetHazardScoresCommandHandler> _logger;
@@ -181,7 +181,7 @@ public class ResetHazardScoresCommandHandler : BaseCommandBundle, IRequestHandle
     }
 }
 
-public class DeleteHazardCommandHandler : BaseCommandBundle, IRequestHandler<DeleteHazardCommand, Result<bool>>
+public class DeleteHazardCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteHazardCommand, Result<bool>>
 {
     private readonly HazardService _hazardService;
     private readonly ILogger<DeleteHazardCommandHandler> _logger;

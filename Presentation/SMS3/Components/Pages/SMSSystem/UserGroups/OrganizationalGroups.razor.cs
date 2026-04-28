@@ -25,7 +25,7 @@ public partial class OrganizationalGroups : ComponentBase
 {
     #region Dependency Injection
 
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<OrganizationalGroups> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
@@ -253,7 +253,8 @@ public partial class OrganizationalGroups : ComponentBase
                 ShowSuccessAsyncNotification($"Organizational group '{NewGroupName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
-                await groupsGrid?.Reload();
+                if (groupsGrid != null)
+                    await groupsGrid.Reload();
             }
             else
             {
@@ -274,7 +275,7 @@ public partial class OrganizationalGroups : ComponentBase
 
     private async Task UpdateGroup()
     {
-        if (CurrentGroup == null || string.IsNullOrWhiteSpace(EditGroupName))
+        if (CurrentGroup is null || string.IsNullOrWhiteSpace(EditGroupName))
         {
             ShowErrorAsyncNotification("Group name is required.");
             return;
@@ -300,7 +301,8 @@ public partial class OrganizationalGroups : ComponentBase
                 ShowSuccessAsyncNotification($"Organizational group '{EditGroupName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
-                await groupsGrid?.Reload();
+                if (groupsGrid != null)
+                    await groupsGrid.Reload();
             }
             else
             {
@@ -350,7 +352,8 @@ public partial class OrganizationalGroups : ComponentBase
                 ShowSuccessAsyncNotification("Organizational group deleted successfully.");
                 CloseDeleteModal();
                 await LoadDataAsync();
-                await groupsGrid?.Reload();
+                if (groupsGrid != null)
+                    await groupsGrid.Reload();
 
                 // If we're editing the deleted group, cancel edit mode
                 if (CurrentGroup?.Code == DeleteGroupCode)

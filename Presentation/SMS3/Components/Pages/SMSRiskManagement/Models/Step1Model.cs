@@ -150,7 +150,7 @@ public class Step1Model
 
     public void LoadFromAssessment(RiskAssessment assessment)
     {
-        if (assessment == null) return;
+        if (assessment is null) return;
 
         if (string.IsNullOrEmpty(LeadAssessor)) LeadAssessor = assessment.LeadAssessorId ?? string.Empty;
         if (string.IsNullOrEmpty(SystemDescription)) SystemDescription = assessment.SystemDescription ?? string.Empty;
@@ -165,12 +165,12 @@ public class Step1Model
         if (string.IsNullOrEmpty(FiveMOperationalEnvironment)) FiveMOperationalEnvironment = assessment.FiveMOperationalEnvironment ?? string.Empty;
 
         // Initialize collections if null
-        if (SelectedStakeholderGroupIds == null)
+        if (SelectedStakeholderGroupIds is null)
         {
             SelectedStakeholderGroupIds = new List<string>();
         }
 
-        if (SelectedIndividualStakeholderIds == null)
+        if (SelectedIndividualStakeholderIds is null)
         {
             SelectedIndividualStakeholderIds = new List<string>();
         }

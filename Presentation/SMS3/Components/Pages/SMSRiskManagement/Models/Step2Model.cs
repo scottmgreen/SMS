@@ -13,7 +13,7 @@ public class Step2Model
     
     public void LoadFromAssessment(RiskAssessment assessment)
     {
-        if (assessment == null) return;
+        if (assessment is null) return;
 
         if (assessment.IdentifiedHazardIds?.Any() == true)
         {

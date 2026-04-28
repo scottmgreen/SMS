@@ -119,7 +119,7 @@
 </RadzenRow>
 
 <!-- Interview Details Modal -->
-@if (ShowDetailsModal && SelectedInterview != null)
+@if (ShowDetailsModal && SelectedInterview is not null)
 {
     <div class="modal-overlay" @onclick="@PreventBackgroundClick" @onclick:stopPropagation="true">
         <div class="sms-modal-dialog sms-modal-xxl" @onclick:stopPropagation="true">

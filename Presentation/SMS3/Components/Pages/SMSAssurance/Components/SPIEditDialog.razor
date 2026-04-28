@@ -271,7 +271,7 @@
 
     protected override void OnInitialized()
     {
-        if (SPI != null)
+        if (SPI is not null)
         {
             SelectedStatus = SPI.Status?.Value ?? SPIStatus.Active.Value;
             SelectedIndicatorType = SPI.IndicatorType?.Value ?? string.Empty;

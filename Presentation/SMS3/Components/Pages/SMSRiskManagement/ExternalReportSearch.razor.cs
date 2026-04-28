@@ -14,7 +14,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class ExternalReportSearch : ComponentBase
 {
     #region Dependencies
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ExternalReportSearch> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
@@ -251,11 +251,11 @@ public partial class ExternalReportSearch : ComponentBase
             HasSimilarResults = false;
             SimilarityScores.Clear();
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 // Get detailed information for the found tracking record
                 var searchResult = await BuildSearchResultFromTracking(result.Value);
-                if (searchResult != null)
+                if (searchResult is not null)
                 {
                     SearchResults.Add(searchResult);
                     SimilarityScores[searchResult.TrackingCode] = 100; // Exact match only
@@ -332,7 +332,7 @@ public partial class ExternalReportSearch : ComponentBase
                 {
                     var trackingDetails = CreateTrackingDetails(tracking);
                     var searchResult = await BuildSearchResultFromTracking(trackingDetails);
-                    if (searchResult != null)
+                    if (searchResult is not null)
                     {
                         SearchResults.Add(searchResult);
                     }
@@ -607,7 +607,7 @@ public partial class ExternalReportSearch : ComponentBase
             {
                 var trackingDetails = CreateTrackingDetails(tracking);
                 var searchResult = await BuildSearchResultFromTracking(trackingDetails);
-                if (searchResult != null && MatchesAdvancedFilters(searchResult))
+                if (searchResult is not null && MatchesAdvancedFilters(searchResult))
                 {
                     // Avoid duplicates
                     if (!SearchResults.Any(sr => sr.TrackingCode == searchResult.TrackingCode))
@@ -633,7 +633,7 @@ public partial class ExternalReportSearch : ComponentBase
             {
                 var trackingDetails = CreateTrackingDetails(tracking);
                 var searchResult = await BuildSearchResultFromTracking(trackingDetails);
-                if (searchResult != null && MatchesAdvancedFilters(searchResult))
+                if (searchResult is not null && MatchesAdvancedFilters(searchResult))
                 {
                     // Avoid duplicates
                     if (!SearchResults.Any(sr => sr.TrackingCode == searchResult.TrackingCode))
@@ -659,7 +659,7 @@ public partial class ExternalReportSearch : ComponentBase
             {
                 var trackingDetails = CreateTrackingDetails(tracking);
                 var searchResult = await BuildSearchResultFromTracking(trackingDetails);
-                if (searchResult != null && MatchesAdvancedFilters(searchResult))
+                if (searchResult is not null && MatchesAdvancedFilters(searchResult))
                 {
                     SearchResults.Add(searchResult);
                 }
@@ -801,7 +801,7 @@ public partial class ExternalReportSearch : ComponentBase
                     var hazardQuery = new GetHazardByCodeQuery(new HazardID(tracking.HazardCode));
                     var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
-                    if (hazardResult.IsSuccess && hazardResult.Value != null)
+                    if (hazardResult.IsSuccess && hazardResult.Value is not null)
                     {
                         var hazard = hazardResult.Value;
                         searchResult.HazardType = hazard.HazardType ?? "Unknown";
@@ -827,7 +827,7 @@ public partial class ExternalReportSearch : ComponentBase
                     var reportQuery = new GetReportByCodeQuery(new ReportID(tracking.ReportCode));
                     var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
-                    if (reportResult.IsSuccess && reportResult.Value != null)
+                    if (reportResult.IsSuccess && reportResult.Value is not null)
                     {
                         var report = reportResult.Value;
 
@@ -860,7 +860,7 @@ public partial class ExternalReportSearch : ComponentBase
                     var validationQuery = new GetReportValidationByReportIdQuery(new ReportID(tracking.ReportCode));
                     var validationResult = await _mediator.SendAsync(validationQuery, CancellationToken.None);
 
-                    if (validationResult.IsSuccess && validationResult.Value != null)
+                    if (validationResult.IsSuccess && validationResult.Value is not null)
                     {
                         searchResult.ValidationDecision = validationResult.Value.ValidationDecision ?? "";
                         searchResult.ValidationDate = validationResult.Value.ValidatedDate;

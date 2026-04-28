@@ -10,7 +10,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 public partial class EvidenceFilesManager : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     
 
     [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
@@ -89,7 +89,7 @@ public partial class EvidenceFilesManager : ComponentBase
             var query = new GetHazardFilesByHazardCodeQuery(HazardCode, false, null); // null removes category filter
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 var allFiles = result.Value.ToList();
                 Logger.LogInformation("?? Retrieved {Count} total files from database for HazardCode: {HazardCode}", allFiles.Count, HazardCode);
@@ -189,7 +189,7 @@ public partial class EvidenceFilesManager : ComponentBase
     {
         try
         {
-            if (file.FileData == null || file.FileData.Length == 0)
+            if (file.FileData is null || file.FileData.Length == 0)
             {
                 await NotificationHelper.ShowErrorAsync("File data is not available for download");
                 return;

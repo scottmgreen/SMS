@@ -18,7 +18,7 @@ public partial class AuditDetail : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<AuditDetail> _logger { get; set; } = default!;
     
     [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
@@ -96,7 +96,7 @@ public partial class AuditDetail : ComponentBase
             var query = new GetSMSAuditByCodeQuery(AuditCode!);
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 Audit = result.Value;
             }
@@ -121,7 +121,7 @@ public partial class AuditDetail : ComponentBase
             var query = new GetSMSAuditFindingsByAuditCodeQuery(AuditCode!);
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 Findings = result.Value.OrderByDescending(f => f.DiscoveredDate).ToList();
             }
@@ -144,7 +144,7 @@ public partial class AuditDetail : ComponentBase
             var query = new GetSMSAuditEvidenceByAuditCodeQuery(AuditCode!);
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 Evidence = result.Value.OrderByDescending(e => e.CollectionDate).ToList();
             }
@@ -167,7 +167,7 @@ public partial class AuditDetail : ComponentBase
             var query = new GetSMSAuditChecklistItemsByAuditCodeQuery(AuditCode!);
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 ChecklistItems = result.Value.OrderBy(c => c.ItemNumber).ToList();
             }
@@ -222,7 +222,7 @@ public partial class AuditDetail : ComponentBase
     #region Audit Actions
     private async Task EditAudit()
     {
-        if (Audit == null) return;
+        if (Audit is null) return;
 
         try
         {
@@ -234,7 +234,7 @@ public partial class AuditDetail : ComponentBase
                 },
                 new DialogOptions() { Width = "900px", Height = "700px", Resizable = true });
 
-            if (result != null)
+            if (result is not null)
             {
                 await LoadAuditAsync();
                 ShowSuccessAsyncNotification("Audit updated successfully");
@@ -249,7 +249,7 @@ public partial class AuditDetail : ComponentBase
 
     private async Task StartAudit()
     {
-        if (Audit == null || Audit.Status != "Scheduled") return;
+        if (Audit is null || Audit.Status != "Scheduled") return;
 
         try
         {
@@ -284,7 +284,7 @@ public partial class AuditDetail : ComponentBase
 
     private async Task CompleteAudit()
     {
-        if (Audit == null || Audit.Status != "In Progress") return;
+        if (Audit is null || Audit.Status != "In Progress") return;
 
         try
         {
@@ -348,7 +348,7 @@ public partial class AuditDetail : ComponentBase
     #region Finding Management
     private async Task CreateFinding()
     {
-        if (Audit == null) return;
+        if (Audit is null) return;
 
         try
         {
@@ -360,7 +360,7 @@ public partial class AuditDetail : ComponentBase
                 },
                 new DialogOptions() { Width = "900px", Height = "700px", Resizable = true });
 
-            if (result != null)
+            if (result is not null)
             {
                 await LoadFindingsAsync();
                 CalculateStatistics();
@@ -387,7 +387,7 @@ public partial class AuditDetail : ComponentBase
                 },
                 new DialogOptions() { Width = "900px", Height = "700px", Resizable = true });
 
-            if (result != null)
+            if (result is not null)
             {
                 await LoadFindingsAsync();
                 CalculateStatistics();
@@ -567,7 +567,7 @@ public partial class AuditDetail : ComponentBase
     #region Evidence Management
     private async Task UploadEvidence()
     {
-        if (Audit == null) return;
+        if (Audit is null) return;
 
         try
         {
@@ -579,7 +579,7 @@ public partial class AuditDetail : ComponentBase
                 },
                 new DialogOptions() { Width = "800px", Height = "600px", Resizable = true });
 
-            if (result != null)
+            if (result is not null)
             {
                 await LoadEvidenceAsync();
                 CalculateStatistics();
@@ -606,7 +606,7 @@ public partial class AuditDetail : ComponentBase
                 },
                 new DialogOptions() { Width = "800px", Height = "600px", Resizable = true });
 
-            if (result != null)
+            if (result is not null)
             {
                 await LoadEvidenceAsync();
                 CalculateStatistics();
@@ -693,7 +693,7 @@ public partial class AuditDetail : ComponentBase
     {
         try
         {
-            if (Audit == null) return;
+            if (Audit is null) return;
 
             // TODO: Implement comprehensive report generation
             // For now, provide a placeholder implementation

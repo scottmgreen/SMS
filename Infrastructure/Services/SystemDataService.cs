@@ -19,9 +19,9 @@ public class SystemDataService : BaseDataService<SystemDataService>
 {
     private readonly ILogger<SystemDataService> _logger;
     private readonly string _logheader;
-    private SystemRepository _repo;
+    private SMSSystemRepository _repo;
 
-    public SystemDataService(ILogger<SystemDataService> logger, IServiceScopeFactory serviceScopeFactory, IConfiguration configuration, SystemRepository repo) : base(logger, serviceScopeFactory, configuration)
+    public SystemDataService(ILogger<SystemDataService> logger, IServiceScopeFactory serviceScopeFactory, IConfiguration configuration, SMSSystemRepository repo) : base(logger, serviceScopeFactory, configuration)
     {
         _logger = base.Logger;
         _logheader = base.LogHeader;

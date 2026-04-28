@@ -19,35 +19,11 @@
     <Copyright>Copyright © 2024 Portland International Airport</Copyright>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="Components\Pages\SMSRiskManagement\Deprecated_Reports.razor.cs" />
-    <Compile Remove="Components\Pages\SMSRiskManagement\HazardReporting.cshtml.cs" />
-    <Compile Remove="Components\Pages\SMSRiskManagement\HybridRiskAssessment.razor.cs" />
-    <Compile Remove="Components\Pages\SMSRiskManagement\MitigationListing.razor.cs" />
-    <Compile Remove="Components\Pages\SMSRiskManagement\MyInterviewsSimple.razor.cs" />
-    <Compile Remove="Components\Pages\SMSRiskManagement\PreliminaryRiskAssessment.razor.cs" />
-    <Compile Remove="Components\Pages\System\UserRoles\UserRoleManagement.cshtml.cs" />
-    <Compile Remove="Components\Shared\UIHelpers.cs" />
-    <Compile Remove="Configuration\SwaggerConfiguration.cs" />
-  </ItemGroup>
+  
 
-  <ItemGroup>
-    <Content Remove="Components\Pages\Counter.razor" />
-    <Content Remove="Components\Pages\SMSAssurance\AuditWorkflowDemo.razor" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Components\HazardLocationCard.razor" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Components\HazardLocationDialog.razor" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Components\ReportEdit.razor" />
-    <Content Remove="Components\Pages\SMSRiskManagement\Deprecated_Reports.razor" />
-    <Content Remove="Components\Pages\SMSRiskManagement\HybridRiskAssessment.razor" />
-    <Content Remove="Components\Pages\SMSRiskManagement\MyInterviewsSimple.razor" />
-    <Content Remove="Components\Pages\SMSRiskManagement\PreliminaryRiskAssessment.razor" />
-    <Content Remove="Components\Pages\System\UserRoles\UserRoleManagement.cshtml" />
-    <Content Remove="Components\Pages\Weather.razor" />
-  </ItemGroup>
+  
 
-  <ItemGroup>
-    <None Remove="Components\Pages\SMSRiskManagement\Deprecated_Reports.razor.css" />
-  </ItemGroup>
+  
 
   <ItemGroup>
     <PackageReference Include="Radzen.Blazor" Version="8.3.8" />

@@ -11,7 +11,7 @@ namespace SMS3.Components.Pages.SMSSystem.UserManagement;
 /// </summary>
 public partial class StakeholderUsers : ComponentBase
 {
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<StakeholderUsers> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -59,7 +59,7 @@ public partial class StakeholderUsers : ComponentBase
     // Dynamically get all unique modules from available roles' permissions
     private IEnumerable<string> SMSModules =>
         UserRoles
-            .Where(role => role.Permissions != null)
+            .Where(role => role.Permissions is not null)
             .SelectMany(role => role.Permissions)
             .Where(permission => !string.IsNullOrWhiteSpace(permission.SMSModule))
             .Select(permission => permission.SMSModule!)
@@ -167,7 +167,7 @@ public partial class StakeholderUsers : ComponentBase
             {
                 var roleQuery = new GetSMSUserRoleByIdQuery(NewUser.UserRoleCode);
                 var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
-                if (roleResult.IsSuccess && roleResult.Value != null)
+                if (roleResult.IsSuccess && roleResult.Value is not null)
                 {
                     user.UserRole = roleResult.Value;
                 }
@@ -258,7 +258,7 @@ public partial class StakeholderUsers : ComponentBase
             IsSaving = true;
             StateHasChanged();
 
-            if (CurrentEditUser == null)
+            if (CurrentEditUser is null)
             {
                 ShowErrorAsyncNotification("No user selected for update.");
                 return;
@@ -280,15 +280,12 @@ public partial class StakeholderUsers : ComponentBase
             {
                 var roleQuery = new GetSMSUserRoleByIdQuery(editUser.UserRoleCode);
                 var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
-                if (roleResult.IsSuccess && roleResult.Value != null)
+                if (roleResult.IsSuccess && roleResult.Value is not null)
                 {
                     CurrentEditUser.UserRole = roleResult.Value;
                 }
             }
-            else
-            {
-                CurrentEditUser.UserRole = null;
-            }
+            // Note: If no role is specified, we keep the existing UserRole unchanged
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSStakeholderUserCommand(CurrentEditUser);
@@ -432,7 +429,7 @@ public partial class StakeholderUsers : ComponentBase
 
     private bool IsPermissionGranted(SMSUserRole role, string module, string action)
     {
-        if (role?.Permissions == null) return false;
+        if (role?.Permissions is null) return false;
 
         var permission = role.Permissions.FirstOrDefault(p => p.SMSModule == module);
         return action switch
@@ -482,7 +479,7 @@ public partial class StakeholderUsers : ComponentBase
             var userQuery = new GetSMSStakeholderUserByCodeQuery(RoleAssignmentUserCode);
             var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
-            if (userResult.IsFailure || userResult.Value == null)
+            if (userResult.IsFailure || userResult.Value is null)
             {
                 ShowErrorAsyncNotification("User not found.");
                 return;
@@ -492,7 +489,7 @@ public partial class StakeholderUsers : ComponentBase
 
             // Get the selected role
             var selectedRole = UserRoles.FirstOrDefault(r => r.Code == SelectedRoleCode);
-            if (selectedRole == null)
+            if (selectedRole is null)
             {
                 ShowErrorAsyncNotification("Selected role not found.");
                 return;
@@ -547,14 +544,14 @@ public partial class StakeholderUsers : ComponentBase
             var userQuery = new GetSMSStakeholderUserByCodeQuery(RoleAssignmentUserCode);
             var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
-            if (userResult.IsFailure || userResult.Value == null)
+            if (userResult.IsFailure || userResult.Value is null)
             {
                 ShowErrorAsyncNotification("User not found.");
                 return;
             }
 
             var user = userResult.Value;
-            user.UserRole = null;
+            user.UserRole = null!; // Explicitly assign null with null-forgiving operator
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSStakeholderUserCommand(user);

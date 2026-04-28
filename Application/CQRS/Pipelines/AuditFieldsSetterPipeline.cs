@@ -16,7 +16,7 @@ namespace SMS_Application.Messaging.Pipelines;
 /// Single-responsibility pipeline that sets audit fields on commands before execution
 /// Does NOT handle audit logging - that's handled by separate pipelines
 /// </summary>
-public class AuditFieldsSetterPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
+public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResult>
     where TRequest : IRequest<TResult>
     where TResult : Result
 {

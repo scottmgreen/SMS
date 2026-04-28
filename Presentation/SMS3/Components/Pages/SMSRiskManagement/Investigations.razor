@@ -34,7 +34,7 @@ else
     <RadzenRow Gap="1rem">
         <!-- Main Content Column (8/12) -->
         <RadzenColumn Size="8">
-            @if (InvestigationEntity == null)
+            @if (InvestigationEntity is null)
             {
                 <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
                     <RadzenText TextStyle="TextStyle.H6">Investigation Not Found</RadzenText>

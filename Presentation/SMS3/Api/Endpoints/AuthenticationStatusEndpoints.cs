@@ -107,6 +107,12 @@ public static class AuthenticationStatusEndpoints
             logger.LogInformation("?? Testing user instantiation for {UserCode} ({UserType})", userCode, userType);
 
             var smsUserType = SMS_Domain.Enums.SMSUserType.FromValue(userType);
+            if (smsUserType == null)
+            {
+                logger.LogWarning("Invalid user type: {UserType}", userType);
+                return Results.BadRequest($"Invalid user type: {userType}");
+            }
+
             var result = await userInstantiationService.GetCompleteUserAsync(userCode, smsUserType);
 
             if (result.IsSuccess)

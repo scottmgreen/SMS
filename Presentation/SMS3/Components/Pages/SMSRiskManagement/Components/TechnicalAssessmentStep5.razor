@@ -11,7 +11,7 @@
 @using SMS_Domain.Enums
 @using global::System.Text.Json
 
-@inject IMediator Mediator
+@inject IBaseMediator Mediator
 @inject ILogger<TechnicalAssessmentStep5> Logger
 
 <style>
@@ -207,7 +207,7 @@
                             }
 
                             <!-- ✅ SECTION 3: Residual Risk Analysis (Collapsible) -->
-                            @if (hasMitigations && CurrentRiskAssessment != null)
+                            @if (hasMitigations && CurrentRiskAssessment is not null)
                             {
                                 <RadzenCard Variant="Variant.Text" Style="background-color: #e3f2fd; border: 1px solid #90caf9;">
                                     <RadzenStack Gap="1rem">
@@ -567,7 +567,7 @@
     /// </summary>
     private async Task SaveResidualAnalysisToDatabase(RiskAnalysis analysis)
     {
-        if (CurrentRiskAssessment == null || analysis == null) return;
+        if (CurrentRiskAssessment is null || analysis is null) return;
 
         try
         {
@@ -582,10 +582,10 @@
                 var createCommand = new CreateRiskAnalysisCommand(analysis);
                 var createResult = await Mediator.SendAsync(createCommand, CancellationToken.None);
 
-                if (createResult.IsSuccess && createResult.Value != null)
+                if (createResult.IsSuccess && createResult.Value is not null)
                 {
                     // Update the Step5 model with the saved entity (which has a proper ID/Code)
-                    Step5.HazardResidualRiskAnalyses[analysis.HazardCode] = createResult.Value;
+                    Step5.HazardResidualRiskAnalyses[analysis.HazardCode ?? ""] = createResult.Value;
                     Logger.LogInformation("✅ Created new residual RiskAnalysis for hazard {HazardCode} with code {Code}", 
                         analysis.HazardCode, createResult.Value.Code);
                 }
@@ -604,10 +604,10 @@
                 var updateCommand = new UpdateRiskAnalysisCommand(analysis);
                 var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
-                if (updateResult.IsSuccess && updateResult.Value != null)
+                if (updateResult.IsSuccess && updateResult.Value is not null)
                 {
                     // Update the Step5 model with the updated entity
-                    Step5.HazardResidualRiskAnalyses[analysis.HazardCode] = updateResult.Value;
+                    Step5.HazardResidualRiskAnalyses[analysis.HazardCode ?? ""] = updateResult.Value;
                     Logger.LogInformation("✅ Updated residual RiskAnalysis for hazard {HazardCode} with code {Code}", analysis.HazardCode, updateResult.Value.Code);
                 }
                 else
@@ -768,7 +768,7 @@
                     var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazard.Code));
                     var hazardResult = await Mediator.SendAsync(hazardQuery, CancellationToken.None);
 
-                    if (hazardResult.IsSuccess && hazardResult.Value != null)
+                    if (hazardResult.IsSuccess && hazardResult.Value is not null)
                     {
                         var updatedHazard = hazardResult.Value;
 

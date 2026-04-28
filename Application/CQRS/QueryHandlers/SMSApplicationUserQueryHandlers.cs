@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // SMS APPLICATION USER QUERY HANDLERS
 // =============================================
 
-public class GetAllSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSApplicationUsersQuery, Result<IEnumerable<SMSApplicationUser>>>
+public class GetAllSMSApplicationUsersQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllSMSApplicationUsersQuery, Result<IEnumerable<SMSApplicationUser>>>
 {
     private readonly SMSApplicationUserService _applicationUserService;
     private readonly ILogger<GetAllSMSApplicationUsersQueryHandler> _logger;
@@ -56,7 +56,7 @@ public class GetAllSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequestHa
 }
 
 
-public class GetSMSApplicationUserByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationUserByCodeQuery, Result<SMSApplicationUser>>
+public class GetSMSApplicationUserByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSApplicationUserByCodeQuery, Result<SMSApplicationUser>>
 {
     private readonly SMSApplicationUserService _applicationUserService;
     private readonly ILogger<GetSMSApplicationUserByCodeQueryHandler> _logger;
@@ -93,7 +93,7 @@ public class GetSMSApplicationUserByCodeQueryHandler : BaseQueryBundle, IRequest
     }
 }
 
-public class GetSMSApplicationUserByUserNameQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationUserByUserNameQuery, Result<SMSApplicationUser>>
+public class GetSMSApplicationUserByUserNameQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSApplicationUserByUserNameQuery, Result<SMSApplicationUser>>
 {
     private readonly SMSApplicationUserService _applicationUserService;
     private readonly ILogger<GetSMSApplicationUserByUserNameQueryHandler> _logger;
@@ -131,7 +131,7 @@ public class GetSMSApplicationUserByUserNameQueryHandler : BaseQueryBundle, IReq
     }
 }
 
-public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetActiveSMSApplicationUsersQuery, Result<IEnumerable<SMSApplicationUser>>>
+public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetActiveSMSApplicationUsersQuery, Result<IEnumerable<SMSApplicationUser>>>
 {
     private readonly SMSApplicationUserService _applicationUserService;
     private readonly ILogger<GetActiveSMSApplicationUsersQueryHandler> _logger;
@@ -168,7 +168,7 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IReques
     }
 }
 
-//public class GetSMSApplicationUsersByPermissionLevelQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationUsersByPermissionLevelQuery, Result<IEnumerable<SMSApplicationUser>>>
+//public class GetSMSApplicationUsersByPermissionLevelQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSApplicationUsersByPermissionLevelQuery, Result<IEnumerable<SMSApplicationUser>>>
 //{
 //    private readonly ISMSApplicationUserRepository _repository;
 //    private readonly ILogger<GetSMSApplicationUsersByPermissionLevelQueryHandler> _logger;
@@ -207,7 +207,7 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IReques
 //    }
 //}
 
-//public class GetSMSApplicationUsersWithMinimumPermissionQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationUsersWithMinimumPermissionQuery, Result<IEnumerable<SMSApplicationUser>>>
+//public class GetSMSApplicationUsersWithMinimumPermissionQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSApplicationUsersWithMinimumPermissionQuery, Result<IEnumerable<SMSApplicationUser>>>
 //{
 //    private readonly ISMSApplicationUserRepository _repository;
 //    private readonly ILogger<GetSMSApplicationUsersWithMinimumPermissionQueryHandler> _logger;
@@ -255,7 +255,7 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IReques
 //    }
 //}
 
-public class CheckSMSApplicationUserNameExistsQueryHandler : BaseQueryBundle, IRequestHandler<CheckSMSApplicationUserNameExistsQuery, Result<bool>>
+public class CheckSMSApplicationUserNameExistsQueryHandler : BaseQueryBundle, IBaseRequestHandler<CheckSMSApplicationUserNameExistsQuery, Result<bool>>
 {
     private readonly SMSApplicationUserDataService _dataService;
     private readonly ILogger<CheckSMSApplicationUserNameExistsQueryHandler> _logger;
@@ -287,7 +287,7 @@ public class CheckSMSApplicationUserNameExistsQueryHandler : BaseQueryBundle, IR
     }
 }
 
-public class ValidateSMSApplicationUserCredentialsQueryHandler : BaseQueryBundle, IRequestHandler<ValidateSMSApplicationUserCredentialsQuery, Result<bool>>
+public class ValidateSMSApplicationUserCredentialsQueryHandler : BaseQueryBundle, IBaseRequestHandler<ValidateSMSApplicationUserCredentialsQuery, Result<bool>>
 {
     private readonly SMSApplicationUserDataService _dataService;
     private readonly ILogger<ValidateSMSApplicationUserCredentialsQueryHandler> _logger;
@@ -331,7 +331,7 @@ public class ValidateSMSApplicationUserCredentialsQueryHandler : BaseQueryBundle
     }
 }
 
-public class GetSMSApplicationUsersRequiringPasswordChangeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationUsersRequiringPasswordChangeQuery, Result<IEnumerable<SMSApplicationUser>>>
+public class GetSMSApplicationUsersRequiringPasswordChangeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSApplicationUsersRequiringPasswordChangeQuery, Result<IEnumerable<SMSApplicationUser>>>
 {
     private readonly SMSApplicationUserDataService _dataService;
     private readonly ILogger<GetSMSApplicationUsersRequiringPasswordChangeQueryHandler> _logger;
@@ -369,7 +369,7 @@ public class GetSMSApplicationUsersRequiringPasswordChangeQueryHandler : BaseQue
     }
 }
 
-public class GetStaleSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequestHandler<GetStaleSMSApplicationUsersQuery, Result<IEnumerable<SMSApplicationUser>>>
+public class GetStaleSMSApplicationUsersQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetStaleSMSApplicationUsersQuery, Result<IEnumerable<SMSApplicationUser>>>
 {
     private readonly SMSApplicationUserDataService _dataService;
     private readonly ILogger<GetStaleSMSApplicationUsersQueryHandler> _logger;
@@ -410,7 +410,7 @@ public class GetStaleSMSApplicationUsersQueryHandler : BaseQueryBundle, IRequest
     }
 }
 
-public class GetSMSApplicationUserStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSApplicationUserStatisticsQuery, Result<Dictionary<string, object>>>
+public class GetSMSApplicationUserStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSApplicationUserStatisticsQuery, Result<Dictionary<string, object>>>
 {
     private readonly SMSApplicationUserDataService _dataService;
     private readonly ILogger<GetSMSApplicationUserStatisticsQueryHandler> _logger;

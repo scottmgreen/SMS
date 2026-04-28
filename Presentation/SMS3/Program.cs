@@ -13,9 +13,6 @@ using SMS_Application.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using SMS_Application.Interfaces;
 
-// EventBus initialization
-using SMS_Application.Configuration;
-
 namespace SMS3;
 public class Program
 {
@@ -69,7 +66,8 @@ public class Program
         var masterProtocolConfig = app.Configuration.GetSection("MasterProtocol");
         var explicitProtocol = masterProtocolConfig.GetValue<string>("Protocol", "HTTP");
         var forceEverywhere = masterProtocolConfig.GetValue<bool>("ForceProtocolEverywhere", true);
-        var isHttps = explicitProtocol.Equals("HTTPS", StringComparison.OrdinalIgnoreCase);
+        var isHttps = !string.IsNullOrEmpty(explicitProtocol) && 
+                      explicitProtocol.Equals("HTTPS", StringComparison.OrdinalIgnoreCase);
 
         // ⚡ SECURITY MIDDLEWARE - Must be first to add headers to all responses
         // 🎯 CONDITIONAL: Only apply security headers if enabled in configuration

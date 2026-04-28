@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // HAZARD FILE COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler<CreateHazardFileCommand, Result<HazardFile>>
+public class CreateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateHazardFileCommand, Result<HazardFile>>
 {
     private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<CreateHazardFileCommandHandler> _logger;
@@ -69,7 +69,7 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler
     }
 }
 
-public class UpdateHazardFileCommandHandler : BaseCommandBundle, IRequestHandler<UpdateHazardFileCommand, Result<HazardFile>>
+public class UpdateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateHazardFileCommand, Result<HazardFile>>
 {
     private readonly IHazardFileService _hazardFileService;
     private readonly ILogger<UpdateHazardFileCommandHandler> _logger;

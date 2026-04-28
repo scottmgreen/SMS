@@ -17,13 +17,13 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// <summary>
 /// Dashboard statistics query handler - aggregates data from all major entities
 /// </summary>
-public class DashboardStatisticsQueryHandler : BaseQueryBundle, IRequestHandler<GetDashboardStatisticsQuery, Result<DashboardStatisticsResponse>>
+public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetDashboardStatisticsQuery, Result<DashboardStatisticsResponse>>
 {
-    private readonly IMediator _mediator;
+    private readonly IBaseMediator _mediator;
     private readonly ILogger<DashboardStatisticsQueryHandler> _logger;
 
     public DashboardStatisticsQueryHandler(
-        IMediator mediator,
+        IBaseMediator mediator,
         ILogger<DashboardStatisticsQueryHandler> logger)
     {
         _mediator = mediator;

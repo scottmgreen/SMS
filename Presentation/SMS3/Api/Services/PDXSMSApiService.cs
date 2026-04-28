@@ -25,10 +25,10 @@ namespace SMS3.Api.Services
     /// </summary>
     public class PDXSMSApiService : IPDXSMSApiService
     {
-        private readonly IMediator _mediator;
+        private readonly IBaseMediator _mediator;
         private readonly ILogger<PDXSMSApiService> _logger;
 
-        public PDXSMSApiService(IMediator mediator, ILogger<PDXSMSApiService> logger)
+        public PDXSMSApiService(IBaseMediator mediator, ILogger<PDXSMSApiService> logger)
         {
             _mediator = mediator;
             _logger = logger;

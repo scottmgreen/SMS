@@ -42,7 +42,7 @@ public class TestPipelineCommand : BaseCommandBundle, IRequest<Result<string>>, 
 /// <summary>
 /// Test command handler to verify pipeline execution
 /// </summary>
-public class TestPipelineCommandHandler : BaseCommandBundle, IRequestHandler<TestPipelineCommand, Result<string>>
+public class TestPipelineCommandHandler : BaseCommandBundle, IBaseRequestHandler<TestPipelineCommand, Result<string>>
 {
     private readonly ILogger<TestPipelineCommandHandler> _logger;
 

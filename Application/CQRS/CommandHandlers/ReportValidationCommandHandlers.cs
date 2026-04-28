@@ -19,7 +19,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // REPORT VALIDATION COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestHandler<CreateReportValidationCommand, Result<ReportValidation>>
+public class CreateReportValidationCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateReportValidationCommand, Result<ReportValidation>>
 {
     private readonly ReportValidationService _reportValidationService;
     private readonly ILogger<CreateReportValidationCommandHandler> _logger;
@@ -70,7 +70,7 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IRequestH
     }
 }
 
-public class UpdateReportValidationCommandHandler : BaseCommandBundle, IRequestHandler<UpdateReportValidationCommand, Result<ReportValidation>>
+public class UpdateReportValidationCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateReportValidationCommand, Result<ReportValidation>>
 {
     private readonly ReportValidationService _reportValidationService;
     private readonly ILogger<UpdateReportValidationCommandHandler> _logger;
@@ -120,7 +120,7 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IRequestH
     }
 }
 
-public class DeleteReportValidationCommandHandler : BaseCommandBundle, IRequestHandler<DeleteReportValidationCommand, Result<bool>>
+public class DeleteReportValidationCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteReportValidationCommand, Result<bool>>
 {
     private readonly ReportValidationService _reportValidationService;
     private readonly ILogger<DeleteReportValidationCommandHandler> _logger;

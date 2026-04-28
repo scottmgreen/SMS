@@ -32,7 +32,7 @@ else
                         <RadzenText TextStyle="TextStyle.Body2">Entity Type:</RadzenText>
                         <RadzenDropDown @bind-Value="@SelectedEntityType" 
                                       Data="@EntityTypeOptions" 
-                                      Change="@(args => OnEntityTypeChanged(args.ToString()))"
+                                      Change="@(args => OnEntityTypeChanged(args?.ToString() ?? ""))"
                                       Style="width: 150px;" />
                     </RadzenStack>
                     
@@ -40,7 +40,7 @@ else
                         <RadzenText TextStyle="TextStyle.Body2">Status:</RadzenText>
                         <RadzenDropDown @bind-Value="@SelectedStatusFilter" 
                                       Data="@StatusFilterOptions" 
-                                      Change="@(args => OnStatusFilterChanged(args.ToString()))"
+                                      Change="@(args => OnStatusFilterChanged(args?.ToString() ?? ""))"
                                       Style="width: 150px;" />
                     </RadzenStack>
                 </RadzenStack>

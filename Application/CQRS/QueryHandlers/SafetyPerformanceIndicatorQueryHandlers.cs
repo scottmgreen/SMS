@@ -15,7 +15,7 @@ namespace SMS_Application.CQRS.QueryHandlers;
 /// <summary>
 /// Query handler for retrieving all Safety Performance Indicators
 /// </summary>
-public class GetAllSafetyPerformanceIndicatorsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSafetyPerformanceIndicatorsQuery, Result<List<SafetyPerformanceIndicator>>>
+public class GetAllSafetyPerformanceIndicatorsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllSafetyPerformanceIndicatorsQuery, Result<List<SafetyPerformanceIndicator>>>
 {
     private readonly SafetyPerformanceIndicatorService _spiService;
     private readonly ILogger<GetAllSafetyPerformanceIndicatorsQueryHandler> _logger;
@@ -76,7 +76,7 @@ public class GetAllSafetyPerformanceIndicatorsQueryHandler : BaseQueryBundle, IR
 /// <summary>
 /// Query handler for retrieving Safety Performance Indicator by ID
 /// </summary>
-public class GetSafetyPerformanceIndicatorByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetSafetyPerformanceIndicatorByIdQuery, Result<SafetyPerformanceIndicator>>
+public class GetSafetyPerformanceIndicatorByIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSafetyPerformanceIndicatorByIdQuery, Result<SafetyPerformanceIndicator>>
 {
     private readonly SafetyPerformanceIndicatorService _spiService;
     private readonly ILogger<GetSafetyPerformanceIndicatorByIdQueryHandler> _logger;
@@ -119,7 +119,7 @@ public class GetSafetyPerformanceIndicatorByIdQueryHandler : BaseQueryBundle, IR
 /// <summary>
 /// Query handler for retrieving Safety Performance Indicator by Code
 /// </summary>
-public class GetSafetyPerformanceIndicatorByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSafetyPerformanceIndicatorByCodeQuery, Result<SafetyPerformanceIndicator>>
+public class GetSafetyPerformanceIndicatorByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSafetyPerformanceIndicatorByCodeQuery, Result<SafetyPerformanceIndicator>>
 {
     private readonly SafetyPerformanceIndicatorService _spiService;
     private readonly ILogger<GetSafetyPerformanceIndicatorByCodeQueryHandler> _logger;

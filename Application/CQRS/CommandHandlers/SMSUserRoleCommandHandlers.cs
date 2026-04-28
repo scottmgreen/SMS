@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // SMS USER ROLE COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSUserRoleCommand, Result<SMSUserRole>>
+public class CreateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateSMSUserRoleCommand, Result<SMSUserRole>>
 {
     private readonly SMSUserRoleService _userRoleService;
     private readonly ILogger<CreateSMSUserRoleCommandHandler> _logger;
@@ -68,7 +68,7 @@ public class CreateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
     }
 }
 
-public class UpdateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSUserRoleCommand, Result<SMSUserRole>>
+public class UpdateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSUserRoleCommand, Result<SMSUserRole>>
 {
     private readonly SMSUserRoleService _userRoleService;
     private readonly ILogger<UpdateSMSUserRoleCommandHandler> _logger;
@@ -118,7 +118,7 @@ public class UpdateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
     }
 }
 
-public class DeleteSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSUserRoleCommand, Result<bool>>
+public class DeleteSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSMSUserRoleCommand, Result<bool>>
 {
     private readonly SMSUserRoleService _userRoleService;
     private readonly ILogger<DeleteSMSUserRoleCommandHandler> _logger;
@@ -168,7 +168,7 @@ public class DeleteSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandle
     }
 }
 
-public class AssignRoleToUserCommandHandler : BaseCommandBundle, IRequestHandler<AssignRoleToUserCommand, Result<SMSUserRole>>
+public class AssignRoleToUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<AssignRoleToUserCommand, Result<SMSUserRole>>
 {
     private readonly SMSUserRoleService _userRoleService;
     private readonly ILogger<AssignRoleToUserCommandHandler> _logger;
@@ -229,7 +229,7 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IRequestHandler
     }
 }
 
-public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandler<ActivateSMSUserRoleCommand, Result<bool>>
+public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHandler<ActivateSMSUserRoleCommand, Result<bool>>
 {
     private readonly SMSUserRoleService _userRoleService;
     private readonly ILogger<ActivateSMSUserRoleCommandHandler> _logger;
@@ -293,7 +293,7 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHand
     }
 }
 
-public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IRequestHandler<DeactivateSMSUserRoleCommand, Result<bool>>
+public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeactivateSMSUserRoleCommand, Result<bool>>
 {
     private readonly SMSUserRoleService _userRoleService;
     private readonly ILogger<DeactivateSMSUserRoleCommandHandler> _logger;

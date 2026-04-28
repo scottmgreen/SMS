@@ -172,7 +172,7 @@ else if (ReportDetails != null)
                     Validation Status
                 </h5>
                 
-                @if (ReportValidation != null)
+                @if (ReportValidation is not null)
                 {
                     <div class="row g-3">
                         <div class="col-lg-3 col-md-6">
@@ -243,13 +243,13 @@ else if (ReportDetails != null)
                     </div>
 
                     <!-- Validation -->
-                    <div class="timeline-item @(ReportValidation != null ? "completed" : "pending")">
+                    <div class="timeline-item @(ReportValidation is not null ? "completed" : "pending")">
                         <div class="timeline-icon">
-                            <RadzenIcon Icon="@(ReportValidation != null ? "verified_user" : "schedule")" />
+                            <RadzenIcon Icon="@(ReportValidation is not null ? "verified_user" : "schedule")" />
                         </div>
                         <div class="timeline-content">
                             <h6>SMS Validation</h6>
-                            @if (ReportValidation != null)
+                            @if (ReportValidation is not null)
                             {
                                 <p class="text-success">
                                    @ReportValidation.Code.ToUpper() - @GetValidationDecisionDisplay(ReportValidation.ValidationDecision).ToUpper()
@@ -265,12 +265,12 @@ else if (ReportDetails != null)
                     </div>
 
                     <!-- Further Processing based on Validation Decision -->
-                    @if (ReportValidation != null)
+                    @if (ReportValidation is not null)
                     {
                        
                         @if(ReportValidation.ValidationDecision == ValidationDecision.SmsRisk)
                         {
-                            if (CurrentRiskAssessment != null)
+                            if (CurrentRiskAssessment is not null)
                             {
                                 if(CurrentRiskAssessment.CurrentStep == 5)
                                 {
@@ -281,7 +281,7 @@ else if (ReportDetails != null)
                                         </div>
                                         <div class="timeline-content">
                                             <h6>Risk Assessment</h6>
-                                            @if (CurrentRiskAssessment != null)
+                                            @if (CurrentRiskAssessment is not null)
                                             {
                                                 string msg = $"{CurrentRiskAssessment.Code} Completed ";
                                                 <div class="text-success">
@@ -296,7 +296,7 @@ else if (ReportDetails != null)
                                         </div>
                                     </div>
 
-                                    @if(CurrentMitigation != null)
+                                    @if(CurrentMitigation is not null)
                                     {
                                         if (CurrentMitigation.Status == MitigationStatus.Approved.Value)
                                         {
@@ -306,7 +306,7 @@ else if (ReportDetails != null)
                                                 </div>
                                                 <div class="timeline-content">
                                                     <h6>Mitigation</h6>
-                                                    @if (CurrentMitigation != null)
+                                                    @if (CurrentMitigation is not null)
                                                     {
                                                         <div class="text-success">
                                                             <p class="@GetProcessingStatusTextClass()">@($"{CurrentMitigation.Code} {CurrentMitigation.Status}  %{CurrentMitigation.Progress} COMPLETE")</p>
@@ -363,7 +363,7 @@ else if (ReportDetails != null)
             </RadzenCard>
 
             <!-- Location Information Card -->
-            @if (HazardLocation != null)
+            @if (HazardLocation is not null)
             {
                 <RadzenCard class="mb-4">
                     <h5 class="mb-3">

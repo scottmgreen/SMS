@@ -1,4 +1,4 @@
-﻿
+
 namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 /// <summary>
@@ -6,10 +6,10 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 /// </summary>
 public class Step3Model
 {
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
-    public Step3Model(IMediator mediator, ICurrentUserService currentUserService)
+    public Step3Model(IBaseMediator mediator, ICurrentUserService currentUserService)
     {
         Mediator = mediator;
         CurrentUserService = currentUserService;
@@ -17,14 +17,14 @@ public class Step3Model
 
     public Dictionary<string, RiskAnalysis> Step3RiskAnalyses { get; set; } = new();
 
-    public (bool isValid, string message) Validate(List<Hazard> availableHazards = null)
+    public (bool isValid, string message) Validate(List<Hazard>? availableHazards = null)
     {
         return Validate(availableHazards, 3);
     }
     
-    public (bool isValid, string message) Validate(List<Hazard> availableHazards, int currentStep)
+    public (bool isValid, string message) Validate(List<Hazard>? availableHazards, int currentStep)
     {
-        if (availableHazards == null || !availableHazards.Any())
+        if (availableHazards is null || !availableHazards.Any())
         {
             return (false, "No hazards available for risk analysis");
         }
@@ -87,56 +87,59 @@ public class Step3Model
     
     public async Task LoadExistingRiskAnalysesAsync(List<Hazard> availableHazards)
     {
-        if (Mediator == null || availableHazards == null) return;
+        if (Mediator is null || availableHazards is null) return;
 
-        // ✅ CLEAR existing data first to ensure fresh load
+        // ? CLEAR existing data first to ensure fresh load
         Step3RiskAnalyses.Clear();
 
         var hazardCodes = availableHazards.Select(h => h.Code).ToList();
-        Console.WriteLine($"🔍 LoadExistingRiskAnalysesAsync: Looking for RiskAnalysis for {hazardCodes.Count} hazards: {string.Join(", ", hazardCodes)}");
+        Console.WriteLine($"?? LoadExistingRiskAnalysesAsync: Looking for RiskAnalysis for {hazardCodes.Count} hazards: {string.Join(", ", hazardCodes)}");
 
-        // ✅ Get ALL RiskAnalysis entities from database
+        // ? Get ALL RiskAnalysis entities from database
         var allAnalysisQuery = new GetAllRiskAnalysisQuery();
         var allAnalysisResult = await Mediator.SendAsync(allAnalysisQuery, CancellationToken.None);
 
-        if (!allAnalysisResult.IsSuccess || allAnalysisResult.Value == null)
+        if (!allAnalysisResult.IsSuccess || allAnalysisResult.Value is null)
         {
-            Console.WriteLine("❌ Failed to load RiskAnalysis entities from database");
+            Console.WriteLine("? Failed to load RiskAnalysis entities from database");
             return;
         }
 
         var allAnalyses = allAnalysisResult.Value.ToList();
-        Console.WriteLine($"🔍 Found {allAnalyses.Count} total RiskAnalysis entities in database");
+        Console.WriteLine($"?? Found {allAnalyses.Count} total RiskAnalysis entities in database");
 
-        // ✅ Debug: Show all analyses that match our hazard codes
-        var matchingAnalyses = allAnalyses.Where(ra => hazardCodes.Contains(ra.HazardCode)).ToList();
-        Console.WriteLine($"🔍 Found {matchingAnalyses.Count} RiskAnalysis entities matching our hazard codes:");
+        // ? Debug: Show all analyses that match our hazard codes
+        var matchingAnalyses = allAnalyses.Where(ra => !string.IsNullOrEmpty(ra.HazardCode) && hazardCodes.Contains(ra.HazardCode)).ToList();
+        Console.WriteLine($"?? Found {matchingAnalyses.Count} RiskAnalysis entities matching our hazard codes:");
         foreach (var analysis in matchingAnalyses)
         {
             Console.WriteLine($"   - HazardCode: {analysis.HazardCode}, RiskAssessmentCode: {analysis.RiskAssessmentCode}, Code: {analysis.Code}");
         }
 
-        // ✅ Get ALL RiskAssessments
+        // ? Get ALL RiskAssessments
         var allAssessmentsQuery = new GetAllRiskAssessmentsQuery();
         var assessmentsResult = await Mediator.SendAsync(allAssessmentsQuery, CancellationToken.None);
 
-        if (!assessmentsResult.IsSuccess || assessmentsResult.Value == null)
+        if (!assessmentsResult.IsSuccess || assessmentsResult.Value is null)
         {
-            Console.WriteLine("❌ Failed to load RiskAssessments from database");
+            Console.WriteLine("? Failed to load RiskAssessments from database");
             return;
         }
 
         var allAssessments = assessmentsResult.Value.ToList();
-        Console.WriteLine($"🔍 Found {allAssessments.Count} total RiskAssessments in database");
+        Console.WriteLine($"?? Found {allAssessments.Count} total RiskAssessments in database");
 
-        // ✅ ENHANCED FILTERING: Be more flexible with RiskAssessment matching
+        // ? ENHANCED FILTERING: Be more flexible with RiskAssessment matching
         var validAssessmentCodes = new HashSet<string>();
 
         // Add all technical assessment codes
         foreach (var assessment in allAssessments.Where(a => a.RiskAssessmentCategory == RiskAssessmentCategory.Technical))
         {
-            validAssessmentCodes.Add(assessment.Code);
-            Console.WriteLine($"🔍 Added Technical RiskAssessment: {assessment.Code}");
+            if (!string.IsNullOrEmpty(assessment.Code))
+            {
+                validAssessmentCodes.Add(assessment.Code);
+                Console.WriteLine($"?? Added Technical RiskAssessment: {assessment.Code}");
+            }
         }
 
         // Also check for assessments that reference our hazards
@@ -144,29 +147,34 @@ public class Step3Model
         {
             if (!string.IsNullOrEmpty(assessment.HazardCode) && hazardCodes.Contains(assessment.HazardCode))
             {
-                validAssessmentCodes.Add(assessment.Code);
-                Console.WriteLine($"🔍 Added RiskAssessment by HazardCode: {assessment.Code} (HazardCode: {assessment.HazardCode})");
+                if (!string.IsNullOrEmpty(assessment.Code))
+                {
+                    validAssessmentCodes.Add(assessment.Code);
+                    Console.WriteLine($"?? Added RiskAssessment by HazardCode: {assessment.Code} (HazardCode: {assessment.HazardCode})");
+                }
             }
 
-            if (assessment.IdentifiedHazardIds?.Any(hazardCodes.Contains) == true)
+            if (assessment.IdentifiedHazardIds?.Any(id => !string.IsNullOrEmpty(id) && hazardCodes.Contains(id)) == true)
             {
-                validAssessmentCodes.Add(assessment.Code);
-                Console.WriteLine($"🔍 Added RiskAssessment by IdentifiedHazardIds: {assessment.Code}");
+                if (!string.IsNullOrEmpty(assessment.Code))
+                {
+                    validAssessmentCodes.Add(assessment.Code);
+                    Console.WriteLine($"?? Added RiskAssessment by IdentifiedHazardIds: {assessment.Code}");
+                }
             }
         }
 
-        Console.WriteLine($"🔍 Valid assessment codes for filtering: {string.Join(", ", validAssessmentCodes)}");
+        Console.WriteLine($"?? Valid assessment codes for filtering: {string.Join(", ", validAssessmentCodes)}");
 
-        // ✅ IMPROVED FILTERING: Load analyses for our hazards that belong to valid assessments
+        // ? IMPROVED FILTERING: Load analyses for our hazards that belong to valid assessments
         var existingAnalyses = allAnalyses
-            .Where(ra => hazardCodes.Contains(ra.HazardCode) &&
-                        (validAssessmentCodes.Contains(ra.RiskAssessmentCode) ||
-                         string.IsNullOrEmpty(ra.RiskAssessmentCode))) // Also include orphaned analyses
+            .Where(ra => !string.IsNullOrEmpty(ra.HazardCode) && hazardCodes.Contains(ra.HazardCode) &&
+                        (string.IsNullOrEmpty(ra.RiskAssessmentCode) || validAssessmentCodes.Contains(ra.RiskAssessmentCode))) // Also include orphaned analyses
             .ToList();
 
-        Console.WriteLine($"🔍 After filtering: Found {existingAnalyses.Count} relevant RiskAnalysis entities");
+        Console.WriteLine($"?? After filtering: Found {existingAnalyses.Count} relevant RiskAnalysis entities");
 
-        // ✅ Load existing analyses into Step3 dictionary with debugging
+        // ? Load existing analyses into Step3 dictionary with debugging
         foreach (var analysis in existingAnalyses)
         {
             // Fix RiskAssessmentCode if needed
@@ -177,31 +185,34 @@ public class Step3Model
                                        (a.HazardCode == analysis.HazardCode ||
                                         a.IdentifiedHazardIds?.Contains(analysis.HazardCode) == true));
 
-                if (assessment != null)
+                if (assessment is not null && !string.IsNullOrEmpty(assessment.Code))
                 {
                     analysis.RiskAssessmentCode = assessment.Code;
-                    Console.WriteLine($"🔧 Fixed RiskAssessmentCode for {analysis.HazardCode}: {assessment.Code}");
+                    Console.WriteLine($"?? Fixed RiskAssessmentCode for {analysis.HazardCode}: {assessment.Code}");
                 }
             }
 
-            Step3RiskAnalyses[analysis.HazardCode] = analysis;
-            Console.WriteLine($"✅ Loaded RiskAnalysis for {analysis.HazardCode}: {analysis.Code} (Assessment: {analysis.RiskAssessmentCode})");
+            if (!string.IsNullOrEmpty(analysis.HazardCode))
+            {
+                Step3RiskAnalyses[analysis.HazardCode] = analysis;
+                Console.WriteLine($"? Loaded RiskAnalysis for {analysis.HazardCode}: {analysis.Code} (Assessment: {analysis.RiskAssessmentCode})");
+            }
         }
 
-        Console.WriteLine($"✅ Step3RiskAnalyses now contains {Step3RiskAnalyses.Count} entries: {string.Join(", ", Step3RiskAnalyses.Keys)}");
+        Console.WriteLine($"? Step3RiskAnalyses now contains {Step3RiskAnalyses.Count} entries: {string.Join(", ", Step3RiskAnalyses.Keys)}");
 
-        // ✅ Create new analyses for missing hazards (but only if they don't exist in database)
+        // ? Create new analyses for missing hazards (but only if they don't exist in database)
         var hazardsWithoutAnalysis = availableHazards
             .Where(h => !Step3RiskAnalyses.ContainsKey(h.Code))
             .ToList();
 
         if (hazardsWithoutAnalysis.Any())
         {
-            Console.WriteLine($"⚠️  {hazardsWithoutAnalysis.Count} hazards don't have RiskAnalysis: {string.Join(", ", hazardsWithoutAnalysis.Select(h => h.Code))}");
+            Console.WriteLine($"??  {hazardsWithoutAnalysis.Count} hazards don't have RiskAnalysis: {string.Join(", ", hazardsWithoutAnalysis.Select(h => h.Code))}");
             await CreateNewRiskAnalysesForNewHazards(hazardsWithoutAnalysis, allAssessments);
         }
 
-        Console.WriteLine($"🏁 LoadExistingRiskAnalysesAsync completed. Final Step3RiskAnalyses count: {Step3RiskAnalyses.Count}");
+        Console.WriteLine($"?? LoadExistingRiskAnalysesAsync completed. Final Step3RiskAnalyses count: {Step3RiskAnalyses.Count}");
     }
 
     /// <summary>
@@ -209,7 +220,7 @@ public class Step3Model
     /// </summary>
     private async Task CreateNewRiskAnalysesForNewHazards(List<Hazard> newHazards, IEnumerable<RiskAssessment> availableAssessments)
     {
-        if (Mediator == null || !newHazards.Any()) return;
+        if (Mediator is null || !newHazards.Any()) return;
 
         try
         {
@@ -220,14 +231,14 @@ public class Step3Model
                     .FirstOrDefault(a => a.HazardCode == hazard.Code ||
                                         a.IdentifiedHazardIds?.Contains(hazard.Code) == true);
 
-                if (assessment == null)
+                if (assessment is null)
                 {
                     // If no specific assessment found, use the first technical assessment
                     assessment = availableAssessments
                         .FirstOrDefault(a => a.RiskAssessmentCategory == RiskAssessmentCategory.Technical);
                 }
 
-                if (assessment != null)
+                if (assessment is not null)
                 {
                     // Create new RiskAnalysis entity for the newly added hazard
                     var newAnalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"))
@@ -252,15 +263,15 @@ public class Step3Model
                     var createCommand = new CreateRiskAnalysisCommand(newAnalysis);
                     var result = await Mediator.SendAsync(createCommand, CancellationToken.None);
 
-                    if (result.IsSuccess && result.Value != null)
+                    if (result.IsSuccess && result.Value is not null)
                     {
                         // Add the newly created analysis to our dictionary
                         Step3RiskAnalyses[hazard.Code] = result.Value;
-                        Console.WriteLine($"✅ Created new RiskAnalysis for newly added hazard {hazard.Code} with code {result.Value.Code}");
+                        Console.WriteLine($"? Created new RiskAnalysis for newly added hazard {hazard.Code} with code {result.Value.Code}");
                     }
                     else
                     {
-                        Console.WriteLine($"❌ Failed to create RiskAnalysis for newly added hazard {hazard.Code}: {result.Error?.Message ?? "Unknown error"}");
+                        Console.WriteLine($"? Failed to create RiskAnalysis for newly added hazard {hazard.Code}: {result.Error?.Message ?? "Unknown error"}");
                     }
                 }
             }
@@ -275,7 +286,7 @@ public class Step3Model
 
     public async Task ApplyToAssessmentAsync(RiskAssessment assessment, List<Hazard> availableHazards, int currentStep)
     {
-        if (Mediator == null || assessment == null || availableHazards == null) return;
+        if (Mediator is null || assessment is null || availableHazards is null) return;
 
         try
         {
@@ -307,7 +318,7 @@ public class Step3Model
                 
 
                 // Ensure RiskAssessmentCode is properly set
-                if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && assessment != null)
+                if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && assessment is not null)
                 {
                     analysis.RiskAssessmentCode = assessment.Code;
                     analysis.UpdatedBy = CurrentUserService?.UserDisplayName;
@@ -334,7 +345,7 @@ public class Step3Model
 
     public async Task LoadFromAssessmentAsync(RiskAssessment assessment, List<Hazard> reportHazards)
     {
-        if (assessment == null) return;
+        if (assessment is null) return;
         await LoadExistingRiskAnalysesAsync(reportHazards);
     }
 

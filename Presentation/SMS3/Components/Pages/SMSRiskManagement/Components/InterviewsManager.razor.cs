@@ -1,4 +1,4 @@
-﻿
+
 
 using SMS3.Components.Shared.UIHelpers;
 
@@ -7,7 +7,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 public partial class InterviewsManager : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator Mediator { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<InterviewsManager> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
@@ -69,7 +69,7 @@ public partial class InterviewsManager : ComponentBase
             var query = new GetAllInterviewsQuery();
             var result = await Mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 Interviews = result.Value
                     .Where(i => i.InvestigationCode == InvestigationCode)
@@ -139,9 +139,9 @@ public partial class InterviewsManager : ComponentBase
             Height = "100%",
             Resizable = false,
             Draggable = false,
-            CloseDialogOnOverlayClick = true,    // ✅ FIXED: Allow overlay click to close
-            CloseDialogOnEsc = true,             // ✅ FIXED: Allow ESC to close
-            ShowTitle = false,                   // ✅ FIXED: No title (your custom modal has its own)
+            CloseDialogOnOverlayClick = true,    // ? FIXED: Allow overlay click to close
+            CloseDialogOnEsc = true,             // ? FIXED: Allow ESC to close
+            ShowTitle = false,                   // ? FIXED: No title (your custom modal has its own)
             ShowClose = false,
             CssClass = "custom-modal-dialog"
         };

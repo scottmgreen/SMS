@@ -176,7 +176,7 @@
 }
 
 <!-- Edit Group Modal -->
-@if (ShowEditModal && CurrentGroup != null)
+@if (ShowEditModal && CurrentGroup is not null)
 {
     <div class="modal-backdrop">
         <div class="modal-dialog modal-lg">
@@ -234,7 +234,7 @@
 }
 
 <!-- Members Management Modal -->
-@if (ShowMembersModal && CurrentGroup != null && !string.IsNullOrEmpty(CurrentGroupCode))
+@if (ShowMembersModal && CurrentGroup is not null && !string.IsNullOrEmpty(CurrentGroupCode))
 {
     <div class="modal-backdrop">
         <div class="modal-dialog modal-xl">

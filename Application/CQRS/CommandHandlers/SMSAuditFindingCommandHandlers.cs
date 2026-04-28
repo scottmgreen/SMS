@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 /// SMS Audit Finding Command Handlers following established patterns
 /// </summary>
 
-public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSAuditFindingCommand, Result<SMSAuditFinding>>
+public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateSMSAuditFindingCommand, Result<SMSAuditFinding>>
 {
     private readonly SMSAuditFindingDataService _auditFindingDataService;
     private readonly SMSAuditService _auditService;
@@ -119,7 +119,7 @@ public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
     }
 }
 
-public class UpdateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSAuditFindingCommand, Result<SMSAuditFinding>>
+public class UpdateSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSAuditFindingCommand, Result<SMSAuditFinding>>
 {
     private readonly SMSAuditFindingDataService _auditFindingDataService;
     private readonly ILogger<UpdateSMSAuditFindingCommandHandler> _logger;
@@ -192,7 +192,7 @@ public class UpdateSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
     }
 }
 
-public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, IRequestHandler<AssignSMSAuditCorrectiveActionCommand, Result<SMSAuditFinding>>
+public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, IBaseRequestHandler<AssignSMSAuditCorrectiveActionCommand, Result<SMSAuditFinding>>
 {
     private readonly SMSAuditFindingDataService _auditFindingDataService;
     private readonly ILogger<AssignSMSAuditCorrectiveActionCommandHandler> _logger;
@@ -269,7 +269,7 @@ public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, I
     }
 }
 
-public class CompleteSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, IRequestHandler<CompleteSMSAuditCorrectiveActionCommand, Result<SMSAuditFinding>>
+public class CompleteSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, IBaseRequestHandler<CompleteSMSAuditCorrectiveActionCommand, Result<SMSAuditFinding>>
 {
     private readonly SMSAuditFindingDataService _auditFindingDataService;
     private readonly ILogger<CompleteSMSAuditCorrectiveActionCommandHandler> _logger;
@@ -343,7 +343,7 @@ public class CompleteSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle,
     }
 }
 
-public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandler<VerifySMSAuditFindingCommand, Result<SMSAuditFinding>>
+public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IBaseRequestHandler<VerifySMSAuditFindingCommand, Result<SMSAuditFinding>>
 {
     private readonly SMSAuditFindingDataService _auditFindingDataService;
     private readonly ILogger<VerifySMSAuditFindingCommandHandler> _logger;
@@ -418,7 +418,7 @@ public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHa
     }
 }
 
-public class DeleteSMSAuditFindingCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSAuditFindingCommand, Result<bool>>
+public class DeleteSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSMSAuditFindingCommand, Result<bool>>
 {
     private readonly SMSAuditFindingDataService _auditFindingDataService;
     private readonly ILogger<DeleteSMSAuditFindingCommandHandler> _logger;

@@ -27,7 +27,7 @@ namespace SMS_Application.Messaging.Pipelines;
 /// This class is kept for reference but should not be registered or used.
 /// </summary>
 [Obsolete("This mega-pipeline violates SRP. Use individual single-responsibility pipelines instead.")]
-public class AuditFieldsPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
+public class AuditFieldsPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResult>
     where TRequest : IRequest<TResult>
     where TResult : Result
 {

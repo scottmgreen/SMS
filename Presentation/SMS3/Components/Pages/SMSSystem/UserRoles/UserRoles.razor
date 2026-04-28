@@ -97,13 +97,13 @@
                                     <Template Context="role">
                                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
                                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
-                                                        Click="@(() => EditRole(role.Code))" 
+                                                        Click="@(() => EditRole(role.Code ?? ""))" 
                                                         title="Edit Role" />
                                             <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
                                                         Click="@(() => ShowPermissionsDialog(role))" 
                                                         title="View Permissions" />
                                             <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
-                                                        Click="@(() => ShowDeleteDialog(role.Code, role.Name))" 
+                                                        Click="@(() => ShowDeleteDialog(role.Code ?? "", role.Name ?? ""))" 
                                                         title="Delete Role" />
                                         </RadzenStack>
                                     </Template>
@@ -238,7 +238,7 @@
 }
 
 <!-- Edit Role Modal -->
-@if (ShowEditModal && CurrentEditRole != null)
+@if (ShowEditModal && CurrentEditRole is not null)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-xl">
@@ -344,7 +344,7 @@
 }
 
 <!-- View Permissions Modal -->
-@if (ShowPermissionsModal && ViewRole != null)
+@if (ShowPermissionsModal && ViewRole is not null)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-lg">

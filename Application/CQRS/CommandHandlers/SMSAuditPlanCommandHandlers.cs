@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 /// SMS Audit Plan Command Handlers following established patterns
 /// </summary>
 
-public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandler<CreateSMSAuditPlanCommand, Result<SMSAuditPlan>>
+public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateSMSAuditPlanCommand, Result<SMSAuditPlan>>
 {
     private readonly SMSAuditPlanService _auditPlanService;
     private readonly ILogger<CreateSMSAuditPlanCommandHandler> _logger;
@@ -97,7 +97,7 @@ public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
     }
 }
 
-public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandler<UpdateSMSAuditPlanCommand, Result<SMSAuditPlan>>
+public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSMSAuditPlanCommand, Result<SMSAuditPlan>>
 {
     private readonly SMSAuditPlanService _auditPlanService;
     private readonly ILogger<UpdateSMSAuditPlanCommandHandler> _logger;
@@ -159,7 +159,7 @@ public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
     }
 }
 
-public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandler<ApproveSMSAuditPlanCommand, Result<SMSAuditPlan>>
+public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestHandler<ApproveSMSAuditPlanCommand, Result<SMSAuditPlan>>
 {
     private readonly SMSAuditPlanService _auditPlanService;
     private readonly ILogger<ApproveSMSAuditPlanCommandHandler> _logger;
@@ -238,7 +238,7 @@ public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHand
     }
 }
 
-public class DeleteSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandler<DeleteSMSAuditPlanCommand, Result<bool>>
+public class DeleteSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSMSAuditPlanCommand, Result<bool>>
 {
     private readonly SMSAuditPlanService _auditPlanService;
     private readonly ILogger<DeleteSMSAuditPlanCommandHandler> _logger;
@@ -290,7 +290,7 @@ public class DeleteSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandl
     }
 }
 
-public class ScheduleSMSAuditPlanCommandHandler : BaseCommandBundle, IRequestHandler<ScheduleSMSAuditPlanCommand, Result<SMSAuditPlan>>
+public class ScheduleSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestHandler<ScheduleSMSAuditPlanCommand, Result<SMSAuditPlan>>
 {
     private readonly SMSAuditPlanService _auditPlanService;
     private readonly ILogger<ScheduleSMSAuditPlanCommandHandler> _logger;

@@ -7,7 +7,7 @@ namespace SMS3.Components.Pages.SMSAssurance;
 public partial class SPIDashboard : ComponentBase
 {
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<SPIDashboard> _logger { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
@@ -82,7 +82,7 @@ public partial class SPIDashboard : ComponentBase
 
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 DashboardData = result.Value;
                 await LoadTrendSPIOptionsAsync();
@@ -132,7 +132,7 @@ public partial class SPIDashboard : ComponentBase
 
     private async Task LoadTrendDataAsync()
     {
-        if (string.IsNullOrEmpty(SelectedTrendSPI) || DashboardData == null)
+        if (string.IsNullOrEmpty(SelectedTrendSPI) || DashboardData is null)
         {
             TrendData = null;
             TrendTargetData = null;
@@ -142,10 +142,10 @@ public partial class SPIDashboard : ComponentBase
         try
         {
             var selectedSPI = DashboardData.SPICards.FirstOrDefault(spi => spi.Name == SelectedTrendSPI);
-            if (selectedSPI == null) return;
+            if (selectedSPI is null) return;
 
             var trendAnalysis = DashboardData.TrendAnalysis?.FirstOrDefault(t => t.SPIId == selectedSPI.SPIId);
-            if (trendAnalysis != null && trendAnalysis.DataPoints?.Any() == true)
+            if (trendAnalysis is not null && trendAnalysis.DataPoints?.Any() == true)
             {
                 // Filter out invalid data points that could cause chart issues
                 TrendData = trendAnalysis.DataPoints
@@ -245,22 +245,22 @@ public partial class SPIDashboard : ComponentBase
     private List<string>? GetTypeFilters()
     {
         if (SelectedSPIType == "All") return null;
-        return new List<string> { SelectedSPIType };
+        return string.IsNullOrEmpty(SelectedSPIType) ? null : new List<string> { SelectedSPIType };
     }
 
     private List<string>? GetDepartmentFilters()
     {
         if (SelectedDepartment == "All") return null;
-        return new List<string> { SelectedDepartment };
+        return string.IsNullOrEmpty(SelectedDepartment) ? null : new List<string> { SelectedDepartment };
     }
 
     private List<SMS_Domain.Entities.SPIDashboardCard> GetFilteredSPICards()
     {
-        if (DashboardData?.SPICards == null) return new List<SMS_Domain.Entities.SPIDashboardCard>();
+        if (DashboardData?.SPICards is null) return new List<SMS_Domain.Entities.SPIDashboardCard>();
 
         var filtered = DashboardData.SPICards.AsEnumerable();
 
-        if (SelectedSPIType != "All")
+        if (SelectedSPIType != "All" && !string.IsNullOrEmpty(SelectedSPIType))
         {
             filtered = filtered.Where(spi => spi.IndicatorType.Contains(SelectedSPIType));
         }
@@ -321,7 +321,7 @@ public partial class SPIDashboard : ComponentBase
     #region Helper Methods
     private string GetComplianceRate()
     {
-        if (DashboardData?.PerformanceSummary == null) return "0";
+        if (DashboardData?.PerformanceSummary is null) return "0";
         return DashboardData.PerformanceSummary.OverallComplianceRate.ToString("F1");
     }
 

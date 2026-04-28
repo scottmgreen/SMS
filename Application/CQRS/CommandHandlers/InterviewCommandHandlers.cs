@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // INTERVIEW COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<CreateInterviewCommand, Result<Interview>>
+public class CreateInterviewCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateInterviewCommand, Result<Interview>>
 {
     private readonly IInterviewService _interviewService;
     private readonly ILogger<CreateInterviewCommandHandler> _logger;
@@ -69,7 +69,7 @@ public class CreateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
     }
 }
 
-public class UpdateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<UpdateInterviewCommand, Result<Interview>>
+public class UpdateInterviewCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateInterviewCommand, Result<Interview>>
 {
     private readonly IInterviewService _interviewService;
     private readonly ILogger<UpdateInterviewCommandHandler> _logger;
@@ -119,7 +119,7 @@ public class UpdateInterviewCommandHandler : BaseCommandBundle, IRequestHandler<
     }
 }
 
-public class DeleteInterviewCommandHandler : BaseCommandBundle, IRequestHandler<DeleteInterviewCommand, Result<bool>>
+public class DeleteInterviewCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteInterviewCommand, Result<bool>>
 {
     private readonly IInterviewService _interviewService;
     private readonly ILogger<DeleteInterviewCommandHandler> _logger;

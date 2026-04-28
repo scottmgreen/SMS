@@ -53,7 +53,7 @@ public partial class About : ComponentBase
         {
             // Get main application assembly information
             var entryAssembly = Assembly.GetEntryAssembly();
-            if (entryAssembly != null)
+            if (entryAssembly is not null)
             {
                 // Get version from assembly
                 var version = entryAssembly.GetName().Version;
@@ -110,10 +110,10 @@ public partial class About : ComponentBase
                 var assembly = loadedAssemblies.FirstOrDefault(a => 
                     a.GetName().Name?.Equals(assemblyName, StringComparison.OrdinalIgnoreCase) == true);
 
-                if (assembly != null)
+                if (assembly is not null)
                 {
                     var assemblyInfo = ExtractAssemblyInfo(assembly);
-                    if (assemblyInfo != null)
+                    if (assemblyInfo is not null)
                     {
                         AssemblyVersions.Add(assemblyInfo);
                     }

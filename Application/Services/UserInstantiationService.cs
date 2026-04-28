@@ -24,12 +24,12 @@ namespace SMS_Application.Services;
 public class UserInstantiationService : IUserInstantiationService
 {
     private readonly ILogger<UserInstantiationService> _logger;
-    private readonly IMediator _mediator;
+    private readonly IBaseMediator _mediator;
     private readonly IUserCompletenessValidator _completenessValidator;
 
     public UserInstantiationService(
         ILogger<UserInstantiationService> logger,
-        IMediator mediator,
+        IBaseMediator mediator,
         IUserCompletenessValidator completenessValidator)
     {
         _logger = logger;

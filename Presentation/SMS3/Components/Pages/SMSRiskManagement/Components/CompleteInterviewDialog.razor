@@ -26,9 +26,9 @@
                     <RadzenCard Variant="Variant.Outlined" Style="background: #f8f9fa; border: 1px solid #e9ecef;">
                         <div style="padding: 1rem;">
                             <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Completing Interview: @Interview.PersonInterviewed</RadzenText>
+                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Completing Interview: @(Interview?.PersonInterviewed ?? "Unknown")</RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); margin: 0;">
-                                    @Interview.Type.Name • @(Interview.InterviewDate?.ToString("MMM dd, yyyy 'at' h:mm tt") ?? "Not scheduled")
+                                    @(Interview?.Type?.Name ?? "Unknown Type") • @(Interview?.InterviewDate?.ToString("MMM dd, yyyy 'at' h:mm tt") ?? "Not scheduled")
                                 </RadzenText>
                             </RadzenStack>
                         </div>

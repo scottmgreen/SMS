@@ -15,7 +15,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 /// ✅ PIPELINE ONLY: Handler for authentication success - no manual audit creation
 /// All audit logging handled automatically by AuditFieldsPipeline
 /// </summary>
-public class RecordAuthenticationSuccessCommandHandler : BaseCommandBundle, IRequestHandler<RecordAuthenticationSuccessCommand, Result<bool>>
+public class RecordAuthenticationSuccessCommandHandler : BaseCommandBundle, IBaseRequestHandler<RecordAuthenticationSuccessCommand, Result<bool>>
 {
     private readonly ILogger<RecordAuthenticationSuccessCommandHandler> _logger;
 
@@ -52,7 +52,7 @@ public class RecordAuthenticationSuccessCommandHandler : BaseCommandBundle, IReq
 /// ✅ PIPELINE ONLY: Handler for authentication failure - no manual audit creation
 /// All audit logging handled automatically by AuditFieldsPipeline
 /// </summary>
-public class RecordAuthenticationFailureCommandHandler : BaseCommandBundle, IRequestHandler<RecordAuthenticationFailureCommand, Result<bool>>
+public class RecordAuthenticationFailureCommandHandler : BaseCommandBundle, IBaseRequestHandler<RecordAuthenticationFailureCommand, Result<bool>>
 {
     private readonly ILogger<RecordAuthenticationFailureCommandHandler> _logger;
 
@@ -86,7 +86,7 @@ public class RecordAuthenticationFailureCommandHandler : BaseCommandBundle, IReq
 /// ✅ PIPELINE ONLY: Handler for logout events - no manual audit creation
 /// All audit logging handled automatically by AuditFieldsPipeline
 /// </summary>
-public class RecordLogoutCommandHandler : BaseCommandBundle, IRequestHandler<RecordAuthenticationLogoutCommand, Result<bool>>
+public class RecordLogoutCommandHandler : BaseCommandBundle, IBaseRequestHandler<RecordAuthenticationLogoutCommand, Result<bool>>
 {
     private readonly ILogger<RecordLogoutCommandHandler> _logger;
 

@@ -33,7 +33,7 @@ else
             <RadzenCard>
                 <RadzenStack Gap="1rem" Class="rz-p-3">
                     
-                    @if (IsEditMode && CurrentMitigation != null)
+                    @if (IsEditMode && CurrentMitigation is not null)
                     {
                         <!-- Edit Mode Header -->
                         <RadzenAlert Size="AlertSize.Small" Variant="Variant.Flat" AlertStyle="AlertStyle.Info">
@@ -61,16 +61,22 @@ else
                             <RadzenRow Gap="1rem">
                                 <RadzenColumn Size="12" SizeMD="8">
                                     <RadzenFormField Text="Mitigation Name *" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenTextBox @bind-Value="@CurrentMitigation.Name" 
-                                                     Placeholder="Enter mitigation name..."
-                                                     Style="width: 100%; min-width: 100%;" />
+                                        @if (CurrentMitigation is not null)
+                                        {
+                                            <RadzenTextBox @bind-Value="@CurrentMitigation.Name" 
+                                                         Placeholder="Enter mitigation name..."
+                                                         Style="width: 100%; min-width: 100%;" />
+                                        }
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="4">
                                     <RadzenFormField Text="Type" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenDropDown @bind-Value="@CurrentMitigation.Type" Data="@ControlTypes"
-                                                        Placeholder="Select type..."
-                                                        Style="width: 100%; min-width: 100%;" />
+                                        @if (CurrentMitigation is not null)
+                                        {
+                                            <RadzenDropDown @bind-Value="@CurrentMitigation.Type" Data="@ControlTypes"
+                                                            Placeholder="Select type..."
+                                                            Style="width: 100%; min-width: 100%;" />
+                                        }
                                     </RadzenFormField>
                                 </RadzenColumn>
                             </RadzenRow>
@@ -78,9 +84,12 @@ else
                             <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
                                 <RadzenColumn Size="12">
                                     <RadzenFormField Text="Description *" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenTextArea @bind-Value="@CurrentMitigation.Description" Rows="4"
-                                                      Placeholder="Describe the mitigation strategy in detail..."
-                                                      Style="width: 100%; min-width: 100%;" />
+                                        @if (CurrentMitigation is not null)
+                                        {
+                                            <RadzenTextArea @bind-Value="@CurrentMitigation.Description" Rows="4"
+                                                          Placeholder="Describe the mitigation strategy in detail..."
+                                                          Style="width: 100%; min-width: 100%;" />
+                                        }
                                     </RadzenFormField>
                                 </RadzenColumn>
                             </RadzenRow>
@@ -92,18 +101,21 @@ else
                                 
                                 <RadzenColumn Size="12" SizeMD="4">
                                     <RadzenFormField Text="Status" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenText TextStyle="TextStyle.Subtitle1">@CurrentMitigation.Status </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Subtitle1">@(CurrentMitigation?.Status ?? "Not Set")</RadzenText>
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="4">
                                     <RadzenFormField Text="Approved By" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenText TextStyle="TextStyle.Subtitle1">@CurrentMitigation.ApprovedBy </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Subtitle1">@(CurrentMitigation?.ApprovedBy ?? "Not Assigned")</RadzenText>
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="4">
                                     <RadzenFormField Text="Progress %" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenNumeric @bind-Value="@CurrentMitigation.Progress" Min="0" Max="100" 
-                                                     Style="width: 100%; min-width: 100%;" />
+                                        @if (CurrentMitigation is not null)
+                                        {
+                                            <RadzenNumeric @bind-Value="@CurrentMitigation.Progress" Min="0" Max="100" 
+                                                         Style="width: 100%; min-width: 100%;" />
+                                        }
                                     </RadzenFormField>
                                 </RadzenColumn>
                             </RadzenRow>
@@ -111,8 +123,11 @@ else
                             <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
                                 <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenFormField Text="Target Date" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenDatePicker @bind-Value="@CurrentMitigation.TargetDate" DateFormat="yyyy-MM-dd" 
-                                                        Style="width: 100%; min-width: 100%;" />
+                                        @if (CurrentMitigation is not null)
+                                        {
+                                            <RadzenDatePicker @bind-Value="@CurrentMitigation.TargetDate" DateFormat="yyyy-MM-dd" 
+                                                            Style="width: 100%; min-width: 100%;" />
+                                        }
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 
@@ -124,16 +139,22 @@ else
                             <RadzenRow Gap="1rem">
                                 <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenFormField Text="Assigned Department" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenDropDown @bind-Value="@CurrentMitigation.AssignedDepartment" Data="@Departments"
-                                                        Placeholder="Select department..."
-                                                        Style="width: 100%; min-width: 100%;" />
+                                        @if (CurrentMitigation is not null)
+                                        {
+                                            <RadzenDropDown @bind-Value="@CurrentMitigation.AssignedDepartment" Data="@Departments"
+                                                            Placeholder="Select department..."
+                                                            Style="width: 100%; min-width: 100%;" />
+                                        }
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenFormField Text="Assigned To" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenTextBox @bind-Value="@CurrentMitigation.AssignedTo" 
-                                                     Placeholder="Person responsible..."
-                                                     Style="width: 100%; min-width: 100%;" />
+                                        @if (CurrentMitigation is not null)
+                                        {
+                                            <RadzenTextBox @bind-Value="@CurrentMitigation.AssignedTo" 
+                                                         Placeholder="Person responsible..."
+                                                         Style="width: 100%; min-width: 100%;" />
+                                        }
                                     </RadzenFormField>
                                 </RadzenColumn>
                             </RadzenRow>
@@ -141,14 +162,20 @@ else
                             <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
                                 <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenFormField Text="Estimated Cost" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenNumeric @bind-Value="@CurrentMitigation.EstimatedCost" Format="c" 
-                                                     Style="width: 100%; min-width: 100%;" />
+                                        @if (CurrentMitigation is not null)
+                                        {
+                                            <RadzenNumeric @bind-Value="@CurrentMitigation.EstimatedCost" Format="c" 
+                                                         Style="width: 100%; min-width: 100%;" />
+                                        }
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="6">
                                     <RadzenFormField Text="Estimated Hours" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenNumeric @bind-Value="@CurrentMitigation.EstimatedHours" 
-                                                     Style="width: 100%; min-width: 100%;" />
+                                        @if (CurrentMitigation is not null)
+                                        {
+                                            <RadzenNumeric @bind-Value="@CurrentMitigation.EstimatedHours" 
+                                                         Style="width: 100%; min-width: 100%;" />
+                                        }
                                     </RadzenFormField>
                                 </RadzenColumn>
                             </RadzenRow>
@@ -156,9 +183,12 @@ else
                             <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
                                 <RadzenColumn Size="12">
                                     <RadzenFormField Text="Resource Requirements" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenTextArea @bind-Value="@CurrentMitigation.ResourceRequirements" Rows="3"
-                                                      Placeholder="Describe required resources..."
-                                                      Style="width: 100%; min-width: 100%;" />
+                                        @if (CurrentMitigation is not null)
+                                        {
+                                            <RadzenTextArea @bind-Value="@CurrentMitigation.ResourceRequirements" Rows="3"
+                                                          Placeholder="Describe required resources..."
+                                                          Style="width: 100%; min-width: 100%;" />
+                                        }
                                     </RadzenFormField>
                                 </RadzenColumn>
                             </RadzenRow>

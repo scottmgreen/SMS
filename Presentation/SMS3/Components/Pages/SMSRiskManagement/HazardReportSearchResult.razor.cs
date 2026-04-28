@@ -25,7 +25,7 @@ public partial class HazardReportSearchResult : ComponentBase
     #endregion
 
     #region Dependencies
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<HazardReportSearchResult> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
@@ -103,7 +103,7 @@ public partial class HazardReportSearchResult : ComponentBase
             var trackingQuery = new GetHazardReportTrackingByTrackingCodeQuery(TrackingCode);
             var trackingResult = await _mediator.SendAsync(trackingQuery, CancellationToken.None);
 
-            if (trackingResult.IsFailure || trackingResult.Value == null)
+            if (trackingResult.IsFailure || trackingResult.Value is null)
             {
                 _logger.LogWarning("No tracking record found for: {TrackingCode}", TrackingCode);
                 HasSearched = true;
@@ -164,14 +164,14 @@ public partial class HazardReportSearchResult : ComponentBase
     /// </summary>
     private async Task LoadHazardInformation(string hazardCode)
     {
-        if (string.IsNullOrEmpty(hazardCode) || ReportDetails == null) return;
+        if (string.IsNullOrEmpty(hazardCode) || ReportDetails is null) return;
 
         try
         {
             var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazardCode));
             var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
-            if (hazardResult.IsSuccess && hazardResult.Value != null)
+            if (hazardResult.IsSuccess && hazardResult.Value is not null)
             {
                 var hazard = hazardResult.Value;
 
@@ -206,14 +206,14 @@ public partial class HazardReportSearchResult : ComponentBase
     /// </summary>
     private async Task LoadReportInformation(string reportCode)
     {
-        if (string.IsNullOrEmpty(reportCode) || ReportDetails == null) return;
+        if (string.IsNullOrEmpty(reportCode) || ReportDetails is null) return;
 
         try
         {
             var reportQuery = new GetReportByCodeQuery(new ReportID(reportCode));
             var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
-            if (reportResult.IsSuccess && reportResult.Value != null)
+            if (reportResult.IsSuccess && reportResult.Value is not null)
             {
                 var report = reportResult.Value;
 
@@ -282,7 +282,7 @@ public partial class HazardReportSearchResult : ComponentBase
             var validationQuery = new GetReportValidationByReportIdQuery(new ReportID(reportCode));
             var validationResult = await _mediator.SendAsync(validationQuery, CancellationToken.None);
 
-            if (validationResult.IsSuccess && validationResult.Value != null)
+            if (validationResult.IsSuccess && validationResult.Value is not null)
             {
                 ReportValidation = validationResult.Value;
                 _logger.LogInformation("Loaded validation information for report: {ReportCode}", reportCode);
@@ -500,7 +500,7 @@ public partial class HazardReportSearchResult : ComponentBase
     /// </summary>
     public string GetProcessingStatusClass()
     {
-        if (ReportValidation?.ValidationDecision == null) return "pending";
+        if (ReportValidation?.ValidationDecision is null) return "pending";
 
         return ReportValidation.ValidationDecision.ToUpper() switch
         {
@@ -516,7 +516,7 @@ public partial class HazardReportSearchResult : ComponentBase
     /// </summary>
     public string GetProcessingIcon()
     {
-        if (ReportValidation?.ValidationDecision == null) return "schedule";
+        if (ReportValidation?.ValidationDecision is null) return "schedule";
 
         return ReportValidation.ValidationDecision.ToUpper() switch
         {
@@ -532,7 +532,7 @@ public partial class HazardReportSearchResult : ComponentBase
     /// </summary>
     public string GetProcessingStageTitle()
     {
-        if (ReportValidation?.ValidationDecision == null) return "Processing";
+        if (ReportValidation?.ValidationDecision is null) return "Processing";
 
         return ReportValidation.ValidationDecision.ToUpper() switch
         {
@@ -567,7 +567,7 @@ public partial class HazardReportSearchResult : ComponentBase
     /// </summary>
     public string GetSimpleProcessingDescription()
     {
-        if (ReportValidation?.ValidationDecision == null) 
+        if (ReportValidation?.ValidationDecision is null) 
             return "Processing status will be updated as the report progresses";
 
         return ReportValidation.ValidationDecision.ToUpper() switch

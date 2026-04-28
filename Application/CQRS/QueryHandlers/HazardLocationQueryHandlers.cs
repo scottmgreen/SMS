@@ -20,7 +20,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // HAZARD LOCATION QUERY HANDLERS - Following Exact SMS Pattern
 // =============================================
 
-public class GetHazardLocationByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardLocationByCodeQuery, Result<HazardLocation>>
+public class GetHazardLocationByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardLocationByCodeQuery, Result<HazardLocation>>
 {
     private readonly HazardLocationDataService _hazardLocationDataService;
     private readonly ILogger<GetHazardLocationByCodeQueryHandler> _logger;
@@ -47,7 +47,7 @@ public class GetHazardLocationByCodeQueryHandler : BaseQueryBundle, IRequestHand
     }
 }
 
-public class GetAllHazardLocationsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllHazardLocationsQuery, Result<List<HazardLocation>>>
+public class GetAllHazardLocationsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllHazardLocationsQuery, Result<List<HazardLocation>>>
 {
     private readonly HazardLocationDataService _hazardLocationDataService;
     private readonly ILogger<GetAllHazardLocationsQueryHandler> _logger;
@@ -74,7 +74,7 @@ public class GetAllHazardLocationsQueryHandler : BaseQueryBundle, IRequestHandle
     }
 }
 
-public class GetHazardLocationsByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetHazardLocationsByHazardCodeQuery, Result<List<HazardLocation>>>
+public class GetHazardLocationsByHazardCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardLocationsByHazardCodeQuery, Result<List<HazardLocation>>>
 {
     private readonly HazardLocationDataService _hazardLocationDataService;
     private readonly ILogger<GetHazardLocationsByHazardCodeQueryHandler> _logger;

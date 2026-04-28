@@ -20,7 +20,7 @@ namespace SMS_Application.Messaging.Pipelines;
 /// Provides comprehensive audit trail for data modification operations
 /// UPDATED: Now respects EnableCommandAudit feature flag to reduce chattiness
 /// </summary>
-public class CommandAuditPipeline<TRequest, TResult> : IPipeline<TRequest, TResult>
+public class CommandAuditPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResult>
     where TRequest : IRequest<TResult>
     where TResult : Result
 {

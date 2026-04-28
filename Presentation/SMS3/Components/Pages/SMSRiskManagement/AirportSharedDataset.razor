@@ -36,7 +36,7 @@ else
                     <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
                         
                         <!-- Edit Mode Indicator -->
-                        @if (IsEditMode && ExistingDataset != null)
+                        @if (IsEditMode && ExistingDataset is not null)
                         {
                             <RadzenAlert Variant="Variant.Outlined" AlertStyle="AlertStyle.Info" AllowClose="false" Style="margin-bottom: 1rem;">
                                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -57,7 +57,7 @@ else
                         }
 
                         <!-- Report Context Display (for create mode) -->
-                        @if (!IsEditMode && (ReportDetails != null || HazardDetails != null))
+                        @if (!IsEditMode && (ReportDetails is not null || HazardDetails is not null))
                         {
                             <RadzenCard Variant="Variant.Outlined" Style="background: var(--rz-base-50);">
                                 <RadzenStack Gap="1rem" Style="padding: 1rem;">
@@ -75,7 +75,7 @@ else
                                         <RadzenColumn Size="12" SizeLG="3">
                                             <RadzenStack Gap="0.25rem">
                                                 <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Report Code:</RadzenText>
-                                                @if (HazardDetails != null)
+                                                @if (HazardDetails is not null)
                                                 {
                                                     <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">Hazard Code:</RadzenText>
                                                 }
@@ -85,7 +85,7 @@ else
                                         <RadzenColumn Size="12" SizeLG="3">
                                             <RadzenStack Gap="0.25rem" AlignItems="AlignItems.Start">
                                                 <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(ReportId ?? "N/A")</RadzenText>
-                                                @if (HazardDetails != null)
+                                                @if (HazardDetails is not null)
                                                 {
                                                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">@(HazardId ?? "N/A")</RadzenText>
                                                 }

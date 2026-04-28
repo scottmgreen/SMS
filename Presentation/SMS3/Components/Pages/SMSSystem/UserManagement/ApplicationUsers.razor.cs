@@ -20,7 +20,7 @@ namespace SMS3.Components.Pages.SMSSystem.UserManagement;
 public partial class ApplicationUsers : ComponentBase
 {
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ApplicationUsers> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -53,7 +53,7 @@ public partial class ApplicationUsers : ComponentBase
     // Dynamically get all unique modules from available roles' permissions
     private IEnumerable<string> SMSModules =>
         AvailableRoles
-            .Where(role => role.Permissions != null)
+            .Where(role => role.Permissions is not null)
             .SelectMany(role => role.Permissions)
             .Where(permission => !string.IsNullOrWhiteSpace(permission.SMSModule))
             .Select(permission => permission.SMSModule!)
@@ -164,13 +164,13 @@ public partial class ApplicationUsers : ComponentBase
             var userResult = await _mediator.SendAsync(getUserQuery, CancellationToken.None);
 
             _logger.LogInformation("Query result - Success: {IsSuccess}, User found: {UserFound}", 
-                userResult.IsSuccess, userResult.Value != null);
+                userResult.IsSuccess, userResult.Value is not null);
 
-            if (userResult.IsFailure || userResult.Value == null)
+            if (userResult.IsFailure || userResult.Value is null)
             {
                 _logger.LogWarning("User not found for ID: {Id}", id);
                 ShowErrorAsyncNotification($"User not found: {id}");
-                _navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
+                _navigation.NavigateTo("/SMSSystem/UserManagement/ApplicationUsers");
                 return;
             }
 
@@ -183,12 +183,12 @@ public partial class ApplicationUsers : ComponentBase
             // Populate edit form
             editUser = new EditUserModel
             {
-                FirstName = CurrentUser.FirstName?.Value ?? "",
-                LastName = CurrentUser.LastName?.Value ?? ""
+                FirstName = CurrentUser?.FirstName?.Value ?? "",
+                LastName = CurrentUser?.LastName?.Value ?? ""
             };
 
             // Set the role code for dropdown binding
-            EditUserRoleCode = CurrentUser.UserRole?.Code;
+            EditUserRoleCode = CurrentUser?.UserRole?.Code;
 
             _logger.LogInformation("Edit form populated - FirstName: {FirstName}, LastName: {LastName}, RoleCode: {RoleCode}", 
                 editUser.FirstName, editUser.LastName, EditUserRoleCode);
@@ -201,7 +201,7 @@ public partial class ApplicationUsers : ComponentBase
             ShowErrorAsyncNotification("An error occurred while loading the user for editing.");
             
             // Navigate back to main list on error
-            _navigation.NavigateTo("/System/UserManagement/ApplicationUsers");
+            _navigation.NavigateTo("/SMSSystem/UserManagement/ApplicationUsers");
         }
     }
 
@@ -210,7 +210,7 @@ public partial class ApplicationUsers : ComponentBase
     #region ?? NEW: Role Assignment Methods
     private bool IsPermissionGranted(SMSUserRole role, string module, string action)
     {
-        if (role?.Permissions == null) return false;
+        if (role?.Permissions is null) return false;
 
         var permission = role.Permissions.FirstOrDefault(p => p.SMSModule == module);
         return action switch
@@ -259,7 +259,7 @@ public partial class ApplicationUsers : ComponentBase
             var userQuery = new GetSMSApplicationUserByCodeQuery(RoleAssignmentUserCode);
             var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
-            if (userResult.IsFailure || userResult.Value == null)
+            if (userResult.IsFailure || userResult.Value is null)
             {
                 ShowErrorAsyncNotification("User not found.");
                 return;
@@ -269,7 +269,7 @@ public partial class ApplicationUsers : ComponentBase
 
             // Get the selected role
             var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == SelectedRoleCode);
-            if (selectedRole == null)
+            if (selectedRole is null)
             {
                 ShowErrorAsyncNotification("Selected role not found.");
                 return;
@@ -327,7 +327,7 @@ public partial class ApplicationUsers : ComponentBase
             var userQuery = new GetSMSApplicationUserByCodeQuery(RoleAssignmentUserCode);
             var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
-            if (userResult.IsFailure || userResult.Value == null)
+            if (userResult.IsFailure || userResult.Value is null)
             {
                 ShowErrorAsyncNotification("User not found.");
                 return;
@@ -336,7 +336,7 @@ public partial class ApplicationUsers : ComponentBase
             var user = userResult.Value;
 
             // ? FIXED: Only set business fields - let pipeline handle audit fields
-            user.UserRole = null;
+            user.UserRole = null!; // Explicitly assign null with null-forgiving operator
             // ? REMOVED: user.UpdatedBy = CurrentUserService?.UserDisplayName;
             // ? REMOVED: user.UpdatedDate = DateTime.UtcNow;
 
@@ -428,7 +428,7 @@ public partial class ApplicationUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                var roleText = selectedRole != null ? $" with role '{selectedRole.Name}'" : "";
+                var roleText = selectedRole is not null ? $" with role '{selectedRole.Name}'" : "";
                 ShowSuccessAsyncNotification($"Application user '{NewUser.FirstName} {NewUser.LastName}' created successfully{roleText}!");
                 CloseCreateModal();
                 await LoadDataAsync();
@@ -475,7 +475,7 @@ public partial class ApplicationUsers : ComponentBase
             
             // Use regular navigation for edit routes since secure navigation has issues with route parameters
             // TODO: Fix SecureNavigation to properly handle route parameters
-            _navigation.NavigateTo($"/System/UserManagement/ApplicationUsers/Edit/{userId}");
+            _navigation.NavigateTo($"/SMSSystem/UserManagement/ApplicationUsers/Edit/{userId}");
         }
         catch (Exception ex)
         {
@@ -488,7 +488,7 @@ public partial class ApplicationUsers : ComponentBase
     {
         try
         {
-            if (CurrentUser == null)
+            if (CurrentUser is null)
             {
                 ShowErrorAsyncNotification("No user selected for update.");
                 return;
@@ -507,7 +507,7 @@ public partial class ApplicationUsers : ComponentBase
             }
             else
             {
-                CurrentUser.UserRole = null;
+                CurrentUser.UserRole = null!; // Explicitly assign null
             }
             
             // ? REMOVED: Manual audit field assignments
@@ -527,7 +527,7 @@ public partial class ApplicationUsers : ComponentBase
                 CurrentUser = null;
                 
                 // Navigate back to main list with success
-                _navigation.NavigateToSecure("/System/UserManagement/ApplicationUsers");
+                _navigation.NavigateToSecure("/SMSSystem/UserManagement/ApplicationUsers");
             }
             else
             {
@@ -625,12 +625,12 @@ public partial class ApplicationUsers : ComponentBase
         CurrentUser = null;
         EditUserRoleCode = null;
         editUser = new EditUserModel();
-        _navigation.NavigateToSecure("/System/UserManagement/ApplicationUsers");
+        _navigation.NavigateToSecure("/SMSSystem/UserManagement/ApplicationUsers");
     }
 
     private void NavigateToUserManagement()
     {
-        _navigation.NavigateToSecure("/System/UserManagement");
+        _navigation.NavigateToSecure("/SMSSystem/UserManagement");
     }
 
     private async Task ExportUsers()

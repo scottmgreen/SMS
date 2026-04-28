@@ -59,45 +59,45 @@ namespace Infrastructure.Configuration.Middleware
                 {
                     // ?? PRODUCTION FIX: Allow same-origin frames instead of DENY for IIS compatibility
                     // DENY was causing Chrome security errors in production IIS deployment
-                    response.Headers.Add("X-Frame-Options", "SAMEORIGIN");
+                    response.Headers["X-Frame-Options"] = "SAMEORIGIN";
                 }
 
                 if (!response.Headers.ContainsKey("X-Content-Type-Options"))
                 {
                     // Prevents MIME type sniffing attacks
-                    response.Headers.Add("X-Content-Type-Options", "nosniff");
+                    response.Headers["X-Content-Type-Options"] = "nosniff";
                 }
 
                 if (!response.Headers.ContainsKey("X-XSS-Protection"))
                 {
                     // Enables browser's built-in XSS protection (legacy browsers)
-                    response.Headers.Add("X-XSS-Protection", "1; mode=block");
+                    response.Headers["X-XSS-Protection"] = "1; mode=block";
                 }
 
                 if (!response.Headers.ContainsKey("Referrer-Policy"))
                 {
                     // Controls how much referrer information is included with requests
-                    response.Headers.Add("Referrer-Policy", "strict-origin-when-cross-origin");
+                    response.Headers["Referrer-Policy"] = "strict-origin-when-cross-origin";
                 }
 
                 if (!response.Headers.ContainsKey("Content-Security-Policy"))
                 {
                     // Content Security Policy - Blazor Server optimized
                     var csp = BuildContentSecurityPolicy(request);
-                    response.Headers.Add("Content-Security-Policy", csp);
+                    response.Headers["Content-Security-Policy"] = csp;
                 }
 
                 if (!response.Headers.ContainsKey("Permissions-Policy"))
                 {
                     // Permissions Policy - restricts access to browser features (updated with valid features)
-                    response.Headers.Add("Permissions-Policy", 
-                        "camera=(), microphone=(), payment=(), usb=(), geolocation=(), gyroscope=(), magnetometer=(), midi=()");
+                    response.Headers["Permissions-Policy"] = 
+                        "camera=(), microphone=(), payment=(), usb=(), geolocation=(), gyroscope=(), magnetometer=(), midi=()";
                 }
 
                 // Add Strict-Transport-Security for HTTPS requests
                 if (request.IsHttps && !response.Headers.ContainsKey("Strict-Transport-Security"))
                 {
-                    response.Headers.Add("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+                    response.Headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains";
                 }
 
                 // Cross-Origin policies for API endpoints
@@ -105,12 +105,12 @@ namespace Infrastructure.Configuration.Middleware
                 {
                     if (!response.Headers.ContainsKey("Cross-Origin-Embedder-Policy"))
                     {
-                        response.Headers.Add("Cross-Origin-Embedder-Policy", "require-corp");
+                        response.Headers["Cross-Origin-Embedder-Policy"] = "require-corp";
                     }
 
                     if (!response.Headers.ContainsKey("Cross-Origin-Opener-Policy"))
                     {
-                        response.Headers.Add("Cross-Origin-Opener-Policy", "same-origin");
+                        response.Headers["Cross-Origin-Opener-Policy"] = "same-origin";
                     }
                 }
 

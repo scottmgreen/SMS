@@ -18,7 +18,7 @@ namespace SMS_Application.Messaging.CommandHandlers;
 // SCORING PANEL COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class CreateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandler<CreateScoringPanelCommand, Result<ScoringPanel>>
+public class CreateScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateScoringPanelCommand, Result<ScoringPanel>>
 {
     private readonly IScoringPanelService _scoringPanelService;
     private readonly ILogger<CreateScoringPanelCommandHandler> _logger;
@@ -69,7 +69,7 @@ public class CreateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
     }
 }
 
-public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandler<UpdateScoringPanelCommand, Result<ScoringPanel>>
+public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateScoringPanelCommand, Result<ScoringPanel>>
 {
     private readonly IScoringPanelService _scoringPanelService;
     private readonly ILogger<UpdateScoringPanelCommandHandler> _logger;
@@ -119,7 +119,7 @@ public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IRequestHandl
     }
 }
 
-public class DeleteScoringPanelCommandHandler : BaseCommandBundle, IRequestHandler<DeleteScoringPanelCommand, Result<bool>>
+public class DeleteScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteScoringPanelCommand, Result<bool>>
 {
     private readonly IScoringPanelService _scoringPanelService;
     private readonly ILogger<DeleteScoringPanelCommandHandler> _logger;

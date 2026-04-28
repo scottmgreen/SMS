@@ -20,7 +20,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // MITIGATION ASSIGNMENT QUERY HANDLERS
 // =============================================
 
-public class GetMitigationAssignmentByIdQueryHandler : BaseQueryBundle, IRequestHandler<GetMitigationAssignmentByIdQuery, Result<MitigationAssignment>>
+public class GetMitigationAssignmentByIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetMitigationAssignmentByIdQuery, Result<MitigationAssignment>>
 {
     private readonly MitigationAssignmentDataService _mitigationAssignmentDataService;
     private readonly ILogger<GetMitigationAssignmentByIdQueryHandler> _logger;
@@ -47,7 +47,7 @@ public class GetMitigationAssignmentByIdQueryHandler : BaseQueryBundle, IRequest
     }
 }
 
-public class GetAllMitigationAssignmentsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllMitigationAssignmentsQuery, Result<List<MitigationAssignment>>>
+public class GetAllMitigationAssignmentsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllMitigationAssignmentsQuery, Result<List<MitigationAssignment>>>
 {
     private readonly MitigationAssignmentDataService _mitigationAssignmentDataService;
     private readonly ILogger<GetAllMitigationAssignmentsQueryHandler> _logger;

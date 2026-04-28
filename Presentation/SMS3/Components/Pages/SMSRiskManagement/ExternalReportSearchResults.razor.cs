@@ -20,7 +20,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class ExternalReportSearchResults : ComponentBase
 {
     #region Dependencies
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ExternalReportSearchResults> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
@@ -202,7 +202,7 @@ public partial class ExternalReportSearchResults : ComponentBase
             var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazardCode));
             var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
 
-            if (hazardResult.IsSuccess && hazardResult.Value != null)
+            if (hazardResult.IsSuccess && hazardResult.Value is not null)
             {
                 var hazard = hazardResult.Value;
 
@@ -240,7 +240,7 @@ public partial class ExternalReportSearchResults : ComponentBase
             var reportQuery = new GetReportByCodeQuery(new ReportID(reportCode));
             var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
-            if (reportResult.IsSuccess && reportResult.Value != null)
+            if (reportResult.IsSuccess && reportResult.Value is not null)
             {
                 var report = reportResult.Value;
 
@@ -308,7 +308,7 @@ public partial class ExternalReportSearchResults : ComponentBase
             var validationQuery = new GetReportValidationByReportIdQuery(new ReportID(reportCode));
             var validationResult = await _mediator.SendAsync(validationQuery, CancellationToken.None);
 
-            if (validationResult.IsSuccess && validationResult.Value != null)
+            if (validationResult.IsSuccess && validationResult.Value is not null)
             {
                 ReportValidation = validationResult.Value;
                 _logger.LogInformation("Loaded validation information for report: {ReportCode}", reportCode);

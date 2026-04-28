@@ -13,7 +13,7 @@ public partial class OrganizationalUsers : ComponentBase
 {
     #region Dependency Injection
 
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<OrganizationalUsers> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
@@ -96,7 +96,7 @@ public partial class OrganizationalUsers : ComponentBase
     // Dynamically get all unique modules from available roles' permissions
     private IEnumerable<string> SMSModules =>
         AvailableRoles
-            .Where(role => role.Permissions != null)
+            .Where(role => role.Permissions is not null)
             .SelectMany(role => role.Permissions)
             .Where(permission => !string.IsNullOrWhiteSpace(permission.SMSModule))
             .Select(permission => permission.SMSModule!)
@@ -158,7 +158,7 @@ public partial class OrganizationalUsers : ComponentBase
     // Update form validation
     private bool IsValidOrganizationLevel(SMSOrganizationalLevel organizationLevel)
     {
-        return organizationLevel != null && organizationLevel != SMSOrganizationalLevel.UnassignedLevel;
+        return organizationLevel is not null && organizationLevel != SMSOrganizationalLevel.UnassignedLevel;
     }
     #endregion
 
@@ -221,7 +221,7 @@ public partial class OrganizationalUsers : ComponentBase
             var query = new GetAllSMSUserRolesQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 SMSRoleOptions = result.Value
                     .Where(role => !string.IsNullOrEmpty(role.Name)) // Only include roles with names
@@ -342,7 +342,7 @@ public partial class OrganizationalUsers : ComponentBase
             {
                 // You'll need to fetch the actual role from the database or loaded options
                 var roleOption = SMSRoleOptions.FirstOrDefault(r => r.Value == NewSMSUserRoleId);
-                if (roleOption != null)
+                if (roleOption is not null)
                 {
                     // Either fetch from database or create a minimal role object
                     selectedRole = new SMSUserRole(new SMSUserRoleID(roleOption.Value))
@@ -380,7 +380,7 @@ public partial class OrganizationalUsers : ComponentBase
                 ShowSuccessAsyncNotification($"Organizational user '{NewFirstName} {NewLastName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
-                await usersGrid?.Reload();
+                await (usersGrid?.Reload() ?? Task.CompletedTask);
             }
             else
             {
@@ -460,7 +460,7 @@ public partial class OrganizationalUsers : ComponentBase
 
     private async Task UpdateUser()
     {
-        if (CurrentUser == null || !IsEditFormValid)
+        if (CurrentUser is null || !IsEditFormValid)
         {
             ShowErrorAsyncNotification("Please fill in all required fields.");
             return;
@@ -483,7 +483,7 @@ public partial class OrganizationalUsers : ComponentBase
             if (!string.IsNullOrEmpty(EditSMSUserRoleId))
             {
                 var roleOption = SMSRoleOptions.FirstOrDefault(r => r.Value == EditSMSUserRoleId);
-                if (roleOption != null)
+                if (roleOption is not null)
                 {
                     CurrentUser.UserRole = new SMSUserRole(new SMSUserRoleID(roleOption.Value))
                     {
@@ -507,7 +507,7 @@ public partial class OrganizationalUsers : ComponentBase
                 ShowSuccessAsyncNotification($"Organizational user '{EditFirstName} {EditLastName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
-                await usersGrid?.Reload();
+                await (usersGrid?.Reload() ?? Task.CompletedTask);
             }
             else
             {
@@ -605,7 +605,7 @@ public partial class OrganizationalUsers : ComponentBase
                 ShowSuccessAsyncNotification("Organizational user deleted successfully.");
                 CloseDeleteModal();
                 await LoadDataAsync();
-                await usersGrid?.Reload();
+                await (usersGrid?.Reload() ?? Task.CompletedTask);
             }
             else
             {
@@ -630,7 +630,7 @@ public partial class OrganizationalUsers : ComponentBase
 
     private bool IsPermissionGranted(SMSUserRole role, string module, string action)
     {
-        if (role?.Permissions == null) return false;
+        if (role?.Permissions is null) return false;
 
         var permission = role.Permissions.FirstOrDefault(p => p.SMSModule == module);
         return action switch
@@ -680,7 +680,7 @@ public partial class OrganizationalUsers : ComponentBase
             var userQuery = new GetSMSOrganizationalUserByCodeQuery(RoleAssignmentUserCode);
             var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
-            if (userResult.IsFailure || userResult.Value == null)
+            if (userResult.IsFailure || userResult.Value is null)
             {
                 ShowErrorAsyncNotification("User not found.");
                 return;
@@ -690,7 +690,7 @@ public partial class OrganizationalUsers : ComponentBase
 
             // Get the selected role
             var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == SelectedRoleCode);
-            if (selectedRole == null)
+            if (selectedRole is null)
             {
                 ShowErrorAsyncNotification("Selected role not found.");
                 return;
@@ -745,14 +745,14 @@ public partial class OrganizationalUsers : ComponentBase
             var userQuery = new GetSMSOrganizationalUserByCodeQuery(RoleAssignmentUserCode);
             var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
-            if (userResult.IsFailure || userResult.Value == null)
+            if (userResult.IsFailure || userResult.Value is null)
             {
                 ShowErrorAsyncNotification("User not found.");
                 return;
             }
 
             var user = userResult.Value;
-            user.UserRole = null;
+            user.UserRole = null!; // Explicitly assign null
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSOrganizationalUserCommand(user);
@@ -990,7 +990,7 @@ public partial class OrganizationalUsers : ComponentBase
         var level = SMSOrganizationalLevel.GetAllValues()
             .FirstOrDefault(l => l.Name.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
 
-        if (level == null) return organizationLevel;
+        if (level is null) return organizationLevel;
 
         return $"{level.Name} - {level.Category} (Authority Level {level.AuthorityLevel})";
     }

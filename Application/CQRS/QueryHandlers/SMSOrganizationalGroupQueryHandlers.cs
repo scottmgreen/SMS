@@ -17,7 +17,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 /// <summary>
 /// Query handler for getting all SMS organizational groups
 /// </summary>
-public class GetAllSMSOrganizationalGroupsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllSMSOrganizationalGroupsQuery, Result<IEnumerable<SMSOrganizationalGroup>>>
+public class GetAllSMSOrganizationalGroupsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllSMSOrganizationalGroupsQuery, Result<IEnumerable<SMSOrganizationalGroup>>>
 {
     private readonly SMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<GetAllSMSOrganizationalGroupsQueryHandler> _logger;
@@ -65,7 +65,7 @@ public class GetAllSMSOrganizationalGroupsQueryHandler : BaseQueryBundle, IReque
 /// <summary>
 /// Query handler for getting an SMS organizational group by code
 /// </summary>
-public class GetSMSOrganizationalGroupByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalGroupByCodeQuery, Result<SMSOrganizationalGroup>>
+public class GetSMSOrganizationalGroupByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSOrganizationalGroupByCodeQuery, Result<SMSOrganizationalGroup>>
 {
     private readonly SMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<GetSMSOrganizationalGroupByCodeQueryHandler> _logger;
@@ -113,7 +113,7 @@ public class GetSMSOrganizationalGroupByCodeQueryHandler : BaseQueryBundle, IReq
 /// <summary>
 /// Query handler for getting SMS organizational groups by user code
 /// </summary>
-public class GetSMSOrganizationalGroupsByUserCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetSMSOrganizationalGroupsByUserCodeQuery, Result<IEnumerable<SMSOrganizationalGroup>>>
+public class GetSMSOrganizationalGroupsByUserCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSOrganizationalGroupsByUserCodeQuery, Result<IEnumerable<SMSOrganizationalGroup>>>
 {
     private readonly SMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<GetSMSOrganizationalGroupsByUserCodeQueryHandler> _logger;
@@ -163,7 +163,7 @@ public class GetSMSOrganizationalGroupsByUserCodeQueryHandler : BaseQueryBundle,
 /// <summary>
 /// Query handler for getting users by organizational group code
 /// </summary>
-public class GetUsersByOrganizationalGroupCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetUsersByOrganizationalGroupCodeQuery, Result<IEnumerable<SMSOrganizationalUser>>>
+public class GetUsersByOrganizationalGroupCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetUsersByOrganizationalGroupCodeQuery, Result<IEnumerable<SMSOrganizationalUser>>>
 {
     private readonly SMSOrganizationalGroupService _organizationalGroupService;
     private readonly ILogger<GetUsersByOrganizationalGroupCodeQueryHandler> _logger;

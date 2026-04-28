@@ -27,28 +27,28 @@ internal static class ServiceCollectionExtensions
     public static IServiceCollection AddMediator(this IServiceCollection services, Assembly assembly)
     {
         // Core mediator service
-        services.AddScoped<IMediator, Mediator>();
+        services.AddScoped<IBaseMediator, Mediator>();
 
         // Register pipelines in execution order (executed in reverse registration order)
         // Each pipeline has a single, well-defined responsibility
         
         // 6. Business audit logging (last - logs to audit tables)
-        services.AddScoped(typeof(IPipeline<,>), typeof(AuditLogPipeline<,>));
+        services.AddScoped(typeof(IBasePipeline<,>), typeof(AuditLogPipeline<,>));
         
         // 5. Query access auditing (for read operations)
-        services.AddScoped(typeof(IPipeline<,>), typeof(QueryAuditPipeline<,>));
+        services.AddScoped(typeof(IBasePipeline<,>), typeof(QueryAuditPipeline<,>));
         
         // 4. Command execution auditing (for write operations)  
-        services.AddScoped(typeof(IPipeline<,>), typeof(CommandAuditPipeline<,>));
+        services.AddScoped(typeof(IBasePipeline<,>), typeof(CommandAuditPipeline<,>));
         
         // 3. Request/response logging (for debugging and performance monitoring)
-        services.AddScoped(typeof(IPipeline<,>), typeof(LoggingPipeline<,>));
+        services.AddScoped(typeof(IBasePipeline<,>), typeof(LoggingPipeline<,>));
         
         // 2. Audit field setting (sets CreatedBy, UpdatedBy, etc.)
-        services.AddScoped(typeof(IPipeline<,>), typeof(AuditFieldsSetterPipeline<,>));
+        services.AddScoped(typeof(IBasePipeline<,>), typeof(AuditFieldsSetterPipeline<,>));
         
         // 1. Input validation (first - validates before execution)
-        services.AddScoped(typeof(IPipeline<,>), typeof(ValidationPipeline<,>));
+        services.AddScoped(typeof(IBasePipeline<,>), typeof(ValidationPipeline<,>));
 
         // Register supporting audit services
         services.AddScoped<IQueryAccessAuditService, QueryAccessAuditService>();
@@ -69,14 +69,14 @@ internal static class ServiceCollectionExtensions
             .Where(t => !t.IsAbstract && !t.IsInterface && 
                        t.GetInterfaces()
                         .Any(i => i.IsGenericType && 
-                                 i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>)))
+                                 i.GetGenericTypeDefinition() == typeof(IBaseRequestHandler<,>)))
             .ToList();
 
         foreach (var handlerType in handlerTypes)
         {
             var interfaceType = handlerType.GetInterfaces()
                 .First(i => i.IsGenericType && 
-                           i.GetGenericTypeDefinition() == typeof(IRequestHandler<,>));
+                           i.GetGenericTypeDefinition() == typeof(IBaseRequestHandler<,>));
 
             services.AddScoped(interfaceType, handlerType);
         }

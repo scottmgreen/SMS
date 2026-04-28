@@ -19,7 +19,7 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // RISK ASSESSMENT QUERY HANDLERS
 // =============================================
 
-public class GetRiskAssessmentByCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAssessmentByCodeQuery, Result<RiskAssessment>>
+public class GetRiskAssessmentByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetRiskAssessmentByCodeQuery, Result<RiskAssessment>>
 {
     private readonly RiskAssessmentService _appService;
     private readonly ILogger<GetRiskAssessmentByCodeQueryHandler> _logger;
@@ -69,7 +69,7 @@ public class GetRiskAssessmentByCodeQueryHandler : BaseQueryBundle, IRequestHand
     }
 }
 
-public class GetRiskAssessmentByHazardCodeQueryHandler : BaseQueryBundle, IRequestHandler<GetRiskAssessmentsByHazardCodeQuery, Result<List<RiskAssessment>>>
+public class GetRiskAssessmentByHazardCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetRiskAssessmentsByHazardCodeQuery, Result<List<RiskAssessment>>>
 {
     private readonly RiskAssessmentService _dataService;
     private readonly ILogger<GetRiskAssessmentByHazardCodeQueryHandler> _logger;
@@ -120,7 +120,7 @@ public class GetRiskAssessmentByHazardCodeQueryHandler : BaseQueryBundle, IReque
 
 
 
-public class GetAllRiskAssessmentsQueryHandler : BaseQueryBundle, IRequestHandler<GetAllRiskAssessmentsQuery, Result<List<RiskAssessment>>>
+public class GetAllRiskAssessmentsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllRiskAssessmentsQuery, Result<List<RiskAssessment>>>
 {
     private readonly RiskAssessmentService _appService;
     private readonly ILogger<GetAllRiskAssessmentsQueryHandler> _logger;

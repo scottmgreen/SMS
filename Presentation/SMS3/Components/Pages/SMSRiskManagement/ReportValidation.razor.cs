@@ -14,7 +14,7 @@ public partial class ReportValidation : ComponentBase
     [Parameter] public string ReportId { get; set; } = "";
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportValidation> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
@@ -52,7 +52,7 @@ public partial class ReportValidation : ComponentBase
     private List<SMSApplicationUser> AvailableInvestigators { get; set; } = new();
 
     // State Properties
-    private bool IsUpdate => ExistingValidation != null;
+    private bool IsUpdate => ExistingValidation is not null;
     private string ValidationCode => ExistingValidation?.Code ?? "New";
     //private string CurrentStatus { get; set;}= string.Empty; // ExistingValidation?.Status ?? "New";
     private bool IsProcessing { get; set; } = false;
@@ -260,7 +260,7 @@ public partial class ReportValidation : ComponentBase
             _logger.LogInformation("HandleSubmit called for ReportId: {ReportId}, Decision: {Decision}", ReportId, SelectedValidationDecision?.Value);
 
             // Manual validation
-            if (SelectedValidationDecision == null)
+            if (SelectedValidationDecision is null)
             {
                 await _notificationHelper.ShowErrorAsync("Please select a validation decision");
                 return;
@@ -324,9 +324,9 @@ public partial class ReportValidation : ComponentBase
     {
         try
         {
-            _logger.LogInformation("Smart validation record processing for ReportId: {ReportId}, HasExisting: {HasExisting}",ReportId, ExistingValidation != null);
+            _logger.LogInformation("Smart validation record processing for ReportId: {ReportId}, HasExisting: {HasExisting}",ReportId, ExistingValidation is not null);
 
-            if (ExistingValidation != null)
+            if (ExistingValidation is not null)
             {
                 // ? UPDATE EXISTING VALIDATION
                 _logger.LogInformation("Updating existing ReportValidation: {ValidationCode}", ExistingValidation.Code);
@@ -493,7 +493,7 @@ public partial class ReportValidation : ComponentBase
     {
         try
         {
-            if (ReportHazard == null)
+            if (ReportHazard is null)
             {
                 await _notificationHelper.ShowErrorAsync("Cannot create investigation - hazard information not found");
                 return;
@@ -510,14 +510,14 @@ public partial class ReportValidation : ComponentBase
             var existingResult = await _mediator.SendAsync(existingInvestigationsQuery, CancellationToken.None);
 
             Investigation? existingInvestigation = null;
-            if (existingResult.IsSuccess && existingResult.Value != null)
+            if (existingResult.IsSuccess && existingResult.Value is not null)
             {
                 existingInvestigation = existingResult.Value.FirstOrDefault(inv =>
                     !string.IsNullOrWhiteSpace(inv.HazardCode) && inv.HazardCode.Equals(ReportHazard.Code, StringComparison.OrdinalIgnoreCase) ||
                     !string.IsNullOrWhiteSpace(inv.ReportCode) && inv.ReportCode.Equals(ReportId, StringComparison.OrdinalIgnoreCase));
             }
 
-            if (existingInvestigation != null)
+            if (existingInvestigation is not null)
             {
                 // Navigate to existing investigation
                 await _notificationHelper.ShowSuccessAsync($"Loading existing investigation {existingInvestigation.Code}");
@@ -606,7 +606,7 @@ public partial class ReportValidation : ComponentBase
     {
         try
         {
-            if (ReportDetails == null)
+            if (ReportDetails is null)
             {
                 throw new Exception("Report details not loaded");
             }
@@ -709,7 +709,7 @@ public partial class ReportValidation : ComponentBase
         // Find existing risk assessment for this hazard
         var existingRiskAssessment = await FindExistingRiskAssessment();
 
-        if (existingRiskAssessment != null)
+        if (existingRiskAssessment is not null)
         {
             await NavigateToExistingRiskAssessment(existingRiskAssessment);
         }
@@ -772,7 +772,7 @@ public partial class ReportValidation : ComponentBase
     /// </summary>
     private async Task CreateAndNavigateToNewRiskAssessment()
     {
-        if (ReportHazard == null)
+        if (ReportHazard is null)
         {
             throw new InvalidOperationException("Cannot create risk assessment - hazard information not found");
         }

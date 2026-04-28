@@ -20,10 +20,10 @@ namespace SMS_Application.Services;
 /// </summary>
 public class AuthenticationService : IAuthenticationService
 {
-    private readonly IMediator _mediator;
+    private readonly IBaseMediator _mediator;
     private readonly ILogger<AuthenticationService> _logger;
 
-    public AuthenticationService(IMediator mediator, ILogger<AuthenticationService> logger)
+    public AuthenticationService(IBaseMediator mediator, ILogger<AuthenticationService> logger)
     {
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

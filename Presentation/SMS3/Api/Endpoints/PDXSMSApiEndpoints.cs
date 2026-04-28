@@ -101,7 +101,7 @@ namespace SMS3.Api.Endpoints
         /// </summary>
         private static async Task<IResult> SubmitPDXSMSReport(
             [FromBody] PDXSMSReportApiRequest request,
-            IMediator mediator,
+            IBaseMediator mediator,
             ILogger<Program> logger,
             HttpContext httpContext,
             IPDXSMSApiService apiService)
@@ -185,7 +185,7 @@ namespace SMS3.Api.Endpoints
 
             return Results.Ok(new
             {
-                message = category != null
+                message = category is not null
                     ? $"Hazard types for category: {category}"
                     : "All available hazard types",
                 category = category,

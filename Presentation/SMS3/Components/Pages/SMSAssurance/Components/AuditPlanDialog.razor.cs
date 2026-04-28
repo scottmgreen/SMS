@@ -16,7 +16,7 @@ public partial class AuditPlanDialog : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<AuditPlanDialog> _logger { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -103,7 +103,7 @@ public partial class AuditPlanDialog : ComponentBase
     {
         _logger.LogInformation("DEBUG: InitializeFormData called - AuditPlan.Status: {Status}", AuditPlan?.Status);
 
-        if (AuditPlan != null)
+        if (AuditPlan is not null)
         {
             Code = AuditPlan.Code;
             Name = AuditPlan.Name;
@@ -224,7 +224,7 @@ public partial class AuditPlanDialog : ComponentBase
             else
             {
                 // Create a copy or clone the existing audit plan instead of using the reference
-                auditPlan = new SMSAuditPlan(new SMSAuditPlanID(AuditPlan.Code), AuditPlan.CreatedBy);
+                auditPlan = new SMSAuditPlan(new SMSAuditPlanID(AuditPlan.Code), AuditPlan.CreatedBy ?? "System");
                 // Copy over the original timestamps and metadata
                 auditPlan.CreatedDate = AuditPlan.CreatedDate;
             }

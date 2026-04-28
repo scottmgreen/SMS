@@ -9,7 +9,7 @@ public partial class AuditManagement : ComponentBase
 {
     #region Injected Services
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
-    [Inject] private IMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<AuditManagement> _logger { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
@@ -98,7 +98,7 @@ public partial class AuditManagement : ComponentBase
             var query = new GetAllSMSAuditPlansQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 AuditPlans = result.Value.ToList();
                 AllAuditPlans = result.Value.ToList(); // Also load to AllAuditPlans for filtering
@@ -126,7 +126,7 @@ public partial class AuditManagement : ComponentBase
             var query = new GetAllSMSAuditsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 var allAudits = result.Value.ToList();
 
@@ -161,7 +161,7 @@ public partial class AuditManagement : ComponentBase
             var query = new GetAllSMSAuditFindingsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 RecentFindings = result.Value
                     .OrderByDescending(f => f.DiscoveredDate)
@@ -188,7 +188,7 @@ public partial class AuditManagement : ComponentBase
             var query = new GetAllSMSAuditEvidenceQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (result.IsSuccess && result.Value != null)
+            if (result.IsSuccess && result.Value is not null)
             {
                 RecentEvidence = result.Value
                     .OrderByDescending(e => e.CollectionDate)
@@ -229,7 +229,7 @@ public partial class AuditManagement : ComponentBase
                 // Calculate overdue audits (scheduled but past end date and not completed)
                 OverdueAudits = AllAudits.Count(a =>
                     a.ScheduledEndDate < DateTime.Now &&
-                    a.ActualEndDate == null &&
+                    a.ActualEndDate is null &&
                     (a.Status == "Scheduled" || a.Status == "In Progress")),
 
                 // Finding Statistics
@@ -259,35 +259,45 @@ public partial class AuditManagement : ComponentBase
     private async Task OnSearchTextChanged(string value)
     {
         SearchText = value;
-        await auditPlansGrid?.Reload();
-        await activeAuditsGrid?.Reload();
+        if (auditPlansGrid != null)
+            await auditPlansGrid.Reload();
+        if (activeAuditsGrid != null)
+            await activeAuditsGrid.Reload();
     }
 
     private async Task OnStatusFilterChanged(object value)
     {
         SelectedStatus = value?.ToString();
-        await auditPlansGrid?.Reload();
-        await activeAuditsGrid?.Reload();
+        if (auditPlansGrid != null)
+            await auditPlansGrid.Reload();
+        if (activeAuditsGrid != null)
+            await activeAuditsGrid.Reload();
     }
 
     private async Task OnTypeFilterChanged(object value)
     {
         SelectedType = value?.ToString();
-        await auditPlansGrid?.Reload();
-        await activeAuditsGrid?.Reload();
+        if (auditPlansGrid != null)
+            await auditPlansGrid.Reload();
+        if (activeAuditsGrid != null)
+            await activeAuditsGrid.Reload();
     }
 
     private async Task OnDepartmentFilterChanged(object value)
     {
         SelectedDepartment = value?.ToString();
-        await auditPlansGrid?.Reload();
-        await activeAuditsGrid?.Reload();
+        if (auditPlansGrid != null)
+            await auditPlansGrid.Reload();
+        if (activeAuditsGrid != null)
+            await activeAuditsGrid.Reload();
     }
 
     private async Task OnDateRangeChanged()
     {
-        await auditPlansGrid?.Reload();
-        await activeAuditsGrid?.Reload();
+        if (auditPlansGrid != null)
+            await auditPlansGrid.Reload();
+        if (activeAuditsGrid != null)
+            await activeAuditsGrid.Reload();
     }
     #endregion
 
@@ -299,12 +309,12 @@ public partial class AuditManagement : ComponentBase
             var result = await _dialogService.OpenAsync<Components.AuditPlanDialog>("Create Audit Plan",
                 new Dictionary<string, object>()
                 {
-                    { "AuditPlan", new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), _currentUserService?.UserDisplayName) },
+                    { "AuditPlan", new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), _currentUserService?.UserDisplayName ?? "System") },
                     { "IsNew", true }
                 },
                 new DialogOptions() { Width = "1200px", Height = "900px", Resizable = true });
 
-            if (result != null)
+            if (result is not null)
             {
                 // Refresh ALL dashboard data after creating a plan
                 await LoadDashboardDataAsync();
@@ -330,7 +340,7 @@ public partial class AuditManagement : ComponentBase
                 },
                 new DialogOptions() { Width = "1200px", Height = "900px", Resizable = true });
 
-            if (result != null)
+            if (result is not null)
             {
                 // Refresh ALL dashboard data after editing a plan
                 await LoadDashboardDataAsync();
@@ -422,7 +432,7 @@ public partial class AuditManagement : ComponentBase
 
             if (confirm == true)
             {
-                var command = new DeleteSMSAuditPlanCommand(plan.Code, _currentUserService?.UserDisplayName);
+                var command = new DeleteSMSAuditPlanCommand(plan.Code, _currentUserService?.UserDisplayName ?? "System");
                 var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)
