@@ -18,6 +18,9 @@
 // </copyright>
 //----------------------------------------------------------------------
 
+using System.Reflection;
+using SMS_Domain.Interfaces;
+
 namespace SMS_Application.Common;
 
 /// <summary>
@@ -32,86 +35,260 @@ namespace SMS_Application.Common;
 public static class SPIConstants
 {
     /// <summary>
-    /// Standard data source options for SPIs and data points
+    /// Dynamic data source discovery for SPIs and data points
+    /// REFACTORED: Uses reflection to discover domain events that implement IEventDataSource
     /// </summary>
     public static class DataSources
     {
+        // ===================================================================
+        // DYNAMIC DATA SOURCES: Discovered from Domain Events
+        // ===================================================================
+
+        /// <summary>
+        /// Gets all domain events that can serve as SPI data sources
+        /// Uses reflection to discover events implementing IEventDataSource
+        /// </summary>
+        public static List<EventDataSourceInfo> GetEventDrivenSources()
+        {
+            var eventDataSources = new List<EventDataSourceInfo>();
+
+            try
+            {
+                // Get all assemblies in the current domain
+                var assemblies = AppDomain.CurrentDomain.GetAssemblies();
+
+                foreach (var assembly in assemblies)
+                {
+                    // Skip system assemblies
+                    if (IsSystemAssembly(assembly))
+                        continue;
+
+                    try
+                    {
+                        // Find all types that implement IEventDataSource
+                        var eventSourceTypes = assembly.GetTypes()
+                            .Where(type => typeof(SMS_Domain.Interfaces.IEventDataSource).IsAssignableFrom(type) && 
+                                          !type.IsInterface && 
+                                          !type.IsAbstract)
+                            .ToList();
+
+                        foreach (var eventType in eventSourceTypes)
+                        {
+                            // Create an instance to get the metadata
+                            var eventInstance = CreateEventInstance(eventType);
+                            if (eventInstance != null)
+                            {
+                                eventDataSources.Add(new EventDataSourceInfo
+                                {
+                                    EventType = eventType,
+                                    EventTypeName = eventType.Name,
+                                    DisplayName = eventInstance.DataSourceDisplayName,
+                                    Category = eventInstance.DataSourceCategory,
+                                    Description = eventInstance.DataSourceDescription,
+                                    IsAutomatic = eventInstance.IsAutomaticDataSource,
+                                    Priority = eventInstance.DisplayPriority
+                                });
+                            }
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        // Skip assemblies that can't be reflected (e.g., dynamic assemblies)
+                        System.Diagnostics.Debug.WriteLine($"Skipping assembly {assembly.FullName}: {ex.Message}");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Fallback to empty list if reflection fails
+                System.Diagnostics.Debug.WriteLine($"Error discovering event data sources: {ex.Message}");
+            }
+
+            // Sort by priority, then by display name
+            return eventDataSources
+                .OrderBy(eds => eds.Priority)
+                .ThenBy(eds => eds.DisplayName)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Gets event-driven data sources grouped by category
+        /// </summary>
+        public static Dictionary<string, List<EventDataSourceInfo>> GetEventDrivenSourcesByCategory()
+        {
+            return GetEventDrivenSources()
+                .GroupBy(eds => eds.Category)
+                .ToDictionary(g => g.Key, g => g.ToList());
+        }
+
+        /// <summary>
+        /// Gets display names for dropdown binding
+        /// </summary>
+        public static List<string> GetEventDrivenSourceNames()
+        {
+            return GetEventDrivenSources()
+                .Where(eds => eds.IsAutomatic)
+                .Select(eds => eds.DisplayName)
+                .ToList();
+        }
+
+        /// <summary>
+        /// Finds event data source info by display name
+        /// </summary>
+        public static EventDataSourceInfo? FindByDisplayName(string displayName)
+        {
+            return GetEventDrivenSources()
+                .FirstOrDefault(eds => eds.DisplayName == displayName);
+        }
+
+        /// <summary>
+        /// Gets recommended data sources for specific SPI categories
+        /// </summary>
+        public static List<EventDataSourceInfo> GetRecommendedFor(string spiCategory)
+        {
+            var categoryFilter = spiCategory?.ToUpper();
+            return GetEventDrivenSources()
+                .Where(eds => eds.IsAutomatic && 
+                            (string.IsNullOrEmpty(categoryFilter) || 
+                             eds.Category.ToUpper().Contains(categoryFilter)))
+                .ToList();
+        }
+
+        // ===================================================================
+        // LEGACY MANUAL DATA SOURCES: For backward compatibility
+        // ===================================================================
+
         public const string ManualEntry = "Manual Entry";
-        public const string SystemGenerated = "System Generated";
-        public const string ExternalImport = "External Import";
-        public const string DatabaseQuery = "Database Query";
         public const string ExcelImport = "Excel Import";
         public const string APIIntegration = "API Integration";
-        public const string AutomatedCollection = "Automated Collection";
-        public const string SurveyData = "Survey Data";
-        public const string ThirdPartySystem = "Third Party System";
-        public const string LegacySystem = "Legacy System";
-        public const string MobileApp = "Mobile App";
-        public const string WebPortal = "Web Portal";
-        public const string SensorData = "Sensor Data";
+        public const string ExternalSystem = "External System";
         public const string CalculatedValue = "Calculated Value";
-        public const string QualityAssurance = "Quality Assurance";
-        public const string SafetyReports = "Safety Reports";
-        public const string AuditResults = "Audit Results";
-        public const string InspectionData = "Inspection Data";
 
         /// <summary>
-        /// Gets all available data source options
+        /// Gets manual data sources that require user input
         /// </summary>
-        public static List<string> GetAll()
+        public static List<string> GetManualSources()
         {
             return new List<string>
             {
                 ManualEntry,
-                SystemGenerated,
-                ExternalImport,
-                DatabaseQuery,
                 ExcelImport,
                 APIIntegration,
-                AutomatedCollection,
-                SurveyData,
-                ThirdPartySystem,
-                LegacySystem,
-                MobileApp,
-                WebPortal,
-                SensorData,
-                CalculatedValue,
-                QualityAssurance,
-                SafetyReports,
-                AuditResults,
-                InspectionData
-            };
-        }
-
-        /// <summary>
-        /// Gets default data sources for hazard report workflows
-        /// </summary>
-        public static List<string> GetHazardReportDefaults()
-        {
-            return new List<string>
-            {
-                SafetyReports,
-                ManualEntry,
-                SystemGenerated,
-                ExcelImport
-            };
-        }
-
-        /// <summary>
-        /// Gets automated data sources
-        /// </summary>
-        public static List<string> GetAutomatedSources()
-        {
-            return new List<string>
-            {
-                SystemGenerated,
-                DatabaseQuery,
-                APIIntegration,
-                AutomatedCollection,
-                SensorData,
+                ExternalSystem,
                 CalculatedValue
             };
         }
+
+        /// <summary>
+        /// Gets all data sources (event-driven + manual)
+        /// </summary>
+        public static List<string> GetAll()
+        {
+            var allSources = new List<string>();
+            allSources.AddRange(GetEventDrivenSourceNames());
+            //allSources.AddRange(GetManualSources());
+            return allSources;
+        }
+
+        #region Helper Methods
+
+        /// <summary>
+        /// Checks if an assembly is a system assembly to skip during reflection
+        /// </summary>
+        private static bool IsSystemAssembly(Assembly assembly)
+        {
+            var assemblyName = assembly.FullName;
+            return assemblyName.StartsWith("System.") ||
+                   assemblyName.StartsWith("Microsoft.") ||
+                   assemblyName.StartsWith("mscorlib") ||
+                   assemblyName.StartsWith("netstandard") ||
+                   assemblyName.StartsWith("Radzen");
+        }
+
+        /// <summary>
+        /// Creates an instance of an event type for metadata extraction
+        /// Uses reflection with fallback for parameterless constructors
+        /// </summary>
+        private static SMS_Domain.Interfaces.IEventDataSource? CreateEventInstance(Type eventType)
+        {
+            try
+            {
+                // Try to create with default constructor first
+                if (eventType.GetConstructor(Type.EmptyTypes) != null)
+                {
+                    return Activator.CreateInstance(eventType) as SMS_Domain.Interfaces.IEventDataSource;
+                }
+
+                // For events with required parameters, use test/default values
+                if (eventType.Name == "HazardCreatedEvent")
+                {
+                    // Create with minimal test data to get metadata
+                    return Activator.CreateInstance(eventType, 
+                        "TEST-ID", "TEST-CODE", "Test Hazard", "Test Type", "Test Category",
+                        "Test Description", "Test Location", "TEST-REPORT", "System",
+                        DateTime.UtcNow, true, SMS_Domain.Enums.HazardPriority.Medium, null, null) as SMS_Domain.Interfaces.IEventDataSource;
+                }
+
+                // For other events, try to create with minimal parameters
+                var constructors = eventType.GetConstructors();
+                var constructor = constructors.OrderBy(c => c.GetParameters().Length).FirstOrDefault();
+
+                if (constructor != null)
+                {
+                    var parameters = constructor.GetParameters();
+                    var args = new object[parameters.Length];
+
+                    for (int i = 0; i < parameters.Length; i++)
+                    {
+                        args[i] = GetDefaultValue(parameters[i].ParameterType);
+                    }
+
+                    return Activator.CreateInstance(eventType, args) as SMS_Domain.Interfaces.IEventDataSource;
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Could not create instance of {eventType.Name}: {ex.Message}");
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets default value for a parameter type
+        /// </summary>
+        private static object GetDefaultValue(Type parameterType)
+        {
+            if (parameterType == typeof(string))
+                return "Test";
+            if (parameterType == typeof(DateTime))
+                return DateTime.UtcNow;
+            if (parameterType == typeof(bool))
+                return false;
+            if (parameterType.IsEnum)
+                return Enum.GetValues(parameterType).GetValue(0);
+            if (parameterType.IsValueType)
+                return Activator.CreateInstance(parameterType);
+
+            return null!;
+        }
+
+        #endregion
+    }
+
+    /// <summary>
+    /// Information about a domain event that can serve as an SPI data source
+    /// </summary>
+    public class EventDataSourceInfo
+    {
+        public Type EventType { get; set; } = null!;
+        public string EventTypeName { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string Category { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public bool IsAutomatic { get; set; }
+        public int Priority { get; set; }
+    }
     }
 
     /// <summary>
@@ -127,4 +304,4 @@ public static class SPIConstants
         public const string MeasurementDateRequired = "Measurement date is required";
         public const string VerifiedByRequired = "Verified by is required when marking as verified";
     }
-}
+

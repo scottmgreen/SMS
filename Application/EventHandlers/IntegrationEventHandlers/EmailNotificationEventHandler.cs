@@ -51,12 +51,13 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
     {
         try
         {
-            _logger.LogInformation("?? Processing email notification: '{Subject}' to {RecipientCount} recipients (Priority: {Priority})",
-                integrationEvent.Subject, integrationEvent.ToRecipients.Count, integrationEvent.Priority);
+            _logger.LogInformation("?? [EMAIL HANDLER] Processing email notification: '{Subject}' to {RecipientCount} recipients (Priority: {Priority}) - UseSimulation: {UseSimulation}",
+                integrationEvent.Subject, integrationEvent.ToRecipients.Count, integrationEvent.Priority, _useSimulation);
 
             // Validate email event before processing
             if (!ValidateEmailEvent(integrationEvent))
             {
+                _logger.LogError("? [EMAIL HANDLER] Email event validation failed for: {Subject}", integrationEvent.Subject);
                 return Result.Failure(new Error("INVALID_EMAIL_EVENT", "Email event validation failed"));
             }
 
@@ -64,23 +65,25 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
 
             if (_useSimulation)
             {
+                _logger.LogInformation("?? [EMAIL HANDLER] Using simulation mode for email: {Subject}", integrationEvent.Subject);
                 // Use simulation for development/testing
                 deliveryResult = await SimulateEmailDelivery(integrationEvent, cancellationToken);
             }
             else
             {
+                _logger.LogInformation("?? [EMAIL HANDLER] Using real email delivery for: {Subject}", integrationEvent.Subject);
                 // Use real email delivery for production
                 deliveryResult = await SendRealEmail(integrationEvent, cancellationToken);
             }
 
             if (deliveryResult.IsSuccess)
             {
-                _logger.LogInformation("? Email notification sent successfully: '{Subject}' to {RecipientCount} recipients",
+                _logger.LogInformation("? [EMAIL HANDLER] Email notification sent successfully: '{Subject}' to {RecipientCount} recipients",
                     integrationEvent.Subject, integrationEvent.ToRecipients.Count);
             }
             else
             {
-                _logger.LogError("? Email notification failed: '{Subject}' - {Error}",
+                _logger.LogError("? [EMAIL HANDLER] Email notification failed: '{Subject}' - {Error}",
                     integrationEvent.Subject, deliveryResult.Error.Message);
             }
 
@@ -88,7 +91,7 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Failed to process email notification: '{Subject}'", integrationEvent.Subject);
+            _logger.LogError(ex, "? [EMAIL HANDLER] Failed to process email notification: '{Subject}'", integrationEvent.Subject);
             return Result.Failure(new Error("EMAIL_NOTIFICATION_FAILED", $"Email notification failed: {ex.Message}"));
         }
     }
@@ -103,11 +106,150 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
 
     private async Task<Result> SimulateEmailDelivery(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
     {
-        // Simulation implementation
-        _logger.LogInformation("?? SIMULATED EMAIL: {Subject} to {Recipients}", 
-            emailEvent.Subject, string.Join(", ", emailEvent.ToRecipients));
-        await Task.CompletedTask;
-        return Result.Success();
+        try
+        {
+            _logger.LogInformation("?? [EMAIL SIM] Starting email simulation for: {Subject}", emailEvent.Subject);
+
+            // Use original simulation directory
+            var simulationDir = @"C:\temp\sms_emails";
+            Directory.CreateDirectory(simulationDir);
+
+            _logger.LogInformation("?? [EMAIL SIM] Using simulation directory: {Directory}", simulationDir);
+
+            // Generate unique filename with timestamp in .eml format (email message format)
+            var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+            var safeSubject = string.Join("_", emailEvent.Subject.Split(Path.GetInvalidFileNameChars()));
+            // Limit subject length for filename safety
+            if (safeSubject.Length > 50)
+                safeSubject = safeSubject.Substring(0, 50);
+            var filename = $"SMS_Email_{timestamp}_{safeSubject}.eml";
+            var filePath = Path.Combine(simulationDir, filename);
+
+            // Create .eml format content (RFC 5322 format)
+            var emlContent = GenerateEmlContent(emailEvent);
+
+            // Write to file
+            await File.WriteAllTextAsync(filePath, emlContent, System.Text.Encoding.UTF8, cancellationToken);
+
+            _logger.LogInformation("?? [EMAIL SIM] SIMULATED EMAIL: '{Subject}' to {RecipientCount} recipients - EML file saved to: {FilePath}", 
+                emailEvent.Subject, emailEvent.ToRecipients.Count, filePath);
+
+            // Also log key details to console for immediate feedback
+            _logger.LogInformation("?? [EMAIL SIM] Email Details: To: {Recipients} | Subject: {Subject} | Priority: {Priority}", 
+                string.Join(", ", emailEvent.ToRecipients), emailEvent.Subject, emailEvent.Priority);
+
+            _logger.LogInformation("?? [EMAIL SIM] File written successfully: {FileName} ({FileSize} bytes)", 
+                Path.GetFileName(filePath), emlContent.Length);
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "? Failed to simulate email delivery for: {Subject}", emailEvent.Subject);
+            return Result.Failure(new Error("EMAIL_SIMULATION_FAILED", $"Email simulation failed: {ex.Message}"));
+        }
+    }
+
+    /// <summary>
+    /// Generates RFC 5322 compliant .eml file content that can be opened by email clients
+    /// </summary>
+    private string GenerateEmlContent(EmailNotificationEvent emailEvent)
+    {
+        var content = new System.Text.StringBuilder();
+
+        // RFC 5322 Email Headers
+        content.AppendLine("From: SMS Safety Management System <noreply@pdxairport.com>");
+        content.AppendLine($"To: {string.Join(", ", emailEvent.ToRecipients)}");
+
+        if (emailEvent.CcRecipients?.Any() == true)
+            content.AppendLine($"Cc: {string.Join(", ", emailEvent.CcRecipients)}");
+
+        if (emailEvent.BccRecipients?.Any() == true)
+            content.AppendLine($"Bcc: {string.Join(", ", emailEvent.BccRecipients)}");
+
+        content.AppendLine($"Subject: {emailEvent.Subject}");
+        content.AppendLine($"Date: {emailEvent.OccurredOn:R}"); // RFC 1123 date format
+        content.AppendLine($"Message-ID: <{emailEvent.EventId}@sms.pdxairport.com>");
+
+        // Priority header
+        var priority = emailEvent.Priority switch
+        {
+            EmailPriority.Low => "5 (Lowest)",
+            EmailPriority.Normal => "3 (Normal)", 
+            EmailPriority.High => "1 (Highest)",
+            EmailPriority.Urgent => "1 (Highest)",
+            _ => "3 (Normal)"
+        };
+        content.AppendLine($"X-Priority: {priority}");
+
+        // SMS-specific headers for tracking
+        content.AppendLine($"X-SMS-Event-ID: {emailEvent.EventId}");
+        content.AppendLine($"X-SMS-Event-Type: {emailEvent.EventType}");
+        if (!string.IsNullOrEmpty(emailEvent.WorkflowType))
+            content.AppendLine($"X-SMS-Workflow: {emailEvent.WorkflowType}");
+        if (!string.IsNullOrEmpty(emailEvent.RelatedEntityId))
+            content.AppendLine($"X-SMS-Entity: {emailEvent.RelatedEntityType}:{emailEvent.RelatedEntityId}");
+
+        // Content headers
+        content.AppendLine("MIME-Version: 1.0");
+        if (emailEvent.IsHtmlContent)
+        {
+            content.AppendLine("Content-Type: text/html; charset=UTF-8");
+        }
+        else
+        {
+            content.AppendLine("Content-Type: text/plain; charset=UTF-8");
+        }
+        content.AppendLine("Content-Transfer-Encoding: 8bit");
+
+        // Empty line separates headers from body (required by RFC 5322)
+        content.AppendLine();
+
+        // Email body
+        if (emailEvent.IsHtmlContent)
+        {
+            // Add HTML wrapper if not already present
+            if (!emailEvent.Body.TrimStart().StartsWith("<html", StringComparison.OrdinalIgnoreCase) &&
+                !emailEvent.Body.TrimStart().StartsWith("<!DOCTYPE", StringComparison.OrdinalIgnoreCase))
+            {
+                content.AppendLine("<!DOCTYPE html>");
+                content.AppendLine("<html>");
+                content.AppendLine("<head>");
+                content.AppendLine($"<title>{emailEvent.Subject}</title>");
+                content.AppendLine("<meta charset=\"UTF-8\">");
+                content.AppendLine("</head>");
+                content.AppendLine("<body>");
+                content.AppendLine(emailEvent.Body);
+                content.AppendLine("</body>");
+                content.AppendLine("</html>");
+            }
+            else
+            {
+                content.AppendLine(emailEvent.Body);
+            }
+        }
+        else
+        {
+            content.AppendLine(emailEvent.Body);
+        }
+
+        // Add simulation footer in plain text
+        content.AppendLine();
+        content.AppendLine("---");
+        content.AppendLine("SMS EMAIL SIMULATION");
+        content.AppendLine($"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+        content.AppendLine($"Event ID: {emailEvent.EventId}");
+        content.AppendLine($"Delivery Mode: {emailEvent.DeliveryMode}");
+        if (emailEvent.EmailMetadata?.Any() == true)
+        {
+            content.AppendLine("Metadata:");
+            foreach (var kvp in emailEvent.EmailMetadata)
+            {
+                content.AppendLine($"  {kvp.Key}: {kvp.Value}");
+            }
+        }
+
+        return content.ToString();
     }
 
     private bool ValidateEmailEvent(EmailNotificationEvent emailEvent)

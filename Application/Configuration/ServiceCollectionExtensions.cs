@@ -8,8 +8,8 @@
 //-------------------------------------------------------------------------------
 
 using SMS_Application.Messaging.Pipelines;
-using SMS_Application.Services;
 using SMS_Application.Interfaces;
+using Application.Interfaces.CommonInterfaces;
 
 namespace SMS_Application.Configuration;
 

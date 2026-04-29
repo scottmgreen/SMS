@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------
 // <copyright file="HazardCreatedEventHandler.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,14 +12,22 @@ using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 using SMS_Domain.Common;
 using SMS_Domain.Events;
+using SMS_Domain.Events.Test;
 using SMS_Domain.Enums;
+using SMS_Domain.Interfaces;
 
 namespace SMS_Application.EventHandlers;
 
 /// <summary>
-/// Event handler for hazard creation events
-/// Coordinates SPI updates, notifications, and workflow initiation
-/// PERFORMANCE FIX: Removed user context dependencies to prevent authentication loops
+/// CLEAN EVENTBUS DEMONSTRATION: HazardCreatedEventHandler
+/// 
+/// Shows the complete EventBus workflow when a hazard is created:
+/// 1. DOMAIN EVENT: HazardCreatedEvent (input) 
+/// 2. UI EVENT: HazardCreatedNotification → popup notifications
+/// 3. INTEGRATION EVENT: EmailNotificationEvent → email simulation (.eml files)
+/// 
+/// This demonstrates the event cascade pattern:
+/// Domain Event → UI Event (immediate user feedback) + Integration Event (external systems)
 /// </summary>
 public class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domain.Events.HazardCreatedEvent>
 {
@@ -37,38 +45,27 @@ public class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domain.Event
 
     /// <summary>
     /// Processes hazard creation events and coordinates downstream workflows
+    /// CLEAN DEMONSTRATION: Shows Domain → Integration → UI event cascade
     /// </summary>
     protected override async Task<Result> ProcessEventAsync(SMS_Domain.Events.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
     {
         try
         {
-            _logger.LogInformation("Processing hazard creation for {HazardCode} (Type: {HazardType}, Priority: {Priority})",
+            _logger.LogInformation("🚀 [HAZARD HANDLER] Processing hazard creation for {HazardCode} (Type: {HazardType}, Priority: {Priority})",
                 domainEvent.HazardCode, domainEvent.HazardType, domainEvent.Priority);
 
-            // PERFORMANCE FIX: Skip scoped services to avoid authentication loops
-            // Use static stakeholder determination instead of database queries
-            var stakeholders = GetStaticStakeholderGroups(domainEvent.Priority);
-            _logger.LogInformation("Using static stakeholder groups for hazard {HazardCode}: {Count} groups", 
-                domainEvent.HazardCode, stakeholders.Count);
+            // STEP 1: UI Event - Immediate dashboard notifications
+            await PublishUINotification(domainEvent, cancellationToken);
 
-            // Step 1: Publish UI event for dashboard updates (no user context needed)
-            await PublishDashboardUpdate(domainEvent, cancellationToken);
+            // STEP 2: Integration Event - Email notifications (for Medium+ priority)
+            await PublishEmailNotification(domainEvent, cancellationToken);
 
-            // Step 2: Send notifications based on hazard priority (no user context needed)
-            await SendHazardNotifications(domainEvent, stakeholders, cancellationToken);
-
-            // Step 3: Check if escalation is required based on priority (no user context needed)
-            if (RequiresImmediateEscalation(domainEvent))
-            {
-                await InitiateHazardEscalation(domainEvent, stakeholders, cancellationToken);
-            }
-
-            _logger.LogInformation("Successfully processed hazard creation for {HazardCode}", domainEvent.HazardCode);
+            _logger.LogInformation("✅ [HAZARD HANDLER] Successfully processed hazard creation for {HazardCode}", domainEvent.HazardCode);
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing hazard creation event for {HazardCode}", domainEvent.HazardCode);
+            _logger.LogError(ex, "❌ [HAZARD HANDLER] Error processing hazard creation event for {HazardCode}", domainEvent.HazardCode);
             return Result.Failure(new Error("HAZARD_CREATION_HANDLER_ERROR", $"Hazard creation processing failed: {ex.Message}"));
         }
     }
@@ -77,61 +74,252 @@ public class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domain.Event
     /// PERFORMANCE FIX: Static stakeholder determination to avoid authentication loops
     /// Uses predefined stakeholder groups instead of database queries
     /// </summary>
-    private List<string> GetStaticStakeholderGroups(SMS_Domain.Enums.HazardPriority priority)
-    {
-        var stakeholderGroups = new List<string>();
+   
 
-        // Business logic for stakeholder selection based on hazard priority
-        switch (priority)
+    #region Event Publishing Methods
+
+    /// <summary>
+    /// Publishes UI events for immediate user notification
+    /// DEMONSTRATION: Shows UI event publication for popup notifications
+    /// </summary>
+    private async Task PublishUINotification(SMS_Domain.Events.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        try
         {
-            case SMS_Domain.Enums.HazardPriority.Critical:
-                // Critical: Notify all relevant stakeholders
-                stakeholderGroups.AddRange(new[] { "EXEC", "SAFETY", "MGMT", "OPS", "MAINT" });
-                break;
+            _logger.LogInformation("📱 [UI EVENT] Publishing popup notification for {HazardCode}", domainEvent.HazardCode);
 
-            case SMS_Domain.Enums.HazardPriority.High:
-                // High: Notify management and safety groups
-                stakeholderGroups.AddRange(new[] { "SAFETY", "MGMT", "OPS" });
-                break;
+            // Create UI notification event for popup/toast notifications
+            var uiNotificationEvent = new TestUIEvent();
+            uiNotificationEvent.SetEventType("HazardCreatedNotification");
+            uiNotificationEvent.SetTargetComponent("NotificationCenter");
+            uiNotificationEvent.Message = $"New {domainEvent.Priority} priority hazard: {domainEvent.HazardCode}";
+            uiNotificationEvent.Priority = GetUINotificationPriority(domainEvent.Priority);
+            uiNotificationEvent.TestData = new
+            {
+                HazardCode = domainEvent.HazardCode,
+                HazardType = domainEvent.HazardType,
+                Priority = domainEvent.Priority.ToString(),
+                CreatedBy = domainEvent.CreatedBy,
+                NotificationType = "popup",
+                AutoDismiss = domainEvent.Priority <= SMS_Domain.Enums.HazardPriority.Medium
+            };
 
-            case SMS_Domain.Enums.HazardPriority.Medium:
-                // Medium: Notify safety and operational groups
-                stakeholderGroups.AddRange(new[] { "SAFETY", "OPS" });
-                break;
+            // Publish UI event for immediate user notification (Manual mode for demonstration)
+            var uiResult = await _eventBus.PublishUIEventAsync(uiNotificationEvent, EventExecutionMode.Manual);
 
-            case SMS_Domain.Enums.HazardPriority.Low:
-            default:
-                // Low: Notify primary safety group only
-                stakeholderGroups.Add("SAFETY");
-                break;
+            if (uiResult.IsSuccess)
+            {
+                _logger.LogInformation("✅ [UI EVENT] Popup notification queued for hazard {HazardCode}", domainEvent.HazardCode);
+            }
+            else
+            {
+                _logger.LogWarning("⚠️ [UI EVENT] Failed to queue popup notification: {Error}", uiResult.Error.Message);
+            }
         }
-
-        return stakeholderGroups;
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "⚠️ [UI EVENT] Failed to publish UI notification for hazard {HazardCode}", domainEvent.HazardCode);
+        }
     }
 
-    // Additional helper methods would continue here...
-    // (Keeping this shorter for organization purposes)
-
-    private async Task PublishDashboardUpdate(SMS_Domain.Events.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
+    /// <summary>
+    /// Publishes email notifications based on hazard priority
+    /// DEMONSTRATION: Shows Integration event publication for external systems
+    /// </summary>
+    private async Task PublishEmailNotification(SMS_Domain.Events.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
     {
-        // Dashboard update logic
-        await Task.CompletedTask;
+        try
+        {
+            // Only send emails for Medium priority and above
+            if (domainEvent.Priority >= SMS_Domain.Enums.HazardPriority.Medium)
+            {
+                _logger.LogInformation("📧 [INTEGRATION EVENT] Creating email notification for {Priority} priority hazard {HazardCode}", 
+                    domainEvent.Priority, domainEvent.HazardCode);
+
+                var recipients = GetEmailRecipientsByPriority(domainEvent.Priority);
+                var emailPriority = GetEmailPriorityFromHazardPriority(domainEvent.Priority);
+
+                // Create rich email notification
+                var emailEvent = new EmailNotificationEvent(
+                    toRecipients: recipients,
+                    subject: $"🚨 {domainEvent.Priority} Priority Hazard: {domainEvent.HazardCode} - {domainEvent.HazardType}",
+                    body: CreateHazardNotificationEmailBody(domainEvent),
+                    isHtmlContent: true,
+                    priority: emailPriority,
+                    deliveryMode: IntegrationDeliveryMode.BestEffort,
+                    workflowType: "HazardNotification",
+                    relatedEntityType: "Hazard",
+                    relatedEntityId: domainEvent.HazardCode,
+                    templateName: "SMS_HazardCreated_Template",
+                    templateData: new Dictionary<string, object>
+                    {
+                        { "HazardCode", domainEvent.HazardCode },
+                        { "HazardType", domainEvent.HazardType },
+                        { "Priority", domainEvent.Priority.ToString() },
+                        { "Description", domainEvent.Description },
+                        { "Location", domainEvent.LocationArea },
+                        { "CreatedBy", domainEvent.CreatedBy },
+                        { "CreatedDate", domainEvent.CreatedDate.ToString("yyyy-MM-dd HH:mm") }
+                    },
+                    emailMetadata: new Dictionary<string, object>
+                    {
+                        { "Source", "HazardCreatedEventHandler" },
+                        { "HazardId", domainEvent.HazardId },
+                        { "ReportCode", domainEvent.ReportCode },
+                        { "EventDemonstration", true }
+                    }
+                );
+
+                // Publish Integration Event for email delivery (Manual mode for demonstration)
+                var emailResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Manual);
+
+                if (emailResult.IsSuccess)
+                {
+                    _logger.LogInformation("✅ [INTEGRATION EVENT] Hazard notification email queued for {HazardCode} to {RecipientCount} recipients", 
+                        domainEvent.HazardCode, recipients.Count);
+                }
+                else
+                {
+                    _logger.LogError("❌ [INTEGRATION EVENT] Failed to queue hazard notification email: {Error}", emailResult.Error.Message);
+                }
+            }
+            else
+            {
+                _logger.LogInformation("ℹ️ [INTEGRATION EVENT] Skipping email notification for {HazardCode} - Priority {Priority} below Medium threshold", 
+                    domainEvent.HazardCode, domainEvent.Priority);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "❌ [INTEGRATION EVENT] Failed to send email notifications for {HazardCode}", domainEvent.HazardCode);
+        }
     }
 
-    private async Task SendHazardNotifications(SMS_Domain.Events.HazardCreatedEvent domainEvent, List<string> stakeholders, CancellationToken cancellationToken)
+    #endregion
+
+    #region Helper Methods
+
+    /// <summary>
+    /// Maps hazard priority to UI notification priority
+    /// </summary>
+    private UIEventPriority GetUINotificationPriority(SMS_Domain.Enums.HazardPriority hazardPriority)
     {
-        // Notification logic  
-        await Task.CompletedTask;
+        return hazardPriority switch
+        {
+            SMS_Domain.Enums.HazardPriority.Critical => UIEventPriority.Critical,
+            SMS_Domain.Enums.HazardPriority.High => UIEventPriority.High,
+            SMS_Domain.Enums.HazardPriority.Medium => UIEventPriority.Normal,
+            _ => UIEventPriority.Low
+        };
     }
 
-    private async Task InitiateHazardEscalation(SMS_Domain.Events.HazardCreatedEvent domainEvent, List<string> stakeholders, CancellationToken cancellationToken)
+    /// <summary>
+    /// Gets email recipients based on hazard priority level
+    /// </summary>
+    private List<string> GetEmailRecipientsByPriority(SMS_Domain.Enums.HazardPriority priority)
     {
-        // Escalation logic
-        await Task.CompletedTask;
+        return priority switch
+        {
+            SMS_Domain.Enums.HazardPriority.Critical => new List<string>
+            {
+                "safety.manager@pdxairport.com",
+                "operations.director@pdxairport.com", 
+                "sms.coordinator@pdxairport.com"
+            },
+            SMS_Domain.Enums.HazardPriority.High => new List<string>
+            {
+                "safety.manager@pdxairport.com",
+                "sms.coordinator@pdxairport.com"
+            },
+            _ => new List<string>
+            {
+                "safety.team@pdxairport.com"
+            }
+        };
     }
 
-    private bool RequiresImmediateEscalation(SMS_Domain.Events.HazardCreatedEvent domainEvent)
+    /// <summary>
+    /// Maps hazard priority to email priority
+    /// </summary>
+    private EmailPriority GetEmailPriorityFromHazardPriority(SMS_Domain.Enums.HazardPriority hazardPriority)
     {
-        return domainEvent.Priority == SMS_Domain.Enums.HazardPriority.Critical;
+        return hazardPriority switch
+        {
+            SMS_Domain.Enums.HazardPriority.Critical => EmailPriority.Urgent,
+            SMS_Domain.Enums.HazardPriority.High => EmailPriority.High,
+            SMS_Domain.Enums.HazardPriority.Medium => EmailPriority.Normal,
+            _ => EmailPriority.Low
+        };
     }
+
+    /// <summary>
+    /// Creates clean HTML email body for hazard notifications
+    /// </summary>
+    private string CreateHazardNotificationEmailBody(SMS_Domain.Events.HazardCreatedEvent domainEvent)
+    {
+        var priorityColor = GetPriorityColor(domainEvent.Priority);
+
+        return $@"
+<html>
+<head>
+    <style>
+        body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f9f9f9; }}
+        .container {{ background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+        .header {{ background-color: {priorityColor}; color: white; padding: 15px; border-radius: 5px; margin-bottom: 20px; }}
+        .details {{ background-color: #f8f9fa; padding: 15px; border-left: 4px solid {priorityColor}; margin: 15px 0; }}
+        .footer {{ color: #666; font-size: 12px; margin-top: 30px; border-top: 1px solid #eee; padding-top: 15px; }}
+        .priority {{ color: {priorityColor}; font-weight: bold; }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>🚨 New Hazard Report: <span class='priority'>{domainEvent.Priority}</span> Priority</h2>
+        </div>
+
+        <p>A new hazard has been reported in the SMS system and requires attention.</p>
+
+        <div class='details'>
+            <h3>Hazard Information:</h3>
+            <ul>
+                <li><strong>Hazard Code:</strong> {domainEvent.HazardCode}</li>
+                <li><strong>Type:</strong> {domainEvent.HazardType}</li>
+                <li><strong>Category:</strong> {domainEvent.HazardCategory}</li>
+                <li><strong>Priority:</strong> <span class='priority'>{domainEvent.Priority}</span></li>
+                <li><strong>Location:</strong> {domainEvent.LocationArea}</li>
+                <li><strong>Reported By:</strong> {domainEvent.CreatedBy}</li>
+                <li><strong>Date:</strong> {domainEvent.CreatedDate:yyyy-MM-dd HH:mm} UTC</li>
+                <li><strong>Report Code:</strong> {domainEvent.ReportCode}</li>
+            </ul>
+
+            <h4>Description:</h4>
+            <p>{domainEvent.Description}</p>
+        </div>
+
+        <p>Please access the SMS system to review this hazard and take appropriate action.</p>
+
+        <div class='footer'>
+            <p><strong>SMS Safety Management System</strong> - Automated Notification<br/>
+            Event ID: {domainEvent.EventId} | Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</p>
+        </div>
+    </div>
+</body>
+</html>";
+    }
+
+    /// <summary>
+    /// Gets color code for hazard priority levels
+    /// </summary>
+    private string GetPriorityColor(SMS_Domain.Enums.HazardPriority priority)
+    {
+        return priority switch
+        {
+            SMS_Domain.Enums.HazardPriority.Critical => "#dc3545", // Bootstrap danger red
+            SMS_Domain.Enums.HazardPriority.High => "#fd7e14",     // Bootstrap warning orange  
+            SMS_Domain.Enums.HazardPriority.Medium => "#ffc107",   // Bootstrap warning yellow
+            _ => "#28a745"                                          // Bootstrap success green
+        };
+    }
+
+    #endregion
 }

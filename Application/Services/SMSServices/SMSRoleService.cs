@@ -28,17 +28,17 @@ public class SMSRoleService : ISMSRoleService
         _userRoleRepository = userRoleRepository ?? throw new ArgumentNullException(nameof(userRoleRepository));
     }
 
-    public async Task<SMSApplicationUserRole> AssignRoleToUserAsync(
+    public async Task<SMSUserRole> AssignRoleToUserAsync(
         string userID,
         string userType,
-        SMSRole role,
+        SMSUserRole role,
         string department,
         string assignedBy,
         DateTime? effectiveDate = null,
         DateTime? expirationDate = null,
         string? notes = null)
     {
-        var userRole = SMSApplicationUserRole.Create(
+        var userRole = SMSUserRole.Create(
             userID,
             userType,
             role,

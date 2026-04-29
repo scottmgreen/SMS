@@ -99,6 +99,97 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
     }
 }
 
+public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSafetyPerformanceIndicatorCommand, Result<SafetyPerformanceIndicator>>
+{
+    private readonly ISafetyPerformanceIndicatorService _spiService;
+    private readonly ILogger<UpdateSafetyPerformanceIndicatorCommandHandler> _logger;
+
+    public UpdateSafetyPerformanceIndicatorCommandHandler(
+        ISafetyPerformanceIndicatorService spiService,
+        ILogger<UpdateSafetyPerformanceIndicatorCommandHandler> logger)
+    {
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(
+        UpdateSafetyPerformanceIndicatorCommand request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogApplicationError("UpdateSafetyPerformanceIndicatorCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
+                    DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSafetyPerformanceIndicatorCommand for ID: {Id}", request.Id?.Value);
+
+            // First, get the existing SPI to update
+            var existingSpiResult = await _spiService.GetSafetyPerformanceIndicatorByIdAsync(request.Id, cancellationToken);
+            if (existingSpiResult.IsFailure)
+            {
+                _logger.LogApplicationError("Failed to retrieve existing SPI with ID: {Id}", ApplicationEventIds.Error, null);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(existingSpiResult.Error);
+            }
+
+            var existingSpi = existingSpiResult.Value;
+
+            // Update the existing SPI properties directly
+            existingSpi.Name = request.Name;
+            existingSpi.Description = request.Description;
+            existingSpi.IndicatorType = request.IndicatorType;
+            existingSpi.Status = request.Status;
+            existingSpi.MeasurementUnit = request.MeasurementUnit;
+            existingSpi.MeasurementFrequency = request.MeasurementFrequency;
+            existingSpi.CalculationMethod = request.CalculationMethod;
+            existingSpi.DataSource = request.DataSource;
+            existingSpi.TargetValue = request.TargetValue;
+            existingSpi.AcceptableRange = request.AcceptableRange;
+            existingSpi.WarningThreshold = request.WarningThreshold;
+            existingSpi.CriticalThreshold = request.CriticalThreshold;
+            existingSpi.ResponsibleDepartment = request.ResponsibleDepartment;
+            existingSpi.DataOwner = request.DataOwner;
+            existingSpi.ReviewAuthority = request.ReviewAuthority;
+            existingSpi.NextReviewDate = request.NextReviewDate;
+            existingSpi.LastReviewDate = request.LastReviewDate;
+            existingSpi.LastReviewNotes = request.LastReviewNotes;
+            existingSpi.AlertsEnabled = request.AlertsEnabled;
+            existingSpi.AlertRecipients = request.AlertRecipients;
+            existingSpi.UpdatedBy = request.UpdatedBy;
+            existingSpi.UpdatedDate = DateTime.UtcNow;
+
+            // Update the SPI through the service
+            var result = await _spiService.UpdateSafetyPerformanceIndicatorAsync(existingSpi, cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogInformation("✅ Clean Architecture: Successfully updated Safety Performance Indicator with ID: {Id}", 
+                    request.Id?.Value);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to update Safety Performance Indicator with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("UpdateSafetyPerformanceIndicatorCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while updating Safety Performance Indicator with ID: {Id}", ApplicationEventIds.Error, ex);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
+        }
+    }
+}
+
 public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSafetyPerformanceIndicatorCommand, Result<bool>>
 {
     private readonly ISafetyPerformanceIndicatorService _spiService;

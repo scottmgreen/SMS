@@ -12,11 +12,13 @@ using System.Reflection;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SMS_Application.Interfaces;
+using SMS_Application.Interfaces;
+using SMS_Application.Services;
 using SMS_Application.Messaging.Pipelines;
-using SMS_Application.Services; // Add this for SecurityFeatureService
 using SMS_Application.EventHandlers; // NEW: For SPI event handlers
-using SMS_Application.BackgroundServices; // NEW: For SPI background services
-using SMS_Domain.Events; // NEW: For EventBus domain events
+using SMS_Application.EventHandlers.UIEventHandlers; // NEW: For UI event handlers
+using SMS_Domain.Events;
+using Application.Interfaces.CommonInterfaces; // NEW: For EventBus domain events
 
 namespace SMS_Application.Configuration
 {
@@ -109,6 +111,9 @@ namespace SMS_Application.Configuration
             // NEW: EventBus Services - Phase 1: SINGLETON for consistent handler registration
             services.AddSingleton<IBaseEventBus, EventBusService>();
 
+            // NEW: EventBus Queue Service - For manual event execution and testing (SINGLETON for shared in-memory queue)
+            services.AddSingleton<IEventQueueService, EventQueueService>();
+
             // NEW: SPI Event Handlers - Automated SPI calculations from SMS events
             services.AddScoped<HazardEventSPIHandler>();
             services.AddScoped<RiskAssessmentEventSPIHandler>();
@@ -128,6 +133,9 @@ namespace SMS_Application.Configuration
 
             // NEW: Phase 3 - Integration Event Handlers for external system coordination
             services.AddTransient<EmailNotificationEventHandler>();
+
+            // NEW: Phase 3 - UI Event Handlers for user interface updates
+            services.AddTransient<HazardCreatedNotificationHandler>();
 
             // NEW: SPI Initialization Service - Default SPI setup
             services.AddScoped<SPIInitializationService>();
@@ -157,9 +165,6 @@ namespace SMS_Application.Configuration
 
             // 🔧 COMMAND AUDIT SERVICES - CONSISTENT: ADDED FOR COMPLETE CQRS AUDIT COVERAGE!
             services.AddScoped<ICommandAccessAuditService, CommandAccessAuditService>();
-
-            // NEW: SPI Background Services - Scheduled automation calculations
-            services.AddHostedService<SPICalculationBackgroundService>();
 
             #endregion
 

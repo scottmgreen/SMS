@@ -36,6 +36,10 @@
     <Compile Remove="Services\SMSAuthorizationService.cs" />
     <Compile Remove="Services\SMSRiskAssessmentWorkflowService.cs" />
     <Compile Remove="Services\SMSRoleService.cs" />
+    <Compile Remove="Services\SMSServices\SMSAuthorizationService.cs" />
+    <Compile Remove="Services\SMSServices\SMSRiskAssessmentWorkflowService.cs" />
+    <Compile Remove="Services\SMSServices\SMSRoleService.cs" />
+    <Compile Remove="Services\SMSServices\SMSWorkflowService.cs" />
     <Compile Remove="Services\SMSWorkflowService.cs" />
   </ItemGroup>
 
@@ -82,5 +86,10 @@
 	<Using Include="System.Text.Json" />
     
 </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="BackgroundServices\" />
+    <Folder Include="Services\SMSServices\" />
+  </ItemGroup>
 
 </Project>

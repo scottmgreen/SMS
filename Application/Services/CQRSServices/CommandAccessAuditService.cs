@@ -8,29 +8,13 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using Application.Interfaces.CommonInterfaces;
+
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
 
 namespace SMS_Application.Services;
-
-/// <summary>
-/// Service for auditing command execution and business action operations
-/// Provides comprehensive audit trail for all write operations in the system
-/// MIRRORS QueryAccessAuditService for complete CQRS audit consistency
-/// </summary>
-public interface ICommandAccessAuditService
-{
-    /// <summary>
-    /// Log a command execution event
-    /// </summary>
-    Task LogCommandExecutionAsync(string userId, string commandType, string resourceIdentifier, string actionType, CancellationToken cancellationToken = default);
-    
-    /// <summary>
-    /// Log command execution with additional context
-    /// </summary>
-    Task LogCommandExecutionAsync(string userId, string commandType, string resourceIdentifier, string actionType, string additionalContext, CancellationToken cancellationToken = default);
-}
 
 /// <summary>
 /// Implementation of command execution audit service

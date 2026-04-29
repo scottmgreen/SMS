@@ -1,0 +1,503 @@
+@page "/SMSSystem/EventBus/TestEventGenerator"
+@using SMS_Application.Interfaces
+@using SMS_Domain.ValueObjects
+@using SMS_Domain.Interfaces
+@using SMS_Domain.Common
+@using SMS_Domain.Events.Test
+@using SMS_Domain.Events
+@using SMS3.Components.Shared
+@inject IEventQueueService EventQueueService
+@inject IBaseEventBus EventBus
+@inject ILogger<TestEventGenerator> Logger
+@inject NotificationService NotificationService
+
+<PageTitle>EventBus Test Generator - SMS3</PageTitle>
+
+<PageHeader Title="EventBus Test Generator" 
+            Subtitle="Generate Test Events for Queue Testing"
+            Icon="fas fa-cogs">
+</PageHeader>
+
+<div class="container-fluid">
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="8">
+            <RadzenCard>
+                <RadzenFieldset Text="Test Event Generation">
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenLabel Text="Event Category:" />
+                            <RadzenDropDown @bind-Value="@_selectedEventCategory" 
+                                           Data="@_eventCategories" 
+                                           TextProperty="Text" 
+                                           ValueProperty="Value" 
+                                           class="w-100" />
+                        </RadzenColumn>
+
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenLabel Text="Event Type:" />
+                            <RadzenDropDown @bind-Value="@_selectedEventType" 
+                                           Data="@_eventTypes" 
+                                           TextProperty="Text" 
+                                           ValueProperty="Value" 
+                                           class="w-100" />
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenLabel Text="Execution Mode:" />
+                            <RadzenDropDown @bind-Value="@_selectedExecutionMode" 
+                                           Data="@_executionModes" 
+                                           TextProperty="Text" 
+                                           ValueProperty="Value" 
+                                           class="w-100" />
+                        </RadzenColumn>
+
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenLabel Text="Target System/Component:" />
+                            <RadzenTextBox @bind-Value="@_targetSystem" 
+                                          Placeholder="Email, Dashboard, SMS, etc."
+                                          class="w-100" />
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow Gap="1rem" class="mt-3">
+                        <RadzenColumn Size="12" SizeMD="8">
+                            <RadzenLabel Text="Test Message:" />
+                            <RadzenTextBox @bind-Value="@_testMessage" 
+                                          Placeholder="Enter test message content..."
+                                          class="w-100" />
+                        </RadzenColumn>
+
+                        <RadzenColumn Size="12" SizeMD="4">
+                            <RadzenLabel Text="Count:" />
+                            <RadzenNumeric @bind-Value="@_eventCount" 
+                                          Min="1" 
+                                          Max="10" 
+                                          class="w-100" />
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow class="mt-3">
+                        <RadzenColumn Size="12">
+                            <div class="btn-toolbar">
+                                <RadzenButton Icon="add" 
+                                             Text="Generate Test Events" 
+                                             Click="@GenerateTestEvents" 
+                                             ButtonStyle="ButtonStyle.Primary" 
+                                             class="me-2"
+                                             Disabled="@_isGenerating" />
+
+                                <RadzenButton Icon="launch" 
+                                             Text="Open Queue Manager" 
+                                             Click="@NavigateToQueueManager" 
+                                             ButtonStyle="ButtonStyle.Secondary" />
+                            </div>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenFieldset>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="4">
+            <RadzenCard>
+                <RadzenFieldset Text="Quick Actions">
+                    <div class="d-grid gap-2">
+                        <RadzenButton Text="Generate Sample Domain Events" 
+                                     Click="@(() => GenerateSampleEvents(EventCategory.DomainEvent))" 
+                                     ButtonStyle="ButtonStyle.Info" 
+                                     Size="ButtonSize.Medium"
+                                     Disabled="@_isGenerating" />
+
+                        <RadzenButton Text="Generate Email Notifications" 
+                                     Click="@(() => GenerateSampleEvents(EventCategory.IntegrationEvent))" 
+                                     ButtonStyle="ButtonStyle.Warning" 
+                                     Size="ButtonSize.Medium"
+                                     Disabled="@_isGenerating" />
+
+                        <RadzenButton Text="Generate Real Email Test" 
+                                     Click="@GenerateRealisticEmailTest" 
+                                     ButtonStyle="ButtonStyle.Danger" 
+                                     Size="ButtonSize.Medium"
+                                     Disabled="@_isGenerating" />
+
+                        <RadzenButton Text="Generate UI Updates" 
+                                     Click="@(() => GenerateSampleEvents(EventCategory.UIEvent))" 
+                                     ButtonStyle="ButtonStyle.Success" 
+                                     Size="ButtonSize.Medium"
+                                     Disabled="@_isGenerating" />
+                    </div>
+                </RadzenFieldset>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+</div>
+
+@code {
+    private EventCategory _selectedEventCategory = EventCategory.DomainEvent;
+    private string _selectedEventType = "TestEvent";
+    private EventExecutionMode _selectedExecutionMode = EventExecutionMode.Manual;
+    private string _testMessage = "Test event generated for queue management testing";
+    private string _targetSystem = "Email";
+    private int _eventCount = 1;
+    private bool _isGenerating = false;
+
+    [Inject] private NavigationManager NavigationManager { get; set; } = null!;
+
+    private readonly List<EventCategoryOption> _eventCategories = new()
+    {
+        new(EventCategory.DomainEvent, "Domain Event"),
+        new(EventCategory.IntegrationEvent, "Integration Event (Email, etc.)"),
+        new(EventCategory.UIEvent, "UI Event (Dashboard, etc.)")
+    };
+
+    private readonly List<EventTypeOption> _eventTypes = new()
+    {
+        new("TestEvent", "Test Event"),
+        new("EmailNotification", "Email Notification"),
+        new("SMSAlert", "SMS Alert"),
+        new("UserCreated", "User Created"),
+        new("HazardReported", "Hazard Reported"),
+        new("RiskAssessmentCompleted", "Risk Assessment Completed"),
+        new("DashboardUpdate", "Dashboard Update"),
+        new("NotificationBadgeUpdate", "Notification Badge Update"),
+        new("TableRefresh", "Table Refresh")
+    };
+
+    private readonly List<ExecutionModeOption> _executionModes = new()
+    {
+        new(EventExecutionMode.Immediate, "Immediate"),
+        new(EventExecutionMode.Queued, "Queued"),
+        new(EventExecutionMode.Manual, "Manual")
+    };
+
+    private async Task GenerateTestEvents()
+    {
+        try
+        {
+            _isGenerating = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Generating {Count} test events of category {Category}, type {Type} with mode {Mode}", 
+                _eventCount, _selectedEventCategory, _selectedEventType, _selectedExecutionMode);
+
+            var successCount = 0;
+
+            for (int i = 1; i <= _eventCount; i++)
+            {
+                Result result;
+
+                switch (_selectedEventCategory)
+                {
+                    case EventCategory.DomainEvent:
+                        var domainEvent = new TestDomainEvent();
+                        domainEvent.SetEventType(_selectedEventType);
+                        domainEvent.Message = $"{_testMessage} (#{i})";
+                        domainEvent.TestData = new { Index = i, Timestamp = DateTime.UtcNow, Mode = _selectedExecutionMode.ToString() };
+                        result = await EventBus.PublishDomainEventAsync(domainEvent, _selectedExecutionMode);
+                        break;
+
+                    case EventCategory.IntegrationEvent:
+                        var integrationEvent = new TestIntegrationEvent();
+                        integrationEvent.SetEventType(_selectedEventType);
+                        integrationEvent.SetTargetSystem(_targetSystem);
+                        integrationEvent.Message = $"{_testMessage} (#{i})";
+                        integrationEvent.TestData = new { Index = i, Timestamp = DateTime.UtcNow, Mode = _selectedExecutionMode.ToString() };
+                        result = await EventBus.PublishIntegrationEventAsync(integrationEvent, _selectedExecutionMode);
+                        break;
+
+                    case EventCategory.UIEvent:
+                        var uiEvent = new TestUIEvent();
+                        uiEvent.SetEventType(_selectedEventType);
+                        uiEvent.SetTargetComponent(_targetSystem);
+                        uiEvent.Message = $"{_testMessage} (#{i})";
+                        uiEvent.TestData = new { Index = i, Timestamp = DateTime.UtcNow, Mode = _selectedExecutionMode.ToString() };
+                        result = await EventBus.PublishUIEventAsync(uiEvent, _selectedExecutionMode);
+                        break;
+
+                    default:
+                        Logger.LogWarning("Unknown event category: {Category}", _selectedEventCategory);
+                        result = Result.Failure(new SMS_Domain.Common.Error("UNKNOWN_CATEGORY", $"Unknown event category: {_selectedEventCategory}"));
+                        break;
+                }
+
+                if (result.IsSuccess)
+                {
+                    successCount++;
+                }
+                else
+                {
+                    Logger.LogWarning("Failed to generate test event {Index}: {Error}", i, result.Error.Message);
+                }
+            }
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Test Events Generated",
+                Detail = $"Successfully generated {successCount}/{_eventCount} {_selectedEventCategory} events.",
+                Duration = 3000
+            });
+
+            Logger.LogInformation("Generated {SuccessCount}/{TotalCount} {Category} test events successfully", 
+                successCount, _eventCount, _selectedEventCategory);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to generate test events");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Generation Error",
+                Detail = "Failed to generate test events.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _isGenerating = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task GenerateSampleEvents(EventCategory category)
+    {
+        try
+        {
+            _isGenerating = true;
+            StateHasChanged();
+
+            var events = category switch
+            {
+                EventCategory.DomainEvent => new[] { 
+                    ("UserCreated", "System"), 
+                    ("HazardReported", "System"), 
+                    ("RiskAssessmentCompleted", "System") 
+                },
+                EventCategory.IntegrationEvent => new[] { 
+                    ("EmailNotification", "Email"), 
+                    ("SMSAlert", "SMS"), 
+                    ("ExternalReportSubmission", "ExternalAPI") 
+                },
+                EventCategory.UIEvent => new[] { 
+                    ("DashboardUpdate", "Dashboard"), 
+                    ("NotificationBadgeUpdate", "NotificationCenter"), 
+                    ("TableRefresh", "DataGrid") 
+                },
+                _ => new[] { ("UnknownEvent", "Unknown") }
+            };
+
+            var successCount = 0;
+
+            foreach (var (eventType, target) in events)
+            {
+                Result result;
+
+                switch (category)
+                {
+                    case EventCategory.DomainEvent:
+                        var domainEvent = new TestDomainEvent();
+                        domainEvent.SetEventType(eventType);
+                        domainEvent.Message = $"Sample {category} event: {eventType}";
+                        domainEvent.TestData = new { Category = category.ToString(), SampleData = true, Generated = DateTime.UtcNow };
+                        result = await EventBus.PublishDomainEventAsync(domainEvent, EventExecutionMode.Manual);
+                        break;
+
+                    case EventCategory.IntegrationEvent:
+                        var integrationEvent = new TestIntegrationEvent();
+                        integrationEvent.SetEventType(eventType);
+                        integrationEvent.SetTargetSystem(target);
+                        integrationEvent.Message = $"Sample {category} event: {eventType}";
+                        integrationEvent.TestData = new { Category = category.ToString(), SampleData = true, Generated = DateTime.UtcNow };
+                        result = await EventBus.PublishIntegrationEventAsync(integrationEvent, EventExecutionMode.Manual);
+                        break;
+
+                    case EventCategory.UIEvent:
+                        var uiEvent = new TestUIEvent();
+                        uiEvent.SetEventType(eventType);
+                        uiEvent.SetTargetComponent(target);
+                        uiEvent.Message = $"Sample {category} event: {eventType}";
+                        uiEvent.TestData = new { Category = category.ToString(), SampleData = true, Generated = DateTime.UtcNow };
+                        result = await EventBus.PublishUIEventAsync(uiEvent, EventExecutionMode.Manual);
+                        break;
+
+                    default:
+                        result = Result.Failure(new SMS_Domain.Common.Error("UNKNOWN_CATEGORY", $"Unknown event category: {category}"));
+                        break;
+                }
+
+                if (result.IsSuccess)
+                {
+                    successCount++;
+                }
+            }
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Sample Events Generated",
+                Detail = $"Generated {successCount} sample {category} events.",
+                Duration = 3000
+            });
+
+            Logger.LogInformation("Generated {SuccessCount} sample {Category} events", successCount, category);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to generate sample events");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Generation Error",
+                Detail = "Failed to generate sample events.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _isGenerating = false;
+            StateHasChanged();
+        }
+    }
+
+    private void NavigateToQueueManager()
+    {
+        NavigationManager.NavigateTo("/SMSSystem/EventBus/QueueManager");
+    }
+
+    private async Task GenerateRealisticEmailTest()
+    {
+        try
+        {
+            _isGenerating = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Generating realistic email notification events for testing");
+
+            var emailScenarios = new[]
+            {
+                new {
+                    Subject = "?? HIGH PRIORITY: Hazard Report #HR-2024-001 Requires Immediate Attention",
+                    Recipients = new List<string> { "safety.manager@pdxairport.com", "risk.assessment@pdxairport.com" },
+                    Body = CreateHazardReportEmailBody("HR-2024-001", "Runway Incursion Risk", "High", "Gate A12 Operations"),
+                    Priority = EmailPriority.High,
+                    WorkflowType = "HazardEscalation",
+                    EntityType = "HazardReport",
+                    EntityId = "HR-2024-001"
+                },
+                new {
+                    Subject = "?? Weekly SPI Report - Safety Performance Indicators Summary",
+                    Recipients = new List<string> { "sms.coordinator@pdxairport.com", "operations.manager@pdxairport.com", "safety.committee@pdxairport.com" },
+                    Body = CreateSPIReportEmailBody(),
+                    Priority = EmailPriority.Normal,
+                    WorkflowType = "SPIReporting",
+                    EntityType = "SPIReport",
+                    EntityId = "SPI-2024-W17"
+                },
+                new {
+                    Subject = "? Mitigation Action Completed - Risk Level Reduced",
+                    Recipients = new List<string> { "hazard.reporter@pdxairport.com", "safety.manager@pdxairport.com" },
+                    Body = CreateMitigationCompletedEmailBody("MIT-2024-045", "Improved Ground Vehicle Training"),
+                    Priority = EmailPriority.Normal,
+                    WorkflowType = "MitigationTracking",
+                    EntityType = "MitigationAction",
+                    EntityId = "MIT-2024-045"
+                }
+            };
+
+            var successCount = 0;
+
+            foreach (var scenario in emailScenarios)
+            {
+                var emailEvent = new EmailNotificationEvent(
+                    toRecipients: scenario.Recipients,
+                    subject: scenario.Subject,
+                    body: scenario.Body,
+                    isHtmlContent: true,
+                    priority: scenario.Priority,
+                    deliveryMode: IntegrationDeliveryMode.BestEffort,
+                    workflowType: scenario.WorkflowType,
+                    relatedEntityType: scenario.EntityType,
+                    relatedEntityId: scenario.EntityId,
+                    templateName: $"SMS_{scenario.WorkflowType}_Template",
+                    templateData: new Dictionary<string, object>
+                    {
+                        { "GeneratedAt", DateTime.UtcNow },
+                        { "TestMode", true },
+                        { "SystemName", "SMS Safety Management System" }
+                    },
+                    emailMetadata: new Dictionary<string, object>
+                    {
+                        { "Source", "EventBus Test Generator" },
+                        { "Environment", "Development" },
+                        { "TestCase", scenario.WorkflowType }
+                    }
+                );
+
+                var result = await EventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Manual);
+
+                if (result.IsSuccess)
+                {
+                    successCount++;
+                    Logger.LogInformation("? Generated email test: {Subject}", scenario.Subject);
+                }
+                else
+                {
+                    Logger.LogWarning("? Failed to generate email test: {Subject} - {Error}", scenario.Subject, result.Error.Message);
+                }
+            }
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Success,
+                Summary = "Realistic Email Tests Generated",
+                Detail = $"Successfully generated {successCount}/{emailScenarios.Length} realistic email notification events. Check Queue Manager to execute them manually. Output will be saved to C:\\temp\\sms_emails\\ as .eml files.",
+                Duration = 5000
+            });
+
+            Logger.LogInformation("Generated {SuccessCount}/{TotalCount} realistic email notification events", 
+                successCount, emailScenarios.Length);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to generate realistic email tests");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Email Test Generation Failed",
+                Detail = "Failed to generate realistic email tests.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _isGenerating = false;
+            StateHasChanged();
+        }
+    }
+
+    private string CreateHazardReportEmailBody(string hazardId, string hazardTitle, string riskLevel, string location)
+    {
+        return $@"<html><head><style>body {{ font-family: Arial, sans-serif; margin: 20px; }}.header {{ background-color: #d32f2f; color: white; padding: 15px; border-radius: 5px; }}.content {{ margin: 20px 0; }}.details {{ background-color: #f5f5f5; padding: 15px; border-left: 4px solid #d32f2f; }}.footer {{ color: #666; font-size: 12px; margin-top: 30px; }}</style></head><body><div class='header'><h2>?? URGENT: Hazard Report Requires Attention</h2></div><div class='content'><p>Dear Safety Management Team,</p><p>A <strong>{riskLevel}</strong> priority hazard report has been submitted and requires immediate review and action.</p><div class='details'><h3>Hazard Details:</h3><ul><li><strong>Hazard ID:</strong> {hazardId}</li><li><strong>Title:</strong> {hazardTitle}</li><li><strong>Risk Level:</strong> <span style='color: #d32f2f; font-weight: bold;'>{riskLevel}</span></li><li><strong>Location:</strong> {location}</li><li><strong>Reported:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</li></ul></div><p><strong>Required Actions:</strong></p><ol><li>Review the hazard report within 4 hours</li><li>Conduct risk assessment</li><li>Assign mitigation actions if required</li><li>Update stakeholders on progress</li></ol><p>Please log into the SMS system to review full details and take appropriate action.</p></div><div class='footer'><p>This is an automated notification from the SMS Safety Management System.<br/>Do not reply to this email. For support, contact: sms.support@pdxairport.com</p></div></body></html>";
+    }
+
+    private string CreateSPIReportEmailBody()
+    {
+        return $@"<html><head><style>body {{ font-family: Arial, sans-serif; margin: 20px; }}.header {{ background-color: #1976d2; color: white; padding: 15px; border-radius: 5px; }}.content {{ margin: 20px 0; }}.metrics {{ display: flex; justify-content: space-between; margin: 20px 0; }}.metric {{ background-color: #f0f8ff; padding: 15px; border-radius: 5px; text-align: center; width: 30%; }}.footer {{ color: #666; font-size: 12px; margin-top: 30px; }}</style></head><body><div class='header'><h2>?? Weekly Safety Performance Indicators Report</h2></div><div class='content'><p>Dear SMS Team,</p><p>Here is your weekly Safety Performance Indicators (SPI) summary for the week ending {DateTime.UtcNow:MMMM dd, yyyy}.</p><div class='metrics'><div class='metric'><h3>Hazard Reports</h3><div style='font-size: 24px; color: #d32f2f;'>12</div><div>This Week</div></div><div class='metric'><h3>Risk Assessments</h3><div style='font-size: 24px; color: #ff9800;'>8</div><div>Completed</div></div><div class='metric'><h3>Mitigations</h3><div style='font-size: 24px; color: #4caf50;'>15</div><div>Active</div></div></div><p><strong>Key Highlights:</strong></p><ul><li>Runway safety incidents decreased by 25% compared to last week</li><li>Ground vehicle training completion rate: 94%</li><li>Average hazard resolution time: 2.3 days</li></ul><p>For detailed analytics and trend analysis, please access the SPI Dashboard in the SMS system.</p></div><div class='footer'><p>Automated SPI Report - SMS Safety Management System<br/>Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</p></div></body></html>";
+    }
+
+    private string CreateMitigationCompletedEmailBody(string mitigationId, string mitigationTitle)
+    {
+        return $@"<html><head><style>body {{ font-family: Arial, sans-serif; margin: 20px; }}.header {{ background-color: #4caf50; color: white; padding: 15px; border-radius: 5px; }}.content {{ margin: 20px 0; }}.success {{ background-color: #e8f5e8; padding: 15px; border-left: 4px solid #4caf50; }}.footer {{ color: #666; font-size: 12px; margin-top: 30px; }}</style></head><body><div class='header'><h2>? Mitigation Action Successfully Completed</h2></div><div class='content'><p>Dear SMS Team,</p><p>We are pleased to inform you that a mitigation action has been successfully completed, resulting in improved safety outcomes.</p><div class='success'><h3>Mitigation Details:</h3><ul><li><strong>Mitigation ID:</strong> {mitigationId}</li><li><strong>Title:</strong> {mitigationTitle}</li><li><strong>Completed:</strong> {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</li><li><strong>Status:</strong> <span style='color: #4caf50; font-weight: bold;'>COMPLETED</span></li></ul></div><p><strong>Impact Assessment:</strong></p><ul><li>Risk level reduced from HIGH to MEDIUM</li><li>Affected operational areas now compliant</li><li>Training requirements updated and implemented</li></ul><p>Thank you for your commitment to maintaining the highest safety standards.</p></div><div class='footer'><p>SMS Safety Management System - Automated Notification<br/>For questions, contact: safety.coordinator@pdxairport.com</p></div></body></html>";
+    }
+
+    private record EventCategoryOption(EventCategory Value, string Text);
+    private record EventTypeOption(string Value, string Text);
+    private record ExecutionModeOption(EventExecutionMode Value, string Text);
+}
+
+<style>
+    .btn-toolbar .rz-button {
+        margin-right: 0.5rem;
+    }
+</style>

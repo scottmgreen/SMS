@@ -88,14 +88,14 @@ public class Step5MitigationData
 
 public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowService
 {
-    private readonly IMediator _mediator;
+    private readonly IBaseMediator _mediator;
     private readonly ILogger<SMSRiskAssessmentWorkflowService> _logger;
     private readonly IRiskAssessmentRepository _riskAssessmentRepository;
     private readonly SMSApplicationUserRepository _userRepository;
     private readonly IHazardRepository _hazardRepository;
 
     public SMSRiskAssessmentWorkflowService(
-        IMediator mediator,
+        IBaseMediator mediator,
         ILogger<SMSRiskAssessmentWorkflowService> logger,
         IRiskAssessmentRepository riskAssessmentRepository,
         SMSApplicationUserRepository userRepository,

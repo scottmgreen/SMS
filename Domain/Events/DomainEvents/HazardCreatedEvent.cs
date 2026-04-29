@@ -18,9 +18,45 @@ namespace SMS_Domain.Events;
 /// Domain event triggered when a new hazard is created
 /// Initiates hazard workflow including SPI updates, stakeholder notifications, and escalation checks
 /// </summary>
-public class HazardCreatedEvent : BaseDomainEvent
+/// <summary>
+/// Domain event representing a new hazard being created in the SMS system
+/// Triggers notifications, SPI calculations, and workflow initiation
+/// IMPLEMENTS: IEventDataSource for automatic SPI data source discovery
+/// </summary>
+public class HazardCreatedEvent : BaseDomainEvent, IEventDataSource
 {
     public override string EventType => "Hazard.Created";
+
+    #region IEventDataSource Implementation
+
+    /// <summary>
+    /// Display name for SPI configuration dropdowns
+    /// </summary>
+    public string DataSourceDisplayName => "Hazard Management";
+
+    /// <summary>
+    /// Category for grouping in UI
+    /// </summary>
+    public string DataSourceCategory => "Safety";
+
+    /// <summary>
+    /// Description of data provided for SPI calculations
+    /// </summary>
+    public string DataSourceDescription => "Provides data points for hazard reporting, safety incident trends, and risk identification metrics";
+
+    /// <summary>
+    /// This is a primary automatic data source for safety SPIs
+    /// </summary>
+    public bool IsAutomaticDataSource => true;
+
+    /// <summary>
+    /// High priority for safety-related SPIs
+    /// </summary>
+    public int DisplayPriority => 1;
+
+    #endregion
+
+    #region Event Properties
 
     public string HazardId { get; private set; }
     public string HazardCode { get; private set; }
@@ -38,6 +74,10 @@ public class HazardCreatedEvent : BaseDomainEvent
     // Location information if available
     public decimal? Latitude { get; private set; }
     public decimal? Longitude { get; private set; }
+
+    #endregion
+
+    #region Constructor
 
     public HazardCreatedEvent(
         string hazardId,
@@ -70,4 +110,6 @@ public class HazardCreatedEvent : BaseDomainEvent
         Latitude = latitude;
         Longitude = longitude;
     }
+
+    #endregion
 }

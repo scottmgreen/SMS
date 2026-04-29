@@ -12,6 +12,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using SMS_Application.Interfaces;
 using SMS_Application.Common;
+using Application.Interfaces.CommonInterfaces;
 
 namespace SMS_Application.Messaging.Pipelines;
 

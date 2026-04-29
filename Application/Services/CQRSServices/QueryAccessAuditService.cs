@@ -7,28 +7,13 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using Application.Interfaces.CommonInterfaces;
+
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
 
 namespace SMS_Application.Services;
-
-/// <summary>
-/// Service for auditing query access and data retrieval operations
-/// Provides comprehensive audit trail for all read operations in the system
-/// </summary>
-public interface IQueryAccessAuditService
-{
-    /// <summary>
-    /// Log a query access event
-    /// </summary>
-    Task LogQueryAccessAsync(string userId, string queryType, string resourceIdentifier, string accessType, CancellationToken cancellationToken = default);
-    
-    /// <summary>
-    /// Log query access with additional context
-    /// </summary>
-    Task LogQueryAccessAsync(string userId, string queryType, string resourceIdentifier, string accessType, string additionalContext, CancellationToken cancellationToken = default);
-}
 
 /// <summary>
 /// Implementation of query access audit service

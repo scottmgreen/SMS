@@ -1,0 +1,592 @@
+﻿//-----------------------------------------------------------------------
+// <copyright file="EventBusQueueManager.razor.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Code-behind for EventBus Queue Manager page.
+//                  Provides management and control of queued events for testing and manual execution.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Logging;
+using Radzen;
+using Radzen.Blazor;
+using SMS_Application.Interfaces;
+using SMS_Domain.ValueObjects;
+
+namespace SMS3.Components.Pages.SMSSystem.EventBus;
+
+/// <summary>
+/// Code-behind for EventBus Queue Manager page
+/// Provides management interface for queued events
+/// </summary>
+public partial class EventBusQueueManager
+{
+    #region Private Fields
+
+    private IEnumerable<QueuedEvent> _queuedEvents = new List<QueuedEvent>();
+    private QueueStatistics? _statistics;
+    private RadzenDataGrid<QueuedEvent>? _eventGrid;
+
+    private bool _isLoading = true;
+    private bool _isProcessing = false;
+
+    private QueuedEventStatus? _statusFilter;
+    private EventCategory? _eventTypeFilter;
+
+    #endregion
+
+    #region Filter Options
+
+    private readonly List<FilterOption<QueuedEventStatus?>> _statusOptions = new()
+    {
+        new(null, "All Statuses"),
+        new(QueuedEventStatus.Pending, "Pending"),
+        new(QueuedEventStatus.Processing, "Processing"),
+        new(QueuedEventStatus.Processed, "Processed"),
+        new(QueuedEventStatus.Failed, "Failed"),
+        new(QueuedEventStatus.Cancelled, "Cancelled")
+    };
+
+    private readonly List<FilterOption<EventCategory?>> _eventTypeOptions = new()
+    {
+        new(null, "All Types"),
+        new(EventCategory.DomainEvent, "Domain Events"),
+        new(EventCategory.IntegrationEvent, "Integration Events"),
+        new(EventCategory.UIEvent, "UI Events")
+    };
+
+    #endregion
+
+    #region Lifecycle Methods
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadQueuedEvents();
+            await LoadStatistics();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to initialize EventBus Queue Manager");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Initialization Error",
+                Detail = "Failed to load queue data. Please refresh the page.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _isLoading = false;
+        }
+    }
+
+    #endregion
+
+    #region Data Loading Methods
+
+    private async Task LoadQueuedEvents()
+    {
+        try
+        {
+            _isLoading = true;
+            StateHasChanged();
+
+            var result = await EventQueueService.GetQueuedEventsAsync(_statusFilter, _eventTypeFilter, 1000);
+
+            if (result.IsSuccess)
+            {
+                _queuedEvents = result.Value;
+                Logger.LogDebug("Loaded {EventCount} queued events", _queuedEvents.Count());
+            }
+            else
+            {
+                Logger.LogWarning("Failed to load queued events: {Error}", result.Error.Message);
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Load Error",
+                    Detail = result.Error.Message,
+                    Duration = 4000
+                });
+                _queuedEvents = new List<QueuedEvent>();
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Exception while loading queued events");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Load Error",
+                Detail = "An unexpected error occurred while loading events.",
+                Duration = 4000
+            });
+            _queuedEvents = new List<QueuedEvent>();
+        }
+        finally
+        {
+            _isLoading = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task LoadStatistics()
+    {
+        try
+        {
+            var result = await EventQueueService.GetQueueStatisticsAsync();
+
+            if (result.IsSuccess)
+            {
+                _statistics = result.Value;
+                Logger.LogDebug("Loaded queue statistics: {Pending} pending, {Processed} processed", 
+                    _statistics.PendingCount, _statistics.ProcessedCount);
+            }
+            else
+            {
+                Logger.LogWarning("Failed to load queue statistics: {Error}", result.Error.Message);
+                _statistics = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Exception while loading queue statistics");
+            _statistics = null;
+        }
+
+        StateHasChanged();
+    }
+
+    #endregion
+
+    #region Event Handling Methods
+
+    private async Task OnFilterChanged()
+    {
+        Logger.LogDebug("Filters changed - Status: {Status}, Type: {Type}", _statusFilter, _eventTypeFilter);
+        await LoadQueuedEvents();
+        await LoadStatistics();
+    }
+
+    private async Task ExecuteEvent(Guid eventId)
+    {
+        try
+        {
+            _isProcessing = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Manually executing event {EventId}", eventId);
+
+            // Get the event details before execution to check if it's a UI event
+            var eventResult = await EventQueueService.GetQueuedEventAsync(eventId);
+            var isUIEvent = eventResult.IsSuccess && eventResult.Value.EventCategory == EventCategory.UIEvent;
+            var uiEventData = isUIEvent ? DeserializeUIEventData(eventResult.Value.EventData) : null;
+
+            var result = await EventQueueService.ExecuteQueuedEventAsync(eventId, "ManualUI");
+
+            if (result.IsSuccess)
+            {
+                // Show actual UI notification if this was a UI event
+                if (isUIEvent && uiEventData != null)
+                {
+                    ShowUIEventNotification(uiEventData);
+                }
+
+                Logger.LogInformation("✅ Successfully executed event {EventId}", eventId);
+            }
+            else
+            {
+                // Only show notifications for actual failures
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Execution Failed", 
+                    Detail = result.Error.Message,
+                    Duration = 4000
+                });
+
+                Logger.LogWarning("❌ Failed to execute event {EventId}: {Error}", eventId, result.Error.Message);
+            }
+
+            // Refresh the data
+            await LoadQueuedEvents();
+            await LoadStatistics();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Exception while executing event {EventId}", eventId);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Execution Error",
+                Detail = "An unexpected error occurred during execution.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task CancelEvent(Guid eventId)
+    {
+        try
+        {
+            _isProcessing = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Cancelling event {EventId}", eventId);
+
+            var result = await EventQueueService.CancelQueuedEventAsync(eventId, "ManualUI");
+
+            if (result.IsSuccess)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Event Cancelled",
+                    Detail = "Event cancelled successfully.",
+                    Duration = 3000
+                });
+
+                Logger.LogInformation("Successfully cancelled event {EventId}", eventId);
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Cancellation Failed",
+                    Detail = result.Error.Message,
+                    Duration = 4000
+                });
+
+                Logger.LogWarning("Failed to cancel event {EventId}: {Error}", eventId, result.Error.Message);
+            }
+
+            // Refresh the data
+            await LoadQueuedEvents();
+            await LoadStatistics();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Exception while cancelling event {EventId}", eventId);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Cancellation Error",
+                Detail = "An unexpected error occurred during cancellation.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ExecuteAllPending()
+    {
+        try
+        {
+            _isProcessing = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Executing all pending events (Type filter: {EventType})", _eventTypeFilter);
+
+            var result = await EventQueueService.ExecuteAllPendingEventsAsync(_eventTypeFilter, "ManualUI");
+
+            if (result.IsSuccess)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Batch Execution Complete",
+                    Detail = $"Successfully executed {result.Value} pending events.",
+                    Duration = 4000
+                });
+
+                Logger.LogInformation("Successfully executed {EventCount} pending events", result.Value);
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Batch Execution Issues",
+                    Detail = result.Error.Message,
+                    Duration = 5000
+                });
+
+                Logger.LogWarning("Batch execution had issues: {Error}", result.Error.Message);
+            }
+
+            // Refresh the data
+            await LoadQueuedEvents();
+            await LoadStatistics();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Exception while executing all pending events");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Batch Execution Error",
+                Detail = "An unexpected error occurred during batch execution.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task ClearCompleted()
+    {
+        try
+        {
+            _isProcessing = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Clearing completed events");
+
+            var result = await EventQueueService.ClearCompletedEventsAsync();
+
+            if (result.IsSuccess)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Info,
+                    Summary = "Cleanup Complete",
+                    Detail = $"Cleared {result.Value} completed events.",
+                    Duration = 3000
+                });
+
+                Logger.LogInformation("Successfully cleared {EventCount} completed events", result.Value);
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Cleanup Failed",
+                    Detail = result.Error.Message,
+                    Duration = 4000
+                });
+
+                Logger.LogWarning("Failed to clear completed events: {Error}", result.Error.Message);
+            }
+
+            // Refresh the data
+            await LoadQueuedEvents();
+            await LoadStatistics();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Exception while clearing completed events");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Cleanup Error",
+                Detail = "An unexpected error occurred during cleanup.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    #endregion
+
+    #region UI Methods
+
+    private async Task ShowEventDetails(QueuedEvent queuedEvent)
+    {
+        try
+        {
+            await DialogService.OpenAsync<EventDetailsDialog>("Event Details", 
+                new Dictionary<string, object> { { "Event", queuedEvent } },
+                new DialogOptions()
+                {
+                    Width = "800px",
+                    Height = "600px",
+                    Resizable = true,
+                    Draggable = true
+                });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to show event details for event {EventId}", queuedEvent.Id);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Display Error",
+                Detail = "Could not display event details.",
+                Duration = 3000
+            });
+        }
+    }
+
+    private void CloseEventDetails()
+    {
+        // This method is no longer needed with DialogService
+    }
+
+    private static BadgeStyle GetStatusBadgeStyle(QueuedEventStatus status)
+    {
+        return status switch
+        {
+            QueuedEventStatus.Pending => BadgeStyle.Warning,
+            QueuedEventStatus.Processing => BadgeStyle.Base,
+            QueuedEventStatus.Processed => BadgeStyle.Success,
+            QueuedEventStatus.Failed => BadgeStyle.Danger,
+            QueuedEventStatus.Cancelled => BadgeStyle.Secondary,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    private static BadgeStyle GetCategoryBadgeStyle(EventCategory category)
+    {
+        return category switch
+        {
+            EventCategory.DomainEvent => BadgeStyle.Primary,
+            EventCategory.IntegrationEvent => BadgeStyle.Warning,
+            EventCategory.UIEvent => BadgeStyle.Base,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    private static BadgeStyle GetPriorityBadgeStyle(EventPriority priority)
+    {
+        return priority switch
+        {
+            EventPriority.Critical => BadgeStyle.Danger,
+            EventPriority.High => BadgeStyle.Warning,
+            EventPriority.Normal => BadgeStyle.Primary,
+            EventPriority.Low => BadgeStyle.Secondary,
+            _ => BadgeStyle.Light
+        };
+    }
+
+    #endregion
+
+    #region UI Event Handling
+
+    /// <summary>
+    /// Deserializes UI event data for notification processing
+    /// </summary>
+    private Dictionary<string, object>? DeserializeUIEventData(string eventData)
+    {
+        try
+        {
+            return System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(eventData);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "Failed to deserialize UI event data");
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// Shows actual NotificationService popup for UI events
+    /// DEMONSTRATION: This is where UI events trigger real user notifications!
+    /// </summary>
+    private void ShowUIEventNotification(Dictionary<string, object> uiEventData)
+    {
+        try
+        {
+            // Extract notification details from UI event
+            var message = uiEventData.ContainsKey("Message") ? uiEventData["Message"]?.ToString() : "UI Event Executed";
+            var priority = uiEventData.ContainsKey("Priority") ? uiEventData["Priority"]?.ToString() : "Normal";
+            var eventType = uiEventData.ContainsKey("EventType") ? uiEventData["EventType"]?.ToString() : "UIEvent";
+
+            var severity = GetNotificationSeverityFromPriority(priority);
+            var summary = GetNotificationSummaryFromEventType(eventType, priority);
+            var duration = GetNotificationDurationFromPriority(priority);
+
+            Logger.LogInformation("🔔 [UI NOTIFICATION] Showing notification: {Summary} - {Message}", summary, message);
+
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = severity,
+                Summary = summary,
+                Detail = message ?? "UI Event notification",
+                Duration = duration
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to show UI event notification");
+        }
+    }
+
+    /// <summary>
+    /// Maps UI event priority to notification severity
+    /// </summary>
+    private NotificationSeverity GetNotificationSeverityFromPriority(string priority)
+    {
+        return priority switch
+        {
+            "Critical" => NotificationSeverity.Error,
+            "High" => NotificationSeverity.Warning,
+            "Normal" => NotificationSeverity.Info,
+            "Low" => NotificationSeverity.Success,
+            _ => NotificationSeverity.Info
+        };
+    }
+
+    /// <summary>
+    /// Generates notification summary based on event type and priority
+    /// </summary>
+    private string GetNotificationSummaryFromEventType(string eventType, string priority)
+    {
+        return eventType switch
+        {
+            "HazardCreatedNotification" => priority switch
+            {
+                "Critical" => "🚨 Critical Hazard Alert",
+                "High" => "⚠️ High Priority Hazard",
+                "Normal" => "📋 New Hazard Reported",
+                _ => "ℹ️ Hazard Notification"
+            },
+            "TestUIEvent" => "🧪 UI Test Event",
+            _ => $"📱 {eventType} Notification"
+        };
+    }
+
+    /// <summary>
+    /// Gets notification duration based on priority
+    /// </summary>
+    private int GetNotificationDurationFromPriority(string priority)
+    {
+        return priority switch
+        {
+            "Critical" => 10000, // 10 seconds for critical
+            "High" => 7000,      // 7 seconds for high  
+            "Normal" => 5000,    // 5 seconds for normal
+            "Low" => 3000,       // 3 seconds for low
+            _ => 5000            // Default 5 seconds
+        };
+    }
+
+    #endregion
+
+    #region Helper Classes
+
+    private record FilterOption<T>(T Value, string Text);
+
+    #endregion
+}

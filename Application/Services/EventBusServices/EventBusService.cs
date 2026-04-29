@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Application.Interfaces;
+using SMS_Application.Interfaces;
 using SMS_Domain.Common;
 using SMS_Domain.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -25,6 +26,7 @@ public sealed class EventBusService : IBaseEventBus
 {
     private readonly ILogger<EventBusService> _logger;
     private readonly IServiceProvider _serviceProvider;
+    private readonly Lazy<IEventQueueService> _eventQueueService;
     private readonly Dictionary<Type, List<Type>> _eventHandlerMappings = new();
     private readonly object _lock = new object();
 
@@ -34,6 +36,9 @@ public sealed class EventBusService : IBaseEventBus
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+        _eventQueueService = new Lazy<IEventQueueService>(() => 
+            _serviceProvider.GetService<IEventQueueService>() ?? 
+            throw new InvalidOperationException("IEventQueueService is not registered"));
     }
 
     /// <summary>
@@ -59,7 +64,7 @@ public sealed class EventBusService : IBaseEventBus
                 return Result.Failure(new Error("EVENTBUS_NULL_EVENT", "Domain event cannot be null"));
             }
 
-            _logger.LogInformation("Publishing event {EventType} (ID: {EventId}) with mode {ExecutionMode}", 
+            _logger.LogInformation("?? Publishing event {EventType} (ID: {EventId}) with mode {ExecutionMode}", 
                 domainEvent.EventType, domainEvent.EventId, mode);
 
             switch (mode)
@@ -143,12 +148,10 @@ public sealed class EventBusService : IBaseEventBus
                     return await ExecuteUIHandlersImmediately(uiEvent, cancellationToken);
 
                 case EventExecutionMode.Queued:
-                    _logger.LogInformation("UI events typically use immediate execution. Routing {EventType} to immediate processing.", uiEvent.EventType);
-                    return await ExecuteUIHandlersImmediately(uiEvent, cancellationToken);
+                    return await QueueUIEventForProcessing(uiEvent, cancellationToken);
 
                 case EventExecutionMode.Manual:
-                    _logger.LogInformation("UI events typically use immediate execution. Routing {EventType} to immediate processing.", uiEvent.EventType);
-                    return await ExecuteUIHandlersImmediately(uiEvent, cancellationToken);
+                    return await StoreUIEventForManualExecution(uiEvent, cancellationToken);
 
                 default:
                     _logger.LogWarning("Unknown execution mode {ExecutionMode} for UI event {EventType}", mode, uiEvent.EventType);
@@ -399,29 +402,46 @@ public sealed class EventBusService : IBaseEventBus
     }
 
     /// <summary>
-    /// Queues event for background processing (future implementation)
-    /// Placeholder for Phase 2 notification queue implementation
+    /// Queues event for background processing using EventQueueService
+    /// Events are stored for later execution
     /// </summary>
     private async Task<Result> QueueEventForProcessing<T>(T domainEvent, CancellationToken cancellationToken) where T : IBaseDomainEvent
     {
-        // Phase 1: Log and execute immediately as fallback
-        _logger.LogInformation("Queued execution not yet implemented for event {EventType} (ID: {EventId}). Executing immediately.",
-            domainEvent.EventType, domainEvent.EventId);
+        try
+        {
+            var queueService = _eventQueueService.Value;
+            return await queueService.QueueDomainEventAsync(domainEvent, "EventBus");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to queue domain event {EventType} (ID: {EventId}). Falling back to immediate execution.",
+                domainEvent.EventType, domainEvent.EventId);
 
-        return await ExecuteHandlersImmediately(domainEvent, cancellationToken);
+            // Fallback to immediate execution if queue service is not available
+            return await ExecuteHandlersImmediately(domainEvent, cancellationToken);
+        }
     }
 
     /// <summary>
-    /// Stores event for manual execution (future implementation)
-    /// Placeholder for Phase 2 manual notification management
+    /// Stores event for manual execution using EventQueueService
+    /// Events are stored and require manual triggering
     /// </summary>
     private async Task<Result> StoreEventForManualExecution<T>(T domainEvent, CancellationToken cancellationToken) where T : IBaseDomainEvent
     {
-        // Phase 1: Log and store basic info, execute immediately as fallback
-        _logger.LogInformation("Manual execution storage not yet implemented for event {EventType} (ID: {EventId}). Executing immediately.",
-            domainEvent.EventType, domainEvent.EventId);
+        try
+        {
+            var queueService = _eventQueueService.Value;
+            _logger.LogDebug("?? Got EventQueueService instance for manual execution: {ServiceType}", queueService.GetType().Name);
+            return await queueService.QueueDomainEventAsync(domainEvent, "ManualExecution");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to store domain event {EventType} (ID: {EventId}) for manual execution. Falling back to immediate execution.",
+                domainEvent.EventType, domainEvent.EventId);
 
-        return await ExecuteHandlersImmediately(domainEvent, cancellationToken);
+            // Fallback to immediate execution if queue service is not available
+            return await ExecuteHandlersImmediately(domainEvent, cancellationToken);
+        }
     }
 
     #region UI Event Execution Methods
@@ -564,29 +584,89 @@ public sealed class EventBusService : IBaseEventBus
     }
 
     /// <summary>
-    /// Queues integration event for background processing (future implementation)
-    /// Placeholder for Phase 2 reliable external delivery implementation
+    /// Queues integration event for background processing using EventQueueService
+    /// Integration events are stored for later reliable delivery
     /// </summary>
     private async Task<Result> QueueIntegrationEventForProcessing<T>(T integrationEvent, CancellationToken cancellationToken) where T : IIntegrationEvent
     {
-        // Phase 1: Log and execute immediately as fallback
-        _logger.LogInformation("Queued integration execution not yet implemented for event {EventType} to {TargetSystem}. Executing immediately.",
-            integrationEvent.EventType, integrationEvent.TargetSystem);
+        try
+        {
+            var queueService = _eventQueueService.Value;
+            return await queueService.QueueIntegrationEventAsync(integrationEvent, "EventBus");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to queue integration event {EventType} to {TargetSystem}. Falling back to immediate execution.",
+                integrationEvent.EventType, integrationEvent.TargetSystem);
 
-        return await ExecuteIntegrationHandlersImmediately(integrationEvent, cancellationToken);
+            // Fallback to immediate execution if queue service is not available
+            return await ExecuteIntegrationHandlersImmediately(integrationEvent, cancellationToken);
+        }
     }
 
     /// <summary>
-    /// Stores integration event for manual execution (future implementation)
-    /// Placeholder for Phase 2 manual external notification management
+    /// Stores integration event for manual execution using EventQueueService
+    /// Integration events are stored and require manual triggering
     /// </summary>
     private async Task<Result> StoreIntegrationEventForManualExecution<T>(T integrationEvent, CancellationToken cancellationToken) where T : IIntegrationEvent
     {
-        // Phase 1: Log and execute immediately as fallback
-        _logger.LogInformation("Manual integration execution storage not yet implemented for event {EventType} to {TargetSystem}. Executing immediately.",
-            integrationEvent.EventType, integrationEvent.TargetSystem);
+        try
+        {
+            var queueService = _eventQueueService.Value;
+            return await queueService.QueueIntegrationEventAsync(integrationEvent, "ManualExecution");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to store integration event {EventType} to {TargetSystem} for manual execution. Falling back to immediate execution.",
+                integrationEvent.EventType, integrationEvent.TargetSystem);
 
-        return await ExecuteIntegrationHandlersImmediately(integrationEvent, cancellationToken);
+            // Fallback to immediate execution if queue service is not available
+            return await ExecuteIntegrationHandlersImmediately(integrationEvent, cancellationToken);
+        }
+    }
+    #endregion
+
+    #region UI Event Queue Methods
+    /// <summary>
+    /// Queues UI event for background processing using EventQueueService
+    /// UI events are stored for later execution
+    /// </summary>
+    private async Task<Result> QueueUIEventForProcessing<T>(T uiEvent, CancellationToken cancellationToken) where T : IUIEvent
+    {
+        try
+        {
+            var queueService = _eventQueueService.Value;
+            return await queueService.QueueUIEventAsync(uiEvent, "EventBus");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to queue UI event {EventType} for {TargetComponent}. Falling back to immediate execution.",
+                uiEvent.EventType, uiEvent.TargetComponent);
+
+            // Fallback to immediate execution if queue service is not available
+            return await ExecuteUIHandlersImmediately(uiEvent, cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// Stores UI event for manual execution using EventQueueService
+    /// UI events are stored and require manual triggering
+    /// </summary>
+    private async Task<Result> StoreUIEventForManualExecution<T>(T uiEvent, CancellationToken cancellationToken) where T : IUIEvent
+    {
+        try
+        {
+            var queueService = _eventQueueService.Value;
+            return await queueService.QueueUIEventAsync(uiEvent, "ManualExecution");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to store UI event {EventType} for {TargetComponent} for manual execution. Falling back to immediate execution.",
+                uiEvent.EventType, uiEvent.TargetComponent);
+
+            // Fallback to immediate execution if queue service is not available
+            return await ExecuteUIHandlersImmediately(uiEvent, cancellationToken);
+        }
     }
     #endregion
 

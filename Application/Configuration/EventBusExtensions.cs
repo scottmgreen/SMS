@@ -42,13 +42,10 @@ public static class EventBusExtensions
 
             logger.LogInformation("Initializing EventBus subscriptions for Phase 3 complete workflow automation...");
 
-            // Register SPI-related event handlers
-            RegisterSPIEventHandlers(eventBus, logger);
-
-            // NEW: Phase 3 - Register Domain Event Handlers for complete workflows
+            // Register all Domain Event Handlers (including SPI-related handlers)
             RegisterDomainEventHandlers(eventBus, logger);
 
-            // NEW: Phase 3 - Register Integration Event Handlers for external systems
+            // Register Integration Event Handlers for external systems
             RegisterIntegrationEventHandlers(eventBus, logger);
 
             // Log successful initialization
@@ -69,88 +66,73 @@ public static class EventBusExtensions
     }
 
     /// <summary>
-    /// Registers SPI-related event handlers with the EventBus
-    /// Phase 1: Basic SPI threshold and workflow event handling
-    /// </summary>
-    private static void RegisterSPIEventHandlers(IBaseEventBus eventBus, ILogger logger)
-    {
-        try
-        {
-            // Register SPI threshold exceeded event handler
-            eventBus.Subscribe<SPIThresholdExceededEvent, SPIThresholdEventHandler>();
-            logger.LogInformation("Registered SPIThresholdEventHandler for SPIThresholdExceededEvent");
-
-            // Phase 1: Register other SPI-related handlers as they're implemented
-            // eventBus.Subscribe<SPIDataUpdatedEvent, SPIDataUpdatedEventHandler>();
-            // eventBus.Subscribe<HazardEscalationEvent, HazardEscalationEventHandler>();
-            // eventBus.Subscribe<MitigationAssignmentEvent, MitigationAssignmentEventHandler>();
-
-            logger.LogInformation("SPI event handler registration completed");
-        }
-        catch (Exception ex)
-        {
-            logger.LogError(ex, "Error registering SPI event handlers");
-            throw;
-        }
-    }
-
-    /// <summary>
-    /// NEW: Phase 3 - Registers Domain Event Handlers for complete workflow automation
-    /// Handles business workflow events like hazard creation, status changes, escalations
+    /// Registers Integration Event Handlers for external system coordination
+    /// Handles all business workflow events including hazard management and SPI automation
     /// </summary>
     private static void RegisterDomainEventHandlers(IBaseEventBus eventBus, ILogger logger)
     {
         try
         {
-            logger.LogInformation("Registering Phase 3 Domain Event Handlers...");
+            logger.LogInformation("Registering Domain Event Handlers...");
 
-            // Register SPI automation handler for unified pub/sub SPI processing
+            // === HAZARD-RELATED DOMAIN EVENT HANDLERS ===
+
+            // Register SPI automation handler for hazard-related metrics
             eventBus.Subscribe<SMS_Domain.Events.HazardCreatedEvent, SPIAutomationEventHandler>();
-            logger.LogInformation("Registered SPIAutomationEventHandler for HazardCreatedEvent (SPI automation)");
+            logger.LogInformation("? Registered SPIAutomationEventHandler for HazardCreatedEvent");
 
             // Register hazard workflow event handlers
             eventBus.Subscribe<SMS_Domain.Events.HazardCreatedEvent, HazardCreatedEventHandler>();
-            logger.LogInformation("Registered HazardCreatedEventHandler for HazardCreatedEvent");
+            logger.LogInformation("? Registered HazardCreatedEventHandler for HazardCreatedEvent");
 
+            // === SPI-RELATED DOMAIN EVENT HANDLERS ===
+
+            // Register SPI threshold exceeded event handler
+            eventBus.Subscribe<SPIThresholdExceededEvent, SPIThresholdEventHandler>();
+            logger.LogInformation("? Registered SPIThresholdEventHandler for SPIThresholdExceededEvent");
+
+            // === FUTURE DOMAIN EVENT HANDLERS ===
             // TODO: Register additional domain event handlers as they're implemented
             // eventBus.Subscribe<HazardStatusChangedEvent, HazardStatusChangedEventHandler>();
             // eventBus.Subscribe<HazardEscalationEvent, HazardEscalationEventHandler>();
             // eventBus.Subscribe<MitigationApprovalRequestedEvent, MitigationApprovalEventHandler>();
             // eventBus.Subscribe<SPIComplianceChangedEvent, SPIComplianceEventHandler>();
+            // eventBus.Subscribe<RiskAssessmentCompletedEvent, RiskAssessmentCompletedEventHandler>();
+            // eventBus.Subscribe<MitigationCompletedEvent, MitigationCompletedEventHandler>();
 
-            logger.LogInformation("Domain event handler registration completed");
+            logger.LogInformation("? Domain event handler registration completed");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error registering domain event handlers");
+            logger.LogError(ex, "? Error registering domain event handlers");
             throw;
         }
     }
 
     /// <summary>
-    /// NEW: Phase 3 - Registers Integration Event Handlers for external system coordination
+    /// Registers Integration Event Handlers for external system coordination
     /// Handles external notifications, email delivery, audit logging, and third-party integrations
     /// </summary>
     private static void RegisterIntegrationEventHandlers(IBaseEventBus eventBus, ILogger logger)
     {
         try
         {
-            logger.LogInformation("Registering Phase 3 Integration Event Handlers...");
+            logger.LogInformation("Registering Integration Event Handlers...");
 
             // Register email notification handler
             eventBus.SubscribeIntegration<EmailNotificationEvent, EmailNotificationEventHandler>();
-            logger.LogInformation("Registered EmailNotificationEventHandler for EmailNotificationEvent");
+            logger.LogInformation("? Registered EmailNotificationEventHandler for EmailNotificationEvent");
 
             // TODO: Register additional integration event handlers as they're implemented
             // eventBus.SubscribeIntegration<SMSNotificationEvent, SMSNotificationEventHandler>();
             // eventBus.SubscribeIntegration<AuditLogEvent, AuditLogEventHandler>();
             // eventBus.SubscribeIntegration<SlackNotificationEvent, SlackNotificationEventHandler>();
 
-            logger.LogInformation("Integration event handler registration completed");
+            logger.LogInformation("? Integration event handler registration completed");
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Error registering integration event handlers");
+            logger.LogError(ex, "? Error registering integration event handlers");
             throw;
         }
     }

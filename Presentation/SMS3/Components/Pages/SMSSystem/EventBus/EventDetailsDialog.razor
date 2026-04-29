@@ -1,0 +1,130 @@
+@using SMS_Domain.ValueObjects
+
+<RadzenCard class="event-details-dialog">
+    <RadzenRow>
+        <RadzenColumn Size="12">
+            <h5>Event Details</h5>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="6">
+            <RadzenFieldset Text="Basic Information">
+                <div class="event-detail-item">
+                    <strong>ID:</strong> @Event.Id
+                </div>
+                <div class="event-detail-item">
+                    <strong>Type:</strong> @Event.EventType
+                </div>
+                <div class="event-detail-item">
+                    <strong>Category:</strong> @Event.EventCategory
+                </div>
+                <div class="event-detail-item">
+                    <strong>Status:</strong> @Event.Status
+                </div>
+                <div class="event-detail-item">
+                    <strong>Priority:</strong> @Event.Priority
+                </div>
+                @if (!string.IsNullOrEmpty(Event.TargetSystem))
+                {
+                    <div class="event-detail-item">
+                        <strong>Target:</strong> @Event.TargetSystem
+                    </div>
+                }
+            </RadzenFieldset>
+        </RadzenColumn>
+
+        <RadzenColumn Size="6">
+            <RadzenFieldset Text="Timing Information">
+                <div class="event-detail-item">
+                    <strong>Queued At:</strong> @Event.QueuedAt.ToString("yyyy-MM-dd HH:mm:ss")
+                </div>
+                @if (Event.ProcessedAt.HasValue)
+                {
+                    <div class="event-detail-item">
+                        <strong>Processed At:</strong> @Event.ProcessedAt.Value.ToString("yyyy-MM-dd HH:mm:ss")
+                    </div>
+                }
+                <div class="event-detail-item">
+                    <strong>Attempt Count:</strong> @Event.AttemptCount
+                </div>
+                @if (!string.IsNullOrEmpty(Event.QueuedBy))
+                {
+                    <div class="event-detail-item">
+                        <strong>Queued By:</strong> @Event.QueuedBy
+                    </div>
+                }
+            </RadzenFieldset>
+        </RadzenColumn>
+    </RadzenRow>
+
+    @if (!string.IsNullOrEmpty(Event.LastError))
+    {
+        <RadzenRow>
+            <RadzenColumn Size="12">
+                <RadzenFieldset Text="Error Information">
+                    <div class="alert alert-danger">
+                        @Event.LastError
+                    </div>
+                </RadzenFieldset>
+            </RadzenColumn>
+        </RadzenRow>
+    }
+
+    <RadzenRow>
+        <RadzenColumn Size="12">
+            <RadzenFieldset Text="Event Data">
+                <pre class="event-data-json">@Event.EventData</pre>
+            </RadzenFieldset>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow>
+        <RadzenColumn Size="12" class="text-end">
+            <RadzenButton Text="Close" Click="@(() => DialogService.Close())" ButtonStyle="ButtonStyle.Secondary" />
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>
+
+@code {
+    [Parameter] public QueuedEvent Event { get; set; } = null!;
+    [Inject] private DialogService DialogService { get; set; } = null!;
+}
+
+<style>
+    .event-details-dialog {
+        min-width: 600px;
+        max-width: 800px;
+    }
+
+    .event-detail-item {
+        margin-bottom: 0.5rem;
+        padding: 0.25rem 0;
+        border-bottom: 1px solid var(--rz-border-color);
+    }
+
+    .event-data-json {
+        background-color: var(--rz-background-color);
+        border: 1px solid var(--rz-border-color);
+        padding: 1rem;
+        border-radius: 0.375rem;
+        font-size: 0.875rem;
+        max-height: 300px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+    }
+
+    .alert {
+        padding: 0.75rem 1.25rem;
+        margin-bottom: 1rem;
+        border: 1px solid transparent;
+        border-radius: 0.375rem;
+    }
+
+    .alert-danger {
+        color: #721c24;
+        background-color: #f8d7da;
+        border-color: #f5c6cb;
+    }
+</style>

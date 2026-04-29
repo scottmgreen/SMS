@@ -16,7 +16,7 @@ using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
-namespace SMS_Application.Services.Authentication;
+namespace Application.Services.Strategies;
 
 /// <summary>
 /// Context-based authentication strategy using HttpContext.Items
@@ -69,7 +69,7 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             if (context == null)
             {
                 _logger.LogWarning("? HttpContext not available for ContextBasedAuthenticationStrategy");
-                return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+                return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
             _logger.LogInformation("?? Storing user {UserCode} ({UserType}) in HttpContext.Items for 2FA", user.Code, userType.Value);
@@ -105,12 +105,12 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             _logger.LogInformation("? SUCCESS: User {UserCode} ({UserType}) stored in HttpContext.Items with {FieldCount} fields (REQUEST-SCOPED)", 
                 user.Code, userType.Value, userData.Count);
 
-            return Result<bool>.Success(true);
+            return Result.Success(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "? Error storing user {UserCode} in HttpContext.Items", user.Code);
-            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 
@@ -125,14 +125,14 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             if (context == null)
             {
                 _logger.LogDebug("?? HttpContext not available for user retrieval");
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             var isAuthenticated = context.Items["IsAuthenticated"]?.ToString();
             if (isAuthenticated != "true")
             {
                 _logger.LogDebug("?? No authenticated user in HttpContext.Items");
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             var userCode = context.Items["SMS_UserCode"]?.ToString();
@@ -142,7 +142,7 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             {
                 _logger.LogWarning("?? Incomplete user data in HttpContext.Items - UserCode: {UserCode}, UserType: {UserType}", 
                     userCode ?? "NULL", userTypeValue ?? "NULL");
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             _logger.LogInformation("?? Retrieving user {UserCode} ({UserType}) from HttpContext.Items", userCode, userTypeValue);
@@ -180,7 +180,7 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             if (!userData.Any())
             {
                 _logger.LogWarning("?? No user data found in HttpContext.Items");
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             // Deserialize user via UserInstantiationService
@@ -190,19 +190,19 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             {
                 _logger.LogInformation("? User {UserCode} ({UserType}) retrieved successfully from HttpContext.Items", 
                     userCode, userTypeValue);
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)result.Value);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)result.Value);
             }
             else
             {
                 _logger.LogWarning("?? Failed to deserialize user {UserCode} from HttpContext.Items: {Error}", 
                     userCode, result.Error?.Message);
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "? Error retrieving user from HttpContext.Items");
-            return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+            return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
         }
     }
 
@@ -217,7 +217,7 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             if (context == null)
             {
                 _logger.LogDebug("?? HttpContext not available for clearing");
-                return Result<bool>.Success(true);
+                return Result.Success(true);
             }
 
             var userCode = context.Items["SMS_UserCode"]?.ToString() ?? "Unknown";
@@ -255,12 +255,12 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             }
 
             _logger.LogInformation("? HttpContext.Items cleared successfully for user {UserCode}", userCode);
-            return Result<bool>.Success(true);
+            return Result.Success(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "? Error clearing HttpContext.Items");
-            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 

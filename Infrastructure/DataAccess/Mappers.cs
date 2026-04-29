@@ -18,46 +18,7 @@ public static partial class Mappers
 {
     #region Generic Helper Methods
 
-    public static List<T> LoadCollection<T>(this SqlDataReader reader) where T : new()
-    {
-        List<T> collection = new List<T>();
-
-        while (reader.Read())
-        {
-            T entity = reader.CreateEntityFromReader<T>();
-            collection.Add(entity);
-        }
-
-        return collection;
-    }
-
-    private static T CreateEntityFromReader<T>(this SqlDataReader reader) where T : new()
-    {
-        T entity = new T();
-        reader.PopulateEntityFromReader(entity);
-        return entity;
-    }
-
-    private static void PopulateEntityFromReader<T>(this SqlDataReader reader, T entity) where T : new()
-    {
-        for (int i = 0; i < reader.FieldCount; i++)
-        {
-            string columnName = reader.GetName(i);
-            object columnValue = reader.GetValue(i);
-
-            PropertyInfo property = typeof(T).GetProperty(columnName);
-            if (property != null && columnValue != DBNull.Value)
-            {
-                property.SetValue(entity, columnValue, null);
-            }
-        }
-    }
-
-    public static T GetValue<T>(this IDataReader reader, string columnName)
-    {
-        object value = reader[columnName];
-        return value == DBNull.Value ? default : (T)value;
-    }
+    
     #endregion
 
     #region SMS Entity Mappers

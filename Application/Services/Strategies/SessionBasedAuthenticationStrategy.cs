@@ -16,7 +16,7 @@ using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
-namespace SMS_Application.Services.Authentication;
+namespace Application.Services.Strategies;
 
 /// <summary>
 /// Session-based authentication strategy using HTTP Session cookies
@@ -59,13 +59,13 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             if (context?.Session == null)
             {
                 _logger.LogWarning("? Session not available for SessionBasedAuthenticationStrategy");
-                return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+                return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
             if (context.Response.HasStarted)
             {
                 _logger.LogWarning("? Response has already started - cannot write to session");
-                return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+                return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
             _logger.LogInformation("?? Storing user {UserCode} ({UserType}) in session", user.Code, userType.Value);
@@ -90,12 +90,12 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             _logger.LogInformation("? User {UserCode} ({UserType}) stored successfully in session with {FieldCount} fields", 
                 user.Code, userType.Value, userData.Count);
 
-            return Result<bool>.Success(true);
+            return Result.Success(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "? Error storing user {UserCode} in session", user.Code);
-            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 
@@ -110,14 +110,14 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             if (context?.Session == null)
             {
                 _logger.LogDebug("?? Session not available for user retrieval");
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             var isAuthenticated = context.Session.GetString("IsAuthenticated");
             if (isAuthenticated != "true")
             {
                 _logger.LogDebug("?? No authenticated user in session");
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             var userCode = context.Session.GetString("SMS_UserCode");
@@ -127,7 +127,7 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             {
                 _logger.LogWarning("?? Incomplete user data in session - UserCode: {UserCode}, UserType: {UserType}", 
                     userCode ?? "NULL", userTypeValue ?? "NULL");
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             _logger.LogInformation("?? Retrieving user {UserCode} ({UserType}) from session", userCode, userTypeValue);
@@ -161,19 +161,19 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             {
                 _logger.LogInformation("? User {UserCode} ({UserType}) retrieved successfully from session", 
                     userCode, userTypeValue);
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)result.Value);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)result.Value);
             }
             else
             {
                 _logger.LogWarning("?? Failed to deserialize user {UserCode} from session: {Error}", 
                     userCode, result.Error?.Message);
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "? Error retrieving user from session");
-            return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+            return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
         }
     }
 
@@ -188,7 +188,7 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             if (context?.Session == null)
             {
                 _logger.LogDebug("?? Session not available for clearing");
-                return Result<bool>.Success(true);
+                return Result.Success(true);
             }
 
             var userCode = context.Session.GetString("SMS_UserCode");
@@ -197,12 +197,12 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             context.Session.Clear();
             
             _logger.LogInformation("? Session cleared successfully for user {UserCode}", userCode ?? "Unknown");
-            return Result<bool>.Success(true);
+            return Result.Success(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "? Error clearing session");
-            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 

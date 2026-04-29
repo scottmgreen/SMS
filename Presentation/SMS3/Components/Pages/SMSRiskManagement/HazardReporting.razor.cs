@@ -1,4 +1,4 @@
-
+﻿
 using Microsoft.JSInterop;
 
 using SMS_Application.Services;
@@ -10,11 +10,6 @@ using SMS_Shared.Configuration;
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
-
-// NEW: EventBus integration for Phase 3 workflow automation
-using SMS_Application.Interfaces;
-using SMS_Domain.Events;
-using SMS_Domain.Enums;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -34,9 +29,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
     [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
-
-    // NEW: EventBus integration for Phase 3 workflow automation
-    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     #endregion
 
     #region Route Parameters
@@ -1337,52 +1329,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
         GeneratedHazardId = createdHazard.Code;
         GeneratedReportId = createdHazard.ReportCode;
 
-        _logger.LogInformation("? Hazard created with Code: {HazardCode}, linked to Report: {ReportCode}", createdHazard.Code, actualReportCode);
+        _logger.LogInformation("✅ Hazard created with Code: {HazardCode}, linked to Report: {ReportCode} - Event publishing now handled by Command Handler", 
+            createdHazard.Code, actualReportCode);
 
-        // NEW: PHASE 3 - EventBus Integration for Complete Workflow Automation ??
-        try
-        {
-            _logger.LogInformation("?? Phase 3: Publishing HazardCreatedEvent for complete workflow automation");
-
-            // Determine hazard priority based on type/category
-            var hazardPriority = DetermineHazardPriority(createdHazard.HazardType, createdHazard.HazardCategory);
-
-            // Create and publish HazardCreatedEvent for complete workflow automation
-            var hazardCreatedEvent = new HazardCreatedEvent(
-                hazardId: createdHazard.Code,
-                hazardCode: createdHazard.Code,
-                hazardName: createdHazard.Name ?? "Unnamed Hazard",
-                hazardType: createdHazard.HazardType ?? "Unknown",
-                hazardCategory: createdHazard.HazardCategory ?? "Unknown",
-                description: createdHazard.Description ?? "No description",
-                locationArea: createdHazard.LocationArea ?? HazardReport.Location ?? "Unknown Location",
-                reportCode: actualReportCode,
-                createdBy: createdHazard.CreatedBy ?? CurrentUserService.UserDisplayName,
-                createdDate: createdHazard.CreatedDate ?? DateTime.UtcNow,
-                isInitialHazard: createdHazard.IsInitialHazard,
-                priority: hazardPriority,
-                latitude: createdHazard.HazardLocation?.Latitude,
-                longitude: createdHazard.HazardLocation?.Longitude
-            );
-
-            // Publish the domain event - this triggers the complete workflow
-            var eventResult = await _eventBus.PublishDomainEventAsync(hazardCreatedEvent);
-
-            if (eventResult.IsSuccess)
-            {
-                _logger.LogInformation("? Phase 3: HazardCreatedEvent published successfully for {HazardCode} - Complete workflow initiated", createdHazard.Code);
-            }
-            else
-            {
-                _logger.LogWarning("?? Phase 3: Failed to publish HazardCreatedEvent for {HazardCode}: {Error} - continuing with submission", 
-                    createdHazard.Code, eventResult.Error.Message);
-            }
-        }
-        catch (Exception eventEx)
-        {
-            // Don't fail the entire submission if EventBus fails
-            _logger.LogWarning(eventEx, "?? Phase 3: EventBus integration failed for {HazardCode} - continuing with submission", createdHazard.Code);
-        }
+        // NOTE: Event publishing moved to CreateHazardCommandHandler for Clean Architecture compliance
+        // This ensures events are published regardless of how the hazard is created (UI, API, External, etc.)
 
         // NOTE: SPI automation now handled by EventBus SPIAutomationEventHandler - no direct calls needed
 
@@ -1634,7 +1585,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 // Could show regulatory warning if required
                 if (hazardType.RequiresRegulatoryReporting)
                 {
-                    _notificationHelper.ShowInfoAsync( $"This hazard type ({hazardType.Name}) requires regulatory reporting to appropriate authorities.", 5000);
+                    await _notificationHelper.ShowInfoAsync( $"This hazard type ({hazardType.Name}) requires regulatory reporting to appropriate authorities.", 5000);
                 }
             }
         }
@@ -1783,50 +1734,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
         return category?.Name ?? key;
     }
 
-    /// <summary>
-    /// NEW: Phase 3 - Determine hazard priority based on type and category for EventBus workflow
-    /// Business logic to assign priority levels for automated workflow routing
-    /// </summary>
-    private HazardPriority DetermineHazardPriority(string? hazardType, string? hazardCategory)
-    {
-        try
-        {
-            // Business rules for priority determination
-            var type = hazardType?.ToUpper() ?? "";
-            var category = hazardCategory?.ToUpper() ?? "";
-
-            // Critical priority conditions
-            if (type.Contains("STRUCTURAL") || type.Contains("FIRE") || type.Contains("EXPLOSIVE") ||
-                category.Contains("SAFETY_CRITICAL") || category.Contains("REGULATORY"))
-            {
-                return HazardPriority.Critical;
-            }
-
-            // High priority conditions  
-            if (type.Contains("EQUIPMENT") || type.Contains("MAINTENANCE") || type.Contains("OPERATIONAL") ||
-                category.Contains("OPERATIONAL") || category.Contains("MAINTENANCE"))
-            {
-                return HazardPriority.High;
-            }
-
-            // Medium priority conditions
-            if (type.Contains("ENVIRONMENTAL") || type.Contains("DOCUMENTATION") ||
-                category.Contains("ENVIRONMENTAL") || category.Contains("PROCESS"))
-            {
-                return HazardPriority.Medium;
-            }
-
-            // Default to Medium for unknown types
-            return HazardPriority.Medium;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Error determining hazard priority for Type: {Type}, Category: {Category} - defaulting to Medium",
-                hazardType, hazardCategory);
-            return HazardPriority.Medium;
-        }
-    }
-
     private string GetDepartmentDisplay(string? key)
     {
         if (string.IsNullOrEmpty(key)) return "UNKNOWN";
@@ -1916,7 +1823,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             InitializeFormDefaults();
             StateHasChanged();
 
-            _notificationHelper.ShowInfoAsync( "All form data has been cleared.", 5000);
+           await _notificationHelper.ShowInfoAsync( "All form data has been cleared.", 5000);
 
         }
     }

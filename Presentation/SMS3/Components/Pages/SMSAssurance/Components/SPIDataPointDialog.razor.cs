@@ -185,9 +185,63 @@ public partial class SPIDataPointDialog : ComponentBase
     #endregion
 
     #region Data Source Options
+
+    /// <summary>
+    /// Gets dynamic data sources from domain events + manual sources
+    /// UPDATED: Now uses reflection-based discovery of IEventDataSource implementations
+    /// </summary>
     private List<string> GetDataSourceOptions()
     {
-        return SPIConstants.DataSources.GetAll();
+        var dataSources = new List<string>();
+
+        try
+        {
+            // Add event-driven data sources (discovered via reflection)
+            var eventDrivenSources = SPIConstants.DataSources.GetEventDrivenSourceNames();
+            dataSources.AddRange(eventDrivenSources);
+
+            // Add manual data sources
+            var manualSources = SPIConstants.DataSources.GetManualSources();
+            dataSources.AddRange(manualSources);
+
+            return dataSources.OrderBy(ds => ds).ToList();
+        }
+        catch (Exception ex)
+        {
+            // Fallback to manual sources only if reflection fails
+            _logger.LogWarning(ex, "Failed to get dynamic data sources, falling back to manual sources");
+            return SPIConstants.DataSources.GetManualSources();
+        }
     }
+
+    /// <summary>
+    /// Gets grouped data sources for better UI organization
+    /// </summary>
+    private Dictionary<string, List<string>> GetGroupedDataSourceOptions()
+    {
+        var grouped = new Dictionary<string, List<string>>();
+
+        try
+        {
+            // Event-driven sources grouped by category
+            var eventSources = SPIConstants.DataSources.GetEventDrivenSourcesByCategory();
+            foreach (var category in eventSources.Keys)
+            {
+                var sourceNames = eventSources[category].Select(eds => eds.DisplayName).ToList();
+                grouped[$"?? {category}"] = sourceNames;
+            }
+
+            // Manual sources as a separate group
+            grouped["?? Manual Sources"] = SPIConstants.DataSources.GetManualSources();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Failed to get grouped data sources");
+            grouped["Data Sources"] = SPIConstants.DataSources.GetManualSources();
+        }
+
+        return grouped;
+    }
+
     #endregion
 }

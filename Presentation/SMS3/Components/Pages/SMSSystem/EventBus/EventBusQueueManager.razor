@@ -1,0 +1,271 @@
+﻿@page "/SMSSystem/EventBus/QueueManager"
+@using SMS_Application.Interfaces
+@using SMS_Domain.ValueObjects
+@using SMS3.Components.Shared
+@inject IEventQueueService EventQueueService
+@inject ILogger<EventBusQueueManager> Logger
+@inject NotificationService NotificationService
+@inject DialogService DialogService
+
+<PageTitle>EventBus Queue Manager - SMS3</PageTitle>
+
+<PageHeader Title="EventBus Queue Manager" 
+            Subtitle="Monitor and Control Queued Events"
+            Icon="fas fa-layer-group">
+</PageHeader>
+
+<div class="container-fluid">
+    <!-- Queue Statistics -->
+    <RadzenRow Gap="1rem" class="mb-4">
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard class="queue-stat-card pending">
+                <div class="queue-stat">
+                    <div class="stat-icon">
+                        <i class="fas fa-clock"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">@(_statistics?.PendingCount ?? 0)</div>
+                        <div class="stat-label">Pending Events</div>
+                    </div>
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard class="queue-stat-card processed">
+                <div class="queue-stat">
+                    <div class="stat-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">@(_statistics?.ProcessedCount ?? 0)</div>
+                        <div class="stat-label">Processed</div>
+                    </div>
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard class="queue-stat-card failed">
+                <div class="queue-stat">
+                    <div class="stat-icon">
+                        <i class="fas fa-exclamation-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">@(_statistics?.FailedCount ?? 0)</div>
+                        <div class="stat-label">Failed</div>
+                    </div>
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+
+        <RadzenColumn Size="12" SizeMD="3">
+            <RadzenCard class="queue-stat-card cancelled">
+                <div class="queue-stat">
+                    <div class="stat-icon">
+                        <i class="fas fa-times-circle"></i>
+                    </div>
+                    <div class="stat-content">
+                        <div class="stat-number">@(_statistics?.CancelledCount ?? 0)</div>
+                        <div class="stat-label">Cancelled</div>
+                    </div>
+                </div>
+            </RadzenCard>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Filters and Actions -->
+    <RadzenCard class="mb-4">
+        <RadzenRow Gap="1rem" AlignItems="AlignItems.Center">
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenLabel Text="Status Filter:" />
+                <RadzenDropDown @bind-Value="@_statusFilter" 
+                               Data="@_statusOptions" 
+                               TextProperty="Text" 
+                               ValueProperty="Value" 
+                               AllowClear="true"
+                               Placeholder="All Statuses"
+                               Change="@OnFilterChanged" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="3">
+                <RadzenLabel Text="Event Type Filter:" />
+                <RadzenDropDown @bind-Value="@_eventTypeFilter" 
+                               Data="@_eventTypeOptions" 
+                               TextProperty="Text" 
+                               ValueProperty="Value" 
+                               AllowClear="true"
+                               Placeholder="All Types"
+                               Change="@OnFilterChanged" />
+            </RadzenColumn>
+
+            <RadzenColumn Size="12" SizeMD="6">
+                <div class="btn-toolbar">
+                    <RadzenButton Icon="refresh" 
+                                 Text="Refresh" 
+                                 Click="@LoadQueuedEvents" 
+                                 ButtonStyle="ButtonStyle.Secondary" 
+                                 class="me-2" />
+
+                    <RadzenButton Icon="play_arrow" 
+                                 Text="Execute All Pending" 
+                                 Click="@ExecuteAllPending" 
+                                 ButtonStyle="ButtonStyle.Success" 
+                                 class="me-2"
+                                 Disabled="@(_isProcessing || (_statistics?.PendingCount ?? 0) == 0)" />
+
+                    <RadzenButton Icon="clear_all" 
+                                 Text="Clear Completed" 
+                                 Click="@ClearCompleted" 
+                                 ButtonStyle="ButtonStyle.Warning" 
+                                 class="me-2"
+                                 Disabled="@(_isProcessing)" />
+                </div>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+
+    <!-- Events Table -->
+    <RadzenCard>
+        <RadzenDataGrid @ref="@_eventGrid"
+                       Data="@_queuedEvents" 
+                       TItem="QueuedEvent"
+                       AllowFiltering="true"
+                       AllowSorting="true"
+                       AllowPaging="true"
+                       PageSize="20"
+                       PagerHorizontalAlign="HorizontalAlign.Left"
+                       ShowPagingSummary="true"
+                       IsLoading="@_isLoading"
+                       EmptyText="No queued events found"
+                       class="queue-grid">
+
+            <Columns>
+                <RadzenDataGridColumn TItem="QueuedEvent" Property="Status" Title="Status" Width="120px" Sortable="true" Filterable="false">
+                    <Template Context="queuedEvent">
+                        <RadzenBadge BadgeStyle="@GetStatusBadgeStyle(queuedEvent.Status)" 
+                                    Text="@queuedEvent.Status.ToString()" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="QueuedEvent" Property="EventCategory" Title="Category" Width="140px" Sortable="true">
+                    <Template Context="queuedEvent">
+                        <RadzenBadge BadgeStyle="@GetCategoryBadgeStyle(queuedEvent.EventCategory)" 
+                                    Text="@queuedEvent.EventCategory.ToString()" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="QueuedEvent" Property="EventType" Title="Event Type" Sortable="true">
+                    <Template Context="queuedEvent">
+                        <span class="fw-bold">@queuedEvent.EventType</span>
+                        @if (!string.IsNullOrEmpty(queuedEvent.TargetSystem))
+                        {
+                            <small class="text-muted d-block">→ @queuedEvent.TargetSystem</small>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="QueuedEvent" Property="Priority" Title="Priority" Width="100px" Sortable="true">
+                    <Template Context="queuedEvent">
+                        <RadzenBadge BadgeStyle="@GetPriorityBadgeStyle(queuedEvent.Priority)" 
+                                    Text="@queuedEvent.Priority.ToString()" />
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="QueuedEvent" Property="QueuedAt" Title="Queued" Width="180px" Sortable="true">
+                    <Template Context="queuedEvent">
+                        <div>
+                            <small class="text-muted">@queuedEvent.QueuedAt.ToString("yyyy-MM-dd")</small><br/>
+                            <small>@queuedEvent.QueuedAt.ToString("HH:mm:ss")</small>
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="QueuedEvent" Property="AttemptCount" Title="Attempts" Width="100px" Sortable="true" TextAlign="TextAlign.Center">
+                    <Template Context="queuedEvent">
+                        @queuedEvent.AttemptCount
+                    </Template>
+                </RadzenDataGridColumn>
+
+                <RadzenDataGridColumn TItem="QueuedEvent" Title="Actions" Width="200px" Filterable="false" Sortable="false">
+                    <Template Context="queuedEvent">
+                        <div class="btn-group-sm">
+                            @if (queuedEvent.Status == QueuedEventStatus.Pending)
+                            {
+                                <RadzenButton Icon="play_arrow" 
+                                             Size="ButtonSize.Small" 
+                                             ButtonStyle="ButtonStyle.Success" 
+                                             Click="@(() => ExecuteEvent(queuedEvent.Id))"
+                                             Disabled="@_isProcessing"
+                                             Title="Execute Event"
+                                             class="me-1" />
+
+                                <RadzenButton Icon="cancel" 
+                                             Size="ButtonSize.Small" 
+                                             ButtonStyle="ButtonStyle.Danger" 
+                                             Click="@(() => CancelEvent(queuedEvent.Id))"
+                                             Disabled="@_isProcessing"
+                                             Title="Cancel Event"
+                                             class="me-1" />
+                            }
+
+                            <RadzenButton Icon="info" 
+                                         Size="ButtonSize.Small" 
+                                         ButtonStyle="ButtonStyle.Base" 
+                                         Click="@(() => ShowEventDetails(queuedEvent))"
+                                         Title="View Details" />
+                        </div>
+                    </Template>
+                </RadzenDataGridColumn>
+
+            </Columns>
+        </RadzenDataGrid>
+    </RadzenCard>
+
+</div>
+
+<style>
+    .queue-stat-card {
+        border-left: 4px solid var(--rz-primary);
+        transition: transform 0.2s ease;
+    }
+
+    .queue-stat-card:hover {
+        transform: translateY(-2px);
+    }
+
+    .queue-stat-card.pending { border-left-color: #ffc107; }
+    .queue-stat-card.processed { border-left-color: #198754; }
+    .queue-stat-card.failed { border-left-color: #dc3545; }
+    .queue-stat-card.cancelled { border-left-color: #6c757d; }
+
+    .queue-stat {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .stat-icon {
+        font-size: 2rem;
+        color: var(--rz-primary);
+    }
+
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: var(--rz-text-color);
+    }
+
+    .stat-label {
+        font-size: 0.875rem;
+        color: var(--rz-text-secondary-color);
+    }
+
+    .queue-grid .rz-datatable-data td {
+        vertical-align: middle;
+    }
+
+    .btn-toolbar .rz-button {
+        margin-right: 0.5rem;
+    }
+</style>

@@ -16,7 +16,7 @@ using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
-namespace SMS_Application.Services.Authentication;
+namespace Application.Services.Strategies;
 
 /// <summary>
 /// Circuit-based authentication strategy using Blazor Server circuit storage
@@ -92,7 +92,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             if (string.IsNullOrEmpty(circuitId))
             {
                 _logger.LogError("? CRITICAL: Could not generate any circuit ID for CircuitBasedAuthenticationStrategy");
-                return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+                return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
             _logger.LogInformation("?? Storing user {UserCode} ({UserType}) in circuit storage with ID: {CircuitId}", user.Code, userType.Value, circuitId);
@@ -127,12 +127,12 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             _logger.LogInformation("? User {UserCode} ({UserType}) stored successfully in circuit storage - Circuit: {CircuitId}, Fields: {FieldCount}", 
                 user.Code, userType.Value, circuitId, userData.Count);
 
-            return Result<bool>.Success(true);
+            return Result.Success(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "? Error storing user {UserCode} in circuit storage", user.Code);
-            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 
@@ -205,13 +205,13 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             if (userData == null)
             {
                 _logger.LogDebug("?? No authenticated user data found in circuit storage");
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             if (userData.GetValueOrDefault("IsAuthenticated") != "true")
             {
                 _logger.LogDebug("?? User data found but not authenticated");
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             var userCode = userData.GetValueOrDefault("SMS_UserCode", "");
@@ -220,7 +220,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             if (string.IsNullOrEmpty(userCode))
             {
                 _logger.LogWarning("?? Incomplete user data in circuit storage - missing UserCode");
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             _logger.LogInformation("?? Retrieving user {UserCode} ({UserType}) from circuit storage using key: {CircuitKey}", 
@@ -233,19 +233,19 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             {
                 _logger.LogInformation("? User {UserCode} ({UserType}) retrieved successfully from circuit storage", 
                     userCode, userTypeValue);
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)result.Value);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)result.Value);
             }
             else
             {
                 _logger.LogWarning("?? Failed to deserialize user {UserCode} from circuit storage: {Error}", 
                     userCode, result.Error?.Message);
-                return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "? Error retrieving user from circuit storage");
-            return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
+            return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
         }
     }
 
@@ -297,12 +297,12 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             }
 
             _logger.LogInformation("? Circuit storage cleared successfully for user {UserCode}", userCode);
-            return Result<bool>.Success(true);
+            return Result.Success(true);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "? Error clearing circuit storage");
-            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 

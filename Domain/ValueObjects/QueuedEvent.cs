@@ -1,0 +1,243 @@
+//-----------------------------------------------------------------------
+// <copyright file="QueuedEvent.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Value object representing a queued event for manual execution.
+//                  Supports EventBus management and manual event processing.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using SMS_Domain.Common;
+using SMS_Domain.Interfaces;
+using SMS_Domain.Enums;
+
+namespace SMS_Domain.ValueObjects;
+
+/// <summary>
+/// Value object representing a queued event for manual execution
+/// Supports EventBus management and testing scenarios
+/// </summary>
+public record QueuedEvent
+{
+    /// <summary>
+    /// Unique identifier for the queued event
+    /// </summary>
+    public Guid Id { get; init; } = Guid.NewGuid();
+
+    /// <summary>
+    /// Type of event (DomainEvent, UIEvent, IntegrationEvent)
+    /// </summary>
+    public EventCategory EventCategory { get; init; }
+
+    /// <summary>
+    /// Specific event type name
+    /// </summary>
+    public string EventType { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Serialized event data
+    /// </summary>
+    public string EventData { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Current status of the queued event
+    /// </summary>
+    public QueuedEventStatus Status { get; init; } = QueuedEventStatus.Pending;
+
+    /// <summary>
+    /// When the event was queued
+    /// </summary>
+    public DateTime QueuedAt { get; init; } = DateTime.UtcNow;
+
+    /// <summary>
+    /// When the event was processed (if processed)
+    /// </summary>
+    public DateTime? ProcessedAt { get; init; }
+
+    /// <summary>
+    /// Number of processing attempts
+    /// </summary>
+    public int AttemptCount { get; init; } = 0;
+
+    /// <summary>
+    /// Last error message (if any)
+    /// </summary>
+    public string? LastError { get; init; }
+
+    /// <summary>
+    /// Priority level for processing order
+    /// </summary>
+    public EventPriority Priority { get; init; } = EventPriority.Normal;
+
+    /// <summary>
+    /// Target system for integration events
+    /// </summary>
+    public string? TargetSystem { get; init; }
+
+    /// <summary>
+    /// User or system that queued the event
+    /// </summary>
+    public string? QueuedBy { get; init; }
+
+    /// <summary>
+    /// Creates a new QueuedEvent from a domain event
+    /// </summary>
+    public static QueuedEvent FromDomainEvent<T>(T domainEvent, string? queuedBy = null) where T : IBaseDomainEvent
+    {
+        return new QueuedEvent
+        {
+            EventCategory = EventCategory.DomainEvent,
+            EventType = domainEvent.EventType, // Use the event's own EventType property instead of C# type name
+            EventData = System.Text.Json.JsonSerializer.Serialize(domainEvent),
+            QueuedBy = queuedBy ?? "System",
+            Priority = EventPriority.Normal
+        };
+    }
+
+    /// <summary>
+    /// Creates a new QueuedEvent from an integration event
+    /// </summary>
+    public static QueuedEvent FromIntegrationEvent<T>(T integrationEvent, string? queuedBy = null) where T : IIntegrationEvent
+    {
+        return new QueuedEvent
+        {
+            EventCategory = EventCategory.IntegrationEvent,
+            EventType = integrationEvent.EventType, // Use the event's own EventType property instead of C# type name
+            EventData = System.Text.Json.JsonSerializer.Serialize(integrationEvent),
+            TargetSystem = integrationEvent.TargetSystem,
+            QueuedBy = queuedBy ?? "System",
+            Priority = EventPriority.High // Integration events are typically high priority
+        };
+    }
+
+    /// <summary>
+    /// Creates a new QueuedEvent from a UI event
+    /// </summary>
+    public static QueuedEvent FromUIEvent<T>(T uiEvent, string? queuedBy = null) where T : IUIEvent
+    {
+        return new QueuedEvent
+        {
+            EventCategory = EventCategory.UIEvent,
+            EventType = uiEvent.EventType, // Use the event's own EventType property instead of C# type name
+            EventData = System.Text.Json.JsonSerializer.Serialize(uiEvent),
+            TargetSystem = uiEvent.TargetComponent,
+            QueuedBy = queuedBy ?? "System",
+            Priority = EventPriority.Low // UI events are typically lower priority
+        };
+    }
+
+    /// <summary>
+    /// Marks the event as processed successfully
+    /// </summary>
+    public QueuedEvent MarkAsProcessed()
+    {
+        return this with
+        {
+            Status = QueuedEventStatus.Processed,
+            ProcessedAt = DateTime.UtcNow,
+            AttemptCount = AttemptCount + 1
+        };
+    }
+
+    /// <summary>
+    /// Marks the event as failed with error message
+    /// </summary>
+    public QueuedEvent MarkAsFailed(string errorMessage)
+    {
+        return this with
+        {
+            Status = QueuedEventStatus.Failed,
+            AttemptCount = AttemptCount + 1,
+            LastError = errorMessage
+        };
+    }
+
+    /// <summary>
+    /// Increments the attempt count for retry scenarios
+    /// </summary>
+    public QueuedEvent IncrementAttempt()
+    {
+        return this with
+        {
+            AttemptCount = AttemptCount + 1
+        };
+    }
+}
+
+/// <summary>
+/// Status of a queued event
+/// </summary>
+public enum QueuedEventStatus
+{
+    /// <summary>
+    /// Event is waiting to be processed
+    /// </summary>
+    Pending = 0,
+
+    /// <summary>
+    /// Event is currently being processed
+    /// </summary>
+    Processing = 1,
+
+    /// <summary>
+    /// Event was processed successfully
+    /// </summary>
+    Processed = 2,
+
+    /// <summary>
+    /// Event processing failed
+    /// </summary>
+    Failed = 3,
+
+    /// <summary>
+    /// Event was cancelled
+    /// </summary>
+    Cancelled = 4
+}
+
+/// <summary>
+/// Priority level for event processing
+/// </summary>
+public enum EventPriority
+{
+    /// <summary>
+    /// Low priority - UI updates, non-critical notifications
+    /// </summary>
+    Low = 0,
+
+    /// <summary>
+    /// Normal priority - Standard business events
+    /// </summary>
+    Normal = 1,
+
+    /// <summary>
+    /// High priority - Integration events, critical notifications
+    /// </summary>
+    High = 2,
+
+    /// <summary>
+    /// Critical priority - Security alerts, system failures
+    /// </summary>
+    Critical = 3
+}
+
+/// <summary>
+/// Type of event for categorization
+/// </summary>
+public enum EventCategory
+{
+    /// <summary>
+    /// Domain business logic events
+    /// </summary>
+    DomainEvent = 0,
+
+    /// <summary>
+    /// User interface events
+    /// </summary>
+    UIEvent = 1,
+
+    /// <summary>
+    /// External system integration events
+    /// </summary>
+    IntegrationEvent = 2
+}

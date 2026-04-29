@@ -1,3 +1,5 @@
+using Application.Services.Strategies;
+
 using Microsoft.AspNetCore.Authentication.Cookies;
 using SMS_Application.Configuration;
 using SMS_Application.Interfaces;
@@ -239,9 +241,9 @@ public static class AuthenticationExtensions
         services.AddScoped<SMS_Application.Interfaces.IUserInstantiationService, SMS_Application.Services.UserInstantiationService>();
         
         // Authentication strategy implementations
-        services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, SMS_Application.Services.Authentication.SessionBasedAuthenticationStrategy>();
-        services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, SMS_Application.Services.Authentication.CircuitBasedAuthenticationStrategy>();
-        services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, SMS_Application.Services.Authentication.ContextBasedAuthenticationStrategy>();
+        services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, SessionBasedAuthenticationStrategy>();
+        services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, CircuitBasedAuthenticationStrategy>();
+        services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, ContextBasedAuthenticationStrategy>();
         
         // Authentication strategy manager (orchestrator)
         services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategyManager, SMS_Application.Services.AuthenticationStrategyManager>();

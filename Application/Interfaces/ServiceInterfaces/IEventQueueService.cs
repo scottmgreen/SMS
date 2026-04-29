@@ -1,0 +1,122 @@
+//-----------------------------------------------------------------------
+// <copyright file="IEventQueueService.cs" company="SMS Safety Management System">
+//     Author: SMS Development Team
+//     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+//     Description: Interface for event queue management and manual execution.
+//                  Supports testing and controlled event processing scenarios.
+// </copyright>
+//-----------------------------------------------------------------------
+
+using SMS_Domain.ValueObjects;
+using SMS_Domain.Common;
+using SMS_Domain.Interfaces;
+
+namespace SMS_Application.Interfaces;
+
+/// <summary>
+/// Service for managing queued events and manual execution
+/// Enables testing and controlled processing of EventBus events
+/// </summary>
+public interface IEventQueueService
+{
+    /// <summary>
+    /// Queues a domain event for manual execution
+    /// </summary>
+    Task<Result> QueueDomainEventAsync<T>(T domainEvent, string? queuedBy = null) where T : IBaseDomainEvent;
+
+    /// <summary>
+    /// Queues an integration event for manual execution
+    /// </summary>
+    Task<Result> QueueIntegrationEventAsync<T>(T integrationEvent, string? queuedBy = null) where T : IIntegrationEvent;
+
+    /// <summary>
+    /// Queues a UI event for manual execution
+    /// </summary>
+    Task<Result> QueueUIEventAsync<T>(T uiEvent, string? queuedBy = null) where T : IUIEvent;
+
+    /// <summary>
+    /// Gets all queued events with optional filtering
+    /// </summary>
+    Task<Result<IEnumerable<QueuedEvent>>> GetQueuedEventsAsync(
+        QueuedEventStatus? status = null,
+        EventCategory? eventType = null,
+        int? maxResults = null);
+
+    /// <summary>
+    /// Gets a specific queued event by ID
+    /// </summary>
+    Task<Result<QueuedEvent>> GetQueuedEventAsync(Guid eventId);
+
+    /// <summary>
+    /// Manually executes a queued event
+    /// </summary>
+    Task<Result> ExecuteQueuedEventAsync(Guid eventId, string? executedBy = null);
+
+    /// <summary>
+    /// Executes all pending events of a specific type
+    /// </summary>
+    Task<Result<int>> ExecuteAllPendingEventsAsync(EventCategory? eventType = null, string? executedBy = null);
+
+    /// <summary>
+    /// Cancels a queued event
+    /// </summary>
+    Task<Result> CancelQueuedEventAsync(Guid eventId, string? cancelledBy = null);
+
+    /// <summary>
+    /// Clears all processed and failed events
+    /// </summary>
+    Task<Result<int>> ClearCompletedEventsAsync();
+
+    /// <summary>
+    /// Gets queue statistics
+    /// </summary>
+    Task<Result<QueueStatistics>> GetQueueStatisticsAsync();
+}
+
+/// <summary>
+/// Statistics about the event queue
+/// </summary>
+public record QueueStatistics
+{
+    /// <summary>
+    /// Total number of pending events
+    /// </summary>
+    public int PendingCount { get; init; }
+
+    /// <summary>
+    /// Total number of processed events
+    /// </summary>
+    public int ProcessedCount { get; init; }
+
+    /// <summary>
+    /// Total number of failed events
+    /// </summary>
+    public int FailedCount { get; init; }
+
+    /// <summary>
+    /// Total number of cancelled events
+    /// </summary>
+    public int CancelledCount { get; init; }
+
+    /// <summary>
+    /// Breakdown by event type
+    /// </summary>
+    public Dictionary<EventCategory, EventTypeStatistics> ByEventType { get; init; } = new();
+
+    /// <summary>
+    /// Breakdown by priority
+    /// </summary>
+    public Dictionary<EventPriority, int> ByPriority { get; init; } = new();
+}
+
+/// <summary>
+/// Statistics for a specific event type
+/// </summary>
+public record EventTypeStatistics
+{
+    public int Pending { get; init; }
+    public int Processed { get; init; }
+    public int Failed { get; init; }
+    public int Cancelled { get; init; }
+    public int Total => Pending + Processed + Failed + Cancelled;
+}
