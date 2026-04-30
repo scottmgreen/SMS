@@ -3,11 +3,13 @@ using Microsoft.OpenApi.Models;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
+using SMS_Domain.Events.UIEvents;
 
 using SMS_Infrastructure.Security;
 
 using SMS3.Api.Extensions;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.EventHandlers;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
 
@@ -98,7 +100,10 @@ public static class DependencyInjection
     {
         // Notification system with feature management integration
         services.AddScoped<INotificationHelper, NotificationHelper>();
-        
+
+        // EventBus UI Event Handlers
+        services.AddScoped<UIEventHandler>();
+
         // Add any additional UI helper services here
         // services.AddScoped<IDialogService, DialogService>();
         // services.AddScoped<IToastService, ToastService>();
@@ -168,6 +173,45 @@ public static class DependencyInjection
         // services.AddScoped<IApiAuditService, ApiAuditService>();
 
         return services;
+    }
+
+    /// <summary>
+    /// Registers UI Event Handlers for the EventBus (Presentation Layer)
+    /// Maintains Clean Architecture by keeping UI handler registration in Presentation layer
+    /// </summary>
+    public static IApplicationBuilder InitializeUIEventHandlers(this IApplicationBuilder app)
+    {
+        try
+        {
+            using var scope = app.ApplicationServices.CreateScope();
+            var eventBus = scope.ServiceProvider.GetRequiredService<IBaseEventBus>();
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<IBaseEventBus>>();
+
+            logger.LogInformation("🔔 Registering UI Event Handlers (Presentation Layer)...");
+
+            // Register UI notification handler (local to SMS3 project)
+            eventBus.SubscribeUI<UINotificationEvent, UIEventHandler>();
+            logger.LogInformation("✅ Registered UINotificationEventHandler for UINotificationEvent");
+
+            // TODO: Register additional UI event handlers as they're implemented
+            // eventBus.SubscribeUI<UserPreferenceChangedEvent, UserPreferenceChangedEventHandler>();
+            // eventBus.SubscribeUI<ThemeChangedEvent, ThemeChangedEventHandler>();
+            // eventBus.SubscribeUI<DashboardRefreshEvent, DashboardRefreshEventHandler>();
+
+            logger.LogInformation("✅ UI event handler registration completed (Presentation Layer)");
+
+            return app;
+        }
+        catch (Exception ex)
+        {
+            // Use a basic logger if dependency injection logger fails
+            var loggerFactory = app.ApplicationServices.GetService<ILoggerFactory>();
+            var logger = loggerFactory?.CreateLogger("EventBus.UI.Initialization") ?? 
+                        Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+
+            logger.LogError(ex, "❌ Failed to initialize UI EventBus subscriptions");
+            throw; // Re-throw to prevent silent failures during startup
+        }
     }
 
     /// <summary>

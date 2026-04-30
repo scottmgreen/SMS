@@ -68,6 +68,12 @@ public interface IEventQueueService
     Task<Result<int>> ClearCompletedEventsAsync();
 
     /// <summary>
+    /// Clears ALL events from the queue (pending, processed, failed, cancelled)
+    /// WARNING: This removes everything - typically used with database truncate/reimport
+    /// </summary>
+    Task<Result<int>> ClearAllEventsAsync();
+
+    /// <summary>
     /// Gets queue statistics
     /// </summary>
     Task<Result<QueueStatistics>> GetQueueStatisticsAsync();

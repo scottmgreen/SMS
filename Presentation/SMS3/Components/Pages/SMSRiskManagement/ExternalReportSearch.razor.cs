@@ -1,6 +1,8 @@
 
 using Microsoft.AspNetCore.Components.Web;
 
+using SMS_Application.Interfaces;
+using SMS_Domain.Events.UIEvents;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -16,8 +18,9 @@ public partial class ExternalReportSearch : ComponentBase
     #region Dependencies
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ExternalReportSearch> _logger { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
-    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     #endregion
@@ -226,7 +229,7 @@ public partial class ExternalReportSearch : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(TrackingIdSearch))
         {
-            await _notificationHelper.ShowWarningAsync("Please enter a tracking ID to search");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please enter a tracking ID to search"));
             return;
         }
 
@@ -267,19 +270,19 @@ public partial class ExternalReportSearch : ComponentBase
             if (!SearchResults.Any())
             {
                 // Show simple no results message without suggestions
-                await _notificationHelper.ShowInfoAsync($"No hazard report found for tracking ID: {cleanedTrackingId}");
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"No hazard report found for tracking ID: {cleanedTrackingId}"));
                 _logger.LogInformation("No exact match found for tracking ID: {TrackingId}", TrackingIdSearch);
             }
             else
             {
-                await _notificationHelper.ShowSuccessAsync($"Found hazard report for tracking ID: {TrackingIdSearch}");
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Found hazard report for tracking ID: {TrackingIdSearch}"));
                 _logger.LogInformation("Found exact match for tracking ID: {TrackingId}", TrackingIdSearch);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error searching by tracking ID: {TrackingId}", TrackingIdSearch);
-            await _notificationHelper.ShowErrorAsync("Error occurred while searching. Please try again.");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error occurred while searching. Please try again."));
         }
         finally
         {
@@ -490,7 +493,7 @@ public partial class ExternalReportSearch : ComponentBase
                       "• Contact support if you need assistance";
         }
 
-        await _notificationHelper.ShowInfoAsync(message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
     }
 
     /// <summary>
@@ -535,7 +538,7 @@ public partial class ExternalReportSearch : ComponentBase
     {
         if (!HasAdvancedSearchCriteria)
         {
-            await _notificationHelper.ShowWarningAsync("Please enter at least one search criteria");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please enter at least one search criteria"));
             return;
         }
 
@@ -572,19 +575,19 @@ public partial class ExternalReportSearch : ComponentBase
 
             if (!SearchResults.Any())
             {
-                await _notificationHelper.ShowInfoAsync("No hazard reports found matching your search criteria");
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No hazard reports found matching your search criteria"));
                 _logger.LogInformation("No results found for advanced search criteria");
             }
             else
             {
-                await _notificationHelper.ShowSuccessAsync($"Found {SearchResults.Count} hazard report(s) matching your criteria");
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Found {SearchResults.Count} hazard report(s) matching your criteria"));
                 _logger.LogInformation("Found {Count} result(s) for advanced search", SearchResults.Count);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in advanced search");
-            await _notificationHelper.ShowErrorAsync("Error occurred while searching. Please try again.");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error occurred while searching. Please try again."));
         }
         finally
         {

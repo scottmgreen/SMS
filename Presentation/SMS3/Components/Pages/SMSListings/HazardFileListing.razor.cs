@@ -2,11 +2,13 @@ using System.Linq.Expressions;
 using System.Text;
 
 using SMS_Domain.Entities;
+using SMS_Domain.Events.UIEvents;
 
 using Microsoft.JSInterop;
 
 using Radzen;
 
+using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 
@@ -32,7 +34,7 @@ public partial class HazardFileListing : ComponentBase
     #region Dependencies
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<HazardFileListing> _logger { get; set; } = default!;
-    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     #endregion
@@ -97,7 +99,7 @@ public partial class HazardFileListing : ComponentBase
                 files = allFiles;
                 totalCount = 0;
                 
-                ShowErrorAsyncNotification("Failed to load hazard files");
+                await ShowErrorAsyncNotification("Failed to load hazard files");
                 _logger.LogError("Failed to load hazard files: {Error}", result.Error?.Message);
             }
         }
@@ -107,9 +109,9 @@ public partial class HazardFileListing : ComponentBase
             allFiles = new List<HazardFile>();
             files = allFiles;
             totalCount = 0;
-            
+
             _logger.LogError(ex, "Error loading hazard files");
-            ShowErrorAsyncNotification($"Error loading hazard files: {ex.Message}");
+            await ShowErrorAsyncNotification($"Error loading hazard files: {ex.Message}");
         }
         finally
         {
@@ -494,27 +496,27 @@ public partial class HazardFileListing : ComponentBase
     }
 
     /// <summary>
-    /// Shows error notification to user
+    /// Shows error notification to user via EventBus
     /// </summary>
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        _notificationHelper.ShowErrorAsync( message, 7000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message, duration: 7000));
     }
 
     /// <summary>
-    /// Shows success notification to user
+    /// Shows success notification to user via EventBus
     /// </summary>
-    private void ShowSuccessAsyncNotification(string message)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        _notificationHelper.ShowSuccessAsync( message, 5000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message, duration: 5000));
     }
 
     /// <summary>
-    /// Shows info notification to user
+    /// Shows info notification to user via EventBus
     /// </summary>
-    private void ShowInfoAsyncNotification(string message)
+    private async Task ShowInfoAsyncNotification(string message)
     {
-        _notificationHelper.ShowInfoAsync( message, 5000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message, duration: 5000));
     }
     #endregion
 
@@ -572,13 +574,13 @@ public partial class HazardFileListing : ComponentBase
             }
 
             _logger.LogInformation("Successfully loaded file data for viewing: {Code}", file.Code);
-            ShowInfoAsyncNotification($"Opened file viewer for {file.FileName}");
+            await ShowInfoAsyncNotification($"Opened file viewer for {file.FileName}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error reading file: {Code}", file.Code);
             fileViewError = "An error occurred while loading the file.";
-            ShowErrorAsyncNotification("Error reading file");
+            await ShowErrorAsyncNotification("Error reading file");
         }
         finally
         {

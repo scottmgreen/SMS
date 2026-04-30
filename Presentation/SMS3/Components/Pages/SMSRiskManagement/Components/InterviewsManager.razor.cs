@@ -1,5 +1,7 @@
 
 
+using SMS_Application.Interfaces;
+using SMS_Domain.Events.UIEvents;
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
@@ -8,7 +10,7 @@ public partial class InterviewsManager : ComponentBase
 {
     #region Injected Services
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
-    [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus EventBus { get; set; } = default!;
     [Inject] private ILogger<InterviewsManager> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     #endregion
@@ -372,15 +374,15 @@ public partial class InterviewsManager : ComponentBase
     }
     #endregion
 
-    #region Notifications
-    private void ShowSuccessAsyncNotification(string message)
+    #region Notifications (EventBus-Driven)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
     }
 
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
     #endregion
 }

@@ -8,6 +8,8 @@ using Radzen.Blazor;
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 
+using SMS_Domain.Entities;
+using SMS_Domain.Events.UIEvents;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 using SMS_Domain.ValueObjects;
@@ -30,7 +32,8 @@ public partial class HazardLocationListing : ComponentBase
     #region Dependencies
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<HazardLocationListing> _logger { get; set; } = default!;
-    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+ 
     [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
@@ -438,25 +441,25 @@ public partial class HazardLocationListing : ComponentBase
     /// <summary>
     /// Shows error notification to user
     /// </summary>
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        _notificationHelper.ShowErrorAsync( message, 7000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
 
     /// <summary>
     /// Shows success notification to user
     /// </summary>
-    private void ShowSuccessAsyncNotification(string message)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        _notificationHelper.ShowSuccessAsync( message, 5000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
     }
 
     /// <summary>
     /// Shows info notification to user
     /// </summary>
-    private void ShowInfoAsyncNotification(string message)
+    private async Task ShowInfoAsyncNotification(string message)
     {
-        _notificationHelper.ShowInfoAsync( message, 5000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
     }
     #endregion
 

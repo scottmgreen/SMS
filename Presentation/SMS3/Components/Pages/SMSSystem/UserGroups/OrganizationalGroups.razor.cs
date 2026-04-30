@@ -1,3 +1,5 @@
+using SMS_Application.Interfaces;
+using SMS_Domain.Events.UIEvents;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -28,7 +30,7 @@ public partial class OrganizationalGroups : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<OrganizationalGroups> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
-    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
@@ -416,16 +418,21 @@ public partial class OrganizationalGroups : ComponentBase
 
     #endregion
 
-    #region Notification Methods
+    #region Notification Methods (EventBus-Driven)
 
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        _notificationHelper.ShowErrorAsync(message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
 
-    private void ShowSuccessAsyncNotification(string message)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        _notificationHelper.ShowSuccessAsync(message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
+    }
+
+    private async Task ShowInfoAsyncNotification(string message)
+    {
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
     }
 
     #endregion
@@ -500,16 +507,16 @@ public partial class OrganizationalGroups : ComponentBase
         }
     }
 
-    private void ExitMemberManagement()
+    private async Task ExitMemberManagement()
     {
         // Reset member management state
         IsManagingMembers = false;
         CurrentGroupCode = null;
         CurrentGroup = null;
-        
+
         _logger.LogInformation("Exited member management view");
-        _notificationHelper.ShowInfoAsync("Returned to group management", 3000);
-        
+        await ShowInfoAsyncNotification("Returned to group management");
+
         _navigation.NavigateToSecure("/System/UserGroups/OrganizationalGroups");
     }
 

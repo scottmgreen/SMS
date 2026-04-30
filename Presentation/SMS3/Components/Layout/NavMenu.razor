@@ -4,6 +4,7 @@
 @using Radzen.Blazor
 @using SMS3.Components.Layout
 @using SMS3.Components.Shared
+@using SMS3.Components.Shared.Components
 @using SMS3.Configuration.Extensions
 @using SMS3.Security
 
@@ -169,6 +170,8 @@
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                                 <RadzenMenuItem Text="System" Icon="settings" class="sms-menu-item">
+                                    <!-- EVENT BUS /SMSSystem/EventBus/QueueManager-->
+                                    <RadzenMenuItem Text="Event Queue Manager" Value='"/SMSSystem/EventBus/QueueManager"' Icon="person"></RadzenMenuItem>
                                     <!-- User Management -->
                                     <RadzenMenuItem Text="User Management" Icon="people">
                                         <RadzenMenuItem Text="Application Users" Value='"/SMSSystem/UserManagement/ApplicationUsers"' Icon="person"></RadzenMenuItem>

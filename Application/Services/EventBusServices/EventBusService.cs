@@ -469,7 +469,10 @@ public sealed class EventBusService : IBaseEventBus
         {
             try
             {
-                var handler = _serviceProvider.GetService(handlerType) as IBaseEventHandler<T>;
+                // Create a scope to resolve scoped services (like UI handlers with INotificationHelper dependencies)
+                using var scope = _serviceProvider.CreateScope();
+                var handler = scope.ServiceProvider.GetService(handlerType) as IBaseEventHandler<T>;
+
                 if (handler != null)
                 {
                     _logger.LogDebug("Executing UI handler {HandlerType} for event {EventType}", 

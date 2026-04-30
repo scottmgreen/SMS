@@ -391,8 +391,12 @@ public sealed class NotificationHelper : INotificationHelper
 
     public async Task ShowSuccessAsync(string message, int duration = 4000)
     {
+        Console.WriteLine($"NotificationHelper.ShowSuccessAsync called with message: '{message}'");
+
         if (await _featureManager.IsEnabledAsync(NotificationFeatures.SuccessNotifications))
         {
+            Console.WriteLine("Feature flag SuccessNotifications is enabled, calling NotificationService.Notify");
+
             _notificationService.Notify(new NotificationMessage
             {
                 Severity = NotificationSeverity.Success,
@@ -400,6 +404,12 @@ public sealed class NotificationHelper : INotificationHelper
                 Detail = message,
                 Duration = duration
             });
+
+            Console.WriteLine("NotificationService.Notify completed");
+        }
+        else
+        {
+            Console.WriteLine("Feature flag SuccessNotifications is DISABLED, notification suppressed");
         }
     }
 

@@ -1,7 +1,9 @@
 
 using Radzen;
 
+using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
+using SMS_Domain.Events.UIEvents;
 
 using SMS_Shared.Configuration;
 
@@ -21,7 +23,7 @@ public partial class AuditEvidenceDialog : ComponentBase
     #region Injected Services
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<AuditEvidenceDialog> _logger { get; set; } = default!;
-    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
@@ -81,7 +83,7 @@ public partial class AuditEvidenceDialog : ComponentBase
     #region Event Handlers
     private async Task OnSubmit()
     {
-        if (!ValidateForm()) return;
+        if (!await ValidateForm()) return;
 
         try
         {
@@ -244,7 +246,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating evidence");
-            ShowErrorAsyncNotification("Error updating evidence");
+            await ShowErrorAsyncNotification("Error updating evidence");
         }
     }
     #endregion
@@ -321,35 +323,35 @@ public partial class AuditEvidenceDialog : ComponentBase
         return string.Format("{0:n1} {1}", number, suffixes[counter]);
     }
 
-    private bool ValidateForm()
+    private async Task<bool> ValidateForm()
     {
         if (string.IsNullOrWhiteSpace(ViewModel.Title))
         {
-            ShowErrorAsyncNotification("Evidence title is required");
+            await ShowErrorAsyncNotification("Evidence title is required");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(ViewModel.Description))
         {
-            ShowErrorAsyncNotification("Evidence description is required");
+            await ShowErrorAsyncNotification("Evidence description is required");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(ViewModel.Source))
         {
-            ShowErrorAsyncNotification("Evidence source is required");
+            await ShowErrorAsyncNotification("Evidence source is required");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(ViewModel.CollectedBy))
         {
-            ShowErrorAsyncNotification("Collector information is required");
+            await ShowErrorAsyncNotification("Collector information is required");
             return false;
         }
 
         if (IsNew && string.IsNullOrEmpty(ViewModel.FilePath))
         {
-            ShowErrorAsyncNotification("Please upload a file");
+            await ShowErrorAsyncNotification("Please upload a file");
             return false;
         }
 
@@ -357,15 +359,15 @@ public partial class AuditEvidenceDialog : ComponentBase
     }
     #endregion
 
-    #region Notification Methods
-    private void ShowSuccessAsyncNotification(string message)
+    #region Notification Methods (EventBus-Driven)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        _notificationHelper.ShowSuccessAsync( message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
     }
 
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        _notificationHelper.ShowErrorAsync( message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
     #endregion
 }

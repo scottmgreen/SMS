@@ -1,3 +1,5 @@
+using SMS_Application.Interfaces;
+using SMS_Domain.Events.UIEvents;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -15,10 +17,7 @@ public partial class StakeholderUsers : ComponentBase
     [Inject] private ILogger<StakeholderUsers> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
-    
-
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
     // Data Properties
@@ -826,21 +825,21 @@ public partial class StakeholderUsers : ComponentBase
 
     #endregion
 
-    #region Notification Methods
+    #region Notification Methods (EventBus-Driven)
 
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
 
-    private void ShowSuccessAsyncNotification(string message)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
     }
 
-    private void ShowInfoAsyncNotification(string message)
+    private async Task ShowInfoAsyncNotification(string message)
     {
-        NotificationHelper.ShowInfoAsync( message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
     }
 
     #endregion

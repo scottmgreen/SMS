@@ -1,7 +1,9 @@
 
 using Microsoft.JSInterop;
 
+using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
+using SMS_Domain.Events.UIEvents;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
@@ -26,8 +28,8 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     [Inject] private ILogger<ExternalReporting> _logger { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
 
-    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
 
@@ -264,7 +266,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
             if (!IsFormValidForSubmission())
             {
-                await _notificationHelper.ShowWarningAsync("Please complete all required fields before submitting.", 4000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please complete all required fields before submitting."));
                 return;
             }
 
@@ -274,7 +276,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         {
             _logger.LogError(ex, "Error during confidential form submission");
 
-            await _notificationHelper.ShowErrorAsync("An error occurred while submitting your report. Please try again.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "An error occurred while submitting your report. Please try again."));
         }
     }
 
@@ -352,7 +354,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             // Show notification about results
             if (successfullyProcessedFiles.Any())
             {
-                await _notificationHelper.ShowSuccessAsync($"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 3000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files."));
             }
         }
         else
@@ -438,15 +440,15 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             // Show notification about results
             if (successfullyProcessedFiles.Any() && failedFiles.Any())
             {
-                await _notificationHelper.ShowWarningAsync( $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 4000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued."));
             }
             else if (successfullyProcessedFiles.Any())
             {
-                await _notificationHelper.ShowSuccessAsync( $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 3000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files."));
             }
             else if (failedFiles.Any())
             {
-                _notificationHelper.ShowErrorAsync( $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions."));
             }
 
             _logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
@@ -506,11 +508,11 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             {
                 _logger.LogError(ex, "Error initializing map in confidential reporting OpenMapSelector");
 
-                _notificationHelper.ShowWarningAsync( "Could not initialize map. Please try refreshing the page.", 5000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Could not initialize map. Please try refreshing the page."));
             }
         }
 
-        _notificationHelper.ShowInfoAsync( "Click on the map to select the incident location.", 3000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "Click on the map to select the incident location."));
     }
 
     /// <summary>
@@ -529,7 +531,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     {
         if (!HasValidCoordinates)
         {
-            _notificationHelper.ShowWarningAsync( "Please click on the map to select a location first.", 3000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please click on the map to select a location first."));
             return;
         }
 
@@ -546,7 +548,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         ShowMapModal = false;
         StateHasChanged();
 
-        _notificationHelper.ShowSuccessAsync( $"Location selected: {GeoLocationDisplay}", 3000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Location selected: {GeoLocationDisplay}"));
     }
 
     /// <summary>
@@ -574,7 +576,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
         StateHasChanged();
 
-        _notificationHelper.ShowInfoAsync( "Map selection has been cleared.", 2000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "Map selection has been cleared."));
     }
 
     /// <summary>
@@ -599,11 +601,11 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     /// <summary>
     /// Show preview modal
     /// </summary>
-    public void ShowPreviewModal()
+    public async Task ShowPreviewModal()
     {
         if (!IsFormValidForPreview)
         {
-            _notificationHelper.ShowWarningAsync( "Please complete all required fields before previewing.", 3000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please complete all required fields before previewing."));
             return;
         }
 
@@ -627,7 +629,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     {
         if (!IsFormValidForSubmission())
         {
-            await _notificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 4000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please complete all required fields before submitting."));
             return;
         }
 
@@ -677,7 +679,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                 ShowSubmissionConfirmation = true;
                 StateHasChanged();
 
-                _notificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 4000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please complete all required fields before submitting."));
                 return;
             }
 
@@ -798,7 +800,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             _logger.LogInformation("? External report submission completed - Report: {ReportCode}, Hazard: {HazardCode}, Tracking: {TrackingCode}",
                 createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
-            _notificationHelper.ShowSuccessAsync( $"Your external report has been securely submitted with tracking ID: {createdTracking.TrackingCode}", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Your external report has been securely submitted with tracking ID: {createdTracking.TrackingCode}"));
         }
         catch (Exception ex)
         {
@@ -806,7 +808,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
             ShowSubmissionConfirmation = false;
 
-            _notificationHelper.ShowErrorAsync( "An error occurred while submitting your confidential report. Please try again.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "An error occurred while submitting your confidential report. Please try again."));
         }
         finally
         {
@@ -1160,7 +1162,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                 // Could show regulatory notification if required
                 if (RequiresRegulatoryReporting(hazardTypeValue))
                 {
-                    _notificationHelper.ShowInfoAsync( $"This hazard type may require regulatory reporting to appropriate authorities.", 5000);
+                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"This hazard type may require regulatory reporting to appropriate authorities."));
                 }
             }
         }
@@ -1269,12 +1271,12 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     /// <summary>
     /// Cancel submission
     /// </summary>
-    public void CancelSubmission()
+    public async Task CancelSubmission()
     {
         ShowSubmissionConfirmation = false;
         StateHasChanged();
 
-        _notificationHelper.ShowInfoAsync( "You can continue editing your confidential report.", 3000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "You can continue editing your confidential report."));
     }
 
     #endregion
@@ -1312,7 +1314,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         {
             if (string.IsNullOrEmpty(GeneratedTrackingId) || string.IsNullOrEmpty(GeneratedReportId))
             {
-                await _notificationHelper.ShowWarningAsync( "No report information available to print.", 3000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "No report information available to print."));
                 return;
             }
 
@@ -1333,7 +1335,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         {
             _logger?.LogError(ex, "Error printing confirmation");
 
-            await _notificationHelper.ShowErrorAsync("Failed to print confirmation. Please try again or save the page.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to print confirmation. Please try again or save the page."));
         }
     }
 

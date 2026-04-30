@@ -1,12 +1,18 @@
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
+
+using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 using SMS_Application.Services;
+
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
+using SMS_Domain.Events.UIEvents;
 using SMS_Domain.Interfaces;
+
 using SMS_Shared.Configuration;
+
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 
@@ -235,10 +241,11 @@ public partial class ReportProcessing : ComponentBase
 {
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportProcessing> _logger { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
 
-    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
 
@@ -1433,20 +1440,20 @@ public partial class ReportProcessing : ComponentBase
             Position = approver.Position ?? "Not specified"
         };
     }
-    // Notification helper methods
-    private void ShowSuccessAsyncNotification(string message)
+    // Notification helper methods (EventBus-driven)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        _notificationHelper.ShowSuccessAsync( message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
     }
 
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        _notificationHelper.ShowErrorAsync( message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
 
-    private void ShowInfoAsyncNotification(string message)
+    private async Task ShowInfoAsyncNotification(string message)
     {
-        _notificationHelper.ShowInfoAsync( message, 5000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
     }
 
     private void RenderEmptyState(RenderTreeBuilder builder, string icon, string title, string description)
@@ -2230,7 +2237,7 @@ public partial class ReportProcessing : ComponentBase
     /// <summary>
     /// Show description modal with full hazard description
     /// </summary>
-    private void ShowDescriptionDialog(ReportProcessingSummary report)
+    private async Task ShowDescriptionDialog(ReportProcessingSummary report)
     {
         try
         {
@@ -2244,7 +2251,7 @@ public partial class ReportProcessing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error showing description modal for report {ReportId}", report.ReportId);
-            _notificationHelper.ShowErrorAsync("Error showing description details");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error showing description details"));
         }
     }
 

@@ -120,6 +120,13 @@
                                  ButtonStyle="ButtonStyle.Warning" 
                                  class="me-2"
                                  Disabled="@(_isProcessing)" />
+
+                    <RadzenButton Icon="delete_sweep" 
+                                 Text="Clear Queue" 
+                                 Click="@ClearQueue" 
+                                 ButtonStyle="ButtonStyle.Danger" 
+                                 class="me-2"
+                                 Disabled="@(_isProcessing)" />
                 </div>
             </RadzenColumn>
         </RadzenRow>

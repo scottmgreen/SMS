@@ -38,8 +38,8 @@ public class HazardCreatedNotificationHandler : BaseUIEventHandler<TestUIEvent>
             var summary = GetNotificationSummary(uiEvent.EventType, uiEvent.Priority);
             var detail = uiEvent.Message;
 
-            _logger.LogInformation("?? [UI HANDLER] SIMULATED NOTIFICATION:");
-            _logger.LogInformation("   ?? Severity: {Severity}", severity);
+            _logger.LogInformation("[UI HANDLER] SIMULATED NOTIFICATION:");
+            _logger.LogInformation("Severity: {Severity}", severity);
             _logger.LogInformation("   ?? Summary: {Summary}", summary);
             _logger.LogInformation("   ?? Detail: {Detail}", detail);
             _logger.LogInformation("   ?? Target: {TargetComponent}", uiEvent.TargetComponent);

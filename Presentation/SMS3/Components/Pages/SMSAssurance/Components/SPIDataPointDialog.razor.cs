@@ -3,6 +3,8 @@ using System.Globalization;
 
 
 using SMS_Application.Common;
+using SMS_Application.Interfaces;
+using SMS_Domain.Events.UIEvents;
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSAssurance.Components;
@@ -20,7 +22,7 @@ public partial class SPIDataPointDialog : ComponentBase
     #region Injected Services
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<SPIDataPointDialog> _logger { get; set; } = default!;
-    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     #endregion
 
@@ -157,10 +159,15 @@ public partial class SPIDataPointDialog : ComponentBase
             await OnSave.InvokeAsync(currentDataPoint);
             _dialogService.Close();
         }
-        catch (Exception)
+        catch (Exception ex)
         {
-            // Simple error notification without excessive details
-            await _notificationHelper.ShowErrorAsync("Failed to save data point");
+            // EventBus-driven error notification
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error(
+                "Save Failed", 
+                "Failed to save data point. Please try again."
+            ));
+
+            _logger.LogError(ex, "Failed to save SPI data point in dialog");
         }
     }
 

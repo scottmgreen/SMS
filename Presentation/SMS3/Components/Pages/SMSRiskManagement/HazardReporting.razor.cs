@@ -1,8 +1,10 @@
 ﻿
 using Microsoft.JSInterop;
 
+using SMS_Application.Interfaces;
 using SMS_Application.Services;
 using SMS_Domain.Entities;
+using SMS_Domain.Events.UIEvents;
 using SMS_Domain.Errors;
 
 using SMS_Shared.Configuration;
@@ -25,8 +27,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
     [Inject] private ILogger<HazardReporting> _logger { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
 
-    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
@@ -327,7 +329,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             _logger.LogError(ex, "Error checking for edit mode");
             IsEditMode = false;
-            await _notificationHelper.ShowErrorAsync( "Unable to determine edit mode. Defaulting to create mode.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Unable to determine edit mode. Defaulting to create mode."));
 
         }
     }
@@ -470,13 +472,13 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 DepartmentOptions.Clear();
                 SelectedDepartment =null;
             }
-            await _notificationHelper.ShowInfoAsync($"Loaded report {reportCode} for editing.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Loaded report {reportCode} for editing."));
             
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading report for editing: {ReportCode}", reportCode);
-            await _notificationHelper.ShowErrorAsync("Failed to load report for editing. Redirecting to Reports page.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load report for editing. Redirecting to Reports page."));
             
             // Redirect back to reports on failure
             _navigation.NavigateToSecure("/SMSRiskManagement/Reports");
@@ -622,12 +624,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
             _logger.LogInformation("Successfully loaded hazard {HazardCode} for editing - Category: {Category}, Type: {Type}",
                 hazardCode, SelectedHazardCategory, HazardReport.HazardType);
 
-            await _notificationHelper.ShowInfoAsync($"Loaded hazard {hazardCode} for editing.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Loaded hazard {hazardCode} for editing."));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading hazard for editing: {HazardCode}", hazardCode);
-            await _notificationHelper.ShowErrorAsync("Failed to load hazard for editing. Redirecting to Hazards page.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load hazard for editing. Redirecting to Hazards page."));
 
             // Redirect back to hazards listing on failure
             _navigation.NavigateToSecure("/Listings/HazardListing");
@@ -708,7 +710,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
             if (!IsFormValidForSubmission())
             {
-                await _notificationHelper.ShowWarningAsync(  "Please complete all required fields before submitting.", 5000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please complete all required fields before submitting."));
                 return;
             }
 
@@ -717,7 +719,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during form submission");
-            await _notificationHelper.ShowErrorAsync("An error occurred while submitting your report. Please try again.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "An error occurred while submitting your report. Please try again."));
             
         }
     }
@@ -798,14 +800,14 @@ public partial class HazardReporting : ComponentBase, IDisposable
             // Show notification about results
             if (successfullyProcessedFiles.Any() && failedFiles.Any())
             {
-                await _notificationHelper.ShowWarningAsync($"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued.", 5000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", $"Added {successfullyProcessedFiles.Count} file(s). Failed to process {failedFiles.Count} file(s). Total: {AttachedFiles.Count} files queued."));
             } else if (successfullyProcessedFiles.Any())
             {
-                await _notificationHelper.ShowSuccessAsync($"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files.", 5000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Added {successfullyProcessedFiles.Count} file(s) to the queue. Total: {AttachedFiles.Count} files."));
             }
             else if (failedFiles.Any())
             {
-                await _notificationHelper.ShowErrorAsync($"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.", 5000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions."));
             }
 
             _logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
@@ -863,10 +865,10 @@ public partial class HazardReporting : ComponentBase, IDisposable
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error initializing map in OpenMapSelector");
-                await _notificationHelper.ShowWarningAsync("Could not initialize map. Please try refreshing the page.", 5000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Could not initialize map. Please try refreshing the page."));
             }
         }
-        await _notificationHelper.ShowInfoAsync("Click on the map to select the hazard location.", 3000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "Click on the map to select the hazard location."));
     }
 
     /// <summary>
@@ -887,7 +889,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         if (!HasValidCoordinates)
         {
 
-            await _notificationHelper.ShowWarningAsync("Please click on the map to select a location first.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please click on the map to select a location first."));
             return;
         }
 
@@ -907,7 +909,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         ShowMapModal = false;
         StateHasChanged();
 
-        await _notificationHelper.ShowSuccessAsync( $"Location selected: {GeoLocationDisplay}", 5000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Location selected: {GeoLocationDisplay}"));
         
     }
 
@@ -935,7 +937,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         StateHasChanged();
-        await _notificationHelper.ShowInfoAsync( "Map selection has been cleared.", 5000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "Map selection has been cleared."));
         
     }
 
@@ -971,7 +973,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     {
         if (!IsFormValidForSubmission())
         {
-            await _notificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please complete all required fields before submitting."));
             return;
         }
 
@@ -991,11 +993,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// <summary>
     /// Cancel submission
     /// </summary>
-    public void CancelSubmission()
+    public async Task CancelSubmission()
     {
         ShowSubmissionConfirmation = false;
         StateHasChanged(); // Force UI update to show buttons again
-        _notificationHelper.ShowInfoAsync( "You can continue editing your report.", 5000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "You can continue editing your report."));
     }
 
     
@@ -1069,7 +1071,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             if (string.IsNullOrEmpty(GeneratedTrackingId) || string.IsNullOrEmpty(GeneratedReportId))
             {
-                await _notificationHelper.ShowWarningAsync( "No report information available to print.", 5000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "No report information available to print."));
                 return;
             }
 
@@ -1090,7 +1092,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             _logger?.LogError(ex, "Error printing confirmation");
 
-            await _notificationHelper.ShowErrorAsync( "Failed to print confirmation. Please try again or save the page.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to print confirmation. Please try again or save the page."));
         }
     }
 
@@ -1132,7 +1134,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             {
                 ShowSubmissionConfirmation = true;
                 StateHasChanged();
-                await _notificationHelper.ShowWarningAsync( "Please complete all required fields before submitting.", 5000);
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please complete all required fields before submitting."));
                 return;
             }
 
@@ -1165,7 +1167,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 IsEditMode ? "EDIT" : "CREATE");
 
             ShowSubmissionConfirmation = false;
-            await _notificationHelper.ShowErrorAsync( $"An error occurred while {(IsEditMode ? "updating" : "saving")} your report. Please try again.", 5000);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"An error occurred while {(IsEditMode ? "updating" : "saving")} your report. Please try again."));
             
         }
         finally
@@ -1251,7 +1253,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         _logger.LogInformation("? EDIT mode completed - Report: {ReportCode}, Hazard: {HazardCode}",
             updatedHazard.ReportCode, updatedHazard.Code);
 
-        await _notificationHelper.ShowSuccessAsync( $"Report {updatedHazard.ReportCode} and hazard {updatedHazard.Code} have been updated.", 5000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Report {updatedHazard.ReportCode} and hazard {updatedHazard.Code} have been updated."));
 
         
     }
@@ -1358,7 +1360,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
         _logger.LogInformation("? CREATE mode completed - Report: {ReportCode}, Hazard: {HazardCode} Tracking: { TrackingCode} ", createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
-        await _notificationHelper.ShowSuccessAsync( $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}.", 5000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}."));
 
     }
 
@@ -1585,7 +1587,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 // Could show regulatory warning if required
                 if (hazardType.RequiresRegulatoryReporting)
                 {
-                    await _notificationHelper.ShowInfoAsync( $"This hazard type ({hazardType.Name}) requires regulatory reporting to appropriate authorities.", 5000);
+                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"This hazard type ({hazardType.Name}) requires regulatory reporting to appropriate authorities."));
                 }
             }
         }
@@ -1823,7 +1825,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             InitializeFormDefaults();
             StateHasChanged();
 
-           await _notificationHelper.ShowInfoAsync( "All form data has been cleared.", 5000);
+           await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "All form data has been cleared."));
 
         }
     }

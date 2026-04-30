@@ -190,6 +190,96 @@ public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
     }
 }
 
+public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSPIDataPointCommand, Result<SafetyPerformanceIndicator>>
+{
+    private readonly ISafetyPerformanceIndicatorService _spiService;
+    private readonly ILogger<UpdateSPIDataPointCommandHandler> _logger;
+
+    public UpdateSPIDataPointCommandHandler(
+        ISafetyPerformanceIndicatorService spiService,
+        ILogger<UpdateSPIDataPointCommandHandler> logger)
+    {
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(
+        UpdateSPIDataPointCommand request,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request?.DataPoint is null)
+            {
+                _logger.LogApplicationError("UpdateSPIDataPointCommand received with null request or DataPoint", ApplicationEventIds.Error, null);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            _logger.LogInformation("✅ Processing UpdateSPIDataPointCommand for SPI: {SPIId}, DataPoint: {DataPointId}",
+                request.DataPoint.SPIId, request.DataPoint.Id?.Value);
+
+            // Update the data point through the SPI service
+            // Note: We'll need to get the SPI first, update the datapoint, then save the SPI
+            var spiResult = await _spiService.GetSafetyPerformanceIndicatorByCodeAsync(request.DataPoint.SPIId, cancellationToken);
+
+            if (spiResult.IsFailure)
+            {
+                _logger.LogApplicationError("SPI not found with code: {SPICode}", ApplicationEventIds.Error, null);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(spiResult.Error);
+            }
+
+            var spi = spiResult.Value;
+
+            // Find and update the specific data point
+            var dataPointToUpdate = spi.DataPoints?.FirstOrDefault(dp => dp.Id?.Value == request.DataPoint.Id?.Value);
+            if (dataPointToUpdate == null)
+            {
+                _logger.LogApplicationError("Data point not found with ID: {DataPointId}", ApplicationEventIds.Error, null);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(
+                    new Error("DATAPOINT_NOT_FOUND", "Data point not found"));
+            }
+
+            // Update the data point properties
+            dataPointToUpdate.Value = request.DataPoint.Value;
+            dataPointToUpdate.MeasurementDate = request.DataPoint.MeasurementDate;
+            dataPointToUpdate.DataSource = request.DataPoint.DataSource;
+            dataPointToUpdate.Period = request.DataPoint.Period;
+            dataPointToUpdate.Notes = request.DataPoint.Notes;
+            dataPointToUpdate.IsVerified = request.DataPoint.IsVerified;
+            dataPointToUpdate.VerifiedBy = request.DataPoint.VerifiedBy;
+            dataPointToUpdate.VerifiedDate = request.DataPoint.VerifiedDate;
+            dataPointToUpdate.UpdatedBy = request.DataPoint.UpdatedBy ?? "SYSTEM";
+            dataPointToUpdate.UpdatedDate = DateTime.UtcNow;
+
+            // Save the updated SPI
+            var updateResult = await _spiService.UpdateSafetyPerformanceIndicatorAsync(spi, cancellationToken);
+
+            if (updateResult.IsSuccess)
+            {
+                _logger.LogInformation("✅ Successfully updated SPI data point for SPI: {SPIId}, DataPoint: {DataPointId}",
+                    request.DataPoint.SPIId, request.DataPoint.Id?.Value);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to update SPI data point for SPI: {SPIId}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
+            }
+
+            return updateResult;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogWarning("UpdateSPIDataPointCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while updating SPI data point", ApplicationEventIds.Error, ex);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
+        }
+    }
+}
+
 public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSafetyPerformanceIndicatorCommand, Result<bool>>
 {
     private readonly ISafetyPerformanceIndicatorService _spiService;

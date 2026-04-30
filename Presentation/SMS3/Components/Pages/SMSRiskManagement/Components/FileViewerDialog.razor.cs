@@ -3,6 +3,8 @@ using System.Text;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 
+using SMS_Application.Interfaces;
+using SMS_Domain.Events.UIEvents;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -14,9 +16,7 @@ public partial class FileViewerDialog : ComponentBase
     #region Injected Services
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     [Inject] private ILogger<FileViewerDialog> Logger { get; set; } = default!;
-    
-
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus EventBus { get; set; } = default!;
     #endregion
 
     #region Parameters
@@ -292,15 +292,15 @@ public partial class FileViewerDialog : ComponentBase
     }
     #endregion
 
-    #region Notification Methods
-    private void ShowSuccessAsyncNotification(string message)
+    #region Notification Methods (EventBus-Driven)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message, 3000);
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message, duration: 3000));
     }
 
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message, 5000);
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message, duration: 5000));
     }
     #endregion
 }

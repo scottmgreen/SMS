@@ -89,7 +89,6 @@
 
   <ItemGroup>
     <Folder Include="BackgroundServices\" />
-    <Folder Include="Services\SMSServices\" />
   </ItemGroup>
 
 </Project>

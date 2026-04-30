@@ -2,6 +2,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 
+using SMS_Domain.Events.UIEvents;
 using SMS_Domain.ValueObjects;
 
 using SMS_Shared.Common;
@@ -19,7 +20,7 @@ public partial class ApplicationGroups : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ApplicationGroups> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
-    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
 
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
@@ -365,16 +366,16 @@ public partial class ApplicationGroups : ComponentBase
 
     #endregion
 
-    #region Notification Methods
+    #region Notification Methods (EventBus-Driven)
 
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        _notificationHelper.ShowErrorAsync(message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
 
-    private void ShowSuccessAsyncNotification(string message)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        _notificationHelper.ShowSuccessAsync(message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
     }
 
     #endregion

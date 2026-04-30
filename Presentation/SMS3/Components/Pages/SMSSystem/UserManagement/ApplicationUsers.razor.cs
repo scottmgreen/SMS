@@ -2,6 +2,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 
+using SMS_Domain.Events.UIEvents;
 using SMS_Domain.ValueObjects;
 
 using SMS_Shared.Common;
@@ -24,7 +25,7 @@ public partial class ApplicationUsers : ComponentBase
     [Inject] private ILogger<ApplicationUsers> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
-    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
 
     // Route parameter for edit mode
     [Parameter] public string? Id { get; set; }
@@ -641,21 +642,21 @@ public partial class ApplicationUsers : ComponentBase
 
     #endregion
 
-    #region Notifications
+    #region Notifications (EventBus-Driven)
 
-    private void ShowSuccessAsyncNotification(string message)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        _notificationHelper.ShowSuccessAsync( message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
     }
 
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        _notificationHelper.ShowErrorAsync( message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
 
-    private void ShowInfoAsyncNotification(String message)
+    private async Task ShowInfoAsyncNotification(String message)
     {
-        _notificationHelper.ShowInfoAsync( message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
     }
 
     #endregion

@@ -3,6 +3,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 
+using SMS_Domain.Events.UIEvents;
 using SMS_Domain.ValueObjects;
 
 using SMS_Shared.Common;
@@ -19,7 +20,7 @@ public partial class StakeholderGroups : ComponentBase
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<StakeholderGroups> Logger { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus EventBus { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     #endregion
@@ -160,7 +161,7 @@ public partial class StakeholderGroups : ComponentBase
         }
     }
 
-    private void CancelEdit()
+    private async Task CancelEdit()
     {
         IsEditMode = false;
         CurrentGroup = null;
@@ -168,7 +169,7 @@ public partial class StakeholderGroups : ComponentBase
         EditDescription = string.Empty;
         EditIsActive = true;
         Logger.LogInformation("Group edit cancelled");
-        NotificationHelper.ShowInfoAsync( "Edit cancelled", 3000);
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "Edit cancelled"));
         Navigation.NavigateToSecure("/System/UserGroups/StakeholderGroups");
     }
 
@@ -389,16 +390,16 @@ public partial class StakeholderGroups : ComponentBase
 
     #endregion
 
-    #region Notification Methods
+    #region Notification Methods (EventBus-Driven)
 
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
 
-    private void ShowSuccessAsyncNotification(string message)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
     }
 
     #endregion
@@ -473,7 +474,7 @@ public partial class StakeholderGroups : ComponentBase
         }
     }
 
-    private void ExitMemberManagement()
+    private async Task ExitMemberManagement()
     {
         // Reset member management state
         IsManagingMembers = false;
@@ -483,8 +484,8 @@ public partial class StakeholderGroups : ComponentBase
         AvailableUsers.Clear();
         SelectedUsers.Clear();
         Logger.LogInformation("Exited member management view");
-        NotificationHelper.ShowInfoAsync( "Returned to group management", 3000);
-        
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "Returned to group management"));
+
         Navigation.NavigateToSecure("/System/UserGroups/StakeholderGroups");
     }
 

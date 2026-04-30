@@ -1,6 +1,7 @@
 using System.Linq.Expressions;
 
 using SMS_Domain.Entities;
+using SMS_Domain.Events.UIEvents;
 
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Logging;
 
 using Radzen;
 
+using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 
@@ -30,8 +32,8 @@ public partial class AirportSharedDatasetListing : ComponentBase
     #region Injected Services
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AirportSharedDatasetListing> Logger { get; set; } = default!;
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
-    
+    [Inject] private IBaseEventBus EventBus { get; set; } = default!;
+
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     #endregion
@@ -297,39 +299,39 @@ public partial class AirportSharedDatasetListing : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessAsyncNotification($"Dataset '{dataset.Code}' deleted successfully");
+                await ShowSuccessAsyncNotification($"Dataset '{dataset.Code}' deleted successfully");
                 await LoadInitialData(); // Refresh the grid
                 if (datasetsGrid != null)
                     await datasetsGrid.Reload(); // Refresh the grid display
             }
             else
             {
-                ShowErrorAsyncNotification($"Failed to delete dataset: {result.Error?.Message}");
+                await ShowErrorAsyncNotification($"Failed to delete dataset: {result.Error?.Message}");
                 Logger.LogError("Failed to delete dataset {Code}: {Error}", dataset.Code, result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error performing delete for dataset {Code}", dataset.Code);
-            ShowErrorAsyncNotification("Error deleting dataset");
+            await ShowErrorAsyncNotification("Error deleting dataset");
         }
     }
     #endregion
 
-    #region Notification Methods
-    private void ShowSuccessAsyncNotification(string message)
+    #region Notification Methods (EventBus-Driven)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
     }
 
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
 
-    private void ShowInfoAsyncNotification(string message)
+    private async Task ShowInfoAsyncNotification(string message)
     {
-        NotificationHelper.ShowInfoAsync( message);
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", message));
     }
     #endregion
 }

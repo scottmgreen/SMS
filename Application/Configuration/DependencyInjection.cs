@@ -42,8 +42,7 @@ namespace SMS_Application.Configuration
         public static IServiceCollection AddApplicationServices(this IServiceCollection services, IConfiguration configuration)
         {
             // Configure SMTP email settings from appsettings
-            services.Configure<SmtpEmailConfiguration>(
-                configuration.GetSection("SmtpEmailConfiguration"));
+            services.Configure<SmtpEmailConfiguration>(configuration.GetSection("SmtpEmailConfiguration"));
 
             // 🔥 CLEANER: Use the Assembly class itself instead of a random handler
             var applicationAssembly = Assembly.GetExecutingAssembly(); // Gets current assembly (Application)
@@ -171,7 +170,7 @@ namespace SMS_Application.Configuration
             #region SMS Workflow Services
 
             // SMS Workflow Services - SINGLE REGISTRATION ONLY
-            services.AddScoped<ISMSInvestigationWorkflowService, SMSInvestigationWorkflowService>();
+            //services.AddScoped<ISMSInvestigationWorkflowService, SMSInvestigationWorkflowService>();
 
             #endregion
 

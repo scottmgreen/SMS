@@ -116,7 +116,8 @@ public class Program
             .AddInteractiveServerRenderMode();
 
         // 🚀 Initialize EventBus subscriptions - CRITICAL for Phase 3 workflow automation
-        app.InitializeEventBus();
+        app.InitializeEventBus(); // Application layer handlers (Domain + Integration events)
+        app.InitializeUIEventHandlers(); // Presentation layer handlers (UI events)
 
         app.Run();
     }

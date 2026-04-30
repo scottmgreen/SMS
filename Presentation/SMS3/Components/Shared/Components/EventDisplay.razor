@@ -1,0 +1,130 @@
+﻿@* <copyright file="NotificationDisplay.razor" company="SMS Safety Management System">
+     Author: SMS Development Team
+     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
+     Description: Centralized notification display component using InvokeAsync pattern for proper Blazor Server threading.
+</copyright> *@
+
+@implements IDisposable
+@implements IEventReceiver
+@inject ILogger<EventDisplay> Logger
+@inject NotificationService NotificationService
+@inject IFeatureManager FeatureManager
+@using Microsoft.FeatureManagement
+@using SMS3.Components.Shared
+@using Radzen
+
+<div class="notification-display-container">
+    @if (ShowDebugInfo && _notificationCount > 0)
+    {
+        <div class="notification-debug-info">
+            <small class="text-muted">
+                📊 Notifications processed: @_notificationCount
+            </small>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool ShowDebugInfo { get; set; } = false;
+    [Parameter] public string? CssClass { get; set; }
+    [Parameter] public string Position { get; set; } = "top-right";
+
+    private int _notificationCount = 0;
+
+    protected override void OnInitialized()
+    {
+        try
+        {
+            Logger.LogInformation("🔔 NotificationDisplay: Registering with BlazorNotificationDispatcher");
+            EventBusDispatcher.Register(this);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ NotificationDisplay: Error during initialization");
+        }
+    }
+
+    /// <summary>
+    /// Handles notifications using InvokeAsync pattern for proper Blazor UI thread marshaling
+    /// Now includes feature flag checking like the original INotificationHelper
+    /// </summary>
+    public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
+    {
+        try
+        {
+            Logger.LogInformation("🔔 EventDisplay: Handling notification - {Severity}: {Title}", severity, title);
+
+            // Check feature flags before displaying notification
+            var shouldDisplay = severity switch
+            {
+                NotificationSeverity.Success => await FeatureManager.IsEnabledAsync("SuccessNotifications"),
+                NotificationSeverity.Error => await FeatureManager.IsEnabledAsync("ErrorNotifications"),
+                NotificationSeverity.Warning => await FeatureManager.IsEnabledAsync("WarningNotifications"),
+                NotificationSeverity.Info => await FeatureManager.IsEnabledAsync("InfoNotifications"),
+                _ => true
+            };
+
+            if (!shouldDisplay)
+            {
+                Logger.LogDebug("🔕 EventDisplay: Notification suppressed by feature flag - {Severity}: {Title}", severity, title);
+                return;
+            }
+
+            // Use InvokeAsync to marshal to Blazor UI thread
+            await InvokeAsync(() =>
+            {
+                _notificationCount++;
+
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = severity,
+                    Summary = title,
+                    Detail = message,
+                    Duration = duration
+                });
+
+                Logger.LogInformation("✅ EventDisplay: Toast displayed via InvokeAsync");
+
+                if (ShowDebugInfo)
+                {
+                    StateHasChanged();
+                }
+            });
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "❌ EventDisplay: Error handling notification");
+        }
+    }
+
+    public void Dispose()
+    {
+        try
+        {
+            EventBusDispatcher.Unregister(this);
+            Logger.LogInformation("🔄 NotificationDisplay: Component disposed - Processed {Count} notifications", _notificationCount);
+        }
+        catch (Exception ex)
+        {
+            Logger.LogWarning(ex, "⚠️ NotificationDisplay: Error during disposal");
+        }
+    }
+}
+
+<style>
+    .notification-display-container {
+        position: relative;
+    }
+
+    .notification-debug-info {
+        position: fixed;
+        bottom: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.1);
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.8em;
+        z-index: 9999;
+        pointer-events: none;
+    }
+</style>

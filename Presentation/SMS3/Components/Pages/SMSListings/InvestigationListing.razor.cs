@@ -1,12 +1,11 @@
 using System.Linq.Expressions;
 
-using SMS_Domain.Entities;
-
-using Radzen;
-
+using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 
+using SMS_Domain.Entities;
+using SMS_Domain.Events.UIEvents;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 using SMS_Domain.ValueObjects;
@@ -29,8 +28,9 @@ public partial class InvestigationListing : ComponentBase
 
     #region Dependencies
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private ILogger<InvestigationListing> _logger { get; set; } = default!;
-    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
 
@@ -72,29 +72,29 @@ public partial class InvestigationListing : ComponentBase
                 // Only show success notification if we have data
                 if (totalCount > 0)
                 {
-                    await _notificationHelper.ShowSuccessAsync($"Successfully loaded {totalCount} investigations");
+                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {totalCount} investigations"));
 
                     if (totalCount == 0)
                     {
-                        await _notificationHelper.ShowInfoAsync("No investigations found");
+                        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No investigations found"));
                     }
                 }
                 else
                 {
-                    await _notificationHelper.ShowErrorAsync("Failed to load investigations");
+                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load investigations"));
                     _logger.LogError("Failed to load investigations: {Error}", result.Error?.Message);
                 }
             }
             else
             {
-                await _notificationHelper.ShowErrorAsync("Failed to load investigations");
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load investigations"));
                 _logger.LogError("Failed to load investigations: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading investigations");
-            await _notificationHelper.ShowErrorAsync($"Error loading investigations: {ex.Message}");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error loading investigations: {ex.Message}"));
         }
         finally
         {
@@ -172,7 +172,7 @@ public partial class InvestigationListing : ComponentBase
         {
             _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
-            await _notificationHelper.ShowErrorAsync($"Error loading data: {ex.Message}");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error loading data: {ex.Message}"));
             
             // Fallback to show all data without filtering/sorting
             try
@@ -417,12 +417,12 @@ public partial class InvestigationListing : ComponentBase
 
             _logger.LogInformation("Navigating to investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
             _navigation.NavigateToSecure(navigationUrl);
-            await _notificationHelper.ShowInfoAsync($"Opening investigation {investigation.Code}");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Opening investigation {investigation.Code}"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error viewing investigation {Code}", investigation?.Code);
-            await _notificationHelper.ShowErrorAsync("Error opening investigation");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error opening investigation"));
         }
     }
 
@@ -439,12 +439,12 @@ public partial class InvestigationListing : ComponentBase
 
             _logger.LogInformation("Navigating to edit investigation: {Code} with URL: {Url}", investigation.Code, navigationUrl);
             _navigation.NavigateToSecure(navigationUrl);
-            await _notificationHelper.ShowInfoAsync($"Opening investigation editor for {investigation.Code}");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Opening investigation editor for {investigation.Code}"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error editing investigation {Code}", investigation?.Code);
-            await _notificationHelper.ShowErrorAsync("Error opening investigation editor");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error opening investigation editor"));
         }
     }
     #endregion

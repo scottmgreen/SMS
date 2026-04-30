@@ -1,4 +1,6 @@
 
+using SMS_Application.Interfaces;
+using SMS_Domain.Events.UIEvents;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -10,8 +12,8 @@ public partial class EditInterviewDialog : ComponentBase
     #region Injected Services
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    
-    [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
+
+    [Inject] private IBaseEventBus EventBus { get; set; } = default!;
     [Inject] private ILogger<EditInterviewDialog> Logger { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
     #endregion
@@ -374,15 +376,15 @@ public partial class EditInterviewDialog : ComponentBase
     }
     #endregion
 
-    #region Notification Methods
-    private void ShowSuccessAsyncNotification(string message)
+    #region Notification Methods (EventBus-Driven)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        NotificationHelper.ShowSuccessAsync( message);
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
     }
 
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        NotificationHelper.ShowErrorAsync( message);
+        await EventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
     #endregion
 

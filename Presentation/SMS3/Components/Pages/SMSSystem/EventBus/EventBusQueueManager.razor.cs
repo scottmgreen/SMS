@@ -408,6 +408,75 @@ public partial class EventBusQueueManager
         }
     }
 
+    private async Task ClearQueue()
+    {
+        try
+        {
+            var confirmed = await DialogService.Confirm(
+                "Are you sure you want to clear ALL events from the queue? This will remove all pending, processed, and failed events.",
+                "Clear All Events",
+                new ConfirmOptions()
+                {
+                    OkButtonText = "Yes, Clear All",
+                    CancelButtonText = "Cancel"
+                });
+
+            if (confirmed != true) return;
+
+            _isProcessing = true;
+            StateHasChanged();
+
+            Logger.LogWarning("Clearing ALL queue events - Database truncate/reimport scenario");
+
+            var result = await EventQueueService.ClearAllEventsAsync();
+
+            if (result.IsSuccess)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Queue Cleared",
+                    Detail = $"Cleared all {result.Value} events from queue.",
+                    Duration = 3000
+                });
+
+                Logger.LogInformation("Successfully cleared all {EventCount} events from queue", result.Value);
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Clear Failed",
+                    Detail = result.Error.Message,
+                    Duration = 4000
+                });
+
+                Logger.LogWarning("Failed to clear queue: {Error}", result.Error.Message);
+            }
+
+            // Refresh the data
+            await LoadQueuedEvents();
+            await LoadStatistics();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Exception while clearing queue");
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Clear Error",
+                Detail = "An unexpected error occurred during queue clear.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
     #endregion
 
     #region UI Methods

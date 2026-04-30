@@ -1,5 +1,6 @@
 ﻿@inherits LayoutComponentBase
 @using SMS3.Components.Layout
+@using SMS3.Components.Shared
 @using SMS3.Configuration.Extensions
 
 @using SMS_Application.Services
@@ -26,6 +27,9 @@
 <RadzenNotification />
 <RadzenTooltip />
 <RadzenContextMenu />
+
+<!-- EventBus Notification Display Component - Centralized notification coordination -->
+<NotificationDisplay ShowDebugInfo="true" />
 
 <div id="blazor-error-ui" class="sms-error-ui">
     <div class="sms-error-content">

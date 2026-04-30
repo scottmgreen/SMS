@@ -746,4 +746,29 @@ public class EventQueueService : IEventQueueService
     }
 
     #endregion
+
+    #region Queue Management Methods
+
+    /// <summary>
+    /// Clears ALL events from the queue (pending, processed, failed, cancelled)
+    /// WARNING: This removes everything - typically used with database truncate/reimport
+    /// </summary>
+    public async Task<Result<int>> ClearAllEventsAsync()
+    {
+        try
+        {
+            var totalCount = _eventQueue.Count;
+            _eventQueue.Clear();
+
+            _logger.LogWarning("Cleared ALL {Count} events from queue - Complete reset", totalCount);
+            return Result<int>.Success(totalCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to clear all events from queue");
+            return Result<int>.Failure<int>(new Error("CLEAR_ALL_FAILED", $"Failed to clear all events: {ex.Message}"));
+        }
+    }
+
+    #endregion
 }

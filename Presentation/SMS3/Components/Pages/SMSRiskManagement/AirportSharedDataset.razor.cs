@@ -1,3 +1,5 @@
+using SMS_Application.Interfaces;
+using SMS_Domain.Events.UIEvents;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -15,7 +17,7 @@ public partial class AirportSharedDataset : ComponentBase
     #region Injected Services
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
-    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!; 
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private ILogger<AirportSharedDataset> _logger { get; set; } = default!;
     [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
     #endregion
@@ -408,15 +410,15 @@ public partial class AirportSharedDataset : ComponentBase
     }
     #endregion
 
-    #region Notifications
-    private void ShowSuccessAsyncNotification(string message)
+    #region Notifications (EventBus-Driven)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        _notificationHelper.ShowSuccessAsync(message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message));
     }
 
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        _notificationHelper.ShowErrorAsync(message);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message));
     }
     #endregion
 

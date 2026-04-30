@@ -1,11 +1,12 @@
 
 @using SMS3.Components.Shared
+@using SMS3.Components.Shared.Components
 @using SMS_Application.Interfaces
 @using SMS_Application.Messaging.Queries
 @using SMS_Domain.Entities
 @inject IBaseMediator Mediator
 @inject ILogger<HazardLocationDisplay> Logger
-
+@namespace SMS3.Components.Shared
 @* 
 Hazard Location Display Component
 Displays the location of a hazard using the ReadOnlyLocationMap component
