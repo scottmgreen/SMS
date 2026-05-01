@@ -1,7 +1,7 @@
-﻿# Import Hazard Reports to SMS API
+﻿# Import Hazard Reports to SMS API (Default Category/Type Version)
 # This script reads the CSV file and maps the data to your SMS API endpoints
-# with proper enum value mapping for categories and types
-# Import-HazardReportsToAPI.ps1 -CsvFilePath "Shared\HazardReportSubmissionForm.csv" -ApiBaseUrl "http://localhost:5115" -ApiKey "SMS-DEV-12345-ABCDEF" -BatchSize 5
+# using DEFAULT_CATEGORY and DEFAULT_TYPE for all hazard categorization
+# Import-HazardReportsToAPI-DefaultValues.ps1 -CsvFilePath "Shared\HazardReportSubmissionForm.csv" -ApiBaseUrl "http://localhost:5115" -ApiKey "SMS-DEV-12345-ABCDEF" -BatchSize 5
 param(
     [Parameter(Mandatory=$true)]
     [string]$CsvFilePath,
@@ -23,86 +23,6 @@ param(
 function Write-ColorOutput {
     param([string]$Message, [string]$Color = "White")
     Write-Host $Message -ForegroundColor $Color
-}
-
-# Function to map CSV Hazard Categories to API enum values
-function Map-HazardCategory {
-    param([string]$CsvCategory)
-
-    $categoryMapping = @{
-        "Incident" = "INCIDENT"
-        "FOD" = "FOD"
-        "General Hazard" = "GENERAL_HAZARD"
-        "Operational Change" = "OPERATIONAL_CHANGE"
-        "Safety Review" = "SAFETY_REVIEW"
-        "Non-Standard Operation" = "NON_STANDARD_OPERATION"
-        "Other" = "GENERAL_HAZARD"  # Default mapping
-    }
-
-    $mapped = $categoryMapping[$CsvCategory]
-    if (-not $mapped) {
-        Write-ColorOutput "⚠️  Unknown category '$CsvCategory', mapping to GENERAL_HAZARD" "Yellow"
-        return "GENERAL_HAZARD"
-    }
-
-    return $mapped
-}
-
-# Function to map CSV Hazard Types to API enum values
-function Map-HazardType {
-    param([string]$CsvType, [string]$CsvCategory, [string]$CsvOtherSpecify)
-
-    # Create comprehensive mapping based on CSV data analysis
-    $typeMapping = @{
-        # Incident types
-        "Incursion" = "INCURSION"
-        "Surface Incident (non-movement)" = "SURFACE_INCIDENT_NON_MOVEMENT"
-        "Surface Incident (movement)" = "SURFACE_INCIDENT_MOVEMENT"
-        "Other" = "INCIDENT_OTHER"
-        "Near runway incursion on Rwy10L with vehicle and aircraft." = "INCURSION"
-
-        # FOD types
-        "Metal" = "METAL_FOD"
-
-        # Non-Standard Operation types
-        "UAS Missions" = "UAS_MISSIONS"
-
-        # Operational Change types
-        "New or modified procedures, policies, agreements, plans, or regulations" = "NEW_MODIFIED_PROCEDURES"
-
-        # Safety Review types
-        "Procedural review request" = "PROCEDURAL_REVIEW"
-
-        # General fallback
-        "" = "GENERAL_HAZARD"
-    }
-
-    # First try direct mapping
-    $mapped = $typeMapping[$CsvType]
-    if ($mapped) {
-        return $mapped
-    }
-
-    # If no direct mapping, try category-based defaults
-    switch ($CsvCategory) {
-        "Incident" {
-            if ($CsvType -like "*Incursion*") { return "INCURSION" }
-            if ($CsvType -like "*Surface*") { 
-                if ($CsvType -like "*movement*") { return "SURFACE_INCIDENT_MOVEMENT" }
-                else { return "SURFACE_INCIDENT_NON_MOVEMENT" }
-            }
-            return "INCIDENT_OTHER"
-        }
-        "FOD" {
-            if ($CsvType -like "*Metal*") { return "METAL_FOD" }
-            return "FOD_OTHER"
-        }
-        "General Hazard" { return "GENERAL_HAZARD" }
-        "Operational Change" { return "NEW_MODIFIED_PROCEDURES" }
-        "Safety Review" { return "PROCEDURAL_REVIEW" }
-        "Non-Standard Operation" { return "NON_STANDARD_OPERATION_OTHER" }
-        default { return "GENERAL_HAZARD" }
-    }
 }
 
 # Function to parse coordinates from CSV
@@ -129,17 +49,13 @@ function Parse-Coordinates {
     return $null, $null
 }
 
-# Function to create API request object
+# Function to create API request object with default category/type
 function Create-ApiRequest {
     param($CsvRow)
 
-    # Map category and type
-    #$mappedCategory = "DEFAULT_CATEGORY" 
-    #$mappedType = "DEFAULT_TYPE" 
-
-    $mappedCategory = Map-HazardCategory -CsvCategory $CsvRow."Hazard Category"
-    $mappedType = Map-HazardType -CsvType $CsvRow."Hazard Type" -CsvCategory $CsvRow."Hazard Category" -CsvOtherSpecify $CsvRow."If Other, please specify:"
-
+    # ALWAYS use default values for category and type
+    $mappedCategory = "DEFAULT_CATEGORY"
+    $mappedType = "DEFAULT_TYPE"
 
     # Parse coordinates - try both AOA and Baggage area fields
     $lat, $lon = Parse-Coordinates -CoordinateString $CsvRow."Location (AOA)"
@@ -161,7 +77,7 @@ function Create-ApiRequest {
         }
     }
 
-    # Create the API request object
+    # Create the API request object with default values
     $apiRequest = @{
         HazardCategory = $mappedCategory
         HazardType = $mappedType
@@ -174,11 +90,6 @@ function Create-ApiRequest {
     if ($lat -and $lon) {
         $apiRequest.Latitude = $lat
         $apiRequest.Longitude = $lon
-
-        # Log special case for baggage areas
-        if ($lat -eq 0.0 -and $lon -eq 0.0 -and $locationDesc -eq "Bag Road or Baggage Make-Up Area") {
-            Write-ColorOutput "📍 Using 0.0, 0.0 coordinates for Baggage area location" "Cyan"
-        }
     }
 
     # Add contact information if available
@@ -234,10 +145,11 @@ function Submit-Report {
 
 # Main execution
 try {
-    Write-ColorOutput "🚀 Starting Hazard Report Import Process" "Green"
+    Write-ColorOutput "🚀 Starting Hazard Report Import Process (DEFAULT VALUES)" "Green"
     Write-ColorOutput "📁 CSV File: $CsvFilePath" "White"
     Write-ColorOutput "🌐 API Base URL: $ApiBaseUrl" "White"
     Write-ColorOutput "🔑 API Key: $($ApiKey.Substring(0, 8))..." "White"
+    Write-ColorOutput "📋 Using DEFAULT_CATEGORY and DEFAULT_TYPE for all reports" "Yellow"
 
     if ($WhatIf) {
         Write-ColorOutput "🔍 Running in WHATIF mode - no actual submissions will be made" "Yellow"
@@ -267,7 +179,7 @@ try {
         Write-ColorOutput "🔄 Processing row $rowIndex/$totalRows - Hazard ID: $($row.'Hazard ID')" "White"
 
         try {
-            # Create API request
+            # Create API request with default values
             $apiRequest = Create-ApiRequest -CsvRow $row
 
             # Submit to API
@@ -322,7 +234,7 @@ try {
     Write-ColorOutput "  Success Rate: $([math]::Round(($successCount / $totalRows) * 100, 2))%" "Cyan"
 
     # Save results to file
-    $resultsFile = "Import-Results-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
+    $resultsFile = "Import-Results-DefaultValues-$(Get-Date -Format 'yyyyMMdd-HHmmss').json"
     $results | ConvertTo-Json -Depth 5 | Out-File -FilePath $resultsFile
     Write-ColorOutput "📄 Detailed results saved to: $resultsFile" "Cyan"
 

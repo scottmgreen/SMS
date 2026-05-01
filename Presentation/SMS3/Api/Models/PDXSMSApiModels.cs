@@ -51,6 +51,7 @@ namespace SMS3.Api.Models
         public string? ReportContactCell { get; init; }
         public string? ReportContactEmail { get; init; }
 
+        public string? ReportContactCompany { get; init; }
         /// <summary>
         /// Location where the hazard occurred (required)
         /// </summary>

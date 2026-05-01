@@ -174,6 +174,11 @@ function Create-ApiRequest {
     if ($lat -and $lon) {
         $apiRequest.Latitude = $lat
         $apiRequest.Longitude = $lon
+
+        # Log special case for baggage areas
+        if ($lat -eq 0.0 -and $lon -eq 0.0 -and $locationDesc -eq "Bag Road or Baggage Make-Up Area") {
+            Write-ColorOutput "📍 Using 0.0, 0.0 coordinates for Baggage area location" "Cyan"
+        }
     }
 
     # Add contact information if available

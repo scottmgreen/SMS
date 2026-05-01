@@ -110,7 +110,7 @@ else
 
                         <RadzenAccordion Multiple="true">
                             <Items>
-                                <RadzenAccordionItem Text="Reporter Information" Icon="person" >
+                                <RadzenAccordionItem Text="Reporter Information" Icon="person" Selected="true">
                                         <!-- Row 0: Anonymous, -->
                                         <RadzenRow Gap="1rem" Class="rz-mb-3" >
                                             <RadzenColumn Size="12">
@@ -171,15 +171,15 @@ else
                                                             </RadzenColumn>
                                                     <RadzenColumn Size="3">
                                                             <RadzenFormField AllowFloatingLabel="false" Text="Company *" Variant="Variant.Outlined" Style="width: 100%;">
-                                                                <RadzenTextBox @bind-Value="@HazardReport.ReportContactName"
-                                                                               Placeholder="Name"
-                                                                               Name="ContactName"
+                                                            <RadzenTextBox @bind-Value="@HazardReport.ReportContactCompany"
+                                                                               Placeholder="Company"
+                                                                   Name="ContactCompany"
                                                                                MaxLength="60"
                                                                                Style="width: 100%;min-width: 100%;" />
-                                                                <RadzenRegexValidator Component="ContactName"
+                                                    <RadzenRegexValidator Component="ContactCompany"
                                                                                       Text="Please enter a valid name (letters, spaces, hyphens, and apostrophes only)"
                                                                                       Pattern="^[a-zA-Z\s\-'\.]+$" />
-                                                                <RadzenRequiredValidator Component="ContactName" Text="Contact Name is required" />
+                                                    <RadzenRequiredValidator Component="ContactCompany" Text="Contact Name is required" />
                                                             </RadzenFormField>
                                                     </RadzenColumn>
                                                 </RadzenRow>
@@ -323,7 +323,7 @@ else
 
                                 </RadzenRow>
                                 </RadzenAccordionItem> *@ 
-                                <RadzenAccordionItem Style="color:green"  Text="Hazard Location" Icon="map" >
+                                    <RadzenAccordionItem Style="color:green" Text="Hazard Location" Icon="map" Selected="true">
                                     <!-- Row 3: Hazard Location -->
                                     <RadzenRow Gap="1rem" Class="rz-mb-3">
                                         <RadzenColumn Size="12">
@@ -368,7 +368,7 @@ else
                                         </RadzenColumn>
                                     </RadzenRow>
                                 </RadzenAccordionItem>
-                                <RadzenAccordionItem Text="Hazard Description" Icon="edit">
+                                <RadzenAccordionItem Text="Hazard Description" Icon="edit" Selected="true">
                                     <!-- Row 4: Hazard Description  -->
                                     <RadzenRow>
                                         <RadzenColumn>

@@ -12,6 +12,7 @@
 @using SMS_Application.Services
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
+@using System.Reflection
 @inject IJSRuntime JSRuntime
 @inject ILogger<NavMenu> _logger
 @inject NavigationManager _navigation
@@ -27,7 +28,7 @@
         <!-- Brand Logo with Environment Detection -->
         <a class="navbar-brand sms-brand @BrandCssClass" href="/">
             <i class="fas fa-plane-departure me-2"></i>
-            PDX SMS @(EnvironmentSuffix)
+            PDX SMS  @(AssemblyVersion) &nbsp;  <small>@(EnvironmentSuffix)</small>
         </a>
 
         <!-- Navigation Links -->
@@ -264,6 +265,9 @@
     // Environment Detection - Always production appearance
     private string BrandCssClass => "";
     private string EnvironmentSuffix => _environment.IsDevelopment() ? "[Development]" : "";
+    private string AssemblyVersion => System.Reflection.Assembly.GetExecutingAssembly()
+        .GetCustomAttributes<System.Reflection.AssemblyInformationalVersionAttribute>()
+        .FirstOrDefault()?.InformationalVersion?.Split('+')[0] ?? "Unknown";
 
     // URL-based login visibility - show login only on specific paths or encrypted login
     private bool ShouldShowLoginToAnonymous => _navigation.Uri.Contains("/pdx") || 
