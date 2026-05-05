@@ -703,23 +703,7 @@ public partial class ExternalReportSearch : ComponentBase
 
     #region UI Helper Methods
 
-    /// <summary>
-    /// Get badge style for report status
-    /// </summary>
-    /// <param name="status">Report status</param>
-    /// <returns>Badge style</returns>
-    public BadgeStyle GetStatusBadgeStyle(string status)
-    {
-        return status?.ToLower() switch
-        {
-            "completed" or "closed" => BadgeStyle.Success,
-            "in_progress" or "processing" => BadgeStyle.Info,
-            "initial" or "draft" => BadgeStyle.Warning,
-            "cancelled" => BadgeStyle.Danger,
-            _ => BadgeStyle.Secondary
-        };
-    }
-
+    
     /// <summary>
     /// Get badge style for validation decision
     /// </summary>

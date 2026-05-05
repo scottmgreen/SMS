@@ -131,7 +131,7 @@ public partial class HazardReportSearchResult : ComponentBase
             await LoadValidationInformation(tracking.ReportCode);
 
             // Step 5: Load risk assessment information if SMS_RISK validation
-            if (ReportValidation?.ValidationDecision == "SMS_RISK")
+            if (ReportValidation?.ValidationDecision == ValidationDecision.SmsRisk.Value)
             {
                 await LoadRiskAssessmentInformation(tracking.HazardCode);
             }
@@ -452,33 +452,26 @@ public partial class HazardReportSearchResult : ComponentBase
 
     #region UI Helper Methods
 
-    /// <summary>
-    /// Get badge style for report status
-    /// </summary>
-    public BadgeStyle GetStatusBadgeStyle(string status)
-    {
-        return status?.ToLower() switch
-        {
-            "completed" or "closed" => BadgeStyle.Success,
-            "in_progress" or "processing" => BadgeStyle.Success,
-            "initial" or "draft" => BadgeStyle.Success,
-            "cancelled" => BadgeStyle.Danger,
-            _ => BadgeStyle.Secondary
-        };
-    }
-
+    
     /// <summary>
     /// Get badge style for validation decision
     /// </summary>
     public BadgeStyle GetValidationBadgeStyle(string? decision)
     {
-        return decision?.ToUpper() switch
+        if (string.IsNullOrWhiteSpace(decision))
+            return BadgeStyle.Secondary;
+
+        if (ValidationDecision.TryFromValue(decision, out var validationDecision))
         {
-            "SMS_RISK" => BadgeStyle.Success,
-            "NOT_SMS_RISK" => BadgeStyle.Danger,
-            "NEEDS_INVESTIGATION" => BadgeStyle.Warning,
-            _ => BadgeStyle.Secondary
-        };
+            if (validationDecision == ValidationDecision.SmsRisk)
+                return BadgeStyle.Success;
+            if (validationDecision == ValidationDecision.NotSmsRisk)
+                return BadgeStyle.Danger;
+            if (validationDecision == ValidationDecision.NeedsInvestigation)
+                return BadgeStyle.Warning;
+        }
+
+        return BadgeStyle.Secondary;
     }
 
     /// <summary>
@@ -486,13 +479,15 @@ public partial class HazardReportSearchResult : ComponentBase
     /// </summary>
     public string GetValidationDecisionDisplay(string? decision)
     {
-        return decision?.ToUpper() switch
+        if (string.IsNullOrWhiteSpace(decision))
+            return "Unknown";
+
+        if (ValidationDecision.TryFromValue(decision, out var validationDecision))
         {
-            "SMS_RISK" => "SMS Risk",
-            "NOT_SMS_RISK" => "Not SMS Risk",
-            "NEEDS_INVESTIGATION" => "Needs Investigation",
-            _ => decision ?? "Unknown"
-        };
+            return validationDecision?.Name ?? "Unknown";
+        }
+
+        return decision ?? "Unknown";
     }
 
     /// <summary>
@@ -502,46 +497,21 @@ public partial class HazardReportSearchResult : ComponentBase
     {
         if (ReportValidation?.ValidationDecision is null) return "pending";
 
-        return ReportValidation.ValidationDecision.ToUpper() switch
+        if (ValidationDecision.TryFromValue(ReportValidation.ValidationDecision, out var validationDecision))
         {
-            "SMS_RISK" => "in-progress",
-            "NEEDS_INVESTIGATION" => "in-progress",
-            "NOT_SMS_RISK" => "completed",
-            _ => "pending"
-        };
+            if (validationDecision == ValidationDecision.SmsRisk)
+                return "in-progress";
+            if (validationDecision == ValidationDecision.NeedsInvestigation)
+                return "in-progress";
+            if (validationDecision == ValidationDecision.NotSmsRisk)
+                return "completed";
+        }
+
+        return "pending";
     }
 
-    /// <summary>
-    /// Get processing icon for timeline
-    /// </summary>
-    public string GetProcessingIcon()
-    {
-        if (ReportValidation?.ValidationDecision is null) return "schedule";
-
-        return ReportValidation.ValidationDecision.ToUpper() switch
-        {
-            "SMS_RISK" => "assessment",
-            "NEEDS_INVESTIGATION" => "search",
-            "NOT_SMS_RISK" => "check_circle",
-            _ => "schedule"
-        };
-    }
-
-    /// <summary>
-    /// Get processing stage title for timeline
-    /// </summary>
-    public string GetProcessingStageTitle()
-    {
-        if (ReportValidation?.ValidationDecision is null) return "Processing";
-
-        return ReportValidation.ValidationDecision.ToUpper() switch
-        {
-            "SMS_RISK" => "Risk Assessment",
-            "NEEDS_INVESTIGATION" => "Investigation",
-            "NOT_SMS_RISK" => "Report Closed",
-            _ => "Processing"
-        };
-    }
+    
+  
 
     /// <summary>
     /// Get processing status description for timeline
@@ -562,22 +532,6 @@ public partial class HazardReportSearchResult : ComponentBase
         };
     }
 
-    /// <summary>
-    /// Get simple processing status description based on validation decision
-    /// </summary>
-    public string GetSimpleProcessingDescription()
-    {
-        if (ReportValidation?.ValidationDecision is null) 
-            return "Processing status will be updated as the report progresses";
-
-        return ReportValidation.ValidationDecision.ToUpper() switch
-        {
-            "SMS_RISK" => "Report identified as SMS Risk - proceeding to risk assessment",
-            "NEEDS_INVESTIGATION" => "Report requires investigation - SMS investigators are reviewing", 
-            "NOT_SMS_RISK" => "Report determined not to be SMS Risk - closed",
-            _ => "Processing status will be updated as the report progresses"
-        };
-    }
 
     /// <summary>
     /// Get file icon based on file type

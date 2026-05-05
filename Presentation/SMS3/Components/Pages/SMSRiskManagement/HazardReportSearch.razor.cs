@@ -1,10 +1,14 @@
 using Microsoft.AspNetCore.Components.Web;
 
+using Radzen;
+
 using SMS_Application.Interfaces;
+
+using SMS_Domain.Entities;
 using SMS_Domain.Events.UIEvents;
+
 using SMS_Shared.Configuration;
 
-using Radzen;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 
@@ -821,11 +825,40 @@ public partial class HazardReportSearch : ComponentBase
                         var hazard = hazardResult.Value;
                         searchResult.HazardType = hazard.HazardType ?? "Unknown";
                         searchResult.HazardCategory = hazard.HazardCategory ?? "Unknown";
-                        //searchResult.SubmittedBy = hazard.SubmittedBy ?? "Unknown";
-                        //searchResult.SubmittedDate = hazard.SubmittedDate != DateTime.MinValue ? hazard.SubmittedDate : DateTime.MinValue;
                         searchResult.Description = hazard.Description;
-                        searchResult.CurrentStatus = hazard.Status ?? "Unknown";
-                        //searchResult.IsConfidential = hazard.IsAnonymous;
+                        
+                        var reportQuery = new GetReportByCodeQuery(new ReportID(hazard.ReportCode));
+                        var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
+
+                        if (reportResult.IsSuccess && reportResult.Value is not null)
+                        {
+                            var report = reportResult.Value;
+
+                            if (string.IsNullOrEmpty(searchResult.SubmittedBy))
+                            {
+                                searchResult.SubmittedBy = report.SubmittedBy ?? "Unknown";
+                            }
+                            if (searchResult.SubmittedDate == DateTime.MinValue)
+                            {
+                                searchResult.SubmittedDate = report.SubmittedDate != DateTime.MinValue ? report.SubmittedDate : DateTime.MinValue;
+                            }
+                            if (string.IsNullOrEmpty(searchResult.CurrentStatus))
+                            {
+                                searchResult.CurrentStatus = report.Status ?? "Unknown";
+                            }
+                        
+
+
+                            var validationQuery = new GetReportValidationByReportIdQuery(new ReportID(report.Code));
+                            var validationResult = await _mediator.SendAsync(validationQuery, CancellationToken.None);
+
+                            if (validationResult.IsSuccess && validationResult.Value is not null)
+                            {
+                                searchResult.ValidationDecision = validationResult.Value.ValidationDecision ?? "";
+                                searchResult.ValidationDate = validationResult.Value.ValidatedDate;
+                                searchResult.ValidatedBy = validationResult.Value.ValidatedBy;
+                            }
+                        }
                     }
                 }
                 catch (Exception ex)

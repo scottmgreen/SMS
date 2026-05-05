@@ -100,17 +100,26 @@ else
                             <RadzenRow Gap="1rem">
                                 
                                 <RadzenColumn Size="12" SizeMD="4">
-                                    <RadzenFormField Text="Status" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenText TextStyle="TextStyle.Subtitle1">@(CurrentMitigation?.Status ?? "Not Set")</RadzenText>
+                                    <RadzenFormField Text="Status" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                        @if (CurrentMitigation is not null)
+                                        {
+                                            <RadzenTextBox Value="@CurrentMitigation.Status.ToString()"
+                                                           Style="width: 100%; min-width: 100%;" />
+                                        }
+                                        @* <RadzenTextBox @bind-Value="@(CurrentMitigation?.Status "
+                                                       Placeholder="Enter mitigation name..."
+                                                       Style="width: 100%; min-width: 100%;" </RadzenTextBox> *@
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="4">
-                                    <RadzenFormField Text="Approved By" Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenText TextStyle="TextStyle.Subtitle1">@(CurrentMitigation?.ApprovedBy ?? "Not Assigned")</RadzenText>
+                                    <RadzenFormField Text="Approved By" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                        @* <RadzenText>@(CurrentMitigation?.ApprovedBy ?? "Not Assigned")</RadzenText> *@
+                                        <RadzenTextBox Value="@CurrentMitigation.ApprovedBy"
+                                                       Style="width: 100%; min-width: 100%;" />
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="4">
-                                    <RadzenFormField Text="Progress %" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenFormField Text="Progress %" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
                                         @if (CurrentMitigation is not null)
                                         {
                                             <RadzenNumeric @bind-Value="@CurrentMitigation.Progress" Min="0" Max="100" 
@@ -122,7 +131,7 @@ else
 
                             <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
                                 <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenFormField Text="Target Date" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenFormField Text="Target Date" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
                                         @if (CurrentMitigation is not null)
                                         {
                                             <RadzenDatePicker @bind-Value="@CurrentMitigation.TargetDate" DateFormat="yyyy-MM-dd" 
@@ -138,7 +147,7 @@ else
                         <RadzenFieldset Text="Assignment & Resources" Style="margin-bottom: 1rem;">
                             <RadzenRow Gap="1rem">
                                 <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenFormField Text="Assigned Department" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenFormField Text="Assigned Department" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
                                         @if (CurrentMitigation is not null)
                                         {
                                             <RadzenDropDown @bind-Value="@CurrentMitigation.AssignedDepartment" Data="@Departments"
@@ -148,7 +157,7 @@ else
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenFormField Text="Assigned To" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenFormField Text="Assigned To" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
                                         @if (CurrentMitigation is not null)
                                         {
                                             <RadzenTextBox @bind-Value="@CurrentMitigation.AssignedTo" 
@@ -161,7 +170,7 @@ else
 
                             <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
                                 <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenFormField Text="Estimated Cost" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenFormField Text="Estimated Cost" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
                                         @if (CurrentMitigation is not null)
                                         {
                                             <RadzenNumeric @bind-Value="@CurrentMitigation.EstimatedCost" Format="c" 
@@ -170,7 +179,7 @@ else
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenFormField Text="Estimated Hours" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenFormField Text="Estimated Hours" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
                                         @if (CurrentMitigation is not null)
                                         {
                                             <RadzenNumeric @bind-Value="@CurrentMitigation.EstimatedHours" 
@@ -182,7 +191,7 @@ else
 
                             <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
                                 <RadzenColumn Size="12">
-                                    <RadzenFormField Text="Resource Requirements" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenFormField Text="Resource Requirements" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
                                         @if (CurrentMitigation is not null)
                                         {
                                             <RadzenTextArea @bind-Value="@CurrentMitigation.ResourceRequirements" Rows="3"

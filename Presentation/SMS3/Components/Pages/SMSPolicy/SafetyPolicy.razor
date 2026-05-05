@@ -67,12 +67,6 @@
                                                     ButtonStyle="ButtonStyle.Primary" 
                                                     Size="ButtonSize.Small"
                                                     Click="@(() => ViewDocument(document.FileName, document.Category))" />
-                                        <RadzenButton Text="Download" 
-                                                    Icon="download" 
-                                                    ButtonStyle="ButtonStyle.Success" 
-                                                    Variant="Variant.Outlined"
-                                                    Size="ButtonSize.Small"
-                                                    Click="@(() => DownloadDocument($"{document.Category}/{document.FileName}"))" />
                                     </RadzenStack>
                                 </Template>
                             </RadzenDataGridColumn>

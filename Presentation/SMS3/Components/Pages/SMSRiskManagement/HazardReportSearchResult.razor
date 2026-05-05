@@ -30,9 +30,13 @@ else if (ReportDetails is not null)
            
             <!-- Report Information Card -->
             <RadzenCard class="report-details-card mb-4">
+                <h5 class="mb-3">
+                    <RadzenIcon Icon="assignment" class="me-2" />
+                    Report Details
+                </h5>
                 <RadzenStack Gap="1.5rem">
                     <!-- Header Section -->
-                    <div class="card-header-section">
+                    @* <div class="card-header-section">
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
                             <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: var(--rz-primary);">
                                 <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
@@ -43,10 +47,10 @@ else if (ReportDetails is not null)
                                 <RadzenBadge Text="Anonymous" BadgeStyle="BadgeStyle.Warning" />
                             }
                         </RadzenStack>
-                    </div>
+                    </div> *@
 
                     <!-- Identification Section -->
-                    <RadzenFieldset Text="Report Identification">
+                    
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12" SizeMD="4">
                                 <div class="info-group">
@@ -67,10 +71,10 @@ else if (ReportDetails is not null)
                                 </div>
                             </RadzenColumn>
                         </RadzenRow>
-                    </RadzenFieldset>
+                    
 
                     <!-- Hazard Classification Section -->
-                    <RadzenFieldset Text="Hazard Classification">
+                    
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12" SizeMD="6">
                                 <div class="info-group">
@@ -78,7 +82,7 @@ else if (ReportDetails is not null)
                                     <div class="info-value hazard-category">
                                         @if (!string.IsNullOrEmpty(ReportDetails.HazardCategory))
                                         {
-                                            <RadzenBadge Text="@ReportDetails.HazardCategory"  />
+                                            @ReportDetails.HazardCategory
                                         }
                                         else
                                         {
@@ -93,7 +97,7 @@ else if (ReportDetails is not null)
                                     <div class="info-value hazard-type">
                                         @if (!string.IsNullOrEmpty(ReportDetails.HazardType))
                                         {
-                                            <RadzenBadge Text="@ReportDetails.HazardType"  />
+                                            @ReportDetails.HazardType
                                         }
                                         else
                                         {
@@ -103,16 +107,15 @@ else if (ReportDetails is not null)
                                 </div>
                             </RadzenColumn>
                         </RadzenRow>
-                    </RadzenFieldset>
+                    
 
                     <!-- Submission Details Section -->
-                    <RadzenFieldset Text="Submission Details">
+                    
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12" SizeMD="6">
                                 <div class="info-group">
                                     <label class="info-label">Submitted By</label>
                                     <div class="info-value">
-                                        <RadzenIcon Icon="person" Style="margin-right: 0.5rem; color: var(--rz-primary);" />
                                         @(ReportDetails.SubmittedBy ?? "Unknown")
                                     </div>
                                 </div>
@@ -121,16 +124,14 @@ else if (ReportDetails is not null)
                                 <div class="info-group">
                                     <label class="info-label">Submission Date</label>
                                     <div class="info-value">
-                                        <RadzenIcon Icon="schedule" Style="margin-right: 0.5rem; color: var(--rz-primary);" />
                                         @(ReportDetails.SubmittedDate?.ToString("MMMM dd, yyyy 'at' HH:mm") ?? "Not Specified")
                                     </div>
                                 </div>
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="6">
                                 <div class="info-group">
-                                    <label class="info-label">Department</label>
+                                    <label class="info-label">Submitting Department</label>
                                     <div class="info-value">
-                                        <RadzenIcon Icon="business" Style="margin-right: 0.5rem; color: var(--rz-primary);" />
                                         @(ReportDetails.SubmittingDepartment ?? "Not Specified")
                                     </div>
                                 </div>
@@ -139,22 +140,23 @@ else if (ReportDetails is not null)
                                 <div class="info-group">
                                     <label class="info-label">Job Function</label>
                                     <div class="info-value">
-                                        <RadzenIcon Icon="work" Style="margin-right: 0.5rem; color: var(--rz-primary);" />
                                         @(ReportDetails.JobFunction ?? "Not Specified")
                                     </div>
                                 </div>
                             </RadzenColumn>
                         </RadzenRow>
-                    </RadzenFieldset>
+                    
 
                     <!-- Description Section -->
                     @if (!string.IsNullOrEmpty(ReportDetails.Description))
                     {
-                        <RadzenFieldset Text="Report Description">
+                        <div class="info-group">
+                            <label class="info-label">Hazard Description</label>
                             <div class="description-content">
                                 @ReportDetails.Description
                             </div>
-                        </RadzenFieldset>
+                        </div>
+                        
                     }
 
                     <!-- Anonymous Alert (if applicable) -->
@@ -254,9 +256,9 @@ else if (ReportDetails is not null)
                         <div class="col-lg-3 col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Validation Decision</label>
-                                <RadzenBadge Text="@GetValidationDecisionDisplay(ReportValidation.ValidationDecision)" 
-                                             BadgeStyle="@GetValidationBadgeStyle(ReportValidation.ValidationDecision)" 
-                                             class="validation-badge" />
+                                <div class="info-value">
+                                    @GetValidationDecisionDisplay(ReportValidation.ValidationDecision)
+                                </div>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6">
@@ -268,7 +270,7 @@ else if (ReportDetails is not null)
                         <div class="col-lg-3 col-md-6">
                             <div class="info-item">
                                 <label class="info-label">Validation Date</label>
-                                <div class="info-value">@(ReportValidation.ValidatedDate?.ToString("MM/dd/yyyy HH:mm tt") ?? "Not Completed")</div>
+                                <div class="info-value">@(ReportValidation.CreatedDate?.ToString("MM/dd/yyyy HH:mm tt") ?? "Not Completed")</div>
                             </div>
                         </div>
                         <div class="col-lg-3 col-md-6">
@@ -324,7 +326,7 @@ else if (ReportDetails is not null)
                             <RadzenIcon Icon="@(ReportValidation is not null ? "verified_user" : "schedule")" />
                         </div>
                         <div class="timeline-content">
-                            <h6>SMS Validation</h6>
+                            <h6>Report Validation</h6>
                             @if (ReportValidation is not null)
                             {
                                 <p class="text-success">
@@ -359,7 +361,7 @@ else if (ReportDetails is not null)
                                             <h6>Risk Assessment</h6>
                                             @if (CurrentRiskAssessment is not null)
                                             {
-                                                string msg = $"{CurrentRiskAssessment.Code} Completed ";
+                                                string msg = $"{CurrentRiskAssessment.Code} - Completed ";
                                                 <div class="text-success">
                                                     <p class="@GetProcessingStatusTextClass()">@(msg.ToUpper())</p>
                                                     <small class="text-muted">@(CurrentRiskAssessment.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
@@ -384,8 +386,9 @@ else if (ReportDetails is not null)
                                                     <h6>Mitigation</h6>
                                                     @if (CurrentMitigation is not null)
                                                     {
+                                                        string msg = $"{CurrentMitigation.Code} - {CurrentMitigation.Status}  %{CurrentMitigation.Progress} COMPLETE";
                                                         <div class="text-success">
-                                                            <p class="@GetProcessingStatusTextClass()">@($"{CurrentMitigation.Code} {CurrentMitigation.Status}  %{CurrentMitigation.Progress} COMPLETE")</p>
+                                                            <p class="@GetProcessingStatusTextClass()">@(msg.ToUpper())</p>
                                                             <small class="text-muted">@(CurrentMitigation.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
                                                         </div>
                                                     }
@@ -398,6 +401,7 @@ else if (ReportDetails is not null)
                                         }
                                         else
                                         {
+                                            string msg = $"{CurrentMitigation.Code} - {CurrentMitigation.Status}";
                                             <div class="timeline-content">
                                                 <div class="timeline-item in-progress">
                                                     <div class="timeline-icon">
@@ -406,7 +410,7 @@ else if (ReportDetails is not null)
                                                     <div class="timeline-item in-progress">
                                                         <div class="timeline-content">
                                                             <h6>Mitigation</h6>
-                                                            <p class="@GetProcessingStatusTextClass()">@($"{CurrentMitigation.Code} {CurrentMitigation.Status}")</p>
+                                                            <p class="@GetProcessingStatusTextClass()">@(msg.ToUpper())</p>
                                                             <small class="text-muted">@(CurrentMitigation.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
                                                         </div>
                                                     </div>
@@ -649,7 +653,7 @@ else if (ReportDetails is not null)
             </RadzenCard>
 
             <!-- Additional Guidance Cards -->
-            <RadzenCard class="guidance-card mb-4">
+            @* <RadzenCard class="guidance-card mb-4">
                 <h6 class="mb-3">
                     <RadzenIcon Icon="info" class="me-2" />
                     Report Status Guide
@@ -673,7 +677,7 @@ else if (ReportDetails is not null)
                         <small>Investigation completed and closed</small>
                     </div>
                 </RadzenStack>
-            </RadzenCard>
+            </RadzenCard> *@
 
             @if (ReportDetails.IsAnonymous)
             {
@@ -801,7 +805,7 @@ else if (!IsLoading && HasSearched)
 
     .info-label {
         display: block;
-        font-size: 0.875rem;
+        font-size: 1rem;
         font-weight: 600;
         color: var(--rz-text-secondary-color);
         margin-bottom: 0.25rem;
@@ -816,23 +820,23 @@ else if (!IsLoading && HasSearched)
         display: flex;
         align-items: center;
         min-height: 1.5rem;
+        padding: 0.25rem 0.5rem;
     }
 
     /* Special styling for codes */
     .tracking-code, .report-code, .hazard-code, .tracking-id {
-        background-color: var(--rz-base-100);
         padding: 0.25rem 0.5rem;
         border-radius: 4px;
         border: 1px solid var(--rz-border-color);
-        font-weight: 700;
-        color: var(--rz-primary);
+        font-weight: 500;
+        color: var(--rz-text-color);
     }
 
     /* Category and Type badges */
     .hazard-category .rz-badge,
     .hazard-type .rz-badge {
-        font-size: 0.875rem;
-        padding: 0.375rem 0.75rem;
+        font-size: 1rem;
+        padding: 0.25rem 0.5rem;
     }
 
     /* Not specified styling */

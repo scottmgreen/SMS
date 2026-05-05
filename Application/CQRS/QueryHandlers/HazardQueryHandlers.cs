@@ -19,12 +19,12 @@ namespace SMS_Application.Messaging.QueryHandlers;
 // HAZARD QUERY HANDLERS - Clean Architecture Pattern
 // =============================================
 
-public class GetHazardByIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardByCodeQuery, Result<Hazard>>
+public class GetHazardByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetHazardByCodeQuery, Result<Hazard>>
 {
     private readonly HazardService _hazardService;
-    private readonly ILogger<GetHazardByIdQueryHandler> _logger;
+    private readonly ILogger<GetHazardByCodeQueryHandler> _logger;
 
-    public GetHazardByIdQueryHandler(HazardService hazardService, ILogger<GetHazardByIdQueryHandler> logger)
+    public GetHazardByCodeQueryHandler(HazardService hazardService, ILogger<GetHazardByCodeQueryHandler> logger)
     {
         _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

@@ -69,7 +69,11 @@ public class ReportProcessingSummary
     public string? AssignedInvestigator { get; set; }
     public string? InvestigationNotes { get; set; }
     public int InterviewCount { get; set; } = 0;
+    public DateTime? InvestigationStartDate { get; set; }
     public bool HasInvestigation => !string.IsNullOrEmpty(InvestigationId);
+    public int DaysInInvestigation => InvestigationStartDate.HasValue 
+        ? (DateTime.UtcNow - InvestigationStartDate.Value).Days 
+        : 0;
 
     // ? NEW: All Mitigations for All Hazards in Report
     public List<MitigationSummary> AllMitigations { get; set; } = new();
@@ -595,6 +599,7 @@ public partial class ReportProcessing : ComponentBase
                             InvestigationStatus = investigation?.Status?.ToString() ?? "",
                             AssignedInvestigator = investigation?.AssignedInvestigatorId,
                             InvestigationNotes = investigation?.InvestigationNotes,
+                            InvestigationStartDate = investigation?.CreatedDate,
                             InterviewCount = investigationInterviews.Count,
 
                             // ? ALL mitigations from ALL hazards in this report
@@ -608,11 +613,11 @@ public partial class ReportProcessing : ComponentBase
                         };
 
                         // NEW: Log when default hazard classification is detected
-                        if (summary.RequiresHazardClassificationUpdate)
-                        {
-                            _logger.LogWarning("?? DEFAULT CLASSIFICATION DETECTED - Report {ReportId}, Hazard {HazardId}: Category='{Category}', Type='{Type}'",
-                                summary.ReportId, summary.HazardId, summary.HazardCategory, summary.HazardType);
-                        }
+                        //if (summary.RequiresHazardClassificationUpdate)
+                        //{
+                        //    _logger.LogWarning("?? DEFAULT CLASSIFICATION DETECTED - Report {ReportId}, Hazard {HazardId}: Category='{Category}', Type='{Type}'",
+                        //        summary.ReportId, summary.HazardId, summary.HazardCategory, summary.HazardType);
+                        //}
 
                         summaries.Add(summary);
                         
@@ -664,6 +669,7 @@ public partial class ReportProcessing : ComponentBase
                         InvestigationStatus = investigation?.Status.Value ?? "",
                         AssignedInvestigator = investigation?.AssignedInvestigatorId,
                         InvestigationNotes = investigation?.InvestigationNotes,
+                        InvestigationStartDate = investigation?.CreatedDate,
                         InterviewCount = investigationInterviews.Count,
 
                         // Empty mitigations
@@ -1503,26 +1509,12 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", "font-size:smaller");
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.ReportStatus) ? report.ReportStatus : "Not Specified");
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
-        // Stage Column DON"T THINK WE NEED THIS FOR NOW
-        //////////builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(40);
-        //////////builder.AddAttribute(41, "Property", "ReportStage");
-        //////////builder.AddAttribute(42, "Title", "Stage");
-        //////////builder.AddAttribute(43, "Width", "120px");
-        //////////builder.AddAttribute(44, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-        //////////    (templateBuilder =>
-        //////////    {
-        //////////        templateBuilder.OpenComponent<RadzenText>(0);
-        //////////        templateBuilder.AddAttribute(1, "style", "font-size:smaller");
-        //////////        templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.ReportStage.ToUpper()) ? report.ReportStage.ToUpper() : "Not Specified");
-        //////////        templateBuilder.CloseComponent();
-        //////////    })));
-        //////////builder.CloseComponent();
-
+        
         // Reported By Column (FIXED: Ensure proper data binding)
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(60);
         builder.AddAttribute(61, "Property", "SubmittedBy");
@@ -1532,8 +1524,23 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", "font-size:smaller");
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.SubmittedBy) ? report.SubmittedBy : "Not Specified");
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Created Date Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(65);
+        builder.AddAttribute(66, "Property", "CreatedDate");
+        builder.AddAttribute(67, "Title", "Report Created");
+        builder.AddAttribute(68, "Width", "120px");
+        builder.AddAttribute(69, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", report.CreatedDate.ToString("MM/dd/yyyy"));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -1554,21 +1561,21 @@ public partial class ReportProcessing : ComponentBase
                 if (report.RequiresHazardClassificationUpdate)
                 {
                     // Show orange warning badge for default values
-                    templateBuilder.OpenComponent<RadzenBadge>(0);
-                    templateBuilder.AddAttribute(1, "BadgeStyle", BadgeStyle.Warning);
-                    //templateBuilder.AddAttribute(2, "Text", "DEFAULTS");
-                    templateBuilder.AddAttribute(2, "Text", $"Category: {report.HazardCategory}, Type: {report.HazardType}");
-                    templateBuilder.AddAttribute(3, "Title", $"Category: {report.HazardCategory}, Type: {report.HazardType}");
+                    templateBuilder.OpenComponent<RadzenText>(0);
+                    templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                    templateBuilder.AddAttribute(2, "Text", $"{report.HazardCategory} / {report.HazardType}");
+                    templateBuilder.AddAttribute(3, "Title", $"{report.HazardCategory} / {report.HazardType}");
                     templateBuilder.CloseComponent();
                 }
                 else
                 {
                     // Show green success badge for properly classified
-                    templateBuilder.OpenComponent<RadzenBadge>(10);
-                    templateBuilder.AddAttribute(11, "BadgeStyle", BadgeStyle.Success);
-                    //templateBuilder.AddAttribute(12, "Text", "CLASSIFIED");
-                    templateBuilder.AddAttribute(12, "Text", $"Category: {report.HazardCategory}, Type: {report.HazardType}");
-                    templateBuilder.AddAttribute(13, "Title", $"Category: {report.HazardCategory}, Type: {report.HazardType}");
+                    templateBuilder.OpenComponent<RadzenBadge>(0);
+                    templateBuilder.AddAttribute(1, "BadgeStyle", BadgeStyle.Success);
+                    templateBuilder.AddAttribute(2, "Shade", Shade.Default);
+                    //templateBuilder.AddAttribute(3, "style", BasicTextStyle);
+                    templateBuilder.AddAttribute(4, "Text", $"{report.HazardCategory}/ {report.HazardType}");
+                    templateBuilder.AddAttribute(5, "Title", $"{report.HazardCategory} / {report.HazardType}");
                     templateBuilder.CloseComponent();
                 }
             })));
@@ -1591,11 +1598,12 @@ public partial class ReportProcessing : ComponentBase
                 var navigationUrl = report.SmartUrl;
 
                 templateBuilder.OpenComponent<RadzenButton>(0);
-                templateBuilder.AddAttribute(1, "Text", buttonText);
-                templateBuilder.AddAttribute(2, "Icon", buttonIcon);
-                templateBuilder.AddAttribute(3, "ButtonStyle", buttonStyle);
-                templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
-                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", buttonText);
+                templateBuilder.AddAttribute(3, "Icon", buttonIcon);
+                templateBuilder.AddAttribute(4, "ButtonStyle", buttonStyle);
+                templateBuilder.AddAttribute(5, "Size", ButtonSize.Small);
+                templateBuilder.AddAttribute(6, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
                     (args) => _navigation.NavigateToSecure(navigationUrl)));
                 templateBuilder.CloseComponent();
             })));
@@ -1720,6 +1728,22 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
+
+        // Created Date Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(25);
+        builder.AddAttribute(26, "Property", "CreatedDate");
+        builder.AddAttribute(27, "Title", "Report Created");
+        builder.AddAttribute(28, "Width", "120px");
+        builder.AddAttribute(29, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", report.CreatedDate.ToString("MM/dd/yyyy"));
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
         RenderRiskAssessmentActionColumn(builder);
     }
 
@@ -1734,11 +1758,12 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenButton>(0);
-                templateBuilder.AddAttribute(1, "Text", report.ActionButtonText);
-                templateBuilder.AddAttribute(2, "Icon", GetAssessmentIcon(report));
-                templateBuilder.AddAttribute(3, "ButtonStyle", GetAssessmentButtonStyle(report));
-                templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
-                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", report.ActionButtonText);
+                templateBuilder.AddAttribute(3, "Icon", GetAssessmentIcon(report));
+                templateBuilder.AddAttribute(4, "ButtonStyle", GetAssessmentButtonStyle(report));
+                templateBuilder.AddAttribute(5, "Size", ButtonSize.Small);
+                templateBuilder.AddAttribute(6, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
                     (args) => _navigation.NavigateToSecure(report.SmartUrl)));
                 templateBuilder.CloseComponent();
             })));
@@ -1796,6 +1821,21 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.OpenComponent<RadzenText>(0);
                 templateBuilder.AddAttribute(1, "style", BasicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", report.InterviewCount.ToString() ?? "Not Assigned");
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Days in Investigation Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(30);
+        builder.AddAttribute(31, "Property", "DaysInInvestigation");
+        builder.AddAttribute(32, "Title", "Days in Investigation");
+        builder.AddAttribute(33, "Width", "140px");
+        builder.AddAttribute(34, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", report.HasInvestigation ? report.DaysInInvestigation.ToString() : "N/A");
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -2331,10 +2371,5 @@ public partial class ReportProcessing : ComponentBase
         }
     }
 
-    public class RiskLevelBreakdown
-    {
-        public string RiskLevel { get; set; } = string.Empty;
-        public int HazardCount { get; set; }
-        public int MitigationCount { get; set; }
-    }
+    
 }

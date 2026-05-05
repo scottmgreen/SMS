@@ -644,6 +644,7 @@ public static partial class Mappers
         mitigation.Type = reader.GetValue<string>(FieldNames.fMitigationType);
         mitigation.Status = MitigationStatus.FromValue(reader.GetValue<string>(FieldNames.fMitigationStatus));
         mitigation.RiskAssessmentCode = reader.GetValue<string>(FieldNames.fMitigationRiskAssessmentCode);
+        mitigation.ApprovedBy = reader.GetValue<string>(FieldNames.fMitigationApprovedBy);
 
         // Date Properties
         mitigation.TargetDate = reader.IsDBNull(FieldNames.fMitigationTargetDate) ? null : reader.GetValue<DateTime?>(FieldNames.fMitigationTargetDate);
@@ -656,6 +657,7 @@ public static partial class Mappers
         // Progress Properties - ✅ FIXED: Progress is int (not nullable)
         mitigation.Progress = reader.IsDBNull(FieldNames.fMitigationProgress) ? 0 : reader.GetValue<int>(FieldNames.fMitigationProgress);
         
+
 
         // Cost and Resource Properties
         mitigation.EstimatedCost = reader.IsDBNull(FieldNames.fMitigationEstimatedCost) ? null : reader.GetValue<decimal?>(FieldNames.fMitigationEstimatedCost);
