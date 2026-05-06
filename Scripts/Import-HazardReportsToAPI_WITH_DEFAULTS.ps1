@@ -81,15 +81,15 @@ function Create-ApiRequest {
     $apiRequest = @{
         HazardCategory = $mappedCategory
         HazardType = $mappedType
-        Description = $CsvRow."Detailed Description"
+        HazardDescription = $CsvRow."Detailed Description"
         LocationDescription = $locationDesc
-        IncidentDateTime = $incidentDateTime
+        HazardIncidentDateTime = $incidentDateTime
     }
 
     # Add coordinates if available
     if ($lat -and $lon) {
-        $apiRequest.Latitude = $lat
-        $apiRequest.Longitude = $lon
+        $apiRequest.LocationLatitude = $lat
+        $apiRequest.LocationLongitude = $lon
     }
 
     # Add contact information if available
@@ -103,7 +103,7 @@ function Create-ApiRequest {
         $apiRequest.ReportContactCell = $CsvRow."Phone Number"
     }
     if ($CsvRow.Company) {
-        $apiRequest.SubmittingDepartment = $CsvRow.Company
+        $apiRequest.ReportContactCompany = $CsvRow.Company
     }
 
     return $apiRequest

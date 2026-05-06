@@ -10,6 +10,8 @@
 
 using System.ComponentModel.DataAnnotations;
 
+using SMS_Domain.Enums;
+
 namespace SMS3.Api.Models
 {
     /// <summary>
@@ -23,7 +25,7 @@ namespace SMS3.Api.Models
         /// </summary>
         /// <example>INCIDENT</example>
         [Required]
-        public string HazardCategory { get; init; } = string.Empty;
+        public string HazardCategory { get; init; } = SMS_Domain.Enums.HazardCategory.Default.Value;
 
         /// <summary>
         /// Specific type of hazard being reported (required). Must match a valid value for the selected category.
@@ -32,7 +34,7 @@ namespace SMS3.Api.Models
         /// </summary>
         /// <example>AIRCRAFT_INCIDENT</example>
         [Required]
-        public string HazardType { get; init; } = string.Empty;
+        public string HazardType { get; init; } = SMS_Domain.Enums.HazardType.Default.Value;
 
         /// <summary>
         /// Detailed description of the hazard or incident (required, max 2000 characters)
@@ -40,13 +42,13 @@ namespace SMS3.Api.Models
         /// <example>Aircraft experienced engine failure during takeoff roll, aborting takeoff safely</example>
         [Required]
         [StringLength(2000)]
-        public string Description { get; init; } = string.Empty;
+        public string HazardDescription { get; init; } = string.Empty;
 
-        public string? SubmittedBy { get; init; }
-        public DateTime? SubmittedDate { get; init; }
-        public string? SubmittingDepartment { get; init; } = "EXTERNAL_SYSTEM";
-        public string? SubmittingDepartmentJobFunction { get; init; } = "EXTERNAL_SYSTEM";
-        public bool? IsAnonymous { get; init; }
+        public string? ReportSubmittedBy { get; init; }
+        public DateTime? ReportSubmittedDate { get; init; }
+        public string? ReportSubmittingDepartment { get; init; } = "EXTERNAL_SYSTEM";
+        public string? ReportSubmittingDepartmentJobFunction { get; init; } = "EXTERNAL_SYSTEM";
+        public bool? ReportIsAnonymous { get; init; }
         public string? ReportContactName { get; init; }
         public string? ReportContactCell { get; init; }
         public string? ReportContactEmail { get; init; }
@@ -63,24 +65,24 @@ namespace SMS3.Api.Models
         /// Optional latitude coordinate for precise location (decimal degrees)
         /// </summary>
         /// <example>45.5898</example>
-        public decimal? Latitude { get; init; }
+        public decimal? LocationLatitude { get; init; }
 
         /// <summary>
         /// Optional longitude coordinate for precise location (decimal degrees)
         /// </summary>
         /// <example>-122.5951</example>
-        public decimal? Longitude { get; init; }
+        public decimal? LocationLongitude { get; init; }
 
         /// <summary>
         /// Optional incident date/time (if not provided, current time is used)
         /// </summary>
         /// <example>2024-01-15T14:30:00Z</example>
-        public DateTime? IncidentDateTime { get; init; }
+        public DateTime? HazardIncidentDateTime { get; init; }
 
         /// <summary>
         /// Optional file attachments as base64 encoded strings (max 10MB per file)
         /// </summary>
-        public List<FileAttachment>? Attachments { get; init; }
+        public List<FileAttachment>? ReportAttachments { get; init; }
     }
 
     /// <summary>
@@ -106,7 +108,7 @@ namespace SMS3.Api.Models
         /// <summary>
         /// Timestamp when the submission was processed
         /// </summary>
-        public DateTime SubmissionDateTime { get; init; }
+        public DateTime ReportSubmissionDateTime { get; init; }
         
         /// <summary>
         /// Processing status

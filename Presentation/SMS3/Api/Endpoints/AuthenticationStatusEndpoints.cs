@@ -31,25 +31,29 @@ public static class AuthenticationStatusEndpoints
             featureManager.IsEnabledAsync("EnableAuthenticationLogging").GetAwaiter().GetResult())
         {
             var authGroup = app.MapGroup("/api/auth-diagnostics")
-                .WithTags("AuthenticationDiagnostics");
+                .WithTags("AuthenticationDiagnostics")
+                .ExcludeFromDescription(); // Hide from Swagger/OpenAPI docs
 
             // Authentication system status
             authGroup.MapGet("/status", GetAuthenticationStatus)
                 .WithName("GetAuthenticationStatus")
                 .WithSummary("Get comprehensive authentication system status")
-                .WithDescription("Development-only endpoint to check authentication strategy status");
+                .WithDescription("Development-only endpoint to check authentication strategy status")
+                .ExcludeFromDescription(); // Additional safety
 
             // Test user instantiation
             authGroup.MapGet("/test-user/{userCode}/{userType}", TestUserInstantiation)
                 .WithName("TestUserInstantiation")
                 .WithSummary("Test complete user instantiation for debugging")
-                .WithDescription("Development-only endpoint to validate user loading with CQRS");
+                .WithDescription("Development-only endpoint to validate user loading with CQRS")
+                .ExcludeFromDescription(); // Additional safety
 
             // Strategy validation
             authGroup.MapGet("/validate-strategies", ValidateStrategies)
                 .WithName("ValidateStrategies")
                 .WithSummary("Validate all authentication strategies")
-                .WithDescription("Development-only endpoint to test all strategy implementations");
+                .WithDescription("Development-only endpoint to test all strategy implementations")
+                .ExcludeFromDescription(); // Additional safety
         }
 
         return app;

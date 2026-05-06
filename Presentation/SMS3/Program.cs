@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.FeatureManagement;
 using SMS_Application.Configuration;
 using SMS_Infrastructure.Configuration;
@@ -48,14 +50,31 @@ public class Program
 
         // **PRESENTATION LAYER SERVICES - Centralized registration**
         // 🔧 NOTE: AddPresentationServices includes AddHttpContextAccessor() registration
-        builder.Services.AddPresentationServices(builder.Configuration);
-        builder.Services.AddPresentationMiddleware();
-        builder.Services.ConfigurePresentationOptions(builder.Configuration);
+        //builder.Services.AddPresentationServices(builder.Configuration);
+        //builder.Services.AddPresentationMiddleware();
+        //builder.Services.ConfigurePresentationOptions(builder.Configuration);
                 
         // Register SMS Services
         // 🔧 NOTE: AddInfrastructureServices also includes AddHttpContextAccessor() registration
         builder.Services.AddSharedServices(builder.Configuration);
         builder.Services.AddInfrastructureServices(builder.Configuration);
+
+        // Add API Versioning
+        builder.Services.AddApiVersioning(options =>
+        {
+            options.DefaultApiVersion = new ApiVersion(1, 0); // Default to v1.0
+            options.AssumeDefaultVersionWhenUnspecified = true;
+            options.ReportApiVersions = true; // Adds API version headers to responses
+        }).AddApiExplorer(options =>
+        {
+            options.GroupNameFormat = "'v'VVV"; // e.g., v1, v2
+            options.SubstituteApiVersionInUrl = true;
+        });
+
+        // **PRESENTATION LAYER SERVICES - Centralized registration**
+        builder.Services.AddPresentationServices(builder.Configuration);
+        builder.Services.AddPresentationMiddleware();
+        builder.Services.ConfigurePresentationOptions(builder.Configuration);
 
         var app = builder.Build();
         
@@ -87,6 +106,18 @@ public class Program
         }
         else
         {
+
+            // Create a unified API version set
+            var apiVersionSet = app.NewApiVersionSet()
+                .HasApiVersion(new ApiVersion(1, 0))
+                .HasApiVersion(new ApiVersion(2, 0))
+                .ReportApiVersions()
+                .Build();
+
+            // Register both API versions using the unified version set
+            //app.MapPDXSMSApiEndpointsV1(apiVersionSet);
+            //app.MapPDXSMSApiEndpointsV2(apiVersionSet);
+
             app.UseDeveloperExceptionPage();
             app.UseSMSSwagger();
         }
@@ -110,8 +141,9 @@ public class Program
 
         app.UseAntiforgery();
 
-        app.MapPDXSMSApiEndpoints();
-        app.MapAuthenticationStatusEndpoints(); // 🎯 NEW: Development diagnostics endpoints
+        
+
+        // Map Blazor UI (restores your home page and all UI routes)
         app.MapRazorComponents<App>()
             .AddInteractiveServerRenderMode();
 

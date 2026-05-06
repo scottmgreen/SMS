@@ -1,104 +1,107 @@
 //-----------------------------------------------------------------------
-// <copyright file="PDXSMSApiEndpoints.cs" company="SMS Safety Management System">
+// <copyright file="PDXSMSApiEndpointsV2.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: External API endpoints for SMS confidential reporting with feature flag support.
-//                  Provides clean separation of API concerns from Program.cs with
-//                  configurable enable/disable functionality for security.
-// </copyright>
+//     Description: API endpoints for PDXSMS API version 2.
 //-----------------------------------------------------------------------
+
+using Asp.Versioning;
+using Asp.Versioning.Builder;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.FeatureManagement;
+using Microsoft.OpenApi.Models;
+
+using SMS_Application.Interfaces;
+using SMS_Application.Messaging.Commands;
+
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Domain.ValueObjects;
+
+using SMS_Infrastructure.Security;
+
 using SMS3.Api.Models;
 using SMS3.Api.Services;
-using SMS_Infrastructure.Security;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Domain.Entities;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Enums;
+using SMS3.Components;
+
+
+
+
+//app.UseSwaggerUI(options =>
+//{
+//    options.SwaggerEndpoint("/swagger/v1/swagger.json", "V1");
+//    options.SwaggerEndpoint("/swagger/v2/swagger.json", "V2");
+//});
+
+
+//builder.Services.AddSwaggerGen(c =>
+//{
+//    c.SwaggerDoc("v1", new OpenApiInfo { Title = "My API", Version = "v1" });
+//    c.SwaggerDoc("v2", new OpenApiInfo { Title = "My API", Version = "v2" });
+//});
+
+//http://localhost:5115/api-docs/index.html?urls.primaryName=V1
+//http://localhost:5115/api-docs/index.html?urls.primaryName=V2
+
+//No operations defined in spec!
+
+
 
 namespace SMS3.Api.Endpoints
 {
     /// <summary>
-    /// Extension methods for registering PDXSMS API endpoints with feature flag support
+    /// Extension methods for registering PDXSMS API v2 endpoints
     /// </summary>
-    public static class PDXSMSApiEndpoints
+    public static class PDXSMSApiEndpointsV2
     {
         /// <summary>
-        /// Maps PDXSMS API endpoints if the feature is enabled
+        /// Maps PDXSMS API v2 endpoints
         /// </summary>
-        /// <param name="app">The web application</param>
-        /// <returns>The web application for method chaining</returns>
-        public static WebApplication MapPDXSMSApiEndpoints(this WebApplication app)
+        public static WebApplication MapPDXSMSApiEndpointsV2(this WebApplication app)
         {
-            // Check if external APIs are enabled via feature management
-            var featureManager = app.Services.GetRequiredService<IFeatureManager>();
-            
-            // Only register API endpoints if the feature is enabled
-            if (featureManager.IsEnabledAsync("ExternalApiEnabled").GetAwaiter().GetResult())
-            {
-                app.MapPDXSMSReportingEndpoints();
-                app.MapPDXSMSReferenceDataEndpoints();
-            }
+            var group = app.MapGroup("/api/v2/pdxsms")
+                .WithGroupName("v2")
+                .WithTags("PDXSMSApiV2");
+
+            // Main report submission endpoint
+            group.MapPost("", SubmitPDXSMSReport)
+                .AddEndpointFilter<ApiKeyAuthenticationFilter>()
+                .WithName("SubmitPDXSMSReportV2")
+                .WithSummary("Submit a confidential safety report from external systems (v2)")
+                .WithDescription("Allows external systems to submit confidential safety reports (API v2)")
+                .Produces<PDXSMSReportApiResponse>(StatusCodes.Status200OK)
+                .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
+                .Produces<ApiErrorResponse>(StatusCodes.Status500InternalServerError);
+                //.WithApiVersionSet(app.GetApiVersionSet("v2"));
+
+            // Get hazard categories
+            //group.MapGet("/hazard-categories", GetHazardCategories)
+            //    .AddEndpointFilter<ApiKeyAuthenticationFilter>()
+            //    .WithName("GetHazardCategoriesV2")
+            //    .WithSummary("Get all available hazard categories (v2)")
+            //    .WithDescription("Returns all valid hazard category values for API submissions (API v2)")
+            //    .Produces<object>(StatusCodes.Status200OK);
+
+            //// Get hazard types
+            //group.MapGet("/hazard-types", GetHazardTypes)
+            //    .AddEndpointFilter<ApiKeyAuthenticationFilter>()
+            //    .WithName("GetHazardTypesV2")
+            //    .WithSummary("Get available hazard types (v2)")
+            //    .WithDescription("Get hazard types. Use ?category=INCIDENT to filter by category (API v2)")
+            //    .Produces<object>(StatusCodes.Status200OK);
+
+            //// Get complete reference data
+            //group.MapGet("/reference-data", GetReferenceData)
+            //    .AddEndpointFilter<ApiKeyAuthenticationFilter>()
+            //    .WithName("GetReferenceDataV2")
+            //    .WithSummary("Get complete reference data (v2)")
+            //    .WithDescription("Returns all categories and hazard types in hierarchical structure (API v2)")
+            //    .Produces<object>(StatusCodes.Status200OK);
 
             return app;
         }
 
-        /// <summary>
-        /// Maps the main reporting endpoints
-        /// </summary>
-        private static void MapPDXSMSReportingEndpoints(this WebApplication app)
-        {
-            // Main report submission endpoint
-            app.MapPost("/api/pdxsms", SubmitPDXSMSReport)
-                .AddEndpointFilter<ApiKeyAuthenticationFilter>()
-                .WithName("SubmitPDXSMSReport")
-                .WithTags("PDXSMSReporting")
-                .WithSummary("Submit a confidential safety report from external systems")
-                .WithDescription("Allows external systems to submit confidential safety reports")
-                .Produces<PDXSMSReportApiResponse>(StatusCodes.Status200OK)
-                .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
-                .Produces<ApiErrorResponse>(StatusCodes.Status500InternalServerError);
-        }
-
-        /// <summary>
-        /// Maps the reference data endpoints
-        /// </summary>
-        private static void MapPDXSMSReferenceDataEndpoints(this WebApplication app)
-        {
-            // Get hazard categories
-            app.MapGet("/api/pdxsms/hazard-categories", GetHazardCategories)
-                .AddEndpointFilter<ApiKeyAuthenticationFilter>()
-                .WithName("GetHazardCategories")
-                .WithTags("PDXSMSReporting")
-                .WithSummary("Get all available hazard categories")
-                .WithDescription("Returns all valid hazard category values for API submissions")
-                .Produces<object>(StatusCodes.Status200OK);
-
-            // Get hazard types
-            app.MapGet("/api/pdxsms/hazard-types", GetHazardTypes)
-                .AddEndpointFilter<ApiKeyAuthenticationFilter>()
-                .WithName("GetHazardTypes")
-                .WithTags("PDXSMSReporting")
-                .WithSummary("Get available hazard types")
-                .WithDescription("Get hazard types. Use ?category=INCIDENT to filter by category")
-                .Produces<object>(StatusCodes.Status200OK);
-
-            // Get complete reference data
-            app.MapGet("/api/pdxsms/reference-data", GetReferenceData)
-                .AddEndpointFilter<ApiKeyAuthenticationFilter>()
-                .WithName("GetReferenceData")
-                .WithTags("PDXSMSReporting")
-                .WithSummary("Get complete reference data")
-                .WithDescription("Returns all categories and hazard types in hierarchical structure")
-                .Produces<object>(StatusCodes.Status200OK);
-        }
-
-        /// <summary>
-        /// Main report submission handler
-        /// </summary>
         private static async Task<IResult> SubmitPDXSMSReport(
             [FromBody] PDXSMSReportApiRequest request,
             IBaseMediator mediator,
@@ -109,6 +112,8 @@ namespace SMS3.Api.Endpoints
             try
             {
                 // Use the dedicated API service for business logic
+                
+
                 var result = await apiService.ProcessReportSubmissionAsync(request, httpContext);
                 
                 return result.IsSuccess 
@@ -138,9 +143,6 @@ namespace SMS3.Api.Endpoints
             }
         }
 
-        /// <summary>
-        /// Get all available hazard categories
-        /// </summary>
         private static IResult GetHazardCategories()
         {
             var categories = HazardCategory.GetAllValues()
@@ -162,9 +164,6 @@ namespace SMS3.Api.Endpoints
             });
         }
 
-        /// <summary>
-        /// Get hazard types (optionally filtered by category)
-        /// </summary>
         private static IResult GetHazardTypes(string? category)
         {
             IEnumerable<HazardType> hazardTypes = string.IsNullOrEmpty(category)
@@ -194,9 +193,6 @@ namespace SMS3.Api.Endpoints
             });
         }
 
-        /// <summary>
-        /// Get complete reference data in hierarchical format
-        /// </summary>
         private static IResult GetReferenceData()
         {
             var categories = HazardCategory.GetAllValues()

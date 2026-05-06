@@ -8,14 +8,19 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using Microsoft.IdentityModel.Tokens;
+
+using SMS_Application.Interfaces;
+using SMS_Application.Messaging.Commands;
+
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Domain.ValueObjects;
+
+using SMS_Shared.Common;
+
 using SMS3.Api.Models;
 using SMS3.Api.Services;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Interfaces;
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Enums;
-using SMS_Shared.Common;
-using SMS_Domain.Entities;
 
 
 namespace SMS3.Api.Services
@@ -69,7 +74,7 @@ namespace SMS3.Api.Services
                     createdHazard.Code, actualReportCode);
 
                 // Step 4: Create hazard location if coordinates provided
-                if (request.Latitude.HasValue && request.Longitude.HasValue)
+                if (request.LocationLatitude.HasValue && request.LocationLongitude.HasValue)
                 {
                     await CreateHazardLocationAsync(request, createdHazard.Code);
                 }
@@ -86,7 +91,7 @@ namespace SMS3.Api.Services
 
                 // Step 6: Process file attachments
                 var (processedFiles, failedFiles) = await ProcessAttachmentsAsync(
-                    request.Attachments, createdHazard.Code, actualReportCode);
+                    request.ReportAttachments, createdHazard.Code, actualReportCode);
 
                 // Step 7: Build success response
                 var response = new PDXSMSReportApiResponse
@@ -94,10 +99,10 @@ namespace SMS3.Api.Services
                     TrackingId = actualTrackingCode,
                     HazardId = createdHazard.Code,
                     ReportId = actualReportCode,
-                    SubmissionDateTime = DateTime.UtcNow,
+                    ReportSubmissionDateTime = DateTime.UtcNow,
                     Status = "Submitted",
                     Message = $"Confidential report submitted successfully. Tracking ID: {actualTrackingCode}",
-                    TrackingUrl = $"https://{httpContext.Request.Host}/ConfidentialReporting/TrackStatus/{actualTrackingCode}",
+                    TrackingUrl = $"https://{httpContext.Request.Host}/ExternalReporting/TrackStatus/{actualTrackingCode}",
                     ProcessedFiles = processedFiles,
                     FailedFiles = failedFiles
                 };
@@ -105,7 +110,7 @@ namespace SMS3.Api.Services
                 _logger.LogInformation("?? PDX SMS API report submitted successfully. " +
                     "TrackingId: {TrackingId}, ReportId: {ReportId}, HazardId: {HazardId}, Files: {ProcessedFiles}/{TotalFiles}", 
                     actualTrackingCode, actualReportCode, createdHazard.Code, processedFiles, 
-                    request.Attachments?.Count ?? 0);
+                    request.ReportAttachments?.Count ?? 0);
 
                 return Result<PDXSMSReportApiResponse>.Success(response);
             }
@@ -120,17 +125,46 @@ namespace SMS3.Api.Services
         public async Task<Result<bool>> ValidateRequestAsync(PDXSMSReportApiRequest request)
         {
             var validationErrors = new List<string>();
-            
+            if (string.IsNullOrEmpty(request.HazardCategory))
+                validationErrors.Add("hazardCategory is required");
+
             if (string.IsNullOrEmpty(request.HazardType))
                 validationErrors.Add("hazardType is required");
             
-            if (string.IsNullOrEmpty(request.Description))
+            if (string.IsNullOrEmpty(request.HazardDescription))
                 validationErrors.Add("description is required");
-            
+
+            // Check if latitude is provided and valid
+            if (!request.LocationLatitude.HasValue)
+            {
+                validationErrors.Add("LocationLatitude is required");
+            }
+            else if (request.LocationLatitude.Value < -90 || request.LocationLatitude.Value > 90)
+            {
+                validationErrors.Add("LocationLatitude must be between -90 and 90 degrees");
+            }
+
+            // Check if longitude is provided and valid  
+            if (!request.LocationLongitude.HasValue)
+            {
+                validationErrors.Add("LocationLongitude is required");
+            }
+            else if (request.LocationLongitude.Value < -180 || request.LocationLongitude.Value > 180)
+            {
+                validationErrors.Add("LocationLongitude must be between -180 and 180 degrees");
+            }
+
+            // Optional: Check for obviously invalid coordinates (like 0,0 if that's not valid for your use case)
+            if (request.LocationLatitude.HasValue && request.LocationLongitude.HasValue &&
+                request.LocationLatitude.Value == 0 && request.LocationLongitude.Value == 0)
+            {
+                validationErrors.Add("Location coordinates (0, 0) are not valid for this application");
+            }
+
             if (string.IsNullOrEmpty(request.LocationDescription))
                 validationErrors.Add("location is required");
 
-            if (request.Description?.Length > 2000)
+            if (request.HazardDescription?.Length > 2000)
                 validationErrors.Add("description cannot exceed 2000 characters");
 
             if (validationErrors.Any())
@@ -245,14 +279,14 @@ namespace SMS3.Api.Services
             var report = new Report(new ReportID("RP-0000"))
             {
                 Code = "RP-0000", // Database will generate actual code
-                Name = $"External - {request.HazardCategory} - {request.HazardType}",
-                Description = request.Description,
+                Name = $"{request.HazardCategory}/{request.HazardType}",
+                Description = request.HazardDescription,
                 SubmittedBy = "EXTERNAL_SYSTEM",
                 SubmittedDate = DateTime.UtcNow,
-                SubmittingDepartment = request.SubmittingDepartment ?? "EXTERNAL_API",
-                SubmittingDepartmentJobFunction = request.SubmittingDepartmentJobFunction ?? "API_SUBMISSION",
-                IncidentDateTime = request.IncidentDateTime ?? DateTime.UtcNow,
-                IsAnonymous = request.IsAnonymous ?? true,
+                SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
+                SubmittingDepartmentJobFunction = request.ReportSubmittingDepartmentJobFunction ?? string.Empty,
+                IncidentDateTime = request.HazardIncidentDateTime ?? DateTime.UtcNow,
+                IsAnonymous = request.ReportIsAnonymous ?? true,
                 ReportContactName = request.ReportContactName ?? string.Empty,
                 ReportContactCell = request.ReportContactCell ?? string.Empty,
                 ReportContactEmail = request.ReportContactEmail ?? string.Empty,
@@ -270,10 +304,10 @@ namespace SMS3.Api.Services
             var hazard = new Hazard(new HazardID("HZ-0000"))
             {
                 Code = "HZ-0000", // Database will generate actual code
-                Name = $"External - {request.HazardCategory} - {request.HazardType}",
-                Description = request.Description,
-                HazardCategory = request.HazardCategory ?? "EXTERNAL",
-                HazardType = request.HazardType,
+                Name = $"{request.HazardCategory}/{request.HazardType}",
+                Description = request.HazardDescription,
+                HazardCategory = request.HazardCategory ?? HazardCategory.Default.Value,
+                HazardType = request.HazardType ?? HazardType.Default.Value,
                 ReportCode = reportCode,
                 IsInitialHazard = true,
                 Status = HazardStatus.InitialRiskAssessment,
@@ -292,13 +326,13 @@ namespace SMS3.Api.Services
             var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
             {
                 HazardCode = hazardCode,
-                Latitude = request.Latitude,
-                Longitude = request.Longitude,
+                Latitude = request.LocationLatitude,
+                Longitude = request.LocationLongitude,
                 Description = request.LocationDescription
             };
 
             _logger.LogInformation("??? Creating hazard location for {HazardCode}: Lat={Latitude}, Lon={Longitude}, Desc='{Description}'", 
-                hazardCode, request.Latitude, request.Longitude, request.LocationDescription);
+                hazardCode, request.LocationLatitude, request.LocationLongitude, request.LocationDescription);
 
             return await _mediator.SendAsync(new CreateHazardLocationCommand(hazardLocation), CancellationToken.None);
         }

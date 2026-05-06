@@ -1,5 +1,8 @@
 ﻿using Microsoft.FeatureManagement;
 using Microsoft.OpenApi.Models;
+using Asp.Versioning.ApiExplorer;
+using Microsoft.Extensions.Options;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
@@ -260,18 +263,69 @@ public static class DependencyInjection
         /// <param name="services">Service collection</param>
         /// <param name="configuration">Application configuration</param>
         /// <returns>Service collection for method chaining</returns>
+        // No-op. Swagger configuration is now handled by ConfigureSwaggerOptions
         public static IServiceCollection AddSMSSwaggerServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddEndpointsApiExplorer();
-
             services.AddSwaggerGen(options =>
             {
-                ConfigureSwaggerDocument(options);
-                ConfigureApiKeySecurity(options);
-                ConfigureXmlDocumentation(options);
-                ConfigureServers(options, configuration);
-            });
+                options.SwaggerDoc("v1", new OpenApiInfo { Title = "SMS External Reporting API", Version = "v1" });
+                options.SwaggerDoc("v2", new OpenApiInfo { Title = "SMS External Reporting API", Version = "v2" });
 
+                // Use a predicate to control which endpoints are included in each document
+                options.DocInclusionPredicate((docName, apiDesc) =>
+                {
+                    if (!apiDesc.TryGetMethodInfo(out var methodInfo)) return false;
+
+                    var groupName = apiDesc.GroupName;
+                    return groupName == docName;
+                });
+
+                // Configure API Key Security
+                options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
+                {
+                    Description = "API Key authentication. Provide your API key in the X-API-Key header.",
+                    In = ParameterLocation.Header,
+                    Name = "X-API-Key",
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "ApiKeyScheme"
+                });
+
+                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "ApiKey"
+                            },
+                            Scheme = "ApiKeyScheme",
+                            Name = "X-API-Key",
+                            In = ParameterLocation.Header,
+                        },
+                        new List<string>()
+                    }
+                });
+
+                // Configure XML Documentation
+                var xmlFiles = new[]
+                {
+                    "SMS3.xml",
+                    "Application.xml",
+                    "Domain.xml"
+                };
+
+                foreach (var xmlFile in xmlFiles)
+                {
+                    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                    if (File.Exists(xmlPath))
+                    {
+                        options.IncludeXmlComments(xmlPath);
+                    }
+                }
+            });
             return services;
         }
 
@@ -282,28 +336,15 @@ public static class DependencyInjection
         /// <returns>Web application for method chaining</returns>
         public static WebApplication UseSMSSwagger(this WebApplication app)
         {
-            // Check if Swagger should be enabled
             if (app.Environment.IsDevelopment() || IsSwaggerEnabledInProduction(app))
             {
-                app.UseSwagger(options =>
-                {
-                    options.RouteTemplate = "api-docs/{documentname}/swagger.json";
-                });
-
+                app.UseSwagger();
                 app.UseSwaggerUI(options =>
                 {
-                    options.SwaggerEndpoint("/api-docs/v1/swagger.json", "SMS External Reporting API v1");
+                    options.SwaggerEndpoint("/swagger/v1/swagger.json", "V1");
+                    options.SwaggerEndpoint("/swagger/v2/swagger.json", "V2");
                     options.RoutePrefix = "api-docs";
                     options.DocumentTitle = "SMS External Reporting API Documentation";
-
-                    // Security-focused UI configuration
-                    options.DefaultModelsExpandDepth(-1); // Don't expand models by default
-                    options.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
-                    options.EnableFilter();
-                    options.EnableDeepLinking();
-
-                    // Custom CSS for branding (optional)
-                    options.InjectStylesheet("/css/swagger-custom.css");
                 });
             }
 
@@ -312,158 +353,19 @@ public static class DependencyInjection
 
         #region Private Configuration Methods
 
-        private static void ConfigureSwaggerDocument(SwaggerGenOptions options)
-        {
-            options.SwaggerDoc("v1", new OpenApiInfo
-            {
-                Title = "SMS External Reporting API",
-                Version = "v1.0",
-                Description = BuildApiDescription()
-                //Contact = new OpenApiContact
-                //{
-                //    Name = "SMS Support Team",
-                //    Email = "sms-support@flypdx.com",
-                //    Url = new Uri("https://flypdx.com/sms-support")
-                //},
-                //License = new OpenApiLicense
-                //{
-                //    Name = "Port of Portland - Internal Use Only",
-                //    Url = new Uri("https://flypdx.com/terms")
-                //}
-            });
-        }
-
-        private static void ConfigureApiKeySecurity(SwaggerGenOptions options)
-        {
-            // API Key authentication scheme
-            options.AddSecurityDefinition("ApiKey", new OpenApiSecurityScheme
-            {
-                Description = "API Key authentication. Provide your API key in the X-API-Key header.",
-                In = ParameterLocation.Header,
-                Name = "X-API-Key",
-                Type = SecuritySchemeType.ApiKey,
-                Scheme = "ApiKeyScheme"
-            });
-
-            // Apply security requirement globally
-            options.AddSecurityRequirement(new OpenApiSecurityRequirement
-            {
-                {
-                    new OpenApiSecurityScheme
-                    {
-                        Reference = new OpenApiReference
-                        {
-                            Type = ReferenceType.SecurityScheme,
-                            Id = "ApiKey"
-                        },
-                        Scheme = "ApiKeyScheme",
-                        Name = "X-API-Key",
-                        In = ParameterLocation.Header,
-                    },
-                    new List<string>()
-                }
-            });
-        }
-
-        private static void ConfigureXmlDocumentation(SwaggerGenOptions options)
-        {
-            // Include XML comments from API assemblies
-            var xmlFiles = new[]
-            {
-                "SMS3.xml",           // Main presentation layer
-                "Application.xml",    // Application layer
-                "Domain.xml"          // Domain layer
-            };
-
-            foreach (var xmlFile in xmlFiles)
-            {
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                if (File.Exists(xmlPath))
-                {
-                    options.IncludeXmlComments(xmlPath);
-                }
-            }
-        }
-
-        private static void ConfigureServers(SwaggerGenOptions options, IConfiguration configuration)
-        {
-            // Always use servers from appsettings.json configuration
-            var configuredServers = configuration.GetSection("Swagger:Servers").Get<List<ApiServer>>();
-            
-            if (configuredServers?.Any() == true)
-            {
-                // Use servers from appsettings.json
-                foreach (var server in configuredServers)
-                {
-                    options.AddServer(new OpenApiServer
-                    {
-                        Url = server.Url,
-                        Description = server.Description
-                    });
-                }
-            }
-            
-            // ALWAYS add a relative path server as primary option
-            options.AddServer(new OpenApiServer
-            {
-                Url = "",
-                Description = "Current Host (Relative Path)"
-            });
-        }
-
-        private static string BuildApiDescription()
-        {
-            return @"
-## SMS External Reporting API
-
-This API provides secure endpoints for external systems to submit safety reports to the Port of Portland SMS system.
-
-### Features
-- ?? **API Key Authentication** - Secure access control
-- ?? **Comprehensive Validation** - Request validation and error handling
-- ?? **File Attachments** - Support for document uploads
-- ?? **Location Data** - Geographic coordinate support
-- ?? **Reference Data** - Hazard categories and types
-
-### Getting Started
-1. Obtain an API key from the SMS administrator
-2. Include the API key in the `X-API-Key` header
-3. Submit reports using the `/api/pdxsms` endpoint
-
-### Rate Limiting
-- 10 requests per minute per API key
-- Larger files may require additional time
-
-### Support
-For technical support or API key requests, contact the SMS team.";
-        }
-
         private static bool IsSwaggerEnabledInProduction(WebApplication app)
         {
             // Check if Swagger is explicitly enabled via feature flag OR configuration
             var featureManager = app.Services.GetService<IFeatureManager>();
             var featureEnabled = featureManager?.IsEnabledAsync("SwaggerEnabled").GetAwaiter().GetResult() ?? false;
-            
+
             // Also check the configuration setting
             var configEnabled = app.Configuration.GetValue<bool>("Swagger:EnableInProduction", false);
-            
+
             return featureEnabled || configEnabled;
         }
 
-        #endregion
-
-        #region Supporting Types
-
-        /// <summary>
-        /// Configuration model for additional API servers
-        /// </summary>
-        public class ApiServer
-        {
-            public string Url { get; set; } = string.Empty;
-            public string Description { get; set; } = string.Empty;
-        }
-
-        #endregion
+    #endregion
     //}
 
 
