@@ -24,9 +24,7 @@ namespace SMS3.Api.Services
         /// <param name="request">The API request with report data</param>
         /// <param name="httpContext">HTTP context for additional processing info</param>
         /// <returns>Result containing the API response or error</returns>
-        Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsync(
-            PDXSMSReportApiRequest request, 
-            HttpContext httpContext);
+        Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsync(PDXSMSReportApiRequest request, HttpContext httpContext);
 
         /// <summary>
         /// Validate an API request for business rule compliance
@@ -46,5 +44,13 @@ namespace SMS3.Api.Services
             List<FileAttachment>? attachments, 
             string hazardCode, 
             string reportCode);
+
+        /// <summary>
+        /// Process an external report submission with full business logic (v2)
+        /// </summary>
+        /// <param name="request">The API request with report data for v2</param>
+        /// <param name="httpContext">HTTP context for additional processing info</param>
+        /// <returns>Result containing the API response or error</returns>
+        Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsyncV2(PDXSMSReportApiRequestV2 request, HttpContext httpContext);
     }
 }

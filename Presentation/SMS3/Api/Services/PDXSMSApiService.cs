@@ -122,6 +122,133 @@ namespace SMS3.Api.Services
             }
         }
 
+        public async Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsyncV2(
+    PDXSMSReportApiRequestV2 request,
+    HttpContext httpContext)
+        {
+            try
+            {
+                // Step 1: Validate request (reuse logic, but only for v2 fields)
+                var validationErrors = new List<string>();
+                if (string.IsNullOrEmpty(request.HazardDescription))
+                    validationErrors.Add("description is required");
+
+                if (string.IsNullOrEmpty(request.LocationDescription))
+                    validationErrors.Add("location is required");
+
+                if (request.HazardDescription?.Length > 2000)
+                    validationErrors.Add("description cannot exceed 2000 characters");
+
+                if (validationErrors.Any())
+                {
+                    var errorMessage = $"Validation failed: {string.Join(", ", validationErrors)}";
+                    return Result<PDXSMSReportApiResponse>.Failure<PDXSMSReportApiResponse>(
+                        new Error("PDXSMS.ValidationFailed", errorMessage));
+                }
+
+                // Step 2: Create parent report (no hazard category/type)
+                var report = new Report(new ReportID("RP-0000"))
+                {
+                    Code = "RP-0000",
+                    Name = $"EXTERNAL/V2",
+                    Description = request.HazardDescription,
+                    SubmittedBy = "EXTERNAL_SYSTEM",
+                    SubmittedDate = DateTime.UtcNow,
+                    SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
+                    SubmittingDepartmentJobFunction = request.ReportSubmittingDepartmentJobFunction ?? string.Empty,
+                    IncidentDateTime = request.HazardIncidentDateTime ?? DateTime.UtcNow,
+                    IsAnonymous = request.ReportIsAnonymous ?? true,
+                    ReportContactName = request.ReportContactName ?? string.Empty,
+                    ReportContactCell = request.ReportContactCell ?? string.Empty,
+                    ReportContactEmail = request.ReportContactEmail ?? string.Empty,
+                    Stage = "INITIAL",
+                    Status = ReportStatus.NeedsValidation,
+                    CreatedBy = "EXTERNAL_SYSTEM",
+                    CreatedDate = DateTime.UtcNow
+                };
+                var reportResult = await _mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
+                if (reportResult.IsFailure)
+                    return Result<PDXSMSReportApiResponse>.Failure<PDXSMSReportApiResponse>(reportResult.Error);
+
+                var actualReportCode = reportResult.Value.Code;
+                _logger.LogInformation("V2 External report created: {ReportCode}", actualReportCode);
+
+                // Step 3: Create associated hazard (no category/type)
+                var hazard = new Hazard(new HazardID("HZ-0000"))
+                {
+                    Code = "HZ-0000",
+                    Name = $"EXTERNAL/V2",
+                    Description = request.HazardDescription,
+                    HazardCategory = HazardCategory.Default.Value,
+                    HazardType = HazardType.Default.Value,
+                    ReportCode = actualReportCode,
+                    IsInitialHazard = true,
+                    Status = HazardStatus.InitialRiskAssessment,
+                    CreatedBy = "EXTERNAL_SYSTEM",
+                    CreatedDate = DateTime.UtcNow
+                };
+                var hazardResult = await _mediator.SendAsync(new CreateHazardCommand(hazard), CancellationToken.None);
+                if (hazardResult.IsFailure)
+                    return Result<PDXSMSReportApiResponse>.Failure<PDXSMSReportApiResponse>(hazardResult.Error);
+
+                var createdHazard = hazardResult.Value;
+                _logger.LogInformation("V2 External hazard created: {HazardCode} for Report: {ReportCode}",
+                    createdHazard.Code, actualReportCode);
+
+                // Step 4: Create hazard location if coordinates provided
+                if (request.LocationLatitude.HasValue && request.LocationLongitude.HasValue)
+                {
+                    var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
+                    {
+                        HazardCode = createdHazard.Code,
+                        Latitude = request.LocationLatitude,
+                        Longitude = request.LocationLongitude,
+                        Description = request.LocationDescription
+                    };
+                    await _mediator.SendAsync(new CreateHazardLocationCommand(hazardLocation), CancellationToken.None);
+                }
+
+                // Step 5: Create tracking record
+                var trackingResult = await CreateTrackingAsync(createdHazard);
+                if (trackingResult.IsFailure)
+                    return Result<PDXSMSReportApiResponse>.Failure<PDXSMSReportApiResponse>(trackingResult.Error);
+
+                var actualTrackingCode = trackingResult.Value.TrackingCode;
+                _logger.LogInformation("V2 External tracking created: {TrackingCode}", actualTrackingCode);
+
+                // Step 6: Process file attachments
+                var (processedFiles, failedFiles) = await ProcessAttachmentsAsync(
+                    request.ReportAttachments, createdHazard.Code, actualReportCode);
+
+                // Step 7: Build success response
+                var response = new PDXSMSReportApiResponse
+                {
+                    TrackingId = actualTrackingCode,
+                    HazardId = createdHazard.Code,
+                    ReportId = actualReportCode,
+                    ReportSubmissionDateTime = DateTime.UtcNow,
+                    Status = "Submitted",
+                    Message = $"Confidential report submitted successfully. Tracking ID: {actualTrackingCode}",
+                    TrackingUrl = $"https://{httpContext.Request.Host}/ExternalReporting/TrackStatus/{actualTrackingCode}",
+                    ProcessedFiles = processedFiles,
+                    FailedFiles = failedFiles
+                };
+
+                _logger.LogInformation("PDX SMS API v2 report submitted successfully. " +
+                    "TrackingId: {TrackingId}, ReportId: {ReportId}, HazardId: {HazardId}, Files: {ProcessedFiles}/{TotalFiles}",
+                    actualTrackingCode, actualReportCode, createdHazard.Code, processedFiles,
+                    request.ReportAttachments?.Count ?? 0);
+
+                return Result<PDXSMSReportApiResponse>.Success(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error processing external confidential report submission (v2)");
+                return Result<PDXSMSReportApiResponse>.Failure<PDXSMSReportApiResponse>(
+                    new Error("PDXSMS.ProcessingFailed", "An unexpected error occurred while processing your confidential report."));
+            }
+        }
+
         public async Task<Result<bool>> ValidateRequestAsync(PDXSMSReportApiRequest request)
         {
             var validationErrors = new List<string>();

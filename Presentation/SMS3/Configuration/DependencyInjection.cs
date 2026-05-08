@@ -15,11 +15,12 @@ using SMS3.Components.Shared.UIHelpers;
 using SMS3.EventHandlers;
 
 using Swashbuckle.AspNetCore.SwaggerGen;
+using SMS3.Api.Endpoints;
 
 namespace SMS3.Configuration;
 
 /// <summary>
-/// SMS Presentation Configuration - Session-Based Authentication Approach
+/// SMS Presentation Configuration 
 /// Clean architecture with secure session management and proper user isolation
 /// </summary>
 
@@ -266,7 +267,6 @@ public static class DependencyInjection
         // No-op. Swagger configuration is now handled by ConfigureSwaggerOptions
         public static IServiceCollection AddSMSSwaggerServices(this IServiceCollection services, IConfiguration configuration)
         {
-            services.AddEndpointsApiExplorer();
             services.AddSwaggerGen(options =>
             {
                 options.SwaggerDoc("v1", new OpenApiInfo { Title = "SMS External Reporting API", Version = "v1" });
@@ -347,8 +347,8 @@ public static class DependencyInjection
                     options.DocumentTitle = "SMS External Reporting API Documentation";
                 });
             }
-
-            return app;
+        // Endpoint registration is now handled in Program.cs with version sets
+        return app;
         }
 
         #region Private Configuration Methods

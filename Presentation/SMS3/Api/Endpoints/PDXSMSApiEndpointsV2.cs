@@ -58,10 +58,12 @@ namespace SMS3.Api.Endpoints
         /// <summary>
         /// Maps PDXSMS API v2 endpoints
         /// </summary>
-        public static WebApplication MapPDXSMSApiEndpointsV2(this WebApplication app)
+        public static WebApplication MapPDXSMSApiEndpointsV2(this WebApplication app, ApiVersionSet versionSet)
         {
             var group = app.MapGroup("/api/v2/pdxsms")
                 .WithGroupName("v2")
+                .WithApiVersionSet(versionSet)
+                .MapToApiVersion(2.0)
                 .WithTags("PDXSMSApiV2");
 
             // Main report submission endpoint
@@ -103,7 +105,7 @@ namespace SMS3.Api.Endpoints
         }
 
         private static async Task<IResult> SubmitPDXSMSReport(
-            [FromBody] PDXSMSReportApiRequest request,
+            [FromBody] PDXSMSReportApiRequestV2 request,
             IBaseMediator mediator,
             ILogger<Program> logger,
             HttpContext httpContext,
@@ -111,11 +113,8 @@ namespace SMS3.Api.Endpoints
         {
             try
             {
-                // Use the dedicated API service for business logic
-                
-
-                var result = await apiService.ProcessReportSubmissionAsync(request, httpContext);
-                
+                // Use the dedicated API service for business logic (v2)
+                var result = await apiService.ProcessReportSubmissionAsyncV2(request, httpContext);
                 return result.IsSuccess 
                     ? Results.Ok(result.Value)
                     : Results.Problem(
@@ -153,6 +152,7 @@ namespace SMS3.Api.Endpoints
                     Description = hc.Description,
                     SortOrder = hc.SortOrder
                 })
+                //.Where (x=> x.Value == HazardCategory.Default.Value)
                 .OrderBy(x => x.SortOrder)
                 .ToList();
 

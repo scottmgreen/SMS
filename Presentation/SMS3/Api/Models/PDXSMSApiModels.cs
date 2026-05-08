@@ -12,8 +12,35 @@ using System.ComponentModel.DataAnnotations;
 
 using SMS_Domain.Enums;
 
-namespace SMS3.Api.Models
-{
+namespace SMS3.Api.Models;
+
+    /// <summary>
+    /// Request model for external confidential report submissions (API v2)
+    /// Omits HazardCategory and HazardType, which are not required in v2
+    /// </summary>
+    public record PDXSMSReportApiRequestV2
+    {
+        [Required]
+        [StringLength(2000)]
+        public string HazardDescription { get; init; } = string.Empty;
+
+        public string? ReportSubmittedBy { get; init; }
+        public DateTime? ReportSubmittedDate { get; init; }
+        public string? ReportSubmittingDepartment { get; init; } = "EXTERNAL_SYSTEM";
+        public string? ReportSubmittingDepartmentJobFunction { get; init; } = "EXTERNAL_SYSTEM";
+        public bool? ReportIsAnonymous { get; init; }
+        public string? ReportContactName { get; init; }
+        public string? ReportContactCell { get; init; }
+        public string? ReportContactEmail { get; init; }
+        public string? ReportContactCompany { get; init; }
+        [Required]
+        public string LocationDescription { get; init; } = string.Empty;
+        public decimal? LocationLatitude { get; init; }
+        public decimal? LocationLongitude { get; init; }
+        public DateTime? HazardIncidentDateTime { get; init; }
+        public List<FileAttachment>? ReportAttachments { get; init; }
+    }
+
     /// <summary>
     /// Request model for external confidential report submissions
     /// </summary>
@@ -84,6 +111,10 @@ namespace SMS3.Api.Models
         /// </summary>
         public List<FileAttachment>? ReportAttachments { get; init; }
     }
+
+    
+
+
 
     /// <summary>
     /// Response model for confidential report submissions - Enhanced for production
@@ -182,4 +213,3 @@ namespace SMS3.Api.Models
         public string GuidanceText { get; init; } = string.Empty;
         public bool RequiresRegulatoryReporting { get; init; }
     }
-}

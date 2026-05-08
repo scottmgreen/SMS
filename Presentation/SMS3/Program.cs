@@ -48,12 +48,6 @@ public class Program
         // Replaces lines 45-194 with organized extension method maintaining exact same loading sequence
         builder.Services.AddPresentationAuthenticationServices(builder.Configuration);
 
-        // **PRESENTATION LAYER SERVICES - Centralized registration**
-        // 🔧 NOTE: AddPresentationServices includes AddHttpContextAccessor() registration
-        //builder.Services.AddPresentationServices(builder.Configuration);
-        //builder.Services.AddPresentationMiddleware();
-        //builder.Services.ConfigurePresentationOptions(builder.Configuration);
-                
         // Register SMS Services
         // 🔧 NOTE: AddInfrastructureServices also includes AddHttpContextAccessor() registration
         builder.Services.AddSharedServices(builder.Configuration);
@@ -72,6 +66,7 @@ public class Program
         });
 
         // **PRESENTATION LAYER SERVICES - Centralized registration**
+        // This must be after AddApiVersioning
         builder.Services.AddPresentationServices(builder.Configuration);
         builder.Services.AddPresentationMiddleware();
         builder.Services.ConfigurePresentationOptions(builder.Configuration);
@@ -106,17 +101,20 @@ public class Program
         }
         else
         {
-
-            // Create a unified API version set
-            var apiVersionSet = app.NewApiVersionSet()
+            // Create separate API version sets for v1 and v2
+            var v1ApiVersionSet = app.NewApiVersionSet()
                 .HasApiVersion(new ApiVersion(1, 0))
+                .ReportApiVersions()
+                .Build();
+
+            var v2ApiVersionSet = app.NewApiVersionSet()
                 .HasApiVersion(new ApiVersion(2, 0))
                 .ReportApiVersions()
                 .Build();
 
-            // Register both API versions using the unified version set
-            //app.MapPDXSMSApiEndpointsV1(apiVersionSet);
-            //app.MapPDXSMSApiEndpointsV2(apiVersionSet);
+            // Register endpoints for each version
+            app.MapPDXSMSApiEndpointsV1(v1ApiVersionSet);
+            app.MapPDXSMSApiEndpointsV2(v2ApiVersionSet);
 
             app.UseDeveloperExceptionPage();
             app.UseSMSSwagger();

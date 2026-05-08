@@ -29,18 +29,20 @@ namespace SMS3.Api.Endpoints
         /// <summary>
         /// Maps PDXSMS API v1 endpoints
         /// </summary>
-        public static WebApplication MapPDXSMSApiEndpointsV1(this WebApplication app)
+        public static WebApplication MapPDXSMSApiEndpointsV1(this WebApplication app, ApiVersionSet versionSet)
         {
             var group = app.MapGroup("/api/v1/pdxsms")
                 .WithGroupName("v1")
+                .WithApiVersionSet(versionSet)
+                .MapToApiVersion(1.0)
                 .WithTags("PDXSMSApiV1");
 
             // Main report submission endpoint
             group.MapPost("", SubmitPDXSMSReport)
                 .AddEndpointFilter<ApiKeyAuthenticationFilter>()
                 .WithName("SubmitPDXSMSReportV1")
-                .WithSummary("Submit a confidential safety report from external systems (v1)")
-                .WithDescription("Allows external systems to submit confidential safety reports (API v1)")
+                .WithSummary("Submit a SMS report from external systems (v1)")
+                .WithDescription("Allows external systems to submit SMS reports (API v1)")
                 .Produces<PDXSMSReportApiResponse>(StatusCodes.Status200OK)
                 .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
                 .Produces<ApiErrorResponse>(StatusCodes.Status500InternalServerError);
