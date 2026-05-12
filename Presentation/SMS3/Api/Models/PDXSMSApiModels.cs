@@ -21,7 +21,7 @@ namespace SMS3.Api.Models;
     public record PDXSMSReportApiRequestV2
     {
         [Required]
-        [StringLength(2000)]
+        [StringLength(5000)]
         public string HazardDescription { get; init; } = string.Empty;
 
         public string? ReportSubmittedBy { get; init; }
@@ -44,7 +44,7 @@ namespace SMS3.Api.Models;
     /// <summary>
     /// Request model for external confidential report submissions
     /// </summary>
-    public record PDXSMSReportApiRequest
+    public record PDXSMSReportApiRequestV1
     {
         /// <summary>
         /// The category of the hazard (required). Use GET /api/pdxsms/hazard-categories to see all valid values.
@@ -68,7 +68,7 @@ namespace SMS3.Api.Models;
         /// </summary>
         /// <example>Aircraft experienced engine failure during takeoff roll, aborting takeoff safely</example>
         [Required]
-        [StringLength(2000)]
+        [StringLength(5000)]
         public string HazardDescription { get; init; } = string.Empty;
 
         public string? ReportSubmittedBy { get; init; }

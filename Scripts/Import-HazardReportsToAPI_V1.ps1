@@ -1,7 +1,7 @@
 ﻿# Import Hazard Reports to SMS API (Default Category/Type Version)
 # This script reads the CSV file and maps the data to your SMS API endpoints
 # using DEFAULT_CATEGORY and DEFAULT_TYPE for all hazard categorization
-# Import-HazardReportsToAPI-DefaultValues.ps1 -CsvFilePath "Shared\HazardReportSubmissionForm.csv" -ApiBaseUrl "http://localhost:5115" -ApiKey "SMS-DEV-12345-ABCDEF" -BatchSize 5
+# Import-HazardReportsToAPI_V1.ps1 -CsvFilePath "Shared\HazardReportSubmissionForm.csv" -ApiBaseUrl "http://localhost:5115" -ApiKey "SMS-DEV-12345-ABCDEF" -BatchSize 5
 param(
     [Parameter(Mandatory=$true)]
     [string]$CsvFilePath,
@@ -126,7 +126,7 @@ function Submit-Report {
         }
 
         $body = $ApiRequest | ConvertTo-Json -Depth 3
-        $response = Invoke-RestMethod -Uri "$ApiBaseUrl/api/pdxsms" -Method POST -Headers $headers -Body $body
+        $response = Invoke-RestMethod -Uri "$ApiBaseUrl/api/v1/pdxsms?api-version=1" -Method POST -Headers $headers -Body $body
 
         return @{
             Success = $true
@@ -149,7 +149,9 @@ try {
     Write-ColorOutput "📁 CSV File: $CsvFilePath" "White"
     Write-ColorOutput "🌐 API Base URL: $ApiBaseUrl" "White"
     Write-ColorOutput "🔑 API Key: $($ApiKey.Substring(0, 8))..." "White"
+    Write-ColorOutput "📋 Using API VERSION 1" "Yellow"
     Write-ColorOutput "📋 Using DEFAULT_CATEGORY and DEFAULT_TYPE for all reports" "Yellow"
+    
 
     if ($WhatIf) {
         Write-ColorOutput "🔍 Running in WHATIF mode - no actual submissions will be made" "Yellow"

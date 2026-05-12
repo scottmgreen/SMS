@@ -40,7 +40,7 @@ namespace SMS3.Api.Services
         }
 
         public async Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsync(
-            PDXSMSReportApiRequest request, 
+            PDXSMSReportApiRequestV1 request, 
             HttpContext httpContext)
         {
             try
@@ -136,8 +136,8 @@ namespace SMS3.Api.Services
                 if (string.IsNullOrEmpty(request.LocationDescription))
                     validationErrors.Add("location is required");
 
-                if (request.HazardDescription?.Length > 2000)
-                    validationErrors.Add("description cannot exceed 2000 characters");
+                if (request.HazardDescription?.Length > 10000)
+                    validationErrors.Add("description cannot exceed 10000 characters");
 
                 if (validationErrors.Any())
                 {
@@ -249,7 +249,7 @@ namespace SMS3.Api.Services
             }
         }
 
-        public async Task<Result<bool>> ValidateRequestAsync(PDXSMSReportApiRequest request)
+        public async Task<Result<bool>> ValidateRequestAsync(PDXSMSReportApiRequestV1 request)
         {
             var validationErrors = new List<string>();
             if (string.IsNullOrEmpty(request.HazardCategory))
@@ -401,7 +401,7 @@ namespace SMS3.Api.Services
 
         #region Private Helper Methods
 
-        private async Task<Result<Report>> CreateReportAsync(PDXSMSReportApiRequest request)
+        private async Task<Result<Report>> CreateReportAsync(PDXSMSReportApiRequestV1 request)
         {
             var report = new Report(new ReportID("RP-0000"))
             {
@@ -426,7 +426,7 @@ namespace SMS3.Api.Services
             return await _mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
         }
 
-        private async Task<Result<Hazard>> CreateHazardAsync(PDXSMSReportApiRequest request, string reportCode)
+        private async Task<Result<Hazard>> CreateHazardAsync(PDXSMSReportApiRequestV1 request, string reportCode)
         {
             var hazard = new Hazard(new HazardID("HZ-0000"))
             {
@@ -445,7 +445,7 @@ namespace SMS3.Api.Services
             return await _mediator.SendAsync(new CreateHazardCommand(hazard), CancellationToken.None);
         }
 
-        private async Task<Result<HazardLocation>> CreateHazardLocationAsync(PDXSMSReportApiRequest request, string hazardCode)
+        private async Task<Result<HazardLocation>> CreateHazardLocationAsync(PDXSMSReportApiRequestV1 request, string hazardCode)
         {
             // TODO: Add check to prevent duplicate location creation
             // Check if hazard location already exists for this hazard code

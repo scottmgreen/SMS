@@ -24,14 +24,14 @@ namespace SMS3.Api.Services
         /// <param name="request">The API request with report data</param>
         /// <param name="httpContext">HTTP context for additional processing info</param>
         /// <returns>Result containing the API response or error</returns>
-        Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsync(PDXSMSReportApiRequest request, HttpContext httpContext);
+        Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsync(PDXSMSReportApiRequestV1 request, HttpContext httpContext);
 
         /// <summary>
         /// Validate an API request for business rule compliance
         /// </summary>
         /// <param name="request">The request to validate</param>
         /// <returns>Validation result with error details if validation fails</returns>
-        Task<Result<bool>> ValidateRequestAsync(PDXSMSReportApiRequest request);
+        Task<Result<bool>> ValidateRequestAsync(PDXSMSReportApiRequestV1 request);
 
         /// <summary>
         /// Process file attachments with security validation

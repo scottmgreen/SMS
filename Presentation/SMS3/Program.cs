@@ -101,11 +101,12 @@ public class Program
         }
         else
         {
-            // Create separate API version sets for v1 and v2
-            var v1ApiVersionSet = app.NewApiVersionSet()
-                .HasApiVersion(new ApiVersion(1, 0))
-                .ReportApiVersions()
-                .Build();
+            //Create separate API version sets for v1 and v2
+
+           var v1ApiVersionSet = app.NewApiVersionSet()
+               .HasApiVersion(new ApiVersion(1, 0))
+               .ReportApiVersions()
+               .Build();
 
             var v2ApiVersionSet = app.NewApiVersionSet()
                 .HasApiVersion(new ApiVersion(2, 0))

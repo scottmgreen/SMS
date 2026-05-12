@@ -79,7 +79,7 @@ namespace SMS3.Api.Endpoints
         /// Main report submission handler
         /// </summary>
         private static async Task<IResult> SubmitPDXSMSReport(
-            [FromBody] PDXSMSReportApiRequest request,
+            [FromBody] PDXSMSReportApiRequestV1 request,
             IBaseMediator mediator,
             ILogger<Program> logger,
             HttpContext httpContext,
