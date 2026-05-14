@@ -14,6 +14,8 @@ using SMS_Shared.Configuration;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using Microsoft.AspNetCore.Components.Web;
+using Microsoft.AspNetCore.Components.Rendering;
 
 namespace SMS3.Components.Pages.SMSListings;
 
@@ -40,6 +42,10 @@ public partial class HazardListing : ComponentBase
     private List<Hazard> allHazards = new List<Hazard>(); // Store all hazards for client-side filtering
     private int totalCount;
     private bool isLoading = false;
+
+    private bool ShowDescriptionModal = false;
+    private string SelectedDescription = string.Empty;
+    private string SelectedHazardId = string.Empty;
     #endregion
     
     #region Lifecycle Methods
@@ -469,4 +475,55 @@ public partial class HazardListing : ComponentBase
         }
     }
     #endregion
+
+    private void RenderHazardDescriptionColumn(RenderTreeBuilder builder, bool includeActions = true)
+    {
+        builder.OpenComponent<RadzenDataGridColumn<Hazard>>(10);
+        builder.AddAttribute(11, "Title", "Description");
+        builder.AddAttribute(12, "Width", "100px");
+        builder.AddAttribute(13, "Sortable", false);
+        builder.AddAttribute(14, "Template", (RenderFragment<Hazard>)(hazard =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenButton>(0);
+                templateBuilder.AddAttribute(1, "Text", "Description");
+                templateBuilder.AddAttribute(2, "Icon", "description");
+                templateBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Base);
+                templateBuilder.AddAttribute(4, "Variant", Variant.Text);
+                templateBuilder.AddAttribute(5, "Size", ButtonSize.ExtraSmall);
+                templateBuilder.AddAttribute(6, "Title", "Click to view full description");
+                templateBuilder.AddAttribute(7, "Class", "description-button");
+                templateBuilder.AddAttribute(8, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                    (args) => ShowDescriptionDialog(hazard)));
+                templateBuilder.CloseComponent();
+            }
+             )));
+        builder.CloseComponent();
+    }
+
+    private async Task ShowDescriptionDialog(Hazard hazard)
+    {
+        try
+        {
+            SelectedDescription = hazard.Description ?? "No description available";
+            SelectedHazardId = hazard.Code ?? "Unknown";
+            ShowDescriptionModal = true;
+            StateHasChanged();
+
+            _logger.LogInformation("Showing description modal for hazard {HazardId}", hazard.Code);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing description modal for hazard {HazardId}", hazard.Code);
+            ShowErrorAsyncNotification("Error showing description details");
+        }
+    }
+
+    private void CloseDescriptionModal()
+    {
+        ShowDescriptionModal = false;
+        SelectedDescription = string.Empty;
+        SelectedHazardId = string.Empty;
+        StateHasChanged();
+    }
 }

@@ -245,8 +245,7 @@ public abstract class HazardType : BaseEnum<HazardType>
     #region Incident Implementations
     private sealed class DefaultType : HazardType
     {
-        public DefaultType() : base("DEFAULT_TYPE", "Default Type",
-            "Default", "DEFAULT",
+        public DefaultType() : base("DEFAULT_TYPE", "Default Type","Default", "DEFAULT_CATEGORY",
             "To Be Determined by SMS Staff",
             false)
         {

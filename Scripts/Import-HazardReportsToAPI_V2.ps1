@@ -156,13 +156,13 @@ function Clean-ApiText {
     $Text = $Text -replace "`n", " "  # REMOVE ALL NEWLINES
 
     # Remove hidden/Unicode line returns (line/paragraph separators)
-    $Text = $Text -replace "([`u2028`u2029])", ''
+    #$Text = $Text -replace "([`u2028`u2029])", ''
 
     # Remove Unicode replacement char
     $Text = $Text -replace ([char]0xFFFD), ''
 
     # Remove all non-printable/control/hidden Unicode characters except tab
-    $Text = [regex]::Replace($Text, '[^\P{C}\t]', '')
+    #$Text = [regex]::Replace($Text, '[^\P{C}\t]', '')
 
     # Remove control chars except tab (redundant but safe)
     $Text = [regex]::Replace($Text, '[\x00-\x08\x0B\x0C\x0E-\x1F]', '')

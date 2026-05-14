@@ -1,23 +1,25 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
-using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.AspNetCore.Components.Web;
 
 using Radzen;
-
+// NEW: EventBus Integration
+using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 
+using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
+using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Interfaces;
 
 using SMS_Shared.Configuration;
 
+using SMS3.Components.Pages.SMSRiskManagement;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
-
-// NEW: EventBus Integration
-using SMS_Application.Interfaces;
 
 namespace SMS3.Components.Pages.SMSListings;
 
@@ -30,7 +32,7 @@ public partial class ReportListing : ComponentBase
     private string BasicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Dependencies
-    [Inject] private IBaseMediator __mediator { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportListing> _logger { get; set; } = default!;
 
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -86,6 +88,11 @@ public partial class ReportListing : ComponentBase
     private bool IsEventBusTestRunning { get; set; } = false;
     private string EventBusTestMessage { get; set; } = string.Empty;
     private string EventBusTestError { get; set; } = string.Empty;
+
+    // Modal properties for hazard description
+    private bool ShowDescriptionModal = false;
+    private string SelectedDescription = string.Empty;
+    private string SelectedReportId = string.Empty;
     #endregion
     
     #region Lifecycle Methods
@@ -106,7 +113,7 @@ public partial class ReportListing : ComponentBase
             _logger.LogInformation("Loading reports for listing view");
 
             var query = new GetAllReportsQuery();
-            var result = await __mediator.SendAsync(query, CancellationToken.None);
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value is not null)
             {
@@ -377,7 +384,7 @@ public partial class ReportListing : ComponentBase
 
             // Get detailed report information
             var reportQuery = new GetReportByCodeQuery(new ReportID(report.Code));
-            var reportResult = await __mediator.SendAsync(reportQuery, CancellationToken.None);
+            var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
             if (reportResult.IsSuccess && reportResult.Value is not null)
             {
@@ -423,7 +430,7 @@ public partial class ReportListing : ComponentBase
         try
         {
             var confirmed = await _dialogService.Confirm(
-                $"Edit report '{report.Code} - {report.Name}'?\n\nThis will navigate to the hazard reporting form in edit mode.",
+                $"Edit report '{report.Code} - {report.Name}'?\n\nThis will navigate to the Initial hazard reporting form in edit mode.",
                 "Edit Report",
                 new ConfirmOptions()
                 {
@@ -433,12 +440,22 @@ public partial class ReportListing : ComponentBase
 
             if (confirmed == true)
             {
-                // Fixed: Navigate without mode parameter since HazardReporting doesn't accept it
-                _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting/{report.Code}");
+                var queryHazard = new GetHazardsByReportCodeQuery(new ReportID(report.Code));
+                var hazardResult = await _mediator.SendAsync(queryHazard, CancellationToken.None);
 
-                _logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Navigation", $"Opening {report.Code} for editing..."));
+                var initialHazard = hazardResult?.Value?.FirstOrDefault(h => h.IsInitialHazard);
 
+                if (initialHazard is not null && !string.IsNullOrEmpty(initialHazard.Code))
+                {
+                    _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting/{initialHazard.Code}");
+                    _logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
+                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Navigation", $"Opening {report.Code} for editing..."));
+                }
+                else
+                {
+                    _logger.LogWarning("No initial hazard found for report: {ReportCode}", report.Code);
+                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Navigation", $"No initial hazard found for {report.Code}."));
+                }
             }
         }
         catch (Exception ex)
@@ -463,19 +480,32 @@ public partial class ReportListing : ComponentBase
 
             var hazardCount = AssociatedHazards.Count;
 
-            var confirmationMessage = $"Are you sure you want to delete report '{report.Code}'?\n\n" +
-                                    $"Report Details:\n" +
-                                    $"� Name: {report.Name ?? "Unnamed Report"}\n" +
-                                    $"� Status: {report.Status ?? "Unknown"}\n" +
-                                    $"� Associated Hazards: {hazardCount}\n\n" +
-                                    (hazardCount > 0 ? "??  WARNING: This report has associated hazards that may also be affected.\n\n" : "") +
-                                    "?? This action cannot be undone!";
+            //var confirmationMessage = $"Are you sure you want to delete report '{report.Code}'?\n\n" +
+            //                        $"Report Details:\n\n" +
+            //                        $"• Name: {report.Name ?? "Unnamed Report"}\n" +
+            //                        $"• Status: {report.Status ?? "Unknown"}\n" +
+            //                        $"• Associated Hazards: {hazardCount}\n\n" +
+            //                        (hazardCount > 0 ? "??  WARNING: This report has associated hazards that may also be affected.\n\n" : "") +
+            //                        "?? This action cannot be undone!";
 
+            string htmlMessage = $"<div style=\"white-space: pre-line;\">" +
+                     $"<p>Are you sure you want to delete report '<b>{report.Code}</b>'?</p>" +
+                     $"<p><b>Report Details:</b></p>" +
+                     $"<ul style=\"list-style-type: none; padding-left: 10px;\">" +
+                     $"<li>• Name: {report.Name ?? "Unnamed Report"}</li>" +
+                     $"<li>• Status: {report.Status ?? "Unknown"}</li>" +
+                     $"<li>• Associated Hazards: {hazardCount}</li>" +
+                     $"</ul>" +
+                     (hazardCount > 0 ? $"<p style=\"color: #dc3545; font-weight: bold; margin-top: 15px;\">⚠️ WARNING: This report has associated hazards that may also be affected.</p>" : "") +
+                     $"<p style=\"font-weight: bold; margin-top: 15px;\">⚠️ This action cannot be undone!</p>" +
+                     $"</div>";
+            RenderFragment messageFragment = builder => builder.AddContent(0, (MarkupString)htmlMessage);
             var confirmed = await _dialogService.Confirm(
-                confirmationMessage,
+                messageFragment,
                 "Confirm Delete Report",
                 new ConfirmOptions()
                 {
+                    Width = "600px",
                     OkButtonText = "Yes, Delete Report",
                     CancelButtonText = "Cancel",
                     AutoFocusFirstElement = false
@@ -484,7 +514,7 @@ public partial class ReportListing : ComponentBase
             if (confirmed == true)
             {
                 var deleteCommand = new DeleteReportCommand(new ReportID(report.Code));
-                var result = await __mediator.SendAsync(deleteCommand, CancellationToken.None);
+                var result = await _mediator.SendAsync(deleteCommand, CancellationToken.None);
 
                 if (result.IsSuccess && result.Value)
                 {
@@ -546,7 +576,7 @@ public partial class ReportListing : ComponentBase
             _logger.LogInformation("Loading hazards for report: {ReportCode}", reportCode);
 
             var hazardsQuery = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
-            var hazardsResult = await __mediator.SendAsync(hazardsQuery, CancellationToken.None);
+            var hazardsResult = await _mediator.SendAsync(hazardsQuery, CancellationToken.None);
 
             if (hazardsResult.IsSuccess && hazardsResult.Value is not null)
             {
@@ -562,7 +592,7 @@ public partial class ReportListing : ComponentBase
                         if (!string.IsNullOrEmpty(hazard.Code))
                         {
                             var locationQuery = new GetHazardLocationsByHazardCodeQuery(hazard.Code);
-                            var locationResult = await __mediator.SendAsync(locationQuery, CancellationToken.None);
+                            var locationResult = await _mediator.SendAsync(locationQuery, CancellationToken.None);
 
                             if (locationResult.IsSuccess && locationResult.Value?.Any() == true)
                             {
@@ -658,7 +688,7 @@ public partial class ReportListing : ComponentBase
             var reportId = new ReportID(reportCode);
 
             var queryHazard = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
-            var hazardResult = await __mediator.SendAsync(queryHazard, CancellationToken.None);
+            var hazardResult = await _mediator.SendAsync(queryHazard, CancellationToken.None);
 
             if (hazardResult is not null)
             {
@@ -671,7 +701,7 @@ public partial class ReportListing : ComponentBase
                     hazard.ResidualRiskMatrixCode = "TBD";
                     hazard.InitialRiskMatrixCode = "TBD";
                     var cmdHazardReset = new ResetHazardScoresCommand(hazard);
-                    var hazardResetResult = await __mediator.SendAsync(cmdHazardReset, CancellationToken.None);
+                    var hazardResetResult = await _mediator.SendAsync(cmdHazardReset, CancellationToken.None);
 
 
                 }
@@ -679,12 +709,12 @@ public partial class ReportListing : ComponentBase
 
 
             var validationQuery = new GetReportValidationByReportIdQuery(reportId);
-            var validationResult = await __mediator.SendAsync(validationQuery, CancellationToken.None);
+            var validationResult = await _mediator.SendAsync(validationQuery, CancellationToken.None);
             if (validationResult.IsSuccess && validationResult.Value is not null)
             {
                 var validation = validationResult.Value;
                 var cmd = new ResetReportValidationCommand(new ReportValidationID(validation.Code));
-                var cmdReset = await __mediator.SendAsync(cmd, CancellationToken.None);
+                var cmdReset = await _mediator.SendAsync(cmd, CancellationToken.None);
 
                 if (cmdReset.IsSuccess)
                 {
@@ -731,18 +761,18 @@ public partial class ReportListing : ComponentBase
 
             // Get the report details first
             var reportQuery = new GetReportByCodeQuery(new ReportID(reportCode));
-            var reportResult = await __mediator.SendAsync(reportQuery, CancellationToken.None);
+            var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
 
             if (reportResult.IsSuccess && reportResult.Value is not null)
             {
                 var report = reportResult.Value;
 
                 // Create new ReportValidation using the static factory method
-                var validation = ReportValidation.Create(reportCode, _currentUserService?.UserDisplayName ?? "Unknown User");
+                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, _currentUserService?.UserDisplayName ?? "Unknown User");
                 validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
 
                 var createCommand = new CreateReportValidationCommand(validation);
-                var createResult = await __mediator.SendAsync(createCommand, CancellationToken.None);
+                var createResult = await _mediator.SendAsync(createCommand, CancellationToken.None);
 
                 if (createResult.IsSuccess)
                 {
@@ -782,7 +812,7 @@ public partial class ReportListing : ComponentBase
     private async Task<bool> UpdateReportStatus(string reportcode, ReportStatus status)
     {
         var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, _currentUserService?.UserDisplayName ?? "Unknown User");
-        var getupdateResult = await __mediator.SendAsync(updatestatuscmd, CancellationToken.None);
+        var getupdateResult = await _mediator.SendAsync(updatestatuscmd, CancellationToken.None);
         if (!getupdateResult.IsSuccess)
         {
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Report{reportcode} Status Was not Updated"));
@@ -1081,6 +1111,70 @@ public async Task OnResetReportAsync(Report report)
     }
 
    
+
+    #endregion
+
+    #region Description Modal Methods
+
+    /// <summary>
+    /// Render the hazard description column in the data grid
+    /// </summary>
+    private void RenderHazardDescriptionColumn(RenderTreeBuilder builder, bool includeActions = true)
+    {
+        builder.OpenComponent<RadzenDataGridColumn<Report>>(10);
+        builder.AddAttribute(11, "Title", "Description");
+        builder.AddAttribute(12, "Width", "100px");
+        builder.AddAttribute(13, "Sortable", false);
+        builder.AddAttribute(14, "Template", (RenderFragment<Report>)(report =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenButton>(0);
+                templateBuilder.AddAttribute(1, "Text", "Description");
+                templateBuilder.AddAttribute(2, "Icon", "description");
+                templateBuilder.AddAttribute(3, "ButtonStyle", ButtonStyle.Base);
+                templateBuilder.AddAttribute(4, "Variant", Variant.Text);
+                templateBuilder.AddAttribute(5, "Size", ButtonSize.ExtraSmall);
+                templateBuilder.AddAttribute(6, "Title", "Click to view full description");
+                templateBuilder.AddAttribute(7, "Class", "description-button");
+                templateBuilder.AddAttribute(8, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                    (args) => ShowDescriptionDialog(report)));
+                templateBuilder.CloseComponent();
+            }
+             )));
+        builder.CloseComponent();
+    }
+
+    /// <summary>
+    /// Show the description dialog for a report
+    /// </summary>
+    private async Task ShowDescriptionDialog(Report report)
+    {
+        try
+        {
+            SelectedDescription = report.Description ?? "No description available";
+            SelectedReportId = report.Code ?? "Unknown";
+            ShowDescriptionModal = true;
+            StateHasChanged();
+
+            _logger.LogInformation("Showing description modal for report {ReportId}", report.Code);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing description modal for report {ReportId}", report.Code);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error showing description details"));
+        }
+    }
+
+    /// <summary>
+    /// Close the description modal
+    /// </summary>
+    private void CloseDescriptionModal()
+    {
+        ShowDescriptionModal = false;
+        SelectedDescription = string.Empty;
+        SelectedReportId = string.Empty;
+        StateHasChanged();
+    }
 
     #endregion
 }

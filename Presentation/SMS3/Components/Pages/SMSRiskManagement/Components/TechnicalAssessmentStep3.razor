@@ -17,13 +17,13 @@
            
                 <RadzenStack Gap="1rem">
                     <RadzenRow AlignItems="AlignItems.Center">
-                        <RadzenColumn Size="10">
+                        <RadzenColumn Size="8">
                             <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-secondary); margin: 0;">
                                 <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
                             Hazard Risk Analysis (@GetAnalyzedCount()/@(Step3Hazards?.Count ?? 0) completed)
                             </RadzenText>
                         </RadzenColumn>
-                        <RadzenColumn Size="2">
+                        <RadzenColumn Size="4">
                             <RadzenText TextStyle="TextStyle.Caption" Text="Complete analysis for each hazard" />
                         </RadzenColumn>
                     </RadzenRow>
@@ -61,7 +61,7 @@
                                     
                                     <!-- Hazard Description -->
                                     <RadzenRow Gap="1rem">
-                                        <RadzenColumn Size="12" SizeMD="6">
+                                        <RadzenColumn Size="12" SizeMD="12">
                                             <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0;">
                                                 <strong>Description:</strong> @hazard.Description
                                             </RadzenText>

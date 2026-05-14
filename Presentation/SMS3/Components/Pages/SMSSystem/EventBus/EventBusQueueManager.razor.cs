@@ -12,6 +12,8 @@ using Microsoft.Extensions.Logging;
 using Radzen;
 using Radzen.Blazor;
 using SMS_Application.Interfaces;
+
+using SMS_Domain.Events;
 using SMS_Domain.ValueObjects;
 
 namespace SMS3.Components.Pages.SMSSystem.EventBus;
@@ -35,6 +37,28 @@ public partial class EventBusQueueManager
     private EventCategory? _eventTypeFilter;
 
     #endregion
+    // Helper to extract HazardCode or HazardId from HazardCreatedEvent domain events
+    private string GetHazardIdentifier(QueuedEvent queuedEvent)
+    {
+        if (queuedEvent.EventCategory == EventCategory.DomainEvent && !string.IsNullOrEmpty(queuedEvent.EventData))
+        {
+            try
+            {
+                var hazardEvent = System.Text.Json.JsonSerializer.Deserialize<HazardCreatedEvent>(queuedEvent.EventData);
+                if (hazardEvent != null)
+                {
+                    return !string.IsNullOrEmpty(hazardEvent.HazardCode)
+                        ? hazardEvent.HazardCode
+                        : hazardEvent.HazardId ?? string.Empty;
+                }
+            }
+            catch
+            {
+                // Ignore deserialization errors
+            }
+        }
+        return string.Empty;
+    }
 
     #region Filter Options
 
@@ -181,10 +205,66 @@ public partial class EventBusQueueManager
 
             Logger.LogInformation("Manually executing event {EventId}", eventId);
 
-            // Get the event details before execution to check if it's a UI event
+            // Get the event details before execution
             var eventResult = await EventQueueService.GetQueuedEventAsync(eventId);
-            var isUIEvent = eventResult.IsSuccess && eventResult.Value.EventCategory == EventCategory.UIEvent;
-            var uiEventData = isUIEvent ? DeserializeUIEventData(eventResult.Value.EventData) : null;
+            if (!eventResult.IsSuccess)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Event Not Found",
+                    Detail = eventResult.Error?.Message ?? "Event not found.",
+                    Duration = 4000
+                });
+                return;
+            }
+
+            var queuedEvent = eventResult.Value;
+
+            // Check for IntegrationEvent and Email Notification
+            if (queuedEvent.EventCategory == EventCategory.IntegrationEvent &&
+                queuedEvent.EventType == "Integration.Email.Notification")
+            {
+                try
+                {
+                    var emailEvent = System.Text.Json.JsonSerializer.Deserialize<SMS_Domain.Events.EmailNotificationEvent>(queuedEvent.EventData);
+                    if (emailEvent != null)
+                    {
+                        var model = new SMS3.Components.Pages.SMSSystem.Models.EmailComposeModel
+                        {
+                            To = emailEvent.ToRecipients ?? new List<string>(),
+                            Cc = emailEvent.CcRecipients ?? new List<string>(),
+                            Bcc = emailEvent.BccRecipients ?? new List<string>(),
+                            Subject = emailEvent.Subject,
+                            BodyHtml = emailEvent.IsHtmlContent ? emailEvent.Body : null
+                        };
+
+                        await DialogService.OpenAsync<Components.EmailComposeDialog>(
+                            "Test Email Notification",
+                            new Dictionary<string, object> { { "InitialModel", model } },
+                            new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
+                        );
+                        // Do not execute the event, just show the dialog for testing
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.LogError(ex, "Failed to deserialize EmailNotificationEvent for event {EventId}", eventId);
+                    NotificationService.Notify(new NotificationMessage
+                    {
+                        Severity = NotificationSeverity.Error,
+                        Summary = "Email Preview Error",
+                        Detail = "Could not preview email notification.",
+                        Duration = 4000
+                    });
+                    return;
+                }
+            }
+
+            // UI Event logic (existing)
+            var isUIEvent = queuedEvent.EventCategory == EventCategory.UIEvent;
+            var uiEventData = isUIEvent ? DeserializeUIEventData(queuedEvent.EventData) : null;
 
             var result = await EventQueueService.ExecuteQueuedEventAsync(eventId, "ManualUI");
 
@@ -204,7 +284,7 @@ public partial class EventBusQueueManager
                 NotificationService.Notify(new NotificationMessage
                 {
                     Severity = NotificationSeverity.Error,
-                    Summary = "Execution Failed", 
+                    Summary = "Execution Failed",
                     Detail = result.Error.Message,
                     Duration = 4000
                 });

@@ -48,8 +48,6 @@ public partial class TechnicalAssessment : ComponentBase
     
     public RiskAnalysis? TechRiskAnalysis { get; set; }
     
-
-
     public Hazard? PrimaryHazard { get; set; }
     public Report? SourceReport { get; set; }
     public List<Hazard> ReportHazards { get; set; } = new();
@@ -70,7 +68,6 @@ public partial class TechnicalAssessment : ComponentBase
 
     public string AssessmentName => GetCurrentAssessmentName();
     public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.UserName.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
-
     public string LeadInvestigatorName => AvailableInvestigators.FirstOrDefault()?.DisplayName ?? "Not Assigned";
 
     // CRITICAL: Make this a property that can trigger change detection
@@ -105,7 +102,6 @@ public partial class TechnicalAssessment : ComponentBase
             _ => "Unknown Step"
         };
     }
-
     public string GetStepIcon(int stepNumber)
     {
         return stepNumber switch
@@ -124,7 +120,6 @@ public partial class TechnicalAssessment : ComponentBase
     #region Reference Data
 
     public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
-
     public List<SMSApplicationUser> AvailableInvestigators { get; set; } = new();
     public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     public List<SMSApplicationUser> AvailableSMSUsers { get; set; } = new();
@@ -197,7 +192,16 @@ public partial class TechnicalAssessment : ComponentBase
     #endregion
 
     #region Data Loading Methods
+    private async Task LoadSourceReport()
+    {
+        var query = new GetReportByCodeQuery(new ReportID(ReportId));
+        var result = await _mediator.SendAsync(query, CancellationToken.None);
 
+        if (result.IsSuccess && result.Value is not null)
+        {
+            SourceReport = result.Value;
+        }
+    }
     private async Task LoadAssessmentDataAsync()
     {
         try
@@ -206,9 +210,9 @@ public partial class TechnicalAssessment : ComponentBase
             StateHasChanged();
 
             _logger.LogInformation("Loading Technical Assessment - Step {StepNumber}, ReportId: {ReportId}, HazardId: {HazardId}",CurrentStep, ReportId, HazardId);
-
+            await LoadSourceReport();
             await LoadCoreAssessmentDataAsync();
-            await LoadReportHazardsAsync(); // ✅ FIXED: Load hazards BEFORE loading step data
+            await LoadReportHazardsAsync(); // Load hazards BEFORE loading step data
             await LoadStepDataFromAssessment(); // Step models need ReportHazards to be populated
             await LoadReferenceDataAsync();
 
@@ -1743,6 +1747,39 @@ public partial class TechnicalAssessment : ComponentBase
     private static RiskLevel GetHigherRiskLevel(RiskLevel level1, RiskLevel level2)
     {
         return level1.RequiredAuthorityLevel >= level2.RequiredAuthorityLevel ? level1 : level2;
+    }
+
+    #endregion
+
+    #region Report Description Modal
+
+    private bool ShowDescriptionModal = false;
+    private string SelectedDescription = string.Empty;
+    private string SelectedReportId = string.Empty;
+
+    private void ShowDescriptionDialog()
+    {
+        try
+        {
+            SelectedDescription = SourceReport?.Description ?? "No description available";
+            SelectedReportId = SourceReport?.Code ?? "Unknown";
+            ShowDescriptionModal = true;
+            StateHasChanged();
+            _logger.LogInformation("Showing description modal for report {ReportId}", SourceReport?.Code);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing description modal for report {ReportId}", SourceReport?.Code);
+            _notificationHelper.ShowErrorAsync("Error showing description details");
+        }
+    }
+
+    private void CloseDescriptionModal()
+    {
+        ShowDescriptionModal = false;
+        SelectedDescription = string.Empty;
+        SelectedReportId = string.Empty;
+        StateHasChanged();
     }
 
     #endregion

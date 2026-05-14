@@ -181,12 +181,7 @@ public partial class OrganizationalUsers : ComponentBase
         IsValidDepartment(EditDepartmentId) &&
         IsValidOrganizationLevel(EditOrganizationLevelId);
 
-    private bool IsPasswordFormValid =>
-        !string.IsNullOrWhiteSpace(NewPassword) &&
-        !string.IsNullOrWhiteSpace(ConfirmPassword) &&
-        NewPassword == ConfirmPassword &&
-        NewPassword.Length >= 8;
-
+    
     // Helper method to validate organization level
     private bool IsValidOrganizationLevel(string organizationLevel)
     {
@@ -555,18 +550,7 @@ public partial class OrganizationalUsers : ComponentBase
         ShowSuccessAsyncNotification($"Password updated successfully for {PasswordUserDisplayName}.");
     }
 
-    // Legacy methods - kept for compatibility
-    private void ClosePasswordModal()
-    {
-        ClosePasswordChangeModal();
-    }
-
-    private async Task UpdatePassword()
-    {
-        // This method is no longer used with the shared component
-        // but kept for compatibility if referenced elsewhere
-        ShowErrorAsyncNotification("Please use the password change modal to update passwords.");
-    }
+      
 
     #endregion
 

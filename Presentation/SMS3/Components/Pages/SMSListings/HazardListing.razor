@@ -13,7 +13,7 @@
 
 <!-- SMS Page Header using reusable component -->
 <PageHeader Title="Hazard Listing"
-           Subtitle="Complete listing and management interface for all SMS hazards"
+           Subtitle="Complete listing for all SMS Hazards"
            Icon="fas fa-list" />
 
 <RadzenDataGrid @ref="hazardsGrid" 
@@ -53,11 +53,16 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Hazard" Property="Description" Title="Description" Width="350px" >
+        <RadzenDataGridColumn TItem="Hazard" Title="Description" Width="100px" Sortable="false">
             <Template Context="hazard">
-                <div title="@hazard.Description" style="@BasicTextStyle">
-                    @(hazard.Description?.Length > 50 ? hazard.Description[..47] + "..." : hazard.Description)
-                </div>
+                <RadzenButton Text="Description"
+                              Icon="description"
+                              ButtonStyle="ButtonStyle.Base"
+                              Variant="Variant.Text"
+                              Size="ButtonSize.ExtraSmall"
+                              Title="Click to view full description"
+                              Class="description-button"
+                              Click="@(() => ShowDescriptionDialog(hazard))" />
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Hazard" Property="HazardRiskLevel" Title="Risk Level" Width="350px">
@@ -103,3 +108,111 @@
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
+
+@if (ShowDescriptionModal)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-md">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-file-alt"></i> Hazard Description - @SelectedHazardId
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Text"
+                                      Icon="close"
+                                      Size="ButtonSize.Small"
+                                      Click="@CloseDescriptionModal" />
+                    </div>
+                </div>
+                <div class="sms-modal-body">
+                    <RadzenCard Variant="Variant.Outlined">
+                        <div class="p-3">
+                            <RadzenText TextStyle="TextStyle.Body1" Style="line-height: 1.6; white-space: pre-wrap;">
+                                @SelectedDescription
+                            </RadzenText>
+                        </div>
+                    </RadzenCard>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end">
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                      Text="Close"
+                                      Icon="close"
+                                      Click="@CloseDescriptionModal"
+                                      Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .sms-modal-xxl {
+        max-width: 1400px;
+        width: 95%;
+    }
+
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+        padding: 1rem;
+    }
+
+    .sms-modal-dialog {
+        position: relative;
+        margin: 0 auto;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+
+    .sms-modal-md {
+        max-width: 700px;
+        width: 100%;
+    }
+
+    .sms-modal-content {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+    }
+
+    .sms-modal-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .sms-header-primary {
+        background-color: #212e61; /* SMS Blue Dark Bold */
+        color: white;
+    }
+
+    .sms-modal-title {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .sms-modal-body {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+
+    .sms-modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e9ecef;
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+
+    
+</style>

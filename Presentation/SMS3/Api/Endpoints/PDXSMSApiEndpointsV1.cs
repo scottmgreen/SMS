@@ -32,7 +32,7 @@ namespace SMS3.Api.Endpoints
         public static WebApplication MapPDXSMSApiEndpointsV1(this WebApplication app, ApiVersionSet versionSet)
         {
             var group = app.MapGroup("/api/v1/pdxsms")
-                .WithGroupName("v1")
+                //.WithGroupName("v1")
                 .WithApiVersionSet(versionSet)
                 .MapToApiVersion(1.0)
                 .WithTags("PDXSMSApiV1");
@@ -46,6 +46,7 @@ namespace SMS3.Api.Endpoints
                 .Produces<PDXSMSReportApiResponse>(StatusCodes.Status200OK)
                 .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
                 .Produces<ApiErrorResponse>(StatusCodes.Status500InternalServerError);
+                
                 //.WithApiVersionSet(app.GetApiVersionSet("v1"));
 
             // Get hazard categories

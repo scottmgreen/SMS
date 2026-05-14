@@ -61,7 +61,7 @@ namespace SMS3.Api.Endpoints
         public static WebApplication MapPDXSMSApiEndpointsV2(this WebApplication app, ApiVersionSet versionSet)
         {
             var group = app.MapGroup("/api/v2/pdxsms")
-                .WithGroupName("v2")
+                //.WithGroupName("v2")
                 .WithApiVersionSet(versionSet)
                 .MapToApiVersion(2.0)
                 .WithTags("PDXSMSApiV2");

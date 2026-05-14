@@ -643,4 +643,33 @@ public partial class RiskRegistry : ComponentBase
         return riskLevel?.GetCssStyle() ?? "background: #6c757d; color: #ffffff;";
     }
     #endregion
+
+    private bool ShowDescriptionModal = false;
+    private string SelectedDescription = string.Empty;
+    private string SelectedHazardId = string.Empty;
+
+    private void ShowDescriptionDialog(RiskRegistryEntry registry)
+    {
+        try
+        {
+            SelectedDescription = registry.HazardDescription ?? "No description available";
+            SelectedHazardId = registry.HazardCode ?? "Unknown";
+            ShowDescriptionModal = true;
+            StateHasChanged();
+            _logger.LogInformation("Showing description modal for hazard {HazardId}", registry.HazardCode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing description modal for hazard {HazardId}", registry.HazardCode);
+            _notificationHelper.ShowErrorAsync("Error showing description details");
+        }
+    }
+   
+    private void CloseDescriptionModal()
+    {
+        ShowDescriptionModal = false;
+        SelectedDescription = string.Empty;
+        SelectedHazardId = string.Empty;
+        StateHasChanged();
+    }
 }

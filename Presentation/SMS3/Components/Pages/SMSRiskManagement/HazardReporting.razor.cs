@@ -558,7 +558,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
             // Try to determine category from hazard type
             var hazardType = HazardType.FromValue(EditingHazard.HazardType ?? "");
-            var category = hazardType is not null ? HazardCategory.FromValue(hazardType.Category) : null;
+            var category = HazardCategory.FromValue(EditingHazard.HazardCategory ?? "") ;
 
             _logger.LogInformation("Determined category: {Category} from hazard type: {HazardType}", 
                 category?.Value ?? "NULL", EditingHazard.HazardType);
@@ -678,8 +678,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 }
                 else
                 {
-                    _logger.LogWarning("Selected type {Type} not found in category {Category}",
-                        currentSelectedType, category.Value);
+                    HazardReport.HazardType = HazardType.Default.Value;
+                    _logger.LogWarning("Selected type {Type} not found in category {Category}",currentSelectedType, category.Value);
                 }
             }
 

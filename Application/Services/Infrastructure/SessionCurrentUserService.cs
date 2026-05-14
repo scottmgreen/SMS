@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------
-// <copyright file="SessionBasedCurrentUserService.cs" company="SMS Safety Management System">
+// <copyright file="SessionCurrentUserService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
 //     Description: Session-based current user service that replaces StaticCurrentUserService
@@ -20,16 +20,16 @@ namespace SMS_Application.Services;
 /// Uses exact same interface and permission logic as StaticCurrentUserService
 /// ENHANCED: Now supports circuit-based storage for Blazor Server
 /// </summary>
-public class SessionBasedCurrentUserService : ICurrentUserService
+public class SessionCurrentUserService : ICurrentUserService
 {
     private readonly IHttpContextAccessor _httpContextAccessor;
-    private readonly ILogger<SessionBasedCurrentUserService> _logger;
+    private readonly ILogger<SessionCurrentUserService> _logger;
     private readonly IBlazorCircuitAuthStorage _circuitAuthStorage;
     private readonly ISMSSessionService _smsSessionService;
 
-    public SessionBasedCurrentUserService(
+    public SessionCurrentUserService(
         IHttpContextAccessor httpContextAccessor, 
-        ILogger<SessionBasedCurrentUserService> logger,
+        ILogger<SessionCurrentUserService> logger,
         IBlazorCircuitAuthStorage circuitAuthStorage,
         ISMSSessionService smsSessionService)
     {

@@ -1,0 +1,63 @@
+/* Email Compose Dialog Styles */
+
+.compose-root {
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    padding: 0;
+    min-width: 400px;
+}
+.compose-titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem 0.5rem 1.5rem;
+    border-bottom: 1px solid #e0e0e0;
+}
+.compose-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+}
+.compose-header {
+    padding: 1rem 1.5rem 0 1.5rem;
+}
+.compose-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+.compose-label {
+    min-width: 60px;
+    font-weight: 500;
+    color: #555;
+}
+.compose-field {
+    flex: 1;
+}
+.compose-actions {
+    display: flex;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e0e0e0;
+    background: #fafbfc;
+}
+.compose-editor {
+    padding: 1rem 1.5rem;
+}
+.sending-indicator {
+    margin-left: 1rem;
+    color: #888;
+    font-style: italic;
+}
+.chips {
+    min-width: 200px;
+}
+.subject-input {
+    width: 100%;
+}
+.toggle-link {
+    margin-right: 1rem;
+    cursor: pointer;
+    color: #1976d2;
+    text-decoration: underline;
+}

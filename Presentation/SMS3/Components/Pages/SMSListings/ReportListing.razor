@@ -15,8 +15,8 @@
 
 <!-- SMS Page Header using reusable component -->
 <PageHeader Title="Reports Listing"
-           Subtitle=""
-           Icon="fas fa-table" />
+            Subtitle="Complete listing for all SMS Reports"
+            Icon="fas fa-list" />
 
 
 
@@ -35,7 +35,6 @@
                 Style="height: calc(100vh - 250px)"
                 IsLoading="@isLoading"
                 >
-    
     <Columns>
         <RadzenDataGridColumn TItem="Report" Property="Code" Title="Report ID" Width="150px" >
             <Template Context="report">
@@ -51,11 +50,16 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Report" Property="Description" Title="Description" Width="250px">
+        <RadzenDataGridColumn TItem="Report" Title="Description" Width="100px" Sortable="false">
             <Template Context="report">
-                <div title="@report.Description" style="@BasicTextStyle">
-                    @(report.Description?.Length > 50 ? report.Description[..47] + "..." : report.Description)
-                </div>
+                <RadzenButton Text="Description"
+                              Icon="description"
+                              ButtonStyle="ButtonStyle.Base"
+                              Variant="Variant.Text"
+                              Size="ButtonSize.ExtraSmall"
+                              Title="Click to view full description"
+                              Class="description-button"
+                              Click="@(() => ShowDescriptionDialog(report))" />
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Report" Property="Status" Title="Status" Width="250px">
@@ -374,6 +378,46 @@
     </div>
 }
 
+@if (ShowDescriptionModal)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-md">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-file-alt"></i> Report Description - @SelectedReportId
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Text"
+                                      Icon="close"
+                                      Size="ButtonSize.Small"
+                                      Click="@CloseDescriptionModal" />
+                    </div>
+                </div>
+                <div class="sms-modal-body">
+                    <RadzenCard Variant="Variant.Outlined">
+                        <div class="p-3">
+                            <RadzenText TextStyle="TextStyle.Body1" Style="line-height: 1.6; white-space: pre-wrap;">
+                                @SelectedDescription
+                            </RadzenText>
+                        </div>
+                    </RadzenCard>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end">
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                      Text="Close"
+                                      Icon="close"
+                                      Click="@CloseDescriptionModal"
+                                      Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <style>
 .sms-modal-xxl {
     max-width: 1400px;
@@ -401,6 +445,10 @@
     overflow-y: auto;
 }
 
+    .sms-modal-md {
+        max-width: 700px;
+        width: 100%;
+    }
 .sms-modal-content {
     background: white;
     border-radius: 0.5rem;

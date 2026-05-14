@@ -94,8 +94,6 @@ else if (ShowFinalSuccessConfirmation)
 
     </div>
 
-
-
 }
 else
 {
@@ -126,7 +124,7 @@ else
                                         <strong>⚠️ DEFAULT HAZARD CLASSIFICATION DETECTED</strong>
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: #721c24;">
-                                        This hazard was submitted with default classification values. Please update the Hazard Category and Type to proper values before proceeding.
+                                        Please update the Hazard Category and Type to proper values before proceeding.
                                     </RadzenText>
                                 </div>
                             </RadzenStack>
@@ -195,6 +193,18 @@ else
                                             </div>
                                         }
                                     </RadzenColumn>
+                                    <RadzenColumn Size="3">
+                                        <RadzenFormField AllowFloatingLabel="false" Text="Contact Company" Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenTextBox @bind-Value="@HazardReport.ReportContactCompany"
+                                                           Placeholder="Company Name"
+                                                           Name="ContactCompany"
+                                                           MaxLength="60"
+                                                           Style="width: 100%;min-width: 100%;" />
+                                            <RadzenRegexValidator Component="ContactCompany"
+                                                                  Text="Please enter a valid name (letters, spaces, hyphens, and apostrophes only)"
+                                                                  Pattern="^[a-zA-Z\s\-'\.]+$" />
+                                        </RadzenFormField>
+                                    </RadzenColumn>
                                 </RadzenCard>
                             }
                             else
@@ -202,6 +212,7 @@ else
                                 HazardReport.ReportContactName = string.Empty;
                                 HazardReport.ReportContactCell =string.Empty;
                                 HazardReport.ReportContactEmail = string.Empty;
+                                HazardReport.ReportContactCompany = string.Empty;
                             }
 
                         <RadzenCard>
@@ -253,13 +264,7 @@ else
 
                         </RadzenCard>
                         
-                        
-                        
-                        
                         </RadzenRow>
-
-
-
                   
                         <!-- Row 2: Hazard Category and Hazard Type -->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
@@ -287,18 +292,15 @@ else
                                                   Style="width: 100%; min-width: 100%;" />
                                 </RadzenFormField>
                                 <RadzenRequiredValidator Component="HazardCategory" Text="Hazard category is required" />
-                                @if (IsHazardCategoryDefault)
+                                @* @if (IsHazardCategoryDefault)
                                 {
-                                    <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.ExtraSmall" Variant="Variant.Outlined" 
-                                                 class="rz-mt-1 default-validation-alert">
-                                        @* <RadzenIcon Icon="warning" Style="font-size: 0.9rem;" /> *@
-                                        <strong>Default category detected!</strong> Please select a proper hazard category.
+                                    <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.ExtraSmall" Variant="Variant.Outlined" class="rz-mt-1 default-validation-alert">
+                                        <small>Default Hazard Category detected</small> 
                                     </RadzenAlert>
-                                }
+                                } *@
                             </RadzenColumn>
                             <RadzenColumn Size="3">
-                                <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false"
-                                                 class="@(IsHazardTypeDefault ? "validation-error-field" : "")">
+                                <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false" class="@(IsHazardTypeDefault ? "validation-error-field" : "")">
                                     <RadzenDropDown @bind-Value="@HazardReport.HazardType" 
                                                   Data="@HazardTypeOptions" 
                                                   TextProperty="Text" 
@@ -312,26 +314,24 @@ else
                                                   Style="width: 100%; min-width: 100%;" />
                                 </RadzenFormField>
                                 <RadzenRequiredValidator Component="HazardType" Text="Hazard type is required" />
-                                @if (IsHazardTypeDefault)
+                               @*  @if (IsHazardTypeDefault)
                                 {
-                                    <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.ExtraSmall" Variant="Variant.Outlined" 
-                                                 class="rz-mt-1 default-validation-alert">
-                                        @* <RadzenIcon Icon="warning" Style="font-size: 0.9rem;" /> *@
-                                        <strong>Default type detected!</strong> Please select a proper hazard type.
+                                    <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.ExtraSmall" Variant="Variant.Outlined" class="rz-mt-1 default-validation-alert">
+                                        <small> Default Hazard Type detected</small>
                                     </RadzenAlert>
-                                }
+                                } *@
                                 @if (HazardTypeOptions.Count == 0 && string.IsNullOrEmpty(SelectedHazardCategory))
                                 {
                                     <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-info rz-mt-1">
                                         <RadzenIcon Icon="info" Style="font-size: 0.9rem;" />
-                                        Select a category first to see hazard types
+                                        Select a Hazard Category first to see Hazard Types
                                     </RadzenText>
                                 }
                             </RadzenColumn>
                             <RadzenRow>
                                 <RadzenColumn Size="12">
                                     @* Guidance Panel for Selected Hazard Type *@
-                                    @if (!string.IsNullOrEmpty(HazardReport.HazardType))
+                                    @if (HazardReport.HazardType != HazardType.Default.Value)
                                     {
                                         <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
                                             <RadzenStack Gap="0.5rem" Class="rz-p-2">
@@ -343,7 +343,6 @@ else
                                                 @if (RequiresRegulatoryReporting(HazardReport.HazardType))
                                                 {
                                                     <RadzenAlert AlertStyle="AlertStyle.Warning" Size="AlertSize.Small" Variant="Variant.Flat">
-                                                        @* <RadzenIcon Icon="report_problem" /> *@
                                                         <strong>Regulatory Reporting Required</strong>
                                                     </RadzenAlert>
                                                 }
@@ -361,7 +360,7 @@ else
                                             </RadzenStack>
                                         </RadzenCard>
                                     }
-                                    else if (!string.IsNullOrEmpty(SelectedHazardCategory))
+                                    else if (HazardReport.HazardCategory != HazardCategory.Default.Value)
                                     {
                                         <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
                                             <RadzenStack Gap="0.5rem" Class="rz-p-2">
@@ -387,13 +386,26 @@ else
 
                         <!-- Row 3: Hazard Description  -->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
-                            <RadzenColumn Size="12">
+                            <RadzenColumn Size="12" class="rz-col-2">
                                 <RadzenFormField Text="Hazard Description *" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                    <RadzenTextArea @bind-Value="@HazardReport.Description" 
+                                    @* <RadzenTextArea @bind-Value="@HazardReport.Description" 
                                                   Rows="4" Cols="200"
                                                   Name="Description"
                                                   Placeholder="Provide a detailed description of the hazard including what happened, when, who was involved, conditions, immediate actions taken, and potential consequences..."
-                                                  Style="width: 100%;min-width:100%" />
+                                                  Style="width: 100%;min-width:100%" /> *@
+                                    <RadzenHtmlEditor @bind-Value="@HazardReport.Description" Style="width: 100%;min-width:100%" >
+                                        <RadzenHtmlEditorUndo />
+                                        <RadzenHtmlEditorRedo />
+                                        <RadzenHtmlEditorSeparator />
+                                        <RadzenHtmlEditorBold />
+                                        <RadzenHtmlEditorItalic />
+                                        <RadzenHtmlEditorUnderline />
+                                        <RadzenHtmlEditorStrikeThrough />
+                                        <RadzenHtmlEditorSeparator />
+                                        <RadzenHtmlEditorColor />
+                                        <RadzenHtmlEditorBackground />
+                                        <RadzenHtmlEditorRemoveFormat />
+                                    </RadzenHtmlEditor>
                                 </RadzenFormField>
                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Class="rz-mt-1">
                                     <RadzenRequiredValidator Component="Description" Text="Description is required" />
@@ -404,8 +416,7 @@ else
                                 </RadzenStack>
                             </RadzenColumn>
                         </RadzenRow>
-
-                        
+                
                         <!-- Row 4: Location Selection -->
                         <RadzenFieldset Text="Location Selection" Style="margin-bottom: 1rem;" AllowFloatingLabel="false">
                             <div class="location-row rz-mt-1">
@@ -445,7 +456,6 @@ else
                                 </div>
                             </div>
                         </RadzenFieldset>
-
 
                         <!-- Row 5: Supporting Documents @* Change=@OnInputFileChange  *@-->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
@@ -506,10 +516,6 @@ else
                             </RadzenColumn>
                         </RadzenRow>
 
-                        
-                        
-
-                        <!-- Form Actions -->
                         <!-- Row 6: Confidential Flag at Bottom -->
                         <RadzenRow Gap="1rem" Class="rz-border-top-1 rz-pt-3">
                             
@@ -784,7 +790,7 @@ else
             </div>
         </div>
     }
-}
+
 
 <style>
 /* =============================================================================
@@ -815,7 +821,7 @@ else
 }
 
 .sms-modal-submission {
-    max-width: 900px;
+    max-width: 1300px;
     width: 100%;
     height:520px;
         

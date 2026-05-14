@@ -1,0 +1,99 @@
+﻿@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Pages.SMSSystem.Models
+
+
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject IEmailSender EmailSender
+
+@inherits EmailComposeDialogBase
+
+<RadzenTemplateForm Data="@Model" Submit="@SendAsync" TItem="EmailComposeModel" class="compose-root">
+
+    <!-- Title bar -->
+    <div class="compose-titlebar">
+        <div class="compose-title">New message</div>
+        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@Close" />
+    </div>
+
+    <!-- Header fields (Outlook-like) -->
+    <div class="compose-header">
+        <!-- TO -->
+        <div class="compose-row">
+            <label class="compose-label">To</label>
+            <div class="compose-field">
+                <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.Center" class="rz-p-12" Gap="2rem">
+                @foreach (string recipient in Model.To)
+                {
+                    <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@recipient"  />
+                }
+                </RadzenStack>
+            </div>
+        </div>
+
+        <!-- CC (toggleable) -->
+        <div class="compose-row cc-toggle">
+            <RadzenLink Click="@ToggleCc" class="toggle-link">Cc</RadzenLink>
+            <RadzenLink Click="@ToggleBcc" class="toggle-link">Bcc</RadzenLink>
+        </div>
+
+        @if (ShowCc)
+        {
+            <div class="compose-row">
+                <label class="compose-label">Cc</label>
+                <div class="compose-field">
+                    
+                </div>
+            </div>
+        }
+
+        @if (ShowBcc)
+        {
+            <div class="compose-row">
+                <label class="compose-label">Bcc</label>
+                <div class="compose-field">
+                    
+                </div>
+            </div>
+        }
+
+        <!-- Subject -->
+        <div class="compose-row">
+            <label class="compose-label">Subject</label>
+            <div class="compose-field">
+                <RadzenTextBox @bind-Value="Model.Subject" Placeholder="Add a subject" class="subject-input" />
+            </div>
+        </div>
+    </div>
+
+    <!-- Editor (Outlook-style compact) -->
+    <div class="compose-editor">
+        <RadzenHtmlEditor @bind-Value="Model.BodyHtml" class="editor" Height="280px">
+            
+                <RadzenHtmlEditorUndo />
+                <RadzenHtmlEditorRedo />
+                <RadzenHtmlEditorSeparator />
+                <RadzenHtmlEditorBold />
+                <RadzenHtmlEditorItalic />
+                <RadzenHtmlEditorUnderline />
+                <RadzenHtmlEditorStrikeThrough />
+                <RadzenHtmlEditorSeparator />
+                <RadzenHtmlEditorColor />
+                <RadzenHtmlEditorBackground />
+                <RadzenHtmlEditorRemoveFormat />
+            
+        </RadzenHtmlEditor>
+    </div>
+
+    <!-- Actions -->
+    <div class="compose-actions">
+        <RadzenButton Text="Send" Icon="send" ButtonStyle="ButtonStyle.Primary" Click="@SendAsync" Disabled="@IsSending" />
+        <RadzenButton Text="Discard" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@Close" class="ms-8" />
+        @if (IsSending)
+        {
+            <span class="sending-indicator">Sending…</span>
+        }
+    </div>
+
+</RadzenTemplateForm>
