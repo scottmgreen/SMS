@@ -48,9 +48,10 @@ namespace SMS_Application.Configuration
             var applicationAssembly = Assembly.GetExecutingAssembly(); // Gets current assembly (Application)
 
             services.AddApplicationMediator(applicationAssembly);
+            services.AddApplicationEventBus(applicationAssembly);
 
             #region Security Services
-            
+
             // 🚀 Security Feature Service - Feature-driven security policies
             services.AddScoped<ISecurityFeatureService, SecurityFeatureService>();
             
@@ -108,7 +109,7 @@ namespace SMS_Application.Configuration
             services.AddScoped<SPIEventCoordinator>();
 
             // NEW: EventBus Services - Phase 1: SINGLETON for consistent handler registration
-            services.AddSingleton<IBaseEventBus, EventBusService>();
+            services.AddSingleton<IBaseEventBus, EventDispatchService>();
 
             // NEW: EventBus Queue Service - For manual event execution and testing (SINGLETON for shared in-memory queue)
             services.AddSingleton<IEventQueueService, EventQueueService>();
@@ -206,7 +207,12 @@ namespace SMS_Application.Configuration
         {
             // Use the enhanced mediator with pipeline support
             services.AddMediator(assembly);
-
+            
+            return services;
+        }
+        public static IServiceCollection AddApplicationEventBus(this IServiceCollection services, Assembly assembly)
+        {
+            services.AddEventBusHandlers(assembly);
             return services;
         }
     }

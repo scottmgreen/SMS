@@ -44,7 +44,7 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
                     DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateSafetyPerformanceIndicatorCommand for Name: {Name}", request.Name);
+            _logger.LogInformation(" Processing CreateSafetyPerformanceIndicatorCommand for Name: {Name}", request.Name);
 
             // Create the SPI entity
             var spi = new SafetyPerformanceIndicator(
@@ -75,7 +75,7 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created Safety Performance Indicator with ID: {Id}, Name: {Name}",
+                _logger.LogInformation(" Successfully created Safety Performance Indicator with ID: {Id}, Name: {Name}",
                     result.Value?.Id, result.Value?.Name);
             }
             else
@@ -125,7 +125,7 @@ public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
                     DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSafetyPerformanceIndicatorCommand for ID: {Id}", request.Id?.Value);
+            _logger.LogInformation(" Processing UpdateSafetyPerformanceIndicatorCommand for ID: {Id}", request.Id?.Value);
 
             // First, get the existing SPI to update
             var existingSpiResult = await _spiService.GetSafetyPerformanceIndicatorByIdAsync(request.Id, cancellationToken);
@@ -166,7 +166,7 @@ public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated Safety Performance Indicator with ID: {Id}", 
+                _logger.LogInformation(" Successfully updated Safety Performance Indicator with ID: {Id}", 
                     request.Id?.Value);
             }
             else
@@ -305,14 +305,14 @@ public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
                 return Result<bool>.Failure<bool>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSafetyPerformanceIndicatorCommand for ID: {Id}",
+            _logger.LogInformation(" Processing DeleteSafetyPerformanceIndicatorCommand for ID: {Id}",
                 request.SafetyPerformanceIndicatorId?.Value);
 
             var result = await _spiService.DeleteSafetyPerformanceIndicatorAsync(request.SafetyPerformanceIndicatorId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted Safety Performance Indicator with ID: {Id}",
+                _logger.LogInformation(" Successfully deleted Safety Performance Indicator with ID: {Id}",
                     request.SafetyPerformanceIndicatorId?.Value);
             }
             else

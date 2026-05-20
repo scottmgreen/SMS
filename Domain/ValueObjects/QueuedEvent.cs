@@ -40,6 +40,11 @@ public record QueuedEvent
     public string EventData { get; init; } = string.Empty;
 
     /// <summary>
+    /// Report identifier the event originated from.
+    /// </summary>
+    public string ReportId { get; init; } = string.Empty;
+
+    /// <summary>
     /// Current status of the queued event
     /// </summary>
     public QueuedEventStatus Status { get; init; } = QueuedEventStatus.Pending;
@@ -89,6 +94,7 @@ public record QueuedEvent
             EventCategory = EventCategory.DomainEvent,
             EventType = domainEvent.EventType, // Use the event's own EventType property instead of C# type name
             EventData = System.Text.Json.JsonSerializer.Serialize(domainEvent),
+            ReportId = domainEvent.ReportId,
             QueuedBy = queuedBy ?? "System",
             Priority = EventPriority.Normal
         };
@@ -97,13 +103,14 @@ public record QueuedEvent
     /// <summary>
     /// Creates a new QueuedEvent from an integration event
     /// </summary>
-    public static QueuedEvent FromIntegrationEvent<T>(T integrationEvent, string? queuedBy = null) where T : IIntegrationEvent
+    public static QueuedEvent FromIntegrationEvent<T>(T integrationEvent, string? queuedBy = null) where T : IBaseIntegrationEvent
     {
         return new QueuedEvent
         {
             EventCategory = EventCategory.IntegrationEvent,
             EventType = integrationEvent.EventType, // Use the event's own EventType property instead of C# type name
             EventData = System.Text.Json.JsonSerializer.Serialize(integrationEvent),
+            ReportId = integrationEvent.ReportId,
             TargetSystem = integrationEvent.TargetSystem,
             QueuedBy = queuedBy ?? "System",
             Priority = EventPriority.High // Integration events are typically high priority
@@ -113,13 +120,14 @@ public record QueuedEvent
     /// <summary>
     /// Creates a new QueuedEvent from a UI event
     /// </summary>
-    public static QueuedEvent FromUIEvent<T>(T uiEvent, string? queuedBy = null) where T : IUIEvent
+    public static QueuedEvent FromUIEvent<T>(T uiEvent, string? queuedBy = null) where T : IBaseUIEvent
     {
         return new QueuedEvent
         {
             EventCategory = EventCategory.UIEvent,
             EventType = uiEvent.EventType, // Use the event's own EventType property instead of C# type name
             EventData = System.Text.Json.JsonSerializer.Serialize(uiEvent),
+            ReportId = uiEvent.ReportId,
             TargetSystem = uiEvent.TargetComponent,
             QueuedBy = queuedBy ?? "System",
             Priority = EventPriority.Low // UI events are typically lower priority

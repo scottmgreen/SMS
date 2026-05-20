@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Common;
+using SMS_Domain.Entities;
 using SMS_Domain.Interfaces;
 
 namespace SMS_Domain.Events;
@@ -19,7 +20,17 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class SPIComplianceChangedEvent : BaseDomainEvent
 {
-    public override string EventType => "SPI.ComplianceChanged";
+    public override string EventType => "SPI_Compliance_Changed";
+
+    /// <summary>
+    /// Display name for SPI configuration dropdowns
+    /// </summary>
+    public string DataSourceDisplayName => "SMS Event Bus";
+
+    /// <summary>
+    /// Category for grouping in UI
+    /// </summary>
+    public string DataSourceCategory => "SMS Domain Event";
 
     public string SPICode { get; private set; }
     public string SPIName { get; private set; }
@@ -39,6 +50,7 @@ public class SPIComplianceChangedEvent : BaseDomainEvent
     public string RegulatoryBody { get; private set; }
 
     public SPIComplianceChangedEvent(
+        SMSEventID id,
         string spiCode,
         string spiName,
         SPIComplianceStatus previousStatus,
@@ -52,7 +64,7 @@ public class SPIComplianceChangedEvent : BaseDomainEvent
         Dictionary<string, object>? complianceMetadata = null,
         bool requiresRegulatoryReporting = false,
         DateTime? regulatoryReportingDeadline = null,
-        string regulatoryBody = "")
+        string regulatoryBody = "") : base(id)
     {
         SPICode = spiCode ?? throw new ArgumentNullException(nameof(spiCode));
         SPIName = spiName ?? throw new ArgumentNullException(nameof(spiName));

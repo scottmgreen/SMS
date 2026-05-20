@@ -27,12 +27,12 @@ public interface IEventQueueService
     /// <summary>
     /// Queues an integration event for manual execution
     /// </summary>
-    Task<Result> QueueIntegrationEventAsync<T>(T integrationEvent, string? queuedBy = null) where T : IIntegrationEvent;
+    Task<Result> QueueIntegrationEventAsync<T>(T integrationEvent, string? queuedBy = null) where T : IBaseIntegrationEvent;
 
     /// <summary>
     /// Queues a UI event for manual execution
     /// </summary>
-    Task<Result> QueueUIEventAsync<T>(T uiEvent, string? queuedBy = null) where T : IUIEvent;
+    Task<Result> QueueUIEventAsync<T>(T uiEvent, string? queuedBy = null) where T : IBaseUIEvent;
 
     /// <summary>
     /// Gets all queued events with optional filtering

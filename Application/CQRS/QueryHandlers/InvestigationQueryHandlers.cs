@@ -34,7 +34,7 @@ public class GetInvestigationByCodeQueryHandler : BaseQueryBundle, IBaseRequestH
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetInvestigationByCodeQuery for Code: {Code}", request.InvestigationId.Value);
+            _logger.LogInformation(" Processing GetInvestigationByCodeQuery for Code: {Code}", request.InvestigationId.Value);
             var result = await _investigationService.GetInvestigationByCodeAsync(new InvestigationID(request.InvestigationId.Value), ct).ConfigureAwait(false);
             return result;
         }
@@ -61,7 +61,7 @@ public class GetAllInvestigationsQueryHandler : BaseQueryBundle, IBaseRequestHan
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetAllInvestigationsQuery");
+            _logger.LogInformation(" Processing GetAllInvestigationsQuery");
             var result = await _investigationService.GetAllInvestigationsAsync(ct).ConfigureAwait(false);
             return result;
         }

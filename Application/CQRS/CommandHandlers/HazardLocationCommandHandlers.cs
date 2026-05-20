@@ -38,13 +38,13 @@ public class CreateHazardLocationCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateHazardLocationCommand for Code: {Code}", request.HazardLocation.Code);
+            _logger.LogInformation(" Processing CreateHazardLocationCommand for Code: {Code}", request.HazardLocation.Code);
 
             var result = await _hazardLocationService.CreateHazardLocationAsync(request.HazardLocation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created HazardLocation with ID: {Id}, Code: {Code}",
+                _logger.LogInformation(" Successfully created HazardLocation with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -89,14 +89,14 @@ public class UpdateHazardLocationCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateHazardLocationCommand for ID: {Id}, Code: {Code}",
+            _logger.LogInformation(" Processing UpdateHazardLocationCommand for ID: {Id}, Code: {Code}",
                 request.HazardLocation.Id, request.HazardLocation.Code);
 
             var result = await _hazardLocationService.UpdateHazardLocationAsync(request.HazardLocation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated HazardLocation with ID: {Id}", request.HazardLocation.Id);
+                _logger.LogInformation(" Successfully updated HazardLocation with ID: {Id}", request.HazardLocation.Id);
             }
             else
             {
@@ -140,13 +140,13 @@ public class DeleteHazardLocationCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteHazardLocationCommand for ID: {Id}", request.HazardLocationId);
+            _logger.LogInformation(" Processing DeleteHazardLocationCommand for ID: {Id}", request.HazardLocationId);
 
             var result = await _hazardLocationService.DeleteHazardLocationAsync(request.HazardLocationId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted HazardLocation with ID: {Id}", request.HazardLocationId);
+                _logger.LogInformation(" Successfully deleted HazardLocation with ID: {Id}", request.HazardLocationId);
             }
             else
             {

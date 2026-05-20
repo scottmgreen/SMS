@@ -23,4 +23,5 @@ namespace SMS_Application.Common;
 /// </summary>
 public class BaseCommandBundle
 {
+    
 }

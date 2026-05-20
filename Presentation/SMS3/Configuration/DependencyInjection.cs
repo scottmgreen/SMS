@@ -14,8 +14,10 @@ using SMS3.Api.Extensions;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.EventHandlers;
 
-using Swashbuckle.AspNetCore.SwaggerGen;
 using SMS3.Api.Endpoints;
+using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Logging;
 
 namespace SMS3.Configuration;
 
@@ -156,40 +158,46 @@ public static class DependencyInjection
     /// Registers UI Event Handlers for the EventBus (Presentation Layer)
     /// Maintains Clean Architecture by keeping UI handler registration in Presentation layer
     /// </summary>
-    public static IApplicationBuilder InitializeUIEventHandlers(this IApplicationBuilder app)
-    {
-        try
-        {
-            using var scope = app.ApplicationServices.CreateScope();
-            var eventBus = scope.ServiceProvider.GetRequiredService<IBaseEventBus>();
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<IBaseEventBus>>();
+    //public static IApplicationBuilder InitializeUIEventHandlers(this IApplicationBuilder app)
+    //{
+    //    try
+    //    {
+    //        using var scope = app.ApplicationServices.CreateScope();
+    //        var eventBus = scope.ServiceProvider.GetRequiredService<IBaseEventBus>();
+    //        var logger = scope.ServiceProvider.GetRequiredService<ILogger<IBaseEventBus>>();
 
-            logger.LogInformation("🔔 Registering UI Event Handlers (Presentation Layer)...");
+    //        logger.LogInformation("Registering UI Event Handlers (Presentation Layer)...");
 
-            // Register UI notification handler (local to SMS3 project)
-            eventBus.SubscribeUI<UINotificationEvent, UIEventHandler>();
-            logger.LogInformation("✅ Registered UINotificationEventHandler for UINotificationEvent");
+    //        // Register UI notification handler (local to SMS3 project)
+    //        eventBus.SubscribeUI<UINotificationEvent, UIEventHandler>();
+    //        logger.LogInformation("Registered UINotificationEventHandler for UINotificationEvent");
 
-            // TODO: Register additional UI event handlers as they're implemented
-            // eventBus.SubscribeUI<UserPreferenceChangedEvent, UserPreferenceChangedEventHandler>();
-            // eventBus.SubscribeUI<ThemeChangedEvent, ThemeChangedEventHandler>();
-            // eventBus.SubscribeUI<DashboardRefreshEvent, DashboardRefreshEventHandler>();
+    //        // TODO: Register additional UI event handlers as they're implemented
+    //        // eventBus.SubscribeUI<UserPreferenceChangedEvent, UserPreferenceChangedEventHandler>();
+    //        // eventBus.SubscribeUI<ThemeChangedEvent, ThemeChangedEventHandler>();
+    //        // eventBus.SubscribeUI<DashboardRefreshEvent, DashboardRefreshEventHandler>();
 
-            logger.LogInformation("✅ UI event handler registration completed (Presentation Layer)");
+    //        logger.LogInformation("UI event handler registration completed (Presentation Layer)");
 
-            return app;
-        }
-        catch (Exception ex)
-        {
-            // Use a basic logger if dependency injection logger fails
-            var loggerFactory = app.ApplicationServices.GetService<ILoggerFactory>();
-            var logger = loggerFactory?.CreateLogger("EventBus.UI.Initialization") ?? 
-                        Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
+    //        return app;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        // Use a basic logger if dependency injection logger fails
+    //        var loggerFactory = app.ApplicationServices.GetService<ILoggerFactory>();
+    //        var logger = loggerFactory?.CreateLogger("EventBus.UI.Initialization") ?? 
+    //                    Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
 
-            logger.LogError(ex, "❌ Failed to initialize UI EventBus subscriptions");
-            throw; // Re-throw to prevent silent failures during startup
-        }
-    }
+    //        logger.LogError(ex, "❌ Failed to initialize UI EventBus subscriptions");
+    //        throw; // Re-throw to prevent silent failures during startup
+    //    }
+    //}
+
+    /// <summary>
+    /// Automatically subscribes all IBaseEventHandler<T> implementations to the event bus at startup.
+    /// </summary>
+    /// <param name="app">The application builder</param>
+    
 
 
 }

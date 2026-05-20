@@ -40,7 +40,7 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
         // Use configuration-based simulation setting
         _useSimulation = smtpConfig?.Value?.UseSimulation ?? false;
 
-        _logger.LogInformation("?? Email handler initialized with UseSimulation: {UseSimulation}", _useSimulation);
+        _logger.LogInformation("[EMAIL HANDLER] Email handler initialized with UseSimulation: {UseSimulation}", _useSimulation);
     }
 
     /// <summary>
@@ -51,13 +51,13 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
     {
         try
         {
-            _logger.LogInformation("?? [EMAIL HANDLER] Processing email notification: '{Subject}' to {RecipientCount} recipients (Priority: {Priority}) - UseSimulation: {UseSimulation}",
+            _logger.LogInformation("[EMAIL HANDLER] Processing email notification: '{Subject}' to {RecipientCount} recipients (Priority: {Priority}) - UseSimulation: {UseSimulation}",
                 integrationEvent.Subject, integrationEvent.ToRecipients.Count, integrationEvent.Priority, _useSimulation);
 
             // Validate email event before processing
             if (!ValidateEmailEvent(integrationEvent))
             {
-                _logger.LogError("? [EMAIL HANDLER] Email event validation failed for: {Subject}", integrationEvent.Subject);
+                _logger.LogError("[EMAIL HANDLER] Email event validation failed for: {Subject}", integrationEvent.Subject);
                 return Result.Failure(new Error("INVALID_EMAIL_EVENT", "Email event validation failed"));
             }
 
@@ -65,33 +65,31 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
 
             if (_useSimulation)
             {
-                _logger.LogInformation("?? [EMAIL HANDLER] Using simulation mode for email: {Subject}", integrationEvent.Subject);
+                _logger.LogInformation("[EMAIL HANDLER] Using simulation mode for email: {Subject}", integrationEvent.Subject);
                 // Use simulation for development/testing
                 deliveryResult = await SimulateEmailDelivery(integrationEvent, cancellationToken);
             }
             else
             {
-                _logger.LogInformation("?? [EMAIL HANDLER] Using real email delivery for: {Subject}", integrationEvent.Subject);
+                _logger.LogInformation("[EMAIL HANDLER] Using real email delivery for: {Subject}", integrationEvent.Subject);
                 // Use real email delivery for production
                 deliveryResult = await SendRealEmail(integrationEvent, cancellationToken);
             }
 
             if (deliveryResult.IsSuccess)
             {
-                _logger.LogInformation("? [EMAIL HANDLER] Email notification sent successfully: '{Subject}' to {RecipientCount} recipients",
-                    integrationEvent.Subject, integrationEvent.ToRecipients.Count);
+                _logger.LogInformation("[EMAIL HANDLER] Email notification sent successfully: '{Subject}' to {RecipientCount} recipients", integrationEvent.Subject, integrationEvent.ToRecipients.Count);
             }
             else
             {
-                _logger.LogError("? [EMAIL HANDLER] Email notification failed: '{Subject}' - {Error}",
-                    integrationEvent.Subject, deliveryResult.Error.Message);
+                _logger.LogError("[EMAIL HANDLER] Email notification failed: '{Subject}' - {Error}",integrationEvent.Subject, deliveryResult.Error.Message);
             }
 
             return deliveryResult;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? [EMAIL HANDLER] Failed to process email notification: '{Subject}'", integrationEvent.Subject);
+            _logger.LogError(ex, "[EMAIL HANDLER] Failed to process email notification: '{Subject}'", integrationEvent.Subject);
             return Result.Failure(new Error("EMAIL_NOTIFICATION_FAILED", $"Email notification failed: {ex.Message}"));
         }
     }
@@ -185,6 +183,8 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
         // SMS-specific headers for tracking
         content.AppendLine($"X-SMS-Event-ID: {emailEvent.EventId}");
         content.AppendLine($"X-SMS-Event-Type: {emailEvent.EventType}");
+        if (!string.IsNullOrWhiteSpace(emailEvent.ReportId))
+            content.AppendLine($"X-SMS-Report-ID: {emailEvent.ReportId}");
         if (!string.IsNullOrEmpty(emailEvent.WorkflowType))
             content.AppendLine($"X-SMS-Workflow: {emailEvent.WorkflowType}");
         if (!string.IsNullOrEmpty(emailEvent.RelatedEntityId))

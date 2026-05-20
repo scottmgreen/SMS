@@ -14,8 +14,8 @@ namespace SMS_Application.Interfaces;
 /// Base class for UI event handlers providing common SMS infrastructure integration
 /// Optimized for responsive UI updates and user experience
 /// </summary>
-/// <typeparam name="T">UI event type implementing IUIEvent</typeparam>
-public abstract class BaseUIEventHandler<T> : IUIEventHandler<T> where T : IUIEvent
+/// <typeparam name="T">UI event type implementing IBaseUIEvent</typeparam>
+public abstract class BaseUIEventHandler<T> : IUIEventHandler<T> where T : IBaseUIEvent
 {
     protected readonly ILogger Logger;
 

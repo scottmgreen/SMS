@@ -38,7 +38,7 @@ public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup?.Code);
+            _logger.LogInformation(" Processing CreateSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup?.Code);
 
             if (request?.StakeholderGroup == null)
             {
@@ -50,7 +50,7 @@ public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
+                _logger.LogInformation(" Successfully created SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
             }
             else
             {
@@ -94,7 +94,7 @@ public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup?.Code);
+            _logger.LogInformation(" Processing UpdateSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup?.Code);
 
             if (request?.StakeholderGroup == null)
             {
@@ -106,7 +106,7 @@ public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
+                _logger.LogInformation(" Successfully updated SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
             }
             else
             {
@@ -150,7 +150,7 @@ public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup.Code);
+            _logger.LogInformation(" Processing DeleteSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup.Code);
 
             if (string.IsNullOrWhiteSpace(request.StakeholderGroup.Code))
             {
@@ -162,7 +162,7 @@ public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
+                _logger.LogInformation(" Successfully deleted SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
             }
             else
             {
@@ -205,7 +205,7 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IBa
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing AssignUserToStakeholderGroupCommand for user: {UserCode} to group: {GroupCode}",
+            _logger.LogInformation(" Processing AssignUserToStakeholderGroupCommand for user: {UserCode} to group: {GroupCode}",
                 request.UserCode, request.StakeholderGroupID);
 
             if (string.IsNullOrWhiteSpace(request.UserCode) || string.IsNullOrWhiteSpace(request.StakeholderGroupID.Value))
@@ -218,7 +218,7 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IBa
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully assigned user {UserCode} to group {GroupCode}", request.UserCode, request.StakeholderGroupID.Value);
+                _logger.LogInformation(" Successfully assigned user {UserCode} to group {GroupCode}", request.UserCode, request.StakeholderGroupID.Value);
             }
             else
             {
@@ -260,7 +260,7 @@ public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, I
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing RemoveUserFromStakeholderGroupCommand for user: {UserCode} from group: {GroupCode}",
+            _logger.LogInformation(" Processing RemoveUserFromStakeholderGroupCommand for user: {UserCode} from group: {GroupCode}",
                 request.UserCode, request.StakeholderGroupID.Value);
 
             if (string.IsNullOrWhiteSpace(request.UserCode) || string.IsNullOrWhiteSpace(request.StakeholderGroupID.Value))
@@ -273,7 +273,7 @@ public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, I
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully removed user {UserCode} from group {GroupCode}", request.UserCode, request.StakeholderGroupID.Value);
+                _logger.LogInformation(" Successfully removed user {UserCode} from group {GroupCode}", request.UserCode, request.StakeholderGroupID.Value);
             }
             else
             {
@@ -317,7 +317,7 @@ public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IBase
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing ClearUserStakeholderGroupsCommand for user: {UserCode}", request.UserCode);
+            _logger.LogInformation(" Processing ClearUserStakeholderGroupsCommand for user: {UserCode}", request.UserCode);
 
             if (string.IsNullOrWhiteSpace(request.UserCode))
             {
@@ -329,7 +329,7 @@ public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IBase
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully cleared all group memberships for user: {UserCode}", request.UserCode);
+                _logger.LogInformation(" Successfully cleared all group memberships for user: {UserCode}", request.UserCode);
             }
             else
             {

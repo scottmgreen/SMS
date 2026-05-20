@@ -17,11 +17,12 @@ namespace SMS_Domain.Events.UIEvents;
 /// Replaces direct NotificationService usage with event-driven approach
 /// Supports success, error, warning, and info notifications
 /// </summary>
-public class UINotificationEvent : IUIEvent
+public class UINotificationEvent : IBaseUIEvent
 {
     public Guid EventId { get; private set; }
     public DateTime OccurredOn { get; private set; }
-    public string EventType => "UI.Notification.Popup";
+    public string EventType => Domain.Enums.EventType.UINotification.Value;
+    public string ReportId { get; private set; }
     public string TargetComponent { get; private set; }
     public UIEventPriority Priority { get; private set; }
 
@@ -43,6 +44,7 @@ public class UINotificationEvent : IUIEvent
         int duration = 5000,
         string category = "UserAction",
         string? sourceLayer = null,
+        string? reportId = null,
         string targetComponent = "NotificationCenter",
         UIEventPriority priority = UIEventPriority.Normal,
         Dictionary<string, object>? metadata = null)
@@ -56,6 +58,7 @@ public class UINotificationEvent : IUIEvent
         Duration = duration > 0 ? duration : 5000;
         Category = category ?? "UserAction";
         SourceLayer = sourceLayer;
+        ReportId = reportId ?? string.Empty;
         TargetComponent = targetComponent ?? "NotificationCenter";
         Priority = priority;
         Metadata = metadata ?? new Dictionary<string, object>();

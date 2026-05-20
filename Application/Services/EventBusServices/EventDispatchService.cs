@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------
-// <copyright file="EventBusService.cs" company="SMS Safety Management System">
+// <copyright file="EventDispatchService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
 //     Description: EventBus service implementation leveraging existing SMS infrastructure patterns.
@@ -22,16 +22,16 @@ namespace SMS_Application.Services;
 /// Provides event-driven workflow capabilities while maintaining consistency with
 /// existing SMS service patterns, logging, and error handling approaches
 /// </summary>
-public sealed class EventBusService : IBaseEventBus
+public sealed class EventDispatchService : IBaseEventBus
 {
-    private readonly ILogger<EventBusService> _logger;
+    private readonly ILogger<EventDispatchService> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly Lazy<IEventQueueService> _eventQueueService;
     private readonly Dictionary<Type, List<Type>> _eventHandlerMappings = new();
     private readonly object _lock = new object();
 
-    public EventBusService(
-        ILogger<EventBusService> logger,
+    public EventDispatchService(
+        ILogger<EventDispatchService> logger,
         IServiceProvider serviceProvider)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -120,7 +120,7 @@ public sealed class EventBusService : IBaseEventBus
     /// Publishes a UI event for dashboard updates and user interface notifications
     /// UI events typically use immediate execution for responsive user experience
     /// </summary>
-    public async Task<Result> PublishUIEventAsync<T>(T uiEvent, CancellationToken cancellationToken = default) where T : IUIEvent
+    public async Task<Result> PublishUIEventAsync<T>(T uiEvent, CancellationToken cancellationToken = default) where T : IBaseUIEvent
     {
         return await PublishUIEventAsync(uiEvent, EventExecutionMode.Immediate, cancellationToken);
     }
@@ -129,7 +129,7 @@ public sealed class EventBusService : IBaseEventBus
     /// Publishes a UI event with specified execution mode
     /// UI events are optimized for immediate execution and user responsiveness
     /// </summary>
-    public async Task<Result> PublishUIEventAsync<T>(T uiEvent, EventExecutionMode mode, CancellationToken cancellationToken = default) where T : IUIEvent
+    public async Task<Result> PublishUIEventAsync<T>(T uiEvent, EventExecutionMode mode, CancellationToken cancellationToken = default) where T : IBaseUIEvent
     {
         try
         {
@@ -172,7 +172,7 @@ public sealed class EventBusService : IBaseEventBus
     /// Publishes an integration event for external system notifications
     /// Integration events often use queued execution for reliable external delivery
     /// </summary>
-    public async Task<Result> PublishIntegrationEventAsync<T>(T integrationEvent, CancellationToken cancellationToken = default) where T : IIntegrationEvent
+    public async Task<Result> PublishIntegrationEventAsync<T>(T integrationEvent, CancellationToken cancellationToken = default) where T : IBaseIntegrationEvent
     {
         // Default to queued execution for integration events (external reliability)
         return await PublishIntegrationEventAsync(integrationEvent, EventExecutionMode.Queued, cancellationToken);
@@ -182,7 +182,7 @@ public sealed class EventBusService : IBaseEventBus
     /// Publishes an integration event with specified execution mode
     /// Supports different delivery patterns based on external system requirements
     /// </summary>
-    public async Task<Result> PublishIntegrationEventAsync<T>(T integrationEvent, EventExecutionMode mode, CancellationToken cancellationToken = default) where T : IIntegrationEvent
+    public async Task<Result> PublishIntegrationEventAsync<T>(T integrationEvent, EventExecutionMode mode, CancellationToken cancellationToken = default) where T : IBaseIntegrationEvent
     {
         try
         {
@@ -251,7 +251,7 @@ public sealed class EventBusService : IBaseEventBus
     /// Registers a UI event handler for a specific UI event type
     /// Supports dynamic subscription for UI component event handling
     /// </summary>
-    public void SubscribeUI<T, THandler>() where T : IUIEvent where THandler : class, IBaseEventHandler<T>
+    public void SubscribeUI<T, THandler>() where T : IBaseUIEvent where THandler : class, IBaseEventHandler<T>
     {
         lock (_lock)
         {
@@ -281,7 +281,7 @@ public sealed class EventBusService : IBaseEventBus
     /// Registers an integration event handler for a specific integration event type
     /// Supports external system integration and notification handling
     /// </summary>
-    public void SubscribeIntegration<T, THandler>() where T : IIntegrationEvent where THandler : class, IBaseEventHandler<T>
+    public void SubscribeIntegration<T, THandler>() where T : IBaseIntegrationEvent where THandler : class, IBaseEventHandler<T>
     {
         lock (_lock)
         {
@@ -449,7 +449,7 @@ public sealed class EventBusService : IBaseEventBus
     /// Executes all registered UI event handlers immediately
     /// Optimized for responsive user interface updates
     /// </summary>
-    private async Task<Result> ExecuteUIHandlersImmediately<T>(T uiEvent, CancellationToken cancellationToken) where T : IUIEvent
+    private async Task<Result> ExecuteUIHandlersImmediately<T>(T uiEvent, CancellationToken cancellationToken) where T : IBaseUIEvent
     {
         var eventType = typeof(T);
 
@@ -522,7 +522,7 @@ public sealed class EventBusService : IBaseEventBus
     /// Executes all registered integration event handlers immediately
     /// Handles external system notifications and integrations
     /// </summary>
-    private async Task<Result> ExecuteIntegrationHandlersImmediately<T>(T integrationEvent, CancellationToken cancellationToken) where T : IIntegrationEvent
+    private async Task<Result> ExecuteIntegrationHandlersImmediately<T>(T integrationEvent, CancellationToken cancellationToken) where T : IBaseIntegrationEvent
     {
         var eventType = typeof(T);
 
@@ -590,7 +590,7 @@ public sealed class EventBusService : IBaseEventBus
     /// Queues integration event for background processing using EventQueueService
     /// Integration events are stored for later reliable delivery
     /// </summary>
-    private async Task<Result> QueueIntegrationEventForProcessing<T>(T integrationEvent, CancellationToken cancellationToken) where T : IIntegrationEvent
+    private async Task<Result> QueueIntegrationEventForProcessing<T>(T integrationEvent, CancellationToken cancellationToken) where T : IBaseIntegrationEvent
     {
         try
         {
@@ -611,7 +611,7 @@ public sealed class EventBusService : IBaseEventBus
     /// Stores integration event for manual execution using EventQueueService
     /// Integration events are stored and require manual triggering
     /// </summary>
-    private async Task<Result> StoreIntegrationEventForManualExecution<T>(T integrationEvent, CancellationToken cancellationToken) where T : IIntegrationEvent
+    private async Task<Result> StoreIntegrationEventForManualExecution<T>(T integrationEvent, CancellationToken cancellationToken) where T : IBaseIntegrationEvent
     {
         try
         {
@@ -634,7 +634,7 @@ public sealed class EventBusService : IBaseEventBus
     /// Queues UI event for background processing using EventQueueService
     /// UI events are stored for later execution
     /// </summary>
-    private async Task<Result> QueueUIEventForProcessing<T>(T uiEvent, CancellationToken cancellationToken) where T : IUIEvent
+    private async Task<Result> QueueUIEventForProcessing<T>(T uiEvent, CancellationToken cancellationToken) where T : IBaseUIEvent
     {
         try
         {
@@ -655,7 +655,7 @@ public sealed class EventBusService : IBaseEventBus
     /// Stores UI event for manual execution using EventQueueService
     /// UI events are stored and require manual triggering
     /// </summary>
-    private async Task<Result> StoreUIEventForManualExecution<T>(T uiEvent, CancellationToken cancellationToken) where T : IUIEvent
+    private async Task<Result> StoreUIEventForManualExecution<T>(T uiEvent, CancellationToken cancellationToken) where T : IBaseUIEvent
     {
         try
         {

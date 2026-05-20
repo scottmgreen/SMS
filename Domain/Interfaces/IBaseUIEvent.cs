@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------
-// <copyright file="IUIEvent.cs" company="SMS Safety Management System">
+// <copyright file="IBaseUIEvent.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
 //     Description: UI event interface for SMS dashboard updates, user notifications, and component state changes.
@@ -15,7 +15,7 @@ namespace SMS_Domain.Interfaces;
 /// UI events handle dashboard updates, user notifications, and component state changes
 /// These events typically have immediate execution requirements for responsive user experience
 /// </summary>
-public interface IUIEvent
+public interface IBaseUIEvent
 {
     /// <summary>
     /// Unique identifier for this UI event instance
@@ -31,6 +31,11 @@ public interface IUIEvent
     /// Type identifier for the UI event (used by EventBus routing)
     /// </summary>
     string EventType { get; }
+
+    /// <summary>
+    /// Report identifier this event originated from.
+    /// </summary>
+    string ReportId { get; }
 
     /// <summary>
     /// The UI component or area this event relates to

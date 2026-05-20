@@ -772,6 +772,9 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmReportContactEmail = new Lazy<string>(() => "@pReportContactEmail");
     public static string pmReportContactEmail => _pmReportContactEmail.Value;
 
+    private static readonly Lazy<string> _pmReportContactCompany = new Lazy<string>(() => "@pReportContactCompany");
+    public static string pmReportContactCompany => _pmReportContactCompany.Value;
+
 
     private static readonly Lazy<string> _pmReportDescription = new Lazy<string>(() => "@pReportDescription");
     public static string pmReportDescription => _pmReportDescription.Value;

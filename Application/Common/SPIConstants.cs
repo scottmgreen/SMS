@@ -36,7 +36,7 @@ public static class SPIConstants
 {
     /// <summary>
     /// Dynamic data source discovery for SPIs and data points
-    /// REFACTORED: Uses reflection to discover domain events that implement IEventDataSource
+    /// REFACTORED: Uses reflection to discover domain events that implement IEventSource
     /// </summary>
     public static class DataSources
     {
@@ -46,7 +46,7 @@ public static class SPIConstants
 
         /// <summary>
         /// Gets all domain events that can serve as SPI data sources
-        /// Uses reflection to discover events implementing IEventDataSource
+        /// Uses reflection to discover events implementing IEventSource
         /// </summary>
         public static List<EventDataSourceInfo> GetEventDrivenSources()
         {
@@ -65,9 +65,9 @@ public static class SPIConstants
 
                     try
                     {
-                        // Find all types that implement IEventDataSource
+                        // Find all types that implement IEventSource
                         var eventSourceTypes = assembly.GetTypes()
-                            .Where(type => typeof(SMS_Domain.Interfaces.IEventDataSource).IsAssignableFrom(type) && 
+                            .Where(type => typeof(SMS_Domain.Interfaces.IEventSource).IsAssignableFrom(type) && 
                                           !type.IsInterface && 
                                           !type.IsAbstract)
                             .ToList();
@@ -82,9 +82,9 @@ public static class SPIConstants
                                 {
                                     EventType = eventType,
                                     EventTypeName = eventType.Name,
-                                    DisplayName = eventInstance.DataSourceDisplayName,
-                                    Category = eventInstance.DataSourceCategory,
-                                    Description = eventInstance.DataSourceDescription,
+                                    DisplayName = eventInstance.EventSourceDisplayName,
+                                    Category = eventInstance.EventSourceCategory,
+                                    Description = eventInstance.EventSourceDescription,
                                     IsAutomatic = eventInstance.IsAutomaticDataSource,
                                     Priority = eventInstance.DisplayPriority
                                 });
@@ -209,14 +209,14 @@ public static class SPIConstants
         /// Creates an instance of an event type for metadata extraction
         /// Uses reflection with fallback for parameterless constructors
         /// </summary>
-        private static SMS_Domain.Interfaces.IEventDataSource? CreateEventInstance(Type eventType)
+        private static SMS_Domain.Interfaces.IEventSource? CreateEventInstance(Type eventType)
         {
             try
             {
                 // Try to create with default constructor first
                 if (eventType.GetConstructor(Type.EmptyTypes) != null)
                 {
-                    return Activator.CreateInstance(eventType) as SMS_Domain.Interfaces.IEventDataSource;
+                    return Activator.CreateInstance(eventType) as SMS_Domain.Interfaces.IEventSource;
                 }
 
                 // For events with required parameters, use test/default values
@@ -226,7 +226,7 @@ public static class SPIConstants
                     return Activator.CreateInstance(eventType, 
                         "TEST-ID", "TEST-CODE", "Test Hazard", "Test Type", "Test Category",
                         "Test Description", "Test Location", "TEST-REPORT", "System",
-                        DateTime.UtcNow, true, SMS_Domain.Enums.HazardPriority.Medium, null, null) as SMS_Domain.Interfaces.IEventDataSource;
+                        DateTime.UtcNow, true, SMS_Domain.Enums.HazardPriority.Medium, null, null) as SMS_Domain.Interfaces.IEventSource;
                 }
 
                 // For other events, try to create with minimal parameters
@@ -243,7 +243,7 @@ public static class SPIConstants
                         args[i] = GetDefaultValue(parameters[i].ParameterType);
                     }
 
-                    return Activator.CreateInstance(eventType, args) as SMS_Domain.Interfaces.IEventDataSource;
+                    return Activator.CreateInstance(eventType, args) as SMS_Domain.Interfaces.IEventSource;
                 }
             }
             catch (Exception ex)

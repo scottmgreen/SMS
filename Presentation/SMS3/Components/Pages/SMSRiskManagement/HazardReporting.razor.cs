@@ -395,6 +395,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     ReportContactName = EditingReport.ReportContactName,
                     ReportContactCell   = EditingReport.ReportContactCell,
                     ReportContactEmail = EditingReport.ReportContactEmail,
+                    ReportContactCompany = EditingReport.ReportContactCompany,
                     IsAnonymous =   EditingReport.IsAnonymous,
                     HazardCategory = category?.Value,
                     HazardType = hazardType?.Value , //primaryHazard.HazardType,
@@ -463,6 +464,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     ReportContactName = EditingReport.ReportContactName,
                     ReportContactCell = EditingReport.ReportContactCell,
                     ReportContactEmail = EditingReport.ReportContactEmail,
+                    ReportContactCompany  = EditingReport.ReportContactCompany,
                     IsAnonymous = EditingReport.IsAnonymous
                 };
 
@@ -1280,7 +1282,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             ReportContactName = HazardReport.ReportContactName,
             ReportContactCell = HazardReport.ReportContactCell,
             ReportContactEmail = HazardReport.ReportContactEmail,
-
+            ReportContactCompany = HazardReport.ReportContactCompany,
             Description = HazardReport.Description,
             Stage = "INITIAL",
             Status = ReportStatus.ReadyForProcessing, //needs validation
@@ -1721,7 +1723,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     private string GetHazardTypeDisplay(string? key)
     {
-        if (string.IsNullOrEmpty(key)) return "UNKNOWN";
+        if (string.IsNullOrEmpty(key)) return HazardType.Default.Value;
         var hazardType = HazardType.FromValue(key);
         return hazardType?.Name ?? key;
     }
@@ -1731,7 +1733,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     private string GetHazardCategoryDisplay(string? key)
     {
-        if (string.IsNullOrEmpty(key)) return "UNKNOWN";
+        if (string.IsNullOrEmpty(key)) return HazardCategory.Default.Value;
         var category = HazardCategory.FromValue(key);
         return category?.Name ?? key;
     }

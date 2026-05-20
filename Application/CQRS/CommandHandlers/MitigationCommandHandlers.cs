@@ -39,13 +39,13 @@ public class CreateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateMitigationCommand for Code: {Code}", request.Mitigation.Code);
+            _logger.LogInformation(" Processing CreateMitigationCommand for Code: {Code}", request.Mitigation.Code);
 
             var result = await _mitigationService.CreateMitigationAsync(request.Mitigation, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created Mitigation with ID: {Id}, Code: {Code}",
+                _logger.LogInformation(" Successfully created Mitigation with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -90,13 +90,13 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateMitigationCommand for ID: {Id}", request.Mitigation.Id);
+            _logger.LogInformation(" Processing UpdateMitigationCommand for ID: {Id}", request.Mitigation.Id);
 
             var result = await _mitigationService.UpdateMitigationAsync(request.Mitigation, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated Mitigation with ID: {Id}", request.Mitigation.Id);
+                _logger.LogInformation(" Successfully updated Mitigation with ID: {Id}", request.Mitigation.Id);
             }
             else
             {
@@ -140,13 +140,13 @@ public class DeleteMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<bool>.Failure<bool>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteMitigationCommand for ID: {Id}", request.MitigationId);
+            _logger.LogInformation(" Processing DeleteMitigationCommand for ID: {Id}", request.MitigationId);
 
             var result = await _mitigationService.DeleteMitigationAsync(request.MitigationId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted Mitigation with ID: {Id}", request.MitigationId);
+                _logger.LogInformation(" Successfully deleted Mitigation with ID: {Id}", request.MitigationId);
             }
             else
             {

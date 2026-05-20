@@ -46,13 +46,13 @@ public class SPIAutomationService : ISPIAutomationService
     {
         try
         {
-            _logger.LogInformation("?? SPI Automation: Updating Hazard Report Rate for date {Date}", reportDate);
+            _logger.LogInformation("SPI Automation: Updating Hazard Report Rate for date {Date}", reportDate);
 
             // Dynamic SPI lookup - find by name
             var spi = await FindSPIByName("Hazard Report Rate", ct);
             if (spi == null)
             {
-                _logger.LogError("? SPI Automation: Could not find 'Hazard Report Rate' SPI in database");
+                _logger.LogError("SPI Automation: Could not find 'Hazard Report Rate' SPI in database");
                 return Result<bool>.Failure<bool>(DomainErrors.SPIError.NotFound);
             }
 
@@ -60,13 +60,13 @@ public class SPIAutomationService : ISPIAutomationService
             var todaysHazardCount = await GetHazardCountForDate(reportDate, ct);
 
             // Create data point using the actual SPI code from database
-            var dataPoint = new SPIDataPoint(new SPIDataPointID($"HRR-{reportDate:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8]}"))
+            var dataPoint = new SPIDataPoint(new SPIDataPointID($"DP-0000"))
             {
                 SPIId = spi.Code, // Use actual SPI code from database
                 Value = todaysHazardCount,
                 MeasurementDate = reportDate,
                 Period = reportDate.ToString("yyyy-MM-dd"),
-                DataSource = "Automated-HazardEvent",
+                DataSource = "SMS Event Bus - Hazard Created",
                 Notes = $"Daily hazard submissions: {todaysHazardCount} (raw hazard creation count)",
                 IsVerified = true, // Auto-verified for system calculations
                 VerifiedBy = "SYSTEM",
@@ -79,19 +79,19 @@ public class SPIAutomationService : ISPIAutomationService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("? SPI Automation: Successfully updated Hazard Report Rate - Count: {Count}, SPI Code: {Code}", 
+                _logger.LogInformation("SPI Automation: Successfully updated Hazard Report Rate - Count: {Count}, SPI Code: {Code}", 
                     todaysHazardCount, spi.Code);
                 return Result<bool>.Success(true);
             }
             else
             {
-                _logger.LogError("? SPI Automation: Failed to update Hazard Report Rate - Error: {Error}", result.Error?.Message);
+                _logger.LogError("SPI Automation: Failed to update Hazard Report Rate - Error: {Error}", result.Error?.Message);
                 return Result<bool>.Failure<bool>(result.Error);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? SPI Automation: Exception updating Hazard Report Rate");
+            _logger.LogError(ex, "SPI Automation: Exception updating Hazard Report Rate");
             return Result<bool>.Failure<bool>(DomainErrors.SPIError.AutomationFailed);
         }
     }
@@ -113,7 +113,7 @@ public class SPIAutomationService : ISPIAutomationService
                 Value = (decimal)daysToClose,
                 MeasurementDate = closedDate,
                 Period = closedDate.ToString("yyyy-MM-dd"),
-                DataSource = "Automated-HazardClosure",
+                DataSource = "SMS Event Bus - Hazard Status Changed",
                 Notes = $"Hazard {hazardId} closed in {daysToClose:F1} days",
                 IsVerified = true,
                 VerifiedBy = "SYSTEM",
@@ -274,7 +274,7 @@ public class SPIAutomationService : ISPIAutomationService
     {
         try
         {
-            _logger.LogInformation("?? SPI Automation: Updating Mitigation Implementation Rate for mitigation {MitigationId}", mitigationId);
+            _logger.LogInformation("SPI Automation: Updating Mitigation Implementation Rate for mitigation {MitigationId}", mitigationId);
 
             // Calculate implementation score based on timeliness
             var daysFromTarget = (completedDate - targetDate).TotalDays;
@@ -298,18 +298,18 @@ public class SPIAutomationService : ISPIAutomationService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("? SPI Automation: Successfully updated Mitigation Implementation Rate - Score: {Score}%", implementationScore);
+                _logger.LogInformation("SPI Automation: Successfully updated Mitigation Implementation Rate - Score: {Score}%", implementationScore);
                 return Result<bool>.Success(true);
             }
             else
             {
-                _logger.LogError("? SPI Automation: Failed to update Mitigation Implementation Rate - Error: {Error}", result.Error?.Message);
+                _logger.LogError("SPI Automation: Failed to update Mitigation Implementation Rate - Error: {Error}", result.Error?.Message);
                 return Result<bool>.Failure<bool>(result.Error);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? SPI Automation: Exception updating Mitigation Implementation Rate for mitigation {MitigationId}", mitigationId);
+            _logger.LogError(ex, "SPI Automation: Exception updating Mitigation Implementation Rate for mitigation {MitigationId}", mitigationId);
             return Result<bool>.Failure<bool>(DomainErrors.SPIError.AutomationFailed);
         }
     }
@@ -321,7 +321,7 @@ public class SPIAutomationService : ISPIAutomationService
     {
         try
         {
-            _logger.LogInformation("?? SPI Automation: Updating Corrective Action Closure Rate for date {Date}", calculationDate);
+            _logger.LogInformation("SPI Automation: Updating Corrective Action Closure Rate for date {Date}", calculationDate);
 
             // Dynamic SPI lookup
             var spi = await FindSPIByName("Corrective Action Closure Rate", ct);
@@ -383,8 +383,7 @@ public class SPIAutomationService : ISPIAutomationService
     {
         try
         {
-            _logger.LogInformation("?? SPI Automation: Updating Risk Identification Effectiveness for report {ReportCode}, Decision: {Decision}", 
-                reportCode, validationDecision);
+            _logger.LogInformation("SPI Automation: Updating Risk Identification Effectiveness for report {ReportCode}, Decision: {Decision}", reportCode, validationDecision);
 
             // This could feed into a new SPI that tracks validation effectiveness
             // For example: "SMS Risk Identification Rate" = (SMS_RISK decisions / Total validations) * 100
@@ -401,7 +400,7 @@ public class SPIAutomationService : ISPIAutomationService
             // Calculate daily effectiveness rate using validated decisions
             var effectivenessRate = await CalculateRiskIdentificationRate(validatedDate, ct);
 
-            var dataPoint = new SPIDataPoint(new SPIDataPointID($"RIE-{validatedDate:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8]}"))
+            var dataPoint = new SPIDataPoint(new SPIDataPointID($"DP-0000"))
             {
                 SPIId = spi.Code,
                 Value = effectivenessRate,
@@ -419,19 +418,19 @@ public class SPIAutomationService : ISPIAutomationService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("? SPI Automation: Successfully updated Risk Identification Effectiveness - Rate: {Rate}%, SPI Code: {Code}", 
+                _logger.LogInformation("SPI Automation: Successfully updated Risk Identification Effectiveness - Rate: {Rate}%, SPI Code: {Code}", 
                     effectivenessRate, spi.Code);
                 return Result<bool>.Success(true);
             }
             else
             {
-                _logger.LogError("? SPI Automation: Failed to update Risk Identification Effectiveness - Error: {Error}", result.Error?.Message);
+                _logger.LogError("SPI Automation: Failed to update Risk Identification Effectiveness - Error: {Error}", result.Error?.Message);
                 return Result<bool>.Failure<bool>(result.Error);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? SPI Automation: Exception updating Risk Identification Effectiveness");
+            _logger.LogError(ex, "SPI Automation: Exception updating Risk Identification Effectiveness");
             return Result<bool>.Failure<bool>(DomainErrors.SPIError.AutomationFailed);
         }
     }
@@ -468,7 +467,7 @@ public class SPIAutomationService : ISPIAutomationService
     {
         try
         {
-            _logger.LogInformation("?? SPI Automation: Looking up SPI by name: {SPIName}", spiName);
+            _logger.LogInformation("SPI Automation: Looking up SPI by name: {SPIName}", spiName);
 
             // Use CQRS to get all SPIs and find by name
             var getAllQuery = new GetAllSafetyPerformanceIndicatorsQuery();
@@ -480,24 +479,24 @@ public class SPIAutomationService : ISPIAutomationService
 
                 if (spi != null)
                 {
-                    _logger.LogInformation("? SPI Automation: Found SPI {SPIName} with Code: {Code}", spiName, spi.Code);
+                    _logger.LogInformation("SPI Automation: Found SPI {SPIName} with Code: {Code}", spiName, spi.Code);
                     return spi;
                 }
                 else
                 {
-                    _logger.LogWarning("?? SPI Automation: SPI not found by name: {SPIName}", spiName);
+                    _logger.LogWarning("SPI Automation: SPI not found by name: {SPIName}", spiName);
                 }
             }
             else
             {
-                _logger.LogError("? SPI Automation: Failed to retrieve SPIs for lookup");
+                _logger.LogError("SPI Automation: Failed to retrieve SPIs for lookup");
             }
 
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? SPI Automation: Error looking up SPI by name: {SPIName}", spiName);
+            _logger.LogError(ex, "SPI Automation: Error looking up SPI by name: {SPIName}", spiName);
             return null;
         }
     }
@@ -509,7 +508,7 @@ public class SPIAutomationService : ISPIAutomationService
     {
         try
         {
-            _logger.LogInformation("?? SPI Automation: Looking up SPI by description pattern: {Pattern}", descriptionPattern);
+            _logger.LogInformation("SPI Automation: Looking up SPI by description pattern: {Pattern}", descriptionPattern);
 
             var getAllQuery = new GetAllSafetyPerformanceIndicatorsQuery();
             var result = await _mediator.SendAsync(getAllQuery, ct);
@@ -520,7 +519,7 @@ public class SPIAutomationService : ISPIAutomationService
 
                 if (spi != null)
                 {
-                    _logger.LogInformation("? SPI Automation: Found SPI by description with Code: {Code}", spi.Code);
+                    _logger.LogInformation("SPI Automation: Found SPI by description with Code: {Code}", spi.Code);
                     return spi;
                 }
             }
@@ -529,7 +528,7 @@ public class SPIAutomationService : ISPIAutomationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? SPI Automation: Error looking up SPI by description: {Pattern}", descriptionPattern);
+            _logger.LogError(ex, "SPI Automation: Error looking up SPI by description: {Pattern}", descriptionPattern);
             return null;
         }
     }
@@ -542,7 +541,7 @@ public class SPIAutomationService : ISPIAutomationService
     {
         try
         {
-            _logger.LogInformation("?? SPI Automation: Querying hazard submissions for {Date}", date.ToString("yyyy-MM-dd"));
+            _logger.LogInformation("SPI Automation: Querying hazard submissions for {Date}", date.ToString("yyyy-MM-dd"));
 
             // Query hazards created on the specific date
             // TODO: When hazard CQRS queries are available, use GetHazardsByDateQuery
@@ -560,14 +559,13 @@ public class SPIAutomationService : ISPIAutomationService
             _dailyHazardCounts[todaysKey]++;
             var actualCount = _dailyHazardCounts[todaysKey];
 
-            _logger.LogInformation("? SPI Automation: Found {Count} hazard submissions on {Date}", 
-                actualCount, date.ToString("yyyy-MM-dd"));
+            _logger.LogInformation("SPI Automation: Found {Count} hazard submissions on {Date}", actualCount, date.ToString("yyyy-MM-dd"));
 
             return actualCount;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? Error getting hazard submission count for date {Date}", date);
+            _logger.LogError(ex, "Error getting hazard submission count for date {Date}", date);
             return 1; // Default to 1 since this is called when a hazard is created
         }
     }
@@ -580,7 +578,7 @@ public class SPIAutomationService : ISPIAutomationService
     {
         try
         {
-            _logger.LogInformation("?? SPI Automation: Querying validated SMS risks for {Date}", date.ToString("yyyy-MM-dd"));
+            _logger.LogInformation("SPI Automation: Querying validated SMS risks for {Date}", date.ToString("yyyy-MM-dd"));
 
             // Use CQRS query to get validated SMS risks for the specific date
             var query = new GetValidatedSMSRisksByDateQuery(date);
@@ -589,29 +587,27 @@ public class SPIAutomationService : ISPIAutomationService
             if (result.IsSuccess)
             {
                 var validatedCount = result.Value.Count;
-                _logger.LogInformation("? SPI Automation: Found {Count} validated SMS risks on {Date}", 
+                _logger.LogInformation("SPI Automation: Found {Count} validated SMS risks on {Date}", 
                     validatedCount, date.ToString("yyyy-MM-dd"));
 
                 // Log details of what we found for transparency
                 if (result.Value.Any())
                 {
                     var reportCodes = string.Join(", ", result.Value.Select(rv => rv.ReportCode ?? "Unknown"));
-                    _logger.LogInformation("?? Validated reports on {Date}: {ReportCodes}", 
-                        date.ToString("yyyy-MM-dd"), reportCodes);
+                    _logger.LogInformation("Validated reports on {Date}: {ReportCodes}", date.ToString("yyyy-MM-dd"), reportCodes);
                 }
 
                 return validatedCount;
             }
             else
             {
-                _logger.LogWarning("?? SPI Automation: Failed to query validated SMS risks for {Date}: {Error}", 
-                    date.ToString("yyyy-MM-dd"), result.Error?.Message);
+                _logger.LogWarning("SPI Automation: Failed to query validated SMS risks for {Date}: {Error}", date.ToString("yyyy-MM-dd"), result.Error?.Message);
                 return 0; // No validated risks found
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? Error getting validated SMS risk count for date {Date}", date);
+            _logger.LogError(ex, "Error getting validated SMS risk count for date {Date}", date);
             return 0; // Default to 0 on error
         }
     }
@@ -628,7 +624,7 @@ public class SPIAutomationService : ISPIAutomationService
         try
         {
             // TODO: Implement query to get high-risk count for specific date
-            _logger.LogWarning("?? SPI Automation: GetHighRiskCountForDate not yet implemented - using placeholder");
+            _logger.LogWarning("SPI Automation: GetHighRiskCountForDate not yet implemented - using placeholder");
             return 1; // Placeholder - implement actual query
         }
         catch (Exception ex)
@@ -646,7 +642,7 @@ public class SPIAutomationService : ISPIAutomationService
         try
         {
             // TODO: Implement query to get overdue mitigation count
-            _logger.LogWarning("?? SPI Automation: GetOverdueMitigationCount not yet implemented - using placeholder");
+            _logger.LogWarning("SPI Automation: GetOverdueMitigationCount not yet implemented - using placeholder");
             return 0; // Placeholder - implement actual query
         }
         catch (Exception ex)
@@ -664,7 +660,7 @@ public class SPIAutomationService : ISPIAutomationService
         try
         {
             // TODO: Implement query to get active mitigation count
-            _logger.LogWarning("?? SPI Automation: GetActiveMitigationCount not yet implemented - using placeholder");
+            _logger.LogWarning("SPI Automation: GetActiveMitigationCount not yet implemented - using placeholder");
             return 1; // Placeholder - implement actual query
         }
         catch (Exception ex)

@@ -7,34 +7,33 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Common;
+using SMS_Domain.Entities;
 using SMS_Domain.Interfaces;
 
 namespace SMS_Domain.Events;
 
 /// <summary>
 /// Domain event triggered when a mitigation is completed
-/// IMPLEMENTS: IEventDataSource for automatic SPI data source discovery
+/// IMPLEMENTS: IEventSource for automatic SPI data source discovery
 /// </summary>
-public class MitigationCompletedEvent : BaseDomainEvent, IEventDataSource
+public class MitigationCompletedEvent : BaseDomainEvent, IEventSource
 {
-    public override string EventType => "Mitigation.Completed";
+    public override string EventType => Domain.Enums.EventType.MitigationStatusChanged.Value;
 
-    #region IEventDataSource Implementation
-
-    /// <summary>
-    /// Display name for SPI configuration dropdowns
-    /// </summary>
-    public string DataSourceDisplayName => "Mitigation Management";
+    public string EventSourceDisplayName => Domain.Enums.EventType.MitigationStatusChanged;
 
     /// <summary>
     /// Category for grouping in UI
     /// </summary>
-    public string DataSourceCategory => "Compliance";
+    public string EventSourceCategory => Domain.Enums.EventCategogy.DomainEvent.Value;
+
+    #region IEventDataSource Implementation
+
 
     /// <summary>
     /// Description of data provided for SPI calculations
     /// </summary>
-    public string DataSourceDescription => "Provides data points for mitigation completion rates, timeliness metrics, and effectiveness tracking";
+    public string EventSourceDescription => "Provides data points for mitigation completion rates, timeliness metrics, and effectiveness tracking";
 
     /// <summary>
     /// This is a primary automatic data source for compliance-related SPIs
@@ -59,15 +58,15 @@ public class MitigationCompletedEvent : BaseDomainEvent, IEventDataSource
     public string CompletionNotes { get; set; } = string.Empty;
     public string EffectivenessRating { get; set; } = string.Empty;
 
-    public MitigationCompletedEvent(string mitigationId, string mitigationCode, string hazardId, 
-        DateTime targetCompletionDate, DateTime completedDate, string aggregateId)
+    public MitigationCompletedEvent(SMSEventID id,string mitigationId, string mitigationCode, string hazardId, 
+        DateTime targetCompletionDate, DateTime completedDate, string aggregateId):base(id)
     {
         MitigationId = mitigationId;
         MitigationCode = mitigationCode;
         HazardId = hazardId;
         TargetCompletionDate = targetCompletionDate;
         CompletedDate = completedDate;
-        AggregateId = aggregateId;
+        
     }
 
     #endregion

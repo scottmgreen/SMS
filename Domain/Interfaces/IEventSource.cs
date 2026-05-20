@@ -1,4 +1,4 @@
-// <copyright file="IEventDataSource.cs" company="SMS Safety Management System">
+// <copyright file="IEventSource.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
 //     Description: Interface for domain events that can serve as SPI data sources.
@@ -14,22 +14,22 @@ namespace SMS_Domain.Interfaces;
 /// Interface for domain events that can serve as SPI data sources
 /// Provides metadata for UI display and automatic discovery
 /// </summary>
-public interface IEventDataSource : IBaseDomainEvent
+public interface IEventSource : IBaseDomainEvent
 {
     /// <summary>
     /// Display name for the UI dropdown (e.g., "Hazard Management")
     /// </summary>
-    string DataSourceDisplayName { get; }
+    string EventSourceDisplayName { get; }
 
     /// <summary>
     /// Category for grouping related events (e.g., "Safety", "Compliance", "Training")
     /// </summary>
-    string DataSourceCategory { get; }
+    string EventSourceCategory { get; }
 
     /// <summary>
     /// Description of what data this event provides for SPI calculations
     /// </summary>
-    string DataSourceDescription { get; }
+    string EventSourceDescription { get; }
 
     /// <summary>
     /// Indicates if this event should be automatically included in SPI calculations

@@ -53,14 +53,14 @@ public class CreateAirportSharedDatasetCommandHandler : BaseCommandBundle, IBase
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateAirportSharedDatasetCommand for Code: {Code}, ReportID: {ReportCode}",
+            _logger.LogInformation(" Processing CreateAirportSharedDatasetCommand for Code: {Code}, ReportID: {ReportCode}",
                 request.AirportSharedDataset.Code, request.AirportSharedDataset.ReportCode);
 
             var result = await _airportSharedDatasetService.CreateAirportSharedDatasetAsync(request.AirportSharedDataset, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created AirportSharedDataset with ID: {Id}, Code: {Code}, ReportID: {ReportCode}",
+                _logger.LogInformation(" Successfully created AirportSharedDataset with ID: {Id}, Code: {Code}, ReportID: {ReportCode}",
                     result.Value?.Id, result.Value?.Code, result.Value?.ReportCode);
             }
             else
@@ -120,14 +120,14 @@ public class UpdateAirportSharedDatasetCommandHandler : BaseCommandBundle, IBase
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateAirportSharedDatasetCommand for ID: {Id}, Code: {Code}, ReportID: {ReportCode}",
+            _logger.LogInformation(" Processing UpdateAirportSharedDatasetCommand for ID: {Id}, Code: {Code}, ReportID: {ReportCode}",
                 request.AirportSharedDataset.Id, request.AirportSharedDataset.Code, request.AirportSharedDataset.ReportCode);
 
             var result = await _airportSharedDatasetService.UpdateAirportSharedDatasetAsync(request.AirportSharedDataset, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated AirportSharedDataset with ID: {Id}", request.AirportSharedDataset.Id);
+                _logger.LogInformation(" Successfully updated AirportSharedDataset with ID: {Id}", request.AirportSharedDataset.Id);
             }
             else
             {
@@ -172,13 +172,13 @@ public class DeleteAirportSharedDatasetCommandHandler : BaseCommandBundle, IBase
                 return Result<bool>.Failure<bool>(DomainErrors.AirportSharedDatasetError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteAirportSharedDatasetCommand for ID: {Id}", request.AirportSharedDatasetId);
+            _logger.LogInformation(" Processing DeleteAirportSharedDatasetCommand for ID: {Id}", request.AirportSharedDatasetId);
 
             var result = await _airportSharedDatasetService.DeleteAirportSharedDatasetAsync(request.AirportSharedDatasetId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted AirportSharedDataset with ID: {Id}", request.AirportSharedDatasetId);
+                _logger.LogInformation(" Successfully deleted AirportSharedDataset with ID: {Id}", request.AirportSharedDatasetId);
             }
             else
             {

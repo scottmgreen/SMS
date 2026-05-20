@@ -39,13 +39,13 @@ public class CreateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
                 return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateInvestigationCommand for Code: {Code}", request.Investigation.Code);
+            _logger.LogInformation(" Processing CreateInvestigationCommand for Code: {Code}", request.Investigation.Code);
 
             var result = await _investigationService.CreateInvestigationAsync(request.Investigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created Investigation with ID: {Id}, Code: {Code}",
+                _logger.LogInformation(" Successfully created Investigation with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -90,14 +90,14 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
                 return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateInvestigationCommand for ID: {Id}, Code: {Code}",
+            _logger.LogInformation(" Processing UpdateInvestigationCommand for ID: {Id}, Code: {Code}",
                 request.Investigation.Id, request.Investigation.Code);
 
             var result = await _investigationService.UpdateInvestigationAsync(request.Investigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated Investigation with ID: {Id}", request.Investigation.Id);
+                _logger.LogInformation(" Successfully updated Investigation with ID: {Id}", request.Investigation.Id);
             }
             else
             {
@@ -141,13 +141,13 @@ public class DeleteInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
                 return Result<bool>.Failure<bool>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteInvestigationCommand for ID: {Id}", request.InvestigationId);
+            _logger.LogInformation(" Processing DeleteInvestigationCommand for ID: {Id}", request.InvestigationId);
 
             var result = await _investigationService.DeleteInvestigationAsync(request.InvestigationId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted Investigation with ID: {Id}", request.InvestigationId);
+                _logger.LogInformation(" Successfully deleted Investigation with ID: {Id}", request.InvestigationId);
             }
             else
             {

@@ -785,6 +785,9 @@ public static class FieldNames
     private static readonly Lazy<string> _fReportContactEmail = new Lazy<string>(() => "fldv_ReportContactEmail");
     public static string fReportContactEmail => _fReportContactEmail.Value;
 
+    private static readonly Lazy<string> _fReportContactCompany = new Lazy<string>(() => "fldv_ReportContactCompany");
+    public static string fReportContactCompany => _fReportContactCompany.Value;
+
     private static readonly Lazy<string> _fReportIncidentDateTime = new Lazy<string>(() => "fldd_IncidentDateTime");
     public static string fReportIncidentDateTime => _fReportIncidentDateTime.Value;
 

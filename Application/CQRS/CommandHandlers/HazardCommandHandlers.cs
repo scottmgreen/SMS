@@ -8,341 +8,413 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Domain.Entities;
-using SMS_Domain.Events;
-using SMS_Domain.ValueObjects;
+using Domain.Enums;
+
+using Microsoft.Extensions.Logging;
+
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
 
-using Microsoft.Extensions.Logging;
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Domain.Events;
+using SMS_Domain.Interfaces;
+using SMS_Domain.ValueObjects;
+
 using SMS_Infrastructure.Interfaces;
 
-namespace SMS_Application.Messaging.CommandHandlers;
-
-// =============================================
-// HAZARD COMMAND HANDLERS - Clean Architecture Pattern
-// =============================================
-
-/// <summary>
-/// Command handler for creating hazards using CQRS/Mediator pattern
-/// Ensures ALL sub-operations go through AuditPipeline for complete audit trail consistency
-/// </summary>
-public class CreateHazardCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateHazardCommand, Result<Hazard>>
+namespace SMS_Application.Messaging.CommandHandlers
 {
-    private readonly HazardService _hazardService;
-    private readonly IBaseMediator _mediator;  // 🔧 ADD: IBaseMediator for consistent sub-operations
-    private readonly IBaseEventBus _eventBus; // NEW: EventBus for event publishing
-    private readonly ILogger<CreateHazardCommandHandler> _logger;
-    private readonly ILogSupport _logsupport;
-    private readonly string _logheader = string.Empty;
 
-    public CreateHazardCommandHandler(
-        HazardService hazardService,
-        IBaseMediator mediator,  // 🔧 ADD: IBaseMediator injection
-        IBaseEventBus eventBus,  // NEW: EventBus injection
-        ILogSupport logsupport,
-        ILogger<CreateHazardCommandHandler> logger)
-    {
-        _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
-        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));  // 🔧 ADD: Validation
-        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus)); // NEW: EventBus validation
-        _logsupport = logsupport;
-        _logheader = _logsupport.GenerateLogHeader();
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
 
-    public async Task<Result<Hazard>> HandleAsync(CreateHazardCommand request, CancellationToken ct = default)
+
+    // =============================================
+    // HAZARD COMMAND HANDLERS - 
+    // =============================================
+
+    /// <summary>
+    /// Command handler for creating hazards using CQRS/Mediator pattern
+    /// Ensures ALL sub-operations go through AuditPipeline for complete audit trail consistency
+    /// </summary>
+    public class CreateHazardCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateHazardCommand, Result<Hazard>>
     {
-        try
+        private readonly HazardService _hazardService;
+        private readonly IBaseMediator _mediator;
+        private readonly IBaseEventBus _eventBus;
+        private readonly ILogger<CreateHazardCommandHandler> _logger;
+        private readonly ILogSupport _logsupport;
+        private readonly string _logheader = string.Empty;
+
+        public CreateHazardCommandHandler(
+            HazardService hazardService,
+            IBaseMediator mediator,  //IBaseMediator injection
+            IBaseEventBus eventBus,  //EventBus injection
+            ILogSupport logsupport,
+            ILogger<CreateHazardCommandHandler> logger)
         {
-            _logger.LogInformation("✅ CQRS Consistent: Creating new hazard - {Name} for Report: {ReportCode}", 
-                request.Hazard.Name, request.Hazard.ReportCode);
+            _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
+            _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+            _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+            _logsupport = logsupport;
+            _logheader = _logsupport.GenerateLogHeader();
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
 
-            Hazard hazard = request.Hazard;
-            hazard.ReportCode = request.Hazard.ReportCode;
+        public async Task<Result<Hazard>> HandleAsync(CreateHazardCommand request, CancellationToken ct = default)
+        {
 
-            // ✅ Main hazard creation - goes through AuditPipeline via this handler
-            var hazardResult = await _hazardService.CreateHazardAsync(hazard, ct);
-            if (hazardResult.IsFailure)
-            {
-                _logger.LogApplicationError($"{_logheader} Failed to save hazard via application service", ApplicationEventIds.Error, null);
-                return Result<Hazard>.Failure<Hazard>(hazardResult.Error);
-            }
-
-            hazard = hazardResult.Value;
-
-            // 🔧 FIXED: DO NOT auto-create default location here
-            // Location creation should be handled by the calling service (UI/API) based on actual data
-            // This prevents duplicate location entries and allows proper coordinate handling
-            _logger.LogInformation("✅ Hazard created without auto-location - Code: {HazardCode}. Location will be handled by calling service.", hazard.Code);
-
-            // 🚀 NEW: EventBus Integration - Publish HazardCreatedEvent for complete workflow automation
             try
             {
-                _logger.LogInformation("🎯 [COMMAND HANDLER] Publishing HazardCreatedEvent for {HazardCode}", hazard.Code);
+                // =============================================
+                // Hazard Create - Using AuditPipeline
+                // Location creation is handled by the calling service (UI/API) 
+                // =============================================
 
-                // Determine hazard priority based on type/category
-                var hazardPriority = DetermineHazardPriority(hazard.HazardType, hazard.HazardCategory);
+                Hazard hazard = request.Hazard;
+                hazard.ReportCode = request.Hazard.ReportCode;
 
-                _logger.LogInformation("🎯 [COMMAND HANDLER] Determined priority: {Priority} for hazard {HazardCode} (Type: {Type}, Category: {Category})",
-                    hazardPriority, hazard.Code, hazard.HazardType, hazard.HazardCategory);
-
-                // Create and publish HazardCreatedEvent for complete workflow automation
-                var hazardCreatedEvent = new HazardCreatedEvent(
-                    hazardId: hazard.Code,
-                    hazardCode: hazard.Code,
-                    hazardName: hazard.Name ?? "Unnamed Hazard",
-                    hazardType: hazard.HazardType ?? "Unknown",
-                    hazardCategory: hazard.HazardCategory ?? "Unknown",
-                    description: hazard.Description ?? "No description",
-                    locationArea: hazard.LocationArea ?? "Unknown Location",
-                    reportCode: hazard.ReportCode ?? "Unknown Report",
-                    createdBy: hazard.CreatedBy ?? "System",
-                    createdDate: hazard.CreatedDate ?? DateTime.UtcNow,
-                    isInitialHazard: hazard.IsInitialHazard,
-                    priority: hazardPriority,
-                    latitude: hazard.HazardLocation?.Latitude,
-                    longitude: hazard.HazardLocation?.Longitude
-                );
-
-                // Publish the domain event - this triggers the complete workflow (MANUAL mode for testing)
-                var eventResult = await _eventBus.PublishDomainEventAsync(hazardCreatedEvent, EventExecutionMode.Manual);
-
-                if (eventResult.IsSuccess)
+                var hazardResult = await _hazardService.CreateHazardAsync(hazard, ct);
+                if (hazardResult.IsFailure)
                 {
-                    _logger.LogInformation("✅ [COMMAND HANDLER] HazardCreatedEvent published successfully for {HazardCode} - Complete workflow initiated", hazard.Code);
+                    _logger.LogApplicationError($"{_logheader} Failed to save hazard via application service", ApplicationEventIds.Error, null);
+                    return Result<Hazard>.Failure<Hazard>(hazardResult.Error);
+                }
+
+                hazard = hazardResult.Value;
+
+                // =============================================
+                // Event Bus
+                // Only a simple Domain Event at this point
+                // =============================================
+                try
+                {
+                    await HazardEventPublisher.PublishHazardEventAsync(_eventBus, _logger, EventType.HazardCreated, hazard,HazardPriority.Low);
+
+                }
+                catch (Exception eventEx)
+                {
+                    // Don't fail the entire command if EventBus fails
+                    _logger.LogWarning(eventEx, "[COMMAND HANDLER] EventBus integration failed for {HazardCode} - continuing with command execution", hazard.Code);
+                }
+
+                _logger.LogApplicationInformation(ApplicationEventIds.Information, "CQRS : Hazard saved with complete audit trail - {Code}", hazard.Code);
+                return Result<Hazard>.Success(hazardResult.Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogApplicationError("Exception creating hazard - {Name}", ApplicationEventIds.Error, ex);
+                return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.CreateFailed);
+            }
+        }
+
+       
+        #region Private Helper Methods
+
+        /// <summary>
+        /// Determines hazard priority based on type and category for automated workflow routing
+        /// Business logic to assign priority levels for automated workflow routing
+        /// </summary>
+        //private SMS_Domain.Enums.HazardPriority DetermineHazardPriority(string? hazardType, string? hazardCategory)
+        //{
+        //    try
+        //    {
+        //        // Business rules for priority determination
+        //        var type = hazardType?.ToUpper() ?? "";
+        //        var category = hazardCategory?.ToUpper() ?? "";
+
+        //        _logger.LogDebug("[PRIORITY] Determining priority for Type: '{Type}', Category: '{Category}'", type, category);
+
+        //        // Handle DEFAULT classifications - assign High priority for testing
+        //        if (type == HazardType.Default.Value || category == HazardCategory.Default.Value)
+        //        {
+        //            _logger.LogInformation("[PRIORITY] DEFAULT classification detected - assigning High priority for testing");
+        //            return SMS_Domain.Enums.HazardPriority.High;
+        //        }
+
+        //        // Critical priority conditions
+        //        if (type.Contains("STRUCTURAL") || type.Contains("FIRE") || type.Contains("EXPLOSIVE") || category.Contains("SAFETY_CRITICAL") || category.Contains("REGULATORY"))
+        //        {
+        //            _logger.LogInformation("[PRIORITY] Critical priority assigned");
+        //            return SMS_Domain.Enums.HazardPriority.Critical;
+        //        }
+
+        //        // High priority conditions  
+        //        if (type.Contains("EQUIPMENT") || type.Contains("MAINTENANCE") || type.Contains("OPERATIONAL") || category.Contains("OPERATIONAL") || category.Contains("MAINTENANCE"))
+        //        {
+        //            _logger.LogInformation("[PRIORITY] High priority assigned");
+        //            return SMS_Domain.Enums.HazardPriority.High;
+        //        }
+
+        //        // Medium priority conditions
+        //        if (type.Contains("ENVIRONMENTAL") || type.Contains("DOCUMENTATION") || category.Contains("ENVIRONMENTAL") || category.Contains("PROCESS"))
+        //        {
+        //            _logger.LogInformation("[PRIORITY] Medium priority assigned");
+        //            return SMS_Domain.Enums.HazardPriority.Medium;
+        //        }
+
+        //        // Default to High for testing purposes
+        //        _logger.LogInformation("[PRIORITY] No specific match - defaulting to High priority for testing");
+        //        return SMS_Domain.Enums.HazardPriority.High;
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        _logger.LogWarning(ex, "[PRIORITY] Error determining hazard priority for Type: {Type}, Category: {Category} - defaulting to High",  hazardType, hazardCategory);
+        //        return SMS_Domain.Enums.HazardPriority.High;
+        //    }
+        //}
+
+        #endregion
+    }
+
+    public class UpdateHazardCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateHazardCommand, Result<Hazard>>
+    {
+        private readonly HazardService _hazardService;
+        private readonly IBaseMediator _mediator;
+        private readonly IBaseEventBus _eventBus;
+        private readonly ILogger<UpdateHazardCommandHandler> _logger;
+        private readonly ILogSupport _logsupport;
+        private readonly string _logheader = string.Empty;
+
+
+        public UpdateHazardCommandHandler(HazardService hazardService,
+            IBaseMediator mediator,  //IBaseMediator injection
+            IBaseEventBus eventBus,  //EventBus injection
+            ILogSupport logsupport,
+            ILogger<UpdateHazardCommandHandler> logger)
+        {
+            _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
+            _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+            _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+            _logsupport = logsupport;
+            _logheader = _logsupport.GenerateLogHeader();
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public async Task<Result<Hazard>> HandleAsync(UpdateHazardCommand request, CancellationToken ct = default)
+        {
+            try
+            {
+                // =============================================
+                // Hazard Create - Using AuditPipeline
+                // Location creation is handled by the calling service (UI/API) 
+                // =============================================
+
+                Hazard hazard = request.Hazard;
+                hazard.ReportCode = request.Hazard.ReportCode;
+
+                var hazardResult = await _hazardService.UpdateHazardAsync(hazard, ct);
+                if (hazardResult.IsFailure)
+                {
+                    _logger.LogApplicationError($"{_logheader} Failed to save hazard via application service", ApplicationEventIds.Error, null);
+                    return Result<Hazard>.Failure<Hazard>(hazardResult.Error);
+                }
+
+                hazard = hazardResult.Value;
+
+                // =============================================
+                // Event Bus
+                // Only a simple Domain Event at this point
+                // =============================================
+                try
+                {
+                    await HazardEventPublisher.PublishHazardEventAsync(_eventBus, _logger, EventType.HazardUpdated, hazard, HazardPriority.Low);
+
+                }
+                catch (Exception eventEx)
+                {
+                    // Don't fail the entire command if EventBus fails
+                    _logger.LogWarning(eventEx, "[COMMAND HANDLER] EventBus integration failed for {HazardCode} - continuing with command execution", hazard.Code);
+                }
+
+                _logger.LogApplicationInformation(ApplicationEventIds.Information, "CQRS : Hazard saved with complete audit trail - {Code}", hazard.Code);
+                return Result<Hazard>.Success(hazardResult.Value);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogApplicationError("Exception creating hazard - {Name}", ApplicationEventIds.Error, ex);
+                return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.CreateFailed);
+            }
+        }
+    }
+
+    public class ResetHazardScoresCommandHandler : BaseCommandBundle, IBaseRequestHandler<ResetHazardScoresCommand, Result<Hazard>>
+    {
+        private readonly HazardService _hazardService;
+        private readonly ILogger<ResetHazardScoresCommandHandler> _logger;
+
+        public ResetHazardScoresCommandHandler(HazardService hazardService, ILogger<ResetHazardScoresCommandHandler> logger)
+        {
+            _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        }
+
+        public async Task<Result<Hazard>> HandleAsync(ResetHazardScoresCommand request, CancellationToken ct = default)
+        {
+            try
+            {
+                if (request?.Hazard is null)
+                {
+                    _logger.LogApplicationError("ResetHazardScoresCommand received with null Hazard", ApplicationEventIds.Error, null);
+                    return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
+                }
+
+                _logger.LogInformation("Processing ResetHazardScoresCommand for ID: {Id}, Code: {Code}", request.Hazard.Id, request.Hazard.Code);
+                request.Hazard.UpdatedDate = DateTime.UtcNow;
+                var result = await _hazardService.UpdateHazardAsync(request.Hazard, ct).ConfigureAwait(false);
+
+                if (result.IsSuccess)
+                {
+                    _logger.LogInformation("Successfully reset scores for Hazard with ID: {Id}", request.Hazard.Id);
                 }
                 else
                 {
-                    _logger.LogWarning("⚠️ [COMMAND HANDLER] Failed to publish HazardCreatedEvent for {HazardCode}: {Error} - continuing with command execution", 
-                        hazard.Code, eventResult.Error.Message);
+                    _logger.LogApplicationError("Failed to reset scores for Hazard with ID: {Id}. Error: {Error}",
+                        ApplicationEventIds.Error, null);
                 }
-            }
-            catch (Exception eventEx)
-            {
-                // Don't fail the entire command if EventBus fails
-                _logger.LogWarning(eventEx, "⚠️ [COMMAND HANDLER] EventBus integration failed for {HazardCode} - continuing with command execution", hazard.Code);
-            }
 
-            _logger.LogApplicationInformation(ApplicationEventIds.Information, "✅ CQRS Consistent: Hazard saved with complete audit trail - {Code}", hazard.Code);
-            return Result<Hazard>.Success(hazardResult.Value);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("❌ Exception creating hazard - {Name}", ApplicationEventIds.Error, ex);
-            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.CreateFailed);
+                return result;
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("ResetHazardScoresCommand operation was cancelled");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogApplicationError("Unexpected error occurred while resetting Hazard scores with ID: {Id}", ApplicationEventIds.Error, ex);
+                return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.UpdateFailed);
+            }
         }
     }
 
-    #region Private Helper Methods
-
-    /// <summary>
-    /// Determines hazard priority based on type and category for automated workflow routing
-    /// Business logic to assign priority levels for automated workflow routing
-    /// </summary>
-    private SMS_Domain.Enums.HazardPriority DetermineHazardPriority(string? hazardType, string? hazardCategory)
+    public class DeleteHazardCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteHazardCommand, Result<bool>>
     {
-        try
+        private readonly HazardService _hazardService;
+        private readonly ILogger<DeleteHazardCommandHandler> _logger;
+
+        public DeleteHazardCommandHandler(HazardService hazardService, ILogger<DeleteHazardCommandHandler> logger)
         {
-            // Business rules for priority determination
-            var type = hazardType?.ToUpper() ?? "";
-            var category = hazardCategory?.ToUpper() ?? "";
-
-            _logger.LogDebug("🎯 [PRIORITY] Determining priority for Type: '{Type}', Category: '{Category}'", type, category);
-
-            // Handle DEFAULT classifications - assign High priority for testing
-            if (type.Contains("DEFAULT") || category.Contains("DEFAULT"))
-            {
-                _logger.LogInformation("🎯 [PRIORITY] DEFAULT classification detected - assigning High priority for testing");
-                return SMS_Domain.Enums.HazardPriority.High;
-            }
-
-            // Critical priority conditions
-            if (type.Contains("STRUCTURAL") || type.Contains("FIRE") || type.Contains("EXPLOSIVE") ||
-                category.Contains("SAFETY_CRITICAL") || category.Contains("REGULATORY"))
-            {
-                _logger.LogInformation("🎯 [PRIORITY] Critical priority assigned");
-                return SMS_Domain.Enums.HazardPriority.Critical;
-            }
-
-            // High priority conditions  
-            if (type.Contains("EQUIPMENT") || type.Contains("MAINTENANCE") || type.Contains("OPERATIONAL") ||
-                category.Contains("OPERATIONAL") || category.Contains("MAINTENANCE"))
-            {
-                _logger.LogInformation("🎯 [PRIORITY] High priority assigned");
-                return SMS_Domain.Enums.HazardPriority.High;
-            }
-
-            // Medium priority conditions
-            if (type.Contains("ENVIRONMENTAL") || type.Contains("DOCUMENTATION") ||
-                category.Contains("ENVIRONMENTAL") || category.Contains("PROCESS"))
-            {
-                _logger.LogInformation("🎯 [PRIORITY] Medium priority assigned");
-                return SMS_Domain.Enums.HazardPriority.Medium;
-            }
-
-            // Default to High for testing purposes
-            _logger.LogInformation("🎯 [PRIORITY] No specific match - defaulting to High priority for testing");
-            return SMS_Domain.Enums.HazardPriority.High;
+            _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
+            _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         }
-        catch (Exception ex)
+
+        public async Task<Result<bool>> HandleAsync(DeleteHazardCommand request, CancellationToken ct = default)
         {
-            _logger.LogWarning(ex, "🎯 [PRIORITY] Error determining hazard priority for Type: {Type}, Category: {Category} - defaulting to High",
-                hazardType, hazardCategory);
-            return SMS_Domain.Enums.HazardPriority.High;
+            try
+            {
+                if (request?.HazardId is null)
+                {
+                    _logger.LogApplicationError("DeleteHazardCommand received with null HazardId", ApplicationEventIds.Error, null);
+                    return Result<bool>.Failure<bool>(DomainErrors.HazardError.NullOrEmpty);
+                }
+
+                _logger.LogInformation("Processing DeleteHazardCommand for ID: {Id}", request.HazardId);
+
+                var result = await _hazardService.DeleteHazardAsync(request.HazardId, ct).ConfigureAwait(false);
+
+                if (result.IsSuccess)
+                {
+                    _logger.LogInformation("Successfully deleted Hazard with ID: {Id}", request.HazardId);
+                }
+                else
+                {
+                    _logger.LogApplicationError("Failed to delete Hazard with ID: {Id}. Error: {Error}",
+                        ApplicationEventIds.Error, null);
+                }
+
+                return result;
+            }
+            catch (OperationCanceledException)
+            {
+                _logger.LogWarning("DeleteHazardCommand operation was cancelled");
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogApplicationError("Unexpected error occurred while deleting Hazard with ID: {Id}", ApplicationEventIds.Error, ex);
+                return Result<bool>.Failure<bool>(DomainErrors.HazardError.DeleteFailed);
+            }
         }
     }
 
-    #endregion
+
+
+    
+    public static class HazardEventPublisher
+    {
+        public static async Task PublishHazardEventAsync(
+            IBaseEventBus eventBus,
+            ILogger logger,
+            EventType eventtype,
+            Hazard hazard,
+            HazardPriority hazardPriority)
+        {
+            // Determine hazard priority based on type/category
+            hazardPriority = HazardPriority.Low; // Or your logic
+            var eventid = new SMSEventID(Guid.NewGuid().ToString());
+            BaseDomainEvent? hazardEvent = eventtype switch
+            {
+                var t when t == EventType.HazardCreated => CreateHazardEvent(new HazardCreatedEvent(eventid)),
+                var t when t == EventType.HazardDeleted => CreateHazardEvent(new HazardDeletedEvent(eventid)),
+                var t when t == EventType.HazardUpdated => CreateHazardEvent(new HazardUpdatedEvent(eventid)),
+                _ => null
+            };
+
+            BaseDomainEvent CreateHazardEvent(BaseDomainEvent evt)
+            {
+                if (evt is HazardCreatedEvent created)
+                {
+                    created.ReportId = hazard.ReportCode;
+                    created.HazardId = hazard.Code;
+                    created.HazardCode = hazard.Code;
+                    created.HazardName = hazard.Name ?? "Unnamed Hazard";
+                    created.HazardType = hazard.HazardType ?? "Unknown";
+                    created.HazardCategory = hazard.HazardCategory ?? "Unknown";
+                    created.Description = hazard.Description ?? "No description";
+                    created.LocationArea = hazard.LocationArea ?? "Unknown Location";
+                    created.ReportCode = hazard.ReportCode ?? "Unknown Report";
+                    created.CreatedBy = hazard.CreatedBy ?? "System";
+                    created.CreatedDate = hazard.CreatedDate ?? DateTime.UtcNow;
+                    created.IsInitialHazard = hazard.IsInitialHazard;
+                    created.Priority = hazardPriority;
+                    created.Latitude = hazard.HazardLocation?.Latitude;
+                    created.Longitude = hazard.HazardLocation?.Longitude;
+                }
+                if (evt is HazardUpdatedEvent updated)
+                {
+                    updated.ReportId = hazard.ReportCode;
+                    updated.HazardId = hazard.Code;
+                    updated.UpdatedBy = "SYSTEM";
+                    updated.UpdatedDate = DateTime.UtcNow;
+                }
+                if (evt is HazardDeletedEvent deleted)
+                {
+                    deleted.ReportId = hazard.ReportCode;
+                    deleted.HazardId = hazard.Code;
+                }
+                return evt;
+            }
+
+            var eventResult = await eventBus.PublishDomainEventAsync(hazardEvent, EventExecutionMode.Manual);
+
+            if (!eventResult.IsSuccess)
+            {
+                logger.LogWarning("[COMMAND HANDLER] Failed to publish Event for {HazardCode}: {Error} - continuing with command execution", hazard.Code, eventResult.Error.Message);
+            }
+        }
+    }
+
+
+
+
+
+
+
+
+
 }
 
-public class UpdateHazardCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateHazardCommand, Result<Hazard>>
-{
-    private readonly HazardService _hazardService;
-    private readonly ILogger<UpdateHazardCommandHandler> _logger;
 
-    public UpdateHazardCommandHandler(HazardService hazardService, ILogger<UpdateHazardCommandHandler> logger)
-    {
-        _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
 
-    public async Task<Result<Hazard>> HandleAsync(UpdateHazardCommand request, CancellationToken ct = default)
-    {
-        try
-        {
-            if (request?.Hazard is null)
-            {
-                _logger.LogApplicationError("UpdateHazardCommand received with null Hazard", ApplicationEventIds.Error, null);
-                return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
-            }
 
-            _logger.LogInformation("Processing UpdateHazardCommand for ID: {Id}, Code: {Code}",
-                request.Hazard.Id, request.Hazard.Code);
-
-            var result = await _hazardService.UpdateHazardAsync(request.Hazard, ct).ConfigureAwait(false);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully updated Hazard with ID: {Id}", request.Hazard.Id);
-            }
-            else
-            {
-                _logger.LogApplicationError("Failed to update Hazard with ID: {Id}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
-            }
-
-            return result;
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("UpdateHazardCommand operation was cancelled");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Unexpected error occurred while updating Hazard with ID: {Id}", ApplicationEventIds.Error, ex);
-            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.UpdateFailed);
-        }
-    }
-}
-
-public class ResetHazardScoresCommandHandler : BaseCommandBundle, IBaseRequestHandler<ResetHazardScoresCommand, Result<Hazard>>
-{
-    private readonly HazardService _hazardService;
-    private readonly ILogger<ResetHazardScoresCommandHandler> _logger;
-
-    public ResetHazardScoresCommandHandler(HazardService hazardService, ILogger<ResetHazardScoresCommandHandler> logger)
-    {
-        _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<Hazard>> HandleAsync(ResetHazardScoresCommand request, CancellationToken ct = default)
-    {
-        try
-        {
-            if (request?.Hazard is null)
-            {
-                _logger.LogApplicationError("ResetHazardScoresCommand received with null Hazard", ApplicationEventIds.Error, null);
-                return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
-            }
-
-            _logger.LogInformation("Processing ResetHazardScoresCommand for ID: {Id}, Code: {Code}", request.Hazard.Id, request.Hazard.Code);
-            request.Hazard.UpdatedDate = DateTime.UtcNow;
-            var result = await _hazardService.UpdateHazardAsync(request.Hazard, ct).ConfigureAwait(false);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully reset scores for Hazard with ID: {Id}", request.Hazard.Id);
-            }
-            else
-            {
-                _logger.LogApplicationError("Failed to reset scores for Hazard with ID: {Id}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
-            }
-
-            return result;
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("ResetHazardScoresCommand operation was cancelled");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Unexpected error occurred while resetting Hazard scores with ID: {Id}", ApplicationEventIds.Error, ex);
-            return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.UpdateFailed);
-        }
-    }
-}
-
-public class DeleteHazardCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteHazardCommand, Result<bool>>
-{
-    private readonly HazardService _hazardService;
-    private readonly ILogger<DeleteHazardCommandHandler> _logger;
-
-    public DeleteHazardCommandHandler(HazardService hazardService, ILogger<DeleteHazardCommandHandler> logger)
-    {
-        _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<bool>> HandleAsync(DeleteHazardCommand request, CancellationToken ct = default)
-    {
-        try
-        {
-            if (request?.HazardId is null)
-            {
-                _logger.LogApplicationError("DeleteHazardCommand received with null HazardId", ApplicationEventIds.Error, null);
-                return Result<bool>.Failure<bool>(DomainErrors.HazardError.NullOrEmpty);
-            }
-
-            _logger.LogInformation("Processing DeleteHazardCommand for ID: {Id}", request.HazardId);
-
-            var result = await _hazardService.DeleteHazardAsync(request.HazardId, ct).ConfigureAwait(false);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogInformation("Successfully deleted Hazard with ID: {Id}", request.HazardId);
-            }
-            else
-            {
-                _logger.LogApplicationError("Failed to delete Hazard with ID: {Id}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
-            }
-
-            return result;
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogWarning("DeleteHazardCommand operation was cancelled");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Unexpected error occurred while deleting Hazard with ID: {Id}", ApplicationEventIds.Error, ex);
-            return Result<bool>.Failure<bool>(DomainErrors.HazardError.DeleteFailed);
-        }
-    }
-}
+    

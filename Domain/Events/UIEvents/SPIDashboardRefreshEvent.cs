@@ -16,11 +16,14 @@ namespace SMS_Domain.Events;
 /// UI event for triggering SPI dashboard refreshes
 /// Ensures real-time updates when SPI data changes
 /// </summary>
-public class SPIDashboardRefreshEvent : IUIEvent
+public class SPIDashboardRefreshEvent : IBaseUIEvent
 {
+    public const string TypeValue = "UI.SPIDashboard.Refresh";
+
     public Guid EventId { get; private set; }
     public DateTime OccurredOn { get; private set; }
-    public string EventType => "UI.SPIDashboard.Refresh";
+    public string EventType => TypeValue;
+    public string ReportId { get; private set; }
     public string TargetComponent { get; private set; }
     public UIEventPriority Priority { get; private set; }
 
@@ -40,6 +43,7 @@ public class SPIDashboardRefreshEvent : IUIEvent
         string refreshReason,
         SPIDashboardSection dashboardSection = SPIDashboardSection.Overview,
         bool refreshEntireDashboard = false,
+        string? reportId = null,
         string? userId = null,
         List<string>? userRoles = null,
         UIEventPriority priority = UIEventPriority.Normal,
@@ -47,6 +51,7 @@ public class SPIDashboardRefreshEvent : IUIEvent
     {
         EventId = Guid.NewGuid();
         OccurredOn = DateTime.UtcNow;
+        ReportId = reportId ?? string.Empty;
         TargetComponent = "SPIDashboard";
         Priority = priority;
 

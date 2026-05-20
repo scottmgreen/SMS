@@ -11,6 +11,7 @@
 using SMS_Domain.Common;
 using SMS_Domain.Interfaces;
 using SMS_Domain.Enums;
+using SMS_Domain.Entities;
 
 namespace SMS_Domain.Events;
 
@@ -20,8 +21,19 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class MitigationApprovalRequestedEvent : BaseDomainEvent
 {
-    public override string EventType => "Mitigation.ApprovalRequested";
+    public override string EventType => Domain.Enums.EventType.MitigationApprovalRequested.Value;
 
+    public string DataSourceDisplayName => Domain.Enums.EventType.MitigationApprovalRequested;
+
+    /// <summary>
+    /// Category for grouping in UI
+    /// </summary>
+    public string DataSourceCategory => Domain.Enums.EventCategogy.DomainEvent.Value;
+
+    /// <summary>
+    /// Category for grouping in UI
+    /// </summary>
+    
     public string MitigationId { get; private set; }
     public string MitigationCode { get; private set; }
     public string HazardId { get; private set; }
@@ -46,6 +58,7 @@ public class MitigationApprovalRequestedEvent : BaseDomainEvent
     public string EscalationPath { get; private set; }
 
     public MitigationApprovalRequestedEvent(
+        SMSEventID id,
         string mitigationId,
         string mitigationCode,
         string hazardId,
@@ -63,7 +76,7 @@ public class MitigationApprovalRequestedEvent : BaseDomainEvent
         TimeSpan? estimatedImplementationTime = null,
         DateTime? approvalDeadline = null,
         bool requiresExecutiveApproval = false,
-        string escalationPath = "")
+        string escalationPath = "") :base(id)
     {
         MitigationId = mitigationId ?? throw new ArgumentNullException(nameof(mitigationId));
         MitigationCode = mitigationCode ?? throw new ArgumentNullException(nameof(mitigationCode));

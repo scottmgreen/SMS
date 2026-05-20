@@ -39,13 +39,13 @@ public class CreateHazardReportTrackingCommandHandler : BaseCommandBundle, IBase
                 return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateHazardReportTrackingCommand for ID: {Id}", request.HazardReportTracking.Id);
+            _logger.LogInformation(" Processing CreateHazardReportTrackingCommand for ID: {Id}", request.HazardReportTracking.Id);
 
             var result = await _hazardReportTrackingService.CreateHazardReportTrackingAsync(request.HazardReportTracking, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created HazardReportTracking with ID: {Id}",
+                _logger.LogInformation(" Successfully created HazardReportTracking with ID: {Id}",
                     result.Value?.Id);
             }
             else
@@ -90,13 +90,13 @@ public class UpdateHazardReportTrackingCommandHandler : BaseCommandBundle, IBase
                 return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateHazardReportTrackingCommand for ID: {Id}", request.HazardReportTracking.Id);
+            _logger.LogInformation(" Processing UpdateHazardReportTrackingCommand for ID: {Id}", request.HazardReportTracking.Id);
 
             var result = await _hazardReportTrackingService.UpdateHazardReportTrackingAsync(request.HazardReportTracking, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated HazardReportTracking with ID: {Id}", request.HazardReportTracking.Id);
+                _logger.LogInformation(" Successfully updated HazardReportTracking with ID: {Id}", request.HazardReportTracking.Id);
             }
             else
             {
@@ -140,13 +140,13 @@ public class DeleteHazardReportTrackingCommandHandler : BaseCommandBundle, IBase
                 return Result<bool>.Failure<bool>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteHazardReportTrackingCommand for ID: {Id}", request.HazardReportTrackingId);
+            _logger.LogInformation(" Processing DeleteHazardReportTrackingCommand for ID: {Id}", request.HazardReportTrackingId);
 
             var result = await _hazardReportTrackingService.DeleteHazardReportTrackingAsync(request.HazardReportTrackingId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted HazardReportTracking with ID: {Id}", request.HazardReportTrackingId);
+                _logger.LogInformation(" Successfully deleted HazardReportTracking with ID: {Id}", request.HazardReportTrackingId);
             }
             else
             {

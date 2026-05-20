@@ -15,8 +15,10 @@ namespace SMS_Domain.Events.Test;
 /// Test UI event for EventBus queue testing and validation
 /// Represents user interface updates and notifications
 /// </summary>
-public class TestUIEvent : IUIEvent
+public class TestUIEvent : IBaseUIEvent
 {
+    public const string TypeValue = "TestUIEvent";
+
     /// <summary>
     /// Unique identifier for this event instance
     /// </summary>
@@ -30,7 +32,9 @@ public class TestUIEvent : IUIEvent
     /// <summary>
     /// Type identifier for the event (used by EventBus routing)
     /// </summary>
-    public string EventType { get; private set; } = "TestUIEvent";
+    public string EventType { get; private set; } = TypeValue;
+
+    public string ReportId { get; private set; } = string.Empty;
 
     /// <summary>
     /// Target UI component for this event
@@ -63,12 +67,13 @@ public class TestUIEvent : IUIEvent
     /// <summary>
     /// Creates a new TestUIEvent with specified parameters
     /// </summary>
-    public TestUIEvent(string eventType, string targetComponent, string message, object? testData = null)
+    public TestUIEvent(string eventType, string targetComponent, string message, object? testData = null, string? reportId = null)
     {
         EventType = eventType;
         TargetComponent = targetComponent;
         Message = message;
         TestData = testData;
+        ReportId = reportId ?? string.Empty;
     }
 
     /// <summary>

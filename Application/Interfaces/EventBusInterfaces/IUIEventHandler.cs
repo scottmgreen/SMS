@@ -14,8 +14,8 @@ namespace SMS_Application.Interfaces;
 /// Specialized interface for UI event handlers
 /// Handles dashboard updates, user notifications, and component state changes
 /// </summary>
-/// <typeparam name="T">UI event type implementing IUIEvent</typeparam>
-public interface IUIEventHandler<in T> : IBaseEventHandler<T> where T : IUIEvent
+/// <typeparam name="T">UI event type implementing IBaseUIEvent</typeparam>
+public interface IUIEventHandler<in T> : IBaseEventHandler<T> where T : IBaseUIEvent
 {
     // Inherits HandleAsync from IBaseEventHandler<T>
 }

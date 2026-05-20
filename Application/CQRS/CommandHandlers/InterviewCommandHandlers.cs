@@ -39,13 +39,13 @@ public class CreateInterviewCommandHandler : BaseCommandBundle, IBaseRequestHand
                 return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateInterviewCommand for Code: {Code}", request.Interview.Code);
+            _logger.LogInformation(" Processing CreateInterviewCommand for Code: {Code}", request.Interview.Code);
 
             var result = await _interviewService.CreateInterviewAsync(request.Interview, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created Interview with ID: {Id}, Code: {Code}",
+                _logger.LogInformation(" Successfully created Interview with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -90,13 +90,13 @@ public class UpdateInterviewCommandHandler : BaseCommandBundle, IBaseRequestHand
                 return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateInterviewCommand for ID: {Id}", request.Interview.Id);
+            _logger.LogInformation(" Processing UpdateInterviewCommand for ID: {Id}", request.Interview.Id);
 
             var result = await _interviewService.UpdateInterviewAsync(request.Interview, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated Interview with ID: {Id}", request.Interview.Id);
+                _logger.LogInformation(" Successfully updated Interview with ID: {Id}", request.Interview.Id);
             }
             else
             {
@@ -140,13 +140,13 @@ public class DeleteInterviewCommandHandler : BaseCommandBundle, IBaseRequestHand
                 return Result<bool>.Failure<bool>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteInterviewCommand for ID: {Id}", request.InterviewId);
+            _logger.LogInformation(" Processing DeleteInterviewCommand for ID: {Id}", request.InterviewId);
 
             var result = await _interviewService.DeleteInterviewAsync(request.InterviewId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted Interview with ID: {Id}", request.InterviewId);
+                _logger.LogInformation(" Successfully deleted Interview with ID: {Id}", request.InterviewId);
             }
             else
             {

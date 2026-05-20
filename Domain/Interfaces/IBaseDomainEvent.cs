@@ -33,13 +33,10 @@ public interface IBaseDomainEvent
     string EventType { get; }
 
     /// <summary>
-    /// The aggregate identifier this event relates to
+    /// Report identifier this event originated from.
     /// </summary>
-    string AggregateId { get; }
+    string ReportId { get; }
 
-    /// <summary>
-    /// Event version for handling schema evolution
-    /// </summary>
-    int Version { get; }
+    
 }
 

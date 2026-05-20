@@ -13,10 +13,11 @@ using SMS_Domain.ValueObjects;
 using SMS_Domain.Common;
 using SMS_Domain.Interfaces;
 using SMS_Domain.Events;
+using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
 using System.Collections.Concurrent;
 using System.Text.Json;
-using System.Text.Json;
+using System.Reflection;
 
 namespace SMS_Application.Services;
 
@@ -29,6 +30,10 @@ public class EventQueueService : IEventQueueService
     private readonly ILogger<EventQueueService> _logger;
     private readonly IBaseEventBus _eventBus;
     private readonly ConcurrentDictionary<Guid, QueuedEvent> _eventQueue = new();
+    private static readonly JsonSerializerOptions EventJsonOptions = new()
+    {
+        PropertyNameCaseInsensitive = true
+    };
 
     public EventQueueService(
         ILogger<EventQueueService> logger,
@@ -68,7 +73,7 @@ public class EventQueueService : IEventQueueService
     /// <summary>
     /// Queues an integration event for manual execution
     /// </summary>
-    public async Task<Result> QueueIntegrationEventAsync<T>(T integrationEvent, string? queuedBy = null) where T : IIntegrationEvent
+    public async Task<Result> QueueIntegrationEventAsync<T>(T integrationEvent, string? queuedBy = null) where T : IBaseIntegrationEvent
     {
         try
         {
@@ -95,7 +100,7 @@ public class EventQueueService : IEventQueueService
     /// <summary>
     /// Queues a UI event for manual execution
     /// </summary>
-    public async Task<Result> QueueUIEventAsync<T>(T uiEvent, string? queuedBy = null) where T : IUIEvent
+    public async Task<Result> QueueUIEventAsync<T>(T uiEvent, string? queuedBy = null) where T : IBaseUIEvent
     {
         try
         {
@@ -419,72 +424,256 @@ public class EventQueueService : IEventQueueService
     /// <summary>
     /// Executes a domain event by reconstructing it from the queued event data and publishing it immediately
     /// </summary>
+    // Generic map from EventType.Value to .NET event type for domain events
+    private static readonly Dictionary<string, Type> DomainEventTypeMap = new()
+    {
+        { Domain.Enums.EventType.HazardCreated.Value, typeof(SMS_Domain.Events.HazardCreatedEvent) },
+        { Domain.Enums.EventType.HazardUpdated.Value, typeof(SMS_Domain.Events.HazardUpdatedEvent) },
+        { Domain.Enums.EventType.HazardDeleted.Value, typeof(SMS_Domain.Events.HazardDeletedEvent) },
+        { Domain.Enums.EventType.ReportCreated.Value, typeof(SMS_Domain.Events.ReportCreatedEvent) },
+        { Domain.Enums.EventType.ReportUpdated.Value, typeof(SMS_Domain.Events.ReportUpdatedEvent) },
+        { Domain.Enums.EventType.ReportClosed.Value, typeof(SMS_Domain.Events.ReportClosedEvent) },
+        { Domain.Enums.EventType.RiskAssessmentCreated.Value, typeof(SMS_Domain.Events.RiskAssessmentCreatedEvent) },
+        { Domain.Enums.EventType.RiskAssessmentUpdated.Value, typeof(SMS_Domain.Events.RiskAssessmentUpdatedEvent) },
+        { Domain.Enums.EventType.MitigationCreated.Value, typeof(SMS_Domain.Events.MitigationCreatedEvent) },
+        { Domain.Enums.EventType.MitigationApprovalRequested.Value, typeof(SMS_Domain.Events.MitigationApprovalRequestedEvent) },
+        { Domain.Enums.EventType.MitigationApprovalApproved.Value, typeof(SMS_Domain.Events.MitigationApprovalApprovedEvent) },
+        { Domain.Enums.EventType.MitigationStatusChanged.Value, typeof(SMS_Domain.Events.MitigationStatusChangedEvent) },
+        // Add more as needed
+    };
     private async Task<Result> ExecuteDomainEvent(QueuedEvent queuedEvent)
     {
         try
         {
-            _logger.LogInformation("?? [QUEUE] Executing domain event {EventType} (Queue ID: {QueueId})", 
-                queuedEvent.EventType, queuedEvent.Id);
+            _logger.LogInformation("[QUEUE] Executing domain event {EventType} (Queue ID: {QueueId})", queuedEvent.EventType, queuedEvent.Id);
 
-            // For now, we use a generic approach since we can't easily reconstruct typed events from serialized data
-            // In the future, this could be enhanced with proper event deserialization
-
-            // Instead of reconstructing the event, we call the EventBus to execute handlers directly
-            var executionResult = await ExecuteEventHandlersByType(queuedEvent.EventType, queuedEvent.EventData);
-
-            if (executionResult.IsSuccess)
+            if (!DomainEventTypeMap.TryGetValue(queuedEvent.EventType, out var eventType))
             {
-                _logger.LogInformation("? [QUEUE] Successfully executed domain event {EventType}", queuedEvent.EventType);
+                return Result.Failure(new Error("UNKNOWN_EVENT_TYPE", $"Unknown domain event type: {queuedEvent.EventType}"));
             }
-            else
+
+            var domainEvent = DeserializeDomainEvent(queuedEvent.EventData, eventType);
+            if (domainEvent == null)
             {
-                _logger.LogError("? [QUEUE] Failed to execute domain event {EventType}: {Error}", 
-                    queuedEvent.EventType, executionResult.Error.Message);
+                return Result.Failure(new Error("DESERIALIZATION_FAILED", $"Could not deserialize event: {queuedEvent.EventType}"));
             }
+
+            // 1. Get the generic method definition (no parameters needed)
+            var publishMethodDef = _eventBus.GetType()
+                .GetMethods()
+                .FirstOrDefault(m => m.Name == "PublishDomainEventAsync" && m.IsGenericMethodDefinition && m.GetParameters().Length == 3);
+
+            if (publishMethodDef == null)
+            {
+                return Result.Failure(new Error("METHOD_NOT_FOUND", $"PublishDomainEventAsync not found for event type: {queuedEvent.EventType}"));
+            }
+
+            // 2. Make the generic method for the concrete event type
+            var publishMethod = publishMethodDef.MakeGenericMethod(eventType);
+
+            // 3. Invoke with the correct parameters
+            var task = (Task<Result>)publishMethod.Invoke(_eventBus, new object[] { domainEvent, EventExecutionMode.Immediate, CancellationToken.None });
+            var executionResult = await task;
+
+            if (executionResult.IsFailure)
+            {
+                _logger.LogError("[QUEUE] Failed to execute domain event {EventType}: {Error}", queuedEvent.EventType, executionResult.Error.Message);
+            }
+            
 
             return executionResult;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? [QUEUE] Exception executing domain event {EventType}", queuedEvent.EventType);
+            _logger.LogError(ex, "[QUEUE] Exception executing domain event {EventType}", queuedEvent.EventType);
             return Result.Failure(new Error("DOMAIN_EVENT_EXECUTION_FAILED", $"Failed to execute domain event: {ex.Message}"));
         }
+    }
+
+    private object? DeserializeDomainEvent(string eventData, Type eventType)
+    {
+        try
+        {
+            return JsonSerializer.Deserialize(eventData, eventType, EventJsonOptions);
+        }
+        catch (InvalidOperationException ex)
+        {
+            _logger.LogDebug(ex, "[QUEUE] Standard deserialization failed for {EventType}. Attempting fallback construction.", eventType.Name);
+            return DeserializeWithIdCtorFallback(eventData, eventType);
+        }
+    }
+
+    private object? DeserializeWithIdCtorFallback(string eventData, Type eventType)
+    {
+        using var doc = JsonDocument.Parse(eventData);
+        var root = doc.RootElement;
+
+        var ctor = eventType
+            .GetConstructors(BindingFlags.Public | BindingFlags.Instance)
+            .FirstOrDefault(c =>
+            {
+                var parameters = c.GetParameters();
+                return parameters.Length == 1 &&
+                       (parameters[0].ParameterType == typeof(SMSEventID) || parameters[0].ParameterType == typeof(string));
+            });
+
+        if (ctor == null)
+        {
+            _logger.LogWarning("[QUEUE] No compatible constructor found for fallback on {EventType}", eventType.Name);
+            return null;
+        }
+
+        var idValue = TryGetIdValue(root) ?? Guid.NewGuid().ToString();
+
+        object? instance = ctor.GetParameters()[0].ParameterType == typeof(SMSEventID)
+            ? ctor.Invoke(new object[] { new SMSEventID(idValue) })
+            : ctor.Invoke(new object[] { idValue });
+
+        if (instance == null)
+        {
+            return null;
+        }
+
+        PopulateSettableProperties(instance, root);
+        MapNestedIdToHazardId(instance, root);
+
+        return instance;
+    }
+
+    private static string? TryGetIdValue(JsonElement root)
+    {
+        if (root.TryGetProperty("Id", out var idElement))
+        {
+            if (idElement.ValueKind == JsonValueKind.Object && idElement.TryGetProperty("Value", out var nestedValue))
+            {
+                return nestedValue.GetString();
+            }
+
+            if (idElement.ValueKind == JsonValueKind.String)
+            {
+                return idElement.GetString();
+            }
+        }
+
+        if (root.TryGetProperty("EventId", out var eventIdElement) && eventIdElement.ValueKind == JsonValueKind.String)
+        {
+            return eventIdElement.GetString();
+        }
+
+        return null;
+    }
+
+    private static void PopulateSettableProperties(object instance, JsonElement root)
+    {
+        var properties = instance
+            .GetType()
+            .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+            .Where(p => p.CanWrite);
+
+        foreach (var property in properties)
+        {
+            if (!TryGetJsonProperty(root, property.Name, out var jsonProperty))
+            {
+                continue;
+            }
+
+            try
+            {
+                var value = jsonProperty.Deserialize(property.PropertyType, EventJsonOptions);
+                property.SetValue(instance, value);
+            }
+            catch
+            {
+                // best-effort hydration for replayed events
+            }
+        }
+    }
+
+    private static void MapNestedIdToHazardId(object instance, JsonElement root)
+    {
+        var hazardIdProperty = instance
+            .GetType()
+            .GetProperty("HazardId", BindingFlags.Public | BindingFlags.Instance);
+
+        if (hazardIdProperty == null || !hazardIdProperty.CanWrite || hazardIdProperty.PropertyType != typeof(string))
+        {
+            return;
+        }
+
+        var currentValue = hazardIdProperty.GetValue(instance) as string;
+        if (!string.IsNullOrWhiteSpace(currentValue))
+        {
+            return;
+        }
+
+        if (root.TryGetProperty("Id", out var idElement) &&
+            idElement.ValueKind == JsonValueKind.Object &&
+            idElement.TryGetProperty("Value", out var valueElement) &&
+            valueElement.ValueKind == JsonValueKind.String)
+        {
+            hazardIdProperty.SetValue(instance, valueElement.GetString());
+        }
+    }
+
+    private static bool TryGetJsonProperty(JsonElement root, string propertyName, out JsonElement value)
+    {
+        foreach (var property in root.EnumerateObject())
+        {
+            if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                value = property.Value;
+                return true;
+            }
+        }
+
+        value = default;
+        return false;
     }
 
     /// <summary>
     /// Executes an integration event by reconstructing it and publishing it immediately
     /// </summary>
+    // Generic map from EventType.Value to .NET event type for integration events
+    private static readonly Dictionary<string, Type> IntegrationEventTypeMap = new()
+    {
+        { Domain.Enums.EventType.EmailNotification.Value, typeof(SMS_Domain.Events.EmailNotificationEvent) },
+        // Add more integration event types as needed
+    };
+
+    private static readonly Dictionary<string, Type> UIEventTypeMap = new()
+    {
+        { Domain.Enums.EventType.UINotification.Value, typeof(SMS_Domain.Events.UIEvents.UINotificationEvent) },
+        { SMS_Domain.Events.SPIDashboardRefreshEvent.TypeValue, typeof(SMS_Domain.Events.SPIDashboardRefreshEvent) },
+        { SMS_Domain.Events.Test.TestUIEvent.TypeValue, typeof(SMS_Domain.Events.Test.TestUIEvent) },
+    };
+
     private async Task<Result> ExecuteIntegrationEvent(QueuedEvent queuedEvent)
     {
         try
         {
-            _logger.LogInformation("?? [QUEUE] Executing integration event {EventType} for {TargetSystem} (Queue ID: {QueueId})", 
-                queuedEvent.EventType, queuedEvent.TargetSystem, queuedEvent.Id);
-
-            // For integration events, we can handle specific known types
-            if (queuedEvent.EventType == "Integration.Email.Notification")
+            if (!IntegrationEventTypeMap.TryGetValue(queuedEvent.EventType, out var eventType))
             {
-                return await ExecuteEmailNotificationEvent(queuedEvent);
+                return Result.Failure(new Error("UNKNOWN_INTEGRATION_EVENT_TYPE", $"Unknown integration event type: {queuedEvent.EventType}"));
             }
 
-            // Generic integration event execution
-            var executionResult = await ExecuteEventHandlersByType(queuedEvent.EventType, queuedEvent.EventData);
-
-            if (executionResult.IsSuccess)
+            var integrationEvent = (IBaseIntegrationEvent?)System.Text.Json.JsonSerializer.Deserialize(queuedEvent.EventData, eventType);
+            if (integrationEvent == null)
             {
-                _logger.LogInformation("? [QUEUE] Successfully executed integration event {EventType}", queuedEvent.EventType);
-            }
-            else
-            {
-                _logger.LogError("? [QUEUE] Failed to execute integration event {EventType}: {Error}", 
-                    queuedEvent.EventType, executionResult.Error.Message);
+                return Result.Failure(new Error("DESERIALIZATION_FAILED", $"Could not deserialize integration event: {queuedEvent.EventType}"));
             }
 
+            var executionResult = await _eventBus.PublishIntegrationEventAsync(integrationEvent, EventExecutionMode.Immediate);
+
+            if (executionResult.IsFailure)
+            {
+                _logger.LogError("[QUEUE] Failed to execute integration event {EventType}: {Error}", queuedEvent.EventType, executionResult.Error.Message);
+            }
+            
             return executionResult;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? [QUEUE] Exception executing integration event {EventType}", queuedEvent.EventType);
+            _logger.LogError(ex, "[QUEUE] Exception executing integration event {EventType}", queuedEvent.EventType);
             return Result.Failure(new Error("INTEGRATION_EVENT_EXECUTION_FAILED", $"Failed to execute integration event: {ex.Message}"));
         }
     }
@@ -497,251 +686,32 @@ public class EventQueueService : IEventQueueService
     {
         try
         {
-            _logger.LogInformation("?? [QUEUE] Executing UI event {EventType} for {TargetSystem} (Queue ID: {QueueId})", 
-                queuedEvent.EventType, queuedEvent.TargetSystem, queuedEvent.Id);
-
-            // For demonstration, we'll handle TestUIEvent specifically
-            if (queuedEvent.EventType == "HazardCreatedNotification" || queuedEvent.EventType == "TestUIEvent")
+            if (!UIEventTypeMap.TryGetValue(queuedEvent.EventType, out var eventType))
             {
-                return await ExecuteHazardCreatedNotification(queuedEvent);
+                return Result.Failure(new Error("UNKNOWN_UI_EVENT_TYPE", $"Unknown UI event type: {queuedEvent.EventType}"));
             }
 
-            // Generic UI event execution - log what would happen
-            _logger.LogInformation("?? [QUEUE] SIMULATED UI EVENT EXECUTION:");
-            _logger.LogInformation("   ?? Event Type: {EventType}", queuedEvent.EventType);
-            _logger.LogInformation("   ?? Target Component: {TargetComponent}", queuedEvent.TargetSystem);
-            _logger.LogInformation("   ?? Priority: {Priority}", queuedEvent.Priority);
-
-            var eventData = JsonSerializer.Deserialize<Dictionary<string, object>>(queuedEvent.EventData);
-            if (eventData != null && eventData.ContainsKey("Message"))
+            var uiEvent = (IBaseUIEvent?)JsonSerializer.Deserialize(queuedEvent.EventData, eventType, EventJsonOptions);
+            if (uiEvent == null)
             {
-                _logger.LogInformation("   ?? Message: {Message}", eventData["Message"]);
+                return Result.Failure(new Error("DESERIALIZATION_FAILED", $"Could not deserialize UI event: {queuedEvent.EventType}"));
             }
 
-            _logger.LogInformation("? [QUEUE] Successfully simulated UI event {EventType}", queuedEvent.EventType);
-            return Result.Success();
+            var reportId = !string.IsNullOrWhiteSpace(uiEvent.ReportId) ? uiEvent.ReportId : queuedEvent.ReportId;
+            
+            var executionResult = await _eventBus.PublishUIEventAsync(uiEvent, EventExecutionMode.Immediate);
+
+            if (executionResult.IsFailure)
+            {
+                _logger.LogError("[QUEUE] Failed to execute UI event {EventType}: {Error}", queuedEvent.EventType, executionResult.Error.Message);
+            }
+
+            return executionResult;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? [QUEUE] Exception executing UI event {EventType}", queuedEvent.EventType);
+            _logger.LogError(ex, "[QUEUE] Exception executing UI event {EventType}", queuedEvent.EventType);
             return Result.Failure(new Error("UI_EVENT_EXECUTION_FAILED", $"Failed to execute UI event: {ex.Message}"));
-        }
-    }
-
-    /// <summary>
-    /// Handles specific HazardCreatedNotification UI events
-    /// DEMONSTRATION: Shows proper UI event processing with clean logging
-    /// </summary>
-    private async Task<Result> ExecuteHazardCreatedNotification(QueuedEvent queuedEvent)
-    {
-        try
-        {
-            _logger.LogInformation("?? [QUEUE] Processing HazardCreatedNotification UI event");
-
-            // Deserialize the UI event data
-            var eventData = JsonSerializer.Deserialize<Dictionary<string, object>>(queuedEvent.EventData);
-
-            if (eventData == null)
-            {
-                return Result.Failure(new Error("UI_EVENT_DESERIALIZATION_FAILED", "Failed to deserialize UI event data"));
-            }
-
-            // Extract notification details
-            var message = eventData.ContainsKey("Message") ? eventData["Message"]?.ToString() : "UI Event Executed";
-            var priority = eventData.ContainsKey("Priority") ? eventData["Priority"]?.ToString() : "Normal";
-            var targetComponent = eventData.ContainsKey("TargetComponent") ? eventData["TargetComponent"]?.ToString() : "Dashboard";
-
-            // LOG what notification SHOULD be shown (Presentation layer will handle actual notifications)
-            _logger.LogInformation("?? [QUEUE] UI EVENT EXECUTED - Notification Details:");
-            _logger.LogInformation("   ?? Priority: {Priority}", priority);
-            _logger.LogInformation("   ?? Target: {TargetComponent}", targetComponent);
-            _logger.LogInformation("   ?? Message: {Message}", message);
-            _logger.LogInformation("   ?? NOTE: Presentation layer should show NotificationService popup");
-
-            // Extract additional notification data if available
-            if (eventData.ContainsKey("TestData"))
-            {
-                var testDataElement = (JsonElement)eventData["TestData"];
-                _logger.LogInformation("?? [QUEUE] Additional Data: {TestData}", testDataElement.GetRawText());
-            }
-
-            _logger.LogInformation("? [QUEUE] Successfully processed HazardCreatedNotification UI event");
-            return Result.Success();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "? [QUEUE] Failed to execute HazardCreatedNotification UI event");
-            return Result.Failure(new Error("HAZARD_NOTIFICATION_UI_FAILED", $"Failed to execute UI notification: {ex.Message}"));
-        }
-    }
-
-    /// <summary>
-    /// Handles specific email notification events with proper deserialization
-    /// </summary>
-    private async Task<Result> ExecuteEmailNotificationEvent(QueuedEvent queuedEvent)
-    {
-        try
-        {
-            _logger.LogInformation("?? [QUEUE] Executing email notification event (Queue ID: {QueueId})", queuedEvent.Id);
-
-            // Try to deserialize the email event data
-            var emailEventData = JsonSerializer.Deserialize<Dictionary<string, object>>(queuedEvent.EventData);
-
-            if (emailEventData == null)
-            {
-                return Result.Failure(new Error("EMAIL_DESERIALIZATION_FAILED", "Failed to deserialize email event data"));
-            }
-
-            // For now, use a simplified approach - create a new email event and execute it
-            // This is a workaround until proper event reconstruction is implemented
-            var emailEvent = CreateEmailEventFromData(emailEventData);
-
-            if (emailEvent != null)
-            {
-                _logger.LogInformation("?? [QUEUE] Recreated email event: {Subject}", emailEvent.Subject);
-                return await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Immediate);
-            }
-            else
-            {
-                _logger.LogWarning("?? [QUEUE] Could not recreate email event from queue data");
-                return Result.Success(); // Don't fail the queue processing for now
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "? [QUEUE] Failed to execute email notification event");
-            return Result.Failure(new Error("EMAIL_EVENT_EXECUTION_FAILED", $"Failed to execute email event: {ex.Message}"));
-        }
-    }
-
-    /// <summary>
-    /// Generic method to execute event handlers by event type name
-    /// This is a simplified approach for the current implementation
-    /// </summary>
-    private async Task<Result> ExecuteEventHandlersByType(string eventType, string eventData)
-    {
-        try
-        {
-            _logger.LogInformation("?? [QUEUE] Looking for handlers for event type: {EventType}", eventType);
-
-            // For HazardCreatedEvent, we can try to recreate and republish it
-            if (eventType == "Hazard.Created")
-            {
-                _logger.LogInformation("? [QUEUE] Found handler for HazardCreatedEvent - executing...");
-                return await ExecuteHazardCreatedEvent(eventData);
-            }
-
-            // For other event types, we'll need to implement specific handling
-            _logger.LogWarning("?? [QUEUE] No specific handler implementation for event type: {EventType}. Marking as successful for now.", eventType);
-            return Result.Success();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "? [QUEUE] Failed to execute handlers for event type: {EventType}", eventType);
-            return Result.Failure(new Error("HANDLER_EXECUTION_FAILED", $"Failed to execute handlers: {ex.Message}"));
-        }
-    }
-
-    /// <summary>
-    /// Handles HazardCreatedEvent execution by recreating the event and republishing it
-    /// </summary>
-    private async Task<Result> ExecuteHazardCreatedEvent(string eventData)
-    {
-        try
-        {
-            _logger.LogInformation("??? [QUEUE] Executing HazardCreatedEvent from queue data");
-
-            // Try to deserialize the hazard event data
-            var hazardEventData = JsonSerializer.Deserialize<Dictionary<string, object>>(eventData);
-
-            if (hazardEventData == null)
-            {
-                return Result.Failure(new Error("HAZARD_DESERIALIZATION_FAILED", "Failed to deserialize hazard event data"));
-            }
-
-            // Create a new HazardCreatedEvent from the stored data
-            var hazardEvent = CreateHazardEventFromData(hazardEventData);
-
-            if (hazardEvent != null)
-            {
-                _logger.LogInformation("??? [QUEUE] Recreated HazardCreatedEvent: {HazardCode}", hazardEvent.HazardCode);
-                return await _eventBus.PublishDomainEventAsync(hazardEvent, EventExecutionMode.Immediate);
-            }
-            else
-            {
-                _logger.LogWarning("?? [QUEUE] Could not recreate HazardCreatedEvent from queue data");
-                return Result.Success(); // Don't fail the queue processing for now
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "? [QUEUE] Failed to execute HazardCreatedEvent");
-            return Result.Failure(new Error("HAZARD_EVENT_EXECUTION_FAILED", $"Failed to execute hazard event: {ex.Message}"));
-        }
-    }
-
-    /// <summary>
-    /// Helper method to create EmailNotificationEvent from dictionary data
-    /// This is a simplified reconstruction - in production you'd want proper event serialization
-    /// </summary>
-    private EmailNotificationEvent? CreateEmailEventFromData(Dictionary<string, object> data)
-    {
-        try
-        {
-            // Extract basic email properties (simplified approach)
-            var subject = data.ContainsKey("Subject") ? data["Subject"]?.ToString() : "Test Email";
-            var body = data.ContainsKey("Body") ? data["Body"]?.ToString() : "Test email body";
-            var recipients = new List<string> { "test@example.com" }; // Simplified
-
-            return new EmailNotificationEvent(
-                toRecipients: recipients,
-                subject: subject ?? "Queue Executed Email",
-                body: body ?? "This email was executed from the event queue.",
-                isHtmlContent: true,
-                priority: EmailPriority.Normal,
-                workflowType: "QueueExecution"
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to create EmailNotificationEvent from data");
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Helper method to create HazardCreatedEvent from dictionary data
-    /// This is a simplified reconstruction - in production you'd want proper event serialization
-    /// </summary>
-    private SMS_Domain.Events.HazardCreatedEvent? CreateHazardEventFromData(Dictionary<string, object> data)
-    {
-        try
-        {
-            // Extract hazard properties (simplified approach)
-            var hazardCode = data.ContainsKey("HazardCode") ? data["HazardCode"]?.ToString() : "HZ-QUEUE-TEST";
-            var hazardName = data.ContainsKey("HazardName") ? data["HazardName"]?.ToString() : "Queue Executed Hazard";
-            var hazardType = data.ContainsKey("HazardType") ? data["HazardType"]?.ToString() : "DEFAULT_TYPE";
-            var description = data.ContainsKey("Description") ? data["Description"]?.ToString() : "Hazard executed from queue";
-
-            return new SMS_Domain.Events.HazardCreatedEvent(
-                hazardId: hazardCode ?? "HZ-QUEUE-TEST",
-                hazardCode: hazardCode ?? "HZ-QUEUE-TEST", 
-                hazardName: hazardName ?? "Queue Executed Hazard",
-                hazardType: hazardType ?? "DEFAULT_TYPE",
-                hazardCategory: "DEFAULT_CATEGORY",
-                description: description ?? "Hazard executed from queue",
-                locationArea: "Queue Execution",
-                reportCode: "QR-QUEUE-TEST",
-                createdBy: "Queue System",
-                createdDate: DateTime.UtcNow,
-                isInitialHazard: true,
-                priority: SMS_Domain.Enums.HazardPriority.High
-            );
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Failed to create HazardCreatedEvent from data");
-            return null;
         }
     }
 

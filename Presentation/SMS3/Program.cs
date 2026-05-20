@@ -149,7 +149,7 @@ public class Program
 
         // 🚀 EVENTBUS SUBSCRIPTIONS 
         app.InitializeEventBus(); // Application layer handlers (Domain + Integration events)
-        app.InitializeUIEventHandlers(); // Presentation layer handlers (UI events)
+        //app.InitializeUIEventHandlers(); // Presentation layer handlers (UI events)
 
         app.Run();
     }

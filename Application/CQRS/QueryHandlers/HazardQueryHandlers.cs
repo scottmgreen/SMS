@@ -34,7 +34,7 @@ public class GetHazardByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetHazardByIdQuery for Code: {Code}", request.HazardId);
+            _logger.LogInformation(" Processing GetHazardByIdQuery for Code: {Code}", request.HazardId);
             var result = await _hazardService.GetHazardByCodeAsync(new HazardID(request.HazardId.Value), ct).ConfigureAwait(false);
             return result;
         }
@@ -61,7 +61,7 @@ public class GetAllHazardsQueryHandler : BaseQueryBundle, IBaseRequestHandler<Ge
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetAllHazardsQuery");
+            _logger.LogInformation(" Processing GetAllHazardsQuery");
             var result = await _hazardService.GetAllHazardsAsync(ct).ConfigureAwait(false);
             return result;
         }
@@ -89,7 +89,7 @@ public class GetAllHazardsQueryHandler : BaseQueryBundle, IBaseRequestHandler<Ge
 //        try
 //        {
 //            ReportID reportid = request.ReportId;
-//            _logger.LogInformation("✅ Clean Architecture: Processing GetAllHazardsByReportIdQuery");
+//            _logger.LogInformation(" Processing GetAllHazardsByReportIdQuery");
 //            var result = await _hazardService.GetAllHazardsByReportCodeAsync(new ReportID(request.ReportId.Value), ct).ConfigureAwait(false);
 //            return result;
 //        }
@@ -116,7 +116,7 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IBaseRequestH
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", request.ReportId.Value);
+            _logger.LogInformation(" Processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", request.ReportId.Value);
             var result = await _hazardService.GetHazardsByReportCodeAsync(request.ReportId, ct).ConfigureAwait(false);
             return result;
         }

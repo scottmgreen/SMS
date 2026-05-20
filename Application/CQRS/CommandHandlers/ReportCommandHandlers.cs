@@ -39,13 +39,13 @@ public class CreateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateReportCommand for Code: {Code}", request.Report.Code);
+            _logger.LogInformation(" Processing CreateReportCommand for Code: {Code}", request.Report.Code);
 
             var result = await _reportService.CreateReportAsync(request.Report, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created Report with ID: {Id}, Code: {Code}",
+                _logger.LogInformation(" Successfully created Report with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -90,13 +90,13 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateReportCommand for ID: {Id}", request.Report.Id);
+            _logger.LogInformation(" Processing UpdateReportCommand for ID: {Id}", request.Report.Id);
 
             var result = await _reportService.UpdateReportAsync(request.Report, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated Report with ID: {Id}", request.Report.Id);
+                _logger.LogInformation(" Successfully updated Report with ID: {Id}", request.Report.Id);
             }
             else
             {
@@ -140,13 +140,13 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                 return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteReportCommand for ID: {Id}", request.ReportId);
+            _logger.LogInformation(" Processing DeleteReportCommand for ID: {Id}", request.ReportId);
 
             var result = await _reportService.DeleteReportAsync(request.ReportId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted Report with ID: {Id}", request.ReportId);
+                _logger.LogInformation(" Successfully deleted Report with ID: {Id}", request.ReportId);
             }
             else
             {
@@ -190,14 +190,14 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateReportStatusCommand for ReportCode: {ReportCode}, Status: {Status}",
+            _logger.LogInformation(" Processing UpdateReportStatusCommand for ReportCode: {ReportCode}, Status: {Status}",
                 request.ReportCode, request.ReportStatus);
 
             var result = await _reportService.UpdateReportStatusAsync(request.ReportCode, request.ReportStatus, request.UpdatedBy, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated Report status for Code: {ReportCode} to {Status}",
+                _logger.LogInformation(" Successfully updated Report status for Code: {ReportCode} to {Status}",
                     request.ReportCode, request.ReportStatus);
             }
             else

@@ -1,5 +1,5 @@
 //-----------------------------------------------------------------------
-// <copyright file="IIntegrationEvent.cs" company="SMS Safety Management System">
+// <copyright file="IBaseIntegrationEvent.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
 //     Description: Integration event interface for SMS external system notifications and third-party integrations.
@@ -15,7 +15,7 @@ namespace SMS_Domain.Interfaces;
 /// Integration events handle external system notifications, third-party integrations,
 /// and cross-system communication requirements
 /// </summary>
-public interface IIntegrationEvent
+public interface IBaseIntegrationEvent
 {
     /// <summary>
     /// Unique identifier for this integration event instance
@@ -31,6 +31,11 @@ public interface IIntegrationEvent
     /// Type identifier for the integration event (used by EventBus routing)
     /// </summary>
     string EventType { get; }
+
+    /// <summary>
+    /// Report identifier this event originated from.
+    /// </summary>
+    string ReportId { get; }
 
     /// <summary>
     /// The external system or integration target this event relates to

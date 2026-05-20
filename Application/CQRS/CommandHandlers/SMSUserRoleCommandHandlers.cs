@@ -39,13 +39,13 @@ public class CreateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHa
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateSMSUserRoleCommand for Code: {Code}", request.SMSUserRole.Code);
+            _logger.LogInformation(" Processing CreateSMSUserRoleCommand for Code: {Code}", request.SMSUserRole.Code);
 
             var result = await _userRoleService.CreateUserRoleAsync(request.SMSUserRole);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created SMS User Role with ID: {Id}", result.Value?.Id);
+                _logger.LogInformation(" Successfully created SMS User Role with ID: {Id}", result.Value?.Id);
             }
             else
             {
@@ -89,13 +89,13 @@ public class UpdateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHa
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSUserRoleCommand for ID: {Id}", request.SMSUserRole.Id);
+            _logger.LogInformation(" Processing UpdateSMSUserRoleCommand for ID: {Id}", request.SMSUserRole.Id);
 
             var result = await _userRoleService.UpdateUserRoleAsync(request.SMSUserRole);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated SMS User Role with ID: {Id}", request.SMSUserRole.Id);
+                _logger.LogInformation(" Successfully updated SMS User Role with ID: {Id}", request.SMSUserRole.Id);
             }
             else
             {
@@ -139,13 +139,13 @@ public class DeleteSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHa
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSUserRoleCommand for ID: {Id}", request.SMSUserRoleId);
+            _logger.LogInformation(" Processing DeleteSMSUserRoleCommand for ID: {Id}", request.SMSUserRoleId);
 
             var result = await _userRoleService.DeleteUserRoleAsync(request.SMSUserRoleId.Value);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted SMS User Role with ID: {Id}", request.SMSUserRoleId);
+                _logger.LogInformation(" Successfully deleted SMS User Role with ID: {Id}", request.SMSUserRoleId);
             }
             else
             {
@@ -189,7 +189,7 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing AssignRoleToUserCommand - User: {UserId}, Role: {RoleCode}",
+            _logger.LogInformation(" Processing AssignRoleToUserCommand - User: {UserId}, Role: {RoleCode}",
                 request.UserId, request.RoleCode);
 
             // Create a new user role assignment
@@ -205,7 +205,7 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IBaseRequestHan
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully assigned role {RoleCode} to user {UserId}",
+                _logger.LogInformation(" Successfully assigned role {RoleCode} to user {UserId}",
                     request.RoleCode, request.UserId);
             }
             else
@@ -250,7 +250,7 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequest
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing ActivateSMSUserRoleCommand for ID: {Id}", request.UserRoleId);
+            _logger.LogInformation(" Processing ActivateSMSUserRoleCommand for ID: {Id}", request.UserRoleId);
 
             // Get the user role to activate
             var userRoleResult = await _userRoleService.GetUserRoleByIdAsync(request.UserRoleId);
@@ -270,7 +270,7 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequest
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully activated SMS User Role with ID: {Id}", request.UserRoleId);
+                _logger.LogInformation(" Successfully activated SMS User Role with ID: {Id}", request.UserRoleId);
                 return Result<bool>.Success(true);
             }
             else
@@ -314,7 +314,7 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseReque
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeactivateSMSUserRoleCommand for ID: {Id}", request.UserRoleId);
+            _logger.LogInformation(" Processing DeactivateSMSUserRoleCommand for ID: {Id}", request.UserRoleId);
 
             // Get the user role to deactivate
             var userRoleResult = await _userRoleService.GetUserRoleByIdAsync(request.UserRoleId);
@@ -335,7 +335,7 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseReque
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deactivated SMS User Role with ID: {Id}", request.UserRoleId);
+                _logger.LogInformation(" Successfully deactivated SMS User Role with ID: {Id}", request.UserRoleId);
                 return Result<bool>.Success(true);
             }
             else

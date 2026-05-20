@@ -39,13 +39,13 @@ public class CreateMitigationAssignmentCommandHandler : BaseCommandBundle, IBase
                 return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateMitigationAssignmentCommand for Code: {Code}", request.MitigationAssignment.Code);
+            _logger.LogInformation(" Processing CreateMitigationAssignmentCommand for Code: {Code}", request.MitigationAssignment.Code);
 
             var result = await _mitigationAssignmentService.CreateMitigationAssignmentAsync(request.MitigationAssignment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created MitigationAssignment with ID: {Id}, Code: {Code}",
+                _logger.LogInformation(" Successfully created MitigationAssignment with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -90,14 +90,14 @@ public class UpdateMitigationAssignmentCommandHandler : BaseCommandBundle, IBase
                 return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateMitigationAssignmentCommand for ID: {Id}, Code: {Code}",
+            _logger.LogInformation(" Processing UpdateMitigationAssignmentCommand for ID: {Id}, Code: {Code}",
                 request.MitigationAssignment.Id, request.MitigationAssignment.Code);
 
             var result = await _mitigationAssignmentService.UpdateMitigationAssignmentAsync(request.MitigationAssignment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated MitigationAssignment with ID: {Id}", request.MitigationAssignment.Id);
+                _logger.LogInformation(" Successfully updated MitigationAssignment with ID: {Id}", request.MitigationAssignment.Id);
             }
             else
             {
@@ -141,13 +141,13 @@ public class DeleteMitigationAssignmentCommandHandler : BaseCommandBundle, IBase
                 return Result<bool>.Failure<bool>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteMitigationAssignmentCommand for ID: {Id}", request.MitigationAssignmentId);
+            _logger.LogInformation(" Processing DeleteMitigationAssignmentCommand for ID: {Id}", request.MitigationAssignmentId);
 
             var result = await _mitigationAssignmentService.DeleteMitigationAssignmentAsync(request.MitigationAssignmentId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted MitigationAssignment with ID: {Id}", request.MitigationAssignmentId);
+                _logger.LogInformation(" Successfully deleted MitigationAssignment with ID: {Id}", request.MitigationAssignmentId);
             }
             else
             {

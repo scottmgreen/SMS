@@ -18,10 +18,17 @@ namespace SMS_Application.Interfaces;
 public abstract class BaseDomainEventHandler<T> : IDomainEventHandler<T> where T : IBaseDomainEvent
 {
     protected readonly ILogger Logger;
+    protected readonly IBaseEventBus? EventBus;
 
     protected BaseDomainEventHandler(ILogger logger)
     {
         Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    protected BaseDomainEventHandler(ILogger logger, IBaseEventBus eventBus)
+    {
+        Logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        EventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
     }
 
     /// <summary>
@@ -31,28 +38,24 @@ public abstract class BaseDomainEventHandler<T> : IDomainEventHandler<T> where T
     {
         try
         {
-            Logger.LogInformation("Processing domain event {EventType} with ID {EventId}", 
-                domainEvent.EventType, domainEvent.EventId);
+            Logger.LogInformation("Processing domain event {EventType} with ID {EventId}", domainEvent.EventType, domainEvent.EventId);
 
             var result = await ProcessEventAsync(domainEvent, cancellationToken);
 
             if (result.IsSuccess)
             {
-                Logger.LogInformation("Successfully processed domain event {EventType} with ID {EventId}", 
-                    domainEvent.EventType, domainEvent.EventId);
+                Logger.LogInformation("Successfully processed domain event {EventType} with ID {EventId}", domainEvent.EventType, domainEvent.EventId);
             }
             else
             {
-                Logger.LogWarning("Failed to process domain event {EventType} with ID {EventId}: {Error}", 
-                    domainEvent.EventType, domainEvent.EventId, result.Error.Message);
+                Logger.LogWarning("Failed to process domain event {EventType} with ID {EventId}: {Error}", domainEvent.EventType, domainEvent.EventId, result.Error.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error processing domain event {EventType} with ID {EventId}", 
-                domainEvent.EventType, domainEvent.EventId);
+            Logger.LogError(ex, "Error processing domain event {EventType} with ID {EventId}", domainEvent.EventType, domainEvent.EventId);
             return Result.Failure(new Error("DOMAIN_EVENT_HANDLER_ERROR", $"Domain event processing failed: {ex.Message}"));
         }
     }

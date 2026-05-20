@@ -49,22 +49,22 @@ public interface IBaseEventBus
     /// UI events handle real-time updates to Blazor components and dashboards
     /// Examples: SPIDashboardRefresh, UserNotification, ComponentStateChanged
     /// </summary>
-    /// <typeparam name="T">UI event type implementing IUIEvent</typeparam>
+    /// <typeparam name="T">UI event type implementing IBaseUIEvent</typeparam>
     /// <param name="uiEvent">The UI event to publish</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result indicating success or failure</returns>
-    Task<Result> PublishUIEventAsync<T>(T uiEvent, CancellationToken cancellationToken = default) where T : IUIEvent;
+    Task<Result> PublishUIEventAsync<T>(T uiEvent, CancellationToken cancellationToken = default) where T : IBaseUIEvent;
 
     /// <summary>
     /// Publishes a UI event with specified execution mode
     /// UI events typically use immediate execution for responsive user experience
     /// </summary>
-    /// <typeparam name="T">UI event type implementing IUIEvent</typeparam>
+    /// <typeparam name="T">UI event type implementing IBaseUIEvent</typeparam>
     /// <param name="uiEvent">The UI event to publish</param>
     /// <param name="mode">Execution mode (typically Immediate for UI responsiveness)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result indicating success or failure</returns>
-    Task<Result> PublishUIEventAsync<T>(T uiEvent, EventExecutionMode mode, CancellationToken cancellationToken = default) where T : IUIEvent;
+    Task<Result> PublishUIEventAsync<T>(T uiEvent, EventExecutionMode mode, CancellationToken cancellationToken = default) where T : IBaseUIEvent;
     #endregion
 
     #region Integration Event Publishing
@@ -73,49 +73,22 @@ public interface IBaseEventBus
     /// Integration events handle communication with external services and systems
     /// Examples: EmailNotification, SMSAlert, AuditLogEntry, ComplianceReport
     /// </summary>
-    /// <typeparam name="T">Integration event type implementing IIntegrationEvent</typeparam>
+    /// <typeparam name="T">Integration event type implementing IBaseIntegrationEvent</typeparam>
     /// <param name="integrationEvent">The integration event to publish</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result indicating success or failure</returns>
-    Task<Result> PublishIntegrationEventAsync<T>(T integrationEvent, CancellationToken cancellationToken = default) where T : IIntegrationEvent;
+    Task<Result> PublishIntegrationEventAsync<T>(T integrationEvent, CancellationToken cancellationToken = default) where T : IBaseIntegrationEvent;
 
     /// <summary>
     /// Publishes an integration event with specified execution mode
     /// Integration events often use queued execution for reliable external delivery
     /// </summary>
-    /// <typeparam name="T">Integration event type implementing IIntegrationEvent</typeparam>
+    /// <typeparam name="T">Integration event type implementing IBaseIntegrationEvent</typeparam>
     /// <param name="integrationEvent">The integration event to publish</param>
     /// <param name="mode">Execution mode (Queued recommended for external integrations)</param>
     /// <param name="cancellationToken">Cancellation token</param>
     /// <returns>Result indicating success or failure</returns>
-    Task<Result> PublishIntegrationEventAsync<T>(T integrationEvent, EventExecutionMode mode, CancellationToken cancellationToken = default) where T : IIntegrationEvent;
-    #endregion
-
-    #region Legacy Support (Backward Compatibility)
-    /// <summary>
-    /// Legacy method: Publishes an event with immediate execution
-    /// Maintained for backward compatibility with existing code
-    /// Internally routes to PublishDomainEventAsync for IBaseDomainEvent types
-    /// </summary>
-    /// <typeparam name="T">Event type implementing IBaseDomainEvent</typeparam>
-    /// <param name="domainEvent">The event to publish</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Result indicating success or failure</returns>
-    [Obsolete("Use PublishDomainEventAsync, PublishUIEventAsync, or PublishIntegrationEventAsync for better semantic clarity")]
-    Task<Result> PublishAsync<T>(T domainEvent, CancellationToken cancellationToken = default) where T : IBaseDomainEvent;
-
-    /// <summary>
-    /// Legacy method: Publishes an event with specified execution mode
-    /// Maintained for backward compatibility with existing code
-    /// Internally routes to PublishDomainEventAsync for IBaseDomainEvent types
-    /// </summary>
-    /// <typeparam name="T">Event type implementing IBaseDomainEvent</typeparam>
-    /// <param name="domainEvent">The event to publish</param>
-    /// <param name="mode">Execution mode (Immediate, Queued, Manual)</param>
-    /// <param name="cancellationToken">Cancellation token</param>
-    /// <returns>Result indicating success or failure</returns>
-    [Obsolete("Use PublishDomainEventAsync, PublishUIEventAsync, or PublishIntegrationEventAsync for better semantic clarity")]
-    Task<Result> PublishAsync<T>(T domainEvent, EventExecutionMode mode, CancellationToken cancellationToken = default) where T : IBaseDomainEvent;
+    Task<Result> PublishIntegrationEventAsync<T>(T integrationEvent, EventExecutionMode mode, CancellationToken cancellationToken = default) where T : IBaseIntegrationEvent;
     #endregion
 
     #region Subscription Management
@@ -133,7 +106,7 @@ public interface IBaseEventBus
     /// </summary>
     /// <typeparam name="T">UI event type</typeparam>
     /// <typeparam name="THandler">Handler type implementing IBaseEventHandler</typeparam>
-    void SubscribeUI<T, THandler>() where T : IUIEvent where THandler : class, IBaseEventHandler<T>;
+    void SubscribeUI<T, THandler>() where T : IBaseUIEvent where THandler : class, IBaseEventHandler<T>;
 
     /// <summary>
     /// Registers an integration event handler for a specific integration event type
@@ -141,7 +114,7 @@ public interface IBaseEventBus
     /// </summary>
     /// <typeparam name="T">Integration event type</typeparam>
     /// <typeparam name="THandler">Handler type implementing IBaseEventHandler</typeparam>
-    void SubscribeIntegration<T, THandler>() where T : IIntegrationEvent where THandler : class, IBaseEventHandler<T>;
+    void SubscribeIntegration<T, THandler>() where T : IBaseIntegrationEvent where THandler : class, IBaseEventHandler<T>;
 
     /// <summary>
     /// Gets active subscriptions for monitoring and debugging

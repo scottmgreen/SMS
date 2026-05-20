@@ -195,7 +195,7 @@ public partial class SPIDataPointDialog : ComponentBase
 
     /// <summary>
     /// Gets dynamic data sources from domain events + manual sources
-    /// UPDATED: Now uses reflection-based discovery of IEventDataSource implementations
+    /// UPDATED: Now uses reflection-based discovery of IEventSource implementations
     /// </summary>
     private List<string> GetDataSourceOptions()
     {

@@ -41,13 +41,13 @@ public class CreateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRe
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateSMSStakeholderUserCommand for UserName: {UserName}", request.SMSStakeholderUser.UserName);
+            _logger.LogInformation(" Processing CreateSMSStakeholderUserCommand for UserName: {UserName}", request.SMSStakeholderUser.UserName);
 
             var result = await _stakeholderUserService.CreateSMSStakeholderUserAsync(request.SMSStakeholderUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created SMS Stakeholder User with ID: {Id}, UserName: {UserName}",
+                _logger.LogInformation(" Successfully created SMS Stakeholder User with ID: {Id}, UserName: {UserName}",
                     result.Value?.UserId, result.Value?.UserName);
             }
             else
@@ -92,13 +92,13 @@ public class UpdateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRe
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSStakeholderUserCommand for UserID: {UserId}", request.SMSStakeholderUser.UserId);
+            _logger.LogInformation(" Processing UpdateSMSStakeholderUserCommand for UserID: {UserId}", request.SMSStakeholderUser.UserId);
 
             var result = await _stakeholderUserService.UpdateSMSStakeholderUserAsync(request.SMSStakeholderUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUser.UserId);
+                _logger.LogInformation(" Successfully updated SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUser.UserId);
             }
             else
             {
@@ -142,7 +142,7 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSStakeholderUserPasswordCommand for UserID: {UserId}", request.UserId);
+            _logger.LogInformation(" Processing UpdateSMSStakeholderUserPasswordCommand for UserID: {UserId}", request.UserId);
 
             // Create new password with proper hashing
             var passwordResult = Password.Create(request.NewPassword);
@@ -165,7 +165,7 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated password for SMS Stakeholder User with ID: {UserId}", request.UserId);
+                _logger.LogInformation(" Successfully updated password for SMS Stakeholder User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else
@@ -209,13 +209,13 @@ public class AuthenticateSMSStakeholderUserCommandHandler : BaseCommandBundle, I
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing authentication request for UserName: {UserName}", request.UserName);
+            _logger.LogInformation(" Processing authentication request for UserName: {UserName}", request.UserName);
 
             var result = await _stakeholderUserService.AuthenticateSMSStakeholderUserAsync(request.UserName, request.Password, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully authenticated SMS Stakeholder User: {UserName}", request.UserName);
+                _logger.LogInformation(" Successfully authenticated SMS Stakeholder User: {UserName}", request.UserName);
             }
             else
             {
@@ -258,7 +258,7 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IB
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing RecordSMSStakeholderUserLoginCommand for UserID: {UserId}", request.UserId);
+            _logger.LogInformation(" Processing RecordSMSStakeholderUserLoginCommand for UserID: {UserId}", request.UserId);
 
             // Get the existing user and record login
             var userResult = await _stakeholderUserService.GetSMSStakeholderUserByCodeAsync(request.UserId, cancellationToken);
@@ -274,7 +274,7 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IB
 
             if (updateResult.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully recorded login for SMS Stakeholder User with ID: {UserId}", request.UserId);
+                _logger.LogInformation(" Successfully recorded login for SMS Stakeholder User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else

@@ -399,6 +399,7 @@ public static partial class Mappers
         report.ReportContactName = reader.GetValue<string>(FieldNames.fReportContactName);
         report.ReportContactCell = reader.GetValue<string>(FieldNames.fReportContactCell);
         report.ReportContactEmail = reader.GetValue<string>(FieldNames.fReportContactEmail);
+        report.ReportContactCompany = reader.GetValue<string>(FieldNames.fReportContactCompany);
         report.Description = reader.GetValue<string>(FieldNames.fReportDescription);
         report.Status = ReportStatus.FromValue(reader.GetValue<string>(FieldNames.fReportStatus)?.Trim());
         report.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";

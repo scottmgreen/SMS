@@ -40,13 +40,13 @@ public class CreateSMSApplicationUserCommandHandler : BaseCommandBundle, IBaseRe
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateSMSApplicationUserCommand for UserName: {UserName}", request.SMSApplicationUser.UserName);
+            _logger.LogInformation(" Processing CreateSMSApplicationUserCommand for UserName: {UserName}", request.SMSApplicationUser.UserName);
 
             var result = await _applicationUserService.CreateSMSApplicationUserAsync(request.SMSApplicationUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created SMS Application User with ID: {Id}, UserName: {UserName}",
+                _logger.LogInformation(" Successfully created SMS Application User with ID: {Id}, UserName: {UserName}",
                     result.Value?.UserId, result.Value?.UserName);
             }
             else
@@ -91,13 +91,13 @@ public class UpdateSMSApplicationUserCommandHandler : BaseCommandBundle, IBaseRe
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUser.UserId);
+            _logger.LogInformation(" Processing UpdateSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUser.UserId);
 
             var result = await _applicationUserService.UpdateSMSApplicationUserAsync(request.SMSApplicationUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated SMS Application User with ID: {UserId}", request.SMSApplicationUser.UserId);
+                _logger.LogInformation(" Successfully updated SMS Application User with ID: {UserId}", request.SMSApplicationUser.UserId);
             }
             else
             {
@@ -141,7 +141,7 @@ public class DeactivateSMSApplicationUserCommandHandler : BaseCommandBundle, IBa
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeactivateSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUser.UserId);
+            _logger.LogInformation(" Processing DeactivateSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUser.UserId);
 
             // Business logic: Deactivate the user
             request.SMSApplicationUser.Deactivate();
@@ -152,7 +152,7 @@ public class DeactivateSMSApplicationUserCommandHandler : BaseCommandBundle, IBa
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deactivated SMS Application User with ID: {UserId}", request.SMSApplicationUser.UserId);
+                _logger.LogInformation(" Successfully deactivated SMS Application User with ID: {UserId}", request.SMSApplicationUser.UserId);
             }
             else
             {
@@ -196,13 +196,13 @@ public class DeleteSMSApplicationUserCommandHandler : BaseCommandBundle, IBaseRe
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUserId);
+            _logger.LogInformation(" Processing DeleteSMSApplicationUserCommand for UserID: {UserId}", request.SMSApplicationUserId);
 
             var result = await _applicationUserService.DeleteSMSApplicationUserAsync(request.SMSApplicationUserId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted SMS Application User with ID: {UserId}", request.SMSApplicationUserId);
+                _logger.LogInformation(" Successfully deleted SMS Application User with ID: {UserId}", request.SMSApplicationUserId);
             }
             else
             {
@@ -246,7 +246,7 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateSMSApplicationUserPasswordCommand for UserID: {UserId}", request.UserId);
+            _logger.LogInformation(" Processing UpdateSMSApplicationUserPasswordCommand for UserID: {UserId}", request.UserId);
 
             // Create new password with proper hashing
             var passwordResult = Password.Create(request.NewPassword);
@@ -269,7 +269,7 @@ public class UpdateSMSApplicationUserPasswordCommandHandler : BaseCommandBundle,
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated password for SMS Application User with ID: {UserId}", request.UserId);
+                _logger.LogInformation(" Successfully updated password for SMS Application User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else
@@ -313,13 +313,13 @@ public class AuthenticateSMSApplicationUserCommandHandler : BaseCommandBundle, I
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing authentication request for UserName: {UserName}", request.UserName);
+            _logger.LogInformation(" Processing authentication request for UserName: {UserName}", request.UserName);
 
             var result = await _applicationUserService.AuthenticateSMSApplicationUserAsync(request.UserName, request.Password, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully authenticated SMS Application User: {UserName}", request.UserName);
+                _logger.LogInformation(" Successfully authenticated SMS Application User: {UserName}", request.UserName);
             }
             else
             {
@@ -362,7 +362,7 @@ public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IB
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing RecordSMSApplicationUserLoginCommand for UserID: {UserId}", request.UserId);
+            _logger.LogInformation(" Processing RecordSMSApplicationUserLoginCommand for UserID: {UserId}", request.UserId);
 
             // Get the existing user
             var userResult = await _applicationUserService.GetSMSApplicationUserByCodeAsync(request.UserId, cancellationToken);
@@ -383,7 +383,7 @@ public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IB
 
             if (updateResult.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully recorded login for SMS Application User with ID: {UserId}", request.UserId);
+                _logger.LogInformation(" Successfully recorded login for SMS Application User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else

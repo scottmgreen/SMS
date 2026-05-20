@@ -55,7 +55,16 @@ internal static class ServiceCollectionExtensions
         services.AddScoped<ICommandAccessAuditService, CommandAccessAuditService>();
         
         // Register all command/query handlers from the assembly
-        RegisterHandlers(services, assembly);
+        RegisterCQRSHandlers(services, assembly);
+
+        return services;
+    }
+
+    public static IServiceCollection AddEventBusHandlers(this IServiceCollection services, Assembly assembly)
+    {
+
+        // Register all command/query handlers from the assembly
+        RegisterEventBusHandlers(services, assembly);
 
         return services;
     }
@@ -63,7 +72,7 @@ internal static class ServiceCollectionExtensions
     /// <summary>
     /// Register all request handlers from the assembly using reflection
     /// </summary>
-    private static void RegisterHandlers(IServiceCollection services, Assembly assembly)
+    private static void RegisterCQRSHandlers(IServiceCollection services, Assembly assembly)
     {
         var handlerTypes = assembly.GetTypes()
             .Where(t => !t.IsAbstract && !t.IsInterface && 
@@ -81,7 +90,24 @@ internal static class ServiceCollectionExtensions
             services.AddScoped(interfaceType, handlerType);
         }
     }
+    public static void RegisterEventBusHandlers(this IServiceCollection services, Assembly assembly)
+    {
+        var handlerTypes = assembly.GetTypes()
+            .Where(t => !t.IsAbstract && !t.IsInterface &&
+                        t.GetInterfaces().Any(i => i.IsGenericType &&
+                            i.GetGenericTypeDefinition() == typeof(IBaseEventHandler<>)))
+            .ToList();
 
+        foreach (var handlerType in handlerTypes)
+        {
+            var interfaceType = handlerType.GetInterfaces()
+                .First(i => i.IsGenericType &&
+                            i.GetGenericTypeDefinition() == typeof(IBaseEventHandler<>));
+
+            services.AddScoped(handlerType);
+            services.AddScoped(interfaceType, handlerType);
+        }
+    }
     public enum LifeTime
     {
         Singleton,

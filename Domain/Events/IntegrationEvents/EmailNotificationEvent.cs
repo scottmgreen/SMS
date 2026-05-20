@@ -16,11 +16,12 @@ namespace SMS_Domain.Events;
 /// Integration event for sending email notifications
 /// Handles external email delivery through email service providers
 /// </summary>
-public class EmailNotificationEvent : IIntegrationEvent
+public class EmailNotificationEvent : IBaseIntegrationEvent
 {
     public Guid EventId { get; private set; }
     public DateTime OccurredOn { get; private set; }
-    public string EventType => "Integration.Email.Notification";
+    public string EventType => Domain.Enums.EventType.EmailNotification.Value;
+    public string ReportId { get; private set; }
     public string TargetSystem { get; private set; }
     public IntegrationDeliveryMode DeliveryMode { get; private set; }
     public int MaxRetryAttempts { get; private set; }
@@ -55,6 +56,7 @@ public class EmailNotificationEvent : IIntegrationEvent
         bool isHtmlContent = true,
         EmailPriority priority = EmailPriority.Normal,
         IntegrationDeliveryMode deliveryMode = IntegrationDeliveryMode.BestEffort,
+        string? reportId = null,
         string? workflowType = null,
         string? relatedEntityType = null,
         string? relatedEntityId = null,
@@ -69,6 +71,7 @@ public class EmailNotificationEvent : IIntegrationEvent
     {
         EventId = Guid.NewGuid();
         OccurredOn = DateTime.UtcNow;
+        ReportId = ResolveReportId(reportId, relatedEntityType, relatedEntityId);
         TargetSystem = "EmailService";
 
         ToRecipients = toRecipients ?? throw new ArgumentNullException(nameof(toRecipients));
@@ -93,6 +96,22 @@ public class EmailNotificationEvent : IIntegrationEvent
         {
             throw new ArgumentException("At least one recipient must be specified", nameof(toRecipients));
         }
+    }
+
+    private static string ResolveReportId(string? reportId, string? relatedEntityType, string? relatedEntityId)
+    {
+        if (!string.IsNullOrWhiteSpace(reportId))
+        {
+            return reportId.Trim();
+        }
+
+        if (string.Equals(relatedEntityType, "Report", StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrWhiteSpace(relatedEntityId))
+        {
+            return relatedEntityId.Trim();
+        }
+
+        return string.Empty;
     }
 }
 

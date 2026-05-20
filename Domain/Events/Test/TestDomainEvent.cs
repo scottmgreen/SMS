@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Common;
+using SMS_Domain.Entities;
 using SMS_Domain.Interfaces;
 
 namespace SMS_Domain.Events.Test;
@@ -38,7 +39,7 @@ public class TestDomainEvent : BaseDomainEvent
     /// <summary>
     /// Creates a new TestDomainEvent
     /// </summary>
-    public TestDomainEvent() : base()
+    public TestDomainEvent(SMSEventID id) : base(id)
     {
         // EventId and OccurredOn are set by the base class
     }
@@ -46,7 +47,7 @@ public class TestDomainEvent : BaseDomainEvent
     /// <summary>
     /// Creates a new TestDomainEvent with specified message and type
     /// </summary>
-    public TestDomainEvent(string eventType, string message, object? testData = null) : base()
+    public TestDomainEvent(SMSEventID id,string eventType, string message, object? testData = null) : base(id)
     {
         _eventType = eventType;
         Message = message;

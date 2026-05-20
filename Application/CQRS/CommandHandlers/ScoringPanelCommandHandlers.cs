@@ -39,13 +39,13 @@ public class CreateScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateScoringPanelCommand for Code: {Code}", request.ScoringPanel.Code);
+            _logger.LogInformation(" Processing CreateScoringPanelCommand for Code: {Code}", request.ScoringPanel.Code);
 
             var result = await _scoringPanelService.CreateScoringPanelAsync(request.ScoringPanel, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created ScoringPanel with ID: {Id}, Code: {Code}",
+                _logger.LogInformation(" Successfully created ScoringPanel with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -90,13 +90,13 @@ public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateScoringPanelCommand for ID: {Id}", request.ScoringPanel.Id);
+            _logger.LogInformation(" Processing UpdateScoringPanelCommand for ID: {Id}", request.ScoringPanel.Id);
 
             var result = await _scoringPanelService.UpdateScoringPanelAsync(request.ScoringPanel, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated ScoringPanel with ID: {Id}", request.ScoringPanel.Id);
+                _logger.LogInformation(" Successfully updated ScoringPanel with ID: {Id}", request.ScoringPanel.Id);
             }
             else
             {
@@ -140,13 +140,13 @@ public class DeleteScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<bool>.Failure<bool>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteScoringPanelCommand for ID: {Id}", request.ScoringPanelId);
+            _logger.LogInformation(" Processing DeleteScoringPanelCommand for ID: {Id}", request.ScoringPanelId);
 
             var result = await _scoringPanelService.DeleteScoringPanelAsync(request.ScoringPanelId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted ScoringPanel with ID: {Id}", request.ScoringPanelId);
+                _logger.LogInformation(" Successfully deleted ScoringPanel with ID: {Id}", request.ScoringPanelId);
             }
             else
             {

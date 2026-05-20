@@ -37,19 +37,28 @@ public partial class EventBusQueueManager
     private EventCategory? _eventTypeFilter;
 
     #endregion
-    // Helper to extract HazardCode or HazardId from HazardCreatedEvent domain events
-    private string GetHazardIdentifier(QueuedEvent queuedEvent)
+    // Helper to extract ReportId from any event type
+    private string GetEventReportIdentifier(QueuedEvent queuedEvent)
     {
-        if (queuedEvent.EventCategory == EventCategory.DomainEvent && !string.IsNullOrEmpty(queuedEvent.EventData))
+        if (!string.IsNullOrWhiteSpace(queuedEvent.ReportId))
+        {
+            return queuedEvent.ReportId.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(queuedEvent.EventData))
         {
             try
             {
-                var hazardEvent = System.Text.Json.JsonSerializer.Deserialize<HazardCreatedEvent>(queuedEvent.EventData);
-                if (hazardEvent != null)
+                using var doc = System.Text.Json.JsonDocument.Parse(queuedEvent.EventData);
+                var root = doc.RootElement;
+
+                foreach (var property in root.EnumerateObject())
                 {
-                    return !string.IsNullOrEmpty(hazardEvent.HazardCode)
-                        ? hazardEvent.HazardCode
-                        : hazardEvent.HazardId ?? string.Empty;
+                    if (string.Equals(property.Name, "ReportId", StringComparison.OrdinalIgnoreCase)
+                        && property.Value.ValueKind == System.Text.Json.JsonValueKind.String)
+                    {
+                        return property.Value.GetString()?.Trim() ?? string.Empty;
+                    }
                 }
             }
             catch
@@ -222,8 +231,7 @@ public partial class EventBusQueueManager
             var queuedEvent = eventResult.Value;
 
             // Check for IntegrationEvent and Email Notification
-            if (queuedEvent.EventCategory == EventCategory.IntegrationEvent &&
-                queuedEvent.EventType == "Integration.Email.Notification")
+            if (queuedEvent.EventCategory == EventCategory.IntegrationEvent && queuedEvent.EventType == Domain.Enums.EventType.EmailNotification.Value)
             {
                 try
                 {
@@ -289,7 +297,7 @@ public partial class EventBusQueueManager
                     Duration = 4000
                 });
 
-                Logger.LogWarning("❌ Failed to execute event {EventId}: {Error}", eventId, result.Error.Message);
+                Logger.LogWarning("Failed to execute event {EventId}: {Error}", eventId, result.Error.Message);
             }
 
             // Refresh the data

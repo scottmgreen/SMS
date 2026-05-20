@@ -62,7 +62,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactName, report.ReportContactName));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactCell, report.ReportContactCell));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactEmail, report.ReportContactEmail));
-
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactCompany, report.ReportContactCompany));
 
 
 
@@ -202,7 +202,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactName, report.ReportContactName));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactCell, report.ReportContactCell));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactEmail, report.ReportContactEmail));
-
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactCompany, report.ReportContactCompany));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportDescription, report.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStatus, report.Status));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, report.UpdatedBy ?? "SYSTEM"));

@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Common;
+using SMS_Domain.Entities;
 
 namespace SMS_Domain.Events;
 
@@ -18,7 +19,17 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class SPIThresholdExceededEvent : BaseDomainEvent
 {
-    public override string EventType => "SPI.ThresholdExceeded";
+    public override string EventType => "SPI_Threshold_Exceeded";
+
+    /// <summary>
+    /// Display name for SPI configuration dropdowns
+    /// </summary>
+    public string DataSourceDisplayName => "SMS Event Bus - SPI Threshold Exceeded";
+
+    /// <summary>
+    /// Category for grouping in UI
+    /// </summary>
+    public string DataSourceCategory => "SMS Domain Event";
 
     public string SPICode { get; private set; }
     public string SPIName { get; private set; }
@@ -30,6 +41,7 @@ public class SPIThresholdExceededEvent : BaseDomainEvent
     public DateTime DetectedAt { get; private set; }
 
     public SPIThresholdExceededEvent(
+        SMSEventID id,
         string spiCode,
         string spiName,
         decimal currentValue,
@@ -37,7 +49,7 @@ public class SPIThresholdExceededEvent : BaseDomainEvent
         SPISeverityLevel severity,
         List<string> stakeholderGroups,
         string reportingPeriod,
-        string aggregateId)
+        string aggregateId) : base(id)
     {
         SPICode = spiCode ?? throw new ArgumentNullException(nameof(spiCode));
         SPIName = spiName ?? throw new ArgumentNullException(nameof(spiName));
@@ -47,7 +59,7 @@ public class SPIThresholdExceededEvent : BaseDomainEvent
         StakeholderGroups = stakeholderGroups ?? new List<string>();
         ReportingPeriod = reportingPeriod ?? string.Empty;
         DetectedAt = DateTime.UtcNow;
-        AggregateId = aggregateId ?? throw new ArgumentNullException(nameof(aggregateId));
+        
     }
 }
 

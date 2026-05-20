@@ -14,8 +14,8 @@ namespace SMS_Application.Interfaces;
 /// Specialized interface for integration event handlers
 /// Handles external system notifications and third-party integrations
 /// </summary>
-/// <typeparam name="T">Integration event type implementing IIntegrationEvent</typeparam>
-public interface IIntegrationEventHandler<in T> : IBaseEventHandler<T> where T : IIntegrationEvent
+/// <typeparam name="T">Integration event type implementing IBaseIntegrationEvent</typeparam>
+public interface IIntegrationEventHandler<in T> : IBaseEventHandler<T> where T : IBaseIntegrationEvent
 {
     // Inherits HandleAsync from IBaseEventHandler<T>
 }

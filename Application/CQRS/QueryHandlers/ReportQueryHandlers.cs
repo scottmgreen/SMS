@@ -34,7 +34,7 @@ public class GetReportByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetReportByCodeQuery for Code: {Code}", request.ReportCode);
+            _logger.LogInformation(" Processing GetReportByCodeQuery for Code: {Code}", request.ReportCode);
             var result = await _reportService.GetReportByCodeAsync(request.ReportCode, ct).ConfigureAwait(false);
             return result;
         }
@@ -61,7 +61,7 @@ public class GetAllReportsQueryHandler : BaseQueryBundle, IBaseRequestHandler<Ge
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetAllReportsQuery");
+            _logger.LogInformation(" Processing GetAllReportsQuery");
             var result = await _reportService.GetAllReportsAsync(ct).ConfigureAwait(false);
             return result;
         }

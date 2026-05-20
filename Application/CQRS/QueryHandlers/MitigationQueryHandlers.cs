@@ -41,13 +41,13 @@ public class GetMitigationByCodeQueryHandler : BaseQueryBundle, IBaseRequestHand
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NotFound);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing GetMitigationByIdQuery for ID: {Id}", request.MitigationId.Value);
+            _logger.LogInformation(" Processing GetMitigationByIdQuery for ID: {Id}", request.MitigationId.Value);
 
             var result = await _mitigationService.GetMitigationByCodeAsync(new MitigationID(request.MitigationId.Value), ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully retrieved Mitigation with ID: {Id}", request.MitigationId.Value);
+                _logger.LogInformation(" Successfully retrieved Mitigation with ID: {Id}", request.MitigationId.Value);
             }
             else
             {
@@ -85,13 +85,13 @@ public class GetAllMitigationsQueryHandler : BaseQueryBundle, IBaseRequestHandle
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetAllMitigationsQuery");
+            _logger.LogInformation(" Processing GetAllMitigationsQuery");
 
             var result = await _mitigationService.GetAllMitigationsAsync(ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully retrieved {Count} Mitigations", result.Value?.Count ?? 0);
+                _logger.LogInformation(" Successfully retrieved {Count} Mitigations", result.Value?.Count ?? 0);
             }
             else
             {
@@ -131,7 +131,7 @@ public class GetMitigationsByHazardCodeQueryHandler : BaseQueryBundle, IBaseRequ
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetMitigationsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogInformation(" Processing GetMitigationsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
             var result = await _mitigationService.GetMitigationsByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }

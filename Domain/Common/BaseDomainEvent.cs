@@ -8,28 +8,25 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Entities;
+
 namespace SMS_Domain.Common;
 
 /// <summary>
 /// Base implementation for all domain events in the SMS system
 /// Integrates with EventBus for workflow notifications and SPI automation
 /// </summary>
-public abstract class BaseDomainEvent : IBaseDomainEvent
+public abstract class BaseDomainEvent :BaseAuditableEntity, IBaseDomainEvent
 {
-    protected BaseDomainEvent()
+    
+    protected BaseDomainEvent(SMSEventID id) : base(id, "SYSTEM", DateTime.UtcNow)
     {
         EventId = Guid.NewGuid();
         OccurredOn = DateTime.UtcNow;
-        Version = 1;
+
     }
 
-    protected BaseDomainEvent(DateTime datetime)
-    {
-        EventId = Guid.NewGuid();
-        OccurredOn = datetime;
-        Version = 1;
-    }
-
+    
     /// <summary>
     /// Unique identifier for this event instance
     /// </summary>
@@ -47,13 +44,10 @@ public abstract class BaseDomainEvent : IBaseDomainEvent
     public abstract string EventType { get; }
 
     /// <summary>
-    /// The aggregate identifier this event relates to
+    /// Report identifier this event originated from.
     /// </summary>
-    public string AggregateId { get; protected set; } = string.Empty;
+    public string ReportId { get; set; } = string.Empty;
 
-    /// <summary>
-    /// Event version for handling schema evolution
-    /// </summary>
-    public int Version { get; protected set; }
+
 }
 

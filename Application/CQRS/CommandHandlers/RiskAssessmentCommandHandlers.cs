@@ -39,13 +39,13 @@ public class CreateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateRiskAssessmentCommand for Code: {Code}", request.RiskAssessment.Code);
+            _logger.LogInformation(" Processing CreateRiskAssessmentCommand for Code: {Code}", request.RiskAssessment.Code);
 
             var result = await _riskAssessmentService.CreateRiskAssessmentAsync(request.RiskAssessment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created RiskAssessment with ID: {Id}, Code: {Code}",
+                _logger.LogInformation(" Successfully created RiskAssessment with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -90,14 +90,14 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateRiskAssessmentCommand for ID: {Id}, Code: {Code}",
+            _logger.LogInformation(" Processing UpdateRiskAssessmentCommand for ID: {Id}, Code: {Code}",
                 request.RiskAssessment.Id, request.RiskAssessment.Code);
 
             var result = await _riskAssessmentService.UpdateRiskAssessmentAsync(request.RiskAssessment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated RiskAssessment with ID: {Id}", request.RiskAssessment.Id);
+                _logger.LogInformation(" Successfully updated RiskAssessment with ID: {Id}", request.RiskAssessment.Id);
             }
             else
             {
@@ -141,13 +141,13 @@ public class DeleteRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteRiskAssessmentCommand for ID: {Id}", request.RiskAssessmentId);
+            _logger.LogInformation(" Processing DeleteRiskAssessmentCommand for ID: {Id}", request.RiskAssessmentId);
 
             var result = await _riskAssessmentService.DeleteRiskAssessmentAsync(request.RiskAssessmentId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted RiskAssessment with ID: {Id}", request.RiskAssessmentId);
+                _logger.LogInformation(" Successfully deleted RiskAssessment with ID: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -195,7 +195,7 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing SaveStep1Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
+            _logger.LogInformation(" Processing SaveStep1Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
 
             // Get the existing assessment first
             var assessmentResult = await _riskAssessmentService.GetRiskAssessmentByIdAsync(request.RiskAssessmentId, ct);
@@ -224,7 +224,7 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully saved Step 1 for RiskAssessment: {Id}", request.RiskAssessmentId);
+                _logger.LogInformation(" Successfully saved Step 1 for RiskAssessment: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -268,7 +268,7 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing SaveStep4Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
+            _logger.LogInformation(" Processing SaveStep4Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
 
             // Get the existing assessment first
             var assessmentResult = await _riskAssessmentService.GetRiskAssessmentByIdAsync(request.RiskAssessmentId, ct);
@@ -290,7 +290,7 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully saved Step 4 for RiskAssessment: {Id}", request.RiskAssessmentId);
+                _logger.LogInformation(" Successfully saved Step 4 for RiskAssessment: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -334,7 +334,7 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing SaveStep5Command for RiskAssessment: {Id}", request.RiskAssessmentId);
+            _logger.LogInformation(" Processing SaveStep5Command for RiskAssessment: {Id}", request.RiskAssessmentId);
 
             // Get the existing assessment first
             var assessmentResult = await _riskAssessmentService.GetRiskAssessmentByIdAsync(request.RiskAssessmentId, ct);
@@ -353,7 +353,7 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully saved Step 5 for RiskAssessment: {Id}", request.RiskAssessmentId);
+                _logger.LogInformation(" Successfully saved Step 5 for RiskAssessment: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -397,7 +397,7 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IBaseRequestHandl
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateProgressCommand for RiskAssessment: {Id}, Step: {Step}",
+            _logger.LogInformation(" Processing UpdateProgressCommand for RiskAssessment: {Id}, Step: {Step}",
                 request.RiskAssessmentId, request.CurrentStep);
 
             // Get the existing assessment first
@@ -438,7 +438,7 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IBaseRequestHandl
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated progress for RiskAssessment: {Id}", request.RiskAssessmentId);
+                _logger.LogInformation(" Successfully updated progress for RiskAssessment: {Id}", request.RiskAssessmentId);
             }
             else
             {

@@ -190,7 +190,7 @@
                 switch (_selectedEventCategory)
                 {
                     case EventCategory.DomainEvent:
-                        var domainEvent = new TestDomainEvent();
+                        var domainEvent = new TestDomainEvent(new SMSEventID(Guid.NewGuid().ToString()));
                         domainEvent.SetEventType(_selectedEventType);
                         domainEvent.Message = $"{_testMessage} (#{i})";
                         domainEvent.TestData = new { Index = i, Timestamp = DateTime.UtcNow, Mode = _selectedExecutionMode.ToString() };
@@ -296,7 +296,7 @@
                 switch (category)
                 {
                     case EventCategory.DomainEvent:
-                        var domainEvent = new TestDomainEvent();
+                        var domainEvent = new TestDomainEvent(new SMSEventID(Guid.NewGuid().ToString()));
                         domainEvent.SetEventType(eventType);
                         domainEvent.Message = $"Sample {category} event: {eventType}";
                         domainEvent.TestData = new { Category = category.ToString(), SampleData = true, Generated = DateTime.UtcNow };

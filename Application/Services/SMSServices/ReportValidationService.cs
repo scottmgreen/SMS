@@ -51,13 +51,13 @@ public sealed class ReportValidationService : IReportValidationService
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Creating report validation with code: {Code}", reportValidation?.Code);
+            _logger.LogInformation(" Creating report validation with code: {Code}", reportValidation?.Code);
             
             var result = await _dataService.CreateReportValidationAsync(reportValidation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created report validation with Code: {Code}", result.Value?.Code);
+                _logger.LogInformation(" Successfully created report validation with Code: {Code}", result.Value?.Code);
 
                 // 🎯 COMPLEX BUSINESS LOGIC: Handle SMS Risk validation decision
                 if (reportValidation?.ValidationDecision == ValidationDecision.SmsRisk.Value)
@@ -148,12 +148,12 @@ public sealed class ReportValidationService : IReportValidationService
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Updating report validation with Code: {Code}", reportValidation?.Code);
+            _logger.LogInformation(" Updating report validation with Code: {Code}", reportValidation?.Code);
             var result = await _dataService.UpdateReportValidationAsync(reportValidation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated report validation with Code: {Code}", reportValidation?.Code);
+                _logger.LogInformation(" Successfully updated report validation with Code: {Code}", reportValidation?.Code);
             }
             else
             {
@@ -173,12 +173,12 @@ public sealed class ReportValidationService : IReportValidationService
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Deleting report validation with Code: {Code}", id);
+            _logger.LogInformation(" Deleting report validation with Code: {Code}", id);
             var result = await _dataService.DeleteReportValidationAsync(id, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted report validation with Code: {Code}", id);
+                _logger.LogInformation(" Successfully deleted report validation with Code: {Code}", id);
             }
             else
             {

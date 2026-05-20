@@ -15,7 +15,7 @@ namespace SMS3.Components.Pages.SMSSystem.EventBus;
 
 /// <summary>
 /// Test page to demonstrate dynamic event data source discovery
-/// Shows how domain events implementing IEventDataSource are automatically discovered
+/// Shows how domain events implementing IEventSource are automatically discovered
 /// </summary>
 public partial class EventDataSourceDiscoveryTest
 {

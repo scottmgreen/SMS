@@ -33,7 +33,7 @@ public class GetRiskAnalysisByCodeQueryHandler : BaseQueryBundle, IBaseRequestHa
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetRiskAnalysisByCodeQuery for Code: {Code}", request.RiskAnalysisCode);
+            _logger.LogInformation(" Processing GetRiskAnalysisByCodeQuery for Code: {Code}", request.RiskAnalysisCode);
             var result = await _riskAnalysisService.GetRiskAnalysisByIdAsync(new RiskAnalysisID(request.RiskAnalysisCode.Value), ct).ConfigureAwait(false);
             return result;
         }
@@ -60,7 +60,7 @@ public class GetRiskAnalysisByIdQueryHandler : BaseQueryBundle, IBaseRequestHand
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetRiskAnalysisByIdQuery for ID: {Id}", request.RiskAnalysisId);
+            _logger.LogInformation(" Processing GetRiskAnalysisByIdQuery for ID: {Id}", request.RiskAnalysisId);
             var result = await _riskAnalysisService.GetRiskAnalysisByIdAsync(new RiskAnalysisID(request.RiskAnalysisId.Value), ct).ConfigureAwait(false);
             return result;
         }
@@ -87,7 +87,7 @@ public class GetRiskAnalysisByHazardCodeQueryHandler : BaseQueryBundle, IBaseReq
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetRiskAnalysisByHazardCodeQuery for Code: {Code}", request.HazardCode);
+            _logger.LogInformation(" Processing GetRiskAnalysisByHazardCodeQuery for Code: {Code}", request.HazardCode);
             var result = await _riskAnalysisService.GetRiskAnalysisByHazardCodeAsync(request.HazardCode.Value, ct).ConfigureAwait(false);
  
             return result;
@@ -184,7 +184,7 @@ public class GetAllRiskAnalysisQueryHandler : BaseQueryBundle, IBaseRequestHandl
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetAllRiskAnalysisQuery");
+            _logger.LogInformation(" Processing GetAllRiskAnalysisQuery");
             var result = await _riskAnalysisService.GetAllRiskAnalysisAsync(ct).ConfigureAwait(false);
             return result;
         }

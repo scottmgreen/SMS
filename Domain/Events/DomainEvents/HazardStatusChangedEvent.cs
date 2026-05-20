@@ -11,6 +11,7 @@
 using SMS_Domain.Common;
 using SMS_Domain.Interfaces;
 using SMS_Domain.Enums;
+using SMS_Domain.Entities;
 
 namespace SMS_Domain.Events;
 
@@ -20,8 +21,17 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class HazardStatusChangedEvent : BaseDomainEvent
 {
-    public override string EventType => "Hazard.StatusChanged";
+    public override string EventType => "Hazard_Status_Changed";
 
+    /// <summary>
+    /// Display name for SPI configuration dropdowns
+    /// </summary>
+    public string EventSourceDisplayName => "SMS Event Bus - Hazard Status Changed";
+
+    /// <summary>
+    /// Category for grouping in UI
+    /// </summary>
+    public string EventSourceCategory => "SMS Domain Event";
     public string HazardId { get; private set; }
     public string HazardCode { get; private set; }
     public HazardStatus PreviousStatus { get; private set; }
@@ -37,33 +47,37 @@ public class HazardStatusChangedEvent : BaseDomainEvent
     public TimeSpan? TimeInCurrentStatus { get; private set; }
     public DateTime? EscalationDeadline { get; private set; }
 
-    public HazardStatusChangedEvent(
-        string hazardId,
-        string hazardCode,
-        HazardStatus previousStatus,
-        HazardStatus newStatus,
-        string statusChangeReason,
-        string changedBy,
-        DateTime statusChangeDate,
-        List<string>? notificationRecipients = null,
-        Dictionary<string, string>? statusMetadata = null,
-        bool requiresEscalation = false,
-        TimeSpan? timeInCurrentStatus = null,
-        DateTime? escalationDeadline = null,
-        string aggregateId = "")
+    public HazardStatusChangedEvent(SMSEventID id):base(id)
     {
-        HazardId = hazardId ?? throw new ArgumentNullException(nameof(hazardId));
-        HazardCode = hazardCode ?? throw new ArgumentNullException(nameof(hazardCode));
-        PreviousStatus = previousStatus;
-        NewStatus = newStatus;
-        StatusChangeReason = statusChangeReason ?? string.Empty;
-        ChangedBy = changedBy ?? throw new ArgumentNullException(nameof(changedBy));
-        StatusChangeDate = statusChangeDate;
-        NotificationRecipients = notificationRecipients ?? new List<string>();
-        StatusMetadata = statusMetadata ?? new Dictionary<string, string>();
-        RequiresEscalation = requiresEscalation;
-        TimeInCurrentStatus = timeInCurrentStatus;
-        EscalationDeadline = escalationDeadline;
-        AggregateId = aggregateId ?? hazardId;
+
     }
+    //public HazardStatusChangedEvent(
+    //    string hazardId,
+    //    string hazardCode,
+    //    HazardStatus previousStatus,
+    //    HazardStatus newStatus,
+    //    string statusChangeReason,
+    //    string changedBy,
+    //    DateTime statusChangeDate,
+    //    List<string>? notificationRecipients = null,
+    //    Dictionary<string, string>? statusMetadata = null,
+    //    bool requiresEscalation = false,
+    //    TimeSpan? timeInCurrentStatus = null,
+    //    DateTime? escalationDeadline = null,
+    //    string aggregateId = "")
+    //{
+    //    HazardId = hazardId ?? throw new ArgumentNullException(nameof(hazardId));
+    //    HazardCode = hazardCode ?? throw new ArgumentNullException(nameof(hazardCode));
+    //    PreviousStatus = previousStatus;
+    //    NewStatus = newStatus;
+    //    StatusChangeReason = statusChangeReason ?? string.Empty;
+    //    ChangedBy = changedBy ?? throw new ArgumentNullException(nameof(changedBy));
+    //    StatusChangeDate = statusChangeDate;
+    //    NotificationRecipients = notificationRecipients ?? new List<string>();
+    //    StatusMetadata = statusMetadata ?? new Dictionary<string, string>();
+    //    RequiresEscalation = requiresEscalation;
+    //    TimeInCurrentStatus = timeInCurrentStatus;
+    //    EscalationDeadline = escalationDeadline;
+        
+    //}
 }

@@ -39,13 +39,13 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateHazardFileCommand for Code: {Code}", request.HazardFile.Code);
+            _logger.LogInformation(" Processing CreateHazardFileCommand for Code: {Code}", request.HazardFile.Code);
 
             var result = await _hazardFileService.CreateHazardFileAsync(request.HazardFile, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created HazardFile with ID: {Id}, Code: {Code}",
+                _logger.LogInformation(" Successfully created HazardFile with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -90,13 +90,13 @@ public class UpdateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateHazardFileCommand for ID: {Id}", request.HazardFile.Id);
+            _logger.LogInformation(" Processing UpdateHazardFileCommand for ID: {Id}", request.HazardFile.Id);
 
             var result = await _hazardFileService.UpdateHazardFileAsync(request.HazardFile, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated HazardFile with ID: {Id}", request.HazardFile.Id);
+                _logger.LogInformation(" Successfully updated HazardFile with ID: {Id}", request.HazardFile.Id);
             }
             else
             {

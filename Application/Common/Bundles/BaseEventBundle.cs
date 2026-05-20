@@ -11,7 +11,7 @@
 
 namespace SMS_Application.Common;
 
-public class BaseEventBundle
+public class BaseEventBundle 
 {
 }
 

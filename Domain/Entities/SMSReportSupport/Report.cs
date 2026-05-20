@@ -31,6 +31,8 @@ public class Report : BaseAuditableEntity
     public string?  ReportContactCell { get; set; }
     public string?  ReportContactEmail { get; set; }
 
+    public string? ReportContactCompany { get; set; }
+
     public string? Description { get; set; }
     public string? Status { get; set; }
     public string? Stage { get; set; }

@@ -39,13 +39,13 @@ public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing CreateRiskAnalysisCommand for Code: {Code}", request.RiskAnalysis.Code);
+            _logger.LogInformation(" Processing CreateRiskAnalysisCommand for Code: {Code}", request.RiskAnalysis.Code);
 
             var result = await _riskAnalysisService.CreateRiskAnalysisAsync(request.RiskAnalysis, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully created RiskAnalysis with ID: {Id}, Code: {Code}",
+                _logger.LogInformation(" Successfully created RiskAnalysis with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -90,14 +90,14 @@ public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing UpdateRiskAnalysisCommand for ID: {Id}, Code: {Code}",
+            _logger.LogInformation(" Processing UpdateRiskAnalysisCommand for ID: {Id}, Code: {Code}",
                 request.RiskAnalysis.Id, request.RiskAnalysis.Code);
 
             var result = await _riskAnalysisService.UpdateRiskAnalysisAsync(request.RiskAnalysis, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully updated RiskAnalysis with ID: {Id}", request.RiskAnalysis.Id);
+                _logger.LogInformation(" Successfully updated RiskAnalysis with ID: {Id}", request.RiskAnalysis.Id);
             }
             else
             {
@@ -141,13 +141,13 @@ public class DeleteRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<bool>.Failure<bool>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Clean Architecture: Processing DeleteRiskAnalysisCommand for ID: {Id}", request.RiskAnalysisId);
+            _logger.LogInformation(" Processing DeleteRiskAnalysisCommand for ID: {Id}", request.RiskAnalysisId);
 
             var result = await _riskAnalysisService.DeleteRiskAnalysisAsync(request.RiskAnalysisId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Clean Architecture: Successfully deleted RiskAnalysis with ID: {Id}", request.RiskAnalysisId);
+                _logger.LogInformation(" Successfully deleted RiskAnalysis with ID: {Id}", request.RiskAnalysisId);
             }
             else
             {

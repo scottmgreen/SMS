@@ -35,7 +35,7 @@ public class GetInterviewByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandl
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetInterviewByCodeQuery for Code: {Code}", request.InterviewId);
+            _logger.LogInformation(" Processing GetInterviewByCodeQuery for Code: {Code}", request.InterviewId);
             var result = await _interviewService.GetInterviewByCodeAsync(new InterviewID(request.InterviewId.Value), ct).ConfigureAwait(false);
             return result;
         }
@@ -62,7 +62,7 @@ public class GetAllInterviewsQueryHandler : BaseQueryBundle, IBaseRequestHandler
     {
         try
         {
-            _logger.LogInformation("✅ Clean Architecture: Processing GetAllInterviewsQuery");
+            _logger.LogInformation(" Processing GetAllInterviewsQuery");
             var result = await _interviewService.GetAllInterviewsAsync(ct).ConfigureAwait(false);
             return result;
         }

@@ -15,7 +15,7 @@ namespace SMS_Domain.Events.Test;
 /// Test integration event for EventBus queue testing and validation
 /// Represents external system notifications and integrations
 /// </summary>
-public class TestIntegrationEvent : IIntegrationEvent
+public class TestIntegrationEvent : IBaseIntegrationEvent
 {
     /// <summary>
     /// Unique identifier for this event instance
@@ -31,6 +31,8 @@ public class TestIntegrationEvent : IIntegrationEvent
     /// Type identifier for the event (used by EventBus routing)
     /// </summary>
     public string EventType { get; private set; } = "TestIntegrationEvent";
+
+    public string ReportId { get; private set; } = string.Empty;
 
     /// <summary>
     /// Target external system for this integration
@@ -68,12 +70,13 @@ public class TestIntegrationEvent : IIntegrationEvent
     /// <summary>
     /// Creates a new TestIntegrationEvent with specified parameters
     /// </summary>
-    public TestIntegrationEvent(string eventType, string targetSystem, string message, object? testData = null)
+    public TestIntegrationEvent(string eventType, string targetSystem, string message, object? testData = null, string? reportId = null)
     {
         EventType = eventType;
         TargetSystem = targetSystem;
         Message = message;
         TestData = testData;
+        ReportId = reportId ?? string.Empty;
     }
 
     /// <summary>
