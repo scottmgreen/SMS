@@ -29,7 +29,7 @@
 <RadzenContextMenu />
 
 <!-- EventBus Notification Display Component - Centralized notification coordination -->
-<NotificationDisplay ShowDebugInfo="true" />
+
 
 <div id="blazor-error-ui" class="sms-error-ui">
     <div class="sms-error-content">
@@ -41,12 +41,12 @@
 </div>
 
 @code {
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private ISMSSessionService SessionService { get; set; } = default!;
-    [Inject] private NavigationManager Navigation { get; set; } = default!;
-    [Inject] private IWebHostEnvironment Environment { get; set; } = default!;
-    [Inject] private IBaseMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<MainLayout> Logger { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private ISMSSessionService _sessionService { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private IWebHostEnvironment _environment { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<MainLayout> _logger { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -75,12 +75,12 @@
         try
         {
             // Get current user info BEFORE clearing session authentication
-            if (CurrentUserService.IsAuthenticated)
+            if (_currentUserService.IsAuthenticated)
             {
-                currentUserName = CurrentUserService.UserDisplayName ?? CurrentUserService.UserCode ?? "Unknown";
+                currentUserName = _currentUserService.UserDisplayName ?? _currentUserService.UserCode ?? "Unknown";
                 
                 // Get user type from the service
-                var userTypeEnum = CurrentUserService.GetUserTypeEnum();
+                var userTypeEnum = _currentUserService.GetUserTypeEnum();
                 if (userTypeEnum != null)
                 {
                     userType = userTypeEnum;
@@ -90,9 +90,9 @@
                 sessionId = $"SESSION_{DateTime.UtcNow:yyyyMMddHHmmss}";
                 
                 // Calculate session duration based on login time
-                if (CurrentUserService.LoginTime.HasValue)
+                if (_currentUserService.LoginTime.HasValue)
                 {
-                    sessionDuration = logoutStartTime - CurrentUserService.LoginTime.Value;
+                    sessionDuration = logoutStartTime - _currentUserService.LoginTime.Value;
                 }
                 else
                 {
@@ -100,7 +100,7 @@
                 }
             }
 
-            Logger.LogInformation("🔐 Starting logout process for user: {UserName}", currentUserName);
+            _logger.LogInformation("Starting logout process for user: {UserName}", currentUserName);
 
             // 🔐 Record logout audit BEFORE clearing authentication (and wait for it)
             try
@@ -113,42 +113,42 @@
                     sessionDuration
                 );
                 
-                var auditResult = await Mediator.SendAsync(logoutCommand, CancellationToken.None);
-                Logger.LogInformation("✅ Logout audit recorded for user: {UserName}, Result: {IsSuccess}", 
+                var auditResult = await _mediator.SendAsync(logoutCommand, CancellationToken.None);
+                _logger.LogInformation("Logout audit recorded for user: {UserName}, Result: {IsSuccess}", 
                     currentUserName, auditResult.IsSuccess);
             }
             catch (Exception auditEx)
             {
-                Logger.LogError(auditEx, "❌ Failed to record logout audit for {UserName}", currentUserName);
+                _logger.LogError(auditEx, "Failed to record logout audit for {UserName}", currentUserName);
                 // Continue with logout even if audit fails
             }
 
             // **🔐 CLEAR SESSION-BASED AUTHENTICATION - Replaces static authentication**
-            await CurrentUserService.ClearAuthentication();
-            await SessionService.ClearSMSSessionAsync();
+            await _currentUserService.ClearAuthentication();
+            await _sessionService.ClearSMSSessionAsync();
             
-            Logger.LogInformation("✅ Session authentication cleared for user: {UserName}", currentUserName);
+            _logger.LogInformation("Session authentication cleared for user: {UserName}", currentUserName);
             
             // 🔐 SECURE NAVIGATION - Navigate to HOME PAGE with encrypted URL
-            Navigation.NavigateToSecure("/", forceLoad: true);
+            _navigation.NavigateToSecure("/", forceLoad: true);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "❌ Error during logout process for user: {UserName}", currentUserName);
+            _logger.LogError(ex, "Error during logout process for user: {UserName}", currentUserName);
             
             // Still try to clear authentication and redirect even if audit fails
             try
             {
-                await CurrentUserService.ClearAuthentication();
-                await SessionService.ClearSMSSessionAsync();
+                await _currentUserService.ClearAuthentication();
+                await _sessionService.ClearSMSSessionAsync();
                 // 🔐 SECURE NAVIGATION - Force navigation to home page
-                Navigation.NavigateToSecure("/", forceLoad: true);
+                _navigation.NavigateToSecure("/", forceLoad: true);
             }
             catch (Exception clearEx)
             {
-                Logger.LogError(clearEx, "❌ Critical: Failed to clear session authentication during logout");
+                _logger.LogError(clearEx, "Critical: Failed to clear session authentication during logout");
                 // 🔐 SECURE NAVIGATION - Force navigation even on clear error
-                Navigation.NavigateToSecure("/", forceLoad: true);
+                _navigation.NavigateToSecure("/", forceLoad: true);
             }
         }
     }

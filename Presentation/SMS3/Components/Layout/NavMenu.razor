@@ -33,7 +33,7 @@
 
         <!-- Navigation Links -->
         <div class="collapse navbar-collapse" id="navbarNav">
-            @if (CurrentUserService?.IsFullyAuthenticated == true)
+            @if (_currentUserService?.IsFullyAuthenticated == true)
             {
                 <!-- All menu items should be right-justified for authenticated users -->
                 <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
@@ -44,7 +44,7 @@
                                          ShowTimer="false" />
                     
                     <!-- SMS Risk Management Menu -->
-                    @if (CurrentUserService.CanRead("SMS_RiskManagement"))
+                    @if (_currentUserService.CanRead("SMS_RiskManagement"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -53,7 +53,7 @@
                                     <RadzenMenuItem Text="Report Processing" Value='"/SMSRiskManagement/ReportProcessing"' Icon="settings"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Search Reports" Value='"/SMSRiskManagement/HazardReportSearch"' Icon="search"></RadzenMenuItem>
                                     <!-- Investigations -->
-                                    @if (CurrentUserService.CanRead("SMS_Listings_Investigations"))
+                                    @if (_currentUserService.CanRead("SMS_Listings_Investigations"))
                                     {
                                         <RadzenMenuItem Text="Investigate" Icon="search">
                                             <RadzenMenuItem Text="Active Investigations" Value='"/Listings/Investigations"' Icon="assignment"></RadzenMenuItem>
@@ -62,7 +62,7 @@
                                     }
                                     
                                     <!-- Mitigation -->
-                                    @if (CurrentUserService.CanRead("SMS_Listings_Mitigations"))
+                                    @if (_currentUserService.CanRead("SMS_Listings_Mitigations"))
                                     {
                                         <RadzenMenuItem Text="Mitigation" Icon="search">
                                             <RadzenMenuItem Text="Active Mitigations" Value='"/Listings/Mitigations"' Icon="assignment"></RadzenMenuItem>
@@ -90,31 +90,31 @@
                     <div class="nav-item me-3">
                         <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                             <RadzenMenuItem Text="Listings" Icon="list" class="sms-menu-item">
-                                @if (CurrentUserService.CanRead("SMS_Listings_Reports"))
+                                @if (_currentUserService.CanRead("SMS_Listings_Reports"))
                                 {
                                     <RadzenMenuItem Text="Reports" Value='"/SMSListings/Reports"' Icon="assignment"></RadzenMenuItem>
                                 }
-                                @if (CurrentUserService.CanRead("SMS_Listings_Hazards"))
+                                @if (_currentUserService.CanRead("SMS_Listings_Hazards"))
                                 {
                                     <RadzenMenuItem Text="Hazards" Value='"/SMSListings/Hazards"' Icon="warning"></RadzenMenuItem> 
                                 }
-                                @if (CurrentUserService.CanRead("SMS_Listings_RiskAssessments"))
+                                @if (_currentUserService.CanRead("SMS_Listings_RiskAssessments"))
                                 {
                                     <RadzenMenuItem Text="Risk Assessments" Value='"/SMSListings/RiskAssessments"' Icon="assessment"></RadzenMenuItem> 
                                 }
-                                @if (CurrentUserService.CanRead("SMS_Listings_Mitigations"))
+                                @if (_currentUserService.CanRead("SMS_Listings_Mitigations"))
                                 {
                                     <RadzenMenuItem Text="Mitigations" Value='"/SMSListings/Mitigations"' Icon="security"></RadzenMenuItem>
                                 }
-                                @if (CurrentUserService.CanRead("SMS_Listings_Investigations"))
+                                @if (_currentUserService.CanRead("SMS_Listings_Investigations"))
                                 {
                                     <RadzenMenuItem Text="Investigations" Value='"/SMSListings/Investigations"' Icon="search"></RadzenMenuItem>
                                 }
-                                @if (CurrentUserService.CanRead("SMS_Listings_HazardLocations"))
+                                @if (_currentUserService.CanRead("SMS_Listings_HazardLocations"))
                                 {
                                     <RadzenMenuItem Text="Hazard Locations" Value='"/SMSListings/HazardLocations"' Icon="place"></RadzenMenuItem>
                                 }
-                                @if (CurrentUserService.CanRead("SMS_Listings_HazardFiles"))
+                                @if (_currentUserService.CanRead("SMS_Listings_HazardFiles"))
                                 {
                                     <RadzenMenuItem Text="Hazard Files" Value='"/SMSListings/HazardFiles"' Icon="attach_file"></RadzenMenuItem>
                                 }
@@ -124,7 +124,7 @@
                     </div>
 
                     <!-- SMS Assurance Menu -->
-                    @if (CurrentUserService.CanRead("SMS_Assurance"))
+                    @if (_currentUserService.CanRead("SMS_Assurance"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -141,7 +141,7 @@
                     }
 
                     <!-- SMS Policy Menu -->
-                    @if (CurrentUserService.CanRead("SMS_Policy"))
+                    @if (_currentUserService.CanRead("SMS_Policy"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -154,7 +154,7 @@
                     }
 
                     <!-- SMS Promotion Menu -->
-                    @if (CurrentUserService.CanRead("SMS_Promotion"))
+                    @if (_currentUserService.CanRead("SMS_Promotion"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -166,7 +166,7 @@
                     }
 
                     <!-- System Administration Menu -->
-                    @if (CurrentUserService.CanRead("SMS_System"))
+                    @if (_currentUserService.CanRead("SMS_System"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -200,7 +200,7 @@
                     <!-- User Profile Menu -->
                     <div class="nav-item">
                         <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
-                            <RadzenMenuItem Text="@CurrentUserService?.UserDisplayName" Icon="person" class="sms-menu-item">
+                            <RadzenMenuItem Text="@_currentUserService?.UserDisplayName" Icon="person" class="sms-menu-item">
                                 <RadzenMenuItem Text="Logout" Icon="logout" Click="@OnLogoutClick" />
                             </RadzenMenuItem>
                         </RadzenMenu>
@@ -210,7 +210,7 @@
             else
             {
                 <!-- Show minimal navigation during 2FA verification -->
-                @if (CurrentUserService?.IsPending2FAVerification == true)
+                @if (_currentUserService?.IsPending2FAVerification == true)
                 {
                     <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
                        @*  <div class="nav-item me-3">
@@ -253,8 +253,8 @@
                     OnContinue="@OnSessionContinued" />
 
 @code {
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
-    [Inject] private SessionTimerService SessionTimerService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private SessionTimerService _sessionTimerService { get; set; } = default!;
 
     [Parameter]
     public EventCallback OnLogoutRequested { get; set; }
@@ -299,28 +299,28 @@
     {
         try
         {
-            _logger.LogDebug("🔐 NavMenu OnInitializedAsync - Checking authentication state");
+            _logger.LogDebug("NavMenu OnInitializedAsync - Checking authentication state");
             
             // Single check - no loops
-            if (CurrentUserService?.IsFullyAuthenticated == true)
+            if (_currentUserService?.IsFullyAuthenticated == true)
             {
-                SessionTimerService.StartTimer();
-                _logger.LogDebug("✅ NavMenu initialized with session timer for user: {UserCode}", CurrentUserService.UserCode);
+                _sessionTimerService.StartTimer();
+                _logger.LogDebug("NavMenu initialized with session timer for user: {UserCode}", _currentUserService.UserCode);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error in NavMenu OnInitializedAsync");
+            _logger.LogError(ex, "Error in NavMenu OnInitializedAsync");
         }
     }
     
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // Only check on first render to avoid constant polling
-        if (firstRender && CurrentUserService?.IsFullyAuthenticated == true)
+        if (firstRender && _currentUserService?.IsFullyAuthenticated == true)
         {
             _hasShownAuthenticatedMenu = true;
-            SessionTimerService.StartTimer();
+            _sessionTimerService.StartTimer();
         }
     }
 
@@ -334,10 +334,10 @@
     {
         try
         {
-            _logger.LogWarning("🔐 Session timer expired - initiating automatic logout");
+            _logger.LogWarning("Session timer expired - initiating automatic logout");
             
             // Stop the session timer
-            SessionTimerService.StopTimer();
+            _sessionTimerService.StopTimer();
             
             // Trigger the logout process
             await OnLogoutRequested.InvokeAsync();
@@ -358,9 +358,9 @@
     {
         try
         {
-            var remaining = SessionTimerService.GetRemainingTime();
-            _logger.LogInformation("🔐 Session warning: {RemainingTime} remaining for user {UserId}", 
-                remaining, CurrentUserService.UserCode);
+            var remaining = _sessionTimerService.GetRemainingTime();
+            _logger.LogInformation("Session warning: {RemainingTime} remaining for user {UserId}", 
+                remaining, _currentUserService.UserCode);
             
             // The modal warning is handled by the SessionTimeoutModal component
             await Task.CompletedTask;
@@ -378,10 +378,10 @@
     {
         try
         {
-            _logger.LogInformation("🔐 Session continued by user {UserId}", CurrentUserService.UserCode);
+            _logger.LogInformation("Session continued by user {UserId}", _currentUserService.UserCode);
             
             // Update session activity (already done in modal, but ensure it's logged)
-            SessionTimerService.UpdateActivity();
+            _sessionTimerService.UpdateActivity();
             
             await Task.CompletedTask;
         }
@@ -400,9 +400,9 @@
         try
         {
             // Update session activity on menu interaction - only for fully authenticated users
-            if (CurrentUserService.IsFullyAuthenticated)
+            if (_currentUserService.IsFullyAuthenticated)
             {
-                SessionTimerService.UpdateActivity();
+                _sessionTimerService.UpdateActivity();
             }
 
             //_logger.LogInformation("OnMenuClick called with value: {Text}", args.Text?.ToString());
@@ -413,7 +413,6 @@
                 if (!string.IsNullOrEmpty(value) && value.StartsWith("/"))
                 {
                     _logger.LogInformation("Navigating to secure URL: {Url}", value);
-                    // 🔐 SECURE NAVIGATION - All URLs automatically encrypted
                     _navigation.NavigateToSecure(value);
                 }
                 else
@@ -435,7 +434,7 @@
     private async Task OnLogoutClick()
     {
         // Stop session timer before logout
-        SessionTimerService.StopTimer();
+        _sessionTimerService.StopTimer();
         
         await OnLogoutRequested.InvokeAsync();
         _cancellationTokenSource?.Cancel();
@@ -447,22 +446,22 @@
     private void NavigateToAbout()
     {
         // Update session activity - only for fully authenticated users
-        if (CurrentUserService.IsFullyAuthenticated)
+        if (_currentUserService.IsFullyAuthenticated)
         {
-            SessionTimerService.UpdateActivity();
+            _sessionTimerService.UpdateActivity();
         }
 
         _logger.LogInformation("Navigating to About page via secure navigation");
         _navigation.NavigateToSecure("/About");
     }
 
-    // **🔥 USER PROFILE MODAL - USING COMPONENT**
+    
     private async Task ShowUserProfileModal()
     {
-        if (CurrentUserService?.IsFullyAuthenticated != true) return;
+        if (_currentUserService?.IsFullyAuthenticated != true) return;
 
         // Update session activity
-        SessionTimerService.UpdateActivity();
+        _sessionTimerService.UpdateActivity();
 
         var options = new DialogOptions()
         {
@@ -478,14 +477,14 @@
         await _dialogService.OpenAsync<UserProfileDialog>("User Profile & Permissions",
             new Dictionary<string, object>()
             {
-                { "CurrentUserService", CurrentUserService }                
+                { "CurrentUserService", _currentUserService }                
             },
             options);
     }
 
     public void Dispose()
     {
-        SessionTimerService?.StopTimer();
+        _sessionTimerService?.StopTimer();
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
     }
@@ -498,9 +497,9 @@
     protected override async Task OnParametersSetAsync()
     {
         // Update session activity when parameters change - only for fully authenticated users
-        if (CurrentUserService.IsFullyAuthenticated)
+        if (_currentUserService.IsFullyAuthenticated)
         {
-            SessionTimerService.UpdateActivity();
+            _sessionTimerService.UpdateActivity();
         }
     }
 }

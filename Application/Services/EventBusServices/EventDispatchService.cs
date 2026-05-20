@@ -357,7 +357,8 @@ public sealed class EventDispatchService : IBaseEventBus
         {
             try
             {
-                var handler = _serviceProvider.GetService(handlerType) as IBaseEventHandler<T>;
+                using var scope = _serviceProvider.CreateScope();
+                var handler = scope.ServiceProvider.GetService(handlerType) as IBaseEventHandler<T>;
                 if (handler != null)
                 {
                     _logger.LogDebug("Executing handler {HandlerType} for event {EventType} (ID: {EventId})", 
@@ -542,7 +543,8 @@ public sealed class EventDispatchService : IBaseEventBus
         {
             try
             {
-                var handler = _serviceProvider.GetService(handlerType) as IBaseEventHandler<T>;
+                using var scope = _serviceProvider.CreateScope();
+                var handler = scope.ServiceProvider.GetService(handlerType) as IBaseEventHandler<T>;
                 if (handler != null)
                 {
                     _logger.LogInformation("Executing integration handler {HandlerType} for event {EventType} to {TargetSystem}", 
