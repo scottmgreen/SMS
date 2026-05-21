@@ -8,6 +8,7 @@ using SMS_Application.Messaging.Queries;
 
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
+using SMS_Domain.Events.UIEvents;
 
 using SMS_Shared.Configuration;
 
@@ -30,7 +31,7 @@ public partial class HazardListing : ComponentBase
     #region Dependencies
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<HazardListing> _logger { get; set; } = default!;
-    [Inject] private INotificationHelper  _notificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
 
@@ -75,19 +76,19 @@ public partial class HazardListing : ComponentBase
                 totalCount = allHazards.Count();
                 _logger.LogInformation("Loaded {Count} hazards for listing", totalCount);
 
-                ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazards");
+                await ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazards");
                
             }
             else
             {
-                ShowErrorAsyncNotification("Failed to load hazards");
+                await ShowErrorAsyncNotification("Failed to load hazards");
                 _logger.LogError("Failed to load hazards: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading hazards");
-            ShowErrorAsyncNotification("Error loading hazards");
+            await ShowErrorAsyncNotification("Error loading hazards");
         }
         finally
         {
@@ -155,7 +156,7 @@ public partial class HazardListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in LoadData");
-            ShowErrorAsyncNotification("Error loading data");
+            await ShowErrorAsyncNotification("Error loading data");
         }
         finally
         {
@@ -355,17 +356,17 @@ public partial class HazardListing : ComponentBase
     /// <summary>
     /// Shows error notification to user
     /// </summary>
-    private void ShowErrorAsyncNotification(string message)
+    private async Task ShowErrorAsyncNotification(string message)
     {
-        _notificationHelper.ShowErrorAsync( message, 7000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", message, 7000));
     }
 
     /// <summary>
     /// Shows success notification to user
     /// </summary>
-    private void ShowSuccessAsyncNotification(string message)
+    private async Task ShowSuccessAsyncNotification(string message)
     {
-        _notificationHelper.ShowSuccessAsync( message, 5000);
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", message, 5000));
     }
     #endregion
 
@@ -385,13 +386,13 @@ public partial class HazardListing : ComponentBase
             StateHasChanged();
 
             // TODO: Implement hazard details modal when ready
-            ShowSuccessAsyncNotification($"View details for hazard {hazard.Code} - Feature coming soon!");
+            await ShowSuccessAsyncNotification($"View details for hazard {hazard.Code} - Feature coming soon!");
             
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading hazard details for {HazardCode}", hazard.Code);
-            ShowErrorAsyncNotification("Failed to load hazard details");
+            await ShowErrorAsyncNotification("Failed to load hazard details");
         }
         finally
         {
@@ -429,7 +430,7 @@ public partial class HazardListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error navigating to edit hazard {HazardCode}", hazard.Code);
-            ShowErrorAsyncNotification("Failed to navigate to edit form");
+            await ShowErrorAsyncNotification("Failed to navigate to edit form");
         }
     }
 
@@ -464,14 +465,14 @@ public partial class HazardListing : ComponentBase
             if (confirmed == true)
             {
                 // TODO: Implement delete command when ready
-                ShowSuccessAsyncNotification($"Delete hazard {hazard.Code} - Command coming soon!");
+                await ShowSuccessAsyncNotification($"Delete hazard {hazard.Code} - Command coming soon!");
                 _logger.LogInformation("Delete confirmed for hazard: {HazardCode}", hazard.Code);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting hazard: {HazardCode}", hazard.Code);
-            ShowErrorAsyncNotification("Failed to delete the hazard");
+            await ShowErrorAsyncNotification("Failed to delete the hazard");
         }
     }
     #endregion
@@ -515,7 +516,7 @@ public partial class HazardListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error showing description modal for hazard {HazardId}", hazard.Code);
-            ShowErrorAsyncNotification("Error showing description details");
+            await ShowErrorAsyncNotification("Error showing description details");
         }
     }
 

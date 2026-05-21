@@ -1,4 +1,5 @@
 using SMS_Domain.Entities;
+using SMS_Domain.Events.UIEvents;
 
 using SMS3.Components.Shared.UIHelpers;
 
@@ -8,7 +9,7 @@ public partial class ReportValidationListing : ComponentBase
 {
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportValidationListing> _logger { get; set; } = default!;
-    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     
 
     private RadzenDataGrid<ReportValidation>? validationsGrid;
@@ -36,14 +37,14 @@ public partial class ReportValidationListing : ComponentBase
             }
             else
             {
-                await _notificationHelper.ShowErrorAsync("Failed to load report validations");
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load report validations"));
                 _logger.LogError("Failed to load report validations: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading report validations");
-            await _notificationHelper.ShowErrorAsync("Error loading report validations");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading report validations"));
         }
     }
 
@@ -81,7 +82,7 @@ public partial class ReportValidationListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in LoadData");
-            await _notificationHelper.ShowErrorAsync("Error loading data");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading data"));
         }
         finally
         {

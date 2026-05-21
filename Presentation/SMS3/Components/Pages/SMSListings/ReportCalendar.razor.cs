@@ -1,4 +1,5 @@
 using SMS_Domain.Entities;
+using SMS_Domain.Events.UIEvents;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
@@ -10,7 +11,7 @@ public partial class ReportCalendar : ComponentBase
     #region Injected Services
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportCalendar> _logger { get; set; } = default!;
-    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
@@ -63,7 +64,7 @@ public partial class ReportCalendar : ComponentBase
             else
             {
                 _logger.LogError("Failed to load reports: {Error}", result.Error?.Message);
-                await _notificationHelper.ShowErrorAsync("Failed to load reports for calendar");
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load reports for calendar"));
                 Reports = new List<Report>();
                 SchedulerData = new List<ReportSchedulerItem>();
             }
@@ -71,7 +72,7 @@ public partial class ReportCalendar : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading reports for calendar");
-            await _notificationHelper.ShowErrorAsync("Error loading reports");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading reports"));
         }
         finally
         {
@@ -83,7 +84,7 @@ public partial class ReportCalendar : ComponentBase
     private async Task RefreshData()
     {
         await LoadReportsAsync();
-        await _notificationHelper.ShowSuccessAsync("Calendar data refreshed");
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", "Calendar data refreshed"));
     }
     #endregion
 
@@ -256,7 +257,7 @@ public partial class ReportCalendar : ComponentBase
                 SelectedReport = Reports.FirstOrDefault(r => r.Code == reportItem.ReportCode);
                 if (SelectedReport is null)
                 {
-                    await _notificationHelper.ShowErrorAsync($"Report {reportItem.ReportCode} not found");
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Report {reportItem.ReportCode} not found"));
                     return;
                 }
             }
@@ -270,12 +271,12 @@ public partial class ReportCalendar : ComponentBase
             _logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards",
                 reportItem.ReportCode, AssociatedHazards.Count);
 
-            await _notificationHelper.ShowSuccessAsync($"Report details loaded for {reportItem.ReportCode}");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Report details loaded for {reportItem.ReportCode}"));
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error showing report details for {ReportCode}", reportItem.ReportCode);
-            await _notificationHelper.ShowErrorAsync("Error opening report details");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error opening report details"));
         }
         finally
         {
@@ -356,13 +357,13 @@ public partial class ReportCalendar : ComponentBase
 
                 _logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
 
-                await _notificationHelper.ShowSuccessAsync($"Opening {report.Code} for editing...");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Opening {report.Code} for editing..."));
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error navigating to edit report {ReportCode}", report.Code);
-            await _notificationHelper.ShowErrorAsync("Failed to navigate to edit form");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to navigate to edit form"));
         }
     }
 

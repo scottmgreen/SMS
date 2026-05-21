@@ -75,11 +75,11 @@ public partial class HazardLocationListing : ComponentBase
                 // Show success notification if we have data
                 if (totalCount > 0)
                 {
-                    ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazard locations");
+                    await ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazard locations");
                 }
                 else
                 {
-                    ShowInfoAsyncNotification("No hazard locations found");
+                    await ShowInfoAsyncNotification("No hazard locations found");
                 }
             }
             else
@@ -89,7 +89,7 @@ public partial class HazardLocationListing : ComponentBase
                 locations = allLocations;
                 totalCount = 0;
                 
-                ShowErrorAsyncNotification("Failed to load hazard locations");
+                await ShowErrorAsyncNotification("Failed to load hazard locations");
                 _logger.LogError("Failed to load hazard locations: {Error}", result.Error?.Message);
             }
         }
@@ -101,7 +101,7 @@ public partial class HazardLocationListing : ComponentBase
             totalCount = 0;
             
             _logger.LogError(ex, "Error loading hazard locations");
-            ShowErrorAsyncNotification($"Error loading hazard locations: {ex.Message}");
+            await ShowErrorAsyncNotification($"Error loading hazard locations: {ex.Message}");
         }
         finally
         {
@@ -179,7 +179,7 @@ public partial class HazardLocationListing : ComponentBase
         {
             _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
-            ShowErrorAsyncNotification($"Error loading data: {ex.Message}");
+            await ShowErrorAsyncNotification($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
             try
@@ -475,7 +475,7 @@ public partial class HazardLocationListing : ComponentBase
 
             if (!HasValidCoordinates(location))
             {
-                ShowErrorAsyncNotification("This location does not have valid coordinates to display on the map.");
+                await ShowErrorAsyncNotification("This location does not have valid coordinates to display on the map.");
                 return;
             }
 
@@ -484,7 +484,7 @@ public partial class HazardLocationListing : ComponentBase
             
             if (hazard is null)
             {
-                ShowErrorAsyncNotification($"Could not find associated hazard for location {location.Code}");
+                await ShowErrorAsyncNotification($"Could not find associated hazard for location {location.Code}");
                 return;
             }
 
@@ -574,12 +574,12 @@ public partial class HazardLocationListing : ComponentBase
                     CloseDialogOnOverlayClick = false
                 });
 
-            ShowInfoAsyncNotification($"Opened location map for {location.Code}");
+            await ShowInfoAsyncNotification($"Opened location map for {location.Code}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error opening location map for {LocationCode}", location.Code);
-            ShowErrorAsyncNotification("Error opening location map");
+            await ShowErrorAsyncNotification("Error opening location map");
         }
     }
 

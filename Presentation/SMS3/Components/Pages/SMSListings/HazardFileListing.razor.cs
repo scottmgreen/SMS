@@ -85,11 +85,11 @@ public partial class HazardFileListing : ComponentBase
                 // Show success notification if we have data
                 if (totalCount > 0)
                 {
-                    ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazard files");
+                    await ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazard files");
                 }
                 else
                 {
-                    ShowInfoAsyncNotification("No hazard files found");
+                    await ShowInfoAsyncNotification("No hazard files found");
                 }
             }
             else
@@ -189,7 +189,7 @@ public partial class HazardFileListing : ComponentBase
         {
             _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
-            ShowErrorAsyncNotification($"Error loading data: {ex.Message}");
+            await ShowErrorAsyncNotification($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
             try
@@ -619,7 +619,7 @@ public partial class HazardFileListing : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    ShowSuccessAsyncNotification($"File '{file.FileName}' has been deleted successfully.");
+                    await ShowSuccessAsyncNotification($"File '{file.FileName}' has been deleted successfully.");
 
                     // Reload the data to reflect changes
                     await LoadInitialData();
@@ -629,7 +629,7 @@ public partial class HazardFileListing : ComponentBase
                 }
                 else
                 {
-                    ShowErrorAsyncNotification($"Failed to delete file: {result.Error?.Message}");
+                    await ShowErrorAsyncNotification($"Failed to delete file: {result.Error?.Message}");
                     _logger.LogError("Failed to delete file {Code}: {Error}", file.Code, result.Error?.Message);
                 }
             }
@@ -637,7 +637,7 @@ public partial class HazardFileListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting file: {Code}", file.Code);
-            ShowErrorAsyncNotification("An error occurred while deleting the file.");
+            await ShowErrorAsyncNotification("An error occurred while deleting the file.");
         }
     }
 
@@ -670,7 +670,7 @@ public partial class HazardFileListing : ComponentBase
 
                 if (result.IsFailure || result.Value?.FileData is null)
                 {
-                    ShowErrorAsyncNotification("Could not download file - file data not available.");
+                    await ShowErrorAsyncNotification("Could not download file - file data not available.");
                     return;
                 }
 
@@ -690,12 +690,12 @@ public partial class HazardFileListing : ComponentBase
                 await JSRuntime.InvokeVoidAsync("downloadFileFromBase64", selectedFile.FileName, base64Data, "text/plain");
             }
 
-            ShowSuccessAsyncNotification($"Downloaded '{selectedFile.FileName}' successfully.");
+            await ShowSuccessAsyncNotification($"Downloaded '{selectedFile.FileName}' successfully.");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error downloading file: {Code}", selectedFile.Code);
-            ShowErrorAsyncNotification("An error occurred while downloading the file.");
+            await ShowErrorAsyncNotification("An error occurred while downloading the file.");
         }
     }
 

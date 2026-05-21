@@ -1,4 +1,5 @@
 using SMS_Domain.Entities;
+using SMS_Domain.Events.UIEvents;
 
 using SMS3.Components.Shared.UIHelpers;
 
@@ -8,7 +9,7 @@ public partial class RiskAnalysisListing : ComponentBase
 {
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<RiskAnalysisListing> _logger { get; set; } = default!;
-    [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
 
     private RadzenDataGrid<RiskAnalysis>? analysisGrid;
     private IEnumerable<RiskAnalysis> analysisResults = new List<RiskAnalysis>();
@@ -35,14 +36,14 @@ public partial class RiskAnalysisListing : ComponentBase
             }
             else
             {
-                await _notificationHelper.ShowErrorAsync("Failed to load risk analysis results");
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load risk analysis results"));
                 _logger.LogError("Failed to load risk analysis: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading risk analysis");
-            await _notificationHelper.ShowErrorAsync("Error loading risk analysis");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading risk analysis"));
         }
     }
 
@@ -80,7 +81,7 @@ public partial class RiskAnalysisListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in LoadData");
-            await _notificationHelper.ShowErrorAsync("Error loading data");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading data"));
         }
         finally
         {

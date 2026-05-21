@@ -68,14 +68,14 @@ public partial class AirportSharedDatasetListing : ComponentBase
             }
             else
             {
-                ShowErrorAsyncNotification("Failed to load airport shared datasets");
+                await ShowErrorAsyncNotification("Failed to load airport shared datasets");
                 Logger.LogError("Failed to load datasets: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading airport shared datasets");
-            ShowErrorAsyncNotification("Error loading datasets");
+            await ShowErrorAsyncNotification("Error loading datasets");
         }
     }
 
@@ -113,7 +113,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error in LoadData");
-            ShowErrorAsyncNotification("Error loading data");
+            await ShowErrorAsyncNotification("Error loading data");
         }
         finally
         {
@@ -144,7 +144,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error viewing dataset {Code}", dataset.Code);
-            ShowErrorAsyncNotification("Error opening dataset details");
+            await ShowErrorAsyncNotification("Error opening dataset details");
         }
     }
 
@@ -157,7 +157,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
             // We need to look up the ReportCode from the Hazard since the dataset only has HazardCode
             if (string.IsNullOrEmpty(dataset.HazardCode))
             {
-                ShowErrorAsyncNotification("Dataset does not have an associated hazard code for editing");
+                await ShowErrorAsyncNotification("Dataset does not have an associated hazard code for editing");
                 return;
             }
 
@@ -172,7 +172,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
 
                 if (string.IsNullOrEmpty(reportCode))
                 {
-                    ShowErrorAsyncNotification("Associated hazard does not have a report code");
+                    await ShowErrorAsyncNotification("Associated hazard does not have a report code");
                     return;
                 }
 
@@ -184,7 +184,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
             }
             else
             {
-                ShowErrorAsyncNotification($"Could not find hazard {dataset.HazardCode} associated with this dataset");
+                await ShowErrorAsyncNotification($"Could not find hazard {dataset.HazardCode} associated with this dataset");
                 Logger.LogError("Failed to find hazard {HazardCode} for dataset {DatasetCode}: {Error}",
                     dataset.HazardCode, dataset.Code, hazardResult.Error?.Message);
             }
@@ -192,7 +192,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error editing dataset {Code}", dataset.Code);
-            ShowErrorAsyncNotification("Error opening dataset editor");
+            await ShowErrorAsyncNotification("Error opening dataset editor");
         }
     }
 
@@ -203,7 +203,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
             Logger.LogInformation("Exporting dataset: {Code}", dataset.Code);
 
             // TODO: Implement export functionality
-            ShowInfoAsyncNotification("Export functionality will be available in a future update");
+            await ShowInfoAsyncNotification("Export functionality will be available in a future update");
 
             // Future implementation could include:
             // - Export to Excel/CSV
@@ -213,7 +213,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error exporting dataset {Code}", dataset.Code);
-            ShowErrorAsyncNotification("Error exporting dataset");
+            await ShowErrorAsyncNotification("Error exporting dataset");
         }
     }
 
@@ -224,7 +224,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
             Logger.LogInformation("Duplicating dataset: {Code}", dataset.Code);
 
             // TODO: Implement duplication functionality
-            ShowInfoAsyncNotification("Duplicate functionality will be available in a future update");
+            await ShowInfoAsyncNotification("Duplicate functionality will be available in a future update");
 
             // Future implementation:
             // - Create new dataset with same data but new ID
@@ -233,7 +233,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error duplicating dataset {Code}", dataset.Code);
-            ShowErrorAsyncNotification("Error duplicating dataset");
+            await ShowErrorAsyncNotification("Error duplicating dataset");
         }
     }
 
@@ -244,7 +244,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
             Logger.LogInformation("Viewing history for dataset: {Code}", dataset.Code);
 
             // TODO: Implement history viewing functionality
-            ShowInfoAsyncNotification("History functionality will be available in a future update");
+            await ShowInfoAsyncNotification("History functionality will be available in a future update");
 
             // Future implementation:
             // - Show audit trail of changes
@@ -254,7 +254,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error viewing dataset history {Code}", dataset.Code);
-            ShowErrorAsyncNotification("Error viewing dataset history");
+            await ShowErrorAsyncNotification("Error viewing dataset history");
         }
     }
 
@@ -283,7 +283,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error initiating delete for dataset {Code}", dataset.Code);
-            ShowErrorAsyncNotification("Error deleting dataset");
+            await ShowErrorAsyncNotification("Error deleting dataset");
         }
     }
 
