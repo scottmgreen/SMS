@@ -1,5 +1,5 @@
 ﻿using Microsoft.FeatureManagement;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 using Asp.Versioning.ApiExplorer;
 using Microsoft.Extensions.Options;
 using Swashbuckle.AspNetCore.SwaggerGen;
@@ -18,6 +18,7 @@ using SMS3.Api.Endpoints;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
+using Microsoft.OpenApi;
 
 namespace SMS3.Configuration;
 

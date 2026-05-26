@@ -25,12 +25,8 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
     private readonly IAuthenticationStrategyManager _strategyManager;
     private readonly ISMSSessionService _sessionService;
     
-    // Performance optimization: Simple cache for authentication state
-    private bool? _cachedAuthState;
-    private DateTime _lastAuthCheck = DateTime.MinValue;
-    private readonly TimeSpan _authCacheTimeout = TimeSpan.FromMilliseconds(100); // Very short cache - just prevent immediate duplicates
-    
-    // No user code caching - keep it simple and immediate
+    // No auth state caching: stale cached false values can survive immediate post-login navigation
+    // and cause NavMenu to render unauthenticated.
 
     public StrategyBasedCurrentUserService(
         ILogger<StrategyBasedCurrentUserService> logger,
@@ -50,21 +46,9 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
         {
             try
             {
-                // Check cache first to avoid excessive strategy manager calls
-                var now = DateTime.UtcNow;
-                if (_cachedAuthState.HasValue && 
-                    (now - _lastAuthCheck) < _authCacheTimeout)
-                {
-                    return _cachedAuthState.Value;
-                }
-
                 _logger.LogDebug("?? StrategyBasedCurrentUserService.IsAuthenticated - Starting check");
                 var result = _strategyManager.IsUserAuthenticatedAsync().GetAwaiter().GetResult();
                 _logger.LogDebug("?? StrategyBasedCurrentUserService.IsAuthenticated - Result: {Result}", result);
-                
-                // Cache the result
-                _cachedAuthState = result;
-                _lastAuthCheck = now;
                 
                 // Enhanced logging for debugging - only log detailed info when authentication succeeds
                 if (result && _logger.IsEnabled(LogLevel.Information))
@@ -92,9 +76,6 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
             catch (Exception ex)
             {
                 _logger.LogError(ex, "? Error checking authentication status");
-                // Clear cache on error
-                _cachedAuthState = null;
-                _lastAuthCheck = DateTime.MinValue;
                 return false;
             }
         }
@@ -413,10 +394,7 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
     /// </summary>
     public void ClearCache()
     {
-        _cachedAuthState = null;
-        _lastAuthCheck = DateTime.MinValue;
-        
-        _logger.LogDebug("?? Authentication cache cleared");
+        _logger.LogDebug("?? Authentication cache clear requested (no-op; caching disabled)");
     }
 
     #endregion

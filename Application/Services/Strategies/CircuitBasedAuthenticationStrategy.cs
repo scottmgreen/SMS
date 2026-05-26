@@ -119,6 +119,13 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             // Store user data in circuit storage with the circuit ID
             _circuitAuthStorage.SetAuthData(circuitId, userData);
 
+            // Keep the circuit ID in the current request context when available
+            var context = _httpContextAccessor.HttpContext;
+            if (context != null)
+            {
+                context.Items["SMS_CIRCUIT_ID"] = circuitId;
+            }
+
             // Also store under user code for fallback retrieval
             var userCircuitKey = $"circuit_{user.Code}_{DateTime.UtcNow.Ticks}";
             userData["SMS_UserCircuitKey"] = userCircuitKey;

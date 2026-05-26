@@ -93,6 +93,29 @@ public class ApiKeyAuthenticationFilter : IEndpointFilter
     }
 
     /// <summary>
+    /// Diagnostic helper to identify whether the request included any API key header.
+    /// </summary>
+    private string GetObservedApiKeyHeader(HttpRequest request)
+    {
+        foreach (var headerName in ApiKeyHeaders)
+        {
+            if (request.Headers.TryGetValue(headerName, out var headerValues))
+            {
+                var value = headerValues.FirstOrDefault();
+                if (!string.IsNullOrEmpty(value))
+                {
+                    return headerName;
+                }
+            }
+        }
+
+        if (request.Query.ContainsKey("apikey")) return "query:apikey";
+        if (request.Query.ContainsKey("api_key")) return "query:api_key";
+
+        return "none";
+    }
+
+    /// <summary>
     /// Validate the provided API key
     /// </summary>
     private Task<bool> ValidateApiKeyAsync(string apiKey, HttpContext context)

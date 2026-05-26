@@ -1618,4 +1618,113 @@ public static class FieldNames
     public static string fHazardReportTrackingTrackingCode => _fHazardReportTrackingTrackingCode.Value;
 
     #endregion
+
+    #region EventQueue Field Names
+
+    /// <summary>
+    /// EventQueue table field names - Following established naming convention
+    /// </summary>
+    private static readonly Lazy<string> _fEventQueueCode = new(() => "fldv_Code");
+    public static string fEventQueueCode => _fEventQueueCode.Value;
+
+    private static readonly Lazy<string> _fEventQueueGuid = new(() => "fldv_QueueGuid");
+    public static string fEventQueueGuid => _fEventQueueGuid.Value;
+
+    private static readonly Lazy<string> _fEventQueueEventCategory = new(() => "fldi_EventCategory");
+    public static string fEventQueueEventCategory => _fEventQueueEventCategory.Value;
+
+    private static readonly Lazy<string> _fEventQueueEventType = new(() => "fldv_EventType");
+    public static string fEventQueueEventType => _fEventQueueEventType.Value;
+
+    private static readonly Lazy<string> _fEventQueueEventData = new(() => "fldv_EventData");
+    public static string fEventQueueEventData => _fEventQueueEventData.Value;
+
+    private static readonly Lazy<string> _fEventQueueReportCode = new(() => "fldv_ReportCode");
+    public static string fEventQueueReportCode => _fEventQueueReportCode.Value;
+
+    private static readonly Lazy<string> _fEventQueueTargetSystem = new(() => "fldv_TargetSystem");
+    public static string fEventQueueTargetSystem => _fEventQueueTargetSystem.Value;
+
+    private static readonly Lazy<string> _fEventQueuePriority = new(() => "fldi_Priority");
+    public static string fEventQueuePriority => _fEventQueuePriority.Value;
+
+    private static readonly Lazy<string> _fEventQueueStatus = new(() => "fldi_Status");
+    public static string fEventQueueStatus => _fEventQueueStatus.Value;
+
+    private static readonly Lazy<string> _fEventQueueAttemptCount = new(() => "fldi_AttemptCount");
+    public static string fEventQueueAttemptCount => _fEventQueueAttemptCount.Value;
+
+    private static readonly Lazy<string> _fEventQueueMaxAttempts = new(() => "fldi_MaxAttempts");
+    public static string fEventQueueMaxAttempts => _fEventQueueMaxAttempts.Value;
+
+    private static readonly Lazy<string> _fEventQueueLastError = new(() => "fldv_LastError");
+    public static string fEventQueueLastError => _fEventQueueLastError.Value;
+
+    private static readonly Lazy<string> _fEventQueueQueuedDate = new(() => "fldd_QueuedDate");
+    public static string fEventQueueQueuedDate => _fEventQueueQueuedDate.Value;
+
+    private static readonly Lazy<string> _fEventQueueProcessingStartedDate = new(() => "fldd_ProcessingStartedDate");
+    public static string fEventQueueProcessingStartedDate => _fEventQueueProcessingStartedDate.Value;
+
+    private static readonly Lazy<string> _fEventQueueProcessedDate = new(() => "fldd_ProcessedDate");
+    public static string fEventQueueProcessedDate => _fEventQueueProcessedDate.Value;
+
+    private static readonly Lazy<string> _fEventQueueNextAttemptDate = new(() => "fldd_NextAttemptDate");
+    public static string fEventQueueNextAttemptDate => _fEventQueueNextAttemptDate.Value;
+
+    private static readonly Lazy<string> _fEventQueueLockedBy = new(() => "fldv_LockedBy");
+    public static string fEventQueueLockedBy => _fEventQueueLockedBy.Value;
+
+    private static readonly Lazy<string> _fEventQueueLockExpiresDate = new(() => "fldd_LockExpiresDate");
+    public static string fEventQueueLockExpiresDate => _fEventQueueLockExpiresDate.Value;
+
+    private static readonly Lazy<string> _fEventQueueQueuedBy = new(() => "fldv_QueuedBy");
+    public static string fEventQueueQueuedBy => _fEventQueueQueuedBy.Value;
+
+    private static readonly Lazy<string> _fEventQueueCorrelationId = new(() => "fldv_CorrelationId");
+    public static string fEventQueueCorrelationId => _fEventQueueCorrelationId.Value;
+
+    private static readonly Lazy<string> _fEventQueueCausationId = new(() => "fldv_CausationId");
+    public static string fEventQueueCausationId => _fEventQueueCausationId.Value;
+
+    private static readonly Lazy<string> _fEventQueuePendingCount = new(() => "fldi_PendingCount");
+    public static string fEventQueuePendingCount => _fEventQueuePendingCount.Value;
+
+    private static readonly Lazy<string> _fEventQueuePending = new(() => "fldi_Pending");
+    public static string fEventQueuePending => _fEventQueuePending.Value;
+
+    private static readonly Lazy<string> _fEventQueueProcessedCount = new(() => "fldi_ProcessedCount");
+    public static string fEventQueueProcessedCount => _fEventQueueProcessedCount.Value;
+
+    private static readonly Lazy<string> _fEventQueueProcessed = new(() => "fldi_Processed");
+    public static string fEventQueueProcessed => _fEventQueueProcessed.Value;
+
+    private static readonly Lazy<string> _fEventQueueFailedCount = new(() => "fldi_FailedCount");
+    public static string fEventQueueFailedCount => _fEventQueueFailedCount.Value;
+
+    private static readonly Lazy<string> _fEventQueueFailed = new(() => "fldi_Failed");
+    public static string fEventQueueFailed => _fEventQueueFailed.Value;
+
+    private static readonly Lazy<string> _fEventQueueCancelledCount = new(() => "fldi_CancelledCount");
+    public static string fEventQueueCancelledCount => _fEventQueueCancelledCount.Value;
+
+    private static readonly Lazy<string> _fEventQueueCancelled = new(() => "fldi_Cancelled");
+    public static string fEventQueueCancelled => _fEventQueueCancelled.Value;
+
+    private static readonly Lazy<string> _fEventQueueTotalCount = new(() => "fldi_TotalCount");
+    public static string fEventQueueTotalCount => _fEventQueueTotalCount.Value;
+
+    private static readonly Lazy<string> _fEventQueueCount = new(() => "fldi_Count");
+    public static string fEventQueueCount => _fEventQueueCount.Value;
+
+    private static readonly Lazy<string> _fRowsAffected = new(() => "fldi_RowsAffected");
+    public static string fRowsAffected => _fRowsAffected.Value;
+
+    private static readonly Lazy<string> _fRemovedCount = new(() => "fldi_RemovedCount");
+    public static string fRemovedCount => _fRemovedCount.Value;
+
+    private static readonly Lazy<string> _fRecoveredCount = new(() => "fldi_RecoveredCount");
+    public static string fRecoveredCount => _fRecoveredCount.Value;
+
+    #endregion
 }

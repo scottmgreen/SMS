@@ -115,13 +115,14 @@ public class Program
             app.UseExceptionHandler("/Error");
             app.UseHsts();
         }
-        else
+
+        if (app.Configuration.GetValue<bool>("FeatureManagement:ExternalApiEnabled", true) && ApiServicesExtensions.IsSwaggerEnabled(app))
         {
-            if (app.Configuration.GetValue<bool>("FeatureManagement:ExternalApiEnabled", true) && ApiServicesExtensions.IsSwaggerEnabled(app))
-            {
-                app.UseSMSSwagger();
-            }
-            
+            SMS3.Api.Extensions.ApiServicesExtensions.UseSMSSwagger(app);
+        }
+
+        if (app.Environment.IsDevelopment())
+        {
             app.UseDeveloperExceptionPage();
         }
 

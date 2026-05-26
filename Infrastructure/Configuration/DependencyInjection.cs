@@ -66,6 +66,8 @@ public static class DependencyInjection
         services.AddScoped<ReportValidationRepository>();
         services.AddScoped<ScoringPanelRepository>();
         services.AddScoped<SafetyPerformanceIndicatorRepository>();
+        services.AddScoped<EventQueueRepository>();
+        services.AddScoped<IEventQueueRepository, EventQueueRepository>();
         services.AddScoped<SMSApplicationUserRepository>();
         services.AddScoped<SMSApplicationGroupRepository>();
         services.AddScoped<SMSOrganizationalUserRepository>();
@@ -105,6 +107,8 @@ public static class DependencyInjection
         services.AddScoped<ReportValidationDataService>();
         services.AddScoped<ScoringPanelDataService>();
         services.AddScoped<SafetyPerformanceIndicatorDataService>();
+        services.AddScoped<EventQueueDataService>();
+        services.AddScoped<IEventQueueDataService, EventQueueDataService>();
 
         // SMS Audit Management Data Services (NEW) - NOW ENABLED WITH PERSISTENCE LAYER
         services.AddScoped<SMSAuditPlanDataService>();

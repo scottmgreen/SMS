@@ -249,3 +249,28 @@ public enum EventCategory
     /// </summary>
     IntegrationEvent = 2
 }
+
+/// <summary>
+/// Statistics about the event queue
+/// </summary>
+public record QueueStatistics
+{
+    public int PendingCount { get; init; }
+    public int ProcessedCount { get; init; }
+    public int FailedCount { get; init; }
+    public int CancelledCount { get; init; }
+    public Dictionary<EventCategory, EventTypeStatistics> ByEventType { get; init; } = new();
+    public Dictionary<EventPriority, int> ByPriority { get; init; } = new();
+}
+
+/// <summary>
+/// Statistics for a specific event type
+/// </summary>
+public record EventTypeStatistics
+{
+    public int Pending { get; init; }
+    public int Processed { get; init; }
+    public int Failed { get; init; }
+    public int Cancelled { get; init; }
+    public int Total => Pending + Processed + Failed + Cancelled;
+}

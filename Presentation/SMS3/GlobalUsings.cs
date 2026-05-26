@@ -3,6 +3,7 @@
 // System namespaces
 global using System.Linq;
 global using System.Linq.Expressions;
+global using System.Reflection;
 global using System.Text.RegularExpressions;
 // Blazor and Radzen namespaces
 global using Microsoft.AspNetCore.Components;

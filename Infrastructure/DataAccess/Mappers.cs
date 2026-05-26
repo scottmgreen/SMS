@@ -298,7 +298,7 @@ public static partial class Mappers
             
             // Risk Level
             //hazard.HazardRiskLevel = RiskLevel.FromValue(reader.GetValue<string>(FieldNames.fHazardRiskLevel).Trim())?? RiskLevel.Unkonwn;
-            hazard.HazardRiskLevel = RiskLevel.FromValue(reader.GetValue<string>(FieldNames.fHazardRiskLevel)?.Trim()) ?? RiskLevel.Unkonwn;
+            //hazard.HazardRiskLevel = RiskLevel.FromValue(reader.GetValue<string>(FieldNames.fHazardRiskLevel)?.Trim()) ?? RiskLevel.Unkonwn;
             //// Step 3 Risk Analysis Fields
             //var worstCredibleOutcome = reader.GetValue<string>(FieldNames.fHazardInitialWorstCredibleOutcome);
             //if (!string.IsNullOrEmpty(worstCredibleOutcome))

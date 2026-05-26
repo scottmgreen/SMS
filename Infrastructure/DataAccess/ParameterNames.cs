@@ -1867,4 +1867,116 @@ public static class ParameterNames
     public static string pmHazardReportTrackingTrackingCode => _pmHazardReportTrackingTrackingCode.Value;
 
     #endregion
+
+    #region EventQueue Parameter Names
+
+    /// <summary>
+    /// EventQueue table parameter names - Following established naming convention
+    /// </summary>
+    private static readonly Lazy<string> _pmEventQueueCode = new Lazy<string>(() => "@pCode");
+    public static string pmEventQueueCode => _pmEventQueueCode.Value;
+
+    private static readonly Lazy<string> _pmEventQueueGuid = new Lazy<string>(() => "@pQueueGuid");
+    public static string pmEventQueueGuid => _pmEventQueueGuid.Value;
+
+    private static readonly Lazy<string> _pmEventQueueId = new Lazy<string>(() => "@pEventQueueID");
+    public static string pmEventQueueId => _pmEventQueueId.Value;
+
+    private static readonly Lazy<string> _pmEventCategory = new Lazy<string>(() => "@pEventCategory");
+    public static string pmEventCategory => _pmEventCategory.Value;
+
+    private static readonly Lazy<string> _pmEventType = new Lazy<string>(() => "@pEventType");
+    public static string pmEventType => _pmEventType.Value;
+
+    private static readonly Lazy<string> _pmEventData = new Lazy<string>(() => "@pEventData");
+    public static string pmEventData => _pmEventData.Value;
+
+    private static readonly Lazy<string> _pmEventQueueReportCode = new Lazy<string>(() => "@pReportCode");
+    public static string pmEventQueueReportCode => _pmEventQueueReportCode.Value;
+
+    private static readonly Lazy<string> _pmTargetSystem = new Lazy<string>(() => "@pTargetSystem");
+    public static string pmTargetSystem => _pmTargetSystem.Value;
+
+    private static readonly Lazy<string> _pmEventPriority = new Lazy<string>(() => "@pPriority");
+    public static string pmEventPriority => _pmEventPriority.Value;
+
+    private static readonly Lazy<string> _pmEventStatus = new Lazy<string>(() => "@pEventStatus");
+    public static string pmEventStatus => _pmEventStatus.Value;
+
+    private static readonly Lazy<string> _pmAttemptCount = new Lazy<string>(() => "@pAttemptCount");
+    public static string pmAttemptCount => _pmAttemptCount.Value;
+
+    private static readonly Lazy<string> _pmMaxAttempts = new Lazy<string>(() => "@pMaxAttempts");
+    public static string pmMaxAttempts => _pmMaxAttempts.Value;
+
+    private static readonly Lazy<string> _pmLastError = new Lazy<string>(() => "@pLastError");
+    public static string pmLastError => _pmLastError.Value;
+
+    private static readonly Lazy<string> _pmQueuedBy = new Lazy<string>(() => "@pQueuedBy");
+    public static string pmQueuedBy => _pmQueuedBy.Value;
+
+    private static readonly Lazy<string> _pmEventQueueCreatedBy = new Lazy<string>(() => "@pCreatedBy");
+    public static string pmEventQueueCreatedBy => _pmEventQueueCreatedBy.Value;
+
+    private static readonly Lazy<string> _pmQueuedDate = new Lazy<string>(() => "@pQueuedDate");
+    public static string pmQueuedDate => _pmQueuedDate.Value;
+
+    private static readonly Lazy<string> _pmProcessingStartedDate = new Lazy<string>(() => "@pProcessingStartedDate");
+    public static string pmProcessingStartedDate => _pmProcessingStartedDate.Value;
+
+    private static readonly Lazy<string> _pmProcessedDate = new Lazy<string>(() => "@pProcessedDate");
+    public static string pmProcessedDate => _pmProcessedDate.Value;
+
+    private static readonly Lazy<string> _pmNextAttemptDate = new Lazy<string>(() => "@pNextAttemptDate");
+    public static string pmNextAttemptDate => _pmNextAttemptDate.Value;
+
+    private static readonly Lazy<string> _pmLockedBy = new Lazy<string>(() => "@pLockedBy");
+    public static string pmLockedBy => _pmLockedBy.Value;
+
+    private static readonly Lazy<string> _pmLockExpiresDate = new Lazy<string>(() => "@pLockExpiresDate");
+    public static string pmLockExpiresDate => _pmLockExpiresDate.Value;
+
+    private static readonly Lazy<string> _pmCorrelationId = new Lazy<string>(() => "@pCorrelationId");
+    public static string pmCorrelationId => _pmCorrelationId.Value;
+
+    private static readonly Lazy<string> _pmCausationId = new Lazy<string>(() => "@pCausationId");
+    public static string pmCausationId => _pmCausationId.Value;
+
+    private static readonly Lazy<string> _pmBatchSize = new Lazy<string>(() => "@pBatchSize");
+    public static string pmBatchSize => _pmBatchSize.Value;
+
+    private static readonly Lazy<string> _pmWorker = new Lazy<string>(() => "@pWorker");
+    public static string pmWorker => _pmWorker.Value;
+
+    private static readonly Lazy<string> _pmLockSeconds = new Lazy<string>(() => "@pLockSeconds");
+    public static string pmLockSeconds => _pmLockSeconds.Value;
+
+    private static readonly Lazy<string> _pmBackoffSeconds = new Lazy<string>(() => "@pBackoffSeconds");
+    public static string pmBackoffSeconds => _pmBackoffSeconds.Value;
+
+    private static readonly Lazy<string> _pmCancelledBy = new Lazy<string>(() => "@pCancelledBy");
+    public static string pmCancelledBy => _pmCancelledBy.Value;
+
+    private static readonly Lazy<string> _pmClearedBy = new Lazy<string>(() => "@pClearedBy");
+    public static string pmClearedBy => _pmClearedBy.Value;
+
+    private static readonly Lazy<string> _pmRecoveryDelaySeconds = new Lazy<string>(() => "@pRecoveryDelaySeconds");
+    public static string pmRecoveryDelaySeconds => _pmRecoveryDelaySeconds.Value;
+
+    private static readonly Lazy<string> _pmRecoveredBy = new Lazy<string>(() => "@pRecoveredBy");
+    public static string pmRecoveredBy => _pmRecoveredBy.Value;
+
+    private static readonly Lazy<string> _pmRowsAffected = new Lazy<string>(() => "@pRowsAffected");
+    public static string pmRowsAffected => _pmRowsAffected.Value;
+
+    private static readonly Lazy<string> _pmRemovedCount = new Lazy<string>(() => "@pRemovedCount");
+    public static string pmRemovedCount => _pmRemovedCount.Value;
+
+    private static readonly Lazy<string> _pmRecoveredCount = new Lazy<string>(() => "@pRecoveredCount");
+    public static string pmRecoveredCount => _pmRecoveredCount.Value;
+
+    private static readonly Lazy<string> _pmMaxResults = new Lazy<string>(() => "@pMaxResults");
+    public static string pmMaxResults => _pmMaxResults.Value;
+
+    #endregion
 }

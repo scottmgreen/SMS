@@ -44,8 +44,7 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
     public string StrategyName => "Session-Based Authentication";
     public AuthenticationMethod Method => AuthenticationMethod.SessionBased;
 
-    public bool IsAvailable => _httpContextAccessor.HttpContext?.Session != null && 
-                              !(_httpContextAccessor.HttpContext?.Response.HasStarted ?? true) &&
+    public bool IsAvailable => _httpContextAccessor.HttpContext?.Session != null &&
                               _protocolDetectionService.CanUseSessionAuth();
 
     /// <summary>

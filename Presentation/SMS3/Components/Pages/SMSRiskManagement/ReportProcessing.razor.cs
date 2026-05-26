@@ -683,11 +683,11 @@ public partial class ReportProcessing : ComponentBase
                     };
 
                     // NEW: Log when default hazard classification is detected
-                    if (summary.RequiresHazardClassificationUpdate)
-                    {
-                        _logger.LogWarning("?? DEFAULT CLASSIFICATION DETECTED - Report {ReportId}, Hazard {HazardId}: Category='{Category}', Type='{Type}'",
-                            summary.ReportId, summary.HazardId, summary.HazardCategory, summary.HazardType);
-                    }
+                    //if (summary.RequiresHazardClassificationUpdate)
+                    //{
+                    //    _logger.LogWarning("?? DEFAULT CLASSIFICATION DETECTED - Report {ReportId}, Hazard {HazardId}: Category='{Category}', Type='{Type}'",
+                    //        summary.ReportId, summary.HazardId, summary.HazardCategory, summary.HazardType);
+                    //}
 
                     summaries.Add(summary);
                 }

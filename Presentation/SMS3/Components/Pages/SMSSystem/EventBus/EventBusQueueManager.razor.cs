@@ -12,6 +12,8 @@ using Microsoft.Extensions.Logging;
 using Radzen;
 using Radzen.Blazor;
 using SMS_Application.Interfaces;
+using SMS_Application.Messaging.Commands;
+using SMS_Application.Messaging.Queries;
 
 using SMS_Domain.Events;
 using SMS_Domain.ValueObjects;
@@ -25,6 +27,8 @@ namespace SMS3.Components.Pages.SMSSystem.EventBus;
 public partial class EventBusQueueManager
 {
     #region Private Fields
+
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
 
     private IEnumerable<QueuedEvent> _queuedEvents = new List<QueuedEvent>();
     private QueueStatistics? _statistics;
@@ -128,7 +132,9 @@ public partial class EventBusQueueManager
             _isLoading = true;
             StateHasChanged();
 
-            var result = await EventQueueService.GetQueuedEventsAsync(_statusFilter, _eventTypeFilter, 1000);
+            var result = await _mediator.SendAsync(
+                new GetQueuedEventsQuery(_statusFilter, _eventTypeFilter, 1000),
+                CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -171,7 +177,9 @@ public partial class EventBusQueueManager
     {
         try
         {
-            var result = await EventQueueService.GetQueueStatisticsAsync();
+            var result = await _mediator.SendAsync(
+                new GetEventQueueStatisticsQuery(),
+                CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -215,7 +223,9 @@ public partial class EventBusQueueManager
             Logger.LogInformation("Manually executing event {EventId}", eventId);
 
             // Get the event details before execution
-            var eventResult = await EventQueueService.GetQueuedEventAsync(eventId);
+            var eventResult = await _mediator.SendAsync(
+                new GetQueuedEventByIdQuery(eventId),
+                CancellationToken.None);
             if (!eventResult.IsSuccess)
             {
                 NotificationService.Notify(new NotificationMessage
@@ -252,21 +262,12 @@ public partial class EventBusQueueManager
                             new Dictionary<string, object> { { "InitialModel", model } },
                             new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
                         );
-                        // Do not execute the event, just show the dialog for testing
-                        return;
+                        // Continue to persisted execution after preview so queue status is updated
                     }
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Failed to deserialize EmailNotificationEvent for event {EventId}", eventId);
-                    NotificationService.Notify(new NotificationMessage
-                    {
-                        Severity = NotificationSeverity.Error,
-                        Summary = "Email Preview Error",
-                        Detail = "Could not preview email notification.",
-                        Duration = 4000
-                    });
-                    return;
+                    Logger.LogWarning(ex, "Failed to preview EmailNotificationEvent for event {EventId}; continuing with execution", eventId);
                 }
             }
 
@@ -274,7 +275,7 @@ public partial class EventBusQueueManager
             var isUIEvent = queuedEvent.EventCategory == EventCategory.UIEvent;
             var uiEventData = isUIEvent ? DeserializeUIEventData(queuedEvent.EventData) : null;
 
-            var result = await EventQueueService.ExecuteQueuedEventAsync(eventId, "ManualUI");
+            var result = await _mediator.SendAsync(new ExecuteQueuedEventCommand(eventId, "ManualUI"), CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -331,7 +332,9 @@ public partial class EventBusQueueManager
 
             Logger.LogInformation("Cancelling event {EventId}", eventId);
 
-            var result = await EventQueueService.CancelQueuedEventAsync(eventId, "ManualUI");
+            var result = await _mediator.SendAsync(
+                new CancelQueuedEventCommand(eventId, "ManualUI"),
+                CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -389,7 +392,9 @@ public partial class EventBusQueueManager
 
             Logger.LogInformation("Executing all pending events (Type filter: {EventType})", _eventTypeFilter);
 
-            var result = await EventQueueService.ExecuteAllPendingEventsAsync(_eventTypeFilter, "ManualUI");
+            var result = await _mediator.SendAsync(
+                new ExecuteAllPendingQueuedEventsCommand(_eventTypeFilter, "ManualUI"),
+                CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -447,7 +452,9 @@ public partial class EventBusQueueManager
 
             Logger.LogInformation("Clearing completed events");
 
-            var result = await EventQueueService.ClearCompletedEventsAsync();
+            var result = await _mediator.SendAsync(
+                new ClearCompletedQueuedEventsCommand(),
+                CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -516,7 +523,9 @@ public partial class EventBusQueueManager
 
             Logger.LogWarning("Clearing ALL queue events - Database truncate/reimport scenario");
 
-            var result = await EventQueueService.ClearAllEventsAsync();
+            var result = await _mediator.SendAsync(
+                new ClearAllQueuedEventsCommand(),
+                CancellationToken.None);
 
             if (result.IsSuccess)
             {

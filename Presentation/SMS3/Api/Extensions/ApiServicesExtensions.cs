@@ -12,7 +12,7 @@ using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
 
 using Microsoft.FeatureManagement;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using SMS_Infrastructure.Security;
 
@@ -59,29 +59,35 @@ namespace SMS3.Api.Extensions
 
             return services;
         }
+
         public static IServiceCollection AddSMSApiSecurityServices(this IServiceCollection services)
         {
             // API key authentication for external endpoints
             services.AddScoped<ApiKeyAuthenticationFilter>();
-
-            // Add any additional API security services here
-            // services.AddScoped<IRateLimitingService, RateLimitingService>();
-            // services.AddScoped<IApiAuditService, ApiAuditService>();
-
             return services;
         }
+
         public static bool IsSwaggerEnabled(WebApplication app)
         {
-            // Check if Swagger is explicitly enabled via feature flag OR configuration
+            // Check if Swagger is enabled via feature flags and environment-specific configuration
             var featureManager = app.Services.GetService<IFeatureManager>();
             var api_featureEnabled = featureManager?.IsEnabledAsync("ExternalApiEnabled").GetAwaiter().GetResult() ?? false;
             var swagger_featureEnabled = featureManager?.IsEnabledAsync("SwaggerEnabled").GetAwaiter().GetResult() ?? false;
 
-            // Also check the configuration setting
-            var configEnabled = app.Configuration.GetValue<bool>("Swagger:EnableInProduction", false);
+            if (!api_featureEnabled || !swagger_featureEnabled)
+            {
+                return false;
+            }
 
-            return api_featureEnabled && swagger_featureEnabled; // || configEnabled;
+            if (app.Environment.IsDevelopment())
+            {
+                return true;
+            }
+
+            // Allow explicit production opt-in from configuration
+            return app.Configuration.GetValue<bool>("Swagger:EnableInProduction", false);
         }
+
         public static IServiceCollection AddSMSSwaggerServices(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddEndpointsApiExplorer();
@@ -93,10 +99,6 @@ namespace SMS3.Api.Extensions
                 // Use a predicate to control which endpoints are included in each document
                 options.DocInclusionPredicate((docName, apiDesc) =>
                 {
-                    //if (!apiDesc.TryGetMethodInfo(out var methodInfo)) return false;
-
-                    //var groupName = apiDesc.GroupName;
-                    //return groupName == docName;
                     if (!string.IsNullOrEmpty(apiDesc.GroupName))
                     {
                         return apiDesc.GroupName.Equals(docName, StringComparison.OrdinalIgnoreCase);
@@ -116,23 +118,16 @@ namespace SMS3.Api.Extensions
                     Scheme = "ApiKeyScheme"
                 });
 
-                options.AddSecurityRequirement(new OpenApiSecurityRequirement
+                options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
                 {
                     {
-                        new OpenApiSecurityScheme
-                        {
-                            Reference = new OpenApiReference
-                            {
-                                Type = ReferenceType.SecurityScheme,
-                                Id = "ApiKey"
-                            },
-                            Scheme = "ApiKeyScheme",
-                            Name = "X-API-Key",
-                            In = ParameterLocation.Header,
-                        },
+                        new OpenApiSecuritySchemeReference("ApiKey", document, null),
                         new List<string>()
                     }
                 });
+
+                // Ensure secured API operations explicitly include ApiKey requirement in OpenAPI operation metadata.
+                options.OperationFilter<ApiKeyHeaderOperationFilter>();
 
                 // Configure XML Documentation
                 var xmlFiles = new[]
@@ -170,22 +165,60 @@ namespace SMS3.Api.Extensions
             app.MapPDXSMSApiEndpointsV1(v1ApiVersionSet);
             app.MapPDXSMSApiEndpointsV2(v2ApiVersionSet);
 
-            var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
             app.UseSwagger();
             app.UseSwaggerUI(options =>
             {
-                //options.SwaggerEndpoint("/swagger/v1/swagger.json", "V1");
-                //options.SwaggerEndpoint("/swagger/v2/swagger.json", "V2");
                 options.SwaggerEndpoint("../swagger/v1/swagger.json", "V1");
                 options.SwaggerEndpoint("../swagger/v2/swagger.json", "V2");
                 options.RoutePrefix = "api-docs";
                 options.DocumentTitle = "SMS External Reporting API Documentation";
-                
+                options.DisplayRequestDuration();
             });
-            //}
-            // Endpoint registration is now handled in Program.cs with version sets
+
             return app;
         }
+    }
 
+    /// <summary>
+    /// Adds X-API-Key security requirement to API operations for Swagger generation.
+    /// </summary>
+    internal sealed class ApiKeyHeaderOperationFilter : IOperationFilter
+    {
+        public void Apply(OpenApiOperation operation, OperationFilterContext context)
+        {
+            if (operation == null || context == null)
+            {
+                return;
+            }
+
+            var relativePath = context.ApiDescription.RelativePath ?? string.Empty;
+            var isExternalApiEndpoint = relativePath.StartsWith("api/", StringComparison.OrdinalIgnoreCase);
+            if (!isExternalApiEndpoint)
+            {
+                return;
+            }
+
+            if (operation.Parameters == null)
+            {
+                operation.Parameters = new List<IOpenApiParameter>();
+            }
+
+            if (!operation.Parameters.Any(p =>
+                    p.In == ParameterLocation.Header &&
+                    p.Name.Equals("X-API-Key", StringComparison.OrdinalIgnoreCase)))
+            {
+                operation.Parameters.Add(new OpenApiParameter
+                {
+                    Name = "X-API-Key",
+                    In = ParameterLocation.Header,
+                    Required = true,
+                    Description = "Required API key header for protected endpoints. Enter a valid key value.",
+                    Schema = new OpenApiSchema
+                    {
+                        Type = JsonSchemaType.String
+                    }
+                });
+            }
+        }
     }
 }

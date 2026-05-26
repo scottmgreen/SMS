@@ -1123,5 +1123,46 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_HazardReportTracking_Delete = new(() => "pr_HazardReportTracking_Delete");
         public static string pr_HazardReportTracking_Delete => _pr_HazardReportTracking_Delete.Value;
         #endregion
+
+        #region EventQueue Operations
+        /// <summary>
+        /// EventQueue Operations
+        /// </summary>
+        private static readonly Lazy<string> _pr_EventQueue_Insert = new(() => "pr_EventQueue_Insert");
+        public static string pr_EventQueue_Insert => _pr_EventQueue_Insert.Value;
+
+        private static readonly Lazy<string> _pr_EventQueue_LeaseBatch = new(() => "pr_EventQueue_LeaseBatch");
+        public static string pr_EventQueue_LeaseBatch => _pr_EventQueue_LeaseBatch.Value;
+
+        private static readonly Lazy<string> _pr_EventQueue_MarkFailed = new(() => "pr_EventQueue_MarkFailed");
+        public static string pr_EventQueue_MarkFailed => _pr_EventQueue_MarkFailed.Value;
+
+        private static readonly Lazy<string> _pr_EventQueue_MarkProcessed = new(() => "pr_EventQueue_MarkProcessed");
+        public static string pr_EventQueue_MarkProcessed => _pr_EventQueue_MarkProcessed.Value;
+
+        private static readonly Lazy<string> _pr_EventQueue_GetByQueueGuid = new(() => "pr_EventQueue_GetByQueueGuid");
+        public static string pr_EventQueue_GetByQueueGuid => _pr_EventQueue_GetByQueueGuid.Value;
+
+        private static readonly Lazy<string> _pr_EventQueue_GetPending = new(() => "pr_EventQueue_GetPending");
+        public static string pr_EventQueue_GetPending => _pr_EventQueue_GetPending.Value;
+
+        private static readonly Lazy<string> _pr_EventQueue_GetByStatus = new(() => "pr_EventQueue_GetByStatus");
+        public static string pr_EventQueue_GetByStatus => _pr_EventQueue_GetByStatus.Value;
+
+        private static readonly Lazy<string> _pr_EventQueue_Cancel = new(() => "pr_EventQueue_Cancel");
+        public static string pr_EventQueue_Cancel => _pr_EventQueue_Cancel.Value;
+
+        private static readonly Lazy<string> _pr_EventQueue_ClearCompleted = new(() => "pr_EventQueue_ClearCompleted");
+        public static string pr_EventQueue_ClearCompleted => _pr_EventQueue_ClearCompleted.Value;
+
+        private static readonly Lazy<string> _pr_EventQueue_ClearAll = new(() => "pr_EventQueue_ClearAll");
+        public static string pr_EventQueue_ClearAll => _pr_EventQueue_ClearAll.Value;
+
+        private static readonly Lazy<string> _pr_EventQueue_RecoverExpiredLocks = new(() => "pr_EventQueue_RecoverExpiredLocks");
+        public static string pr_EventQueue_RecoverExpiredLocks => _pr_EventQueue_RecoverExpiredLocks.Value;
+
+        private static readonly Lazy<string> _pr_EventQueue_GetStats = new(() => "pr_EventQueue_GetStats");
+        public static string pr_EventQueue_GetStats => _pr_EventQueue_GetStats.Value;
+        #endregion
     }
 }

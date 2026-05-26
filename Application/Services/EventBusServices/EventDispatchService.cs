@@ -26,7 +26,6 @@ public sealed class EventDispatchService : IBaseEventBus
 {
     private readonly ILogger<EventDispatchService> _logger;
     private readonly IServiceProvider _serviceProvider;
-    private readonly Lazy<IEventQueueService> _eventQueueService;
     private readonly Dictionary<Type, List<Type>> _eventHandlerMappings = new();
     private readonly object _lock = new object();
 
@@ -36,9 +35,13 @@ public sealed class EventDispatchService : IBaseEventBus
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-        _eventQueueService = new Lazy<IEventQueueService>(() => 
-            _serviceProvider.GetService<IEventQueueService>() ?? 
-            throw new InvalidOperationException("IEventQueueService is not registered"));
+    }
+
+    private async Task<Result> ExecuteWithQueueServiceAsync(Func<IEventQueueService, Task<Result>> operation)
+    {
+        using var scope = _serviceProvider.CreateScope();
+        var queueService = scope.ServiceProvider.GetRequiredService<IEventQueueService>();
+        return await operation(queueService).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -410,8 +413,7 @@ public sealed class EventDispatchService : IBaseEventBus
     {
         try
         {
-            var queueService = _eventQueueService.Value;
-            return await queueService.QueueDomainEventAsync(domainEvent, "EventBus");
+            return await ExecuteWithQueueServiceAsync(queueService => queueService.QueueDomainEventAsync(domainEvent, "EventBus"));
         }
         catch (Exception ex)
         {
@@ -431,9 +433,11 @@ public sealed class EventDispatchService : IBaseEventBus
     {
         try
         {
-            var queueService = _eventQueueService.Value;
-            _logger.LogDebug("?? Got EventQueueService instance for manual execution: {ServiceType}", queueService.GetType().Name);
-            return await queueService.QueueDomainEventAsync(domainEvent, "ManualExecution");
+            return await ExecuteWithQueueServiceAsync(async queueService =>
+            {
+                _logger.LogDebug("?? Got EventQueueService instance for manual execution: {ServiceType}", queueService.GetType().Name);
+                return await queueService.QueueDomainEventAsync(domainEvent, "ManualExecution");
+            });
         }
         catch (Exception ex)
         {
@@ -596,8 +600,7 @@ public sealed class EventDispatchService : IBaseEventBus
     {
         try
         {
-            var queueService = _eventQueueService.Value;
-            return await queueService.QueueIntegrationEventAsync(integrationEvent, "EventBus");
+            return await ExecuteWithQueueServiceAsync(queueService => queueService.QueueIntegrationEventAsync(integrationEvent, "EventBus"));
         }
         catch (Exception ex)
         {
@@ -617,8 +620,7 @@ public sealed class EventDispatchService : IBaseEventBus
     {
         try
         {
-            var queueService = _eventQueueService.Value;
-            return await queueService.QueueIntegrationEventAsync(integrationEvent, "ManualExecution");
+            return await ExecuteWithQueueServiceAsync(queueService => queueService.QueueIntegrationEventAsync(integrationEvent, "ManualExecution"));
         }
         catch (Exception ex)
         {
@@ -640,8 +642,7 @@ public sealed class EventDispatchService : IBaseEventBus
     {
         try
         {
-            var queueService = _eventQueueService.Value;
-            return await queueService.QueueUIEventAsync(uiEvent, "EventBus");
+            return await ExecuteWithQueueServiceAsync(queueService => queueService.QueueUIEventAsync(uiEvent, "EventBus"));
         }
         catch (Exception ex)
         {
@@ -661,8 +662,7 @@ public sealed class EventDispatchService : IBaseEventBus
     {
         try
         {
-            var queueService = _eventQueueService.Value;
-            return await queueService.QueueUIEventAsync(uiEvent, "ManualExecution");
+            return await ExecuteWithQueueServiceAsync(queueService => queueService.QueueUIEventAsync(uiEvent, "ManualExecution"));
         }
         catch (Exception ex)
         {

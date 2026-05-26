@@ -126,9 +126,11 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
                 return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
-            // Last resort: try any available strategy
+            // Last resort: try any available PERSISTENT strategy
+            // ContextBased is request-scoped and can create false-success logins across navigations.
             foreach (var strategy in _strategies.Values.Where(s => s.IsAvailable && 
-                s.Method != _config.PreferredMethod && s.Method != _config.FallbackMethod))
+                s.Method != _config.PreferredMethod && s.Method != _config.FallbackMethod &&
+                s.Method != AuthenticationMethod.ContextBased))
             {
                 try
                 {
@@ -202,9 +204,10 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
                 return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
-            // Last resort: try any available strategy
+            // Last resort: try any available PERSISTENT strategy
             foreach (var strategy in _strategies.Values.Where(s => s.IsAvailable && 
-                s.Method != _config.PreferredMethod && s.Method != _config.FallbackMethod))
+                s.Method != _config.PreferredMethod && s.Method != _config.FallbackMethod &&
+                s.Method != AuthenticationMethod.ContextBased))
             {
                 try
                 {

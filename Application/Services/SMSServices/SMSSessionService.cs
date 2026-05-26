@@ -578,11 +578,34 @@ public class SMSSessionService : ISMSSessionService
                     if (contextResult.IsSuccess && contextResult.Value.HasValue)
                     {
                         _logger.LogDebug("🔐 Found user in Context strategy: {UserCode}", contextResult.Value.Value.User.Code);
-                        
-                        // Context strategy is primarily used for temporary 2FA storage
-                        // If we find a user here, they are likely pending 2FA verification
-                        _logger.LogDebug("🔐 Context strategy contains user data - likely pending 2FA");
-                        return true;
+
+                        // Context strategy can contain either temporary 2FA data OR fully-authenticated data.
+                        // Only treat it as pending 2FA when explicit pending markers are present.
+                        if (contextStrategy.GetType().Name == "ContextBasedAuthenticationStrategy")
+                        {
+                            var httpContextField = contextStrategy.GetType().GetField("_httpContextAccessor",
+                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+                            if (httpContextField?.GetValue(contextStrategy) is Microsoft.AspNetCore.Http.IHttpContextAccessor accessor)
+                            {
+                                var items = accessor.HttpContext?.Items;
+                                if (items != null)
+                                {
+                                    var hasPendingMarkers = items.ContainsKey("Pending2FA_UserData") ||
+                                                            items.ContainsKey("Pending2FA_StoredAt") ||
+                                                            items.ContainsKey("Pending2FA_Protocol");
+
+                                    if (hasPendingMarkers)
+                                    {
+                                        _logger.LogDebug("🔐 Found explicit 2FA markers in Context strategy - user is pending 2FA");
+                                        return true;
+                                    }
+                                }
+                            }
+                        }
+
+                        _logger.LogDebug("🔐 Context strategy contains user but no 2FA markers - fully authenticated");
+                        return false;
                     }
                 }
                 catch (Exception ex)

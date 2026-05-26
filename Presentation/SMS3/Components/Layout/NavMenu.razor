@@ -10,9 +10,6 @@
 
 @using SMS_Application.Interfaces
 @using SMS_Application.Services
-@using SMS_Domain.Entities
-@using SMS_Domain.Enums
-@using System.Reflection
 @inject IJSRuntime JSRuntime
 @inject ILogger<NavMenu> _logger
 @inject NavigationManager _navigation
@@ -80,7 +77,6 @@
                     SMS_Listings
                     SMS_Listings_HazardFiles
                     SMS_Listings_HazardLocations
-                    SMS_Listings_Hazards
                     SMS_Listings_Investigations
                     SMS_Listings_Mitigations
                     SMS_Listings_Reports
@@ -297,6 +293,8 @@
 
     protected override async Task OnInitializedAsync()
     {
+        _navigation.LocationChanged += OnLocationChanged;
+
         try
         {
             _logger.LogDebug("NavMenu OnInitializedAsync - Checking authentication state");
@@ -313,7 +311,7 @@
             _logger.LogError(ex, "Error in NavMenu OnInitializedAsync");
         }
     }
-    
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // Only check on first render to avoid constant polling
@@ -321,6 +319,23 @@
         {
             _hasShownAuthenticatedMenu = true;
             _sessionTimerService.StartTimer();
+        }
+    }
+
+    private void OnLocationChanged(object? sender, Microsoft.AspNetCore.Components.Routing.LocationChangedEventArgs e)
+    {
+        _ = InvokeAsync(() =>
+        {
+            StateHasChanged();
+        });
+    }
+    
+    protected override async Task OnParametersSetAsync()
+    {
+        // Update session activity when parameters change - only for fully authenticated users
+        if (_currentUserService.IsFullyAuthenticated)
+        {
+            _sessionTimerService.UpdateActivity();
         }
     }
 
@@ -484,6 +499,7 @@
 
     public void Dispose()
     {
+        _navigation.LocationChanged -= OnLocationChanged;
         _sessionTimerService?.StopTimer();
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();
@@ -493,13 +509,4 @@
     private bool IsOnRestrictedPage => _navigation.Uri.Contains("/pdx") || 
                                       _navigation.Uri.Contains("/login") ||
                                       IsObfuscatedLogin();
-
-    protected override async Task OnParametersSetAsync()
-    {
-        // Update session activity when parameters change - only for fully authenticated users
-        if (_currentUserService.IsFullyAuthenticated)
-        {
-            _sessionTimerService.UpdateActivity();
-        }
-    }
 }

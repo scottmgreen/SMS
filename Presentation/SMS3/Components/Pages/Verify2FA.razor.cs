@@ -418,10 +418,18 @@ public partial class Verify2FA : ComponentBase
             if (!sessionCreated)
             {
                 Logger.LogError(lastException, "? CRITICAL: Failed to create SMS session after {MaxAttempts} attempts", maxAttempts);
-                
-                // ?? FALLBACK: Try to complete login anyway and let the user access the system
-                // The authentication may still work via circuit storage
-                Logger.LogWarning("?? Attempting fallback login completion despite session creation failure...");
+
+                // Do not navigate when session creation failed.
+                // This previously caused users to land on Home without an authenticated NavMenu state.
+                var isAuthenticatedAfterRetries = SessionService.IsAuthenticated();
+                if (!isAuthenticatedAfterRetries)
+                {
+                    ErrorMessage = "2FA verification succeeded, but sign-in session could not be established. Please try signing in again.";
+                    Logger.LogError("? Blocking navigation because no authenticated session exists after 2FA completion");
+                    return;
+                }
+
+                Logger.LogWarning("?? Session creation retries failed, but authentication state is present; continuing to navigation");
             }
 
             // Start session timer regardless of session creation success
@@ -445,8 +453,8 @@ public partial class Verify2FA : ComponentBase
             
             // Navigate with a small delay to ensure state changes are processed
             await Task.Delay(100);
-            Logger.LogInformation("?? Navigating to home page...");
-            Navigation.NavigateTo("/", forceLoad: true);
+            Logger.LogInformation("?? Navigating to home page without force reload to preserve Blazor auth state...");
+            Navigation.NavigateTo("/", forceLoad: false);
         }
         catch (Exception ex)
         {
@@ -455,8 +463,8 @@ public partial class Verify2FA : ComponentBase
             
             // Force navigation anyway - user might still be authenticated
             await Task.Delay(2000);
-            Logger.LogInformation("?? Force navigating to home page after error...");
-            Navigation.NavigateTo("/", forceLoad: true);
+            Logger.LogInformation("?? Navigating to home page after error without force reload...");
+            Navigation.NavigateTo("/", forceLoad: false);
         }
     }
 

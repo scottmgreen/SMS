@@ -9,16 +9,20 @@
 //-----------------------------------------------------------------------
 
 using System.Reflection;
+
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 using SMS_Application.Interfaces;
 using SMS_Application.Interfaces;
-using SMS_Application.Services;
 using SMS_Application.Messaging.Pipelines;
 using SMS_Application.EventHandlers; // NEW: For SPI event handlers
 using SMS_Application.EventHandlers.UIEventHandlers; // NEW: For UI event handlers
+
 using SMS_Domain.Events;
-using Application.Interfaces.CommonInterfaces; // NEW: For EventBus domain events
+
+using Application.Interfaces.CommonInterfaces;
+using Application.Services.EventBusServices; // NEW: For EventBus domain events
 
 namespace SMS_Application.Configuration
 {
@@ -111,8 +115,8 @@ namespace SMS_Application.Configuration
             // NEW: EventBus Services - Phase 1: SINGLETON for consistent handler registration
             services.AddSingleton<IBaseEventBus, EventDispatchService>();
 
-            // NEW: EventBus Queue Service - For manual event execution and testing (SINGLETON for shared in-memory queue)
-            services.AddSingleton<IEventQueueService, EventQueueService>();
+            // NEW: EventBus Queue Service - Scoped because it depends on scoped infrastructure services
+            services.AddScoped<IEventQueueService, EventQueueService>();
 
             // NEW: SPI Event Handlers - Automated SPI calculations from SMS events
             services.AddScoped<HazardEventSPIHandler>();

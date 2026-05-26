@@ -1,0 +1,2901 @@
+{
+  "settings": {
+    "components": {
+      "code": true,
+      "binaries": false
+    },
+    "targetId": "net10.0",
+    "targetDisplayName": ".NETCoreApp,Version=v10.0"
+  },
+  "analysisStartTime": "2026-05-21T19:04:42.7066708Z",
+  "analysisEndTime": "2026-05-21T19:04:55.9196319Z",
+  "privacyModeHelpUrl": "https://go.microsoft.com/fwlink/?linkid=2270980",
+  "stats": {
+    "summary": {
+      "projects": 6,
+      "issues": 6,
+      "incidents": 101,
+      "effort": 101
+    },
+    "charts": {
+      "severity": {
+        "Mandatory": 12,
+        "Optional": 1,
+        "Potential": 88,
+        "Information": 0
+      },
+      "category": {
+        "NuGet": 22,
+        "Project": 6,
+        "Api": 73
+      }
+    }
+  },
+  "projects": [
+    {
+      "path": "Application\\Application.csproj",
+      "startingProject": true,
+      "issues": 6,
+      "storyPoints": 38,
+      "properties": {
+        "appName": "Application",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net8.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 238,
+        "numberOfCodeFiles": 238,
+        "linesTotal": 51287,
+        "linesOfCode": 51287,
+        "totalApiScanned": 41491,
+        "minLinesOfCodeToChange": 31,
+        "maxLinesOfCodeToChange": 31
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "e604357b-9732-4930-b3a7-1d3a7f78eb3a",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Configuration, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8",
+              "protected": "Microsoft.Extensions.Configuration, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8"
+            },
+            "kind": "File",
+            "path": "Application\\Application.csproj",
+            "snippet": "Microsoft.Extensions.Configuration, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Configuration, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8",
+            "label": "Microsoft.Extensions.Configuration 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Configuration",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "dcbf08ca-5240-460f-8be7-d5fbd0e0a57e",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8",
+              "protected": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8"
+            },
+            "kind": "File",
+            "path": "Application\\Application.csproj",
+            "snippet": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8",
+            "label": "Microsoft.Extensions.Logging 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "1a088caf-85d4-4ace-a4d7-a69d31deb604",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging.Console, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Console, and replace with new package Microsoft.Extensions.Logging.Console 10.0.8",
+              "protected": "Microsoft.Extensions.Logging.Console, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Console, and replace with new package Microsoft.Extensions.Logging.Console 10.0.8"
+            },
+            "kind": "File",
+            "path": "Application\\Application.csproj",
+            "snippet": "Microsoft.Extensions.Logging.Console, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Console, and replace with new package Microsoft.Extensions.Logging.Console 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging.Console, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Console, and replace with new package Microsoft.Extensions.Logging.Console 10.0.8",
+            "label": "Microsoft.Extensions.Logging.Console 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging.Console",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "b595127c-1031-4fa2-8d8f-d173e6ffc4a2",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging.Debug, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Debug, and replace with new package Microsoft.Extensions.Logging.Debug 10.0.8",
+              "protected": "Microsoft.Extensions.Logging.Debug, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Debug, and replace with new package Microsoft.Extensions.Logging.Debug 10.0.8"
+            },
+            "kind": "File",
+            "path": "Application\\Application.csproj",
+            "snippet": "Microsoft.Extensions.Logging.Debug, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Debug, and replace with new package Microsoft.Extensions.Logging.Debug 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging.Debug, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Debug, and replace with new package Microsoft.Extensions.Logging.Debug 10.0.8",
+            "label": "Microsoft.Extensions.Logging.Debug 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging.Debug",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "8e20842a-0481-4bb0-9f36-7783e85f7bf8",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging.EventLog, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.EventLog, and replace with new package Microsoft.Extensions.Logging.EventLog 10.0.8",
+              "protected": "Microsoft.Extensions.Logging.EventLog, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.EventLog, and replace with new package Microsoft.Extensions.Logging.EventLog 10.0.8"
+            },
+            "kind": "File",
+            "path": "Application\\Application.csproj",
+            "snippet": "Microsoft.Extensions.Logging.EventLog, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.EventLog, and replace with new package Microsoft.Extensions.Logging.EventLog 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging.EventLog, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.EventLog, and replace with new package Microsoft.Extensions.Logging.EventLog 10.0.8",
+            "label": "Microsoft.Extensions.Logging.EventLog 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging.EventLog",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "e9113b52-8269-422c-a681-13fd6e58714a",
+          "ruleId": "NuGet.0005",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.AspNetCore.Http, 2.2.2\n\nRecommendation:\n\nThis package has been deprecated as part of the .NET Package Deprecation effort. You can learn more about it from https://github.com/dotnet/announcements/issues/217\nRemove Microsoft.AspNetCore.Http, and replace with new package Microsoft.AspNetCore.Http, 2.3.10",
+              "protected": "Microsoft.AspNetCore.Http, 2.2.2\n\nRecommendation:\n\nThis package has been deprecated as part of the .NET Package Deprecation effort. You can learn more about it from https://github.com/dotnet/announcements/issues/217\nRemove Microsoft.AspNetCore.Http, and replace with new package Microsoft.AspNetCore.Http, 2.3.10"
+            },
+            "kind": "File",
+            "path": "Application\\Application.csproj",
+            "snippet": "Microsoft.AspNetCore.Http, 2.2.2\n\nRecommendation:\n\nThis package has been deprecated as part of the .NET Package Deprecation effort. You can learn more about it from https://github.com/dotnet/announcements/issues/217\nRemove Microsoft.AspNetCore.Http, and replace with new package Microsoft.AspNetCore.Http, 2.3.10",
+            "protectedSnippet": "Microsoft.AspNetCore.Http, 2.2.2\n\nRecommendation:\n\nThis package has been deprecated as part of the .NET Package Deprecation effort. You can learn more about it from https://github.com/dotnet/announcements/issues/217\nRemove Microsoft.AspNetCore.Http, and replace with new package Microsoft.AspNetCore.Http, 2.3.10",
+            "label": "Microsoft.AspNetCore.Http 2.2.2",
+            "properties": {
+              "PackageId": "Microsoft.AspNetCore.Http",
+              "PackageVersion": "2.2.2",
+              "PackageNewVersion": null,
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "15971ef7-3e85-4977-9683-7e69961dfbc1",
+          "ruleId": "Project.0002",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net8.0\nRecommended target framework: net10.0",
+              "protected": "Current target framework: net8.0\nRecommended target framework: net10.0"
+            },
+            "kind": "File",
+            "path": "Application\\Application.csproj",
+            "snippet": "Current target framework: net8.0\nRecommended target framework: net10.0",
+            "protectedSnippet": "Current target framework: net8.0\nRecommended target framework: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "net8.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        },
+        {
+          "incidentId": "5166ae39-fa72-4300-b440-275aa35a55f9",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_cacheExpiry = DateTime.UtcNow.Add(TimeSpan.FromSeconds(30));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Strategies\\CircuitBasedAuthenticationStrategy.cs",
+            "snippet": "_cacheExpiry = DateTime.UtcNow.Add(TimeSpan.FromSeconds(30));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 450,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "adeb517f-4d4c-41e0-a321-74b1c32b081f",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: System.Text.Json metadata reader now unescapes metadata property names ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var uiEvent = (IBaseUIEvent?)JsonSerializer.Deserialize(queuedEvent.EventData, eventType, EventJsonOptions);",
+              "protected": "M:System.Text.Json.JsonSerializer.Deserialize(System.String,System.Type,System.Text.Json.JsonSerializerOptions)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\EventQueueService.cs",
+            "snippet": "var uiEvent = (IBaseUIEvent?)JsonSerializer.Deserialize(queuedEvent.EventData, eventType, EventJsonOptions);",
+            "protectedSnippet": "M:System.Text.Json.JsonSerializer.Deserialize(System.String,System.Type,System.Text.Json.JsonSerializerOptions)",
+            "label": "M:System.Text.Json.JsonSerializer.Deserialize(System.String,System.Type,System.Text.Json.JsonSerializerOptions)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/json-metadata-reader.md",
+                "isCustom": false
+              }
+            ],
+            "line": 693,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "0489fb3f-63c3-4753-bf41-1e0281a422f4",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: System.Text.Json metadata reader now unescapes metadata property names ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var integrationEvent = (IBaseIntegrationEvent?)System.Text.Json.JsonSerializer.Deserialize(queuedEvent.EventData, eventType);",
+              "protected": "M:System.Text.Json.JsonSerializer.Deserialize(System.String,System.Type,System.Text.Json.JsonSerializerOptions)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\EventQueueService.cs",
+            "snippet": "var integrationEvent = (IBaseIntegrationEvent?)System.Text.Json.JsonSerializer.Deserialize(queuedEvent.EventData, eventType);",
+            "protectedSnippet": "M:System.Text.Json.JsonSerializer.Deserialize(System.String,System.Type,System.Text.Json.JsonSerializerOptions)",
+            "label": "M:System.Text.Json.JsonSerializer.Deserialize(System.String,System.Type,System.Text.Json.JsonSerializerOptions)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/json-metadata-reader.md",
+                "isCustom": false
+              }
+            ],
+            "line": 658,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "37ceb37b-6ee9-423e-8dba-e9fa8449c498",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: System.Text.Json metadata reader now unescapes metadata property names ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var value = jsonProperty.Deserialize(property.PropertyType, EventJsonOptions);",
+              "protected": "M:System.Text.Json.JsonSerializer.Deserialize(System.Text.Json.JsonElement,System.Type,System.Text.Json.JsonSerializerOptions)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\EventQueueService.cs",
+            "snippet": "var value = jsonProperty.Deserialize(property.PropertyType, EventJsonOptions);",
+            "protectedSnippet": "M:System.Text.Json.JsonSerializer.Deserialize(System.Text.Json.JsonElement,System.Type,System.Text.Json.JsonSerializerOptions)",
+            "label": "M:System.Text.Json.JsonSerializer.Deserialize(System.Text.Json.JsonElement,System.Type,System.Text.Json.JsonSerializerOptions)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/json-metadata-reader.md",
+                "isCustom": false
+              }
+            ],
+            "line": 581,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "bea27337-5478-453e-bdc3-2ab435cf74f5",
+          "ruleId": "Api.0003",
+          "description": "Nullable JsonDocument properties deserialize to JsonValueKind.Null ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var doc = JsonDocument.Parse(eventData);",
+              "protected": "T:System.Text.Json.JsonDocument"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\EventQueueService.cs",
+            "snippet": "using var doc = JsonDocument.Parse(eventData);",
+            "protectedSnippet": "T:System.Text.Json.JsonDocument",
+            "label": "T:System.Text.Json.JsonDocument",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/jsondocument-props.md",
+                "isCustom": false
+              }
+            ],
+            "line": 507,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "2afa4b1b-f144-4757-b206-c7835af085f2",
+          "ruleId": "Api.0003",
+          "description": "Nullable JsonDocument properties deserialize to JsonValueKind.Null ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var doc = JsonDocument.Parse(eventData);",
+              "protected": "T:System.Text.Json.JsonDocument"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\EventQueueService.cs",
+            "snippet": "using var doc = JsonDocument.Parse(eventData);",
+            "protectedSnippet": "T:System.Text.Json.JsonDocument",
+            "label": "T:System.Text.Json.JsonDocument",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/jsondocument-props.md",
+                "isCustom": false
+              }
+            ],
+            "line": 507,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "9be1b949-6d01-42fa-ba71-692f91b1c1f2",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: System.Text.Json metadata reader now unescapes metadata property names ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "return JsonSerializer.Deserialize(eventData, eventType, EventJsonOptions);",
+              "protected": "M:System.Text.Json.JsonSerializer.Deserialize(System.String,System.Type,System.Text.Json.JsonSerializerOptions)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\EventQueueService.cs",
+            "snippet": "return JsonSerializer.Deserialize(eventData, eventType, EventJsonOptions);",
+            "protectedSnippet": "M:System.Text.Json.JsonSerializer.Deserialize(System.String,System.Type,System.Text.Json.JsonSerializerOptions)",
+            "label": "M:System.Text.Json.JsonSerializer.Deserialize(System.String,System.Type,System.Text.Json.JsonSerializerOptions)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/json-metadata-reader.md",
+                "isCustom": false
+              }
+            ],
+            "line": 496,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "8bb93173-5046-4aa1-8596-1347890f4664",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.FromMinutes(1.5))\r\n            {\r\n                _logger.LogWarning(\u0022?? 2FA session approaching timeout - {RemainingMinutes} minutes remaining\u0022, remaining.TotalMinutes);\r\n                OnWarningThreshold?.Invoke();\r\n            }",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\CommonServices\\AuthenticationServices\\TwoFactorSessionTimerService.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.FromMinutes(1.5))\r\n            {\r\n                _logger.LogWarning(\u0022?? 2FA session approaching timeout - {RemainingMinutes} minutes remaining\u0022, remaining.TotalMinutes);\r\n                OnWarningThreshold?.Invoke();\r\n            }",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 159,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "5afb1ce7-a51c-4895-acdb-224df427d45e",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.FromMinutes(1.5))\r\n            {\r\n                _logger.LogWarning(\u0022?? 2FA session approaching timeout - {RemainingMinutes} minutes remaining\u0022, remaining.TotalMinutes);\r\n                OnWarningThreshold?.Invoke();\r\n            }",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\CommonServices\\AuthenticationServices\\TwoFactorSessionTimerService.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.FromMinutes(1.5))\r\n            {\r\n                _logger.LogWarning(\u0022?? 2FA session approaching timeout - {RemainingMinutes} minutes remaining\u0022, remaining.TotalMinutes);\r\n                OnWarningThreshold?.Invoke();\r\n            }",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 159,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "73f184aa-f5a6-4812-a796-3aa5f727bd2c",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(2))\r\n            return \u0022twofa-warning\u0022;\r\n        else\r\n            return \u0022twofa-normal\u0022;",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\CommonServices\\AuthenticationServices\\TwoFactorSessionTimerService.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(2))\r\n            return \u0022twofa-warning\u0022;\r\n        else\r\n            return \u0022twofa-normal\u0022;",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 124,
+            "column": 13
+          }
+        },
+        {
+          "incidentId": "b2bb0c06-566a-4915-bbf5-b5c7b48a1fa8",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(1))\r\n            return \u0022twofa-critical\u0022;\r\n        else if (remaining \u003C= TimeSpan.FromMinutes(2))\r\n            return \u0022twofa-warning\u0022;\r\n        else\r\n            return \u0022twofa-normal\u0022;",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\CommonServices\\AuthenticationServices\\TwoFactorSessionTimerService.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(1))\r\n            return \u0022twofa-critical\u0022;\r\n        else if (remaining \u003C= TimeSpan.FromMinutes(2))\r\n            return \u0022twofa-warning\u0022;\r\n        else\r\n            return \u0022twofa-normal\u0022;",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 122,
+            "column": 13
+          }
+        },
+        {
+          "incidentId": "f47399fd-6f1f-4677-ba20-6e891161f235",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "return remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.Zero;",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\CommonServices\\AuthenticationServices\\TwoFactorSessionTimerService.cs",
+            "snippet": "return remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.Zero;",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 94,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "4dc9ea21-af69-4470-b9c8-15f572934712",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_timer = new Timer(CheckSessionTimeout, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\CommonServices\\AuthenticationServices\\TwoFactorSessionTimerService.cs",
+            "snippet": "_timer = new Timer(CheckSessionTimeout, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 58,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "725604d8-3691-4bd3-aa8b-d782afeabed9",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_timer = new Timer(CheckSessionTimeout, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\CommonServices\\AuthenticationServices\\TwoFactorSessionTimerService.cs",
+            "snippet": "_timer = new Timer(CheckSessionTimeout, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 58,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "35b0eba4-f89c-4ddd-97ee-605f853039e4",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "delay = TimeSpan.FromSeconds(delay.TotalSeconds * 1.5);",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\SmtpEmailService.cs",
+            "snippet": "delay = TimeSpan.FromSeconds(delay.TotalSeconds * 1.5);",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 243,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "2981119a-dd07-4702-8a57-9a966f9d6c0f",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var delay = TimeSpan.FromSeconds(Math.Max(1, _config.RetryDelaySeconds));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\SmtpEmailService.cs",
+            "snippet": "var delay = TimeSpan.FromSeconds(Math.Max(1, _config.RetryDelaySeconds));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 223,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "b0a8336d-3182-4f87-8a7c-aec871c35e58",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "cts.CancelAfter(TimeSpan.FromSeconds(10));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\SmtpEmailService.cs",
+            "snippet": "cts.CancelAfter(TimeSpan.FromSeconds(10));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 113,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "b06b4aa5-930a-4f4f-b0ee-3fd054c6e927",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.FromMinutes(1.5))\r\n            {\r\n                _logger.LogWarning(\u0022Session approaching timeout for user {UserId} - {RemainingMinutes} minutes remaining\u0022, \r\n                    _currentUserService.UserCode, remaining.TotalMinutes);\r\n                OnWarningThreshold?.Invoke();\r\n            }",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\SessionTimerService.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.FromMinutes(1.5))\r\n            {\r\n                _logger.LogWarning(\u0022Session approaching timeout for user {UserId} - {RemainingMinutes} minutes remaining\u0022, \r\n                    _currentUserService.UserCode, remaining.TotalMinutes);\r\n                OnWarningThreshold?.Invoke();\r\n            }",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 159,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "77b55d67-f715-4d63-8920-b5e3ff717e09",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.FromMinutes(1.5))\r\n            {\r\n                _logger.LogWarning(\u0022Session approaching timeout for user {UserId} - {RemainingMinutes} minutes remaining\u0022, \r\n                    _currentUserService.UserCode, remaining.TotalMinutes);\r\n                OnWarningThreshold?.Invoke();\r\n            }",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\SessionTimerService.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.FromMinutes(1.5))\r\n            {\r\n                _logger.LogWarning(\u0022Session approaching timeout for user {UserId} - {RemainingMinutes} minutes remaining\u0022, \r\n                    _currentUserService.UserCode, remaining.TotalMinutes);\r\n                OnWarningThreshold?.Invoke();\r\n            }",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 159,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "093ba440-f810-453d-86c7-c9348962a271",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(2))\r\n            return \u0022session-warning\u0022;\r\n        else\r\n            return \u0022session-normal\u0022;",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\SessionTimerService.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(2))\r\n            return \u0022session-warning\u0022;\r\n        else\r\n            return \u0022session-normal\u0022;",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 140,
+            "column": 13
+          }
+        },
+        {
+          "incidentId": "13b8feda-3b6a-4712-94a9-29ed4fdc2176",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(1))\r\n            return \u0022session-critical\u0022;\r\n        else if (remaining \u003C= TimeSpan.FromMinutes(2))\r\n            return \u0022session-warning\u0022;\r\n        else\r\n            return \u0022session-normal\u0022;",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\SessionTimerService.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(1))\r\n            return \u0022session-critical\u0022;\r\n        else if (remaining \u003C= TimeSpan.FromMinutes(2))\r\n            return \u0022session-warning\u0022;\r\n        else\r\n            return \u0022session-normal\u0022;",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 138,
+            "column": 13
+          }
+        },
+        {
+          "incidentId": "24ec7fc6-7d9f-4b1f-a4aa-85e206ff3ca3",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "return remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.Zero;",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\SessionTimerService.cs",
+            "snippet": "return remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.Zero;",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 110,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "8b2d3210-876c-446c-9392-061273bb3c64",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_timer = new Timer(CheckSessionTimeout, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\SessionTimerService.cs",
+            "snippet": "_timer = new Timer(CheckSessionTimeout, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 62,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "f5a1d5da-b060-46b0-8169-fcc072f6e41e",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_timer = new Timer(CheckSessionTimeout, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\Infrastructure\\SessionTimerService.cs",
+            "snippet": "_timer = new Timer(CheckSessionTimeout, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 62,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "95476378-3b9e-45eb-832b-fb855d259641",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var secret = Uri.EscapeDataString(secretKey);",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\CommonServices\\AuthenticationServices\\TwoFactorAuthService.cs",
+            "snippet": "var secret = Uri.EscapeDataString(secretKey);",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 56,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "ac26eb4d-e2c4-4a6c-be99-80ba699bf6d9",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var issuer = Uri.EscapeDataString(_config.IssuerName);",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\CommonServices\\AuthenticationServices\\TwoFactorAuthService.cs",
+            "snippet": "var issuer = Uri.EscapeDataString(_config.IssuerName);",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 55,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "1e6ad864-911a-49c5-ae73-4161e2aa5719",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var account = Uri.EscapeDataString($\u0022{_config.IssuerName}:{userEmail}\u0022);",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Application\\Services\\CommonServices\\AuthenticationServices\\TwoFactorAuthService.cs",
+            "snippet": "var account = Uri.EscapeDataString($\u0022{_config.IssuerName}:{userEmail}\u0022);",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 54,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "edd2d45b-1f89-48e1-a9f1-7f0f835d89ee",
+          "ruleId": "Api.0001",
+          "description": "Breaking change: DynamicallyAccessedMembers annotation removed from trim-unsafe configuration APIs ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "services.Configure\u003CSmtpEmailConfiguration\u003E(configuration.GetSection(\u0022SmtpEmailConfiguration\u0022));",
+              "protected": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)"
+            },
+            "kind": "File",
+            "path": "Application\\Configuration\\DependencyInjection.cs",
+            "snippet": "services.Configure\u003CSmtpEmailConfiguration\u003E(configuration.GetSection(\u0022SmtpEmailConfiguration\u0022));",
+            "protectedSnippet": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)",
+            "label": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/extensions/10.0/dynamically-accessed-members-configuration.md",
+                "isCustom": false
+              }
+            ],
+            "line": 44,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "f638d240-1e1b-4559-8679-be1f32a1510e",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "TimeSpan.FromMinutes(TimeoutMinutes)",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Configuration\\SessionConfiguration.cs",
+            "snippet": "TimeSpan.FromMinutes(TimeoutMinutes)",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 82,
+            "column": 35
+          }
+        },
+        {
+          "incidentId": "3b023cfb-fede-4fc7-a124-38e990c46ffe",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "TimeSpan.FromMinutes(LockoutDurationMinutes)",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Configuration\\TwoFactorAuthConfiguration.cs",
+            "snippet": "TimeSpan.FromMinutes(LockoutDurationMinutes)",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 122,
+            "column": 39
+          }
+        },
+        {
+          "incidentId": "8c8203f3-dcf8-4bf8-a80f-6f347b181ff1",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Application\\Application.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "TimeSpan.FromMinutes(TwoFASessionTimeoutMinutes)",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Application\\Configuration\\TwoFactorAuthConfiguration.cs",
+            "snippet": "TimeSpan.FromMinutes(TwoFASessionTimeoutMinutes)",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 117,
+            "column": 43
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "Domain\\Domain.csproj",
+      "startingProject": true,
+      "issues": 2,
+      "storyPoints": 3,
+      "properties": {
+        "appName": "Domain",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net8.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 170,
+        "numberOfCodeFiles": 170,
+        "linesTotal": 15909,
+        "linesOfCode": 15909,
+        "totalApiScanned": 10484,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "a0753344-b2e7-4189-8ee8-fc8ae6f7c710",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Domain\\Domain.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Configuration, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8",
+              "protected": "Microsoft.Extensions.Configuration, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8"
+            },
+            "kind": "File",
+            "path": "Domain\\Domain.csproj",
+            "snippet": "Microsoft.Extensions.Configuration, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Configuration, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8",
+            "label": "Microsoft.Extensions.Configuration 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Configuration",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "ff7b071d-0c53-4ffe-bfe6-5aad9a436470",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Domain\\Domain.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8",
+              "protected": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8"
+            },
+            "kind": "File",
+            "path": "Domain\\Domain.csproj",
+            "snippet": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8",
+            "label": "Microsoft.Extensions.Logging 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "f121b55c-81db-447a-8bad-43b2c6b385ba",
+          "ruleId": "Project.0002",
+          "projectPath": "Domain\\Domain.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net8.0\nRecommended target framework: net10.0",
+              "protected": "Current target framework: net8.0\nRecommended target framework: net10.0"
+            },
+            "kind": "File",
+            "path": "Domain\\Domain.csproj",
+            "snippet": "Current target framework: net8.0\nRecommended target framework: net10.0",
+            "protectedSnippet": "Current target framework: net8.0\nRecommended target framework: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "net8.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "Infrastructure\\Infrastructure.csproj",
+      "startingProject": true,
+      "issues": 3,
+      "storyPoints": 9,
+      "properties": {
+        "appName": "Infrastructure",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net8.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 97,
+        "numberOfCodeFiles": 97,
+        "linesTotal": 26389,
+        "linesOfCode": 26389,
+        "totalApiScanned": 37054,
+        "minLinesOfCodeToChange": 1,
+        "maxLinesOfCodeToChange": 1
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "f0bc1aed-25f6-4581-91bd-3f80318baef1",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Configuration, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8",
+              "protected": "Microsoft.Extensions.Configuration, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Microsoft.Extensions.Configuration, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Configuration, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration, and replace with new package Microsoft.Extensions.Configuration 10.0.8",
+            "label": "Microsoft.Extensions.Configuration 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Configuration",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "acdb37b8-0e4c-4f32-b520-d6fe65fbb81e",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Configuration.Json, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration.Json, and replace with new package Microsoft.Extensions.Configuration.Json 10.0.8",
+              "protected": "Microsoft.Extensions.Configuration.Json, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration.Json, and replace with new package Microsoft.Extensions.Configuration.Json 10.0.8"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Microsoft.Extensions.Configuration.Json, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration.Json, and replace with new package Microsoft.Extensions.Configuration.Json 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Configuration.Json, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration.Json, and replace with new package Microsoft.Extensions.Configuration.Json 10.0.8",
+            "label": "Microsoft.Extensions.Configuration.Json 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Configuration.Json",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "6dd9c4c4-b03c-4b74-81b8-343f512bf202",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Http, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Http, and replace with new package Microsoft.Extensions.Http 10.0.8",
+              "protected": "Microsoft.Extensions.Http, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Http, and replace with new package Microsoft.Extensions.Http 10.0.8"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Microsoft.Extensions.Http, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Http, and replace with new package Microsoft.Extensions.Http 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Http, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Http, and replace with new package Microsoft.Extensions.Http 10.0.8",
+            "label": "Microsoft.Extensions.Http 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Http",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "5c5aef5f-617f-4dde-aeee-0c2dbf50778f",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8",
+              "protected": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8",
+            "label": "Microsoft.Extensions.Logging 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "f8c62565-dc0b-43d8-8344-0d68e8d39168",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging.Console, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Console, and replace with new package Microsoft.Extensions.Logging.Console 10.0.8",
+              "protected": "Microsoft.Extensions.Logging.Console, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Console, and replace with new package Microsoft.Extensions.Logging.Console 10.0.8"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Microsoft.Extensions.Logging.Console, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Console, and replace with new package Microsoft.Extensions.Logging.Console 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging.Console, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Console, and replace with new package Microsoft.Extensions.Logging.Console 10.0.8",
+            "label": "Microsoft.Extensions.Logging.Console 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging.Console",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "34b89a02-97b6-4e6c-b47e-0d047225089d",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging.Debug, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Debug, and replace with new package Microsoft.Extensions.Logging.Debug 10.0.8",
+              "protected": "Microsoft.Extensions.Logging.Debug, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Debug, and replace with new package Microsoft.Extensions.Logging.Debug 10.0.8"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Microsoft.Extensions.Logging.Debug, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Debug, and replace with new package Microsoft.Extensions.Logging.Debug 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging.Debug, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Debug, and replace with new package Microsoft.Extensions.Logging.Debug 10.0.8",
+            "label": "Microsoft.Extensions.Logging.Debug 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging.Debug",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "7d7b055a-e62a-488a-be46-4bc93e5db73c",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging.EventLog, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.EventLog, and replace with new package Microsoft.Extensions.Logging.EventLog 10.0.8",
+              "protected": "Microsoft.Extensions.Logging.EventLog, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.EventLog, and replace with new package Microsoft.Extensions.Logging.EventLog 10.0.8"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Microsoft.Extensions.Logging.EventLog, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.EventLog, and replace with new package Microsoft.Extensions.Logging.EventLog 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging.EventLog, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.EventLog, and replace with new package Microsoft.Extensions.Logging.EventLog 10.0.8",
+            "label": "Microsoft.Extensions.Logging.EventLog 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging.EventLog",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "ba304509-7ec6-4335-a5a5-39ea09913196",
+          "ruleId": "Project.0002",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net8.0\nRecommended target framework: net10.0",
+              "protected": "Current target framework: net8.0\nRecommended target framework: net10.0"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Infrastructure.csproj",
+            "snippet": "Current target framework: net8.0\nRecommended target framework: net10.0",
+            "protectedSnippet": "Current target framework: net8.0\nRecommended target framework: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "net8.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        },
+        {
+          "incidentId": "1c4b6981-55b3-42fc-946b-9d16e6dcaf29",
+          "ruleId": "Api.0001",
+          "description": "Breaking change: DynamicallyAccessedMembers annotation removed from trim-unsafe configuration APIs ",
+          "projectPath": "Infrastructure\\Infrastructure.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var configKeys = _configuration.GetSection(\u0022ApiAuthentication:ValidApiKeys\u0022).Get\u003Cstring[]\u003E();",
+              "protected": "M:Microsoft.Extensions.Configuration.ConfigurationBinder.Get\u0060\u00601(Microsoft.Extensions.Configuration.IConfiguration)"
+            },
+            "kind": "File",
+            "path": "Infrastructure\\Security\\ApiKeyAuthenticationFilter.cs",
+            "snippet": "var configKeys = _configuration.GetSection(\u0022ApiAuthentication:ValidApiKeys\u0022).Get\u003Cstring[]\u003E();",
+            "protectedSnippet": "M:Microsoft.Extensions.Configuration.ConfigurationBinder.Get\u0060\u00601(Microsoft.Extensions.Configuration.IConfiguration)",
+            "label": "M:Microsoft.Extensions.Configuration.ConfigurationBinder.Get\u0060\u00601(Microsoft.Extensions.Configuration.IConfiguration)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/extensions/10.0/dynamically-accessed-members-configuration.md",
+                "isCustom": false
+              }
+            ],
+            "line": 131,
+            "column": 8
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "PasswordGenerator\\PasswordGenerator.csproj",
+      "startingProject": true,
+      "issues": 1,
+      "storyPoints": 1,
+      "properties": {
+        "appName": "PasswordGenerator",
+        "projectKind": "DotNetCoreApp",
+        "frameworks": [
+          "net8.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 1,
+        "numberOfCodeFiles": 1,
+        "linesTotal": 127,
+        "linesOfCode": 127,
+        "totalApiScanned": 121,
+        "minLinesOfCodeToChange": 0,
+        "maxLinesOfCodeToChange": 0
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "ace93ee3-a057-4931-97ba-69a543e6a019",
+          "ruleId": "Project.0002",
+          "projectPath": "PasswordGenerator\\PasswordGenerator.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net8.0\nRecommended target framework: net10.0",
+              "protected": "Current target framework: net8.0\nRecommended target framework: net10.0"
+            },
+            "kind": "File",
+            "path": "PasswordGenerator\\PasswordGenerator.csproj",
+            "snippet": "Current target framework: net8.0\nRecommended target framework: net10.0",
+            "protectedSnippet": "Current target framework: net8.0\nRecommended target framework: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "net8.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "Shared\\Shared.csproj",
+      "startingProject": true,
+      "issues": 3,
+      "storyPoints": 9,
+      "properties": {
+        "appName": "Shared",
+        "projectKind": "ClassLibrary",
+        "frameworks": [
+          "net8.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 3,
+        "numberOfCodeFiles": 3,
+        "linesTotal": 187,
+        "linesOfCode": 187,
+        "totalApiScanned": 72,
+        "minLinesOfCodeToChange": 1,
+        "maxLinesOfCodeToChange": 1
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "412c5bc9-ed10-4861-bbc0-8e01b92e95e1",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Shared\\Shared.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Configuration.Abstractions, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration.Abstractions, and replace with new package Microsoft.Extensions.Configuration.Abstractions 10.0.8",
+              "protected": "Microsoft.Extensions.Configuration.Abstractions, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration.Abstractions, and replace with new package Microsoft.Extensions.Configuration.Abstractions 10.0.8"
+            },
+            "kind": "File",
+            "path": "Shared\\Shared.csproj",
+            "snippet": "Microsoft.Extensions.Configuration.Abstractions, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration.Abstractions, and replace with new package Microsoft.Extensions.Configuration.Abstractions 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Configuration.Abstractions, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration.Abstractions, and replace with new package Microsoft.Extensions.Configuration.Abstractions 10.0.8",
+            "label": "Microsoft.Extensions.Configuration.Abstractions 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Configuration.Abstractions",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "a1a15b26-8ed8-4a7e-af06-c0ef661e945f",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Shared\\Shared.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Configuration.Json, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration.Json, and replace with new package Microsoft.Extensions.Configuration.Json 10.0.8",
+              "protected": "Microsoft.Extensions.Configuration.Json, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration.Json, and replace with new package Microsoft.Extensions.Configuration.Json 10.0.8"
+            },
+            "kind": "File",
+            "path": "Shared\\Shared.csproj",
+            "snippet": "Microsoft.Extensions.Configuration.Json, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration.Json, and replace with new package Microsoft.Extensions.Configuration.Json 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Configuration.Json, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Configuration.Json, and replace with new package Microsoft.Extensions.Configuration.Json 10.0.8",
+            "label": "Microsoft.Extensions.Configuration.Json 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Configuration.Json",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "e36ec2c4-fb7b-4ee5-a1d4-6733ca4add07",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Shared\\Shared.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8",
+              "protected": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8"
+            },
+            "kind": "File",
+            "path": "Shared\\Shared.csproj",
+            "snippet": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging, and replace with new package Microsoft.Extensions.Logging 10.0.8",
+            "label": "Microsoft.Extensions.Logging 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "75c754d7-64af-4740-9259-cce2a80bead2",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Shared\\Shared.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging.Abstractions, 8.0.3\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Abstractions, and replace with new package Microsoft.Extensions.Logging.Abstractions 10.0.8",
+              "protected": "Microsoft.Extensions.Logging.Abstractions, 8.0.3\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Abstractions, and replace with new package Microsoft.Extensions.Logging.Abstractions 10.0.8"
+            },
+            "kind": "File",
+            "path": "Shared\\Shared.csproj",
+            "snippet": "Microsoft.Extensions.Logging.Abstractions, 8.0.3\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Abstractions, and replace with new package Microsoft.Extensions.Logging.Abstractions 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging.Abstractions, 8.0.3\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Abstractions, and replace with new package Microsoft.Extensions.Logging.Abstractions 10.0.8",
+            "label": "Microsoft.Extensions.Logging.Abstractions 8.0.3",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging.Abstractions",
+              "PackageVersion": "8.0.3",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "876b9863-d734-4c80-bf82-a463eb6b4ca2",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Shared\\Shared.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging.Console, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Console, and replace with new package Microsoft.Extensions.Logging.Console 10.0.8",
+              "protected": "Microsoft.Extensions.Logging.Console, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Console, and replace with new package Microsoft.Extensions.Logging.Console 10.0.8"
+            },
+            "kind": "File",
+            "path": "Shared\\Shared.csproj",
+            "snippet": "Microsoft.Extensions.Logging.Console, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Console, and replace with new package Microsoft.Extensions.Logging.Console 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging.Console, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Console, and replace with new package Microsoft.Extensions.Logging.Console 10.0.8",
+            "label": "Microsoft.Extensions.Logging.Console 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging.Console",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "e9749a4b-4a41-40d7-9065-2411cabd2e66",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Shared\\Shared.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging.Debug, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Debug, and replace with new package Microsoft.Extensions.Logging.Debug 10.0.8",
+              "protected": "Microsoft.Extensions.Logging.Debug, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Debug, and replace with new package Microsoft.Extensions.Logging.Debug 10.0.8"
+            },
+            "kind": "File",
+            "path": "Shared\\Shared.csproj",
+            "snippet": "Microsoft.Extensions.Logging.Debug, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Debug, and replace with new package Microsoft.Extensions.Logging.Debug 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging.Debug, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.Debug, and replace with new package Microsoft.Extensions.Logging.Debug 10.0.8",
+            "label": "Microsoft.Extensions.Logging.Debug 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging.Debug",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "a71dcfd3-fcc7-44b8-86a4-9d01bf4651ee",
+          "ruleId": "NuGet.0002",
+          "projectPath": "Shared\\Shared.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Microsoft.Extensions.Logging.EventLog, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.EventLog, and replace with new package Microsoft.Extensions.Logging.EventLog 10.0.8",
+              "protected": "Microsoft.Extensions.Logging.EventLog, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.EventLog, and replace with new package Microsoft.Extensions.Logging.EventLog 10.0.8"
+            },
+            "kind": "File",
+            "path": "Shared\\Shared.csproj",
+            "snippet": "Microsoft.Extensions.Logging.EventLog, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.EventLog, and replace with new package Microsoft.Extensions.Logging.EventLog 10.0.8",
+            "protectedSnippet": "Microsoft.Extensions.Logging.EventLog, 8.0.0\n\nRecommendation:\n\nRemove Microsoft.Extensions.Logging.EventLog, and replace with new package Microsoft.Extensions.Logging.EventLog 10.0.8",
+            "label": "Microsoft.Extensions.Logging.EventLog 8.0.0",
+            "properties": {
+              "PackageId": "Microsoft.Extensions.Logging.EventLog",
+              "PackageVersion": "8.0.0",
+              "PackageNewVersion": "10.0.8",
+              "PackageReplacements": null
+            }
+          }
+        },
+        {
+          "incidentId": "9ba6d03d-1d34-45d3-af94-2ad8c96e009b",
+          "ruleId": "Project.0002",
+          "projectPath": "Shared\\Shared.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net8.0\nRecommended target framework: net10.0",
+              "protected": "Current target framework: net8.0\nRecommended target framework: net10.0"
+            },
+            "kind": "File",
+            "path": "Shared\\Shared.csproj",
+            "snippet": "Current target framework: net8.0\nRecommended target framework: net10.0",
+            "protectedSnippet": "Current target framework: net8.0\nRecommended target framework: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "net8.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        },
+        {
+          "incidentId": "3728fb46-890f-4715-8c09-85a1aaf3315b",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: Message no longer duplicated in Console log output ",
+          "projectPath": "Shared\\Shared.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "services.AddLogging(opt =\u003E opt.AddConfiguration(configuration)\r\n                    .AddSimpleConsole(x =\u003E x.SingleLine = true)\r\n#if WINDOWS\r\n                    .AddEventLog()\r\n#endif\r\n                    .AddDebug())\r\n\r\n                ;",
+              "protected": "M:Microsoft.Extensions.Logging.ConsoleLoggerExtensions.AddSimpleConsole(Microsoft.Extensions.Logging.ILoggingBuilder,System.Action{Microsoft.Extensions.Logging.Console.SimpleConsoleFormatterOptions})"
+            },
+            "kind": "File",
+            "path": "Shared\\Configuration\\DependencyInjection.cs",
+            "snippet": "services.AddLogging(opt =\u003E opt.AddConfiguration(configuration)\r\n                    .AddSimpleConsole(x =\u003E x.SingleLine = true)\r\n#if WINDOWS\r\n                    .AddEventLog()\r\n#endif\r\n                    .AddDebug())\r\n\r\n                ;",
+            "protectedSnippet": "M:Microsoft.Extensions.Logging.ConsoleLoggerExtensions.AddSimpleConsole(Microsoft.Extensions.Logging.ILoggingBuilder,System.Action{Microsoft.Extensions.Logging.Console.SimpleConsoleFormatterOptions})",
+            "label": "M:Microsoft.Extensions.Logging.ConsoleLoggerExtensions.AddSimpleConsole(Microsoft.Extensions.Logging.ILoggingBuilder,System.Action{Microsoft.Extensions.Logging.Console.SimpleConsoleFormatterOptions})",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/extensions/10.0/console-json-logging-duplicate-messages.md",
+                "isCustom": false
+              }
+            ],
+            "line": 11,
+            "column": 12
+          }
+        }
+      ],
+      "features": []
+    },
+    {
+      "path": "Presentation\\SMS3\\SMS3.csproj",
+      "startingProject": true,
+      "issues": 4,
+      "storyPoints": 41,
+      "properties": {
+        "appName": "SMS3",
+        "projectKind": "AspNetCore",
+        "frameworks": [
+          "net8.0"
+        ],
+        "languages": [
+          "C#"
+        ],
+        "tools": [
+          "MSBuild"
+        ],
+        "isSdkStyle": true,
+        "numberOfFiles": 236,
+        "numberOfCodeFiles": 98,
+        "linesTotal": 114831,
+        "linesOfCode": 44712,
+        "totalApiScanned": 214678,
+        "minLinesOfCodeToChange": 40,
+        "maxLinesOfCodeToChange": 40
+      },
+      "ruleInstances": [
+        {
+          "incidentId": "4d3dab5e-b866-430f-83d1-b2596e6ffbe3",
+          "ruleId": "Project.0002",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Current target framework: net8.0\nRecommended target framework: net10.0",
+              "protected": "Current target framework: net8.0\nRecommended target framework: net10.0"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\SMS3.csproj",
+            "snippet": "Current target framework: net8.0\nRecommended target framework: net10.0",
+            "protectedSnippet": "Current target framework: net8.0\nRecommended target framework: net10.0",
+            "properties": {
+              "CurrentTargetFramework": "net8.0",
+              "RecommendedTargetFramework": "net10.0"
+            }
+          }
+        },
+        {
+          "incidentId": "0d74750b-1726-4387-a1cc-66d14f7fd309",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var url = $\u0022{path}?{parameterName}={Uri.EscapeDataString(parameterValue)}\u0022;",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Configuration\\SecureNavigationExtensions.cs",
+            "snippet": "var url = $\u0022{path}?{parameterName}={Uri.EscapeDataString(parameterValue)}\u0022;",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 114,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "4cb649fd-360f-4529-ad6f-b73ec01036e0",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var queryString = string.Join(\u0022\u0026\u0022, \r\n                parameters.Select(p =\u003E $\u0022{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}\u0022));",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Configuration\\SecureNavigationExtensions.cs",
+            "snippet": "var queryString = string.Join(\u0022\u0026\u0022, \r\n                parameters.Select(p =\u003E $\u0022{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}\u0022));",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 98,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "f0e2cea0-325f-4fac-b06d-e7d17fd0ac6a",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var queryString = string.Join(\u0022\u0026\u0022, \r\n                parameters.Select(p =\u003E $\u0022{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}\u0022));",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Configuration\\SecureNavigationExtensions.cs",
+            "snippet": "var queryString = string.Join(\u0022\u0026\u0022, \r\n                parameters.Select(p =\u003E $\u0022{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}\u0022));",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 98,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "2783a1a9-4391-4e52-a455-3659152a8a8c",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var queryString = string.Join(\u0022\u0026\u0022, \r\n                parameters.Select(p =\u003E $\u0022{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}\u0022));",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Configuration\\SecureNavigationExtensions.cs",
+            "snippet": "var queryString = string.Join(\u0022\u0026\u0022, \r\n                parameters.Select(p =\u003E $\u0022{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}\u0022));",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 65,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "1efab2b5-1e99-463b-9052-6f28fe843129",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var queryString = string.Join(\u0022\u0026\u0022, \r\n                parameters.Select(p =\u003E $\u0022{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}\u0022));",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Configuration\\SecureNavigationExtensions.cs",
+            "snippet": "var queryString = string.Join(\u0022\u0026\u0022, \r\n                parameters.Select(p =\u003E $\u0022{Uri.EscapeDataString(p.Key)}={Uri.EscapeDataString(p.Value)}\u0022));",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 65,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "0c707a82-fe76-474d-a77a-dd9df138bb14",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var url = $\u0022{path}?{parameterName}={Uri.EscapeDataString(parameterValue)}\u0022;",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Configuration\\SecureNavigationExtensions.cs",
+            "snippet": "var url = $\u0022{path}?{parameterName}={Uri.EscapeDataString(parameterValue)}\u0022;",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 50,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "aea57157-8731-4a05-acaa-5806005d6f66",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "return $\u0022{path}?{parameterName}={Uri.EscapeDataString(parameterValue)}\u0022;",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Configuration\\SecureNavigationExtensions.cs",
+            "snippet": "return $\u0022{path}?{parameterName}={Uri.EscapeDataString(parameterValue)}\u0022;",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 18,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "3fe2906f-4cb8-4b84-a598-c2f3be91dbda",
+          "ruleId": "Api.0001",
+          "description": "Breaking change: DynamicallyAccessedMembers annotation removed from trim-unsafe configuration APIs ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "services.Configure\u003CSMS_Application.Configuration.AuthenticationConfiguration\u003E(\r\n            configuration.GetSection(SMS_Application.Configuration.AuthenticationConfiguration.SectionName));",
+              "protected": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Configuration\\AuthenticationExtensions.cs",
+            "snippet": "services.Configure\u003CSMS_Application.Configuration.AuthenticationConfiguration\u003E(\r\n            configuration.GetSection(SMS_Application.Configuration.AuthenticationConfiguration.SectionName));",
+            "protectedSnippet": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)",
+            "label": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/extensions/10.0/dynamically-accessed-members-configuration.md",
+                "isCustom": false
+              }
+            ],
+            "line": 114,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "e8ff50ae-8e9a-4686-945a-ed922778af4b",
+          "ruleId": "Api.0001",
+          "description": "Breaking change: DynamicallyAccessedMembers annotation removed from trim-unsafe configuration APIs ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "services.Configure\u003CSMS_Application.Configuration.TwoFactorAuthConfiguration\u003E(\r\n            configuration.GetSection(SMS_Application.Configuration.TwoFactorAuthConfiguration.SectionName));",
+              "protected": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Configuration\\AuthenticationExtensions.cs",
+            "snippet": "services.Configure\u003CSMS_Application.Configuration.TwoFactorAuthConfiguration\u003E(\r\n            configuration.GetSection(SMS_Application.Configuration.TwoFactorAuthConfiguration.SectionName));",
+            "protectedSnippet": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)",
+            "label": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/extensions/10.0/dynamically-accessed-members-configuration.md",
+                "isCustom": false
+              }
+            ],
+            "line": 98,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "0e5c0b32-2483-46cf-9264-656230ffb86b",
+          "ruleId": "Api.0001",
+          "description": "Breaking change: DynamicallyAccessedMembers annotation removed from trim-unsafe configuration APIs ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "services.Configure\u003CSMS_Application.Configuration.RequestValidationConfiguration\u003E(\r\n            configuration.GetSection(SMS_Application.Configuration.RequestValidationConfiguration.SectionName));",
+              "protected": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Configuration\\AuthenticationExtensions.cs",
+            "snippet": "services.Configure\u003CSMS_Application.Configuration.RequestValidationConfiguration\u003E(\r\n            configuration.GetSection(SMS_Application.Configuration.RequestValidationConfiguration.SectionName));",
+            "protectedSnippet": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)",
+            "label": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/extensions/10.0/dynamically-accessed-members-configuration.md",
+                "isCustom": false
+              }
+            ],
+            "line": 82,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "e6bc7d18-f653-4b5b-9ac6-f58b54f64cef",
+          "ruleId": "Api.0001",
+          "description": "Breaking change: DynamicallyAccessedMembers annotation removed from trim-unsafe configuration APIs ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "services.Configure\u003CSMS_Application.Configuration.SessionConfiguration\u003E(\r\n            configuration.GetSection(SMS_Application.Configuration.SessionConfiguration.SectionName));",
+              "protected": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Configuration\\AuthenticationExtensions.cs",
+            "snippet": "services.Configure\u003CSMS_Application.Configuration.SessionConfiguration\u003E(\r\n            configuration.GetSection(SMS_Application.Configuration.SessionConfiguration.SectionName));",
+            "protectedSnippet": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)",
+            "label": "M:Microsoft.Extensions.DependencyInjection.OptionsConfigurationServiceCollectionExtensions.Configure\u0060\u00601(Microsoft.Extensions.DependencyInjection.IServiceCollection,Microsoft.Extensions.Configuration.IConfiguration)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/extensions/10.0/dynamically-accessed-members-configuration.md",
+                "isCustom": false
+              }
+            ],
+            "line": 66,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "463e980a-f566-4d0f-90d2-1eb275cd6f15",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "sessionDuration = TimeSpan.FromMinutes(30);",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Layout/MainLayout_razor.g.cs",
+            "snippet": "sessionDuration = TimeSpan.FromMinutes(30);",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 263,
+            "column": 20
+          }
+        },
+        {
+          "incidentId": "9b6f51dd-5a44-4765-a737-c60200053be4",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "return remaining \u003C= TimeSpan.FromMinutes(5) \u0026\u0026 remaining \u003E TimeSpan.Zero;",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/SessionTimer_razor.g.cs",
+            "snippet": "return remaining \u003C= TimeSpan.FromMinutes(5) \u0026\u0026 remaining \u003E TimeSpan.Zero;",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 399,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "31eaf5f1-20bb-4537-a35d-e4befef3dbaa",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(5))\r\n            return \u0022Session will expire soon - save your work\u0022;\r\n        else\r\n            return $\u0022Session expires in {SessionTimerSvc.FormatRemainingTime()}\u0022;",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/SessionTimer_razor.g.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(5))\r\n            return \u0022Session will expire soon - save your work\u0022;\r\n        else\r\n            return $\u0022Session expires in {SessionTimerSvc.FormatRemainingTime()}\u0022;",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 390,
+            "column": 13
+          }
+        },
+        {
+          "incidentId": "810e3369-f5db-4aea-ba8f-b0ba42b731e2",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(2))\r\n            return \u0022Session expires very soon! Save your work immediately.\u0022;\r\n        else if (remaining \u003C= TimeSpan.FromMinutes(5))\r\n            return \u0022Session will expire soon - save your work\u0022;\r\n        else\r\n            return $\u0022Session expires in {SessionTimerSvc.FormatRemainingTime()}\u0022;",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/SessionTimer_razor.g.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(2))\r\n            return \u0022Session expires very soon! Save your work immediately.\u0022;\r\n        else if (remaining \u003C= TimeSpan.FromMinutes(5))\r\n            return \u0022Session will expire soon - save your work\u0022;\r\n        else\r\n            return $\u0022Session expires in {SessionTimerSvc.FormatRemainingTime()}\u0022;",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 388,
+            "column": 13
+          }
+        },
+        {
+          "incidentId": "be3d5cf4-d5be-4345-8948-d845775d1496",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(5))\r\n            return \u0022timer-icon-warning\u0022;\r\n        else\r\n            return \u0022timer-icon-normal\u0022;",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/SessionTimer_razor.g.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(5))\r\n            return \u0022timer-icon-warning\u0022;\r\n        else\r\n            return \u0022timer-icon-normal\u0022;",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 376,
+            "column": 13
+          }
+        },
+        {
+          "incidentId": "ee7a8da7-6660-4ea1-ad90-45ded288caf3",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(2))\r\n            return \u0022timer-icon-critical\u0022;\r\n        else if (remaining \u003C= TimeSpan.FromMinutes(5))\r\n            return \u0022timer-icon-warning\u0022;\r\n        else\r\n            return \u0022timer-icon-normal\u0022;",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/SessionTimer_razor.g.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(2))\r\n            return \u0022timer-icon-critical\u0022;\r\n        else if (remaining \u003C= TimeSpan.FromMinutes(5))\r\n            return \u0022timer-icon-warning\u0022;\r\n        else\r\n            return \u0022timer-icon-normal\u0022;",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 374,
+            "column": 13
+          }
+        },
+        {
+          "incidentId": "90b6e756-7d29-4e2e-a2af-962b42e6ebdc",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (now - _lastWarningCheck \u003E TimeSpan.FromSeconds(30))\r\n            {\r\n                _lastWarningCheck = now;\r\n                if (OnSessionWarning.HasDelegate)\r\n                {\r\n                    _ = Task.Run(async () =\u003E await OnSessionWarning.InvokeAsync());\r\n                }\r\n            }",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/SessionTimer_razor.g.cs",
+            "snippet": "if (now - _lastWarningCheck \u003E TimeSpan.FromSeconds(30))\r\n            {\r\n                _lastWarningCheck = now;\r\n                if (OnSessionWarning.HasDelegate)\r\n                {\r\n                    _ = Task.Run(async () =\u003E await OnSessionWarning.InvokeAsync());\r\n                }\r\n            }",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 309,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "59e93d44-577e-4ba9-a72c-de5ec3d7c67b",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(5) \u0026\u0026 remaining \u003E TimeSpan.Zero)\r\n        {\r\n            if (now - _lastWarningCheck \u003E TimeSpan.FromSeconds(30))\r\n            {\r\n                _lastWarningCheck = now;\r\n                if (OnSessionWarning.HasDelegate)\r\n                {\r\n                    _ = Task.Run(async () =\u003E await OnSessionWarning.InvokeAsync());\r\n                }\r\n            }\r\n        }",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/SessionTimer_razor.g.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(5) \u0026\u0026 remaining \u003E TimeSpan.Zero)\r\n        {\r\n            if (now - _lastWarningCheck \u003E TimeSpan.FromSeconds(30))\r\n            {\r\n                _lastWarningCheck = now;\r\n                if (OnSessionWarning.HasDelegate)\r\n                {\r\n                    _ = Task.Run(async () =\u003E await OnSessionWarning.InvokeAsync());\r\n                }\r\n            }\r\n        }",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 307,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "2464fc81-d49d-43a4-956c-8da8443c6ec2",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_updateTimer = new System.Threading.Timer(async _ =\u003E \r\n            {\r\n                await InvokeAsync(() =\u003E\r\n                {\r\n                    CheckForWarnings();\r\n                    StateHasChanged();\r\n                });\r\n            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/SessionTimer_razor.g.cs",
+            "snippet": "_updateTimer = new System.Threading.Timer(async _ =\u003E \r\n            {\r\n                await InvokeAsync(() =\u003E\r\n                {\r\n                    CheckForWarnings();\r\n                    StateHasChanged();\r\n                });\r\n            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 288,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "d4270a45-bcad-4c57-b4b5-5ec190970542",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_updateTimer = new System.Threading.Timer(async _ =\u003E \r\n            {\r\n                await InvokeAsync(() =\u003E\r\n                {\r\n                    CheckForWarnings();\r\n                    StateHasChanged();\r\n                });\r\n            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/SessionTimer_razor.g.cs",
+            "snippet": "_updateTimer = new System.Threading.Timer(async _ =\u003E \r\n            {\r\n                await InvokeAsync(() =\u003E\r\n                {\r\n                    CheckForWarnings();\r\n                    StateHasChanged();\r\n                });\r\n            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 288,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "f78796f8-edb0-4505-8081-49068762064e",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_countdownTimer = new Timer(async _ =\u003E \r\n            {\r\n                await InvokeAsync(() =\u003E\r\n                {\r\n                    var remaining = TwoFactorTimer.GetRemainingTime();\r\n                    \r\n                    // Auto-redirect if time runs out\r\n                    if (remaining \u003C= TimeSpan.Zero)\r\n                    {\r\n                        _ = Task.Run(async () =\u003E await ForceRedirectToLogin());\r\n                        return;\r\n                    }\r\n                    \r\n                    StateHasChanged();\r\n                });\r\n            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/TwoFactorTimeoutModal_razor.g.cs",
+            "snippet": "_countdownTimer = new Timer(async _ =\u003E \r\n            {\r\n                await InvokeAsync(() =\u003E\r\n                {\r\n                    var remaining = TwoFactorTimer.GetRemainingTime();\r\n                    \r\n                    // Auto-redirect if time runs out\r\n                    if (remaining \u003C= TimeSpan.Zero)\r\n                    {\r\n                        _ = Task.Run(async () =\u003E await ForceRedirectToLogin());\r\n                        return;\r\n                    }\r\n                    \r\n                    StateHasChanged();\r\n                });\r\n            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 355,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "dabf3ae0-7170-4ee7-9117-0d11020fe1c2",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_countdownTimer = new Timer(async _ =\u003E \r\n            {\r\n                await InvokeAsync(() =\u003E\r\n                {\r\n                    var remaining = TwoFactorTimer.GetRemainingTime();\r\n                    \r\n                    // Auto-redirect if time runs out\r\n                    if (remaining \u003C= TimeSpan.Zero)\r\n                    {\r\n                        _ = Task.Run(async () =\u003E await ForceRedirectToLogin());\r\n                        return;\r\n                    }\r\n                    \r\n                    StateHasChanged();\r\n                });\r\n            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/TwoFactorTimeoutModal_razor.g.cs",
+            "snippet": "_countdownTimer = new Timer(async _ =\u003E \r\n            {\r\n                await InvokeAsync(() =\u003E\r\n                {\r\n                    var remaining = TwoFactorTimer.GetRemainingTime();\r\n                    \r\n                    // Auto-redirect if time runs out\r\n                    if (remaining \u003C= TimeSpan.Zero)\r\n                    {\r\n                        _ = Task.Run(async () =\u003E await ForceRedirectToLogin());\r\n                        return;\r\n                    }\r\n                    \r\n                    StateHasChanged();\r\n                });\r\n            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 355,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "4dee5923-2ed7-492c-8542-f5319f6c2175",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.Zero)\r\n        {\r\n            _warningTriggeredAt = remaining;\r\n            ShowModal();\r\n        }",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/TwoFactorTimeoutModal_razor.g.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.Zero)\r\n        {\r\n            _warningTriggeredAt = remaining;\r\n            ShowModal();\r\n        }",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 324,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "8b21f089-734b-4cf5-a3cf-c52ee7bb989a",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_countdownTimer = new Timer(async _ =\u003E \r\n            {\r\n                await InvokeAsync(() =\u003E\r\n                {\r\n                    var remaining = SessionTimerService.GetRemainingTime();\r\n                    \r\n                    // Auto-logout if time runs out\r\n                    if (remaining \u003C= TimeSpan.Zero)\r\n                    {\r\n                        _ = Task.Run(async () =\u003E await ForceLogout());\r\n                        return;\r\n                    }\r\n                    \r\n                    StateHasChanged();\r\n                });\r\n            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/SessionTimeoutModal_razor.g.cs",
+            "snippet": "_countdownTimer = new Timer(async _ =\u003E \r\n            {\r\n                await InvokeAsync(() =\u003E\r\n                {\r\n                    var remaining = SessionTimerService.GetRemainingTime();\r\n                    \r\n                    // Auto-logout if time runs out\r\n                    if (remaining \u003C= TimeSpan.Zero)\r\n                    {\r\n                        _ = Task.Run(async () =\u003E await ForceLogout());\r\n                        return;\r\n                    }\r\n                    \r\n                    StateHasChanged();\r\n                });\r\n            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 296,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "64565a5f-e2e4-46d0-8689-a46a8aaddecc",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_countdownTimer = new Timer(async _ =\u003E \r\n            {\r\n                await InvokeAsync(() =\u003E\r\n                {\r\n                    var remaining = SessionTimerService.GetRemainingTime();\r\n                    \r\n                    // Auto-logout if time runs out\r\n                    if (remaining \u003C= TimeSpan.Zero)\r\n                    {\r\n                        _ = Task.Run(async () =\u003E await ForceLogout());\r\n                        return;\r\n                    }\r\n                    \r\n                    StateHasChanged();\r\n                });\r\n            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/SessionTimeoutModal_razor.g.cs",
+            "snippet": "_countdownTimer = new Timer(async _ =\u003E \r\n            {\r\n                await InvokeAsync(() =\u003E\r\n                {\r\n                    var remaining = SessionTimerService.GetRemainingTime();\r\n                    \r\n                    // Auto-logout if time runs out\r\n                    if (remaining \u003C= TimeSpan.Zero)\r\n                    {\r\n                        _ = Task.Run(async () =\u003E await ForceLogout());\r\n                        return;\r\n                    }\r\n                    \r\n                    StateHasChanged();\r\n                });\r\n            }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 296,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "62ce5f6e-c790-43d1-84b5-02a4350e506c",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "if (remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.Zero)\r\n        {\r\n            _warningTriggeredAt = remaining;\r\n            ShowModal();\r\n        }",
+              "protected": "M:System.TimeSpan.FromMinutes(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Shared/Components/SessionTimeoutModal_razor.g.cs",
+            "snippet": "if (remaining \u003C= TimeSpan.FromMinutes(2) \u0026\u0026 remaining \u003E TimeSpan.Zero)\r\n        {\r\n            _warningTriggeredAt = remaining;\r\n            ShowModal();\r\n        }",
+            "protectedSnippet": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "label": "M:System.TimeSpan.FromMinutes(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 258,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "f2c77c47-bcf8-4a1e-a4b8-61cbd61473c0",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var uri = new Uri(_navigation.Uri);",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Components\\Pages\\SMSRiskManagement\\HazardReporting.razor.cs",
+            "snippet": "var uri = new Uri(_navigation.Uri);",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 304,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "bbaeef04-b3d8-4ed2-bba5-3c16d1a11ab4",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var uri = new Uri(_navigation.Uri);",
+              "protected": "M:System.Uri.#ctor(System.String)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Components\\Pages\\SMSRiskManagement\\HazardReporting.razor.cs",
+            "snippet": "var uri = new Uri(_navigation.Uri);",
+            "protectedSnippet": "M:System.Uri.#ctor(System.String)",
+            "label": "M:System.Uri.#ctor(System.String)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 304,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "b4cd254e-847d-432d-a816-d204255429de",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var url = $\u0022/SMSAssurance/SPIDashboard?spiCode={Uri.EscapeDataString(spi.Code)}\u0022;",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Components\\Pages\\SMSAssurance\\SPIConfiguration.razor.cs",
+            "snippet": "var url = $\u0022/SMSAssurance/SPIDashboard?spiCode={Uri.EscapeDataString(spi.Code)}\u0022;",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 403,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "376db159-c708-4879-8a1d-acab517018d6",
+          "ruleId": "Api.0003",
+          "description": "Nullable JsonDocument properties deserialize to JsonValueKind.Null ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var doc = System.Text.Json.JsonDocument.Parse(queuedEvent.EventData);",
+              "protected": "T:System.Text.Json.JsonDocument"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Components\\Pages\\SMSSystem\\EventBus\\EventBusQueueManager.razor.cs",
+            "snippet": "using var doc = System.Text.Json.JsonDocument.Parse(queuedEvent.EventData);",
+            "protectedSnippet": "T:System.Text.Json.JsonDocument",
+            "label": "T:System.Text.Json.JsonDocument",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/jsondocument-props.md",
+                "isCustom": false
+              }
+            ],
+            "line": 51,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "d4c2f22f-625e-4525-b6eb-b1451dd7b827",
+          "ruleId": "Api.0003",
+          "description": "Nullable JsonDocument properties deserialize to JsonValueKind.Null ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "using var doc = System.Text.Json.JsonDocument.Parse(queuedEvent.EventData);",
+              "protected": "T:System.Text.Json.JsonDocument"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Components\\Pages\\SMSSystem\\EventBus\\EventBusQueueManager.razor.cs",
+            "snippet": "using var doc = System.Text.Json.JsonDocument.Parse(queuedEvent.EventData);",
+            "protectedSnippet": "T:System.Text.Json.JsonDocument",
+            "label": "T:System.Text.Json.JsonDocument",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/serialization/9.0/jsondocument-props.md",
+                "isCustom": false
+              }
+            ],
+            "line": 51,
+            "column": 16
+          }
+        },
+        {
+          "incidentId": "8ab12300-e0ef-4b03-8e1a-eac8006e5e7a",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var path = uri.AbsolutePath;",
+              "protected": "P:System.Uri.AbsolutePath"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Pages/SecurePage_razor.g.cs",
+            "snippet": "var path = uri.AbsolutePath;",
+            "protectedSnippet": "P:System.Uri.AbsolutePath",
+            "label": "P:System.Uri.AbsolutePath",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 258,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "8c7dced2-78fc-48b0-a088-d22f0c143ad8",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var uri = new Uri($\u0022https://localhost{decryptedUrl}\u0022);",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Pages/SecurePage_razor.g.cs",
+            "snippet": "var uri = new Uri($\u0022https://localhost{decryptedUrl}\u0022);",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 257,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "c5fe911a-4b2c-448b-a476-608c0be391e1",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "var uri = new Uri($\u0022https://localhost{decryptedUrl}\u0022);",
+              "protected": "M:System.Uri.#ctor(System.String)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Pages/SecurePage_razor.g.cs",
+            "snippet": "var uri = new Uri($\u0022https://localhost{decryptedUrl}\u0022);",
+            "protectedSnippet": "M:System.Uri.#ctor(System.String)",
+            "label": "M:System.Uri.#ctor(System.String)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 257,
+            "column": 12
+          }
+        },
+        {
+          "incidentId": "81fe573d-0d04-4ffe-be97-43263faf90e2",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Navigation.ToAbsoluteUri(\u0022/\u0022)",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Pages/SecurityTest_razor.g.cs",
+            "snippet": "Navigation.ToAbsoluteUri(\u0022/\u0022)",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 311,
+            "column": 27
+          }
+        },
+        {
+          "incidentId": "ec86212d-acf4-486a-921d-a924f4240a8c",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: URI length limits removed ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "Navigation.ToAbsoluteUri(\u0022/\u0022)",
+              "protected": "T:System.Uri"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\obj\\Debug\\net8.0\\Microsoft.CodeAnalysis.Razor.Compiler\\Microsoft.NET.Sdk.Razor.SourceGenerators.RazorSourceGenerator\\Components/Pages/SecurityTest_razor.g.cs",
+            "snippet": "Navigation.ToAbsoluteUri(\u0022/\u0022)",
+            "protectedSnippet": "T:System.Uri",
+            "label": "T:System.Uri",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/networking/10.0/uri-length-limits-removed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 310,
+            "column": 31
+          }
+        },
+        {
+          "incidentId": "16921f9c-9f72-4713-b9b6-8efd40ebe6a2",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_timeRemainingTimer = new Timer(async _ =\u003E\r\n        {\r\n            var newTimeRemaining = TwoFactorAuthService.GetTimeRemainingInWindow();\r\n            \r\n            // Update every second as requested - keep the smooth countdown\r\n            TimeRemainingInWindow = newTimeRemaining;\r\n            await InvokeAsync(StateHasChanged);\r\n        }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Components\\Pages\\Verify2FA.razor.cs",
+            "snippet": "_timeRemainingTimer = new Timer(async _ =\u003E\r\n        {\r\n            var newTimeRemaining = TwoFactorAuthService.GetTimeRemainingInWindow();\r\n            \r\n            // Update every second as requested - keep the smooth countdown\r\n            TimeRemainingInWindow = newTimeRemaining;\r\n            await InvokeAsync(StateHasChanged);\r\n        }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 613,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "ebaa99ad-e1f7-45f8-b545-9ac005c35829",
+          "ruleId": "Api.0002",
+          "description": "Breaking change: New TimeSpan.From*() overloads that take integers ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "_timeRemainingTimer = new Timer(async _ =\u003E\r\n        {\r\n            var newTimeRemaining = TwoFactorAuthService.GetTimeRemainingInWindow();\r\n            \r\n            // Update every second as requested - keep the smooth countdown\r\n            TimeRemainingInWindow = newTimeRemaining;\r\n            await InvokeAsync(StateHasChanged);\r\n        }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+              "protected": "M:System.TimeSpan.FromSeconds(System.Double)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Components\\Pages\\Verify2FA.razor.cs",
+            "snippet": "_timeRemainingTimer = new Timer(async _ =\u003E\r\n        {\r\n            var newTimeRemaining = TwoFactorAuthService.GetTimeRemainingInWindow();\r\n            \r\n            // Update every second as requested - keep the smooth countdown\r\n            TimeRemainingInWindow = newTimeRemaining;\r\n            await InvokeAsync(StateHasChanged);\r\n        }, null, TimeSpan.FromSeconds(1), TimeSpan.FromSeconds(1));",
+            "protectedSnippet": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "label": "M:System.TimeSpan.FromSeconds(System.Double)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/core-libraries/9.0/timespan-from-overloads.md",
+                "isCustom": false
+              }
+            ],
+            "line": 613,
+            "column": 8
+          }
+        },
+        {
+          "incidentId": "f371e9a6-ae0c-4cfb-88af-e41a58e61f83",
+          "ruleId": "Api.0003",
+          "description": "Breaking change: Exception diagnostics are suppressed when IExceptionHandler.TryHandleAsync returns true ",
+          "projectPath": "Presentation\\SMS3\\SMS3.csproj",
+          "state": "Active",
+          "location": {
+            "snippetModel": {
+              "unrestricted": "app.UseExceptionHandler(\u0022/Error\u0022);",
+              "protected": "M:Microsoft.AspNetCore.Builder.ExceptionHandlerExtensions.UseExceptionHandler(Microsoft.AspNetCore.Builder.IApplicationBuilder,System.String)"
+            },
+            "kind": "File",
+            "path": "Presentation\\SMS3\\Program.cs",
+            "snippet": "app.UseExceptionHandler(\u0022/Error\u0022);",
+            "protectedSnippet": "M:Microsoft.AspNetCore.Builder.ExceptionHandlerExtensions.UseExceptionHandler(Microsoft.AspNetCore.Builder.IApplicationBuilder,System.String)",
+            "label": "M:Microsoft.AspNetCore.Builder.ExceptionHandlerExtensions.UseExceptionHandler(Microsoft.AspNetCore.Builder.IApplicationBuilder,System.String)",
+            "links": [
+              {
+                "title": "API documentation",
+                "url": "https://github.com/dotnet/docs/blob/main/docs/core/compatibility/aspnet-core/10/exception-handler-diagnostics-suppressed.md",
+                "isCustom": false
+              }
+            ],
+            "line": 114,
+            "column": 12
+          }
+        }
+      ],
+      "features": []
+    }
+  ],
+  "rules": {
+    "NuGet.0002": {
+      "id": "NuGet.0002",
+      "isFeature": false,
+      "description": "NuGet package upgrade is recommended for selected target framework.\n\nStandard .NET packages are recommended to have versions matching version of .NET that project targets.\n\nSome other packages also are known to work better for selected target frameworks.",
+      "label": "NuGet package upgrade is recommended",
+      "severity": "Potential",
+      "effort": 1,
+      "links": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262530",
+          "isCustom": false
+        }
+      ]
+    },
+    "Project.0002": {
+      "id": "Project.0002",
+      "isFeature": false,
+      "description": "Project\u0027s target framework(s) needs to be changed to the new target framework that you selected for this upgrade.\n\nDuring upgrade target framework will be adjusted to corresponding platform when applicable. In some cases project would result in multiple target frameworks after the upgrade if it was using features that now have their own platforms in modern .NET frameworks (windows, iOS, Android etc).",
+      "label": "Project\u0027s target framework(s) needs to be changed",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Overview of porting from .NET Framework to .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265227",
+          "isCustom": false
+        },
+        {
+          "title": ".NET project SDKs",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2265226",
+          "isCustom": false
+        }
+      ]
+    },
+    "Api.0003": {
+      "id": "Api.0003",
+      "isFeature": false,
+      "description": "API has a behavioral change in selected .NET version: code and binaries may behave differently at runtime without needing recompilation, but the new behavior might be undesirable and require updates.",
+      "label": "Behavioral change in selected .NET version",
+      "severity": "Potential",
+      "effort": 1
+    },
+    "Api.0001": {
+      "id": "Api.0001",
+      "isFeature": false,
+      "description": "API is binary incompatible for selected .NET version: affects existing binaries, often requiring recompilation, because the API has changed in a way that prevents older binaries from loading or executing.",
+      "label": "Binary incompatible for selected .NET version",
+      "severity": "Mandatory",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Breaking changes in .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262679",
+          "isCustom": false
+        }
+      ]
+    },
+    "NuGet.0005": {
+      "id": "NuGet.0005",
+      "isFeature": false,
+      "description": "NuGet package is deprecated.\n\nGo to its documentation and if there is a guidance for replacement of functionality provided by this package.",
+      "label": "NuGet package is deprecated",
+      "severity": "Optional",
+      "effort": 1,
+      "links": [
+        {
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262531",
+          "isCustom": false
+        }
+      ]
+    },
+    "Api.0002": {
+      "id": "Api.0002",
+      "isFeature": false,
+      "description": "API is source incompatible for selected .NET version: requires code changes to compile successfully when targeting a new version, such as removing obsolete APIs or changing method signatures.",
+      "label": "Source incompatible for selected .NET version",
+      "severity": "Potential",
+      "effort": 1,
+      "links": [
+        {
+          "title": "Breaking changes in .NET",
+          "url": "https://go.microsoft.com/fwlink/?linkid=2262679",
+          "isCustom": false
+        }
+      ]
+    }
+  }
+}

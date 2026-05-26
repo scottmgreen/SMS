@@ -186,14 +186,11 @@ public partial class Login : ComponentBase
     {
         // 🔐 CREATE SESSION-BASED AUTHENTICATION - Replaces static authentication
         await SessionService.CreateSMSSessionAsync(user, userType);
-        Logger.LogInformation("✅ Session-based authentication created for user: {Username}", user.UserName.Value);
         
         // 🔐 START SESSION TIMER - Begin countdown for automatic logout
         SessionTimerService.StartTimer();
-        Logger.LogInformation("✅ Session timer started for user: {Username}", user.UserName.Value);
         
         // Navigate to home page
-        Logger.LogInformation("Navigating to home page after successful authentication");
         Navigation.NavigateTo("/", forceLoad: false);
     }
 

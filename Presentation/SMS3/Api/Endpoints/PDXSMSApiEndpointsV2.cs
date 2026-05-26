@@ -10,7 +10,7 @@ using Asp.Versioning.Builder;
 
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.FeatureManagement;
-using Microsoft.OpenApi.Models;
+using Microsoft.OpenApi;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;

@@ -274,8 +274,7 @@ public class UserInstantiationService : IUserInstantiationService
                     }
                     userData["SMS_UserPermissions"] = string.Join("|", permissionPairs);
                     
-                    _logger.LogInformation("?? Serialized {PermissionCount} permissions for user {UserCode}", 
-                        user.UserRole.Permissions.Count, user.Code);
+                    _logger.LogInformation("?? Serialized {PermissionCount} permissions for user {UserCode}", user.UserRole.Permissions.Count, user.Code);
                 }
             }
 
@@ -296,8 +295,7 @@ public class UserInstantiationService : IUserInstantiationService
                     break;
             }
 
-            _logger.LogInformation("? Complete user serialization successful for {UserCode} ({UserType}) - {DataCount} fields", 
-                user.Code, userType.Value, userData.Count);
+            _logger.LogInformation("? Complete user serialization successful for {UserCode} ({UserType}) - {DataCount} fields", user.Code, userType.Value, userData.Count);
 
             return userData;
         }
@@ -367,11 +365,21 @@ public class UserInstantiationService : IUserInstantiationService
             }
             else
             {
-                // Only fetch fresh data if we truly don't have complete data
-                _logger.LogInformation("?? Incomplete user data found (Score: {Score}), returning failure to avoid infinite loop", 
-                    completenessScore);
-                    
-                // ?? CRITICAL: Don't call GetCompleteUserAsync during deserialization - it creates loops!
+                // In modern runtime flows we can still have valid authenticated cached payloads
+                // with lower completeness scores (for example, missing non-critical profile fields).
+                // Avoid turning those into hard auth failures.
+                _logger.LogWarning("?? Incomplete cached user data found (Score: {Score}) for {UserCode}; attempting minimal reconstruction", 
+                    completenessScore, userCode);
+
+                var reconstructedUserType = SMSUserType.FromValue(userTypeValue);
+                var minimalUser = CreateMinimalUserFromCachedData(userData, reconstructedUserType);
+                if (minimalUser != null)
+                {
+                    _logger.LogInformation("? Minimal reconstruction succeeded for incomplete cached user {UserCode}", userCode);
+                    return Result<(BaseUser, SMSUserType)>.Success((minimalUser, reconstructedUserType));
+                }
+
+                _logger.LogError("? Minimal reconstruction failed for incomplete cached user {UserCode}", userCode);
                 return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(
                     DomainErrors.GeneralError.UnProcessableRequest);
             }
