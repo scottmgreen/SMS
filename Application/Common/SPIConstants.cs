@@ -29,7 +29,7 @@ namespace SMS_Application.Common;
 /// Ensures consistency in data source definitions and validation across all SPI operations.
 /// 
 /// Classes:
-/// - DataSources: Standard data source options for SPIs with helper methods
+/// - SPIDataSources: Standard data source options for SPIs with helper methods
 /// - ValidationMessages: Common validation error messages for SPI operations
 /// </summary>
 public static class SPIConstants
@@ -38,7 +38,7 @@ public static class SPIConstants
     /// Dynamic data source discovery for SPIs and data points
     /// REFACTORED: Uses reflection to discover domain events that implement IEventSource
     /// </summary>
-    public static class DataSources
+    public static class SPIDataSources
     {
         // ===================================================================
         // DYNAMIC DATA SOURCES: Discovered from Domain Events

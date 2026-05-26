@@ -8,21 +8,12 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using System.Reflection;
-
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-
-using SMS_Application.Interfaces;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Pipelines;
-using SMS_Application.EventHandlers; // NEW: For SPI event handlers
-using SMS_Application.EventHandlers.UIEventHandlers; // NEW: For UI event handlers
-
-using SMS_Domain.Events;
-
 using Application.Interfaces.CommonInterfaces;
 using Application.Services.EventBusServices; // NEW: For EventBus domain events
+
+using Microsoft.Extensions.Configuration;
+
+using SMS_Application.EventHandlers; // NEW: For SPI event handlers
 
 namespace SMS_Application.Configuration
 {

@@ -16,12 +16,21 @@
 <!-- SMS Page Header using reusable component -->
 <PageHeader Title="Reports Listing"
             Subtitle="Complete listing for all SMS Reports"
-            Icon="fas fa-list" />
+            Icon="fas fa-list">
+    <AdditionalContent>
+        <RadzenButton Text="Export Selected Package"
+                      Icon="download"
+                      ButtonStyle="ButtonStyle.Light"
+                      Click="@OnExportSelectedReportsAsync"
+                      Disabled="@(!selectedReports.Any())" />
+    </AdditionalContent>
+</PageHeader>
 
 
 
 <RadzenDataGrid @ref="reportsGrid" 
                 Data="@reports" 
+                @bind-Value="@selectedReports"
                 Count="@totalCount" 
                 LoadData="@LoadData"
                 AllowPaging="true" 
@@ -31,11 +40,26 @@
                 PagerHorizontalAlign="HorizontalAlign.Left"
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
-                SelectionMode="DataGridSelectionMode.Single"
+                SelectionMode="DataGridSelectionMode.Multiple"
                 Style="height: calc(100vh - 250px)"
                 IsLoading="@isLoading"
                 >
     <Columns>
+        <RadzenDataGridColumn TItem="Report" Width="60px" Sortable="false" Filterable="false">
+            <HeaderTemplate>
+                <RadzenCheckBox TValue="bool"
+                                TriState="false"
+                                Value="@IsAllVisibleReportsSelected()"
+                                Change="@OnSelectAllVisibleReportsChanged" />
+            </HeaderTemplate>
+            <Template Context="report">
+                <RadzenCheckBox TValue="bool"
+                                TriState="false"
+                                Value="@IsReportSelected(report)"
+                                Change="@(isChecked => OnReportSelectionChanged(report, (bool)isChecked))"
+                                @onclick:stopPropagation="true" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Report" Property="Code" Title="Report ID" Width="150px" >
             <Template Context="report">
                 <div title="@report.Code" style="@BasicTextStyle">

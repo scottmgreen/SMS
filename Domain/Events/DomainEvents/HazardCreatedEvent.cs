@@ -8,7 +8,6 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Domain.Enums;
 
 using Microsoft.Extensions.Logging;
 
@@ -30,19 +29,19 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class HazardCreatedEvent : BaseDomainEvent, IEventSource
 {
-    public override string EventType => Domain.Enums.EventType.HazardCreated.Value;
+    public override string EventType => SMS_Domain.Enums.EventType.HazardCreated.Value;
 
     #region IEventDataSource Implementation
 
     /// <summary>
     /// Display name for SPI configuration dropdowns
     /// </summary>
-    public string EventSourceDisplayName => Domain.Enums.EventType.HazardCreated;
+    public string EventSourceDisplayName => SMS_Domain.Enums.EventType.HazardCreated;
 
     /// <summary>
     /// Category for grouping in UI
     /// </summary>
-    public string EventSourceCategory => Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string EventSourceCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
 
     /// <summary>
     /// Description of data provided for SPI calculations

@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.ValueObjects;
+using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 using SMS_Infrastructure.Interfaces;
 

@@ -8,11 +8,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Domain.Entities;
-
-using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.CommandHandlers;
-
+namespace SMS_Application.Messaging.CommandHandlers;
 // =============================================
 // HAZARD LOCATION COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================

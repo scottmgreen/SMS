@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.ValueObjects;
+using SMS_Domain.Enums;
 
 namespace SMS_Application.Messaging.Commands;
 

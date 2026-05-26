@@ -87,8 +87,4 @@
     
 </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="BackgroundServices\" />
-  </ItemGroup>
-
 </Project>

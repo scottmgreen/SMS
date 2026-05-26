@@ -11,3 +11,6 @@
 
 ## Database Naming Conventions
 - Field names should use typed prefixes like `fldi_`, `fldv_`, `fldd_` (and similar) consistently in SQL/stored procedures.
+
+## Risk Assessment
+- In this codebase, RiskAssessment should be fetched by hazard code (GetRiskAssessmentByHazardCode query), not via a Hazard.RiskAssessmentCode property.

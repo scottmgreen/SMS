@@ -27,11 +27,19 @@
                 PagerHorizontalAlign="HorizontalAlign.Left"
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
-                SelectionMode="DataGridSelectionMode.Single"
+                SelectionMode="DataGridSelectionMode.Multiple"
                 Style="height: calc(100vh - 200px)"
                 IsLoading="@isLoading">
     
     <Columns>
+        <RadzenDataGridColumn TItem="HazardFile" Width="60px" Sortable="false" Filterable="false">
+            <HeaderTemplate>
+                <input type="checkbox" />
+            </HeaderTemplate>
+            <Template Context="file">
+                <input type="checkbox" @onclick:stopPropagation="true" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardFile" Property="Code" Title="File ID" Width="150px">
             <Template Context="file">
                 <div title="@file.Code" style="font-size:smaller;font-weight: 600">

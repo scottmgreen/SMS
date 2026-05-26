@@ -1,11 +1,6 @@
-using Microsoft.Extensions.Logging;
-using SMS_Application.Interfaces;
-using SMS_Domain.Common;
 using SMS_Domain.Events.UIEvents;
-using SMS_Domain.Enums;
-using SMS_Domain.Interfaces;
 
-namespace SMS_Application.EventHandlers.UIEventHandlers;
+namespace SMS_Application.EventHandlers;
 
 /// <summary>
 /// UI Event Handler for UINotificationEvent

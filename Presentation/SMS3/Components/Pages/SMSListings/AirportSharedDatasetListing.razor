@@ -27,10 +27,18 @@
                 PagerHorizontalAlign="HorizontalAlign.Left"
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
-                SelectionMode="DataGridSelectionMode.Single"
+                SelectionMode="DataGridSelectionMode.Multiple"
                 Style="height: calc(100vh - 200px)">
     
     <Columns>
+        <RadzenDataGridColumn TItem="AirportSharedDataset" Width="60px" Sortable="false" Filterable="false">
+            <HeaderTemplate>
+                <input type="checkbox" />
+            </HeaderTemplate>
+            <Template Context="dataset">
+                <input type="checkbox" @onclick:stopPropagation="true" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="AirportSharedDataset" Property="Code" Title="Dataset Code" Width="150px" />
         <RadzenDataGridColumn TItem="AirportSharedDataset" Property="ReportCode" Title="Report Code" Width="120px">
             <Template Context="dataset">

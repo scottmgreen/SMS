@@ -1,7 +1,11 @@
 ﻿using System.Linq.Expressions;
+using System.Reflection;
+using System.Text;
+using System.IO.Compression;
 
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
+using Microsoft.JSInterop;
 
 using Radzen;
 // NEW: EventBus Integration
@@ -39,6 +43,7 @@ public partial class ReportListing : ComponentBase
     [Inject] private NavigationManager _navigation { get; set; } = default!;
 
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
 
     // NEW: EventBus Integration
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
@@ -47,6 +52,7 @@ public partial class ReportListing : ComponentBase
     #region Properties
     private RadzenDataGrid<Report>? reportsGrid;
     private IEnumerable<Report> reports = new List<Report>();
+    private IList<Report> selectedReports = new List<Report>();
     private List<Report> allReports = new List<Report>(); // Store all reports for client-side filtering
     private int totalCount;
     private bool isLoading = false;
@@ -93,6 +99,26 @@ public partial class ReportListing : ComponentBase
     private bool ShowDescriptionModal = false;
     private string SelectedDescription = string.Empty;
     private string SelectedReportId = string.Empty;
+
+    private static readonly PropertyInfo[] ReportExportProperties = typeof(Report)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null)
+        .ToArray();
+
+    private static readonly PropertyInfo[] HazardExportProperties = typeof(Hazard)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null)
+        .ToArray();
+
+    private static readonly PropertyInfo[] HazardLocationExportProperties = typeof(HazardLocation)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null)
+        .ToArray();
+
+    private static readonly PropertyInfo[] RiskAssessmentExportProperties = typeof(RiskAssessment)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null)
+        .ToArray();
     #endregion
     
     #region Lifecycle Methods
@@ -195,6 +221,14 @@ public partial class ReportListing : ComponentBase
             }
 
             reports = query.ToList();
+
+            if (selectedReports.Count > 0)
+            {
+                var selectedCodes = selectedReports.Select(r => r.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                selectedReports = allReports
+                    .Where(r => selectedCodes.Contains(r.Code))
+                    .ToList();
+            }
 
             _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} reports", 
                 reports.Count(), totalCount);
@@ -365,6 +399,244 @@ public partial class ReportListing : ComponentBase
             return query.OrderByDescending(r => r.CreatedDate); // Fallback to default sort
         }
     }
+    #endregion
+
+    #region Selection + CSV Export
+
+    private bool IsReportSelected(Report report)
+    {
+        return selectedReports.Any(r => r.Code == report.Code);
+    }
+
+    private void OnReportSelectionChanged(Report report, bool isSelected)
+    {
+        if (isSelected)
+        {
+            if (!selectedReports.Any(r => r.Code == report.Code))
+            {
+                selectedReports.Add(report);
+            }
+        }
+        else
+        {
+            var existing = selectedReports.FirstOrDefault(r => r.Code == report.Code);
+            if (existing is not null)
+            {
+                selectedReports.Remove(existing);
+            }
+        }
+    }
+
+    private bool IsAllVisibleReportsSelected()
+    {
+        var visibleReports = reports.ToList();
+        if (!visibleReports.Any())
+        {
+            return false;
+        }
+
+        var selectedCodes = selectedReports.Select(r => r.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        return visibleReports.All(r => selectedCodes.Contains(r.Code));
+    }
+
+    private void OnSelectAllVisibleReportsChanged(bool isSelected)
+    {
+        var visibleReports = reports.ToList();
+        if (!visibleReports.Any())
+        {
+            return;
+        }
+
+        if (isSelected)
+        {
+            var selectedCodes = selectedReports.Select(r => r.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            foreach (var report in visibleReports)
+            {
+                if (!selectedCodes.Contains(report.Code))
+                {
+                    selectedReports.Add(report);
+                }
+            }
+        }
+        else
+        {
+            var visibleCodes = visibleReports.Select(r => r.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            selectedReports = selectedReports
+                .Where(r => !visibleCodes.Contains(r.Code))
+                .ToList();
+        }
+    }
+
+    private async Task OnExportSelectedReportsAsync()
+    {
+        if (!selectedReports.Any())
+        {
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please select at least one report to export"));
+            return;
+        }
+
+        try
+        {
+            var zipBytes = await BuildExportPackageAsync(selectedReports);
+            var base64 = Convert.ToBase64String(zipBytes);
+            var fileName = $"reports-export-package-{DateTime.UtcNow:yyyyMMdd-HHmmss}.zip";
+
+            await _jsRuntime.InvokeVoidAsync("downloadFile", fileName, "application/zip", base64);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Exported {selectedReports.Count} report package(s)"));
+            _logger.LogInformation("Exported package for {Count} selected reports", selectedReports.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export selected reports package");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to export selected reports package"));
+        }
+    }
+
+    private async Task<byte[]> BuildExportPackageAsync(IEnumerable<Report> reportsToExport)
+    {
+        using var memoryStream = new MemoryStream();
+        using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            foreach (var report in reportsToExport)
+            {
+                if (string.IsNullOrWhiteSpace(report.Code))
+                {
+                    continue;
+                }
+
+                await AddReportFolderToArchiveAsync(archive, report);
+            }
+        }
+
+        return memoryStream.ToArray();
+    }
+
+    private async Task AddReportFolderToArchiveAsync(ZipArchive archive, Report report)
+    {
+        var folderName = $"Report_{SanitizeFileNamePart(report.Code)}";
+
+        AddCsvEntry(
+            archive,
+            $"{folderName}/Report_{SanitizeFileNamePart(report.Code)}.csv",
+            BuildCsv(new[] { report }, ReportExportProperties));
+
+        var hazardsQuery = new GetHazardsByReportCodeQuery(new ReportID(report.Code));
+        var hazardsResult = await _mediator.SendAsync(hazardsQuery, CancellationToken.None);
+        var hazards = hazardsResult.IsSuccess && hazardsResult.Value is not null
+            ? hazardsResult.Value.ToList()
+            : new List<Hazard>();
+
+        AddCsvEntry(
+            archive,
+            $"{folderName}/Hazards_{SanitizeFileNamePart(report.Code)}.csv",
+            BuildCsv(hazards, HazardExportProperties));
+
+        var hazardLocations = new List<HazardLocation>();
+        var riskAssessments = new List<RiskAssessment>();
+
+        foreach (var hazard in hazards)
+        {
+            if (!string.IsNullOrWhiteSpace(hazard.Code))
+            {
+                var locationQuery = new GetHazardLocationsByHazardCodeQuery(hazard.Code);
+                var locationResult = await _mediator.SendAsync(locationQuery, CancellationToken.None);
+
+                if (locationResult.IsSuccess && locationResult.Value is not null)
+                {
+                    hazardLocations.AddRange(locationResult.Value);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(hazard.Code))
+            {
+                var riskAssessmentQuery = new GetRiskAssessmentsByHazardCodeQuery(new HazardID(hazard.Code));
+                var riskAssessmentResult = await _mediator.SendAsync(riskAssessmentQuery, CancellationToken.None);
+
+                if (riskAssessmentResult.IsSuccess && riskAssessmentResult.Value is not null)
+                {
+                    riskAssessments.AddRange(riskAssessmentResult.Value);
+                }
+            }
+        }
+
+        var distinctLocations = hazardLocations
+            .GroupBy(location => location.Code)
+            .Select(group => group.First())
+            .ToList();
+
+        var distinctRiskAssessments = riskAssessments
+            .GroupBy(assessment => assessment.Code)
+            .Select(group => group.First())
+            .ToList();
+
+        AddCsvEntry(
+            archive,
+            $"{folderName}/HazardLocations_{SanitizeFileNamePart(report.Code)}.csv",
+            BuildCsv(distinctLocations, HazardLocationExportProperties));
+
+        AddCsvEntry(
+            archive,
+            $"{folderName}/RiskAssessments_{SanitizeFileNamePart(report.Code)}.csv",
+            BuildCsv(distinctRiskAssessments, RiskAssessmentExportProperties));
+    }
+
+    private static void AddCsvEntry(ZipArchive archive, string entryPath, string csvContent)
+    {
+        var entry = archive.CreateEntry(entryPath, CompressionLevel.Fastest);
+        using var entryStream = entry.Open();
+        using var writer = new StreamWriter(entryStream, Encoding.UTF8);
+        writer.Write(csvContent);
+    }
+
+    private static string BuildCsv<T>(IEnumerable<T> records, PropertyInfo[] properties)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine(string.Join(",", properties.Select(p => EscapeCsv(p.Name))));
+
+        foreach (var record in records)
+        {
+            var row = properties
+                .Select(property => property.GetValue(record))
+                .Select(FormatCsvValue);
+
+            sb.AppendLine(string.Join(",", row));
+        }
+
+        return sb.ToString();
+    }
+
+    private static string FormatCsvValue(object? value)
+    {
+        return value switch
+        {
+            null => string.Empty,
+            DateTime dateTime => EscapeCsv(dateTime.ToString("O")),
+            DateTimeOffset dateTimeOffset => EscapeCsv(dateTimeOffset.ToString("O")),
+            _ => EscapeCsv(value.ToString() ?? string.Empty)
+        };
+    }
+
+    private static string EscapeCsv(string value)
+    {
+        if (value.Contains('"'))
+        {
+            value = value.Replace("\"", "\"\"");
+        }
+
+        if (value.Contains(',') || value.Contains('\n') || value.Contains('\r') || value.Contains('"'))
+        {
+            return $"\"{value}\"";
+        }
+
+        return value;
+    }
+
+    private static string SanitizeFileNamePart(string value)
+    {
+        var invalidChars = Path.GetInvalidFileNameChars();
+        return new string(value.Select(c => invalidChars.Contains(c) ? '_' : c).ToArray());
+    }
+
     #endregion
 
     #region CRUD Action Methods

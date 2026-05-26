@@ -6,9 +6,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Domain.Common;
 using SMS_Domain.Entities;
-using SMS_Domain.Interfaces;
 
 namespace SMS_Domain.Events;
 
@@ -18,14 +16,14 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class MitigationCompletedEvent : BaseDomainEvent, IEventSource
 {
-    public override string EventType => Domain.Enums.EventType.MitigationStatusChanged.Value;
+    public override string EventType => SMS_Domain.Enums.EventType.MitigationStatusChanged.Value;
 
-    public string EventSourceDisplayName => Domain.Enums.EventType.MitigationStatusChanged;
+    public string EventSourceDisplayName => SMS_Domain.Enums.EventType.MitigationStatusChanged;
 
     /// <summary>
     /// Category for grouping in UI
     /// </summary>
-    public string EventSourceCategory => Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string EventSourceCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
 
     #region IEventDataSource Implementation
 

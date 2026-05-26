@@ -7,9 +7,6 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Domain.Enums;
-using SMS_Domain.Interfaces;
-
 namespace SMS_Domain.Events.UIEvents;
 
 /// <summary>
@@ -21,7 +18,7 @@ public class UINotificationEvent : IBaseUIEvent
 {
     public Guid EventId { get; private set; }
     public DateTime OccurredOn { get; private set; }
-    public string EventType => Domain.Enums.EventType.UINotification.Value;
+    public string EventType => SMS_Domain.Enums.EventType.UINotification.Value;
     public string ReportId { get; private set; }
     public string TargetComponent { get; private set; }
     public UIEventPriority Priority { get; private set; }

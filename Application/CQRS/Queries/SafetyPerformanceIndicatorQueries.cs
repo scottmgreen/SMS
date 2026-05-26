@@ -8,8 +8,6 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Domain.Entities;
-
 namespace SMS_Application.Messaging.Queries;
 
 // =============================================

@@ -11,6 +11,7 @@ using SMS_Domain.Common;
 using SMS_Domain.Interfaces;
 using SMS_Domain.Enums;
 
+
 namespace SMS_Domain.ValueObjects;
 
 /// <summary>
@@ -170,84 +171,6 @@ public record QueuedEvent
             AttemptCount = AttemptCount + 1
         };
     }
-}
-
-/// <summary>
-/// Status of a queued event
-/// </summary>
-public enum QueuedEventStatus
-{
-    /// <summary>
-    /// Event is waiting to be processed
-    /// </summary>
-    Pending = 0,
-
-    /// <summary>
-    /// Event is currently being processed
-    /// </summary>
-    Processing = 1,
-
-    /// <summary>
-    /// Event was processed successfully
-    /// </summary>
-    Processed = 2,
-
-    /// <summary>
-    /// Event processing failed
-    /// </summary>
-    Failed = 3,
-
-    /// <summary>
-    /// Event was cancelled
-    /// </summary>
-    Cancelled = 4
-}
-
-/// <summary>
-/// Priority level for event processing
-/// </summary>
-public enum EventPriority
-{
-    /// <summary>
-    /// Low priority - UI updates, non-critical notifications
-    /// </summary>
-    Low = 0,
-
-    /// <summary>
-    /// Normal priority - Standard business events
-    /// </summary>
-    Normal = 1,
-
-    /// <summary>
-    /// High priority - Integration events, critical notifications
-    /// </summary>
-    High = 2,
-
-    /// <summary>
-    /// Critical priority - Security alerts, system failures
-    /// </summary>
-    Critical = 3
-}
-
-/// <summary>
-/// Type of event for categorization
-/// </summary>
-public enum EventCategory
-{
-    /// <summary>
-    /// Domain business logic events
-    /// </summary>
-    DomainEvent = 0,
-
-    /// <summary>
-    /// User interface events
-    /// </summary>
-    UIEvent = 1,
-
-    /// <summary>
-    /// External system integration events
-    /// </summary>
-    IntegrationEvent = 2
 }
 
 /// <summary>

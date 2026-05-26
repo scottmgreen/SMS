@@ -8,8 +8,6 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Domain.Interfaces;
-
 namespace SMS_Domain.Events;
 
 /// <summary>
@@ -20,7 +18,7 @@ public class EmailNotificationEvent : IBaseIntegrationEvent
 {
     public Guid EventId { get; private set; }
     public DateTime OccurredOn { get; private set; }
-    public string EventType => Domain.Enums.EventType.EmailNotification.Value;
+    public string EventType => SMS_Domain.Enums.EventType.EmailNotification.Value;
     public string ReportId { get; private set; }
     public string TargetSystem { get; private set; }
     public IntegrationDeliveryMode DeliveryMode { get; private set; }

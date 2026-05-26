@@ -10,6 +10,7 @@
 
 using SMS_Domain.Interfaces;
 using SMS_Domain.ValueObjects;
+using SMS_Domain.Enums;
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Infrastructure.Services;

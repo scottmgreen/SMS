@@ -15,6 +15,7 @@ using SMS_Domain.Common;
 using SMS_Domain.Interfaces;
 using SMS_Domain.Events;
 using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 using SMS_Infrastructure.Interfaces;
 
 using Microsoft.Extensions.Logging;
@@ -482,18 +483,18 @@ public class EventQueueService : IEventQueueService
     // Generic map from EventType.Value to .NET event type for domain events
     private static readonly Dictionary<string, Type> DomainEventTypeMap = new()
     {
-        { Domain.Enums.EventType.HazardCreated.Value, typeof(SMS_Domain.Events.HazardCreatedEvent) },
-        { Domain.Enums.EventType.HazardUpdated.Value, typeof(SMS_Domain.Events.HazardUpdatedEvent) },
-        { Domain.Enums.EventType.HazardDeleted.Value, typeof(SMS_Domain.Events.HazardDeletedEvent) },
-        { Domain.Enums.EventType.ReportCreated.Value, typeof(SMS_Domain.Events.ReportCreatedEvent) },
-        { Domain.Enums.EventType.ReportUpdated.Value, typeof(SMS_Domain.Events.ReportUpdatedEvent) },
-        { Domain.Enums.EventType.ReportClosed.Value, typeof(SMS_Domain.Events.ReportClosedEvent) },
-        { Domain.Enums.EventType.RiskAssessmentCreated.Value, typeof(SMS_Domain.Events.RiskAssessmentCreatedEvent) },
-        { Domain.Enums.EventType.RiskAssessmentUpdated.Value, typeof(SMS_Domain.Events.RiskAssessmentUpdatedEvent) },
-        { Domain.Enums.EventType.MitigationCreated.Value, typeof(SMS_Domain.Events.MitigationCreatedEvent) },
-        { Domain.Enums.EventType.MitigationApprovalRequested.Value, typeof(SMS_Domain.Events.MitigationApprovalRequestedEvent) },
-        { Domain.Enums.EventType.MitigationApprovalApproved.Value, typeof(SMS_Domain.Events.MitigationApprovalApprovedEvent) },
-        { Domain.Enums.EventType.MitigationStatusChanged.Value, typeof(SMS_Domain.Events.MitigationStatusChangedEvent) },
+        { SMS_Domain.Enums.EventType.HazardCreated.Value, typeof(SMS_Domain.Events.HazardCreatedEvent) },
+        { SMS_Domain.Enums.EventType.HazardUpdated.Value, typeof(SMS_Domain.Events.HazardUpdatedEvent) },
+        { SMS_Domain.Enums.EventType.HazardDeleted.Value, typeof(SMS_Domain.Events.HazardDeletedEvent) },
+        { SMS_Domain.Enums.EventType.ReportCreated.Value, typeof(SMS_Domain.Events.ReportCreatedEvent) },
+        { SMS_Domain.Enums.EventType.ReportUpdated.Value, typeof(SMS_Domain.Events.ReportUpdatedEvent) },
+        { SMS_Domain.Enums.EventType.ReportClosed.Value, typeof(SMS_Domain.Events.ReportClosedEvent) },
+        { SMS_Domain.Enums.EventType.RiskAssessmentCreated.Value, typeof(SMS_Domain.Events.RiskAssessmentCreatedEvent) },
+        { SMS_Domain.Enums.EventType.RiskAssessmentUpdated.Value, typeof(SMS_Domain.Events.RiskAssessmentUpdatedEvent) },
+        { SMS_Domain.Enums.EventType.MitigationCreated.Value, typeof(SMS_Domain.Events.MitigationCreatedEvent) },
+        { SMS_Domain.Enums.EventType.MitigationApprovalRequested.Value, typeof(SMS_Domain.Events.MitigationApprovalRequestedEvent) },
+        { SMS_Domain.Enums.EventType.MitigationApprovalApproved.Value, typeof(SMS_Domain.Events.MitigationApprovalApprovedEvent) },
+        { SMS_Domain.Enums.EventType.MitigationStatusChanged.Value, typeof(SMS_Domain.Events.MitigationStatusChangedEvent) },
         // Add more as needed
     };
     private async Task<Result> ExecuteDomainEvent(QueuedEvent queuedEvent)
@@ -700,13 +701,13 @@ public class EventQueueService : IEventQueueService
     // Generic map from EventType.Value to .NET event type for integration events
     private static readonly Dictionary<string, Type> IntegrationEventTypeMap = new()
     {
-        { Domain.Enums.EventType.EmailNotification.Value, typeof(SMS_Domain.Events.EmailNotificationEvent) },
+        { SMS_Domain.Enums.EventType.EmailNotification.Value, typeof(SMS_Domain.Events.EmailNotificationEvent) },
         // Add more integration event types as needed
     };
 
     private static readonly Dictionary<string, Type> UIEventTypeMap = new()
     {
-        { Domain.Enums.EventType.UINotification.Value, typeof(SMS_Domain.Events.UIEvents.UINotificationEvent) },
+        { SMS_Domain.Enums.EventType.UINotification.Value, typeof(SMS_Domain.Events.UIEvents.UINotificationEvent) },
         { SMS_Domain.Events.SPIDashboardRefreshEvent.TypeValue, typeof(SMS_Domain.Events.SPIDashboardRefreshEvent) },
         { SMS_Domain.Events.Test.TestUIEvent.TypeValue, typeof(SMS_Domain.Events.Test.TestUIEvent) },
     };

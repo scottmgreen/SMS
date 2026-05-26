@@ -8,9 +8,6 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Domain.Common;
-using SMS_Domain.Interfaces;
-using SMS_Domain.Enums;
 using SMS_Domain.Entities;
 
 namespace SMS_Domain.Events;
@@ -21,14 +18,14 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class MitigationApprovalRequestedEvent : BaseDomainEvent
 {
-    public override string EventType => Domain.Enums.EventType.MitigationApprovalRequested.Value;
+    public override string EventType => SMS_Domain.Enums.EventType.MitigationApprovalRequested.Value;
 
-    public string DataSourceDisplayName => Domain.Enums.EventType.MitigationApprovalRequested;
+    public string DataSourceDisplayName => SMS_Domain.Enums.EventType.MitigationApprovalRequested;
 
     /// <summary>
     /// Category for grouping in UI
     /// </summary>
-    public string DataSourceCategory => Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string DataSourceCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
 
     /// <summary>
     /// Category for grouping in UI

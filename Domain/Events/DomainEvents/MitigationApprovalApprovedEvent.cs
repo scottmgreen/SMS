@@ -5,10 +5,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Domain.Enums;
-using SMS_Domain.Common;
+
 using SMS_Domain.Entities;
-using SMS_Domain.Enums;
 
 namespace SMS_Domain.Events;
 
@@ -17,8 +15,8 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class MitigationApprovalApprovedEvent : BaseDomainEvent
 {
-    public override string EventType => Domain.Enums.EventType.MitigationApprovalApproved.Value;
-    public string EventCategory => Domain.Enums.EventCategogy.DomainEvent.Value;
+    public override string EventType => SMS_Domain.Enums.EventType.MitigationApprovalApproved.Value;
+    public string EventCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
 
     public string MitigationId { get; private set; }
     public string ApprovedBy { get; private set; }

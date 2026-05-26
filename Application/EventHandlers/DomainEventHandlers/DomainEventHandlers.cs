@@ -1,4 +1,3 @@
-using Microsoft.Extensions.Logging;
 //-----------------------------------------------------------------------
 // <copyright file="DomainEventHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
@@ -8,13 +7,7 @@ using Microsoft.Extensions.Logging;
 //-----------------------------------------------------------------------
 
 
-using Domain.Enums;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
-using SMS_Application.Interfaces;
-using SMS_Application.Services;
-using SMS_Domain.Common;
-using SMS_Domain.Enums;
+
 using SMS_Domain.Events;
 using SMS_Domain.Events.UIEvents;
 

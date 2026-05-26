@@ -22,10 +22,18 @@
                 PagerHorizontalAlign="HorizontalAlign.Left"
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
-                SelectionMode="DataGridSelectionMode.Single"
+                SelectionMode="DataGridSelectionMode.Multiple"
                 Style="height: calc(100vh - 200px)">
     
     <Columns>
+        <RadzenDataGridColumn TItem="ScoringPanel" Width="60px" Sortable="false" Filterable="false">
+            <HeaderTemplate>
+                <input type="checkbox" />
+            </HeaderTemplate>
+            <Template Context="panel">
+                <input type="checkbox" @onclick:stopPropagation="true" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="ScoringPanel" Property="Code" Title="Code" Width="150px" />
         <RadzenDataGridColumn TItem="ScoringPanel" Property="Name" Title="Name" Width="200px" />
         <RadzenDataGridColumn TItem="ScoringPanel" Property="Description" Title="Description" Width="300px" />

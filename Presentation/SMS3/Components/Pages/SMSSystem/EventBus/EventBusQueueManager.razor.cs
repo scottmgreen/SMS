@@ -15,6 +15,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 
+using SMS_Domain.Enums;
 using SMS_Domain.Events;
 using SMS_Domain.ValueObjects;
 
@@ -241,7 +242,7 @@ public partial class EventBusQueueManager
             var queuedEvent = eventResult.Value;
 
             // Check for IntegrationEvent and Email Notification
-            if (queuedEvent.EventCategory == EventCategory.IntegrationEvent && queuedEvent.EventType == Domain.Enums.EventType.EmailNotification.Value)
+            if (queuedEvent.EventCategory == EventCategory.IntegrationEvent && queuedEvent.EventType == SMS_Domain.Enums.EventType.EmailNotification.Value)
             {
                 try
                 {

@@ -34,9 +34,9 @@ public partial class EventDataSourceDiscoveryTest
             Logger.LogInformation("?? Discovering dynamic event data sources...");
 
             // Test the dynamic discovery
-            _eventDataSources = SPIConstants.DataSources.GetEventDrivenSources();
-            _groupedSources = SPIConstants.DataSources.GetEventDrivenSourcesByCategory();
-            _dataSourceNames = SPIConstants.DataSources.GetEventDrivenSourceNames();
+            _eventDataSources = SPIConstants.SPIDataSources.GetEventDrivenSources();
+            _groupedSources = SPIConstants.SPIDataSources.GetEventDrivenSourcesByCategory();
+            _dataSourceNames = SPIConstants.SPIDataSources.GetEventDrivenSourceNames();
 
             Logger.LogInformation("? Discovered {Count} event data sources", _eventDataSources.Count);
 

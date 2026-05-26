@@ -7,10 +7,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Application.Messaging.Queries;
-using SMS_Domain.Entities;
-
-namespace SMS_Application.CQRS.QueryHandlers;
+namespace SMS_Application.Messaging.Queries;
 
 /// <summary>
 /// Query handler for retrieving all Safety Performance Indicators

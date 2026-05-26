@@ -5,10 +5,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Domain.Enums;
-using SMS_Domain.Common;
 using SMS_Domain.Entities;
-using SMS_Domain.Enums;
 
 namespace SMS_Domain.Events;
 
@@ -17,8 +14,8 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class ReportCreatedEvent : BaseDomainEvent
 {
-    public override string EventType => Domain.Enums.EventType.ReportCreated.Value;
-    public string EventCategory => Domain.Enums.EventCategogy.DomainEvent.Value;
+    public override string EventType => SMS_Domain.Enums.EventType.ReportCreated.Value;
+    public string EventCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
 
     // Example properties (expand as needed)
     public string ReportId { get; private set; }

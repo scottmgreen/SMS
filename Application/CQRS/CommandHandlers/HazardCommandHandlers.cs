@@ -8,25 +8,12 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Domain.Enums;
-
-using Microsoft.Extensions.Logging;
-
-using SMS_Application.Interfaces;
-using SMS_Application.Services;
-
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
 using SMS_Domain.Events;
-using SMS_Domain.Interfaces;
-using SMS_Domain.ValueObjects;
 
 using SMS_Infrastructure.Interfaces;
 
 namespace SMS_Application.Messaging.CommandHandlers
 {
-
-
 
     // =============================================
     // HAZARD COMMAND HANDLERS - 

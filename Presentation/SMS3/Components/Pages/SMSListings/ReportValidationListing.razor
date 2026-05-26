@@ -26,10 +26,18 @@
                 PagerHorizontalAlign="HorizontalAlign.Left"
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
-                SelectionMode="DataGridSelectionMode.Single"
+                SelectionMode="DataGridSelectionMode.Multiple"
                 Style="height: calc(100vh - 200px)">
     
     <Columns>
+        <RadzenDataGridColumn TItem="ReportValidation" Width="60px" Sortable="false" Filterable="false">
+            <HeaderTemplate>
+                <input type="checkbox" />
+            </HeaderTemplate>
+            <Template Context="validation">
+                <input type="checkbox" @onclick:stopPropagation="true" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="ReportValidation" Property="ReportCode" Title="Report ID" Width="140px" />
         <RadzenDataGridColumn TItem="ReportValidation" Property="Code" Title="Report Validation ID" Width="150px" />
         <RadzenDataGridColumn TItem="ReportValidation" Property="ValidationDecision" Title="Decision" Width="150px" />

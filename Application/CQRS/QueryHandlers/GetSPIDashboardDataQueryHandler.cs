@@ -7,13 +7,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
-using SMS_Application.Services;
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-
-namespace SMS_Application.CQRS.QueryHandlers;
+namespace SMS_Application.Messaging.Queries;
 
 /// <summary>
 /// Handler for retrieving comprehensive SPI dashboard data

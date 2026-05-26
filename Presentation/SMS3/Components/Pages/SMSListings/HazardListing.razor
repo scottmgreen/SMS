@@ -27,11 +27,19 @@
                 PagerHorizontalAlign="HorizontalAlign.Left"
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
-                SelectionMode="DataGridSelectionMode.Single"
+                SelectionMode="DataGridSelectionMode.Multiple"
                 Style="height: calc(100vh - 200px)"
                 IsLoading="@isLoading">
     
     <Columns>
+        <RadzenDataGridColumn TItem="Hazard" Width="60px" Sortable="false" Filterable="false">
+            <HeaderTemplate>
+                <input type="checkbox" />
+            </HeaderTemplate>
+            <Template Context="hazard">
+                <input type="checkbox" @onclick:stopPropagation="true" />
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Hazard" Property="ReportCode" Title="Report ID" Width="150px">
             <Template Context="hazard">
                 <div title="@hazard.ReportCode" style="@BasicTextStyle">

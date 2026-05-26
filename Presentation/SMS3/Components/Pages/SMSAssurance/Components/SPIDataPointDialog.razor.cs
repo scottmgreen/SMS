@@ -77,7 +77,7 @@ public partial class SPIDataPointDialog : ComponentBase
             {
                 SPIId = SPI?.Code ?? string.Empty,
                 MeasurementDate = DateTime.Today,
-                DataSource = SPI?.DataSource ?? SPIConstants.DataSources.ManualEntry,
+                DataSource = SPI?.DataSource ?? SPIConstants.SPIDataSources.ManualEntry,
                 Period = string.Empty
             };
         }
@@ -204,11 +204,11 @@ public partial class SPIDataPointDialog : ComponentBase
         try
         {
             // Add event-driven data sources (discovered via reflection)
-            var eventDrivenSources = SPIConstants.DataSources.GetEventDrivenSourceNames();
+            var eventDrivenSources = SPIConstants.SPIDataSources.GetEventDrivenSourceNames();
             dataSources.AddRange(eventDrivenSources);
 
             // Add manual data sources
-            var manualSources = SPIConstants.DataSources.GetManualSources();
+            var manualSources = SPIConstants.SPIDataSources.GetManualSources();
             dataSources.AddRange(manualSources);
 
             return dataSources.OrderBy(ds => ds).ToList();
@@ -217,7 +217,7 @@ public partial class SPIDataPointDialog : ComponentBase
         {
             // Fallback to manual sources only if reflection fails
             _logger.LogWarning(ex, "Failed to get dynamic data sources, falling back to manual sources");
-            return SPIConstants.DataSources.GetManualSources();
+            return SPIConstants.SPIDataSources.GetManualSources();
         }
     }
 
@@ -231,7 +231,7 @@ public partial class SPIDataPointDialog : ComponentBase
         try
         {
             // Event-driven sources grouped by category
-            var eventSources = SPIConstants.DataSources.GetEventDrivenSourcesByCategory();
+            var eventSources = SPIConstants.SPIDataSources.GetEventDrivenSourcesByCategory();
             foreach (var category in eventSources.Keys)
             {
                 var sourceNames = eventSources[category].Select(eds => eds.DisplayName).ToList();
@@ -239,12 +239,12 @@ public partial class SPIDataPointDialog : ComponentBase
             }
 
             // Manual sources as a separate group
-            grouped["?? Manual Sources"] = SPIConstants.DataSources.GetManualSources();
+            grouped["?? Manual Sources"] = SPIConstants.SPIDataSources.GetManualSources();
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to get grouped data sources");
-            grouped["Data Sources"] = SPIConstants.DataSources.GetManualSources();
+            grouped["Data Sources"] = SPIConstants.SPIDataSources.GetManualSources();
         }
 
         return grouped;

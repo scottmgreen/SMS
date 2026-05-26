@@ -5,7 +5,6 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Domain.Enums;
 
 using SMS_Domain.Common;
 using SMS_Domain.Entities;
@@ -18,8 +17,8 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class RiskAssessmentCreatedEvent : BaseDomainEvent
 {
-    public override string EventType => Domain.Enums.EventType.RiskAssessmentCreated.Value;
-    public string EventCategory => Domain.Enums.EventCategogy.DomainEvent.Value;
+    public override string EventType => SMS_Domain.Enums.EventType.RiskAssessmentCreated.Value;
+    public string EventCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
 
     public string RiskAssessmentId { get; private set; }
     public string CreatedBy { get; private set; }
