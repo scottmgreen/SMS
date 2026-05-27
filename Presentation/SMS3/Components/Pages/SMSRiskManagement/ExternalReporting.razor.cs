@@ -3,7 +3,7 @@ using Microsoft.JSInterop;
 
 using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
@@ -728,8 +728,8 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             {
                 Code = "HZ-0000",
                 Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}",
-                Description = HazardReport.Description,
-                HazardCategory = HazardReport.HazardCategory,
+                Description = HazardReport.Description ?? string.Empty,
+                HazardCategory = HazardReport.HazardCategory ?? string.Empty,
                 HazardType = HazardReport.HazardType,
                 
                 ReportCode = actualReportCode,
@@ -765,8 +765,8 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                     createdDate: createdHazard.CreatedDate ?? DateTime.UtcNow,
                     createdBy: "EXTERNAL_USER",
                     reportId: actualReportCode,
-                    hazardType: createdHazard.HazardType,
-                    hazardCategory: createdHazard.HazardCategory);
+                    hazardType: createdHazard.HazardType ?? string.Empty,
+                    hazardCategory: createdHazard.HazardCategory ?? string.Empty);
 
                 _logger.LogInformation("? SPI Automation: External hazard creation event processed for {HazardCode}", createdHazard.Code);
             }

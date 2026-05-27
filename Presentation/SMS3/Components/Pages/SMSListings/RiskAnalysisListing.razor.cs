@@ -1,5 +1,5 @@
 using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 using SMS3.Components.Shared.UIHelpers;
 
@@ -14,7 +14,6 @@ public partial class RiskAnalysisListing : ComponentBase
     private RadzenDataGrid<RiskAnalysis>? analysisGrid;
     private IEnumerable<RiskAnalysis> analysisResults = new List<RiskAnalysis>();
     private int totalCount;
-    private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -51,9 +50,6 @@ public partial class RiskAnalysisListing : ComponentBase
     {
         try
         {
-            isLoading = true;
-            StateHasChanged();
-
             await LoadInitialData();
 
             var query = analysisResults.AsQueryable();
@@ -82,11 +78,6 @@ public partial class RiskAnalysisListing : ComponentBase
         {
             _logger.LogError(ex, "Error in LoadData");
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading data"));
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
         }
     }
 

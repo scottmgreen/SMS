@@ -194,6 +194,11 @@ public partial class TechnicalAssessment : ComponentBase
     #region Data Loading Methods
     private async Task LoadSourceReport()
     {
+        if (string.IsNullOrWhiteSpace(ReportId))
+        {
+            return;
+        }
+
         var query = new GetReportByCodeQuery(new ReportID(ReportId));
         var result = await _mediator.SendAsync(query, CancellationToken.None);
 
@@ -966,7 +971,7 @@ public partial class TechnicalAssessment : ComponentBase
             var query = new GetScoringPanelsByHazardCodeQuery(hazardCode);
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-            if (!result.IsSuccess || result.Value.Count == 0)
+            if (!result.IsSuccess || result.Value is null || result.Value.Count == 0)
             {
                 _logger.LogWarning("No scoring panels found for hazard {HazardCode}", hazardCode);
                 return new List<ScoringPanel>();
@@ -980,7 +985,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             // Filter panels by risk assessment code
             var filteredPanels = (result.Value ?? new List<ScoringPanel>())
-                .Where(p => p.RiskAssessmentCode.Trim() == targetAssessmentCode)
+                .Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), targetAssessmentCode, StringComparison.Ordinal))
                 .ToList();
 
             // Map properties based on current step for all loaded panels
@@ -1064,7 +1069,7 @@ public partial class TechnicalAssessment : ComponentBase
         {
             // Get existing panels for the current assessment
             var existingPanels = (allPanels ?? Enumerable.Empty<ScoringPanel>())
-                .Where(p => p.RiskAssessmentCode.Trim() == targetAssessmentCode)
+                .Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), targetAssessmentCode, StringComparison.Ordinal))
                 .ToList();
 
             if (!existingPanels.Any())

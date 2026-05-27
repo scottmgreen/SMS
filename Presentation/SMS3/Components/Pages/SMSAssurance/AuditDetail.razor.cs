@@ -1,5 +1,5 @@
 using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 using Radzen;
 
@@ -82,7 +82,7 @@ public partial class AuditDetail : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading audit detail for code: {AuditCode}", AuditCode);
-            ShowErrorAsyncNotification("Error loading audit details");
+            await ShowErrorAsyncNotification("Error loading audit details");
         }
         finally
         {
@@ -105,7 +105,7 @@ public partial class AuditDetail : ComponentBase
             else
             {
                 _logger.LogWarning("Audit not found: {AuditCode}", AuditCode);
-                ShowErrorAsyncNotification("Audit not found");
+                await ShowErrorAsyncNotification("Audit not found");
                 _navigation.NavigateToSecure("/SMSAssurance/AuditManagement");
             }
         }
@@ -217,7 +217,7 @@ public partial class AuditDetail : ComponentBase
     private async Task RefreshData()
     {
         await LoadAuditDetailAsync();
-        ShowSuccessAsyncNotification("Audit details refreshed successfully");
+        await ShowSuccessAsyncNotification("Audit details refreshed successfully");
     }
     #endregion
 
@@ -229,7 +229,7 @@ public partial class AuditDetail : ComponentBase
         try
         {
             var result = await _dialogService.OpenAsync<Components.AuditDialog>("Edit Audit",
-                new Dictionary<string, object>()
+                new Dictionary<string, object?>()
                 {
                     { "Audit", Audit },
                     { "IsNew", false }
@@ -239,13 +239,13 @@ public partial class AuditDetail : ComponentBase
             if (result is not null)
             {
                 await LoadAuditAsync();
-                ShowSuccessAsyncNotification("Audit updated successfully");
+                await ShowSuccessAsyncNotification("Audit updated successfully");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error editing audit");
-            ShowErrorAsyncNotification("Error editing audit");
+            await ShowErrorAsyncNotification("Error editing audit");
         }
     }
 
@@ -265,17 +265,17 @@ public partial class AuditDetail : ComponentBase
             if (result.IsSuccess)
             {
                 await LoadAuditAsync();
-                ShowSuccessAsyncNotification("Audit started successfully");
+                await ShowSuccessAsyncNotification("Audit started successfully");
             }
             else
             {
-                ShowErrorAsyncNotification($"Failed to start audit: {result.Error?.Message}");
+                await ShowErrorAsyncNotification($"Failed to start audit: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error starting audit");
-            ShowErrorAsyncNotification("Error starting audit");
+            await ShowErrorAsyncNotification("Error starting audit");
         }
         finally
         {
@@ -355,7 +355,7 @@ public partial class AuditDetail : ComponentBase
         try
         {
             var result = await _dialogService.OpenAsync<Components.AuditFindingDialog>("Create Finding",
-                new Dictionary<string, object>()
+                new Dictionary<string, object?>()
                 {
                     { "AuditCode", Audit.Code! },
                     { "IsNew", true }
@@ -366,13 +366,13 @@ public partial class AuditDetail : ComponentBase
             {
                 await LoadFindingsAsync();
                 CalculateStatistics();
-                ShowSuccessAsyncNotification("Finding created successfully");
+                await ShowSuccessAsyncNotification("Finding created successfully");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating finding");
-            ShowErrorAsyncNotification("Error creating finding");
+            await ShowErrorAsyncNotification("Error creating finding");
         }
     }
 
@@ -381,7 +381,7 @@ public partial class AuditDetail : ComponentBase
         try
         {
             var result = await _dialogService.OpenAsync<Components.AuditFindingDialog>("Edit Finding",
-                new Dictionary<string, object>()
+                new Dictionary<string, object?>()
                 {
                     { "AuditCode", Audit!.Code! },
                     { "Finding", finding },
@@ -393,13 +393,13 @@ public partial class AuditDetail : ComponentBase
             {
                 await LoadFindingsAsync();
                 CalculateStatistics();
-                ShowSuccessAsyncNotification("Finding updated successfully");
+                await ShowSuccessAsyncNotification("Finding updated successfully");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error editing finding");
-            ShowErrorAsyncNotification("Error editing finding");
+            await ShowErrorAsyncNotification("Error editing finding");
         }
     }
 
@@ -422,18 +422,18 @@ public partial class AuditDetail : ComponentBase
                 {
                     await LoadFindingsAsync();
                     CalculateStatistics();
-                    ShowSuccessAsyncNotification("Finding deleted successfully");
+                    await ShowSuccessAsyncNotification("Finding deleted successfully");
                 }
                 else
                 {
-                    ShowErrorAsyncNotification($"Failed to delete finding: {result.Error?.Message}");
+                    await ShowErrorAsyncNotification($"Failed to delete finding: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting finding");
-            ShowErrorAsyncNotification("Error deleting finding");
+            await ShowErrorAsyncNotification("Error deleting finding");
         }
     }
 
@@ -469,17 +469,17 @@ public partial class AuditDetail : ComponentBase
             {
                 await LoadFindingsAsync();
                 CalculateStatistics();
-                ShowSuccessAsyncNotification("Corrective action assigned successfully");
+                await ShowSuccessAsyncNotification("Corrective action assigned successfully");
             }
             else
             {
-                ShowErrorAsyncNotification($"Failed to assign corrective action: {result.Error?.Message}");
+                await ShowErrorAsyncNotification($"Failed to assign corrective action: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning corrective action");
-            ShowErrorAsyncNotification("Error assigning corrective action");
+            await ShowErrorAsyncNotification("Error assigning corrective action");
         }
     }
 
@@ -510,17 +510,17 @@ public partial class AuditDetail : ComponentBase
             {
                 await LoadFindingsAsync();
                 CalculateStatistics();
-                ShowSuccessAsyncNotification("Corrective action completed successfully");
+                await ShowSuccessAsyncNotification("Corrective action completed successfully");
             }
             else
             {
-                ShowErrorAsyncNotification($"Failed to complete corrective action: {result.Error?.Message}");
+                await ShowErrorAsyncNotification($"Failed to complete corrective action: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error completing corrective action");
-            ShowErrorAsyncNotification("Error completing corrective action");
+            await ShowErrorAsyncNotification("Error completing corrective action");
         }
     }
 
@@ -551,17 +551,17 @@ public partial class AuditDetail : ComponentBase
             {
                 await LoadFindingsAsync();
                 CalculateStatistics();
-                ShowSuccessAsyncNotification("Finding verified successfully");
+                await ShowSuccessAsyncNotification("Finding verified successfully");
             }
             else
             {
-                ShowErrorAsyncNotification($"Failed to verify finding: {result.Error?.Message}");
+                await ShowErrorAsyncNotification($"Failed to verify finding: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error verifying finding");
-            ShowErrorAsyncNotification("Error verifying finding");
+            await ShowErrorAsyncNotification("Error verifying finding");
         }
     }
     #endregion
@@ -574,7 +574,7 @@ public partial class AuditDetail : ComponentBase
         try
         {
             var result = await _dialogService.OpenAsync<Components.AuditEvidenceDialog>("Upload Evidence",
-                new Dictionary<string, object>()
+                new Dictionary<string, object?>()
                 {
                     { "AuditCode", Audit.Code! },
                     { "IsNew", true }
@@ -585,13 +585,13 @@ public partial class AuditDetail : ComponentBase
             {
                 await LoadEvidenceAsync();
                 CalculateStatistics();
-                ShowSuccessAsyncNotification("Evidence uploaded successfully");
+                await ShowSuccessAsyncNotification("Evidence uploaded successfully");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error uploading evidence");
-            ShowErrorAsyncNotification("Error uploading evidence");
+            await ShowErrorAsyncNotification("Error uploading evidence");
         }
     }
 
@@ -600,7 +600,7 @@ public partial class AuditDetail : ComponentBase
         try
         {
             var result = await _dialogService.OpenAsync<Components.AuditEvidenceDialog>("Edit Evidence",
-                new Dictionary<string, object>()
+                new Dictionary<string, object?>()
                 {
                     { "AuditCode", Audit!.Code! },
                     { "Evidence", evidence },
@@ -612,13 +612,13 @@ public partial class AuditDetail : ComponentBase
             {
                 await LoadEvidenceAsync();
                 CalculateStatistics();
-                ShowSuccessAsyncNotification("Evidence updated successfully");
+                await ShowSuccessAsyncNotification("Evidence updated successfully");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error editing evidence");
-            ShowErrorAsyncNotification("Error editing evidence");
+            await ShowErrorAsyncNotification("Error editing evidence");
         }
     }
 
@@ -627,12 +627,12 @@ public partial class AuditDetail : ComponentBase
         try
         {
             // TODO: Implement evidence viewing when ViewEvidenceDialog is created
-            ShowSuccessAsyncNotification($"Evidence viewing feature will be implemented soon. Evidence: {evidence.Title}");
+            await ShowSuccessAsyncNotification($"Evidence viewing feature will be implemented soon. Evidence: {evidence.Title}");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error viewing evidence");
-            ShowErrorAsyncNotification("Error viewing evidence");
+            await ShowErrorAsyncNotification("Error viewing evidence");
         }
     }
 
@@ -648,7 +648,7 @@ public partial class AuditDetail : ComponentBase
             if (confirm == true)
             {
                 // TODO: Implement DeleteSMSAuditEvidenceCommand when available
-                ShowSuccessAsyncNotification($"Evidence '{evidence.Title}' deleted successfully");
+                await ShowSuccessAsyncNotification($"Evidence '{evidence.Title}' deleted successfully");
                 await LoadEvidenceAsync();
                 CalculateStatistics();
             }
@@ -656,7 +656,7 @@ public partial class AuditDetail : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting evidence");
-            ShowErrorAsyncNotification("Error deleting evidence");
+            await ShowErrorAsyncNotification("Error deleting evidence");
         }
     }
 
@@ -665,12 +665,12 @@ public partial class AuditDetail : ComponentBase
         try
         {
             // TODO: Implement file download functionality
-            ShowSuccessAsyncNotification($"Download initiated for '{evidence.Title}'");
+            await ShowSuccessAsyncNotification($"Download initiated for '{evidence.Title}'");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error downloading evidence");
-            ShowErrorAsyncNotification("Error downloading evidence");
+                await ShowErrorAsyncNotification("Error downloading evidence");
         }
     }
     #endregion
@@ -699,7 +699,7 @@ public partial class AuditDetail : ComponentBase
 
             // TODO: Implement comprehensive report generation
             // For now, provide a placeholder implementation
-            ShowSuccessAsyncNotification($"Report generation initiated for audit {Audit.Code}. Feature will be enhanced in future updates.");
+            await ShowSuccessAsyncNotification($"Report generation initiated for audit {Audit.Code}. Feature will be enhanced in future updates.");
 
             // Future implementation could:
             // 1. Generate PDF report with audit details
@@ -710,7 +710,7 @@ public partial class AuditDetail : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error generating audit report");
-            ShowErrorAsyncNotification("Error generating audit report");
+            await ShowErrorAsyncNotification("Error generating audit report");
         }
     }
     #endregion

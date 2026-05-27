@@ -7,11 +7,6 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Domain.ValueObjects;
-using SMS_Domain.Common;
-using SMS_Domain.Interfaces;
-using SMS_Domain.Enums;
-
 namespace SMS_Application.Interfaces;
 
 /// <summary>

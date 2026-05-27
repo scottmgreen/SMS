@@ -205,7 +205,7 @@ namespace SMS3.Api.Extensions
 
             if (!operation.Parameters.Any(p =>
                     p.In == ParameterLocation.Header &&
-                    p.Name.Equals("X-API-Key", StringComparison.OrdinalIgnoreCase)))
+                    p.Name?.Equals("X-API-Key", StringComparison.OrdinalIgnoreCase) == true))
             {
                 operation.Parameters.Add(new OpenApiParameter
                 {

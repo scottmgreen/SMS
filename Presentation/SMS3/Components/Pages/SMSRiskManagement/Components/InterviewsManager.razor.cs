@@ -1,7 +1,7 @@
 
 
 using SMS_Application.Interfaces;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
@@ -90,7 +90,7 @@ public partial class InterviewsManager : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading interviews for investigation: {Code}", InvestigationCode);
-            ShowErrorAsyncNotification("Error loading interviews");
+            await ShowErrorAsyncNotification("Error loading interviews");
         }
         finally
         {
@@ -116,7 +116,7 @@ public partial class InterviewsManager : ComponentBase
             CssClass = "custom-modal-dialog"
         };
 
-        var parameters = new Dictionary<string, object>
+        var parameters = new Dictionary<string, object?>
         {
             { "InvestigationCode", InvestigationCode }
         };
@@ -129,7 +129,7 @@ public partial class InterviewsManager : ComponentBase
         if (result == true)
         {
             await RefreshInterviews();
-            ShowSuccessAsyncNotification("Interview scheduled successfully");
+            await ShowSuccessAsyncNotification("Interview scheduled successfully");
         }
     }
 
@@ -148,7 +148,7 @@ public partial class InterviewsManager : ComponentBase
             CssClass = "custom-modal-dialog"
         };
 
-        var parameters = new Dictionary<string, object>
+        var parameters = new Dictionary<string, object?>
         {
             { "Interview", interview }
         };
@@ -174,7 +174,7 @@ public partial class InterviewsManager : ComponentBase
             CssClass = "custom-modal-dialog"
         };
 
-        var parameters = new Dictionary<string, object>
+        var parameters = new Dictionary<string, object?>
         {
             { "Interview", interview }
         };
@@ -187,7 +187,7 @@ public partial class InterviewsManager : ComponentBase
         if (result == true)
         {
             await RefreshInterviews();
-            ShowSuccessAsyncNotification("Interview updated successfully");
+            await ShowSuccessAsyncNotification("Interview updated successfully");
         }
     }
 
@@ -211,26 +211,26 @@ public partial class InterviewsManager : ComponentBase
                     if (result.IsSuccess)
                     {
                         await RefreshInterviews();
-                        ShowSuccessAsyncNotification("Interview started - Opening interview dialog for conducting");
+                        await ShowSuccessAsyncNotification("Interview started - Opening interview dialog for conducting");
 
                         // Immediately open the EditInterviewDialog to conduct the interview
                         await OpenConductInterviewDialog(interview);
                     }
                     else
                     {
-                        ShowErrorAsyncNotification($"Failed to start interview: {result.Error?.Message}");
+                        await ShowErrorAsyncNotification($"Failed to start interview: {result.Error?.Message}");
                     }
                 }
                 else
                 {
-                    ShowErrorAsyncNotification($"Cannot start interview: {startResult.Error?.Message}");
+                    await ShowErrorAsyncNotification($"Cannot start interview: {startResult.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error starting interview: {Code}", interview.Code);
-            ShowErrorAsyncNotification("Error starting interview");
+            await ShowErrorAsyncNotification("Error starting interview");
         }
     }
 
@@ -249,7 +249,7 @@ public partial class InterviewsManager : ComponentBase
             CssClass = "custom-modal-dialog"
         };
 
-        var parameters = new Dictionary<string, object>
+        var parameters = new Dictionary<string, object?>
         {
             { "Interview", interview }
         };
@@ -262,7 +262,7 @@ public partial class InterviewsManager : ComponentBase
         if (result == true)
         {
             await RefreshInterviews();
-            ShowSuccessAsyncNotification("Interview session completed");
+            await ShowSuccessAsyncNotification("Interview session completed");
         }
     }
 
@@ -281,7 +281,7 @@ public partial class InterviewsManager : ComponentBase
             CssClass = "custom-modal-dialog"
         };
 
-        var parameters = new Dictionary<string, object>
+        var parameters = new Dictionary<string, object?>
         {
             { "Interview", interview }
         };
@@ -294,7 +294,7 @@ public partial class InterviewsManager : ComponentBase
         if (result == true)
         {
             await RefreshInterviews();
-            ShowSuccessAsyncNotification("Interview completed successfully");
+            await ShowSuccessAsyncNotification("Interview completed successfully");
         }
     }
 
@@ -321,23 +321,23 @@ public partial class InterviewsManager : ComponentBase
                     if (result.IsSuccess)
                     {
                         await RefreshInterviews();
-                        ShowSuccessAsyncNotification("Interview cancelled");
+                        await ShowSuccessAsyncNotification("Interview cancelled");
                     }
                     else
                     {
-                        ShowErrorAsyncNotification($"Failed to cancel interview: {result.Error?.Message}");
+                        await ShowErrorAsyncNotification($"Failed to cancel interview: {result.Error?.Message}");
                     }
                 }
                 else
                 {
-                    ShowErrorAsyncNotification($"Cannot cancel interview: {cancelResult.Error?.Message}");
+                    await ShowErrorAsyncNotification($"Cannot cancel interview: {cancelResult.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error cancelling interview: {Code}", interview.Code);
-            ShowErrorAsyncNotification("Error cancelling interview");
+            await ShowErrorAsyncNotification("Error cancelling interview");
         }
     }
     #endregion

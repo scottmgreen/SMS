@@ -21,7 +21,7 @@
 
 using Microsoft.AspNetCore.Http;
 
-namespace Infrastructure.Configuration.Middleware
+namespace SMS_Infrastructure.Configuration.Middleware
 {
     /// <summary>
     /// Middleware that adds security headers to HTTP responses to protect against common web vulnerabilities

@@ -86,9 +86,9 @@ function Create-ApiRequest {
     $locationDesc = if ($CsvRow.Location) { $CsvRow.Location } else { "Not Provided" }
 
     $incidentDateTime = $null
-    if ($CsvRow."Date and Time of Incident") {
+    if ($CsvRow."Date Created") {
         try {
-            $incidentDateTime = [DateTime]::Parse($CsvRow."Date and Time of Incident").ToString("yyyy-MM-ddTHH:mm:ssZ")
+            $incidentDateTime = [DateTime]::Parse($CsvRow."Date Created").ToString("yyyy-MM-ddTHH:mm:ssZ")
         }
         catch {
             $incidentDateTime = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")

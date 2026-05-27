@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using System.Text;
 
 using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 using Microsoft.JSInterop;
 
@@ -29,8 +29,6 @@ namespace SMS3.Components.Pages.SMSListings;
 /// </summary>
 public partial class HazardFileListing : ComponentBase
 {
-    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
-
     #region Dependencies
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<HazardFileListing> _logger { get; set; } = default!;

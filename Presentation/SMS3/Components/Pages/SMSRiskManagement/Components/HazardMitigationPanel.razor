@@ -729,7 +729,7 @@
             Id = a.Id.Value,
             Name = a.DisplayName ?? a.UserName?.Value ?? "Unknown User",
             Organization = "SMS Team",
-            Role = a.UserRole.Name,
+            Role = a.UserRole?.Name ?? string.Empty,
             IsSelected = currentPanelMembers.Contains(a.Id.Value)
         }));
     }

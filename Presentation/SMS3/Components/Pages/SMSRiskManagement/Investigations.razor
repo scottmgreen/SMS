@@ -24,7 +24,7 @@
 }
 else
 {
-    <PageHeader Title="@($"SMS Investigation {InvestigationEntity.Code} for Hazard: {InvestigationEntity.HazardCode}")"
+    <PageHeader Title="@($"SMS Investigation {InvestigationEntity?.Code ?? "N/A"} for Hazard: {InvestigationEntity?.HazardCode ?? "N/A"}")"
                 Subtitle="@GetInvestigationSubtitle()"
                 Icon="fas fa-search" />
 

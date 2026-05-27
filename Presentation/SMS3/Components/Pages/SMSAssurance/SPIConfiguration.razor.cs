@@ -285,7 +285,7 @@ public partial class SPIConfiguration
             CssClass = "sms-spi-dialog"
         };
 
-        var parameters = new Dictionary<string, object>
+        var parameters = new Dictionary<string, object?>
         {
             { "SPI", spi },
             { "IsEditMode", isEditMode },

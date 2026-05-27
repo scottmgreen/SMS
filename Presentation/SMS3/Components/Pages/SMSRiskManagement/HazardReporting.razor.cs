@@ -4,7 +4,7 @@ using Microsoft.JSInterop;
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
 using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS_Domain.Errors;
 
 using SMS_Shared.Configuration;
@@ -308,13 +308,14 @@ public partial class HazardReporting : ComponentBase, IDisposable
             if (queryParams.TryGetValue("mode", out var mode) && mode == "edit" &&
                 queryParams.TryGetValue("reportCode", out var reportCode) && !string.IsNullOrEmpty(reportCode))
             {
+                var reportCodeValue = reportCode.ToString();
                 IsEditMode = true;
-                EditReportCode = reportCode;
+                EditReportCode = reportCodeValue;
 
-                _logger.LogInformation("Edit mode detected for report: {ReportCode} (via query parameter)", reportCode);
+                _logger.LogInformation("Edit mode detected for report: {ReportCode} (via query parameter)", reportCodeValue);
 
                 // Load the existing report data
-                await LoadReportForEditingAsync(reportCode);
+                await LoadReportForEditingAsync(reportCodeValue);
             }
             else
             {
@@ -741,7 +742,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             var successfullyProcessedFiles = new List<AttachedFile>();
             var failedFiles = new List<string>();
 
-            foreach (var newFile in args.Files)
+            foreach (var newFile in newFiles)
             {
                 try
                 {
@@ -1217,8 +1218,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
         // STEP 2: Update the existing Hazard
         // ===============================
         EditingHazard!.Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}";
-        EditingHazard.Description = HazardReport.Description;
-        EditingHazard.HazardCategory = HazardReport.HazardCategory;
+        EditingHazard.Description = HazardReport.Description ?? string.Empty;
+        EditingHazard.HazardCategory = HazardReport.HazardCategory ?? string.Empty;
         EditingHazard.HazardType = HazardReport.HazardType; // This is the actual selected hazard type, not "Initial"
         
         EditingHazard.UpdatedDate = DateTime.UtcNow;
@@ -1307,8 +1308,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             Code = "HZ-0000",
             Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}",
-            Description = HazardReport.Description,
-            HazardCategory = HazardReport.HazardCategory,
+            Description = HazardReport.Description ?? string.Empty,
+            HazardCategory = HazardReport.HazardCategory ?? string.Empty,
             HazardType = HazardReport.HazardType,
             
             ReportCode = actualReportCode,
@@ -1503,7 +1504,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             FileSizeBytes = attachedFile.Size,
                             StorageType = "Database",
                             FileData = fileData,
-                            UploadedBy = HazardReport.SubmittedBy ?? CurrentUserService?.UserDisplayName,
+                            UploadedBy = HazardReport.SubmittedBy ?? CurrentUserService?.UserDisplayName ?? "SYSTEM",
                             UploadedDate = DateTime.UtcNow,
                             IsActive = true,
                             IsConfidential = HazardReport.IsAnonymous

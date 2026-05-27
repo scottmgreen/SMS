@@ -143,7 +143,7 @@ public partial class EvidenceFilesManager : ComponentBase
             CloseDialogOnEsc = true
         };
 
-        var parameters = new Dictionary<string, object>
+        var parameters = new Dictionary<string, object?>
         {
             { "HazardCode", HazardCode },
             { "InvestigationCode", InvestigationCode }

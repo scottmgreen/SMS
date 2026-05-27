@@ -5,7 +5,7 @@ using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 
 using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
@@ -489,6 +489,17 @@ public partial class RiskAssessmentListing : ComponentBase
             _logger.LogError(ex, "Error editing risk assessment {Code}", assessment.Code);
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error opening risk assessment editor"));
         }
+    }
+
+    private async Task OnEditAssessmentFromDialog()
+    {
+        if (SelectedAssessment is null)
+        {
+            return;
+        }
+
+        ShowViewDialog = false;
+        await EditAssessment(SelectedAssessment);
     }
     
     private async Task NavigateToTechnicalAssessment(RiskAssessment assessment)

@@ -707,7 +707,7 @@ public class EventQueueService : IEventQueueService
 
     private static readonly Dictionary<string, Type> UIEventTypeMap = new()
     {
-        { SMS_Domain.Enums.EventType.UINotification.Value, typeof(SMS_Domain.Events.UIEvents.UINotificationEvent) },
+        { SMS_Domain.Enums.EventType.UINotification.Value, typeof(SMS_Domain.Events.UINotificationEvent) },
         { SMS_Domain.Events.SPIDashboardRefreshEvent.TypeValue, typeof(SMS_Domain.Events.SPIDashboardRefreshEvent) },
         { SMS_Domain.Events.Test.TestUIEvent.TypeValue, typeof(SMS_Domain.Events.Test.TestUIEvent) },
     };

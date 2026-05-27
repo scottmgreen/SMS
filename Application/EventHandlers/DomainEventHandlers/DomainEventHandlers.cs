@@ -9,7 +9,6 @@
 
 
 using SMS_Domain.Events;
-using SMS_Domain.Events.UIEvents;
 
 namespace SMS_Application.EventHandlers
 {

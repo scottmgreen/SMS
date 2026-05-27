@@ -545,9 +545,10 @@
                         analysis.ResidualAdditionalComments = newValue.Trim();
                         break;
                 }
+
+                // ✅ Ensure the updated entity is maintained in the dictionary
+                Step5.HazardResidualRiskAnalyses[hazardCode] = analysis;
             }
-            // ✅ Ensure the updated entity is maintained in the dictionary
-            Step5.HazardResidualRiskAnalyses[hazardCode] = analysis;
 
             // Trigger UI update and notify parent component
             await InvokeAsync(StateHasChanged);

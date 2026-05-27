@@ -2,7 +2,7 @@ using Microsoft.Extensions.Logging;
 using Radzen;
 using SMS_Application.Interfaces;
 using SMS_Domain.Common;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS3.Components.Shared;
 
 namespace SMS3.EventHandlers;

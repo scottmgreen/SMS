@@ -1,5 +1,5 @@
 using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 using SMS3.Components.Shared.UIHelpers;
 
@@ -15,7 +15,6 @@ public partial class ScoringPanelListing : ComponentBase
     private RadzenDataGrid<ScoringPanel>? panelsGrid;
     private IEnumerable<ScoringPanel> panels = new List<ScoringPanel>();
     private int totalCount;
-    private bool isLoading = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -52,9 +51,6 @@ public partial class ScoringPanelListing : ComponentBase
     {
         try
         {
-            isLoading = true;
-            StateHasChanged();
-
             await LoadInitialData();
 
             var query = panels.AsQueryable();
@@ -83,11 +79,6 @@ public partial class ScoringPanelListing : ComponentBase
         {
             _logger.LogError(ex, "Error in LoadData");
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error loading data"));
-        }
-        finally
-        {
-            isLoading = false;
-            StateHasChanged();
         }
     }
 

@@ -19,11 +19,11 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Infrastructure.Configuration.Middleware;
+using SMS_Infrastructure.Configuration.Middleware;
 
 using Microsoft.AspNetCore.Builder;
 
-namespace Infrastructure.Configuration.Extensions
+namespace SMS_Infrastructure.Configuration.Extensions
 {
     /// <summary>
     /// Extension methods for configuring security headers middleware

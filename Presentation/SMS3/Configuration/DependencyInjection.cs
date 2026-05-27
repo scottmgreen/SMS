@@ -6,7 +6,7 @@ using Swashbuckle.AspNetCore.SwaggerGen;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 using SMS_Infrastructure.Security;
 

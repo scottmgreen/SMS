@@ -2,7 +2,7 @@
 using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 using SMS_Shared.Configuration;
 
@@ -374,8 +374,8 @@ public partial class Investigations : ComponentBase
                 return;
             }
                         
-            InvestigationEntity.DecisionMaker = CurrentUserService?.UserDisplayName;
-            InvestigationEntity.Status = InvestigationStatus.FromValue(InvestigationStatusId);
+            InvestigationEntity.DecisionMaker = CurrentUserService?.UserDisplayName ?? "SYSTEM";
+            InvestigationEntity.Status = InvestigationStatus.FromValue(InvestigationStatusId) ?? InvestigationStatus.StatusUnknown;
 
             // Check if user is trying to set status to complete
             if (InvestigationEntity.Status == InvestigationStatus.InvestigationComplete)
@@ -596,7 +596,7 @@ public partial class Investigations : ComponentBase
                 var report = reportResult.Value;
 
                 // Create new ReportValidation using the static factory method
-                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, CurrentUserService?.UserDisplayName);
+                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, CurrentUserService?.UserDisplayName ?? "SYSTEM");
                 validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
 
                 var createCommand = new CreateReportValidationCommand(validation);
@@ -636,7 +636,7 @@ public partial class Investigations : ComponentBase
 
     private async Task<bool> UpdateReportStatus(string reportcode, ReportStatus status)
     {
-        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, CurrentUserService?.UserDisplayName);
+        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, CurrentUserService?.UserDisplayName ?? "SYSTEM");
         var getupdateResult = await _mediator.SendAsync(updatestatuscmd, CancellationToken.None);
         if (!getupdateResult.IsSuccess)
         {

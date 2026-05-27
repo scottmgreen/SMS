@@ -1,7 +1,7 @@
 using SMS_Shared.Configuration;
 
 using SMS_Application.Interfaces;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS3.Components.Pages.SMSAssurance.Components;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
@@ -137,7 +137,7 @@ public partial class SPIDetail : ComponentBase
             Period = string.Empty
         };
 
-        var parameters = new Dictionary<string, object>
+        var parameters = new Dictionary<string, object?>
         {
             { "SPI", SPI },
             { "DataPoint", currentDataPoint },
@@ -187,7 +187,7 @@ public partial class SPIDetail : ComponentBase
         //    VerifiedDate = dataPoint.VerifiedDate
         //};
 
-        var parameters = new Dictionary<string, object>
+        var parameters = new Dictionary<string, object?>
         {
             { "SPI", SPI ?? throw new InvalidOperationException("SPI cannot be null") },
             { "DataPoint", dataPoint ?? new SPIDataPoint(new("DP-0000")) },

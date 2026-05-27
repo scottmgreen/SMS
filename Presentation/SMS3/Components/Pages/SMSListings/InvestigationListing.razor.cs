@@ -5,7 +5,7 @@ using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 
 using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 using SMS_Domain.ValueObjects;
@@ -24,8 +24,6 @@ namespace SMS3.Components.Pages.SMSListings;
 /// </summary>
 public partial class InvestigationListing : ComponentBase
 {
-    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
-
     #region Dependencies
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
@@ -39,7 +37,6 @@ public partial class InvestigationListing : ComponentBase
     private IEnumerable<Investigation> investigations = new List<Investigation>();
     private List<Investigation> allInvestigations = new List<Investigation>(); // Store all investigations for client-side filtering
     private int totalCount;
-    private bool isLoading = false;
     #endregion
     
     #region Lifecycle Methods
@@ -54,9 +51,6 @@ public partial class InvestigationListing : ComponentBase
     {
         try
         {
-            isLoading = true;
-            StateHasChanged();
-
             _logger.LogInformation("Loading investigations for listing view");
 
             var query = new GetAllInvestigationsQuery();
@@ -98,7 +92,6 @@ public partial class InvestigationListing : ComponentBase
         }
         finally
         {
-            isLoading = false;
             StateHasChanged();
         }
     }
@@ -107,9 +100,6 @@ public partial class InvestigationListing : ComponentBase
     {
         try
         {
-            isLoading = true;
-            StateHasChanged();
-
             _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
@@ -189,7 +179,6 @@ public partial class InvestigationListing : ComponentBase
         }
         finally
         {
-            isLoading = false;
             StateHasChanged();
         }
     }

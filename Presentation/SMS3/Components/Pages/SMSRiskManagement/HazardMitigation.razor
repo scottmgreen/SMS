@@ -114,8 +114,11 @@ else
                                 <RadzenColumn Size="12" SizeMD="4">
                                     <RadzenFormField Text="Approved By" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
                                         @* <RadzenText>@(CurrentMitigation?.ApprovedBy ?? "Not Assigned")</RadzenText> *@
-                                        <RadzenTextBox Value="@CurrentMitigation.ApprovedBy"
-                                                       Style="width: 100%; min-width: 100%;" />
+                                        @if (CurrentMitigation is not null)
+                                        {
+                                            <RadzenTextBox Value="@CurrentMitigation.ApprovedBy"
+                                                           Style="width: 100%; min-width: 100%;" />
+                                        }
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 <RadzenColumn Size="12" SizeMD="4">
@@ -336,7 +339,7 @@ else
         font-style: italic;
     }
 
-    /* Ensure proper input sizing with Radzen */
+    /* Ensure proper input sizing with Radzen 
     ::deep .rz-textbox,
     ::deep .rz-dropdown,
     ::deep .rz-textarea,
@@ -346,14 +349,15 @@ else
         min-width: 100% !important;
     }
 
-    /* Ensure FormField containers take full width */
+    Ensure FormField containers take full width 
     ::deep .rz-formfield {
         width: 100% !important;
     }
 
-    /* Make sure dropdowns are responsive and fill container */
+    Make sure dropdowns are responsive and fill container 
     ::deep .rz-dropdown {
         display: block !important;
         width: 100% !important;
     }
+        */
 </style>

@@ -131,7 +131,7 @@ public partial class ReportValidation : ComponentBase
 
                 // Set defaults for new validation
                 SelectedValidationDecision = null;
-                ValidatedBy = CurrentUserService?.UserDisplayName;
+                ValidatedBy = CurrentUserService?.UserDisplayName ?? string.Empty;
                 ValidationType = RiskAssessmentCategory.Technical;
                 ValidationComments = "";
             }
@@ -310,7 +310,7 @@ public partial class ReportValidation : ComponentBase
         var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
         var getReportQueryResult = await _mediator.SendAsync(getReportQuery, CancellationToken.None);
 
-        var cmd = new UpdateReportStatusCommand(reportId, status, CurrentUserService?.UserDisplayName);
+        var cmd = new UpdateReportStatusCommand(reportId, status, CurrentUserService?.UserDisplayName ?? "SYSTEM");
         var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
         if (!cmdResult.IsSuccess)
         {
@@ -731,7 +731,7 @@ public partial class ReportValidation : ComponentBase
         var query = new GetAllRiskAssessmentsQuery();
         var result = await _mediator.SendAsync(query, CancellationToken.None);
 
-        if (!result.IsSuccess || result.Value?.Count == 0)
+        if (!result.IsSuccess || result.Value is null || result.Value.Count == 0)
             return null;
 
         return result.Value.FirstOrDefault(ra => 

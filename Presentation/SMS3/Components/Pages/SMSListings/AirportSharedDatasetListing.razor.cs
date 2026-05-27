@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
 
 using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Mvc;
@@ -42,7 +42,6 @@ public partial class AirportSharedDatasetListing : ComponentBase
     private RadzenDataGrid<AirportSharedDataset>? datasetsGrid;
     private IEnumerable<AirportSharedDataset> datasets = new List<AirportSharedDataset>();
     private int totalCount;
-    private bool isLoading = false;
     #endregion
 
     #region Lifecycle Methods
@@ -83,7 +82,6 @@ public partial class AirportSharedDatasetListing : ComponentBase
     {
         try
         {
-            isLoading = true;
             StateHasChanged();
 
             await LoadInitialData();
@@ -117,7 +115,6 @@ public partial class AirportSharedDatasetListing : ComponentBase
         }
         finally
         {
-            isLoading = false;
             StateHasChanged();
         }
     }

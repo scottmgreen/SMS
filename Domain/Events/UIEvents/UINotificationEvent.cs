@@ -7,7 +7,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace SMS_Domain.Events.UIEvents;
+namespace SMS_Domain.Events;
 
 /// <summary>
 /// UI event for displaying popup/toast notifications

@@ -1,5 +1,5 @@
 using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
@@ -12,7 +12,6 @@ public partial class ReportCalendar : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportCalendar> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
-    [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
 
@@ -21,16 +20,6 @@ public partial class ReportCalendar : ComponentBase
     private RadzenScheduler<ReportSchedulerItem> scheduler = default!;
     private List<Report> Reports { get; set; } = new();
     private List<ReportSchedulerItem> SchedulerData { get; set; } = new();
-    private Report? SelectedReport { get; set; }
-
-    // Modal state properties (copied from ReportListing)
-    public bool ShowDetailsModal { get; set; } = false;
-    public List<Hazard> AssociatedHazards { get; set; } = new();
-    public string LocationsWithMaps => AssociatedHazards
-        .Count(h => h.HazardLocation?.Latitude.HasValue == true && h.HazardLocation?.Longitude.HasValue == true)
-        .ToString();
-    public int TotalFilesCount => AssociatedHazards
-        .Sum(h => h.HazardFileIds?.Count ?? 0);
     #endregion
 
     #region Lifecycle Methods
@@ -91,17 +80,21 @@ public partial class ReportCalendar : ComponentBase
     #region Data Mapping
     private ReportSchedulerItem MapReportToSchedulerItem(Report report)
     {
-        var reportDate = report.CreatedDate ?? DateTime.Now;
+        var reportDate = report.SubmittedDate ;
+        //var hazardsQuery = new GetHazardsByReportCodeQuery(new ReportID(report.Code));
+        //var hazardsResult = _mediator.SendAsync(hazardsQuery, CancellationToken.None);
+
+        //var initialHazard = hazardsResult.Result.Value.FirstOrDefault(h => h.IsInitialHazard)
+        //                       ?? hazardsResult.Result.Value.FirstOrDefault();
 
         return new ReportSchedulerItem
         {
-            ReportId = report.Id?.Value ?? "",
             ReportCode = report.Code ?? "Unknown",
-            Text = $"{report.Code} - {GetShortDescription(report)}",
+            Text = $"{report.Code}", // - {GetShortDescription(report)}",
             Start = reportDate,
             End = reportDate.AddHours(1), // Default 1 hour duration for display
-            ReportType = DetermineReportType(report),
-            Priority = DeterminePriority(report),
+            HazardCategory = "", //initialHazard?.HazardCategory ?? "Unknown",
+            HazardType = "", //initialHazard?.HazardType ?? "Unknown",
             Status = report.Status ?? "Unknown",
             Reporter = report.SubmittedBy ?? "Unknown",
             Description = report.Description ?? "No description available"
@@ -114,28 +107,7 @@ public partial class ReportCalendar : ComponentBase
         return description.Length > 50 ? $"{description[..50]}..." : description;
     }
 
-    private ReportType DetermineReportType(Report report)
-    {
-        // Logic to determine report type from report data
-        // Since we don't have specific type fields, use the Name or Description to infer
-        var text = (report.Name + " " + report.Description).ToLower();
-
-        if (text.Contains("incident"))
-            return ReportType.Incident;
-        else if (text.Contains("hazard"))
-            return ReportType.Hazard;
-        else if (text.Contains("observation"))
-            return ReportType.Observation;
-        else
-            return ReportType.Other;
-    }
-
-    private Priority DeterminePriority(Report report)
-    {
-        // Logic to determine priority - can be enhanced based on actual report data
-        // For now, return Medium as default
-        return Priority.Medium;
-    }
+        
     #endregion
 
     #region Scheduler Event Handlers
@@ -159,14 +131,49 @@ public partial class ReportCalendar : ComponentBase
         try
         {
             var reportItem = args.Data;
-            _logger.LogInformation("Report appointment selected: {ReportCode}", reportItem.ReportCode);
+            _logger.LogInformation("Report appointment selected: {ReportCode}", reportItem?.ReportCode);
 
-            // Navigate to report details or show popup
-            await ShowReportDetails(reportItem);
+            // Navigate to the initial hazard report for the selected report
+            if (reportItem is not null)
+            {
+                await NavigateToInitialHazardReportAsync(reportItem.ReportCode);
+            }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling appointment selection");
+        }
+    }
+
+    private async Task NavigateToInitialHazardReportAsync(string reportCode)
+    {
+        try
+        {
+            var hazardsQuery = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
+            var hazardsResult = await _mediator.SendAsync(hazardsQuery, CancellationToken.None);
+
+            if (!hazardsResult.IsSuccess || hazardsResult.Value is null || !hazardsResult.Value.Any())
+            {
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"No hazards found for report {reportCode}"));
+                return;
+            }
+
+            var initialHazard = hazardsResult.Value.FirstOrDefault(h => h.IsInitialHazard)
+                               ?? hazardsResult.Value.FirstOrDefault();
+
+            if (initialHazard is null)
+            {
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Unable to determine initial hazard for report {reportCode}"));
+                return;
+            }
+
+            _logger.LogInformation("Navigating from report {ReportCode} to initial hazard {HazardCode}", reportCode, initialHazard.Code);
+            _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting/{initialHazard.Code}");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error navigating to initial hazard for report {ReportCode}", reportCode);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to open hazard report"));
         }
     }
 
@@ -177,24 +184,17 @@ public partial class ReportCalendar : ComponentBase
             // Customize appointment appearance based on report type
             var reportItem = args.Data;
 
-            switch (reportItem.ReportType)
+            if (reportItem is null)
             {
-                case ReportType.Incident:
-                    args.Attributes["class"] = "report-incident";
-                    break;
-                case ReportType.Hazard:
-                    args.Attributes["class"] = "report-hazard";
-                    break;
-                case ReportType.Observation:
-                    args.Attributes["class"] = "report-observation";
-                    break;
-                default:
-                    args.Attributes["class"] = "report-other";
-                    break;
+                return;
             }
 
-            // Add tooltip with additional information
-            args.Attributes["title"] = $"Report: {reportItem.ReportCode}\nType: {reportItem.ReportType}\nReporter: {reportItem.Reporter}\nStatus: {reportItem.Status}";
+            
+            args.Attributes["class"] = "report-hazard";
+                  
+            
+            //Add tooltip with additional information
+            args.Attributes["title"] = $"Report: {reportItem.ReportCode}\nCategory: {reportItem.HazardCategory}\nType: {reportItem.HazardType}\nReporter: {reportItem.Reporter}\nStatus: {reportItem.Status}";
         }
         catch (Exception ex)
         {
@@ -233,57 +233,6 @@ public partial class ReportCalendar : ComponentBase
             _logger.LogError(ex, "Error navigating to today");
         }
     }
-
-    private async Task ShowReportDetails(ReportSchedulerItem reportItem)
-    {
-        _logger.LogInformation("View report details requested from calendar: {ReportCode}", reportItem.ReportCode);
-
-        try
-        {
-            IsLoading = true;
-            StateHasChanged();
-
-            // Get detailed report information
-            var reportQuery = new GetReportByCodeQuery(new ReportID(reportItem.ReportCode));
-            var reportResult = await _mediator.SendAsync(reportQuery, CancellationToken.None);
-
-            if (reportResult.IsSuccess && reportResult.Value is not null)
-            {
-                SelectedReport = reportResult.Value;
-            }
-            else
-            {
-                // Find the report from the loaded reports as fallback
-                SelectedReport = Reports.FirstOrDefault(r => r.Code == reportItem.ReportCode);
-                if (SelectedReport is null)
-                {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Report {reportItem.ReportCode} not found"));
-                    return;
-                }
-            }
-
-            // Load associated hazards for this report
-            await LoadAssociatedHazardsAsync(reportItem.ReportCode);
-
-            // Show the details modal
-            ShowDetailsModal = true;
-
-            _logger.LogInformation("Displaying details for report: {ReportCode} with {HazardCount} hazards",
-                reportItem.ReportCode, AssociatedHazards.Count);
-
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Report details loaded for {reportItem.ReportCode}"));
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error showing report details for {ReportCode}", reportItem.ReportCode);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error opening report details"));
-        }
-        finally
-        {
-            IsLoading = false;
-            StateHasChanged();
-        }
-    }
     #endregion
 
     #region Statistics Methods
@@ -309,151 +258,6 @@ public partial class ReportCalendar : ComponentBase
     }
     #endregion
 
-    #region Modal Management Methods (copied from ReportListing)
-
-    /// <summary>
-    /// Close the details modal
-    /// </summary>
-    public void CloseDetailsModal()
-    {
-        ShowDetailsModal = false;
-        SelectedReport = null;
-        AssociatedHazards.Clear();
-        StateHasChanged();
-    }
-
-    /// <summary>
-    /// Edit report from details modal
-    /// </summary>
-    /// <param name="report">Report to edit</param>
-    public async Task EditFromDetailsModal(Report report)
-    {
-        CloseDetailsModal();
-        await OnEditReportAsync(report);
-    }
-
-    /// <summary>
-    /// Handle edit report request - Navigate to HazardReporting page in edit mode
-    /// </summary>
-    /// <param name="report">Report to edit</param>
-    public async Task OnEditReportAsync(Report report)
-    {
-        _logger.LogInformation("Edit report requested: {ReportCode}", report.Code);
-
-        try
-        {
-            var confirmed = await _dialogService.Confirm(
-                $"Edit report '{report.Code} - {report.Name}'?\n\nThis will navigate to the hazard reporting form in edit mode.",
-                "Edit Report",
-                new ConfirmOptions()
-                {
-                    OkButtonText = "Yes, Edit Report",
-                    CancelButtonText = "Cancel"
-                });
-
-            if (confirmed == true)
-            {
-                _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting?mode=edit&reportCode={report.Code}");
-
-                _logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
-
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Opening {report.Code} for editing..."));
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error navigating to edit report {ReportCode}", report.Code);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to navigate to edit form"));
-        }
-    }
-
-    /// <summary>
-    /// Load hazards associated with a specific report
-    /// </summary>
-    /// <param name="reportCode">Report code to load hazards for</param>
-    private async Task LoadAssociatedHazardsAsync(string reportCode)
-    {
-        try
-        {
-            _logger.LogInformation("Loading hazards for report: {ReportCode}", reportCode);
-
-            // Try using GetHazardsByReportCodeQuery if it exists, otherwise fallback to GetAllHazardsQuery with filtering
-            try
-            {
-                var hazardsQuery = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
-                var hazardsResult = await _mediator.SendAsync(hazardsQuery, CancellationToken.None);
-
-                if (hazardsResult.IsSuccess && hazardsResult.Value is not null)
-                {
-                    AssociatedHazards = hazardsResult.Value.ToList();
-                    _logger.LogInformation("Loaded {Count} hazards for report {ReportCode}",
-                        AssociatedHazards.Count, reportCode);
-                    return;
-                }
-            }
-            catch (Exception queryEx)
-            {
-                _logger.LogWarning(queryEx, "GetHazardsByReportCodeQuery not available, using fallback approach");
-            }
-
-            // Fallback: Get all hazards and filter by report code
-            var allHazardsQuery = new GetAllHazardsQuery();
-            var allHazardsResult = await _mediator.SendAsync(allHazardsQuery, CancellationToken.None);
-
-            if (allHazardsResult.IsSuccess && allHazardsResult.Value is not null)
-            {
-                // Filter hazards that are associated with this report
-                AssociatedHazards = allHazardsResult.Value
-                    .Where(h => h.ReportCode == reportCode)
-                    .ToList();
-
-                _logger.LogInformation("Loaded {Count} hazards for report {ReportCode} using fallback method",
-                    AssociatedHazards.Count, reportCode);
-            }
-            else
-            {
-                AssociatedHazards = new List<Hazard>();
-                _logger.LogWarning("No hazards found for report {ReportCode}: {Error}",
-                    reportCode, allHazardsResult.Error?.Message);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error loading hazards for report {ReportCode}", reportCode);
-            AssociatedHazards = new List<Hazard>();
-        }
-    }
-
-    /// <summary>
-    /// Get Radzen badge style for status
-    /// </summary>
-    public BadgeStyle GetStatusBadgeStyle(string? status)
-    {
-        return status?.ToLower() switch
-        {
-            "active" => BadgeStyle.Success,
-            "pending" => BadgeStyle.Warning,
-            "closed" => BadgeStyle.Secondary,
-            "cancelled" => BadgeStyle.Danger,
-            _ => BadgeStyle.Info
-        };
-    }
-
-    /// <summary>
-    /// Get Radzen badge style for stage
-    /// </summary>
-    public BadgeStyle GetStageBadgeStyle(string? stage)
-    {
-        return stage?.ToLower() switch
-        {
-            "validation" => BadgeStyle.Primary,
-            "assessment" => BadgeStyle.Info,
-            "mitigation" => BadgeStyle.Warning,
-            "closure" => BadgeStyle.Success,
-            _ => BadgeStyle.Secondary
-        };
-    }
-    #endregion
 }
 
 #region Supporting Classes and Enums
@@ -462,37 +266,17 @@ public partial class ReportCalendar : ComponentBase
 /// </summary>
 public class ReportSchedulerItem
 {
-    public string ReportId { get; set; } = string.Empty;
     public string ReportCode { get; set; } = string.Empty;
     public string Text { get; set; } = string.Empty;
     public DateTime Start { get; set; }
     public DateTime End { get; set; }
-    public ReportType ReportType { get; set; }
-    public Priority Priority { get; set; }
+    public string HazardCategory { get; set; }
+    public string HazardType { get; set; }
     public string Status { get; set; } = string.Empty;
     public string Reporter { get; set; } = string.Empty;
     public string Description { get; set; } = string.Empty;
 }
 
-/// <summary>
-/// Report types for calendar categorization
-/// </summary>
-public enum ReportType
-{
-    Incident,
-    Hazard,
-    Observation,
-    Other
-}
 
-/// <summary>
-/// Priority levels for visual indicators
-/// </summary>
-public enum Priority
-{
-    Low,
-    Medium,
-    High,
-    Critical
-}
+
 #endregion

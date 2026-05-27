@@ -2,7 +2,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS_Domain.ValueObjects;
 
 using SMS_Shared.Common;
@@ -120,7 +120,7 @@ public partial class ApplicationGroups : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading data");
-            ShowErrorAsyncNotification("Error loading data. Please try again.");
+            await ShowErrorAsyncNotification("Error loading data. Please try again.");
         }
     }
 
@@ -132,7 +132,7 @@ public partial class ApplicationGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(groupCode))
         {
-            ShowErrorAsyncNotification("Group code is required.");
+            await ShowErrorAsyncNotification("Group code is required.");
             return;
         }
 
@@ -143,7 +143,7 @@ public partial class ApplicationGroups : ComponentBase
 
             if (groupResult.IsFailure)
             {
-                ShowErrorAsyncNotification("Group not found.");
+                await ShowErrorAsyncNotification("Group not found.");
                 return;
             }
 
@@ -160,7 +160,7 @@ public partial class ApplicationGroups : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading group for edit: {GroupCode}", groupCode);
-            ShowErrorAsyncNotification("Error loading group. Please try again.");
+            await ShowErrorAsyncNotification("Error loading group. Please try again.");
         }
     }
 
@@ -191,7 +191,7 @@ public partial class ApplicationGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(NewGroupName))
         {
-            ShowErrorAsyncNotification("Group name is required.");
+            await ShowErrorAsyncNotification("Group name is required.");
             return;
         }
 
@@ -216,7 +216,7 @@ public partial class ApplicationGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessAsyncNotification($"Application group '{NewGroupName}' created successfully.");
+                await ShowSuccessAsyncNotification($"Application group '{NewGroupName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
                 if (groupsGrid != null)
@@ -224,13 +224,13 @@ public partial class ApplicationGroups : ComponentBase
             }
             else
             {
-                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to create application group.");
+                await ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to create application group.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating application group");
-            ShowErrorAsyncNotification("Error creating application group. Please try again.");
+            await ShowErrorAsyncNotification("Error creating application group. Please try again.");
         }
         finally
         {
@@ -243,7 +243,7 @@ public partial class ApplicationGroups : ComponentBase
     {
         if (CurrentGroup is null || string.IsNullOrWhiteSpace(EditGroupName))
         {
-            ShowErrorAsyncNotification("Group name is required.");
+            await ShowErrorAsyncNotification("Group name is required.");
             return;
         }
 
@@ -262,7 +262,7 @@ public partial class ApplicationGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessAsyncNotification($"Application group '{EditGroupName}' updated successfully.");
+                await ShowSuccessAsyncNotification($"Application group '{EditGroupName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
                 if (groupsGrid != null)
@@ -270,13 +270,13 @@ public partial class ApplicationGroups : ComponentBase
             }
             else
             {
-                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to update application group.");
+                await ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to update application group.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating application group: {GroupCode}", CurrentGroup.Code);
-            ShowErrorAsyncNotification("Error updating application group. Please try again.");
+            await ShowErrorAsyncNotification("Error updating application group. Please try again.");
         }
         finally
         {
@@ -289,7 +289,7 @@ public partial class ApplicationGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(DeleteGroupCode))
         {
-            ShowErrorAsyncNotification("Group code is required for deletion.");
+            await ShowErrorAsyncNotification("Group code is required for deletion.");
             return;
         }
 
@@ -303,7 +303,7 @@ public partial class ApplicationGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessAsyncNotification("Application group deleted successfully.");
+                await ShowSuccessAsyncNotification("Application group deleted successfully.");
                 CloseDeleteModal();
                 await LoadDataAsync();
                 if (groupsGrid != null)
@@ -317,13 +317,13 @@ public partial class ApplicationGroups : ComponentBase
             }
             else
             {
-                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to delete application group.");
+                await ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to delete application group.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting application group: {GroupCode}", DeleteGroupCode);
-            ShowErrorAsyncNotification("Error deleting application group. Please try again.");
+            await ShowErrorAsyncNotification("Error deleting application group. Please try again.");
         }
         finally
         {
@@ -386,7 +386,7 @@ public partial class ApplicationGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(groupCode))
         {
-            ShowErrorAsyncNotification("Group code is required to manage members.");
+            await ShowErrorAsyncNotification("Group code is required to manage members.");
             return;
         }
 
@@ -406,7 +406,7 @@ public partial class ApplicationGroups : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error entering manage members mode for group: {GroupCode}", groupCode);
-            ShowErrorAsyncNotification("Error entering manage members mode. Please try again.");
+            await ShowErrorAsyncNotification("Error entering manage members mode. Please try again.");
         }
     }
 
@@ -476,7 +476,7 @@ public partial class ApplicationGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(CurrentGroupCode))
         {
-            ShowErrorAsyncNotification("User code and group code are required.");
+            await ShowErrorAsyncNotification("User code and group code are required.");
             return;
         }
 
@@ -487,19 +487,19 @@ public partial class ApplicationGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessAsyncNotification("User removed from group successfully.");
+                await ShowSuccessAsyncNotification("User removed from group successfully.");
                 await LoadGroupMembersAsync(CurrentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
             {
-                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to remove user from group.");
+                await ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to remove user from group.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, CurrentGroupCode);
-            ShowErrorAsyncNotification("Error removing user from group. Please try again.");
+            await ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
 
@@ -507,7 +507,7 @@ public partial class ApplicationGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(CurrentGroupCode) || !SelectedUsers.Any(s => s.Value))
         {
-            ShowErrorAsyncNotification("Group code and at least one user must be selected.");
+            await ShowErrorAsyncNotification("Group code and at least one user must be selected.");
             return;
         }
 
@@ -541,20 +541,20 @@ public partial class ApplicationGroups : ComponentBase
                 var message = $"Successfully assigned {successCount} user(s) to group.";
                 if (failureCount > 0)
                     message += $" {failureCount} assignment(s) failed.";
-                ShowSuccessAsyncNotification(message);
+                await ShowSuccessAsyncNotification(message);
 
                 await LoadGroupMembersAsync(CurrentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
             {
-                ShowErrorAsyncNotification("Failed to assign users to group.");
+                await ShowErrorAsyncNotification("Failed to assign users to group.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning multiple users to group {GroupCode}", CurrentGroupCode);
-            ShowErrorAsyncNotification("Error assigning users to group. Please try again.");
+            await ShowErrorAsyncNotification("Error assigning users to group. Please try again.");
         }
     }
 
@@ -562,7 +562,7 @@ public partial class ApplicationGroups : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(CurrentGroupCode))
         {
-            ShowErrorAsyncNotification("User code and group code are required.");
+            await ShowErrorAsyncNotification("User code and group code are required.");
             return;
         }
 
@@ -573,19 +573,19 @@ public partial class ApplicationGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessAsyncNotification("User assigned to group successfully.");
+                await ShowSuccessAsyncNotification("User assigned to group successfully.");
                 await LoadGroupMembersAsync(CurrentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
             {
-                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to assign user to group.");
+                await ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to assign user to group.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
-            ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
+            await ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }
 

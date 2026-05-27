@@ -217,8 +217,8 @@ public class Step4Model
                                 PanelScores[hazard.Code].Add(new PanelMemberScoreData
                                 {
                                     HazardId = hazard.Code,
-                                    MemberId = panel.SMSUserCode,
-                                    MemberName = panel.SMSUserCode,
+                                    MemberId = panel.SMSUserCode ?? string.Empty,
+                                    MemberName = panel.SMSUserCode ?? string.Empty,
                                     SeverityScore = panel.Severity.Value,
                                     LikelihoodScore = panel.Likelihood.Value,
                                     SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.UtcNow

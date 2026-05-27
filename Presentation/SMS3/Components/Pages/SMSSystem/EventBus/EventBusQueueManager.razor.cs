@@ -260,7 +260,7 @@ public partial class EventBusQueueManager
 
                         await DialogService.OpenAsync<Components.EmailComposeDialog>(
                             "Test Email Notification",
-                            new Dictionary<string, object> { { "InitialModel", model } },
+                            new Dictionary<string, object?> { { "InitialModel", model } },
                             new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
                         );
                         // Continue to persisted execution after preview so queue status is updated
@@ -584,7 +584,7 @@ public partial class EventBusQueueManager
         try
         {
             await DialogService.OpenAsync<EventDetailsDialog>("Event Details", 
-                new Dictionary<string, object> { { "Event", queuedEvent } },
+                new Dictionary<string, object?> { { "Event", queuedEvent } },
                 new DialogOptions()
                 {
                     Width = "800px",
@@ -680,9 +680,12 @@ public partial class EventBusQueueManager
             var priority = uiEventData.ContainsKey("Priority") ? uiEventData["Priority"]?.ToString() : "Normal";
             var eventType = uiEventData.ContainsKey("EventType") ? uiEventData["EventType"]?.ToString() : "UIEvent";
 
-            var severity = GetNotificationSeverityFromPriority(priority);
-            var summary = GetNotificationSummaryFromEventType(eventType, priority);
-            var duration = GetNotificationDurationFromPriority(priority);
+            var priorityValue = priority ?? "Normal";
+            var eventTypeValue = eventType ?? "UIEvent";
+
+            var severity = GetNotificationSeverityFromPriority(priorityValue);
+            var summary = GetNotificationSummaryFromEventType(eventTypeValue, priorityValue);
+            var duration = GetNotificationDurationFromPriority(priorityValue);
 
             Logger.LogInformation("🔔 [UI NOTIFICATION] Showing notification: {Summary} - {Message}", summary, message);
 

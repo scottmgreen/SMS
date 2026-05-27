@@ -1,7 +1,4 @@
-
-using SMS_Application.Interfaces;
-using SMS_Domain.Events.UIEvents;
-using SMS_Shared.Configuration;
+using SMS_Domain.Events;
 
 using SMS3.Components.Shared.UIHelpers;
 
@@ -71,7 +68,7 @@ public partial class EditInterviewDialog : ComponentBase
     public async Task OnWitnessInterviewTypeChanged(string? departmentValue)
     {
         Model.InterviewTypeId = departmentValue;
-        Model.Type = InterviewType.FromValue(Model.InterviewTypeId ?? "");
+        Model.Type = InterviewType.FromValue(Model.InterviewTypeId ?? "") ?? InterviewType.Witness;
 
     }
     #endregion
@@ -175,18 +172,18 @@ public partial class EditInterviewDialog : ComponentBase
                 Model.Status = InterviewStatus.InterviewInProgress;
                 selectedTabIndex = 2; // Switch to conducting tab
                 await UpdateInterview();
-                ShowSuccessAsyncNotification("Interview started successfully. You can now begin recording notes and findings.");
+                await ShowSuccessAsyncNotification("Interview started successfully. You can now begin recording notes and findings.");
                 StateHasChanged();
             }
             else
             {
-                ShowErrorAsyncNotification($"Cannot start interview: {result.Error?.Message}");
+                await ShowErrorAsyncNotification($"Cannot start interview: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error starting interview {Code}", Interview.Code);
-            ShowErrorAsyncNotification("Error starting interview");
+            await ShowErrorAsyncNotification("Error starting interview");
         }
     }
 
@@ -212,18 +209,18 @@ public partial class EditInterviewDialog : ComponentBase
                 Model.Status = InterviewStatus.InterviewComplete;
                 Model.CompletedDate = DateTime.UtcNow;
                 await UpdateInterview();
-                ShowSuccessAsyncNotification("Interview completed successfully!");
+                await ShowSuccessAsyncNotification("Interview completed successfully!");
                 StateHasChanged();
             }
             else
             {
-                ShowErrorAsyncNotification($"Cannot complete interview: {result.Error?.Message}");
+                await ShowErrorAsyncNotification($"Cannot complete interview: {result.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error completing interview {Code}", Interview.Code);
-            ShowErrorAsyncNotification("Error completing interview");
+            await ShowErrorAsyncNotification("Error completing interview");
         }
     }
 
@@ -248,19 +245,19 @@ public partial class EditInterviewDialog : ComponentBase
                 {
                     Model.Status = InterviewStatus.InterviewCanceled;
                     await UpdateInterview();
-                    ShowSuccessAsyncNotification("Interview cancelled successfully");
+                    await ShowSuccessAsyncNotification("Interview cancelled successfully");
                     StateHasChanged();
                 }
                 else
                 {
-                    ShowErrorAsyncNotification($"Cannot cancel interview: {result.Error?.Message}");
+                    await ShowErrorAsyncNotification($"Cannot cancel interview: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error cancelling interview {Code}", Interview.Code);
-            ShowErrorAsyncNotification("Error cancelling interview");
+            await ShowErrorAsyncNotification("Error cancelling interview");
         }
     }
     #endregion
@@ -277,7 +274,7 @@ public partial class EditInterviewDialog : ComponentBase
         {
             if (string.IsNullOrWhiteSpace(model.PersonInterviewed))
             {
-                ShowErrorAsyncNotification("Person interviewed is required");
+                await ShowErrorAsyncNotification("Person interviewed is required");
                 return;
             }
 
@@ -322,7 +319,7 @@ public partial class EditInterviewDialog : ComponentBase
 
                     if (updateResult.IsFailure)
                     {
-                        ShowErrorAsyncNotification($"Failed to update interview: {updateResult.Error?.Message}");
+                        await ShowErrorAsyncNotification($"Failed to update interview: {updateResult.Error?.Message}");
                         return;
                     }
 
@@ -350,7 +347,7 @@ public partial class EditInterviewDialog : ComponentBase
                 Logger.LogInformation("Interview updated successfully: {Code} by user {UserId}",
                     Interview.Code, CurrentUserService.UserCode);
 
-                ShowSuccessAsyncNotification("Interview updated successfully");
+                await ShowSuccessAsyncNotification("Interview updated successfully");
 
                 // Close the dialog and return true to indicate success
                 // This will trigger the calendar to refresh
@@ -358,7 +355,7 @@ public partial class EditInterviewDialog : ComponentBase
             }
             else
             {
-                ShowErrorAsyncNotification($"Failed to update interview: {result.Error?.Message}");
+                await ShowErrorAsyncNotification($"Failed to update interview: {result.Error?.Message}");
                 Logger.LogError("Failed to update interview {Code}: {Error}",
                     Interview.Code, result.Error?.Message);
             }
@@ -366,7 +363,7 @@ public partial class EditInterviewDialog : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error updating interview {Code}", Interview.Code);
-            ShowErrorAsyncNotification("Error updating interview");
+            await ShowErrorAsyncNotification("Error updating interview");
         }
         finally
         {
@@ -391,7 +388,7 @@ public partial class EditInterviewDialog : ComponentBase
     #region Models
     public class EditInterviewModel
     {
-        public string InterviewCode { get; set; }
+        public string InterviewCode { get; set; } = string.Empty;
         public string PersonInterviewed { get; set; } = "";
         public string? PersonInterviewedRole { get; set; }
         public string? PersonInterviewedDepartmentId { get; set; }

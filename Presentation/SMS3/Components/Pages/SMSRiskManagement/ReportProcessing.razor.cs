@@ -8,7 +8,7 @@ using SMS_Application.Services;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS_Domain.Interfaces;
 
 using SMS_Shared.Configuration;
@@ -224,7 +224,7 @@ public class MitigationSummary
     public string HazardCode { get; set; } = string.Empty;
     public RiskLevel HazardRiskLevel { get; set; } = default!;
     public string HazardDescription { get; set; } = string.Empty;
-    public MitigationStatus Status { get; set; } 
+    public MitigationStatus Status { get; set; } = MitigationStatus.PendingApproval;
     public string AssignedTo { get; set; } = string.Empty;
 
     public string ApprovedBy { get; set; } = string.Empty;
@@ -1323,7 +1323,7 @@ public partial class ReportProcessing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error navigating to mitigation edit for {Code}", mitigation.MitigationCode);
-            ShowErrorAsyncNotification("Error navigating to mitigation editor");
+            _ = ShowErrorAsyncNotification("Error navigating to mitigation editor");
         }
     }
 
@@ -1353,7 +1353,7 @@ public partial class ReportProcessing : ComponentBase
 
                 if (updateResult.IsSuccess)
                 {
-                    ShowSuccessAsyncNotification($"Mitigation {mitigation.MitigationCode} approved successfully");
+                    await ShowSuccessAsyncNotification($"Mitigation {mitigation.MitigationCode} approved successfully");
 
                     // Update the local summary
                     mitigation.Status = MitigationStatus.Approved;
@@ -1363,18 +1363,18 @@ public partial class ReportProcessing : ComponentBase
                 }
                 else
                 {
-                    ShowErrorAsyncNotification($"Failed to approve mitigation: {updateResult.Error?.Message}");
+                    await ShowErrorAsyncNotification($"Failed to approve mitigation: {updateResult.Error?.Message}");
                 }
             }
             else
             {
-                ShowErrorAsyncNotification($"Failed to load mitigation details: {mitigationResult.Error?.Message}");
+                await ShowErrorAsyncNotification($"Failed to load mitigation details: {mitigationResult.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error quick approving mitigation {Code}", mitigation.MitigationCode);
-            ShowErrorAsyncNotification("Error approving mitigation");
+            await ShowErrorAsyncNotification("Error approving mitigation");
         }
         finally
         {
@@ -1389,12 +1389,12 @@ public partial class ReportProcessing : ComponentBase
         {
             _logger.LogInformation("Viewing mitigation details: {Code}", mitigation.MitigationCode);
             // You might want to show a details dialog or navigate to a details page
-            ShowInfoAsyncNotification($"Details for mitigation {mitigation.MitigationCode} - Feature to be implemented");
+            _ = ShowInfoAsyncNotification($"Details for mitigation {mitigation.MitigationCode} - Feature to be implemented");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error viewing mitigation details for {Code}", mitigation.MitigationCode);
-            ShowErrorAsyncNotification("Error viewing mitigation details");
+            _ = ShowErrorAsyncNotification("Error viewing mitigation details");
         }
     }
 
@@ -1883,7 +1883,7 @@ public partial class ReportProcessing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error showing bulk approval confirmation for report {ReportId}", report.ReportId);
-            ShowErrorAsyncNotification("Error showing approval confirmation dialog");
+            _ = ShowErrorAsyncNotification("Error showing approval confirmation dialog");
         }
     }
 
@@ -1965,7 +1965,7 @@ public partial class ReportProcessing : ComponentBase
 
             if (!hazardsResult.IsSuccess || hazardsResult.Value is null)
             {
-                ShowErrorAsyncNotification("Failed to load hazard data");
+                await ShowErrorAsyncNotification("Failed to load hazard data");
                 return;
             }
 
@@ -1973,7 +1973,7 @@ public partial class ReportProcessing : ComponentBase
 
             if (!reportHazards.Any())
             {
-                ShowErrorAsyncNotification($"No hazards found for report {reportId}");
+                await ShowErrorAsyncNotification($"No hazards found for report {reportId}");
                 return;
             }
 
@@ -2009,7 +2009,7 @@ public partial class ReportProcessing : ComponentBase
                             try
                             {
                                 processedMitigationCodes.Add(mitigation.Code);
-
+                                
                                 // ? Update mitigation status using enum value
                                 mitigation.Status = MitigationStatus.Approved; 
                                 mitigation.UpdatedDate = DateTime.UtcNow;
@@ -2022,6 +2022,8 @@ public partial class ReportProcessing : ComponentBase
                                 {
                                     successCount++;
                                     _logger.LogInformation("? Approved mitigation: {Code} for hazard {HazardCode}", mitigation.Code, hazard.Code);
+
+                                    await PublishEmailNotification(reportId, mitigation);
 
                                     // NEW: SPI AUTOMATION - Trigger mitigation completion SPI ??
                                     await TriggerMitigationApprovalSPIAutomation(mitigation, approverCode);
@@ -2058,23 +2060,23 @@ public partial class ReportProcessing : ComponentBase
 
             if (successCount > 0)
             {
-                ShowSuccessAsyncNotification($"Successfully approved {successCount} mitigation(s) across {reportHazards.Count} hazard(s) for report {reportId}");
+                await ShowSuccessAsyncNotification($"Successfully approved {successCount} mitigation(s) across {reportHazards.Count} hazard(s) for report {reportId}");
                 await LoadDataAsync();
             }
             else if (errorCount == 0)
             {
-                ShowInfoAsyncNotification($"No pending mitigations found for report {reportId}");
+                await ShowInfoAsyncNotification($"No pending mitigations found for report {reportId}");
             }
 
             if (errorCount > 0)
             {
-                ShowErrorAsyncNotification($"Failed to approve {errorCount} mitigation(s). Please check logs for details.");
+                await ShowErrorAsyncNotification($"Failed to approve {errorCount} mitigation(s). Please check logs for details.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error during bulk approval for report {ReportId}", reportId);
-            ShowErrorAsyncNotification($"Error during bulk approval for report {reportId}: {ex.Message}");
+            await ShowErrorAsyncNotification($"Error during bulk approval for report {reportId}: {ex.Message}");
         }
         finally
         {
@@ -2083,20 +2085,48 @@ public partial class ReportProcessing : ComponentBase
         }
     }
 
-        
+    private async Task PublishEmailNotification(string reportId, Mitigation mitigation)
+    {
+        var assignedTo = mitigation.AssignedTo?.Trim();
+        if (!string.IsNullOrWhiteSpace(assignedTo))
+        {
+            var assigneeEmail = $"{assignedTo}@flypdx.com";
+            var emailEvent = new EmailNotificationEvent(
+                toRecipients: new List<string> { assigneeEmail },
+                subject: $"Mitigation Assignment: {mitigation.Code}",
+                body: $"{mitigation.Code} has been assigned to you.",
+                isHtmlContent: false,
+                reportId: reportId,
+                workflowType: "MitigationApproval",
+                relatedEntityType: "Mitigation",
+                relatedEntityId: mitigation.Code);
+
+            var emailResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, CancellationToken.None);
+            if (!emailResult.IsSuccess)
+            {
+                _logger.LogWarning("Failed to publish mitigation assignment email event for mitigation {MitigationCode} to {AssigneeEmail}: {Error}",
+                    mitigation.Code, assigneeEmail, emailResult.Error?.Message);
+            }
+        }
+        else
+        {
+            _logger.LogWarning("Skipping mitigation assignment email event for mitigation {MitigationCode} because AssignedTo is empty", mitigation.Code);
+        }
+    }
+
     private async Task<bool> UpdateReportStatus(string reportId, ReportStatus status)
     {
         
-            var cmd = new UpdateReportStatusCommand(reportId, status, CurrentUserService?.UserDisplayName);
+            var cmd = new UpdateReportStatusCommand(reportId, status, CurrentUserService?.UserDisplayName ?? "SYSTEM");
             var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
             if (!cmdResult.IsSuccess)
             {
-                ShowErrorAsyncNotification($"Report{reportId} Status Was not Updated");
+                await ShowErrorAsyncNotification($"Report{reportId} Status Was not Updated");
                 return false;
             }
             else
             {
-                ShowSuccessAsyncNotification($"Report{reportId} Status Was Updated");
+                await ShowSuccessAsyncNotification($"Report{reportId} Status Was Updated");
                 return true;
             }
 
@@ -2206,7 +2236,10 @@ public partial class ReportProcessing : ComponentBase
     /// </summary>
     private int GetRiskPriority(string riskLevel)
     {
-        return riskLevel?.ToUpper() switch
+        if (string.IsNullOrWhiteSpace(riskLevel))
+            return 0;
+
+        return riskLevel.ToUpperInvariant() switch
         {
             _ when riskLevel.Equals(RiskLevel.Critical.Name, StringComparison.OrdinalIgnoreCase) => 4,
             _ when riskLevel.Equals(RiskLevel.High.Name, StringComparison.OrdinalIgnoreCase) => 3,
@@ -2223,13 +2256,13 @@ public partial class ReportProcessing : ComponentBase
     {
         if (SelectedReportForApproval is null)
         {
-            ShowErrorAsyncNotification("No report selected for approval.");
+            await ShowErrorAsyncNotification("No report selected for approval.");
             return;
         }
 
         if (string.IsNullOrEmpty(SelectedApprover))
         {
-            ShowErrorAsyncNotification("Please select an authorized approver before proceeding.");
+            await ShowErrorAsyncNotification("Please select an authorized approver before proceeding.");
             return;
         }
 
@@ -2248,7 +2281,7 @@ public partial class ReportProcessing : ComponentBase
                 _ => "Unknown"
             };
 
-            ShowErrorAsyncNotification($"Selected approver does not have sufficient authority to approve {riskLevelDisplay} risk level mitigations.");
+            await ShowErrorAsyncNotification($"Selected approver does not have sufficient authority to approve {riskLevelDisplay} risk level mitigations.");
             return;
         }
 

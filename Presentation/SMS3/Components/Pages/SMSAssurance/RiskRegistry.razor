@@ -132,7 +132,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="InitialRiskMatrixCode" Title="Residual RS" Width="110px">
                         <Template Context="registry">
-                            <div style="@GetAviationMatrixCellStyle(registry.ResidualRiskMatrixCode.Trim())" class="text-center fw-bold">
+                            <div style="@GetAviationMatrixCellStyle(registry.ResidualRiskMatrixCode?.Trim() ?? string.Empty)" class="text-center fw-bold">
                                 @if (!string.IsNullOrEmpty(registry.ResidualRiskMatrixCode) && registry.ResidualRiskMatrixCode != "-")
                                 {
                                     <div style="@BasicTextStyle">

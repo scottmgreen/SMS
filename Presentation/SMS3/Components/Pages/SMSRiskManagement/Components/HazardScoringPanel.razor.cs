@@ -32,7 +32,6 @@ public partial class HazardScoringPanel : ComponentBase
     private RadzenDataGrid<ScoringPanel>? ScoringGrid;
     private List<ScoringPanel> HazardScoringPanels = new();
     private bool IsSubmitting = false;
-    private bool _isDataLoaded = false;
     private string _lastHazardCode = string.Empty;
 
     // Local properties to track calculated hazard scoring data (for future database update)
@@ -50,7 +49,6 @@ public partial class HazardScoringPanel : ComponentBase
         {
             await LoadHazardScoringPanelsInternal();
             _lastHazardCode = Hazard.Code;
-            _isDataLoaded = true;
         }
     }
 
@@ -64,7 +62,6 @@ public partial class HazardScoringPanel : ComponentBase
         {
             await LoadHazardScoringPanelsInternal();
             _lastHazardCode = Hazard.Code;
-            _isDataLoaded = true;
         }
         
         // Ensure property mapping is current for existing panels when CurrentStep changes
@@ -100,7 +97,7 @@ public partial class HazardScoringPanel : ComponentBase
                 Logger.LogInformation("Filtering panels by target assessment: {TargetCode}", targetRiskAssessmentCode);
 
                 var filteredPanels = (result.Value ?? new List<ScoringPanel>())
-                    .Where(p => p.RiskAssessmentCode.Trim() == targetRiskAssessmentCode)
+                    .Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), targetRiskAssessmentCode, StringComparison.Ordinal))
                     .ToList();
 
                 // Map properties based on CurrentStep for all loaded panels
@@ -357,7 +354,7 @@ public partial class HazardScoringPanel : ComponentBase
         Hazard.Code, selectedCodes.Count, string.Join(", ", selectedCodes));
 
         var result = await DialogService.OpenAsync<PanelManagementDialog>($" <br/> Manage  Panel for {Hazard.Code}",
-        new Dictionary<string, object>
+        new Dictionary<string, object?>
         {
                 { "HazardCode", Hazard.Code },
                 { "HazardDescription", Hazard.Description },
@@ -401,7 +398,7 @@ public partial class HazardScoringPanel : ComponentBase
             {
                 // Find panels for this assessment that should be removed
                 var panelsToRemove = (allPanelsResult.Value ?? new List<ScoringPanel>())
-                    .Where(p => p.RiskAssessmentCode.Trim() == targetAssessmentCode && 
+                    .Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), targetAssessmentCode, StringComparison.Ordinal) && 
                                !selectedStakeholderCodes.Contains(p.SMSUserCode!))
                     .ToList();
 
@@ -628,7 +625,7 @@ public partial class HazardScoringPanel : ComponentBase
     /// </summary>
     public (double? AverageScore, string MatrixCode, string RiskLevel) GetCalculatedScoringData()
     {
-        return (CalculatedAverageScore, CalculatedMatrixCode, CalculatedRiskLevel);
+        return (CalculatedAverageScore, CalculatedMatrixCode, CalculatedRiskLevel?.Name ?? string.Empty);
     }
 
     /// <summary>
@@ -912,7 +909,7 @@ public partial class HazardScoringPanel : ComponentBase
 
             // Get existing panels for the current assessment
             var existingPanels = (allPanels ?? Enumerable.Empty<ScoringPanel>())
-                .Where(p => p.RiskAssessmentCode.Trim() == targetCode)
+                .Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), targetCode, StringComparison.Ordinal))
                 .ToList();
 
             if (!existingPanels.Any())

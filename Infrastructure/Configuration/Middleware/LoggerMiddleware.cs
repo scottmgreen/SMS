@@ -21,7 +21,7 @@
 
 using Microsoft.AspNetCore.Http;
 
-namespace Infrastructure.Configuration.Middleware
+namespace SMS_Infrastructure.Configuration.Middleware
 {
     public class LoggerMiddleware
     {

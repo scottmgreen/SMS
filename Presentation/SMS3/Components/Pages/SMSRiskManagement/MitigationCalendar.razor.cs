@@ -138,7 +138,7 @@ public partial class MitigationCalendar : ComponentBase
             _logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
 
             // Don't create appointments in year view
-            if (args.View.Text != "Year")
+            if (args.View?.Text != "Year")
             {
                 await ShowCreateMitigationDialog(args.Start, args.End);
             }
@@ -189,7 +189,7 @@ public partial class MitigationCalendar : ComponentBase
             var cssClasses = new List<string>();
 
             // Base status class
-            var statusClass = mitigationItem.Status switch
+            var statusClass = (mitigationItem?.Status) switch
             {
                 "PENDING_APPROVAL" => "mitigation-pending",
                 "APPROVED" => "mitigation-approved",
@@ -202,13 +202,13 @@ public partial class MitigationCalendar : ComponentBase
             cssClasses.Add(statusClass);
 
             // Add overdue class if needed
-            if (mitigationItem.IsOverdue)
+            if (mitigationItem?.IsOverdue == true)
             {
                 cssClasses.Add("overdue");
             }
 
             // Add high priority class for critical mitigations
-            if (mitigationItem.Priority == "High" || mitigationItem.Priority == "Critical")
+            if (mitigationItem?.Priority == "High" || mitigationItem?.Priority == "Critical")
             {
                 cssClasses.Add("high-priority");
             }
@@ -216,7 +216,7 @@ public partial class MitigationCalendar : ComponentBase
             args.Attributes["class"] = string.Join(" ", cssClasses);
 
             // Set background color based on status for better visibility
-            var backgroundColor = mitigationItem.Status switch
+            var backgroundColor = mitigationItem?.Status switch
             {
                 "PENDING_APPROVAL" => "#ffc107",
                 "APPROVED" => "#17a2b8",
@@ -227,26 +227,26 @@ public partial class MitigationCalendar : ComponentBase
                 _ => "#ffc107" // Default to pending color
             };
 
-            var textColor = mitigationItem.Status == "PENDING_APPROVAL" ? "#212529" : "white";
+            var textColor = mitigationItem?.Status == "PENDING_APPROVAL" ? "#212529" : "white";
             args.Attributes["style"] = $"background: {backgroundColor}; color: {textColor};";
 
             // Add enhanced tooltip with additional information
-            var tooltip = $"Mitigation: {mitigationItem.MitigationCode}\\n" +
-                         $"Status: {mitigationItem.Status}\\n" +
-                         $"Hazard: {mitigationItem.HazardCode}\\n" +
-                         $"Assigned to: {mitigationItem.AssignedTo}\\n" +
-                         $"Priority: {mitigationItem.Priority}\\n" +
-                         $"Progress: {mitigationItem.Progress}%";
+            var tooltip = $"Mitigation: {mitigationItem?.MitigationCode}\\n" +
+                         $"Status: {mitigationItem?.Status}\\n" +
+                         $"Hazard: {mitigationItem?.HazardCode}\\n" +
+                         $"Assigned to: {mitigationItem?.AssignedTo}\\n" +
+                         $"Priority: {mitigationItem?.Priority}\\n" +
+                         $"Progress: {mitigationItem?.Progress}%";
 
-            if (mitigationItem.IsOverdue)
+            if (mitigationItem?.IsOverdue == true)
                 tooltip += "\\n?? OVERDUE";
 
             args.Attributes["title"] = tooltip;
 
             // Add data attributes for better event handling
-            args.Attributes["data-mitigation-code"] = mitigationItem.MitigationCode;
-            args.Attributes["data-mitigation-id"] = mitigationItem.MitigationId;
-            args.Attributes["data-status"] = mitigationItem.Status;
+            args.Attributes["data-mitigation-code"] = mitigationItem?.MitigationCode ?? string.Empty;
+            args.Attributes["data-mitigation-id"] = mitigationItem?.MitigationId ?? string.Empty;
+            args.Attributes["data-status"] = mitigationItem?.Status ?? string.Empty;
 
             // Add style to prevent text selection which can interfere with clicking
             var existingStyle = args.Attributes.ContainsKey("style") ? args.Attributes["style"] : "";
@@ -263,14 +263,14 @@ public partial class MitigationCalendar : ComponentBase
         try
         {
             // Highlight today in month view
-            if (args.View.Text == "Month" && args.Start.Date == DateTime.Today)
+            if (args.View?.Text == "Month" && args.Start.Date == DateTime.Today)
             {
                 args.Attributes["class"] = "today";
                 args.Attributes["style"] = "background: var(--rz-scheduler-today-background-color, rgba(33,46,97,.1));";
             }
 
             // Highlight working hours (9-18) in week and day views
-            if ((args.View.Text == "Week" || args.View.Text == "Day") &&
+            if ((args.View?.Text == "Week" || args.View?.Text == "Day") &&
                 args.Start.Hour >= 9 && args.Start.Hour < 18)
             {
                 args.Attributes["class"] = "business-hours";
@@ -287,7 +287,8 @@ public partial class MitigationCalendar : ComponentBase
     {
         try
         {
-            var draggedAppointment = SchedulerData.FirstOrDefault(x => x == args.Appointment.Data);
+            var appointmentData = args.Appointment?.Data;
+            var draggedAppointment = SchedulerData.FirstOrDefault(x => x == appointmentData);
 
             if (draggedAppointment is not null)
             {

@@ -8,7 +8,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Infrastructure.Configuration.Middleware;
+using SMS_Infrastructure.Configuration.Middleware;
 
 using Microsoft.AspNetCore.Components.Server.Circuits;
 using Microsoft.AspNetCore.Http;

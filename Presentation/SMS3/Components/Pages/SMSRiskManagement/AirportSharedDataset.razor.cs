@@ -1,5 +1,5 @@
 using SMS_Application.Interfaces;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -75,7 +75,7 @@ public partial class AirportSharedDataset : ComponentBase
 
             if (string.IsNullOrWhiteSpace(ReportId))
             {
-                ShowErrorAsyncNotification("Report ID is required for dataset creation");
+                await ShowErrorAsyncNotification("Report ID is required for dataset creation");
                 _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
                 return;
             }
@@ -118,7 +118,7 @@ public partial class AirportSharedDataset : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading dataset page for Report: {ReportId}", ReportId);
-            ShowErrorAsyncNotification("Error loading dataset page");
+            await ShowErrorAsyncNotification("Error loading dataset page");
         }
         finally
         {
@@ -244,7 +244,7 @@ public partial class AirportSharedDataset : ComponentBase
             StateHasChanged();
 
             // Validate required fields
-            if (!ValidateForm())
+            if (!await ValidateForm())
             {
                 return;
             }
@@ -294,13 +294,13 @@ public partial class AirportSharedDataset : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessAsyncNotification($"Airport Shared Dataset {dataset.Code} created successfully!");
+                await ShowSuccessAsyncNotification($"Airport Shared Dataset {dataset.Code} created successfully!");
                 _logger.LogInformation("Created Airport Shared Dataset: {DatasetId} for Report: {ReportId}",
                     dataset.Code, ReportId);
             }
             else
             {
-                ShowErrorAsyncNotification($"Failed to create dataset: {result.Error?.Message}");
+                await ShowErrorAsyncNotification($"Failed to create dataset: {result.Error?.Message}");
                 _logger.LogError("Failed to create Airport Shared Dataset for Report: {ReportId}, Error: {Error}",
                     ReportId, result.Error?.Message);
             }
@@ -308,7 +308,7 @@ public partial class AirportSharedDataset : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving Airport Shared Dataset for Report: {ReportId}", ReportId);
-            ShowErrorAsyncNotification("Error saving dataset");
+            await ShowErrorAsyncNotification("Error saving dataset");
         }
         finally
         {
@@ -364,23 +364,23 @@ public partial class AirportSharedDataset : ComponentBase
     #endregion
 
     #region Validation
-    private bool ValidateForm()
+    private async Task<bool> ValidateForm()
     {
         if (Model.DateTime == default)
         {
-            ShowErrorAsyncNotification("Date and Time is required");
+            await ShowErrorAsyncNotification("Date and Time is required");
             return false;
         }
 
         if (string.IsNullOrWhiteSpace(Model.Location))
         {
-            ShowErrorAsyncNotification("Location is required");
+            await ShowErrorAsyncNotification("Location is required");
             return false;
         }
 
         if (Model.Location == "Other" && string.IsNullOrWhiteSpace(Model.LocationOther))
         {
-            ShowErrorAsyncNotification("Please specify the other location");
+            await ShowErrorAsyncNotification("Please specify the other location");
             return false;
         }
 

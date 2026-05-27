@@ -3,7 +3,7 @@ using Radzen;
 
 using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 using SMS_Shared.Configuration;
 
@@ -102,7 +102,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error submitting evidence");
-            ShowErrorAsyncNotification("Error saving evidence");
+            await ShowErrorAsyncNotification("Error saving evidence");
         }
         finally
         {
@@ -122,7 +122,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         StateHasChanged();
     }
 
-    private void OnFileUploadComplete(UploadCompleteEventArgs args)
+    private async Task OnFileUploadComplete(UploadCompleteEventArgs args)
     {
         try
         {
@@ -133,19 +133,19 @@ public partial class AuditEvidenceDialog : ComponentBase
             ViewModel.FileSize = 1024000; // 1MB simulation
             ViewModel.ContentType = "application/pdf";
 
-            ShowSuccessAsyncNotification("File uploaded successfully");
+            await ShowSuccessAsyncNotification("File uploaded successfully");
             StateHasChanged();
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error processing uploaded file");
-            ShowErrorAsyncNotification("Error processing uploaded file");
+            await ShowErrorAsyncNotification("Error processing uploaded file");
         }
     }
 
-    private void OnFileUploadError(UploadErrorEventArgs args)
+    private async Task OnFileUploadError(UploadErrorEventArgs args)
     {
-        ShowErrorAsyncNotification($"File upload failed: {args.Message}");
+        await ShowErrorAsyncNotification($"File upload failed: {args.Message}");
     }
 
     private async Task OnDownloadFile()
@@ -154,12 +154,12 @@ public partial class AuditEvidenceDialog : ComponentBase
         {
             // In a real implementation, you would trigger the file download
             // For now, just show a notification
-            ShowSuccessAsyncNotification("File download would start here");
+            await ShowSuccessAsyncNotification("File download would start here");
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error downloading file");
-            ShowErrorAsyncNotification("Error downloading file");
+            await ShowErrorAsyncNotification("Error downloading file");
         }
     }
     #endregion
@@ -170,7 +170,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         try
         {
             // For now, just show success since the commands don't exist yet
-            ShowSuccessAsyncNotification("Evidence creation feature will be implemented when command handlers are ready");
+            await ShowSuccessAsyncNotification("Evidence creation feature will be implemented when command handlers are ready");
 
             // TODO: Implement when CreateSMSAuditEvidenceCommand is available
             /*
@@ -203,7 +203,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating evidence");
-            ShowErrorAsyncNotification("Error uploading evidence");
+            await ShowErrorAsyncNotification("Error uploading evidence");
         }
     }
 
@@ -212,7 +212,7 @@ public partial class AuditEvidenceDialog : ComponentBase
         try
         {
             // For now, just show success since the commands don't exist yet
-            ShowSuccessAsyncNotification("Evidence update feature will be implemented when command handlers are ready");
+            await ShowSuccessAsyncNotification("Evidence update feature will be implemented when command handlers are ready");
 
             // TODO: Implement when UpdateSMSAuditEvidenceCommand is available
             /*

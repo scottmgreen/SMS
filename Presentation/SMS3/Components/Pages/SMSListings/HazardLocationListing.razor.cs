@@ -9,7 +9,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Queries;
 
 using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 using SMS_Domain.ValueObjects;

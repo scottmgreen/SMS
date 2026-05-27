@@ -720,7 +720,6 @@ else
     </div>
 }
 @code {
-    private bool isSelected = false;
     bool ToggleValue(bool val) => val = !val;
 }
 
@@ -871,42 +870,42 @@ else
 }
 
 /* Location selection styling for RadzenStack horizontal layout */
-::deep .rz-stack-horizontal .rz-button,
-::deep .rz-stack-horizontal .rz-textbox {
+.rz-stack-horizontal .rz-button,
+.rz-stack-horizontal .rz-textbox {
     height: 42px !important;
     align-items: center !important;
 }
 
-::deep .rz-stack-horizontal .rz-button {
+.rz-stack-horizontal .rz-button {
     flex-shrink: 0 !important;
     white-space: nowrap !important;
 }
 
 /* Ensure proper input sizing with Radzen */
-::deep .rz-textbox,
-::deep .rz-dropdown,
-::deep .rz-textarea,
-::deep .rz-datepicker {
+.rz-textbox,
+.rz-dropdown,
+.rz-textarea,
+.rz-datepicker {
     width: 100% !important;
     min-width: 100% !important;
 }
 
 /* Ensure FormField containers take full width */
-::deep .rz-formfield {
+.rz-formfield {
     width: 100% !important;
 }
 
 /* Specific dropdown styling for full width */
-::deep .rz-dropdown-panel {
+.rz-dropdown-panel {
     min-width: 100% !important;
 }
 
-::deep .rz-dropdown .rz-dropdown-label {
+.rz-dropdown .rz-dropdown-label {
     width: calc(100% - 32px) !important;
 }
 
 /* Make sure dropdowns are responsive and fill container */
-::deep .rz-dropdown {
+.rz-dropdown {
     display: block !important;
     width: 100% !important;
 }

@@ -41,7 +41,6 @@ public sealed class Hazard : BaseAuditableEntity
    
     #region Location and Context Properties
 
-    public HazardLocation Location { get; set; }
     public string? LocationArea { get; set; }
     public string? LocationSubArea { get; set; }
 

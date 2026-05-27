@@ -1,27 +1,13 @@
-﻿using Asp.Versioning;
-using Asp.Versioning.ApiExplorer;
-
-using Infrastructure.Configuration.Extensions;
-
-using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Configuration;
-using Microsoft.FeatureManagement;
-
-using SMS_Application.Configuration;
-using SMS_Application.Interfaces;
-using SMS_Application.Services;
+﻿using SMS_Application.Configuration;
 
 using SMS_Infrastructure.Configuration;
+using SMS_Infrastructure.Configuration.Extensions;
 
 using SMS_Shared.Configuration;
 
-using SMS3.Api.Endpoints;
 using SMS3.Api.Extensions;
 using SMS3.Components;
-using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration;
-using SMS3.Security;
 
 namespace SMS3;
 public class Program

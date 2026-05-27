@@ -145,13 +145,13 @@ public partial class AuditCalendar : ComponentBase
         try
         {
             // Highlight today in month view
-            if (args.View.Text == "Month" && args.Start.Date == DateTime.Today)
+            if (args.View?.Text == "Month" && args.Start.Date == DateTime.Today)
             {
                 args.Attributes["style"] = "background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.2));";
             }
 
             // Highlight working hours (9-17) in week and day views
-            if ((args.View.Text == "Week" || args.View.Text == "Day") && args.Start.Hour > 8 && args.Start.Hour < 18)
+            if ((args.View?.Text == "Week" || args.View?.Text == "Day") && args.Start.Hour > 8 && args.Start.Hour < 18)
             {
                 args.Attributes["style"] = "background: var(--rz-scheduler-highlight-background-color, rgba(255,220,40,.2));";
             }
@@ -171,7 +171,7 @@ public partial class AuditCalendar : ComponentBase
             _logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
 
             // Don't create appointments in year view (like Radzen sample)
-            if (args.View.Text != "Year")
+            if (args.View?.Text != "Year")
             {
                 var newAuditPlan = new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), "CURRENT_USER")
                 {
@@ -180,7 +180,7 @@ public partial class AuditCalendar : ComponentBase
                 };
 
                 var data = await _dialogService.OpenAsync<AuditPlanDialog>("Add Audit Plan",
-                    new Dictionary<string, object>
+                    new Dictionary<string, object?>
                     {
                         { "AuditPlan", newAuditPlan },
                         { "IsNew", true }
@@ -208,11 +208,12 @@ public partial class AuditCalendar : ComponentBase
     {
         try
         {
-            console?.Log($"AppointmentSelect: AuditPlan={args.Data.AuditPlanCode}");
-            _logger.LogInformation("Audit appointment selected: {AuditCode}", args.Data.AuditPlanCode);
+            console?.Log($"AppointmentSelect: AuditPlan={args.Data?.AuditPlanCode}");
+            _logger.LogInformation("Audit appointment selected: {AuditCode}", args.Data?.AuditPlanCode);
 
             // Find the actual audit plan
-            var auditPlan = AuditPlans.FirstOrDefault(a => a.Code == args.Data.AuditPlanCode);
+            var selectedAuditPlanCode = args.Data?.AuditPlanCode;
+            var auditPlan = AuditPlans.FirstOrDefault(a => a.Code == selectedAuditPlanCode);
             if (auditPlan is not null)
             {
                 // Create a copy for editing like Radzen sample
@@ -238,7 +239,7 @@ public partial class AuditCalendar : ComponentBase
                 };
 
                 var data = await _dialogService.OpenAsync<AuditPlanDialog>("Edit Audit Plan",
-                    new Dictionary<string, object>
+                    new Dictionary<string, object?>
                     {
                         { "AuditPlan", copy },
                         { "IsNew", false }
@@ -271,6 +272,10 @@ public partial class AuditCalendar : ComponentBase
 
             // Customize appointment appearance based on audit status
             var auditItem = args.Data;
+            if (auditItem is null)
+            {
+                return;
+            }
             var backgroundColor = auditItem.Status?.ToLower() switch
             {
                 "draft" => "#6c757d",
@@ -305,7 +310,8 @@ public partial class AuditCalendar : ComponentBase
     {
         try
         {
-            var draggedAppointment = SchedulerData.FirstOrDefault(x => x == args.Appointment.Data);
+            var appointmentData = args.Appointment?.Data;
+            var draggedAppointment = SchedulerData.FirstOrDefault(x => x == appointmentData);
 
             if (draggedAppointment is not null)
             {
@@ -417,7 +423,7 @@ public partial class AuditCalendar : ComponentBase
             };
 
             var result = await _dialogService.OpenAsync<AuditPlanDialog>("Create Audit Plan",
-                new Dictionary<string, object>()
+                new Dictionary<string, object?>()
                 {
                     { "AuditPlan", newAuditPlan },
                     { "IsNew", true }

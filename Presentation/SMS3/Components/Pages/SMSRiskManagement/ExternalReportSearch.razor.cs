@@ -2,7 +2,7 @@
 using Microsoft.AspNetCore.Components.Web;
 
 using SMS_Application.Interfaces;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -824,7 +824,7 @@ public partial class ExternalReportSearch : ComponentBase
                             {
                                 searchResult.ValidationDecision = validationResult.Value.ValidationDecision ?? "";
                                 searchResult.ValidationDate = validationResult.Value.ValidatedDate;
-                                searchResult.ValidatedBy = validationResult.Value.ValidatedBy;
+                                searchResult.ValidatedBy = validationResult.Value.ValidatedBy ?? string.Empty;
                             }
 
 
@@ -883,7 +883,7 @@ public partial class ExternalReportSearch : ComponentBase
                     {
                         searchResult.ValidationDecision = validationResult.Value.ValidationDecision ?? "";
                         searchResult.ValidationDate = validationResult.Value.ValidatedDate;
-                        searchResult.ValidatedBy = validationResult.Value.ValidatedBy;
+                        searchResult.ValidatedBy = validationResult.Value.ValidatedBy ?? string.Empty;
                     }
                 }
                 catch (Exception ex)

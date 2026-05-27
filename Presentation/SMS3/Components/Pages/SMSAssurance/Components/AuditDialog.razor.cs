@@ -8,7 +8,7 @@ namespace SMS3.Components.Pages.SMSAssurance.Components;
 public partial class AuditDialog : ComponentBase
 {
     #region Parameters
-    [Parameter] public SMSAudit Audit { get; set; }
+    [Parameter] public SMSAudit Audit { get; set; } = default!;
     [Parameter] public bool IsNew { get; set; } = true;
     #endregion
 
@@ -209,13 +209,13 @@ public partial class AuditDialog : ComponentBase
                 if (result.IsSuccess)
                 {
                     _logger.LogInformation("Audit created successfully: {Code}", Code);
-                    _notificationHelper.ShowSuccessAsync("Audit created successfully");
+                    await _notificationHelper.ShowSuccessAsync("Audit created successfully");
                     _dialogService.Close(true);
                 }
                 else
                 {
                     _logger.LogError("Failed to create audit: {Error}", result.Error?.Message);
-                    _notificationHelper.ShowErrorAsync($"Failed to create audit: {result.Error?.Message}");
+                    await _notificationHelper.ShowErrorAsync($"Failed to create audit: {result.Error?.Message}");
                 }
             }
             else

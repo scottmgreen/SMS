@@ -2,7 +2,7 @@
 
 using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 using SMS_Shared.Configuration;
 
@@ -285,13 +285,13 @@ public partial class AuditPlanDialog : ComponentBase
                 if (result.IsSuccess)
                 {
                     _logger.LogInformation("Audit plan created successfully: {Code}", Code);
-                    ShowSuccessAsyncNotification("Audit plan created successfully");
+                    await ShowSuccessAsyncNotification("Audit plan created successfully");
                     _dialogService.Close(true);
                 }
                 else
                 {
                     _logger.LogError("Failed to create audit plan: {Error}", result.Error?.Message);
-                    ShowErrorAsyncNotification($"Failed to create audit plan: {result.Error?.Message}");
+                    await ShowErrorAsyncNotification($"Failed to create audit plan: {result.Error?.Message}");
                 }
             }
             else
@@ -302,20 +302,20 @@ public partial class AuditPlanDialog : ComponentBase
                 if (result.IsSuccess)
                 {
                     _logger.LogInformation("Audit plan updated successfully: {Code}", Code);
-                    ShowSuccessAsyncNotification("Audit plan updated successfully");
+                    await ShowSuccessAsyncNotification("Audit plan updated successfully");
                     _dialogService.Close(true);
                 }
                 else
                 {
                     _logger.LogError("Failed to update audit plan: {Error}", result.Error?.Message);
-                    ShowErrorAsyncNotification($"Failed to update audit plan: {result.Error?.Message}");
+                    await ShowErrorAsyncNotification($"Failed to update audit plan: {result.Error?.Message}");
                 }
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving audit plan");
-            ShowErrorAsyncNotification("Error saving audit plan");
+            await ShowErrorAsyncNotification("Error saving audit plan");
         }
         finally
         {

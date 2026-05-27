@@ -4,7 +4,7 @@ using System.Globalization;
 
 using SMS_Application.Common;
 using SMS_Application.Interfaces;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSAssurance.Components;

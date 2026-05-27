@@ -8,8 +8,6 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Domain.Interfaces;
-
 namespace SMS_Domain.Events;
 
 /// <summary>

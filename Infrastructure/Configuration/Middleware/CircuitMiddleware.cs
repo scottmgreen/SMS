@@ -14,7 +14,7 @@ using System.Net.Sockets;
 
 using Microsoft.AspNetCore.Http;
 
-namespace Infrastructure.Configuration.Middleware
+namespace SMS_Infrastructure.Configuration.Middleware
 {
     public class CircuitMiddleware
     {

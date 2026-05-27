@@ -68,7 +68,7 @@ public partial class CreateInterviewDialog : ComponentBase
     public async Task OnWitnessInterviewTypeChanged(string? departmentValue)
     {
         Model.InterviewTypeId = departmentValue;
-        Model.Type = InterviewType.FromValue(Model.InterviewTypeId ?? "");
+        Model.Type = InterviewType.FromValue(Model.InterviewTypeId ?? "") ?? InterviewType.Witness;
 
     }
     #endregion

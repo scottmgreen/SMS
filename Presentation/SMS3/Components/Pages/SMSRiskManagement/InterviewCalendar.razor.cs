@@ -154,7 +154,7 @@ public partial class InterviewCalendar : ComponentBase
             _logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
 
             // Don't create appointments in year view (like Radzen example)
-            if (args.View.Text != "Year")
+            if (args.View?.Text != "Year")
             {
                 await ShowCreateInterviewDialog(args.Start, args.End);
             }
@@ -177,7 +177,7 @@ public partial class InterviewCalendar : ComponentBase
 
             _handlingAppointmentClick = true;
             var interviewItem = args.Data;
-            _logger.LogInformation("Interview appointment selected: {InterviewCode}", interviewItem.InterviewCode);
+            _logger.LogInformation("Interview appointment selected: {InterviewCode}", interviewItem?.InterviewCode);
 
             // Use a background task to handle the click without blocking the UI thread
             // This prevents the scheduler from trying to manage focus on elements we're about to change
@@ -188,7 +188,10 @@ public partial class InterviewCalendar : ComponentBase
                     await Task.Delay(150); // Give the scheduler time to complete its focus operations
                     await InvokeAsync(async () =>
                     {
-                        await ShowInterviewDetails(interviewItem);
+                        if (interviewItem is not null)
+                        {
+                            await ShowInterviewDetails(interviewItem);
+                        }
                     });
                 }
                 catch (Exception ex)
@@ -225,7 +228,7 @@ public partial class InterviewCalendar : ComponentBase
             var cssClasses = new List<string>();
 
             // Base status class using actual enum values instead of hardcoded strings
-            var statusClass = interviewItem.InterviewStatus.Value switch
+            var statusClass = interviewItem?.InterviewStatus?.Value switch
             {
                 var v when v == InterviewStatus.InterviewScheduled.Value => "interview-scheduled",
                 var v when v == InterviewStatus.InterviewInProgress.Value => "interview-inprogress", 
@@ -238,14 +241,14 @@ public partial class InterviewCalendar : ComponentBase
             cssClasses.Add(statusClass);
 
             // Add confidential class if needed
-            if (interviewItem.IsConfidential)
+            if (interviewItem?.IsConfidential == true)
             {
                 cssClasses.Add("confidential");
             }
 
             // Add high priority class for urgent interviews
-            if (interviewItem.InterviewType.Value == "WITNESS" &&
-                interviewItem.InterviewStatus.Value == InterviewStatus.InterviewScheduled.Value &&
+            if (interviewItem?.InterviewType?.Value == "WITNESS" &&
+                interviewItem.InterviewStatus?.Value == InterviewStatus.InterviewScheduled.Value &&
                 interviewItem.Start.Date == DateTime.Today)
             {
                 cssClasses.Add("high-priority");
@@ -254,7 +257,7 @@ public partial class InterviewCalendar : ComponentBase
             args.Attributes["class"] = string.Join(" ", cssClasses);
 
             // Set background color using CSS custom properties instead of hardcoded colors
-            var backgroundColor = interviewItem.InterviewStatus.Value switch
+            var backgroundColor = interviewItem?.InterviewStatus?.Value switch
             {
                 var v when v == InterviewStatus.InterviewScheduled.Value => "var(--sms-blue-primary)",
                 var v when v == InterviewStatus.InterviewInProgress.Value => "var(--sms-red-accent)",
@@ -268,23 +271,23 @@ public partial class InterviewCalendar : ComponentBase
             args.Attributes["style"] = $"background: {backgroundColor}; color: white;";
 
             // Add enhanced tooltip with additional information
-            var tooltip = $"Interview: {interviewItem.InterviewCode}\\n" +
-                         $"Person: {interviewItem.PersonInterviewed}\\n" +
-                         $"Type: {interviewItem.InterviewType.Name}\\n" +
-                         $"Status: {interviewItem.InterviewStatus.Name}\\n" +
-                         $"Investigation: {interviewItem.InvestigationCode}\\n" +
-                         $"Investigator: {interviewItem.Investigator}\\n" +
-                         $"Location: {interviewItem.Location}";
+            var tooltip = $"Interview: {interviewItem?.InterviewCode}\\n" +
+                         $"Person: {interviewItem?.PersonInterviewed}\\n" +
+                         $"Type: {interviewItem?.InterviewType?.Name}\\n" +
+                         $"Status: {interviewItem?.InterviewStatus?.Name}\\n" +
+                         $"Investigation: {interviewItem?.InvestigationCode}\\n" +
+                         $"Investigator: {interviewItem?.Investigator}\\n" +
+                         $"Location: {interviewItem?.Location}";
 
-            if (interviewItem.IsConfidential)
+            if (interviewItem?.IsConfidential == true)
                 tooltip += "\\n?? CONFIDENTIAL";
 
             args.Attributes["title"] = tooltip;
 
             // Add data attributes for better event handling
-            args.Attributes["data-interview-code"] = interviewItem.InterviewCode;
-            args.Attributes["data-interview-id"] = interviewItem.InterviewId;
-            args.Attributes["data-status"] = interviewItem.InterviewStatus.Value;
+            args.Attributes["data-interview-code"] = interviewItem?.InterviewCode ?? string.Empty;
+            args.Attributes["data-interview-id"] = interviewItem?.InterviewId ?? string.Empty;
+            args.Attributes["data-status"] = interviewItem?.InterviewStatus?.Value ?? string.Empty;
 
             // Add style to prevent text selection which can interfere with clicking
             var existingStyle = args.Attributes.ContainsKey("style") ? args.Attributes["style"] : "";
@@ -301,14 +304,14 @@ public partial class InterviewCalendar : ComponentBase
         try
         {
             // Highlight today in month view
-            if (args.View.Text == "Month" && args.Start.Date == DateTime.Today)
+            if (args.View?.Text == "Month" && args.Start.Date == DateTime.Today)
             {
                 args.Attributes["class"] = "today";
                 args.Attributes["style"] = "background: var(--rz-scheduler-today-background-color, rgba(33,46,97,.1));";
             }
 
             // Highlight working hours (9-18) in week and day views
-            if ((args.View.Text == "Week" || args.View.Text == "Day") &&
+            if ((args.View?.Text == "Week" || args.View?.Text == "Day") &&
                 args.Start.Hour >= 9 && args.Start.Hour < 18)
             {
                 args.Attributes["class"] = "business-hours";
@@ -326,7 +329,8 @@ public partial class InterviewCalendar : ComponentBase
     {
         try
         {
-            var draggedAppointment = SchedulerData.FirstOrDefault(x => x == args.Appointment.Data);
+            var appointmentData = args.Appointment?.Data;
+            var draggedAppointment = SchedulerData.FirstOrDefault(x => x == appointmentData);
 
             if (draggedAppointment is not null)
             {
@@ -445,7 +449,7 @@ public partial class InterviewCalendar : ComponentBase
                 CssClass = "custom-modal-dialog"
             };
 
-            var parameters = new Dictionary<string, object>
+            var parameters = new Dictionary<string, object?>
             {
                 { "InvestigationCode", "UNKNOWN" }, // Default - user can change
                 { "PresetDateTime", startTime },
@@ -645,7 +649,7 @@ public partial class InterviewCalendar : ComponentBase
                 CssClass = "custom-modal-dialog"
             };
 
-            var parameters = new Dictionary<string, object>
+            var parameters = new Dictionary<string, object?>
             {
                 { "Interview", interview }
             };

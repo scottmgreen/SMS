@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 
 using SMS_Application.Interfaces;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -46,7 +46,7 @@ public partial class FileViewerDialog : ComponentBase
         if (ViewingFile?.FileData is null || ViewingFile.FileData.Length == 0)
         {
             Logger.LogWarning("File data is null or empty for file: {FileName}", ViewingFile?.FileName);
-            ShowErrorAsyncNotification("File data is not available for viewing");
+            await ShowErrorAsyncNotification("File data is not available for viewing");
             return;
         }
 
@@ -87,7 +87,7 @@ public partial class FileViewerDialog : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading file for viewing: {FileName}", ViewingFile.FileName);
-            ShowErrorAsyncNotification($"Error loading file for viewing: {ex.Message}");
+            await ShowErrorAsyncNotification($"Error loading file for viewing: {ex.Message}");
         }
         finally
         {
@@ -244,7 +244,7 @@ public partial class FileViewerDialog : ComponentBase
     {
         if (ViewingFile is null || string.IsNullOrEmpty(FileDataUrl))
         {
-            ShowErrorAsyncNotification("File is not ready for viewing");
+            await ShowErrorAsyncNotification("File is not ready for viewing");
             return;
         }
 
@@ -254,12 +254,12 @@ public partial class FileViewerDialog : ComponentBase
 
             await JSRuntime.InvokeVoidAsync("open", FileDataUrl, "_blank");
 
-            ShowSuccessAsyncNotification($"Opened '{ViewingFile.FileName}' in new tab");
+            await ShowSuccessAsyncNotification($"Opened '{ViewingFile.FileName}' in new tab");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error opening file in new tab: {FileName}", ViewingFile.FileName);
-            ShowErrorAsyncNotification("Unable to open file in new tab");
+            await ShowErrorAsyncNotification("Unable to open file in new tab");
         }
     }
 
@@ -267,7 +267,7 @@ public partial class FileViewerDialog : ComponentBase
     {
         if (ViewingFile is null || ViewingFile.FileData is null)
         {
-            ShowErrorAsyncNotification("File is not available for download");
+            await ShowErrorAsyncNotification("File is not available for download");
             return;
         }
 
@@ -282,12 +282,12 @@ public partial class FileViewerDialog : ComponentBase
 
             await JSRuntime.InvokeVoidAsync("downloadFile", fileName, mimeType, base64);
 
-            ShowSuccessAsyncNotification($"Download started for '{fileName}'");
+            await ShowSuccessAsyncNotification($"Download started for '{fileName}'");
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error downloading file: {FileName}", ViewingFile?.FileName);
-            ShowErrorAsyncNotification("Unable to download file");
+            await ShowErrorAsyncNotification("Unable to download file");
         }
     }
     #endregion

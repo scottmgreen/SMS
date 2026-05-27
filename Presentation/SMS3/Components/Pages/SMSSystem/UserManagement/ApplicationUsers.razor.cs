@@ -2,7 +2,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Messaging.Commands;
 using SMS_Application.Messaging.Queries;
 
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 using SMS_Domain.ValueObjects;
 
 using SMS_Shared.Common;
@@ -151,7 +151,7 @@ public partial class ApplicationUsers : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading application users data");
-            ShowErrorAsyncNotification("Error loading data. Please refresh the page.");
+            await ShowErrorAsyncNotification("Error loading data. Please refresh the page.");
         }
     }
 
@@ -170,7 +170,7 @@ public partial class ApplicationUsers : ComponentBase
             if (userResult.IsFailure || userResult.Value is null)
             {
                 _logger.LogWarning("User not found for ID: {Id}", id);
-                ShowErrorAsyncNotification($"User not found: {id}");
+                await ShowErrorAsyncNotification($"User not found: {id}");
                 _navigation.NavigateTo("/SMSSystem/UserManagement/ApplicationUsers");
                 return;
             }
@@ -199,7 +199,7 @@ public partial class ApplicationUsers : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading user for edit: {UserId}", id);
-            ShowErrorAsyncNotification("An error occurred while loading the user for editing.");
+            await ShowErrorAsyncNotification("An error occurred while loading the user for editing.");
             
             // Navigate back to main list on error
             _navigation.NavigateTo("/SMSSystem/UserManagement/ApplicationUsers");
@@ -247,7 +247,7 @@ public partial class ApplicationUsers : ComponentBase
     {
         if (string.IsNullOrEmpty(RoleAssignmentUserCode) || string.IsNullOrEmpty(SelectedRoleCode))
         {
-            ShowErrorAsyncNotification("Invalid user or role selection.");
+            await ShowErrorAsyncNotification("Invalid user or role selection.");
             return;
         }
 
@@ -262,7 +262,7 @@ public partial class ApplicationUsers : ComponentBase
 
             if (userResult.IsFailure || userResult.Value is null)
             {
-                ShowErrorAsyncNotification("User not found.");
+                await ShowErrorAsyncNotification("User not found.");
                 return;
             }
 
@@ -272,7 +272,7 @@ public partial class ApplicationUsers : ComponentBase
             var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == SelectedRoleCode);
             if (selectedRole is null)
             {
-                ShowErrorAsyncNotification("Selected role not found.");
+                await ShowErrorAsyncNotification("Selected role not found.");
                 return;
             }
             user.SMSUserType = SMSUserType.Application;
@@ -288,7 +288,7 @@ public partial class ApplicationUsers : ComponentBase
 
             if (updateResult.IsSuccess)
             {
-                ShowSuccessAsyncNotification($"Role '{selectedRole.Name}' successfully assigned to {RoleAssignmentUserDisplayName}.");
+                await ShowSuccessAsyncNotification($"Role '{selectedRole.Name}' successfully assigned to {RoleAssignmentUserDisplayName}.");
 
                 // Refresh data and close modal
                 await LoadDataAsync();
@@ -296,13 +296,13 @@ public partial class ApplicationUsers : ComponentBase
             }
             else
             {
-                ShowErrorAsyncNotification($"Failed to assign role: {updateResult.Error?.Message}");
+                await ShowErrorAsyncNotification($"Failed to assign role: {updateResult.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning role to user {UserCode}", RoleAssignmentUserCode);
-            ShowErrorAsyncNotification("An error occurred while assigning the role. Please try again.");
+            await ShowErrorAsyncNotification("An error occurred while assigning the role. Please try again.");
         }
         finally
         {
@@ -315,7 +315,7 @@ public partial class ApplicationUsers : ComponentBase
     {
         if (string.IsNullOrEmpty(RoleAssignmentUserCode))
         {
-            ShowErrorAsyncNotification("Invalid user selection.");
+            await ShowErrorAsyncNotification("Invalid user selection.");
             return;
         }
 
@@ -330,7 +330,7 @@ public partial class ApplicationUsers : ComponentBase
 
             if (userResult.IsFailure || userResult.Value is null)
             {
-                ShowErrorAsyncNotification("User not found.");
+                await ShowErrorAsyncNotification("User not found.");
                 return;
             }
 
@@ -347,7 +347,7 @@ public partial class ApplicationUsers : ComponentBase
 
             if (updateResult.IsSuccess)
             {
-                ShowSuccessAsyncNotification($"Role successfully removed from {RoleAssignmentUserDisplayName}.");
+                await ShowSuccessAsyncNotification($"Role successfully removed from {RoleAssignmentUserDisplayName}.");
 
                 // Refresh data and close modal
                 await LoadDataAsync();
@@ -355,13 +355,13 @@ public partial class ApplicationUsers : ComponentBase
             }
             else
             {
-                ShowErrorAsyncNotification($"Failed to remove role: {updateResult.Error?.Message}");
+                await ShowErrorAsyncNotification($"Failed to remove role: {updateResult.Error?.Message}");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing role from user {UserCode}", RoleAssignmentUserCode);
-            ShowErrorAsyncNotification("An error occurred while removing the role. Please try again.");
+            await ShowErrorAsyncNotification("An error occurred while removing the role. Please try again.");
         }
         finally
         {
@@ -389,7 +389,7 @@ public partial class ApplicationUsers : ComponentBase
     {
         if (!IsCreateFormValid)
         {
-            ShowErrorAsyncNotification("Please fill in all required fields.");
+            await ShowErrorAsyncNotification("Please fill in all required fields.");
             return;
         }
 
@@ -414,7 +414,7 @@ public partial class ApplicationUsers : ComponentBase
                 LastName = LastName.Create(NewUser.LastName).Value,
                 UserName = UserName.Create(NewUser.UserName).Value,
                 Password = Password.Create(NewUser.Password).Value,
-                UserRole = selectedRole, // ?? NEW: Assign role during creation
+                UserRole = selectedRole ?? new SMSUserRole(new SMSUserRoleID("ROLE-UNASSIGNED")) { Name = "Unassigned" }, // ?? NEW: Assign role during creation
                 TwoFactorEnabled = NewUser.TwoFactorEnabled, // ?? NEW: Set 2FA requirement
                 IsActive = NewIsActive, // UPDATED: Use NewIsActive property
                 SMSUserType = SMSUserType.Application
@@ -430,19 +430,19 @@ public partial class ApplicationUsers : ComponentBase
             if (result.IsSuccess)
             {
                 var roleText = selectedRole is not null ? $" with role '{selectedRole.Name}'" : "";
-                ShowSuccessAsyncNotification($"Application user '{NewUser.FirstName} {NewUser.LastName}' created successfully{roleText}!");
+                await ShowSuccessAsyncNotification($"Application user '{NewUser.FirstName} {NewUser.LastName}' created successfully{roleText}!");
                 CloseCreateModal();
                 await LoadDataAsync();
             }
             else
             {
-                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to create application user.");
+                await ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to create application user.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating application user");
-            ShowErrorAsyncNotification("Error creating application user. Please try again.");
+            await ShowErrorAsyncNotification("Error creating application user. Please try again.");
         }
         finally
         {
@@ -481,7 +481,7 @@ public partial class ApplicationUsers : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error navigating to edit user: {UserId}", userId);
-            ShowErrorAsyncNotification("Error opening user editor");
+            _ = ShowErrorAsyncNotification("Error opening user editor");
         }
     }
 
@@ -491,7 +491,7 @@ public partial class ApplicationUsers : ComponentBase
         {
             if (CurrentUser is null)
             {
-                ShowErrorAsyncNotification("No user selected for update.");
+                await ShowErrorAsyncNotification("No user selected for update.");
                 return;
             }
 
@@ -504,11 +504,11 @@ public partial class ApplicationUsers : ComponentBase
             if (!string.IsNullOrEmpty(EditUserRoleCode))
             {
                 var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == EditUserRoleCode);
-                CurrentUser.UserRole = selectedRole;
+                CurrentUser.UserRole = selectedRole ?? new SMSUserRole(new SMSUserRoleID("ROLE-UNASSIGNED")) { Name = "Unassigned" };
             }
             else
             {
-                CurrentUser.UserRole = null!; // Explicitly assign null
+                CurrentUser.UserRole = new SMSUserRole(new SMSUserRoleID("ROLE-UNASSIGNED")) { Name = "Unassigned" };
             }
             
             // ? REMOVED: Manual audit field assignments
@@ -521,7 +521,7 @@ public partial class ApplicationUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessAsyncNotification($"User '{CurrentUser.UserName.Value}' has been updated successfully!");
+                await ShowSuccessAsyncNotification($"User '{CurrentUser.UserName.Value}' has been updated successfully!");
                 
                 // Reset form state
                 IsEditMode = false;
@@ -532,13 +532,13 @@ public partial class ApplicationUsers : ComponentBase
             }
             else
             {
-                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to update application user.");
+                await ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to update application user.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating application user: {UserId}", CurrentUser?.Code);
-            ShowErrorAsyncNotification("Error updating application user. Please try again.");
+            await ShowErrorAsyncNotification("Error updating application user. Please try again.");
         }
     }
 
@@ -569,18 +569,18 @@ public partial class ApplicationUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessAsyncNotification("Application user deleted successfully.");
+                await ShowSuccessAsyncNotification("Application user deleted successfully.");
                 await LoadDataAsync();
             }
             else
             {
-                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to delete application user.");
+                await ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to delete application user.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error deleting application user: {UserId}", userId);
-            ShowErrorAsyncNotification("Error deleting application user. Please try again.");
+            await ShowErrorAsyncNotification("Error deleting application user. Please try again.");
         }
     }
 
@@ -607,7 +607,7 @@ public partial class ApplicationUsers : ComponentBase
     private async Task OnPasswordChangedSuccess()
     {
         // Password was changed successfully by the modal
-        ShowSuccessAsyncNotification($"Password updated successfully for {PasswordUserDisplayName}.");
+        await ShowSuccessAsyncNotification($"Password updated successfully for {PasswordUserDisplayName}.");
     }
 
     private async Task ShowPasswordDialog(string userId, string displayName)
@@ -637,7 +637,7 @@ public partial class ApplicationUsers : ComponentBase
     private async Task ExportUsers()
     {
         // TODO: Implement export functionality
-        ShowInfoAsyncNotification("Export functionality will be implemented soon.");
+        await ShowInfoAsyncNotification("Export functionality will be implemented soon.");
     }
 
     #endregion
@@ -700,7 +700,7 @@ public partial class ApplicationUsers : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error opening group management for user: {UserId}", userId);
-            ShowErrorAsyncNotification("Error loading user groups. Please try again.");
+            await ShowErrorAsyncNotification("Error loading user groups. Please try again.");
         }
     }
 
@@ -761,7 +761,7 @@ public partial class ApplicationUsers : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(GroupManagementUserCode))
         {
-            ShowErrorAsyncNotification("Group code and user code are required.");
+            await ShowErrorAsyncNotification("Group code and user code are required.");
             return;
         }
 
@@ -772,19 +772,19 @@ public partial class ApplicationUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessAsyncNotification("User removed from group successfully.");
+                await ShowSuccessAsyncNotification("User removed from group successfully.");
                 await LoadUserGroups(GroupManagementUserCode);
                 StateHasChanged();
             }
             else
             {
-                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to remove user from group.");
+                await ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to remove user from group.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", GroupManagementUserCode, groupCode);
-            ShowErrorAsyncNotification("Error removing user from group. Please try again.");
+            await ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
 
@@ -792,7 +792,7 @@ public partial class ApplicationUsers : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(GroupManagementUserCode))
         {
-            ShowErrorAsyncNotification("Group code and user code are required.");
+            await ShowErrorAsyncNotification("Group code and user code are required.");
             return;
         }
 
@@ -803,19 +803,19 @@ public partial class ApplicationUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                ShowSuccessAsyncNotification("User assigned to group successfully.");
+                await ShowSuccessAsyncNotification("User assigned to group successfully.");
                 await LoadUserGroups(GroupManagementUserCode);
                 StateHasChanged();
             }
             else
             {
-                ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to assign user to group.");
+                await ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to assign user to group.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
-            ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
+            await ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }
 
@@ -823,7 +823,7 @@ public partial class ApplicationUsers : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(GroupManagementUserCode) || !SelectedGroups.Any(s => s.Value))
         {
-            ShowErrorAsyncNotification("User code and at least one group must be selected.");
+            await ShowErrorAsyncNotification("User code and at least one group must be selected.");
             return;
         }
 
@@ -857,20 +857,20 @@ public partial class ApplicationUsers : ComponentBase
                 var message = $"Successfully assigned user to {successCount} group(s).";
                 if (failureCount > 0)
                     message += $" {failureCount} assignment(s) failed.";
-                ShowSuccessAsyncNotification(message);
+                await ShowSuccessAsyncNotification(message);
 
                 await LoadUserGroups(GroupManagementUserCode);
                 StateHasChanged();
             }
             else
             {
-                ShowErrorAsyncNotification("Failed to assign user to groups.");
+                await ShowErrorAsyncNotification("Failed to assign user to groups.");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", GroupManagementUserCode);
-            ShowErrorAsyncNotification("Error assigning user to groups. Please try again.");
+            await ShowErrorAsyncNotification("Error assigning user to groups. Please try again.");
         }
     }
 

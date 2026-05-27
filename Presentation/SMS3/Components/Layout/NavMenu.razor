@@ -1,9 +1,6 @@
-﻿@using Microsoft.AspNetCore.Components.Authorization
-@using Microsoft.AspNetCore.Components.Web
+﻿
 @using Radzen
 @using Radzen.Blazor
-@using SMS3.Components.Layout
-@using SMS3.Components.Shared
 @using SMS3.Components.Shared.Components
 @using SMS3.Configuration.Extensions
 @using SMS3.Security
@@ -46,6 +43,7 @@
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                                 <RadzenMenuItem Text="Risk Management" Icon="shield" class="sms-menu-item">
+                                    <RadzenMenuItem Text="Report Calendar" Value='"/SMSListings/ReportCalendar"' Icon="diversity_3"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Create Hazard Report" Value='"/SMSRiskManagement/HazardReporting"' Icon="add_circle"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Report Processing" Value='"/SMSRiskManagement/ReportProcessing"' Icon="settings"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Search Reports" Value='"/SMSRiskManagement/HazardReportSearch"' Icon="search"></RadzenMenuItem>
@@ -53,7 +51,7 @@
                                     @if (_currentUserService.CanRead("SMS_Listings_Investigations"))
                                     {
                                         <RadzenMenuItem Text="Investigate" Icon="search">
-                                            <RadzenMenuItem Text="Active Investigations" Value='"/Listings/Investigations"' Icon="assignment"></RadzenMenuItem>
+                                            <RadzenMenuItem Text="Active Investigations" Value='"/SMSListings/Investigations"' Icon="assignment"></RadzenMenuItem>
                                             <RadzenMenuItem Text="Interview Calendar" Value='"/SMSRiskManagement/InterviewCalendar"' Icon="diversity_3"></RadzenMenuItem>
                                         </RadzenMenuItem> 
                                     }
@@ -62,7 +60,7 @@
                                     @if (_currentUserService.CanRead("SMS_Listings_Mitigations"))
                                     {
                                         <RadzenMenuItem Text="Mitigation" Icon="search">
-                                            <RadzenMenuItem Text="Active Mitigations" Value='"/Listings/Mitigations"' Icon="assignment"></RadzenMenuItem>
+                                            <RadzenMenuItem Text="Active Mitigations" Value='"/SMSListings/Mitigations"' Icon="assignment"></RadzenMenuItem>
                                             <RadzenMenuItem Text="Mitigations Calendar" Value='"/SMSRiskManagement/MitigationCalendar"' Icon="diversity_3"></RadzenMenuItem>
                                         </RadzenMenuItem>
                                     }
@@ -167,6 +165,7 @@
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                                 <RadzenMenuItem Text="System" Icon="settings" class="sms-menu-item">
+                                    <RadzenMenuItem Text="System Configuration" Value='"/SMSSystem/SMSConfiguration/SMSConfiguration"' Icon="settings"></RadzenMenuItem>
                                     <!-- EVENT BUS /SMSSystem/EventBus/QueueManager-->
                                     <RadzenMenuItem Text="Event Queue Manager" Value='"/SMSSystem/EventBus/QueueManager"' Icon="person"></RadzenMenuItem>
                                     <!-- User Management -->
@@ -187,6 +186,9 @@
                                     <RadzenMenuItem Text="User Roles" Icon="admin_panel_settings">
                                         <RadzenMenuItem Text="User Roles" Value='"/SMSSystem/UserRoles/UserRoles"' Icon="badge"></RadzenMenuItem>
                                     </RadzenMenuItem>
+
+
+
                                 </RadzenMenuItem>
                             </RadzenMenu>
                         </div>
@@ -317,7 +319,6 @@
         // Only check on first render to avoid constant polling
         if (firstRender && _currentUserService?.IsFullyAuthenticated == true)
         {
-            _hasShownAuthenticatedMenu = true;
             _sessionTimerService.StartTimer();
         }
     }
@@ -338,9 +339,6 @@
             _sessionTimerService.UpdateActivity();
         }
     }
-
-    // Add these fields at the class level
-    private bool _hasShownAuthenticatedMenu = false;
 
     /// <summary>
     /// Handle session timer expiry - automatic logout
@@ -490,7 +488,7 @@
         };
 
         await _dialogService.OpenAsync<UserProfileDialog>("User Profile & Permissions",
-            new Dictionary<string, object>()
+            new Dictionary<string, object?>()
             {
                 { "CurrentUserService", _currentUserService }                
             },

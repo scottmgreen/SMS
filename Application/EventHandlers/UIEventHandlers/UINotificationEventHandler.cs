@@ -1,4 +1,4 @@
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 namespace SMS_Application.EventHandlers;
 

@@ -153,11 +153,11 @@ namespace SMS3.Api.Services
                     Name = $"EXTERNAL/V2",
                     Description = request.HazardDescription,
                     SubmittedBy = "EXTERNAL_SYSTEM",
-                    SubmittedDate = DateTime.UtcNow,
+                    SubmittedDate = request.ReportSubmittedDate ?? DateTime.UtcNow,
                     SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
                     SubmittingDepartmentJobFunction = request.ReportSubmittingDepartmentJobFunction ?? string.Empty,
                     IncidentDateTime = request.HazardIncidentDateTime ?? DateTime.UtcNow,
-                    IsAnonymous = request.ReportIsAnonymous ?? true,
+                    IsAnonymous = request.ReportIsAnonymous.GetValueOrDefault(true),
                     ReportContactName = request.ReportContactName ?? string.Empty,
                     ReportContactCell = request.ReportContactCell ?? string.Empty,
                     ReportContactEmail = request.ReportContactEmail ?? string.Empty,
@@ -178,7 +178,7 @@ namespace SMS3.Api.Services
                 {
                     Code = "HZ-0000",
                     Name = $"EXTERNAL/V2",
-                    Description = request.HazardDescription,
+                    Description = request.HazardDescription ?? string.Empty,
                     HazardCategory = HazardCategory.Default.Value,
                     HazardType = HazardType.Default.Value,
                     ReportCode = actualReportCode,
@@ -201,8 +201,8 @@ namespace SMS3.Api.Services
                     var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
                     {
                         HazardCode = createdHazard.Code,
-                        Latitude = request.LocationLatitude,
-                        Longitude = request.LocationLongitude,
+                        Latitude = request.LocationLatitude ?? 0,
+                        Longitude = request.LocationLongitude ?? 0,
                         Description = request.LocationDescription
                     };
                     await _mediator.SendAsync(new CreateHazardLocationCommand(hazardLocation), CancellationToken.None);
@@ -409,11 +409,11 @@ namespace SMS3.Api.Services
                 Name = $"{request.HazardCategory}/{request.HazardType}",
                 Description = request.HazardDescription,
                 SubmittedBy = "EXTERNAL_SYSTEM",
-                SubmittedDate = DateTime.UtcNow,
+                SubmittedDate = request.ReportSubmittedDate.Value,
                 SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
                 SubmittingDepartmentJobFunction = request.ReportSubmittingDepartmentJobFunction ?? string.Empty,
                 IncidentDateTime = request.HazardIncidentDateTime ?? DateTime.UtcNow,
-                IsAnonymous = request.ReportIsAnonymous ?? true,
+                IsAnonymous = request.ReportIsAnonymous.GetValueOrDefault(true),
                 ReportContactName = request.ReportContactName ?? string.Empty,
                 ReportContactCell = request.ReportContactCell ?? string.Empty,
                 ReportContactEmail = request.ReportContactEmail ?? string.Empty,
@@ -453,8 +453,8 @@ namespace SMS3.Api.Services
             var hazardLocation = new HazardLocation(new HazardLocationID("HL-0000"))
             {
                 HazardCode = hazardCode,
-                Latitude = request.LocationLatitude,
-                Longitude = request.LocationLongitude,
+                Latitude = request.LocationLatitude ?? 0,
+                Longitude = request.LocationLongitude ?? 0,
                 Description = request.LocationDescription
             };
 

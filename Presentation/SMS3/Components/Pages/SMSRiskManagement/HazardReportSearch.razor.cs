@@ -5,7 +5,7 @@ using Radzen;
 using SMS_Application.Interfaces;
 
 using SMS_Domain.Entities;
-using SMS_Domain.Events.UIEvents;
+using SMS_Domain.Events;
 
 using SMS_Shared.Configuration;
 
@@ -591,7 +591,7 @@ public partial class HazardReportSearch : ComponentBase
 
             HasSearched = true;
 
-            if (SearchResults?.Any() == true)
+            if (SearchResults?.Any() != true)
             {
                 await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No hazard reports found matching your search criteria"));
             }
@@ -856,7 +856,7 @@ public partial class HazardReportSearch : ComponentBase
                             {
                                 searchResult.ValidationDecision = validationResult.Value.ValidationDecision ?? "";
                                 searchResult.ValidationDate = validationResult.Value.ValidatedDate;
-                                searchResult.ValidatedBy = validationResult.Value.ValidatedBy;
+                                searchResult.ValidatedBy = validationResult.Value.ValidatedBy ?? string.Empty;
                             }
                         }
                     }
@@ -912,7 +912,7 @@ public partial class HazardReportSearch : ComponentBase
                     {
                         searchResult.ValidationDecision = validationResult.Value.ValidationDecision ?? "";
                         searchResult.ValidationDate = validationResult.Value.ValidatedDate;
-                        searchResult.ValidatedBy = validationResult.Value.ValidatedBy;
+                        searchResult.ValidatedBy = validationResult.Value.ValidatedBy ?? string.Empty;
                     }
                 }
                 catch (Exception ex)

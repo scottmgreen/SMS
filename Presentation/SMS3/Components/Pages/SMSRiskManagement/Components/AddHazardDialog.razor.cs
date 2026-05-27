@@ -16,9 +16,9 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     [Parameter] public Hazard? EditingHazard { get; set; }
     [Parameter] public bool IsEditMode { get; set; } = false;
 
-    [Parameter] public string RiskAssessmentId { get; set; } 
+    [Parameter] public string RiskAssessmentId { get; set; } = string.Empty;
 
-    [Inject] ICurrentUserService CurrentUserService { get; set; }
+    [Inject] ICurrentUserService CurrentUserService { get; set; } = default!;
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<AddHazardDialog>? Logger { get; set; }
@@ -448,7 +448,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         }
 
         var createdHazard = hazardResult.Value;
-        Logger?.LogInformation("Successfully created hazard: {HazardCode} with Category: {Category}, Type: {Type}",  createdHazard?.Code, NewHazardCategory, NewHazardType);
+        Logger?.LogInformation("Successfully created hazard: {HazardCode} with Category: {Category}, Type: {Type}", createdHazard.Code, NewHazardCategory, NewHazardType);
 
         //Create RiskAnalysis 
         

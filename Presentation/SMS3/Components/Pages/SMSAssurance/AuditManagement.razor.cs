@@ -267,7 +267,7 @@ public partial class AuditManagement : ComponentBase
 
     private async Task OnStatusFilterChanged(object value)
     {
-        SelectedStatus = value?.ToString();
+        SelectedStatus = value?.ToString() ?? string.Empty;
         if (auditPlansGrid != null)
             await auditPlansGrid.Reload();
         if (activeAuditsGrid != null)
@@ -276,7 +276,7 @@ public partial class AuditManagement : ComponentBase
 
     private async Task OnTypeFilterChanged(object value)
     {
-        SelectedType = value?.ToString();
+        SelectedType = value?.ToString() ?? string.Empty;
         if (auditPlansGrid != null)
             await auditPlansGrid.Reload();
         if (activeAuditsGrid != null)
@@ -285,7 +285,7 @@ public partial class AuditManagement : ComponentBase
 
     private async Task OnDepartmentFilterChanged(object value)
     {
-        SelectedDepartment = value?.ToString();
+        SelectedDepartment = value?.ToString() ?? string.Empty;
         if (auditPlansGrid != null)
             await auditPlansGrid.Reload();
         if (activeAuditsGrid != null)
@@ -307,7 +307,7 @@ public partial class AuditManagement : ComponentBase
         try
         {
             var result = await _dialogService.OpenAsync<Components.AuditPlanDialog>("Create Audit Plan",
-                new Dictionary<string, object>()
+                new Dictionary<string, object?>()
                 {
                     { "AuditPlan", new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), _currentUserService?.UserDisplayName ?? "System") },
                     { "IsNew", true }
@@ -333,7 +333,7 @@ public partial class AuditManagement : ComponentBase
         try
         {
             var result = await _dialogService.OpenAsync<Components.AuditPlanDialog>("Edit Audit Plan",
-                new Dictionary<string, object>()
+                new Dictionary<string, object?>()
                 {
                     { "AuditPlan", plan },
                     { "IsNew", false }
