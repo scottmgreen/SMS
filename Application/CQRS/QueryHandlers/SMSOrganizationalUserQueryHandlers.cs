@@ -10,9 +10,9 @@
 
 using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 /// <summary>
 /// Query handler for getting all SMS organizational users
@@ -32,16 +32,16 @@ public class GetAllSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IBaseRe
     {
         try
         {
-            _logger.LogInformation("Processing GetAllSMSOrganizationalUsersQuery");
+            _logger.LogApplicationInformation("Processing GetAllSMSOrganizationalUsersQuery");
             var result = await _organizationalUserService.GetAllSMSOrganizationalUsersAsync(ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users", result.Value?.Count() ?? 0);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS Organizational Users", result.Value?.Count() ?? 0);
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve SMS Organizational Users");
+                _logger.LogApplicationWarning("Failed to retrieve SMS Organizational Users");
             }
 
             return result;
@@ -72,16 +72,16 @@ public class GetSMSOrganizationalUserByCodeQueryHandler : BaseQueryBundle, IBase
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSOrganizationalUserByCodeQuery for Code: {Code}", request.UserCode);
+            _logger.LogApplicationInformation("Processing GetSMSOrganizationalUserByCodeQuery for Code: {Code}", request.UserCode);
             var result = await _organizationalUserService.GetSMSOrganizationalUserByCodeAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved SMS Organizational User with Code: {Code}", request.UserCode);
+                _logger.LogApplicationInformation("Successfully retrieved SMS Organizational User with Code: {Code}", request.UserCode);
             }
             else
             {
-                _logger.LogWarning("SMS Organizational User not found with Code: {Code}", request.UserCode);
+                _logger.LogApplicationWarning("SMS Organizational User not found with Code: {Code}", request.UserCode);
             }
 
             return result;
@@ -112,7 +112,7 @@ public class GetSMSOrganizationalUserByUserNameQueryHandler : BaseQueryBundle, I
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSOrganizationalUserByUserNameQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationInformation("Processing GetSMSOrganizationalUserByUserNameQuery for UserName: {UserName}", request.UserName);
 
             // Get all users and filter by username (fallback approach)
             var allUsersResult = await _organizationalUserService.GetAllSMSOrganizationalUsersAsync(ct);
@@ -125,12 +125,12 @@ public class GetSMSOrganizationalUserByUserNameQueryHandler : BaseQueryBundle, I
 
             if (user != null)
             {
-                _logger.LogInformation("Successfully retrieved SMS Organizational User with UserName: {UserName}", request.UserName);
+                _logger.LogApplicationInformation("Successfully retrieved SMS Organizational User with UserName: {UserName}", request.UserName);
                 return Result<SMSOrganizationalUser>.Success(user);
             }
             else
             {
-                _logger.LogWarning("SMS Organizational User not found with UserName: {UserName}", request.UserName);
+                _logger.LogApplicationWarning("SMS Organizational User not found with UserName: {UserName}", request.UserName);
                 return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
             }
         }
@@ -160,7 +160,7 @@ public class GetActiveSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IBas
     {
         try
         {
-            _logger.LogInformation("Processing GetActiveSMSOrganizationalUsersQuery");
+            _logger.LogApplicationInformation("Processing GetActiveSMSOrganizationalUsersQuery");
 
             // Get all users and filter for active ones
             var allUsersResult = await _organizationalUserService.GetAllSMSOrganizationalUsersAsync(ct);
@@ -171,7 +171,7 @@ public class GetActiveSMSOrganizationalUsersQueryHandler : BaseQueryBundle, IBas
 
             var activeUsers = allUsersResult.Value?.Where(u => u.IsActive) ?? Enumerable.Empty<SMSOrganizationalUser>();
 
-            _logger.LogInformation("Successfully retrieved {Count} active SMS Organizational Users", activeUsers.Count());
+            _logger.LogApplicationInformation("Successfully retrieved {Count} active SMS Organizational Users", activeUsers.Count());
             return Result<IEnumerable<SMSOrganizationalUser>>.Success(activeUsers);
         }
         catch (Exception ex)
@@ -200,7 +200,7 @@ public class GetSMSOrganizationalUsersByDepartmentQueryHandler : BaseQueryBundle
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSOrganizationalUsersByDepartmentQuery for Department: {Department}", request.Department);
+            _logger.LogApplicationInformation("Processing GetSMSOrganizationalUsersByDepartmentQuery for Department: {Department}", request.Department);
 
             // Filter from all users as service method doesn't exist
             var allUsersResult = await _organizationalUserService.GetAllSMSOrganizationalUsersAsync(ct);
@@ -211,7 +211,7 @@ public class GetSMSOrganizationalUsersByDepartmentQueryHandler : BaseQueryBundle
 
             var filteredUsers = allUsersResult.Value?.Where(u => string.Equals(u.Department, request.Department, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSOrganizationalUser>();
 
-            _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for Department: {Department}", filteredUsers.Count(), request.Department);
+            _logger.LogApplicationInformation("Successfully retrieved {Count} SMS Organizational Users for Department: {Department}", filteredUsers.Count(), request.Department);
             return Result<IEnumerable<SMSOrganizationalUser>>.Success(filteredUsers);
         }
         catch (Exception ex)
@@ -240,7 +240,7 @@ public class GetSMSOrganizationalUsersByPositionQueryHandler : BaseQueryBundle, 
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSOrganizationalUsersByPositionQuery for Position: {Position}", request.Position);
+            _logger.LogApplicationInformation("Processing GetSMSOrganizationalUsersByPositionQuery for Position: {Position}", request.Position);
 
             // Filter from all users as service method doesn't exist
             var allUsersResult = await _organizationalUserService.GetAllSMSOrganizationalUsersAsync(ct);
@@ -251,7 +251,7 @@ public class GetSMSOrganizationalUsersByPositionQueryHandler : BaseQueryBundle, 
 
             var filteredUsers = allUsersResult.Value?.Where(u => string.Equals(u.Position, request.Position, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSOrganizationalUser>();
 
-            _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for Position: {Position}", filteredUsers.Count(), request.Position);
+            _logger.LogApplicationInformation("Successfully retrieved {Count} SMS Organizational Users for Position: {Position}", filteredUsers.Count(), request.Position);
             return Result<IEnumerable<SMSOrganizationalUser>>.Success(filteredUsers);
         }
         catch (Exception ex)
@@ -280,7 +280,7 @@ public class GetSMSOrganizationalUsersByOrganizationLevelQueryHandler : BaseQuer
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSOrganizationalUsersByOrganizationLevelQuery for OrganizationLevel: {OrganizationLevel}", request.OrganizationLevel);
+            _logger.LogApplicationInformation("Processing GetSMSOrganizationalUsersByOrganizationLevelQuery for OrganizationLevel: {OrganizationLevel}", request.OrganizationLevel);
 
             // Filter users by organization level through service
             var allUsersResult = await _organizationalUserService.GetAllSMSOrganizationalUsersAsync(ct);
@@ -291,7 +291,7 @@ public class GetSMSOrganizationalUsersByOrganizationLevelQueryHandler : BaseQuer
 
             var filteredUsers = allUsersResult.Value?.Where(u => u.OrganizationLevel.Value.Equals(request.OrganizationLevel, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSOrganizationalUser>();
 
-            _logger.LogInformation("Successfully retrieved {Count} SMS Organizational Users for OrganizationLevel: {OrganizationLevel}", filteredUsers.Count(), request.OrganizationLevel);
+            _logger.LogApplicationInformation("Successfully retrieved {Count} SMS Organizational Users for OrganizationLevel: {OrganizationLevel}", filteredUsers.Count(), request.OrganizationLevel);
             return Result<IEnumerable<SMSOrganizationalUser>>.Success(filteredUsers);
         }
         catch (Exception ex)
@@ -320,7 +320,7 @@ public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle,
     {
         try
         {
-            _logger.LogInformation("Processing CheckSMSOrganizationalUserNameExistsQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationInformation("Processing CheckSMSOrganizationalUserNameExistsQuery for UserName: {UserName}", request.UserName);
 
             var result = await _organizationalUserService.GetAllSMSOrganizationalUsersAsync(ct);
             if (result.IsFailure)
@@ -330,7 +330,7 @@ public class CheckSMSOrganizationalUserNameExistsQueryHandler : BaseQueryBundle,
 
             var exists = result.Value?.Any(x => x.UserName.Value.Equals(request.UserName, StringComparison.OrdinalIgnoreCase)) ?? false;
 
-            _logger.LogInformation("Username {UserName} exists: {Exists}", request.UserName, exists);
+            _logger.LogApplicationInformation("Username {UserName} exists: {Exists}", request.UserName, exists);
 
             return Result<bool>.Success(exists);
         }
@@ -360,7 +360,7 @@ public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, I
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSOrganizationalUserStatisticsQuery");
+            _logger.LogApplicationInformation("Processing GetSMSOrganizationalUserStatisticsQuery");
 
             // Generate basic statistics from all users
             var allUsersResult = await _organizationalUserService.GetAllSMSOrganizationalUsersAsync(ct);
@@ -380,7 +380,7 @@ public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, I
                 ["LastLoginDate"] = users.Where(u => u.LastLoginDate.HasValue).Max(u => u.LastLoginDate)
             };
 
-            _logger.LogInformation("Successfully retrieved SMS Organizational User statistics");
+            _logger.LogApplicationInformation("Successfully retrieved SMS Organizational User statistics");
             return Result<Dictionary<string, object>>.Success<Dictionary<string, object>>(stats);
         }
         catch (Exception ex)
@@ -409,11 +409,11 @@ public class ValidateSMSOrganizationalUserCredentialsQueryHandler : BaseQueryBun
     {
         try
         {
-            _logger.LogInformation("Processing ValidateSMSOrganizationalUserCredentialsQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationInformation("Processing ValidateSMSOrganizationalUserCredentialsQuery for UserName: {UserName}", request.UserName);
 
             var result = await _organizationalUserService.AuthenticateSMSOrganizationalUserAsync(request.UserName, request.Password, ct);
 
-            _logger.LogInformation("Credential validation for {UserName}: {IsValid}", request.UserName, result.IsSuccess && result.Value);
+            _logger.LogApplicationInformation("Credential validation for {UserName}: {IsValid}", request.UserName, result.IsSuccess && result.Value);
 
             return result;
         }

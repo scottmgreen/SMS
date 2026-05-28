@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="CircuitUserTrackingMiddleware.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -52,7 +52,7 @@ namespace SMS_Infrastructure.Configuration.Middleware
             await _next(context);
         }
 
-        // ✅ New method to retrieve a ConnectionId when CircuitHandler fires
+        // New method to retrieve a ConnectionId when CircuitHandler fires
         public static string? GetConnectionId()
         {
             return ConnectionIds.FirstOrDefault();
@@ -181,4 +181,5 @@ namespace SMS_Infrastructure.Configuration.Middleware
         }
     }
 }
+
 

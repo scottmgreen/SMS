@@ -7,7 +7,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace SMS_Application.Messaging.Queries;
+namespace SMS_Application.Queries;
 
 /// <summary>
 /// Query handler for retrieving all Safety Performance Indicators
@@ -29,7 +29,7 @@ public class GetAllSafetyPerformanceIndicatorsQueryHandler : BaseQueryBundle, IB
     {
         try
         {
-            _logger.LogInformation("?? Processing GetAllSafetyPerformanceIndicatorsQuery");
+            _logger.LogApplicationInformation("Processing GetAllSafetyPerformanceIndicatorsQuery");
 
             var result = await _spiService.GetAllSafetyPerformanceIndicatorsAsync(ct);
 
@@ -53,18 +53,18 @@ public class GetAllSafetyPerformanceIndicatorsQueryHandler : BaseQueryBundle, IB
                     spis = spis.Where(spi => spi.ResponsibleDepartment.Equals(request.DepartmentFilter, StringComparison.OrdinalIgnoreCase)).ToList();
                 }
 
-                _logger.LogInformation("? Retrieved {Count} SPIs", spis.Count);
+                _logger.LogApplicationInformation("Retrieved {Count} SPIs", spis.Count);
                 return Result<List<SafetyPerformanceIndicator>>.Success(spis);
             }
             else
             {
-                _logger.LogWarning("?? Failed to retrieve SPIs: {Error}", result.Error?.Message);
+                _logger.LogApplicationWarning("Failed to retrieve SPIs: {Error}", result.Error?.Message);
                 return Result<List<SafetyPerformanceIndicator>>.Failure<List<SafetyPerformanceIndicator>>(result.Error);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? Error processing GetAllSafetyPerformanceIndicatorsQuery");
+            _logger.LogApplicationError(ex, "Error processing GetAllSafetyPerformanceIndicatorsQuery");
             return Result<List<SafetyPerformanceIndicator>>.Failure<List<SafetyPerformanceIndicator>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -90,24 +90,24 @@ public class GetSafetyPerformanceIndicatorByIdQueryHandler : BaseQueryBundle, IB
     {
         try
         {
-            _logger.LogInformation("?? Processing GetSafetyPerformanceIndicatorByIdQuery for ID: {Id}", request.SPIId?.Value);
+            _logger.LogApplicationInformation("Processing GetSafetyPerformanceIndicatorByIdQuery for ID: {Id}", request.SPIId?.Value);
 
             var result = await _spiService.GetSafetyPerformanceIndicatorByIdAsync(request.SPIId, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("? Retrieved SPI with ID: {Id}", request.SPIId?.Value);
+                _logger.LogApplicationInformation("Retrieved SPI with ID: {Id}", request.SPIId?.Value);
             }
             else
             {
-                _logger.LogWarning("?? Failed to retrieve SPI with ID {Id}: {Error}", request.SPIId?.Value, result.Error?.Message);
+                _logger.LogApplicationWarning("Failed to retrieve SPI with ID {Id}: {Error}", request.SPIId?.Value, result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? Error processing GetSafetyPerformanceIndicatorByIdQuery for ID: {Id}", request.SPIId?.Value);
+            _logger.LogApplicationError(ex, "Error processing GetSafetyPerformanceIndicatorByIdQuery for ID: {Id}", request.SPIId?.Value);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -133,25 +133,26 @@ public class GetSafetyPerformanceIndicatorByCodeQueryHandler : BaseQueryBundle, 
     {
         try
         {
-            _logger.LogInformation("?? Processing GetSafetyPerformanceIndicatorByCodeQuery for Code: {Code}", request.Code);
+            _logger.LogApplicationInformation("Processing GetSafetyPerformanceIndicatorByCodeQuery for Code: {Code}", request.Code);
 
             var result = await _spiService.GetSafetyPerformanceIndicatorByCodeAsync(request.Code, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("? Retrieved SPI with Code: {Code}", request.Code);
+                _logger.LogApplicationInformation("Retrieved SPI with Code: {Code}", request.Code);
             }
             else
             {
-                _logger.LogWarning("?? Failed to retrieve SPI with Code {Code}: {Error}", request.Code, result.Error?.Message);
+                _logger.LogApplicationWarning("Failed to retrieve SPI with Code {Code}: {Error}", request.Code, result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? Error processing GetSafetyPerformanceIndicatorByCodeQuery for Code: {Code}", request.Code);
+            _logger.LogApplicationError(ex, "Error processing GetSafetyPerformanceIndicatorByCodeQuery for Code: {Code}", request.Code);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
         }
     }
 }
+

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ReportValidationQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -10,11 +10,11 @@
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // REPORT VALIDATION QUERY HANDLERS
@@ -35,7 +35,7 @@ public class GetReportValidationByIdQueryHandler : BaseQueryBundle, IBaseRequest
     {
         try
         {
-            _logger.LogInformation("Processing GetReportValidationByIdQuery for ID: {Id}", request.ReportValidationId);
+            _logger.LogApplicationInformation("Processing GetReportValidationByIdQuery for ID: {Id}", request.ReportValidationId);
             var result = await _reportValidationDataService.GetReportValidationByIdAsync(request.ReportValidationId, ct).ConfigureAwait(false);
             return result;
         }
@@ -63,7 +63,7 @@ public class GetReportValidationByReportIdQueryHandler : BaseQueryBundle, IBaseR
     {
         try
         {
-            _logger.LogInformation("Processing GetReportValidationByIdQuery for ID: {Id}", request.ReportId);
+            _logger.LogApplicationInformation("Processing GetReportValidationByIdQuery for ID: {Id}", request.ReportId);
             var result = await _reportValidationDataService.GetReportValidationByReportIdAsync(request.ReportId, ct).ConfigureAwait(false);
             return result;
         }
@@ -90,7 +90,7 @@ public class GetAllReportValidationsQueryHandler : BaseQueryBundle, IBaseRequest
     {
         try
         {
-            _logger.LogInformation("Processing GetAllReportValidationsQuery");
+            _logger.LogApplicationInformation("Processing GetAllReportValidationsQuery");
             var result = await _reportValidationDataService.GetAllReportValidationsAsync(ct).ConfigureAwait(false);
             return result;
         }
@@ -122,7 +122,7 @@ public class GetValidatedSMSRisksByDateQueryHandler : BaseQueryBundle, IBaseRequ
     {
         try
         {
-            _logger.LogInformation("🔍 Processing GetValidatedSMSRisksByDateQuery for {FromDate} to {ToDate}", 
+            _logger.LogApplicationInformation("Processing GetValidatedSMSRisksByDateQuery for {FromDate} to {ToDate}", 
                 request.FromDate, request.ToDate);
 
             // Get all report validations first
@@ -130,7 +130,7 @@ public class GetValidatedSMSRisksByDateQueryHandler : BaseQueryBundle, IBaseRequ
 
             if (allValidationsResult.IsFailure)
             {
-                _logger.LogError("❌ Failed to retrieve report validations: {Error}", allValidationsResult.Error?.Message);
+                _logger.LogApplicationError("Failed to retrieve report validations: {Error}", allValidationsResult.Error?.Message);
                 return Result<List<ReportValidation>>.Failure<List<ReportValidation>>(allValidationsResult.Error);
             }
 
@@ -142,16 +142,18 @@ public class GetValidatedSMSRisksByDateQueryHandler : BaseQueryBundle, IBaseRequ
                            rv.ValidatedDate.Value <= request.ToDate)
                 .ToList();
 
-            _logger.LogInformation("✅ Found {Count} validated SMS risks between {FromDate} and {ToDate}", 
+            _logger.LogApplicationInformation("Found {Count} validated SMS risks between {FromDate} and {ToDate}", 
                 validatedRisks.Count, request.FromDate.ToString("yyyy-MM-dd"), request.ToDate.ToString("yyyy-MM-dd"));
 
             return Result<List<ReportValidation>>.Success(validatedRisks);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "💥 Error processing GetValidatedSMSRisksByDateQuery for {FromDate} to {ToDate}", 
+            _logger.LogApplicationError(ex, "Error processing GetValidatedSMSRisksByDateQuery for {FromDate} to {ToDate}", 
                 request.FromDate, request.ToDate);
             return Result<List<ReportValidation>>.Failure<List<ReportValidation>>(DomainErrors.ReportError.NotFound);
         }
     }
 }
+
+

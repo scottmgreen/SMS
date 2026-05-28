@@ -52,7 +52,7 @@ public class SessionTimerService : IDisposable
     {
         if (!_currentUserService.IsAuthenticated)
         {
-            _logger.LogDebug("Cannot start timer - user not authenticated");
+            _logger.LogApplicationDebug("Cannot start timer - user not authenticated", ApplicationEventIds.Debug);
             return;
         }
 
@@ -62,7 +62,9 @@ public class SessionTimerService : IDisposable
         // Create timer that checks every 30 seconds
         _timer = new Timer(CheckSessionTimeout, null, TimeSpan.FromSeconds(30), TimeSpan.FromSeconds(30));
         
-        _logger.LogDebug("Session timer started - timeout in {TimeoutMinutes} minutes", _sessionConfig.TimeoutMinutes);
+        _logger.LogApplicationDebug("Session timer started - timeout in {TimeoutMinutes} minutes",
+            ApplicationEventIds.Debug,
+            _sessionConfig.TimeoutMinutes);
     }
 
     /// <summary>
@@ -73,7 +75,7 @@ public class SessionTimerService : IDisposable
         if (_isActive && _currentUserService.IsAuthenticated)
         {
             _lastActivity = DateTime.UtcNow;
-            _logger.LogTrace("Session activity updated");
+            _logger.LogApplicationTrace("Session activity updated", ApplicationEventIds.Trace);
         }
     }
 
@@ -85,7 +87,7 @@ public class SessionTimerService : IDisposable
         _isActive = false;
         _timer?.Dispose();
         _timer = null;
-        _logger.LogDebug("Session timer stopped");
+        _logger.LogApplicationDebug("Session timer stopped", ApplicationEventIds.Debug);
     }
 
     /// <summary>
@@ -159,7 +161,8 @@ public class SessionTimerService : IDisposable
             // Check for warning threshold (2 minutes)
             if (remaining <= TimeSpan.FromMinutes(2) && remaining > TimeSpan.FromMinutes(1.5))
             {
-                _logger.LogWarning("Session approaching timeout for user {UserId} - {RemainingMinutes} minutes remaining", 
+                _logger.LogApplicationWarning("Session approaching timeout for user {UserId} - {RemainingMinutes} minutes remaining",
+                    ApplicationEventIds.Warning,
                     _currentUserService.UserCode, remaining.TotalMinutes);
                 OnWarningThreshold?.Invoke();
             }
@@ -167,14 +170,16 @@ public class SessionTimerService : IDisposable
             // Check for session expiry
             if (remaining <= TimeSpan.Zero)
             {
-                _logger.LogWarning("Session expired for user {UserId}", _currentUserService.UserCode);
+                _logger.LogApplicationWarning("Session expired for user {UserId}",
+                    ApplicationEventIds.Warning,
+                    _currentUserService.UserCode);
                 _isActive = false;
                 OnSessionExpired?.Invoke();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in session timeout check");
+            _logger.LogApplicationError("Error in session timeout check", ApplicationEventIds.Error, ex);
         }
     }
 

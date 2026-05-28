@@ -10,7 +10,7 @@
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
 
-namespace SMS_Application.Messaging.Commands;
+namespace SMS_Application.Commands;
 
 public class ExecuteQueuedEventCommand : BaseCommandBundle, IRequest<Result>
 {

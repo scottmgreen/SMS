@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSUserRoleCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // SMS USER ROLE COMMAND HANDLERS - Clean Architecture Pattern
@@ -39,13 +39,13 @@ public class CreateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHa
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateSMSUserRoleCommand for Code: {Code}", request.SMSUserRole.Code);
+            _logger.LogApplicationInformation(" Processing CreateSMSUserRoleCommand for Code: {Code}", request.SMSUserRole.Code);
 
             var result = await _userRoleService.CreateUserRoleAsync(request.SMSUserRole);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created SMS User Role with ID: {Id}", result.Value?.Id);
+                _logger.LogApplicationInformation(" Successfully created SMS User Role with ID: {Id}", result.Value?.Id);
             }
             else
             {
@@ -57,7 +57,7 @@ public class CreateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHa
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateSMSUserRoleCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateSMSUserRoleCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -89,13 +89,13 @@ public class UpdateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHa
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateSMSUserRoleCommand for ID: {Id}", request.SMSUserRole.Id);
+            _logger.LogApplicationInformation(" Processing UpdateSMSUserRoleCommand for ID: {Id}", request.SMSUserRole.Id);
 
             var result = await _userRoleService.UpdateUserRoleAsync(request.SMSUserRole);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated SMS User Role with ID: {Id}", request.SMSUserRole.Id);
+                _logger.LogApplicationInformation(" Successfully updated SMS User Role with ID: {Id}", request.SMSUserRole.Id);
             }
             else
             {
@@ -107,7 +107,7 @@ public class UpdateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHa
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSMSUserRoleCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSMSUserRoleCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -139,13 +139,13 @@ public class DeleteSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHa
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteSMSUserRoleCommand for ID: {Id}", request.SMSUserRoleId);
+            _logger.LogApplicationInformation(" Processing DeleteSMSUserRoleCommand for ID: {Id}", request.SMSUserRoleId);
 
             var result = await _userRoleService.DeleteUserRoleAsync(request.SMSUserRoleId.Value);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted SMS User Role with ID: {Id}", request.SMSUserRoleId);
+                _logger.LogApplicationInformation(" Successfully deleted SMS User Role with ID: {Id}", request.SMSUserRoleId);
             }
             else
             {
@@ -157,7 +157,7 @@ public class DeleteSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequestHa
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteSMSUserRoleCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteSMSUserRoleCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -189,7 +189,7 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing AssignRoleToUserCommand - User: {UserId}, Role: {RoleCode}",
+            _logger.LogApplicationInformation(" Processing AssignRoleToUserCommand - User: {UserId}, Role: {RoleCode}",
                 request.UserId, request.RoleCode);
 
             // Create a new user role assignment
@@ -205,7 +205,7 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IBaseRequestHan
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully assigned role {RoleCode} to user {UserId}",
+                _logger.LogApplicationInformation(" Successfully assigned role {RoleCode} to user {UserId}",
                     request.RoleCode, request.UserId);
             }
             else
@@ -218,7 +218,7 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IBaseRequestHan
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("AssignRoleToUserCommand operation was cancelled");
+            _logger.LogApplicationWarning("AssignRoleToUserCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -250,7 +250,7 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequest
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing ActivateSMSUserRoleCommand for ID: {Id}", request.UserRoleId);
+            _logger.LogApplicationInformation(" Processing ActivateSMSUserRoleCommand for ID: {Id}", request.UserRoleId);
 
             // Get the user role to activate
             var userRoleResult = await _userRoleService.GetUserRoleByIdAsync(request.UserRoleId);
@@ -270,7 +270,7 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequest
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully activated SMS User Role with ID: {Id}", request.UserRoleId);
+                _logger.LogApplicationInformation(" Successfully activated SMS User Role with ID: {Id}", request.UserRoleId);
                 return Result<bool>.Success(true);
             }
             else
@@ -282,7 +282,7 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequest
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("ActivateSMSUserRoleCommand operation was cancelled");
+            _logger.LogApplicationWarning("ActivateSMSUserRoleCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -314,7 +314,7 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseReque
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeactivateSMSUserRoleCommand for ID: {Id}", request.UserRoleId);
+            _logger.LogApplicationInformation(" Processing DeactivateSMSUserRoleCommand for ID: {Id}", request.UserRoleId);
 
             // Get the user role to deactivate
             var userRoleResult = await _userRoleService.GetUserRoleByIdAsync(request.UserRoleId);
@@ -335,7 +335,7 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseReque
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deactivated SMS User Role with ID: {Id}", request.UserRoleId);
+                _logger.LogApplicationInformation(" Successfully deactivated SMS User Role with ID: {Id}", request.UserRoleId);
                 return Result<bool>.Success(true);
             }
             else
@@ -347,7 +347,7 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseReque
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeactivateSMSUserRoleCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeactivateSMSUserRoleCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -357,3 +357,4 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseReque
         }
     }
 }
+

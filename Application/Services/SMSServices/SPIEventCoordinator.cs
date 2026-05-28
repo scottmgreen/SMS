@@ -32,14 +32,14 @@ public class SPIEventCoordinator
     public async Task OnHazardCreated(string hazardId, string hazardCode, DateTime createdDate, string createdBy,
         string reportId, string hazardType, string hazardCategory)
     {
-        _logger.LogInformation("?? SPI Coordinator: Hazard creation noted for {HazardCode} (reorganization in progress)", hazardCode);
+        _logger.LogApplicationInformation("SPI Coordinator: Hazard creation noted for {HazardCode} (reorganization in progress)", hazardCode);
         await Task.CompletedTask;
     }
 
     public async Task OnHazardClosed(string hazardId, string hazardCode, DateTime submittedDate, DateTime closedDate,
         string closedBy, string reportId, string closureReason, string resolution)
     {
-        _logger.LogInformation("?? SPI Coordinator: Hazard closure noted for {HazardCode} (reorganization in progress)", hazardCode);
+        _logger.LogApplicationInformation("SPI Coordinator: Hazard closure noted for {HazardCode} (reorganization in progress)", hazardCode);
         await Task.CompletedTask;
     }
 
@@ -51,14 +51,14 @@ public class SPIEventCoordinator
         DateTime targetCompletionDate, DateTime completedDate, string hazardId, string reportId, 
         string riskLevel, decimal riskScore, string assessmentType, string completedBy = "")
     {
-        _logger.LogInformation("?? SPI Coordinator: Risk assessment completion noted for {AssessmentCode} (reorganization in progress)", assessmentCode);
+        _logger.LogApplicationInformation("SPI Coordinator: Risk assessment completion noted for {AssessmentCode} (reorganization in progress)", assessmentCode);
         await Task.CompletedTask;
     }
 
     public async Task OnHighRiskIdentified(string assessmentId, string reportId, string riskLevel, 
         decimal riskScore, DateTime identifiedDate, string identifiedBy, string riskDescription, string hazardId = "", string impactArea = "")
     {
-        _logger.LogInformation("?? SPI Coordinator: High risk identification noted for {AssessmentId} (reorganization in progress)", assessmentId);
+        _logger.LogApplicationInformation("SPI Coordinator: High risk identification noted for {AssessmentId} (reorganization in progress)", assessmentId);
         await Task.CompletedTask;
     }
 
@@ -69,7 +69,7 @@ public class SPIEventCoordinator
     public async Task OnValidationDecisionMade(string reportId, string reportCode, string validationDecision,
         DateTime validatedDate, string validatedBy, string validationNotes = "", string validationComments = "")
     {
-        _logger.LogInformation("?? SPI Coordinator: Validation decision noted for {ReportCode} (reorganization in progress)", reportCode);
+        _logger.LogApplicationInformation("SPI Coordinator: Validation decision noted for {ReportCode} (reorganization in progress)", reportCode);
         await Task.CompletedTask;
     }
 
@@ -81,23 +81,24 @@ public class SPIEventCoordinator
         DateTime targetCompletionDate, DateTime completedDate, string reportId, string completionNotes,
         string effectivenessRating, string completedBy = "")
     {
-        _logger.LogInformation("?? SPI Coordinator: Mitigation completion noted for {MitigationCode} (reorganization in progress)", mitigationCode);
+        _logger.LogApplicationInformation("SPI Coordinator: Mitigation completion noted for {MitigationCode} (reorganization in progress)", mitigationCode);
         await Task.CompletedTask;
     }
 
     public async Task OnMitigationOverdue(string mitigationId, string mitigationCode, string hazardId,
         DateTime targetCompletionDate, string reportId, string assignedTo, string priority)
     {
-        _logger.LogInformation("?? SPI Coordinator: Mitigation overdue noted for {MitigationCode} (reorganization in progress)", mitigationCode);
+        _logger.LogApplicationInformation("SPI Coordinator: Mitigation overdue noted for {MitigationCode} (reorganization in progress)", mitigationCode);
         await Task.CompletedTask;
     }
 
     public async Task OnMitigationStatusChanged(string mitigationId, string mitigationCode, string hazardId,
         string oldStatus, string newStatus, DateTime statusChangeDate, string changedBy, string changeReason)
     {
-        _logger.LogInformation("?? SPI Coordinator: Mitigation status change noted for {MitigationCode} (reorganization in progress)", mitigationCode);
+        _logger.LogApplicationInformation("SPI Coordinator: Mitigation status change noted for {MitigationCode} (reorganization in progress)", mitigationCode);
         await Task.CompletedTask;
     }
 
     #endregion
 }
+

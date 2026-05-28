@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="InterviewQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,9 +12,9 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // INTERVIEW QUERY HANDLERS - Clean Architecture Pattern
@@ -35,7 +35,7 @@ public class GetInterviewByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandl
     {
         try
         {
-            _logger.LogInformation(" Processing GetInterviewByCodeQuery for Code: {Code}", request.InterviewId);
+            _logger.LogApplicationInformation(" Processing GetInterviewByCodeQuery for Code: {Code}", request.InterviewId);
             var result = await _interviewService.GetInterviewByCodeAsync(new InterviewID(request.InterviewId.Value), ct).ConfigureAwait(false);
             return result;
         }
@@ -62,7 +62,7 @@ public class GetAllInterviewsQueryHandler : BaseQueryBundle, IBaseRequestHandler
     {
         try
         {
-            _logger.LogInformation(" Processing GetAllInterviewsQuery");
+            _logger.LogApplicationInformation(" Processing GetAllInterviewsQuery");
             var result = await _interviewService.GetAllInterviewsAsync(ct).ConfigureAwait(false);
             return result;
         }
@@ -73,3 +73,4 @@ public class GetAllInterviewsQueryHandler : BaseQueryBundle, IBaseRequestHandler
         }
     }
 }
+

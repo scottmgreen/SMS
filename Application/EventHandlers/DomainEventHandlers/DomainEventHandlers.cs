@@ -34,7 +34,7 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
     {
         try
         {
-            _logger.LogInformation("[HAZARD HANDLER] Processing hazard creation for {HazardCode} (Type: {HazardType}, Priority: {Priority})", domainEvent.HazardCode, domainEvent.HazardType, domainEvent.Priority);
+            _logger.LogApplicationInformation("[HAZARD HANDLER] Processing hazard creation for {HazardCode} (Type: {HazardType}, Priority: {Priority})", domainEvent.HazardCode, domainEvent.HazardType, domainEvent.Priority);
 
             var domainResult = await HandleDomainEventAsync(domainEvent, cancellationToken);
             if (domainResult.IsFailure)
@@ -54,19 +54,19 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
                 return uiResult;
             }
 
-            _logger.LogInformation("[HAZARD HANDLER] Successfully processed hazard creation for {HazardCode}", domainEvent.HazardCode);
+            _logger.LogApplicationInformation("[HAZARD HANDLER] Successfully processed hazard creation for {HazardCode}", domainEvent.HazardCode);
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[HAZARD HANDLER] Error processing hazard creation event for {HazardCode}", domainEvent.HazardCode);
+            _logger.LogApplicationError(ex, "[HAZARD HANDLER] Error processing hazard creation event for {HazardCode}", domainEvent.HazardCode);
             return Result.Failure(new Error("HAZARD_CREATION_HANDLER_ERROR", $"Hazard creation processing failed: {ex.Message}"));
         }
     }
 
     private Task<Result> HandleDomainEventAsync(SMS_Domain.Events.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("[DOMAIN EVENT] HazardCreatedEvent received for {HazardCode}", domainEvent.HazardCode);
+        _logger.LogApplicationInformation("[DOMAIN EVENT] HazardCreatedEvent received for {HazardCode}", domainEvent.HazardCode);
         return Task.FromResult(Result.Success());
     }
 
@@ -110,12 +110,12 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
 
             if (uiResult.IsFailure)
             {
-                _logger.LogWarning("[UI EVENT] Failed to queue popup notification: {Error}", uiResult.Error.Message);
+                _logger.LogApplicationWarning("[UI EVENT] Failed to queue popup notification: {Error}", uiResult.Error.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "[UI EVENT] Failed to publish UI notification for hazard {HazardCode}", domainEvent.HazardCode);
+            _logger.LogApplicationWarning(ex, "[UI EVENT] Failed to publish UI notification for hazard {HazardCode}", domainEvent.HazardCode);
         }
     }
 
@@ -160,12 +160,12 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
 
             if (emailResult.IsFailure)
             {
-                _logger.LogError("[INTEGRATION EVENT] Failed to queue hazard notification email: {Error}", emailResult.Error.Message);
+                _logger.LogApplicationError("[INTEGRATION EVENT] Failed to queue hazard notification email: {Error}", emailResult.Error.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[INTEGRATION EVENT] Failed to send email notifications for {HazardCode}", domainEvent.HazardCode);
+            _logger.LogApplicationError(ex, "[INTEGRATION EVENT] Failed to send email notifications for {HazardCode}", domainEvent.HazardCode);
         }
     }
 
@@ -290,7 +290,7 @@ public sealed class HazardUpdatedEventHandler : BaseDomainEventHandler<HazardUpd
 
     protected override Task<Result> HandleDomainEventAsync(HazardUpdatedEvent domainEvent, CancellationToken cancellationToken)
     {
-        Logger.LogInformation("[DOMAIN EVENT] Hazard updated. HazardId: {HazardId}, ReportId: {ReportId}",domainEvent.HazardId,HandlerHelpers.ResolveReportId(domainEvent));
+        Logger.LogApplicationInformation("[DOMAIN EVENT] Hazard updated. HazardId: {HazardId}, ReportId: {ReportId}",domainEvent.HazardId,HandlerHelpers.ResolveReportId(domainEvent));
 
         return Task.FromResult(Result.Success());
     }
@@ -445,12 +445,12 @@ public class HazardEventSPIHandler
 
             if (result.IsFailure)
             {
-                _logger.LogWarning("SPI Event: Failed to process HazardCreated event for hazard {HazardCode}: {Error}", evt.HazardCode, result.Error.Message);
+                _logger.LogApplicationWarning("SPI Event: Failed to process HazardCreated event for hazard {HazardCode}: {Error}", evt.HazardCode, result.Error.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "SPI Event: Error processing HazardCreated event for hazard {HazardCode}", evt.HazardCode);
+            _logger.LogApplicationError(ex, "SPI Event: Error processing HazardCreated event for hazard {HazardCode}", evt.HazardCode);
         }
     }
 }
@@ -480,12 +480,12 @@ public class MitigationEventSPIHandler
 
             if (result.IsFailure)
             {
-                _logger.LogWarning("SPI Event: Failed to process MitigationCompleted event for mitigation {MitigationId}: {Error}", evt.MitigationId, result.Error.Message);
+                _logger.LogApplicationWarning("SPI Event: Failed to process MitigationCompleted event for mitigation {MitigationId}: {Error}", evt.MitigationId, result.Error.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "SPI Event: Error processing MitigationCompleted event for mitigation {MitigationId}", evt.MitigationId);
+            _logger.LogApplicationError(ex, "SPI Event: Error processing MitigationCompleted event for mitigation {MitigationId}", evt.MitigationId);
         }
     }
 
@@ -497,7 +497,7 @@ public class MitigationEventSPIHandler
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "SPI Event: Error processing MitigationOverdue event for mitigation {MitigationId}", evt.MitigationId);
+            _logger.LogApplicationError(ex, "SPI Event: Error processing MitigationOverdue event for mitigation {MitigationId}", evt.MitigationId);
         }
     }
 }
@@ -530,12 +530,12 @@ public class RiskAssessmentEventSPIHandler
 
             if (result.IsFailure)
             {
-                _logger.LogWarning("SPI Event: Failed to process RiskAssessmentCompleted event for assessment {AssessmentId}: {Error}", evt.AssessmentId, result.Error.Message);
+                _logger.LogApplicationWarning("SPI Event: Failed to process RiskAssessmentCompleted event for assessment {AssessmentId}: {Error}", evt.AssessmentId, result.Error.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "SPI Event: Error processing RiskAssessmentCompleted event for assessment {AssessmentId}", evt.AssessmentId);
+            _logger.LogApplicationError(ex, "SPI Event: Error processing RiskAssessmentCompleted event for assessment {AssessmentId}", evt.AssessmentId);
         }
     }
 }
@@ -566,14 +566,14 @@ public class SPIAutomationEventHandler : BaseDomainEventHandler<SMS_Domain.Event
 
             if (hazardRateResult.IsFailure)
             {
-                _logger.LogWarning("[SPI AUTOMATION] Failed to update Hazard Report Rate SPI for {HazardCode}: {Error}", domainEvent.HazardCode, hazardRateResult.Error.Message);
+                _logger.LogApplicationWarning("[SPI AUTOMATION] Failed to update Hazard Report Rate SPI for {HazardCode}: {Error}", domainEvent.HazardCode, hazardRateResult.Error.Message);
             }
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[SPI AUTOMATION] SPI automation failed for hazard {HazardCode}", domainEvent.HazardCode);
+            _logger.LogApplicationError(ex, "[SPI AUTOMATION] SPI automation failed for hazard {HazardCode}", domainEvent.HazardCode);
             return Result.Failure(new Error("SPI_AUTOMATION_FAILED", $"SPI automation failed: {ex.Message}"));
         }
     }
@@ -602,14 +602,14 @@ public class SPIThresholdEventHandler : BaseDomainEventHandler<SPIThresholdExcee
             _ = scope.ServiceProvider.GetRequiredService<SMSStakeholderGroupService>();
             _ = scope.ServiceProvider.GetRequiredService<SPIEventCoordinator>();
 
-            _logger.LogInformation("[SPI THRESHOLD] Processed SPI threshold exceeded for {SPICode}: {CurrentValue} > {Threshold} (Severity: {Severity})",
+            _logger.LogApplicationInformation("[SPI THRESHOLD] Processed SPI threshold exceeded for {SPICode}: {CurrentValue} > {Threshold} (Severity: {Severity})",
                 domainEvent.SPICode, domainEvent.CurrentValue, domainEvent.ThresholdValue, domainEvent.Severity);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[SPI THRESHOLD] Error processing SPI threshold exceeded event for {SPICode}", domainEvent.SPICode);
+            _logger.LogApplicationError(ex, "[SPI THRESHOLD] Error processing SPI threshold exceeded event for {SPICode}", domainEvent.SPICode);
             return Result.Failure(new Error("SPI_THRESHOLD_HANDLER_ERROR", $"SPI threshold processing failed: {ex.Message}"));
         }
     }

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,9 +12,9 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // SMS AUDIT QUERY HANDLERS
@@ -40,7 +40,7 @@ public class GetAllSMSAuditsQueryHandler : BaseQueryBundle, IBaseRequestHandler<
     {
         try
         {
-            _logger.LogInformation("Processing GetAllSMSAuditsQuery");
+            _logger.LogApplicationInformation("Processing GetAllSMSAuditsQuery");
 
             var result = await _dataService.GetAllAuditsAsync(ct);
 
@@ -113,7 +113,7 @@ public class GetSMSAuditByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandle
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditByCodeQuery for Code: {AuditCode}", request.AuditCode);
+            _logger.LogApplicationInformation("Processing GetSMSAuditByCodeQuery for Code: {AuditCode}", request.AuditCode);
 
             var result = await _dataService.GetAuditByCodeAsync(request.AuditCode, request.IncludeFindings, request.IncludeEvidence, ct);
 
@@ -147,7 +147,7 @@ public class GetSMSAuditsByPlanQueryHandler : BaseQueryBundle, IBaseRequestHandl
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditsByPlanQuery for Plan: {AuditPlanCode}", request.AuditPlanCode);
+            _logger.LogApplicationInformation("Processing GetSMSAuditsByPlanQuery for Plan: {AuditPlanCode}", request.AuditPlanCode);
 
             var result = await _dataService.GetAuditsByPlanAsync(request.AuditPlanCode, request.StatusFilter, request.IncludeFindings, ct);
 
@@ -181,7 +181,7 @@ public class GetSMSAuditsByStatusQueryHandler : BaseQueryBundle, IBaseRequestHan
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditsByStatusQuery for Status: {Status}", request.Status);
+            _logger.LogApplicationInformation("Processing GetSMSAuditsByStatusQuery for Status: {Status}", request.Status);
 
             var result = await _dataService.GetAuditsByStatusAsync(request.Status, request.DepartmentFilter, request.IncludeFindings, ct);
 
@@ -215,7 +215,7 @@ public class GetSMSAuditsByAuditorQueryHandler : BaseQueryBundle, IBaseRequestHa
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditsByAuditorQuery for Auditor: {Auditor}", request.Auditor);
+            _logger.LogApplicationInformation("Processing GetSMSAuditsByAuditorQuery for Auditor: {Auditor}", request.Auditor);
 
             var result = await _dataService.GetAuditsByAuditorAsync(
                 request.Auditor,
@@ -254,7 +254,7 @@ public class GetOverdueSMSAuditsQueryHandler : BaseQueryBundle, IBaseRequestHand
     {
         try
         {
-            _logger.LogInformation("Processing GetOverdueSMSAuditsQuery");
+            _logger.LogApplicationInformation("Processing GetOverdueSMSAuditsQuery");
 
             var result = await _dataService.GetOverdueAuditsAsync(request.DepartmentFilter, request.AuditorFilter, ct);
 
@@ -288,7 +288,7 @@ public class GetSMSAuditExecutionDashboardQueryHandler : BaseQueryBundle, IBaseR
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditExecutionDashboardQuery");
+            _logger.LogApplicationInformation("Processing GetSMSAuditExecutionDashboardQuery");
 
             var result = await _dataService.GetAuditExecutionDashboardAsync(
                 request.StartDate,
@@ -338,7 +338,7 @@ public class GetSMSAuditFindingsByAuditCodeQueryHandler : BaseQueryBundle, IBase
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditFindingsByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
+            _logger.LogApplicationInformation("Processing GetSMSAuditFindingsByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
 
             var result = await _dataService.GetFindingsByAuditCodeAsync(request.AuditCode, ct);
 
@@ -390,7 +390,7 @@ public class GetAllSMSAuditFindingsQueryHandler : BaseQueryBundle, IBaseRequestH
     {
         try
         {
-            _logger.LogInformation("Processing GetAllSMSAuditFindingsQuery");
+            _logger.LogApplicationInformation("Processing GetAllSMSAuditFindingsQuery");
 
             var result = await _dataService.GetAllFindingsAsync(ct);
 
@@ -424,7 +424,7 @@ public class GetSMSAuditFindingByCodeQueryHandler : BaseQueryBundle, IBaseReques
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditFindingByCodeQuery for FindingCode: {FindingCode}", request.FindingCode);
+            _logger.LogApplicationInformation("Processing GetSMSAuditFindingByCodeQuery for FindingCode: {FindingCode}", request.FindingCode);
 
             var result = await _dataService.GetFindingByCodeAsync(request.FindingCode, ct);
 
@@ -458,7 +458,7 @@ public class GetOverdueSMSAuditFindingsQueryHandler : BaseQueryBundle, IBaseRequ
     {
         try
         {
-            _logger.LogInformation("Processing GetOverdueSMSAuditFindingsQuery");
+            _logger.LogApplicationInformation("Processing GetOverdueSMSAuditFindingsQuery");
 
             var result = await _dataService.GetOverdueFindingsAsync(ct);
 
@@ -496,7 +496,7 @@ public class GetSMSAuditEvidenceByAuditCodeQueryHandler : BaseQueryBundle, IBase
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditEvidenceByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
+            _logger.LogApplicationInformation("Processing GetSMSAuditEvidenceByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
 
             var result = await _dataService.GetEvidenceByAuditCodeAsync(request.AuditCode, request.IncludeArchived, ct);
 
@@ -543,7 +543,7 @@ public class GetAllSMSAuditEvidenceQueryHandler : BaseQueryBundle, IBaseRequestH
     {
         try
         {
-            _logger.LogInformation("Processing GetAllSMSAuditEvidenceQuery");
+            _logger.LogApplicationInformation("Processing GetAllSMSAuditEvidenceQuery");
 
             var result = await _dataService.GetAllEvidenceAsync(ct);
 
@@ -577,7 +577,7 @@ public class GetSMSAuditEvidenceByCodeQueryHandler : BaseQueryBundle, IBaseReque
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditEvidenceByCodeQuery for EvidenceCode: {EvidenceCode}", request.EvidenceCode);
+            _logger.LogApplicationInformation("Processing GetSMSAuditEvidenceByCodeQuery for EvidenceCode: {EvidenceCode}", request.EvidenceCode);
 
             var result = await _dataService.GetEvidenceByCodeAsync(request.EvidenceCode, ct);
 
@@ -611,7 +611,7 @@ public class GetSMSAuditEvidenceByFindingCodeQueryHandler : BaseQueryBundle, IBa
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditEvidenceByFindingCodeQuery for FindingCode: {FindingCode}", request.FindingCode);
+            _logger.LogApplicationInformation("Processing GetSMSAuditEvidenceByFindingCodeQuery for FindingCode: {FindingCode}", request.FindingCode);
 
             var result = await _dataService.GetEvidenceByFindingCodeAsync(request.FindingCode, request.IncludeArchived, ct);
 
@@ -642,7 +642,7 @@ public class GetSMSAuditChecklistItemsByAuditCodeQueryHandler : BaseQueryBundle,
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditChecklistItemsByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
+            _logger.LogApplicationInformation("Processing GetSMSAuditChecklistItemsByAuditCodeQuery for AuditCode: {AuditCode}", request.AuditCode);
 
             // For now, return an empty list since the checklist feature isn't fully implemented
             // TODO: Implement when SMSAuditChecklistDataService is available
@@ -655,3 +655,4 @@ public class GetSMSAuditChecklistItemsByAuditCodeQueryHandler : BaseQueryBundle,
         }
     }
 }
+

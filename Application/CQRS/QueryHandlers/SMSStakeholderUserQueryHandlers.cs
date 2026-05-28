@@ -10,9 +10,9 @@
 
 using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 /// <summary>
 /// Query handler for getting all SMS stakeholder users
@@ -32,16 +32,16 @@ public class GetAllSMSStakeholderUsersQueryHandler : BaseQueryBundle, IBaseReque
     {
         try
         {
-            _logger.LogInformation("Processing GetAllSMSStakeholderUsersQuery");
+            _logger.LogApplicationInformation("Processing GetAllSMSStakeholderUsersQuery");
             var result = await _stakeholderUserService.GetAllSMSStakeholderUsersAsync(ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users", result.Value?.Count() ?? 0);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS Stakeholder Users", result.Value?.Count() ?? 0);
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve SMS Stakeholder Users");
+                _logger.LogApplicationWarning("Failed to retrieve SMS Stakeholder Users");
             }
 
             return result;
@@ -72,16 +72,16 @@ public class GetSMSStakeholderUserByCodeQueryHandler : BaseQueryBundle, IBaseReq
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSStakeholderUserByCodeQuery for Code: {UserCode}", request.UserCode);
+            _logger.LogApplicationInformation("Processing GetSMSStakeholderUserByCodeQuery for Code: {UserCode}", request.UserCode);
             var result = await _stakeholderUserService.GetSMSStakeholderUserByCodeAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved SMS Stakeholder User with Code: {UserCode}", request.UserCode);
+                _logger.LogApplicationInformation("Successfully retrieved SMS Stakeholder User with Code: {UserCode}", request.UserCode);
             }
             else
             {
-                _logger.LogWarning("SMS Stakeholder User not found with Code: {UserCode}", request.UserCode);
+                _logger.LogApplicationWarning("SMS Stakeholder User not found with Code: {UserCode}", request.UserCode);
             }
 
             return result;
@@ -112,7 +112,7 @@ public class GetSMSStakeholderUserByUserNameQueryHandler : BaseQueryBundle, IBas
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSStakeholderUserByUserNameQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationInformation("Processing GetSMSStakeholderUserByUserNameQuery for UserName: {UserName}", request.UserName);
 
             // Get all users and filter by username (as the service doesn't have a direct method)
             var allUsersResult = await _stakeholderUserService.GetAllSMSStakeholderUsersAsync(ct);
@@ -125,12 +125,12 @@ public class GetSMSStakeholderUserByUserNameQueryHandler : BaseQueryBundle, IBas
 
             if (user != null)
             {
-                _logger.LogInformation("Successfully retrieved SMS Stakeholder User with UserName: {UserName}", request.UserName);
+                _logger.LogApplicationInformation("Successfully retrieved SMS Stakeholder User with UserName: {UserName}", request.UserName);
                 return Result<SMSStakeholderUser>.Success(user);
             }
             else
             {
-                _logger.LogWarning("SMS Stakeholder User not found with UserName: {UserName}", request.UserName);
+                _logger.LogApplicationWarning("SMS Stakeholder User not found with UserName: {UserName}", request.UserName);
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
             }
         }
@@ -160,7 +160,7 @@ public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IBaseRe
     {
         try
         {
-            _logger.LogInformation("Processing GetActiveSMSStakeholderUsersQuery");
+            _logger.LogApplicationInformation("Processing GetActiveSMSStakeholderUsersQuery");
 
             // Get all users and filter for active ones
             var allUsersResult = await _stakeholderUserService.GetAllSMSStakeholderUsersAsync(ct);
@@ -171,7 +171,7 @@ public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IBaseRe
 
             var activeUsers = allUsersResult.Value?.Where(u => u.IsActive) ?? Enumerable.Empty<SMSStakeholderUser>();
 
-            _logger.LogInformation("Successfully retrieved {Count} active SMS Stakeholder Users", activeUsers.Count());
+            _logger.LogApplicationInformation("Successfully retrieved {Count} active SMS Stakeholder Users", activeUsers.Count());
             return Result<IEnumerable<SMSStakeholderUser>>.Success(activeUsers);
         }
         catch (Exception ex)
@@ -200,11 +200,11 @@ public class GetSMSStakeholderUsersByTypeQueryHandler : BaseQueryBundle, IBaseRe
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSStakeholderUsersByTypeQuery for Type: {StakeholderType}", request.StakeholderType);
+            _logger.LogApplicationInformation("Processing GetSMSStakeholderUsersByTypeQuery for Type: {StakeholderType}", request.StakeholderType);
 
             var result = await _stakeholderUserService.GetSMSStakeholderUsersByTypeAsync(request.StakeholderType, ct);
 
-            _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users for Type: {StakeholderType}", result.Value?.Count() ?? 0, request.StakeholderType);
+            _logger.LogApplicationInformation("Successfully retrieved {Count} SMS Stakeholder Users for Type: {StakeholderType}", result.Value?.Count() ?? 0, request.StakeholderType);
             return result;
         }
         catch (Exception ex)
@@ -233,7 +233,7 @@ public class GetSMSStakeholderUsersByOrganizationQueryHandler : BaseQueryBundle,
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSStakeholderUsersByOrganizationQuery for Organization: {Organization}", request.Organization);
+            _logger.LogApplicationInformation("Processing GetSMSStakeholderUsersByOrganizationQuery for Organization: {Organization}", request.Organization);
 
             // Get all users and filter by organization
             var allUsersResult = await _stakeholderUserService.GetAllSMSStakeholderUsersAsync(ct);
@@ -244,7 +244,7 @@ public class GetSMSStakeholderUsersByOrganizationQueryHandler : BaseQueryBundle,
 
             var filteredUsers = allUsersResult.Value?.Where(u => u.Organization.Equals(request.Organization, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSStakeholderUser>();
 
-            _logger.LogInformation("Successfully retrieved {Count} SMS Stakeholder Users for Organization: {Organization}", filteredUsers.Count(), request.Organization);
+            _logger.LogApplicationInformation("Successfully retrieved {Count} SMS Stakeholder Users for Organization: {Organization}", filteredUsers.Count(), request.Organization);
             return Result<IEnumerable<SMSStakeholderUser>>.Success(filteredUsers);
         }
         catch (Exception ex)
@@ -273,11 +273,11 @@ public class ValidateSMSStakeholderUsersCredentialsQueryHandler : BaseQueryBundl
     {
         try
         {
-            _logger.LogInformation("Processing ValidateSMSStakeholderUsersCredentialsQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationInformation("Processing ValidateSMSStakeholderUsersCredentialsQuery for UserName: {UserName}", request.UserName);
 
             var result = await _stakeholderUserService.AuthenticateSMSStakeholderUserAsync(request.UserName, request.Password, ct);
 
-            _logger.LogInformation("Credential validation for {UserName}: {IsValid}", request.UserName, result.IsSuccess && result.Value);
+            _logger.LogApplicationInformation("Credential validation for {UserName}: {IsValid}", request.UserName, result.IsSuccess && result.Value);
 
             return result;
         }

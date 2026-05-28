@@ -10,7 +10,7 @@
 
 using SMS_Domain.Entities;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
 namespace SMS_Application.Interfaces;
 

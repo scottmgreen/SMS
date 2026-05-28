@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSSessionService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -51,30 +51,30 @@ public class SMSSessionService : ISMSSessionService
     {
         try
         {
-            _logger.LogInformation("🚀 Creating SMS session for user {UserCode} ({UserType}) using strategy manager", 
+            _logger.LogApplicationInformation("Creating SMS session for user {UserCode} ({UserType}) using strategy manager", 
                 user.Code, userType.Value);
 
-            // 🔧 CRITICAL FIX: Always ensure user completeness - the user may not have complete role/permission data
+            // ?? CRITICAL FIX: Always ensure user completeness - the user may not have complete role/permission data
             // This is especially important after 2FA verification where the stored user may be incomplete
-            _logger.LogInformation("🔍 Ensuring user completeness before session creation...");
+            _logger.LogApplicationInformation("Ensuring user completeness before session creation...");
             
             var completeUserResult = await _userInstantiationService.EnsureUserCompletenessAsync(user, userType);
             if (completeUserResult.IsFailure)
             {
-                _logger.LogError("❌ Failed to ensure user completeness: {UserCode}: {Error}", 
+                _logger.LogApplicationError("Failed to ensure user completeness: {UserCode}: {Error}", 
                     user.Code, completeUserResult.Error?.Message);
                 throw new InvalidOperationException($"User {user.Code} could not be fully instantiated: {completeUserResult.Error?.Message}");
             }
 
             var completeUser = completeUserResult.Value;
-            _logger.LogInformation("✅ User completeness ensured - Role: {RoleCode}, Permissions: {PermissionCount}", 
+            _logger.LogApplicationInformation("User completeness ensured - Role: {RoleCode}, Permissions: {PermissionCount}", 
                 completeUser.UserRole?.Code ?? "None", completeUser.UserRole?.Permissions?.Count ?? 0);
 
             // Final validation of user completeness
             if (!_userInstantiationService.IsUserComplete(completeUser))
             {
                 var missing = _userInstantiationService.GetMissingComponents(completeUser);
-                _logger.LogError("❌ User {UserCode} is incomplete - Missing: {MissingComponents}", 
+                _logger.LogApplicationError("User {UserCode} is incomplete - Missing: {MissingComponents}", 
                     user.Code, string.Join(", ", missing));
                 throw new InvalidOperationException($"User {user.Code} is incomplete - missing: {string.Join(", ", missing)}");
             }
@@ -83,7 +83,7 @@ public class SMSSessionService : ISMSSessionService
             var storeResult = await _strategyManager.StoreUserAsync(completeUser, userType);
             if (storeResult.IsFailure)
             {
-                _logger.LogError("❌ Failed to store user {UserCode} via strategy manager: {Error}", 
+                _logger.LogApplicationError("Failed to store user {UserCode} via strategy manager: {Error}", 
                     user.Code, storeResult.Error?.Message);
                 throw new InvalidOperationException($"Failed to store user {user.Code}: {storeResult.Error?.Message}");
             }
@@ -94,18 +94,18 @@ public class SMSSessionService : ISMSSessionService
 
             if (_sessionConfig.LogSessionActivity)
             {
-                _logger.LogInformation("✅ SMS Session created successfully for user {UserCode} ({UserType}) - Primary: {PrimaryStrategy}, Fallback: {FallbackStrategy}, Completeness: 100%", 
+                _logger.LogApplicationInformation("SMS Session created successfully for user {UserCode} ({UserType}) - Primary: {PrimaryStrategy}, Fallback: {FallbackStrategy}, Completeness: 100%", 
                     user.Code, userType.Value, primaryStrategy.StrategyName, fallbackStrategy?.StrategyName ?? "None");
             }
             else
             {
-                _logger.LogInformation("✅ SMS Session created successfully for user {UserCode} ({UserType})", 
+                _logger.LogApplicationInformation("SMS Session created successfully for user {UserCode} ({UserType})", 
                     user.Code, userType.Value);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error creating SMS session for user {UserCode} ({UserType})", user.Code, userType.Value);
+            _logger.LogApplicationError(ex, "Error creating SMS session for user {UserCode} ({UserType})", user.Code, userType.Value);
             throw;
         }
     }
@@ -120,7 +120,7 @@ public class SMSSessionService : ISMSSessionService
             // Get user info before clearing for logging
             var userId = await _strategyManager.GetCurrentUserIdAsync() ?? "Unknown";
             
-            _logger.LogInformation("🗑️ Clearing SMS session for user: {UserId}", userId);
+            _logger.LogApplicationInformation("??? Clearing SMS session for user: {UserId}", userId);
 
             // Clear using strategy manager (clears all strategies)
             var clearResult = await _strategyManager.ClearUserAsync();
@@ -129,21 +129,21 @@ public class SMSSessionService : ISMSSessionService
             {
                 if (_sessionConfig.LogSessionActivity)
                 {
-                    _logger.LogInformation("✅ SMS Session cleared successfully for user: {UserId} - All strategies cleared", userId);
+                    _logger.LogApplicationInformation("SMS Session cleared successfully for user: {UserId} - All strategies cleared", userId);
                 }
                 else
                 {
-                    _logger.LogInformation("✅ SMS Session cleared successfully for user: {UserId}", userId);
+                    _logger.LogApplicationInformation("SMS Session cleared successfully for user: {UserId}", userId);
                 }
             }
             else
             {
-                _logger.LogWarning("⚠️ Some strategies may not have been cleared for user: {UserId}", userId);
+                _logger.LogApplicationWarning("Some strategies may not have been cleared for user: {UserId}", userId);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error clearing SMS session");
+            _logger.LogApplicationError(ex, "Error clearing SMS session");
             throw;
         }
     }
@@ -159,7 +159,7 @@ public class SMSSessionService : ISMSSessionService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error getting current user ID");
+            _logger.LogApplicationError(ex, "Error getting current user ID");
             return null;
         }
     }
@@ -175,7 +175,7 @@ public class SMSSessionService : ISMSSessionService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error getting current user display name");
+            _logger.LogApplicationError(ex, "Error getting current user display name");
             return null;
         }
     }
@@ -192,7 +192,7 @@ public class SMSSessionService : ISMSSessionService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error getting current user type");
+            _logger.LogApplicationError(ex, "Error getting current user type");
             return null;
         }
     }
@@ -208,12 +208,12 @@ public class SMSSessionService : ISMSSessionService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error checking authentication status");
+            _logger.LogApplicationError(ex, "Error checking authentication status");
             return false;
         }
     }
 
-    // 🔐 Two-Factor Authentication Session Methods
+    // ?? Two-Factor Authentication Session Methods
     // These remain circuit-based for now as they are temporary storage
 
     /// <summary>
@@ -225,18 +225,18 @@ public class SMSSessionService : ISMSSessionService
     {
         try
         {
-            _logger.LogInformation("🔐 Storing pending 2FA user: {UserId} ({UserType}) with HTTP protocol compatibility", user.Code, userType.Value);
+            _logger.LogApplicationInformation("Storing pending 2FA user: {UserId} ({UserType}) with HTTP protocol compatibility", user.Code, userType.Value);
 
-            // 🚨 CRITICAL FIX: ALWAYS clear existing 2FA data FIRST to prevent session contamination
-            _logger.LogInformation("🧹 CLEARING any existing 2FA data to prevent session contamination...");
+            // ?? CRITICAL FIX: ALWAYS clear existing 2FA data FIRST to prevent session contamination
+            _logger.LogApplicationInformation("CLEARING any existing 2FA data to prevent session contamination...");
             await ClearPending2FAUserAsync();
             
-            // 🚨 ADD VERIFICATION: Ensure cleanup completed before proceeding
+            // ?? ADD VERIFICATION: Ensure cleanup completed before proceeding
             await Task.Delay(100); // Brief pause to ensure cleanup completes
             var verifyCleared = GetPending2FAUser();
             if (verifyCleared != null)
             {
-                _logger.LogWarning("⚠️ Previous 2FA data not fully cleared on first attempt, trying again...");
+                _logger.LogApplicationWarning("Previous 2FA data not fully cleared on first attempt, trying again...");
                 await ClearPending2FAUserAsync();
                 await Task.Delay(200);
                 
@@ -244,17 +244,17 @@ public class SMSSessionService : ISMSSessionService
                 verifyCleared = GetPending2FAUser();
                 if (verifyCleared != null)
                 {
-                    _logger.LogError("❌ CRITICAL: Failed to clear previous 2FA data - FORCING aggressive cleanup");
+                    _logger.LogApplicationError("CRITICAL: Failed to clear previous 2FA data - FORCING aggressive cleanup");
                     await AggressiveClearAllStrategiesAsync(); // New method for deep cleanup
                 }
             }
-            _logger.LogInformation("✅ Previous 2FA data cleared successfully - ready for new user");
+            _logger.LogApplicationInformation("Previous 2FA data cleared successfully - ready for new user");
 
             // Ensure user is complete before storing
             var completeUserResult = await _userInstantiationService.EnsureUserCompletenessAsync(user, userType);
             if (completeUserResult.IsFailure)
             {
-                _logger.LogError("❌ Failed to ensure user completeness for 2FA: {UserCode}: {Error}", 
+                _logger.LogApplicationError("Failed to ensure user completeness for 2FA: {UserCode}: {Error}", 
                     user.Code, completeUserResult.Error?.Message);
                 throw new InvalidOperationException($"User {user.Code} could not be fully instantiated for 2FA: {completeUserResult.Error?.Message}");
             }
@@ -273,7 +273,7 @@ public class SMSSessionService : ISMSSessionService
             var stored = false;
             var attemptedStrategies = new List<string>();
 
-            // 🎯 PRODUCTION-OPTIMIZED STRATEGY ORDER
+            // ?? PRODUCTION-OPTIMIZED STRATEGY ORDER
             // Try strategies in order of production reliability when circuit IDs fail
 
             // Strategy 1: Try Context-Based FIRST (most reliable in production when circuit IDs fail)
@@ -281,11 +281,11 @@ public class SMSSessionService : ISMSSessionService
             if (contextStrategy?.IsAvailable == true)
             {
                 attemptedStrategies.Add("ContextBased");
-                _logger.LogInformation("🔄 Attempting ContextBased storage for 2FA (production-optimized)");
+                _logger.LogApplicationInformation("Attempting ContextBased storage for 2FA (production-optimized)");
                 
                 try
                 {
-                    // 🎯 CRITICAL: Pass the 2FA markers to the context strategy
+                    // ?? CRITICAL: Pass the 2FA markers to the context strategy
                     var twoFAMarkers = new Dictionary<string, string>
                     {
                         ["Pending2FA_UserData"] = System.Text.Json.JsonSerializer.Serialize(userData),
@@ -304,33 +304,33 @@ public class SMSSessionService : ISMSSessionService
                         // Use enhanced method with 2FA markers
                         contextResult = await (Task<Result<bool>>)contextStorageMethod.Invoke(contextStrategy, 
                             new object[] { completeUser, userType, twoFAMarkers, CancellationToken.None });
-                        _logger.LogInformation("🔐 Used enhanced context method with 2FA markers");
+                        _logger.LogApplicationInformation("Used enhanced context method with 2FA markers");
                     }
                     else
                     {
                         // Fallback to standard method
                         contextResult = await contextStrategy.StoreUserAsync(completeUser, userType);
-                        _logger.LogWarning("⚠️ Context strategy using standard method - 2FA markers may be lost");
+                        _logger.LogApplicationWarning("Context strategy using standard method - 2FA markers may be lost");
                     }
 
                     if (contextResult.IsSuccess)
                     {
                         stored = true;
-                        _logger.LogInformation("✅ SUCCESS: Pending 2FA user stored in ContextBased strategy: {UserId}", user.Code);
+                        _logger.LogApplicationInformation("SUCCESS: Pending 2FA user stored in ContextBased strategy: {UserId}", user.Code);
                     }
                     else
                     {
-                        _logger.LogWarning("⚠️ ContextBased strategy failed: {Error}", contextResult.Error?.Message);
+                        _logger.LogApplicationWarning("ContextBased strategy failed: {Error}", contextResult.Error?.Message);
                     }
                 }
                 catch (Exception contextEx)
                 {
-                    _logger.LogWarning(contextEx, "⚠️ ContextBased strategy threw exception");
+                    _logger.LogApplicationWarning(contextEx, "ContextBased strategy threw exception");
                 }
             }
             else
             {
-                _logger.LogWarning("⚠️ ContextBased strategy not available - IsAvailable: {IsAvailable}", contextStrategy?.IsAvailable);
+                _logger.LogApplicationWarning("ContextBased strategy not available - IsAvailable: {IsAvailable}", contextStrategy?.IsAvailable);
             }
 
             // Strategy 2: Try Circuit-Based SECOND (if context fails and circuit ID available)
@@ -340,7 +340,7 @@ public class SMSSessionService : ISMSSessionService
                 if (circuitStrategy?.IsAvailable == true)
                 {
                     attemptedStrategies.Add("CircuitBased");
-                    _logger.LogInformation("🔄 Attempting CircuitBased storage for 2FA");
+                    _logger.LogApplicationInformation("Attempting CircuitBased storage for 2FA");
 
                     // CRITICAL: Pass the 2FA markers to the circuit strategy
                     var twoFAMarkers = new Dictionary<string, string>
@@ -363,33 +363,33 @@ public class SMSSessionService : ISMSSessionService
                             // Use enhanced method with 2FA markers
                             circuitResult = await (Task<Result<bool>>)circuitStorageMethod.Invoke(circuitStrategy, 
                                 new object[] { completeUser, userType, twoFAMarkers, CancellationToken.None });
-                            _logger.LogInformation("🔐 Attempted enhanced circuit method with 2FA markers");
+                            _logger.LogApplicationInformation("Attempted enhanced circuit method with 2FA markers");
                         }
                         else
                         {
                             // Fallback to standard method
                             circuitResult = await circuitStrategy.StoreUserAsync(completeUser, userType);
-                            _logger.LogWarning("⚠️ Circuit strategy using standard method - 2FA markers may be lost");
+                            _logger.LogApplicationWarning("Circuit strategy using standard method - 2FA markers may be lost");
                         }
 
                         if (circuitResult.IsSuccess)
                         {
                             stored = true;
-                            _logger.LogInformation("✅ SUCCESS: Pending 2FA user stored in CircuitBased strategy: {UserId}", user.Code);
+                            _logger.LogApplicationInformation("SUCCESS: Pending 2FA user stored in CircuitBased strategy: {UserId}", user.Code);
                         }
                         else
                         {
-                            _logger.LogWarning("⚠️ CircuitBased strategy failed: {Error}", circuitResult.Error?.Message);
+                            _logger.LogApplicationWarning("CircuitBased strategy failed: {Error}", circuitResult.Error?.Message);
                         }
                     }
                     catch (Exception circuitEx)
                     {
-                        _logger.LogWarning(circuitEx, "⚠️ CircuitBased strategy threw exception");
+                        _logger.LogApplicationWarning(circuitEx, "CircuitBased strategy threw exception");
                     }
                 }
                 else
                 {
-                    _logger.LogWarning("⚠️ CircuitBased strategy not available - IsAvailable: {IsAvailable}", circuitStrategy?.IsAvailable);
+                    _logger.LogApplicationWarning("CircuitBased strategy not available - IsAvailable: {IsAvailable}", circuitStrategy?.IsAvailable);
                 }
             }
 
@@ -400,7 +400,7 @@ public class SMSSessionService : ISMSSessionService
                 if (sessionStrategy?.IsAvailable == true)
                 {
                     attemptedStrategies.Add("SessionBased");
-                    _logger.LogInformation("🔄 Attempting SessionBased storage for 2FA (final fallback)");
+                    _logger.LogApplicationInformation("Attempting SessionBased storage for 2FA (final fallback)");
                     
                     try
                     {
@@ -408,45 +408,45 @@ public class SMSSessionService : ISMSSessionService
                         if (sessionResult.IsSuccess)
                         {
                             stored = true;
-                            _logger.LogInformation("✅ SUCCESS: Pending 2FA user stored in SessionBased strategy: {UserId}", user.Code);
+                            _logger.LogApplicationInformation("SUCCESS: Pending 2FA user stored in SessionBased strategy: {UserId}", user.Code);
                         }
                         else
                         {
-                            _logger.LogWarning("⚠️ SessionBased strategy failed: {Error}", sessionResult.Error?.Message);
+                            _logger.LogApplicationWarning("SessionBased strategy failed: {Error}", sessionResult.Error?.Message);
                         }
                     }
                     catch (Exception sessionEx)
                     {
-                        _logger.LogWarning(sessionEx, "⚠️ SessionBased strategy threw exception");
+                        _logger.LogApplicationWarning(sessionEx, "SessionBased strategy threw exception");
                     }
                 }
                 else
                 {
-                    _logger.LogWarning("⚠️ SessionBased strategy not available - IsAvailable: {IsAvailable}", sessionStrategy?.IsAvailable);
+                    _logger.LogApplicationWarning("SessionBased strategy not available - IsAvailable: {IsAvailable}", sessionStrategy?.IsAvailable);
                 }
             }
 
             // Final verification with detailed logging
             if (!stored)
             {
-                _logger.LogError("❌ CRITICAL FAILURE: Failed to store pending 2FA user in ANY strategy");
-                _logger.LogError("❌ Attempted strategies: {AttemptedStrategies}", string.Join(", ", attemptedStrategies));
+                _logger.LogApplicationError("CRITICAL FAILURE: Failed to store pending 2FA user in ANY strategy");
+                _logger.LogApplicationError("Attempted strategies: {AttemptedStrategies}", string.Join(", ", attemptedStrategies));
                 
                 // Get strategy availability for debugging
                 var contextAvailable = _strategyManager.GetStrategy(AuthenticationMethod.ContextBased)?.IsAvailable;
                 var circuitAvailable = _strategyManager.GetStrategy(AuthenticationMethod.CircuitBased)?.IsAvailable;
                 var sessionAvailable = _strategyManager.GetStrategy(AuthenticationMethod.SessionBased)?.IsAvailable;
                 
-                _logger.LogError("❌ Strategy availability - Context: {Context}, Circuit: {Circuit}, Session: {Session}", 
+                _logger.LogApplicationError("Strategy availability - Context: {Context}, Circuit: {Circuit}, Session: {Session}", 
                     contextAvailable, circuitAvailable, sessionAvailable);
                 throw new InvalidOperationException($"2FA storage failed - no compatible strategy available. Attempted: {string.Join(", ", attemptedStrategies)}");
             }
 
-            _logger.LogInformation("🎉 2FA STORAGE SUCCESS using strategy: {SuccessfulStrategy}", attemptedStrategies.Last());
+            _logger.LogApplicationInformation("2FA STORAGE SUCCESS using strategy: {SuccessfulStrategy}", attemptedStrategies.Last());
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ EXCEPTION in StorePending2FAUserAsync for user: {UserId}", user.Code);
+            _logger.LogApplicationError(ex, "EXCEPTION in StorePending2FAUserAsync for user: {UserId}", user.Code);
             throw;
         }
     }
@@ -459,7 +459,7 @@ public class SMSSessionService : ISMSSessionService
     {
         try
         {
-            _logger.LogDebug("🔍 Retrieving pending 2FA user from multiple strategies");
+            _logger.LogApplicationDebug("Retrieving pending 2FA user from multiple strategies");
 
             // Try all strategies to find 2FA data
             var strategies = new[]
@@ -479,24 +479,24 @@ public class SMSSessionService : ISMSSessionService
                         var result = strategy.RetrieveUserAsync().GetAwaiter().GetResult();
                         if (result.IsSuccess && result.Value.HasValue)
                         {
-                            _logger.LogInformation("✅ Retrieved pending 2FA user from {Strategy}: {UserCode} ({UserType})", 
+                            _logger.LogApplicationInformation("Retrieved pending 2FA user from {Strategy}: {UserCode} ({UserType})", 
                                 strategy.StrategyName, result.Value.Value.User.Code, result.Value.Value.UserType.Value);
                             return result.Value.Value;
                         }
                     }
                     catch (Exception strategyEx)
                     {
-                        _logger.LogDebug(strategyEx, "Strategy {Strategy} failed to retrieve 2FA user", strategy.StrategyName);
+                        _logger.LogApplicationDebug(strategyEx, "Strategy {Strategy} failed to retrieve 2FA user", strategy.StrategyName);
                     }
                 }
             }
 
-            _logger.LogWarning("⚠️ No pending 2FA user data found in any strategy");
+            _logger.LogApplicationWarning("No pending 2FA user data found in any strategy");
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error retrieving pending 2FA user");
+            _logger.LogApplicationError(ex, "Error retrieving pending 2FA user");
             return null;
         }
     }
@@ -509,7 +509,7 @@ public class SMSSessionService : ISMSSessionService
     {
         try
         {
-            _logger.LogInformation("🗑️ Clearing pending 2FA user data from all strategies");
+            _logger.LogApplicationInformation("??? Clearing pending 2FA user data from all strategies");
 
             // Clear from all available strategies for complete cleanup
             var cleared = false;
@@ -531,28 +531,28 @@ public class SMSSessionService : ISMSSessionService
                         if (result.IsSuccess)
                         {
                             cleared = true;
-                            _logger.LogDebug("✅ Cleared 2FA data from {Strategy}", strategy.StrategyName);
+                            _logger.LogApplicationDebug("Cleared 2FA data from {Strategy}", strategy.StrategyName);
                         }
                     }
                     catch (Exception strategyEx)
                     {
-                        _logger.LogDebug(strategyEx, "Error clearing 2FA data from {Strategy}", strategy.StrategyName);
+                        _logger.LogApplicationDebug(strategyEx, "Error clearing 2FA data from {Strategy}", strategy.StrategyName);
                     }
                 }
             }
 
             if (cleared)
             {
-                _logger.LogInformation("✅ Pending 2FA user data cleared successfully from available strategies");
+                _logger.LogApplicationInformation("Pending 2FA user data cleared successfully from available strategies");
             }
             else
             {
-                _logger.LogWarning("⚠️ No strategies available for clearing 2FA data");
+                _logger.LogApplicationWarning("No strategies available for clearing 2FA data");
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error clearing pending 2FA user data");
+            _logger.LogApplicationError(ex, "Error clearing pending 2FA user data");
             throw;
         }
     }
@@ -566,7 +566,7 @@ public class SMSSessionService : ISMSSessionService
     {
         try
         {
-            _logger.LogDebug("🔐 HasPending2FAUser: Checking for pending 2FA state across all strategies");
+            _logger.LogApplicationDebug("HasPending2FAUser: Checking for pending 2FA state across all strategies");
 
             // Strategy 1: Try Context-Based Authentication first (where temp 2FA data is stored)
             var contextStrategy = _strategyManager.GetStrategy(AuthenticationMethod.ContextBased);
@@ -577,7 +577,7 @@ public class SMSSessionService : ISMSSessionService
                     var contextResult = contextStrategy.RetrieveUserAsync().GetAwaiter().GetResult();
                     if (contextResult.IsSuccess && contextResult.Value.HasValue)
                     {
-                        _logger.LogDebug("🔐 Found user in Context strategy: {UserCode}", contextResult.Value.Value.User.Code);
+                        _logger.LogApplicationDebug("Found user in Context strategy: {UserCode}", contextResult.Value.Value.User.Code);
 
                         // Context strategy can contain either temporary 2FA data OR fully-authenticated data.
                         // Only treat it as pending 2FA when explicit pending markers are present.
@@ -597,20 +597,20 @@ public class SMSSessionService : ISMSSessionService
 
                                     if (hasPendingMarkers)
                                     {
-                                        _logger.LogDebug("🔐 Found explicit 2FA markers in Context strategy - user is pending 2FA");
+                                        _logger.LogApplicationDebug("Found explicit 2FA markers in Context strategy - user is pending 2FA");
                                         return true;
                                     }
                                 }
                             }
                         }
 
-                        _logger.LogDebug("🔐 Context strategy contains user but no 2FA markers - fully authenticated");
+                        _logger.LogApplicationDebug("Context strategy contains user but no 2FA markers - fully authenticated");
                         return false;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogDebug(ex, "Error checking Context strategy for 2FA user");
+                    _logger.LogApplicationDebug(ex, "Error checking Context strategy for 2FA user");
                 }
             }
 
@@ -623,7 +623,7 @@ public class SMSSessionService : ISMSSessionService
                     var circuitResult = circuitStrategy.RetrieveUserAsync().GetAwaiter().GetResult();
                     if (circuitResult.IsSuccess && circuitResult.Value.HasValue)
                     {
-                        _logger.LogDebug("🔐 Found user in Circuit strategy: {UserCode}", circuitResult.Value.Value.User.Code);
+                        _logger.LogApplicationDebug("Found user in Circuit strategy: {UserCode}", circuitResult.Value.Value.User.Code);
                         
                         // For circuit storage, we need to check if this contains 2FA markers
                         // Use reflection to check the actual stored data
@@ -642,12 +642,12 @@ public class SMSSessionService : ISMSSessionService
                                         kvp.Value.ContainsKey("Pending2FA_StoredAt") ||
                                         kvp.Value.ContainsKey("Pending2FA_Protocol"))
                                     {
-                                        _logger.LogDebug("🔐 Found explicit 2FA markers in Circuit storage - user is pending 2FA");
+                                        _logger.LogApplicationDebug("Found explicit 2FA markers in Circuit storage - user is pending 2FA");
                                         return true;
                                     }
                                 }
                                 
-                                _logger.LogDebug("🔐 Circuit storage contains user but no 2FA markers - fully authenticated");
+                                _logger.LogApplicationDebug("Circuit storage contains user but no 2FA markers - fully authenticated");
                                 return false;
                             }
                         }
@@ -655,7 +655,7 @@ public class SMSSessionService : ISMSSessionService
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogDebug(ex, "Error checking Circuit strategy for 2FA markers");
+                    _logger.LogApplicationDebug(ex, "Error checking Circuit strategy for 2FA markers");
                 }
             }
 
@@ -668,27 +668,27 @@ public class SMSSessionService : ISMSSessionService
                     var sessionResult = sessionStrategy.RetrieveUserAsync().GetAwaiter().GetResult();
                     if (sessionResult.IsSuccess && sessionResult.Value.HasValue)
                     {
-                        _logger.LogDebug("🔐 Found user in Session strategy: {UserCode}", sessionResult.Value.Value.User.Code);
+                        _logger.LogApplicationDebug("Found user in Session strategy: {UserCode}", sessionResult.Value.Value.User.Code);
                         
                         // Session-based storage typically indicates full authentication
                         // Only return true if this is specifically marked as 2FA pending
                         // For now, assume session storage means fully authenticated
-                        _logger.LogDebug("🔐 Session storage typically means full authentication");
+                        _logger.LogApplicationDebug("Session storage typically means full authentication");
                         return false;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogDebug(ex, "Error checking Session strategy for 2FA user");
+                    _logger.LogApplicationDebug(ex, "Error checking Session strategy for 2FA user");
                 }
             }
 
-            _logger.LogDebug("🔐 HasPending2FAUser: No pending 2FA user found in any strategy");
+            _logger.LogApplicationDebug("HasPending2FAUser: No pending 2FA user found in any strategy");
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error checking for pending 2FA user");
+            _logger.LogApplicationError(ex, "Error checking for pending 2FA user");
             return false;
         }
     }
@@ -701,7 +701,7 @@ public class SMSSessionService : ISMSSessionService
     {
         try
         {
-            _logger.LogWarning("🚨 Performing aggressive cleanup of ALL cached 2FA data");
+            _logger.LogApplicationWarning("Performing aggressive cleanup of ALL cached 2FA data");
 
             var clearResults = new List<string>();
 
@@ -741,7 +741,7 @@ public class SMSSessionService : ISMSSessionService
                 clearResults.Add($"StrategyManager: EXCEPTION - {ex.Message}");
             }
 
-            _logger.LogWarning("🧹 Aggressive cleanup results: {Results}", string.Join(", ", clearResults));
+            _logger.LogApplicationWarning("Aggressive cleanup results: {Results}", string.Join(", ", clearResults));
 
             // Method 3: If we have access to BlazorCircuitAuthStorage, clear by user ID pattern
             try
@@ -773,21 +773,23 @@ public class SMSSessionService : ISMSSessionService
                         
                         if (clearedKeys.Any())
                         {
-                            _logger.LogWarning("🧹 Aggressive cleanup: Cleared {Count} circuit auth entries with 2FA data", clearedKeys.Count);
+                            _logger.LogApplicationWarning("Aggressive cleanup: Cleared {Count} circuit auth entries with 2FA data", clearedKeys.Count);
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "❌ Error during aggressive circuit cleanup");
+                _logger.LogApplicationError(ex, "Error during aggressive circuit cleanup");
             }
 
-            _logger.LogWarning("✅ Aggressive cleanup completed");
+            _logger.LogApplicationWarning("Aggressive cleanup completed");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Critical error during aggressive cleanup");
+            _logger.LogApplicationError(ex, "Critical error during aggressive cleanup");
         }
     }
 }
+
+

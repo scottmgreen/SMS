@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSApplicationGroupService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -35,18 +35,18 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
     {
         try
         {
-            _logger.LogInformation("Creating SMS Application Group with code: {Code}", group?.Code);
+            _logger.LogApplicationInformation("Creating SMS Application Group with code: {Code}", group?.Code);
 
             if (group is null)
             {
-                _logger.LogError("CreateSMSApplicationGroupAsync received null group");
+                _logger.LogApplicationError("CreateSMSApplicationGroupAsync received null group");
                 return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.NullOrEmpty);
             }
 
             // Business validation - ensure group is active by default
             if (!group.IsActive)
             {
-                _logger.LogInformation("Activating group during creation: {Code}", group.Code);
+                _logger.LogApplicationInformation("Activating group during creation: {Code}", group.Code);
                 // Set IsActive directly since SMSApplicationGroup may not have an Activate method
                 group.IsActive = true;
             }
@@ -58,18 +58,18 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS Application Group with code: {Code}", result.Value?.Code);
+                _logger.LogApplicationInformation("Successfully created SMS Application Group with code: {Code}", result.Value?.Code);
             }
             else
             {
-                _logger.LogError("Failed to create SMS Application Group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS Application Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating SMS Application Group");
+            _logger.LogApplicationError(ex, "Unexpected error creating SMS Application Group");
             return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.CreateFailed);
         }
     }
@@ -81,12 +81,12 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Application Group with code: {Code}", code);
+            _logger.LogApplicationInformation("Retrieving SMS Application Group with code: {Code}", code);
             return await _dataService.GetByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Application Group with code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving SMS Application Group with code: {Code}", code);
             return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.NotFound);
         }
     }
@@ -98,12 +98,12 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
     {
         try
         {
-            _logger.LogInformation("Retrieving all SMS Application Groups");
+            _logger.LogApplicationInformation("Retrieving all SMS Application Groups");
             return await _dataService.GetAllAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all SMS Application Groups");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all SMS Application Groups");
             return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.NotFound);
         }
     }
@@ -115,11 +115,11 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Application Groups for user: {UserCode}", userCode);
+            _logger.LogApplicationInformation("Retrieving SMS Application Groups for user: {UserCode}", userCode);
 
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogWarning("Invalid user code provided for group lookup");
+                _logger.LogApplicationWarning("Invalid user code provided for group lookup");
                 return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
@@ -127,7 +127,7 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Application Groups for user: {UserCode}", userCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving SMS Application Groups for user: {UserCode}", userCode);
             return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.NotFound);
         }
     }
@@ -139,11 +139,11 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
     {
         try
         {
-            _logger.LogInformation("Retrieving users for SMS Application Group: {GroupCode}", groupCode);
+            _logger.LogApplicationInformation("Retrieving users for SMS Application Group: {GroupCode}", groupCode);
 
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogWarning("Invalid group code provided for user lookup");
+                _logger.LogApplicationWarning("Invalid group code provided for user lookup");
                 return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationGroupError.CodeRequired);
             }
 
@@ -151,7 +151,7 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving users for SMS Application Group: {GroupCode}", groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving users for SMS Application Group: {GroupCode}", groupCode);
             return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationGroupError.NotFound);
         }
     }
@@ -163,11 +163,11 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
     {
         try
         {
-            _logger.LogInformation("Updating SMS Application Group with code: {Code}", group?.Code);
+            _logger.LogApplicationInformation("Updating SMS Application Group with code: {Code}", group?.Code);
 
             if (group is null)
             {
-                _logger.LogError("UpdateSMSApplicationGroupAsync received null group");
+                _logger.LogApplicationError("UpdateSMSApplicationGroupAsync received null group");
                 return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.NullOrEmpty);
             }
 
@@ -175,7 +175,7 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
             var existingGroupResult = await _dataService.GetByCodeAsync(group.Code, ct).ConfigureAwait(false);
             if (existingGroupResult.IsFailure)
             {
-                _logger.LogWarning("Cannot update non-existent SMS Application Group with code: {Code}", group.Code);
+                _logger.LogApplicationWarning("Cannot update non-existent SMS Application Group with code: {Code}", group.Code);
                 return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.NotFound);
             }
 
@@ -186,18 +186,18 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS Application Group with code: {Code}", group.Code);
+                _logger.LogApplicationInformation("Successfully updated SMS Application Group with code: {Code}", group.Code);
             }
             else
             {
-                _logger.LogError("Failed to update SMS Application Group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS Application Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating SMS Application Group with code: {Code}", group?.Code);
+            _logger.LogApplicationError(ex, "Unexpected error updating SMS Application Group with code: {Code}", group?.Code);
             return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.UpdateFailed);
         }
     }
@@ -209,11 +209,11 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
     {
         try
         {
-            _logger.LogInformation("Deleting SMS Application Group with code: {Code}", groupCode);
+            _logger.LogApplicationInformation("Deleting SMS Application Group with code: {Code}", groupCode);
 
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("DeleteSMSApplicationGroupAsync received null or empty group code");
+                _logger.LogApplicationError("DeleteSMSApplicationGroupAsync received null or empty group code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.CodeRequired);
             }
 
@@ -221,7 +221,7 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
             var usersResult = await _dataService.GetUsersByGroupCodeAsync(groupCode, ct).ConfigureAwait(false);
             if (usersResult.IsSuccess && usersResult.Value.Any())
             {
-                _logger.LogWarning("Cannot delete SMS Application Group with active members: {Code}", groupCode);
+                _logger.LogApplicationWarning("Cannot delete SMS Application Group with active members: {Code}", groupCode);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.GroupHasMembers);
             }
 
@@ -229,18 +229,18 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS Application Group with code: {Code}", groupCode);
+                _logger.LogApplicationInformation("Successfully deleted SMS Application Group with code: {Code}", groupCode);
             }
             else
             {
-                _logger.LogError("Failed to delete SMS Application Group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete SMS Application Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting SMS Application Group with code: {Code}", groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error deleting SMS Application Group with code: {Code}", groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.DeleteFailed);
         }
     }
@@ -252,11 +252,11 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
     {
         try
         {
-            _logger.LogInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
+            _logger.LogApplicationInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
 
             if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("AssignUserToGroupAsync received null or empty parameters");
+                _logger.LogApplicationError("AssignUserToGroupAsync received null or empty parameters");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
@@ -264,13 +264,13 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
             var groupResult = await _dataService.GetByCodeAsync(groupCode, ct).ConfigureAwait(false);
             if (groupResult.IsFailure)
             {
-                _logger.LogWarning("Cannot assign user to non-existent group: {GroupCode}", groupCode);
+                _logger.LogApplicationWarning("Cannot assign user to non-existent group: {GroupCode}", groupCode);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.NotFound);
             }
 
             if (!groupResult.Value.IsActive)
             {
-                _logger.LogWarning("Cannot assign user to inactive group: {GroupCode}", groupCode);
+                _logger.LogApplicationWarning("Cannot assign user to inactive group: {GroupCode}", groupCode);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.CannotAssignToInactiveGroup);
             }
 
@@ -278,18 +278,18 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned user {UserCode} to group {GroupCode}", userCode, groupCode);
+                _logger.LogApplicationInformation("Successfully assigned user {UserCode} to group {GroupCode}", userCode, groupCode);
             }
             else
             {
-                _logger.LogError("Failed to assign user to group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to assign user to group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.AssignmentFailed);
         }
     }
@@ -301,11 +301,11 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
     {
         try
         {
-            _logger.LogInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
+            _logger.LogApplicationInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
 
             if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("RemoveUserFromGroupAsync received null or empty parameters");
+                _logger.LogApplicationError("RemoveUserFromGroupAsync received null or empty parameters");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
@@ -313,18 +313,18 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully removed user {UserCode} from group {GroupCode}", userCode, groupCode);
+                _logger.LogApplicationInformation("Successfully removed user {UserCode} from group {GroupCode}", userCode, groupCode);
             }
             else
             {
-                _logger.LogError("Failed to remove user from group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to remove user from group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.RemovalFailed);
         }
     }
@@ -336,11 +336,11 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
     {
         try
         {
-            _logger.LogInformation("Clearing all group memberships for user {UserCode}", userCode);
+            _logger.LogApplicationInformation("Clearing all group memberships for user {UserCode}", userCode);
 
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogError("ClearUserGroupsAsync received null or empty user code");
+                _logger.LogApplicationError("ClearUserGroupsAsync received null or empty user code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
@@ -348,18 +348,18 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully cleared all group memberships for user {UserCode}", userCode);
+                _logger.LogApplicationInformation("Successfully cleared all group memberships for user {UserCode}", userCode);
             }
             else
             {
-                _logger.LogError("Failed to clear user groups. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to clear user groups. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error clearing group memberships for user {UserCode}", userCode);
+            _logger.LogApplicationError(ex, "Unexpected error clearing group memberships for user {UserCode}", userCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.ClearGroupsFailed);
         }
     }
@@ -385,14 +385,14 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
 
                 if (existingGroup != null)
                 {
-                    _logger.LogWarning("Duplicate group name detected: {GroupName}", groupName);
+                    _logger.LogApplicationWarning("Duplicate group name detected: {GroupName}", groupName);
                     // Could throw an exception or return an error result here
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating group name uniqueness for: {GroupName}", groupName);
+            _logger.LogApplicationError(ex, "Error validating group name uniqueness for: {GroupName}", groupName);
             // Continue with creation/update - uniqueness will be enforced at database level
         }
 
@@ -432,7 +432,7 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
 
                 if (currentMemberCount >= maxMembersPerGroup)
                 {
-                    _logger.LogWarning("Group {GroupCode} has reached maximum member limit: {Count}",
+                    _logger.LogApplicationWarning("Group {GroupCode} has reached maximum member limit: {Count}",
                         groupCode, currentMemberCount);
                     return false;
                 }
@@ -441,10 +441,11 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating group membership limits for: {GroupCode}", groupCode);
+            _logger.LogApplicationError(ex, "Error validating group membership limits for: {GroupCode}", groupCode);
             return true; // Allow operation to continue
         }
     }
 
     #endregion
 }
+

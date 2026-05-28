@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSStakeholderUserDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -42,17 +42,17 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
         {
             if (user is null)
             {
-                _logger.LogError("CreateSMSStakeholderUserAsync received null user");
+                _logger.LogInfrastructureError("CreateSMSStakeholderUserAsync received null user");
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Creating SMS Stakeholder User with code: {Code}", user.Code);
+            _logger.LogInfrastructureInformation("Creating SMS Stakeholder User with code: {Code}", user.Code);
 
             // Check if username already exists
             var existsResult = await _repository.UserNameExistsAsync(user.UserName.Value);
             if (existsResult.IsSuccess && existsResult.Value)
             {
-                _logger.LogWarning("Username {UserName} already exists", user.UserName.Value);
+                _logger.LogInfrastructureWarning("Username {UserName} already exists", user.UserName.Value);
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.UserNameError.AlreadyExists);
             }
 
@@ -60,18 +60,18 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS Stakeholder User with ID: {Id}", result.Value?.UserId);
+                _logger.LogInfrastructureInformation("Successfully created SMS Stakeholder User with ID: {Id}", result.Value?.UserId);
             }
             else
             {
-                _logger.LogError("Failed to create SMS Stakeholder User. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to create SMS Stakeholder User. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating SMS Stakeholder User");
+            _logger.LogInfrastructureError(ex, "Unexpected error creating SMS Stakeholder User");
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.CreateFailed);
         }
     }
@@ -83,12 +83,12 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Stakeholder User with ID: {Id}", id);
+            _logger.LogInfrastructureInformation("Retrieving SMS Stakeholder User with ID: {Id}", id);
             return await _repository.GetByCodeAsync(id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder User with ID: {Id}", id);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Stakeholder User with ID: {Id}", id);
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -100,12 +100,12 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Stakeholder User with UserName: {UserName}", userName);
+            _logger.LogInfrastructureInformation("Retrieving SMS Stakeholder User with UserName: {UserName}", userName);
             return await _repository.GetByUserNameAsync(userName);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder User with UserName: {UserName}", userName);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Stakeholder User with UserName: {UserName}", userName);
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -117,12 +117,12 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving all SMS Stakeholder Users");
+            _logger.LogInfrastructureInformation("Retrieving all SMS Stakeholder Users");
             return await _repository.GetAllAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all SMS Stakeholder Users");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving all SMS Stakeholder Users");
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -134,12 +134,12 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving active SMS Stakeholder Users");
+            _logger.LogInfrastructureInformation("Retrieving active SMS Stakeholder Users");
             return await _repository.GetActiveUsersAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving active SMS Stakeholder Users");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving active SMS Stakeholder Users");
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -151,12 +151,12 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
+            _logger.LogInfrastructureInformation("Retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
             return await _repository.GetByStakeholderTypeAsync(stakeholderType);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -168,12 +168,12 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Stakeholder Users by organization: {Organization}", organization);
+            _logger.LogInfrastructureInformation("Retrieving SMS Stakeholder Users by organization: {Organization}", organization);
             return await _repository.GetByOrganizationAsync(organization);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder Users by organization: {Organization}", organization);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Stakeholder Users by organization: {Organization}", organization);
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -198,16 +198,16 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
         {
             if (user is null)
             {
-                _logger.LogError("UpdateSMSStakeholderUserAsync received null user");
+                _logger.LogInfrastructureError("UpdateSMSStakeholderUserAsync received null user");
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Updating SMS Stakeholder User with ID: {Id}", user.UserId);
+            _logger.LogInfrastructureInformation("Updating SMS Stakeholder User with ID: {Id}", user.UserId);
 
             var updateResult = await _repository.UpdateAsync(user);
             if (updateResult.IsFailure)
             {
-                _logger.LogError("Failed to update SMS Stakeholder User. Error: {Error}", updateResult.Error?.Message);
+                _logger.LogInfrastructureError("Failed to update SMS Stakeholder User. Error: {Error}", updateResult.Error?.Message);
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(updateResult.Error);
             }
 
@@ -216,7 +216,7 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating SMS Stakeholder User with ID: {Id}", user?.UserId);
+            _logger.LogInfrastructureError(ex, "Unexpected error updating SMS Stakeholder User with ID: {Id}", user?.UserId);
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.UpdateFailed);
         }
     }
@@ -228,23 +228,23 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     {
         try
         {
-            _logger.LogInformation("Deleting SMS Stakeholder User with ID: {Id}", userId);
+            _logger.LogInfrastructureInformation("Deleting SMS Stakeholder User with ID: {Id}", userId);
             var result = await _repository.DeleteAsync(userId);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS Stakeholder User with ID: {Id}", userId);
+                _logger.LogInfrastructureInformation("Successfully deleted SMS Stakeholder User with ID: {Id}", userId);
             }
             else
             {
-                _logger.LogError("Failed to delete SMS Stakeholder User. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to delete SMS Stakeholder User. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting SMS Stakeholder User with ID: {Id}", userId);
+            _logger.LogInfrastructureError(ex, "Unexpected error deleting SMS Stakeholder User with ID: {Id}", userId);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.DeleteFailed);
         }
     }
@@ -256,12 +256,12 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     {
         try
         {
-            _logger.LogInformation("Authenticating SMS Stakeholder User: {UserName}", userName);
+            _logger.LogInfrastructureInformation("Authenticating SMS Stakeholder User: {UserName}", userName);
 
             var userResult = await _repository.GetByUserNameAsync(userName);
             if (userResult.IsFailure)
             {
-                _logger.LogWarning("Authentication failed - user not found: {UserName}", userName);
+                _logger.LogInfrastructureWarning("Authentication failed - user not found: {UserName}", userName);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.LoginFailed);
             }
 
@@ -269,7 +269,7 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
 
             if (!user.Authenticate(plainTextPassword))
             {
-                _logger.LogWarning("Authentication failed - invalid password for user: {UserName}", userName);
+                _logger.LogInfrastructureWarning("Authentication failed - invalid password for user: {UserName}", userName);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.LoginFailed);
             }
 
@@ -277,12 +277,12 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
             user.RecordLogin();
             await _repository.UpdateAsync(user);
 
-            _logger.LogInformation("Successfully authenticated SMS Stakeholder User: {UserName}", userName);
+            _logger.LogInfrastructureInformation("Successfully authenticated SMS Stakeholder User: {UserName}", userName);
             return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error during authentication for user: {UserName}", userName);
+            _logger.LogInfrastructureError(ex, "Unexpected error during authentication for user: {UserName}", userName);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.LoginFailed);
         }
     }
@@ -294,12 +294,12 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving stakeholder type statistics");
+            _logger.LogInfrastructureInformation("Retrieving stakeholder type statistics");
             return await _repository.GetStakeholderTypeStatisticsAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving stakeholder type statistics");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving stakeholder type statistics");
             return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -311,12 +311,12 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving organization statistics");
+            _logger.LogInfrastructureInformation("Retrieving organization statistics");
             return await _repository.GetOrganizationStatisticsAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving organization statistics");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving organization statistics");
             return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -328,12 +328,12 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Stakeholder User statistics");
+            _logger.LogInfrastructureInformation("Retrieving SMS Stakeholder User statistics");
             return await _repository.GetUserStatisticsAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder User statistics");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Stakeholder User statistics");
             return Result<UserStatistics>.Failure<UserStatistics>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -347,16 +347,16 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
         {
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("GetSMSStakeholderUsersByGroupCodeAsync received null or empty group code");
+                _logger.LogInfrastructureError("GetSMSStakeholderUsersByGroupCodeAsync received null or empty group code");
                 return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving SMS Stakeholder Users by group code: {GroupCode}", groupCode);
+            _logger.LogInfrastructureInformation("Retrieving SMS Stakeholder Users by group code: {GroupCode}", groupCode);
             return await _repository.GetUsersByGroupCodeAsync(groupCode);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder Users by group code: {GroupCode}", groupCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Stakeholder Users by group code: {GroupCode}", groupCode);
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -367,24 +367,25 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     {
         try
         {
-            _logger.LogInformation("Updating password for SMS Application User with ID: {Id}", userId.Value);
+            _logger.LogInfrastructureInformation("Updating password for SMS Application User with ID: {Id}", userId.Value);
             var result = await _repository.UpdatePasswordAsync(userId, hashedPassword);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated password for SMS Application User with ID: {Id}", userId.Value);
+                _logger.LogInfrastructureInformation("Successfully updated password for SMS Application User with ID: {Id}", userId.Value);
             }
             else
             {
-                _logger.LogError("Failed to update password for SMS Application User. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to update password for SMS Application User. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating password for SMS Application User with ID: {Id}", userId.Value);
+            _logger.LogInfrastructureError(ex, "Unexpected error updating password for SMS Application User with ID: {Id}", userId.Value);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.PasswordUpdateFailed);
         }
     }
 }
+

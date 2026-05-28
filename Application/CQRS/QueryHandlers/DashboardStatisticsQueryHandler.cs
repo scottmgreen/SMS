@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="DashboardStatisticsQueryHandler.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -10,9 +10,9 @@
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 /// <summary>
 /// Dashboard statistics query handler - aggregates data from all major entities
@@ -34,7 +34,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
     {
         try
         {
-            _logger.LogInformation("Loading comprehensive dashboard statistics");
+            _logger.LogApplicationInformation("Loading comprehensive dashboard statistics");
 
             var response = new DashboardStatisticsResponse();
 
@@ -55,14 +55,14 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
             // Calculate cross-entity analytics
             CalculateCrossEntityAnalytics(response);
 
-            _logger.LogInformation("Dashboard statistics loaded successfully - Reports: {Reports}, Hazards: {Hazards}, Assessments: {Assessments}",
+            _logger.LogApplicationInformation("Dashboard statistics loaded successfully - Reports: {Reports}, Hazards: {Hazards}, Assessments: {Assessments}",
                 response.TotalReports, response.TotalHazards, response.TotalRiskAssessments);
 
             return Result<DashboardStatisticsResponse>.Success(response);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading dashboard statistics");
+            _logger.LogApplicationError(ex, "Error loading dashboard statistics");
             return Result.Failure<DashboardStatisticsResponse>(new Error("DASHBOARD_LOAD_ERROR", "Failed to load dashboard statistics"));
         }
     }
@@ -92,13 +92,13 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
                     .OrderBy(g => g.Key)
                     .ToDictionary(g => FormatMonthYear(g.Key), g => g.Count());
 
-                _logger.LogInformation("Loaded report statistics: {Count} reports across {StatusCount} statuses",
+                _logger.LogApplicationInformation("Loaded report statistics: {Count} reports across {StatusCount} statuses",
                     response.TotalReports, response.ReportsByStatus.Count);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading report statistics");
+            _logger.LogApplicationError(ex, "Error loading report statistics");
         }
     }
 
@@ -124,13 +124,13 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
                     .GroupBy(h => h.HazardType ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                _logger.LogInformation("Loaded hazard statistics: {Count} hazards across {StatusCount} statuses and {TypeCount} types",
+                _logger.LogApplicationInformation("Loaded hazard statistics: {Count} hazards across {StatusCount} statuses and {TypeCount} types",
                     response.TotalHazards, response.HazardsByStatus.Count, response.HazardsByType.Count);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading hazard statistics");
+            _logger.LogApplicationError(ex, "Error loading hazard statistics");
         }
     }
 
@@ -156,13 +156,13 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
                     .GroupBy(a => a.AssessmentType?.Name ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                _logger.LogInformation("Loaded risk assessment statistics: {Count} assessments across {StatusCount} statuses",
+                _logger.LogApplicationInformation("Loaded risk assessment statistics: {Count} assessments across {StatusCount} statuses",
                     response.TotalRiskAssessments, response.RiskAssessmentsByStatus.Count);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading risk assessment statistics");
+            _logger.LogApplicationError(ex, "Error loading risk assessment statistics");
         }
     }
 
@@ -183,13 +183,13 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
                     .GroupBy(i => i.Status ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                _logger.LogInformation("Loaded investigation statistics: {Count} investigations across {StatusCount} statuses",
+                _logger.LogApplicationInformation("Loaded investigation statistics: {Count} investigations across {StatusCount} statuses",
                     response.TotalInvestigations, response.InvestigationsByStatus.Count);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading investigation statistics");
+            _logger.LogApplicationError(ex, "Error loading investigation statistics");
         }
     }
 
@@ -210,13 +210,13 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
                     .GroupBy(i => i.Status?.Name ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                _logger.LogInformation("Loaded interview statistics: {Count} interviews across {StatusCount} statuses",
+                _logger.LogApplicationInformation("Loaded interview statistics: {Count} interviews across {StatusCount} statuses",
                     response.TotalInterviews, response.InterviewsByStatus.Count);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading interview statistics");
+            _logger.LogApplicationError(ex, "Error loading interview statistics");
         }
     }
 
@@ -242,13 +242,13 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
                     .GroupBy(m => m.Type ?? "Unknown")
                     .ToDictionary(g => g.Key, g => g.Count());
 
-                _logger.LogInformation("Loaded mitigation statistics: {Count} mitigations across {StatusCount} statuses",
+                _logger.LogApplicationInformation("Loaded mitigation statistics: {Count} mitigations across {StatusCount} statuses",
                     response.TotalMitigations, response.MitigationsByStatus.Count);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading mitigation statistics");
+            _logger.LogApplicationError(ex, "Error loading mitigation statistics");
         }
     }
 
@@ -346,11 +346,11 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
                 .Take(10)
                 .ToList();
 
-            _logger.LogInformation("Loaded recent activity: {Count} items", response.RecentActivity.Count);
+            _logger.LogApplicationInformation("Loaded recent activity: {Count} items", response.RecentActivity.Count);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading recent activity");
+            _logger.LogApplicationError(ex, "Error loading recent activity");
         }
     }
 
@@ -381,12 +381,12 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
                 response.HazardsByStatus.GetValueOrDefault("Under Review", 0) / 2 +
                 response.RiskAssessmentsByStatus.GetValueOrDefault("In Progress", 0) / 2;
 
-            _logger.LogInformation("Cross-entity analytics calculated - Completed this month: {Completed}, Overdue: {Overdue}",
+            _logger.LogApplicationInformation("Cross-entity analytics calculated - Completed this month: {Completed}, Overdue: {Overdue}",
                 response.ItemsCompletedThisMonth, response.ItemsOverdue);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating cross-entity analytics");
+            _logger.LogApplicationError(ex, "Error calculating cross-entity analytics");
         }
     }
 
@@ -399,3 +399,4 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
         return yearMonth;
     }
 }
+

@@ -33,7 +33,7 @@ public partial class OrganizationalGroups : ComponentBase
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
 
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     #endregion
 

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditPlanCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 /// <summary>
 /// SMS Audit Plan Command Handlers following established patterns
@@ -41,7 +41,7 @@ public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing CreateSMSAuditPlanCommand for audit plan: {Name}", request.AuditPlan.Name);
+            _logger.LogApplicationInformation("Processing CreateSMSAuditPlanCommand for audit plan: {Name}", request.AuditPlan.Name);
 
             // Generate audit plan code
 
@@ -75,7 +75,7 @@ public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestH
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS audit plan: {AuditPlanCode}", result.Value.Code);
+                _logger.LogApplicationInformation("Successfully created SMS audit plan: {AuditPlanCode}", result.Value.Code);
             }
             else
             {
@@ -86,7 +86,7 @@ public class CreateSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateSMSAuditPlanCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateSMSAuditPlanCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -120,7 +120,7 @@ public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing UpdateSMSAuditPlanCommand for audit plan: {AuditPlanCode}", request.AuditPlan.Code);
+            _logger.LogApplicationInformation("Processing UpdateSMSAuditPlanCommand for audit plan: {AuditPlanCode}", request.AuditPlan.Code);
 
             var auditPlan = request.AuditPlan; //existingPlanResult.Value!;
 
@@ -137,7 +137,7 @@ public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestH
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS audit plan: {AuditPlanCode}", request.AuditPlan.Code);
+                _logger.LogApplicationInformation("Successfully updated SMS audit plan: {AuditPlanCode}", request.AuditPlan.Code);
             }
             else
             {
@@ -148,7 +148,7 @@ public class UpdateSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSMSAuditPlanCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSMSAuditPlanCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -182,7 +182,7 @@ public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequest
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing ApproveSMSAuditPlanCommand for audit plan: {AuditPlanCode}", request.AuditPlanCode);
+            _logger.LogApplicationInformation("Processing ApproveSMSAuditPlanCommand for audit plan: {AuditPlanCode}", request.AuditPlanCode);
 
             // Get existing audit plan
             var existingPlanResult = await _auditPlanService.GetAuditPlanByCodeAsync(request.AuditPlanCode, cancellationToken);
@@ -215,7 +215,7 @@ public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequest
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully approved SMS audit plan: {AuditPlanCode} by {ApprovedBy}",
+                _logger.LogApplicationInformation("Successfully approved SMS audit plan: {AuditPlanCode} by {ApprovedBy}",
                     request.AuditPlanCode, request.ApprovedBy);
             }
             else
@@ -227,7 +227,7 @@ public class ApproveSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequest
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("ApproveSMSAuditPlanCommand operation was cancelled");
+            _logger.LogApplicationWarning("ApproveSMSAuditPlanCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -261,13 +261,13 @@ public class DeleteSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<bool>.Failure<bool>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing DeleteSMSAuditPlanCommand for audit plan: {AuditPlanCode}", request.AuditPlanCode);
+            _logger.LogApplicationInformation("Processing DeleteSMSAuditPlanCommand for audit plan: {AuditPlanCode}", request.AuditPlanCode);
 
             var result = await _auditPlanService.DeleteAuditPlanAsync(request.AuditPlanCode, request.DeletedBy, request.DeletionReason, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS audit plan: {AuditPlanCode} by {DeletedBy}",
+                _logger.LogApplicationInformation("Successfully deleted SMS audit plan: {AuditPlanCode} by {DeletedBy}",
                     request.AuditPlanCode, request.DeletedBy);
             }
             else
@@ -279,7 +279,7 @@ public class DeleteSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteSMSAuditPlanCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteSMSAuditPlanCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -313,7 +313,7 @@ public class ScheduleSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing ScheduleSMSAuditPlanCommand for audit plan: {AuditPlanCode}", request.AuditPlan.Code);
+            _logger.LogApplicationInformation("Processing ScheduleSMSAuditPlanCommand for audit plan: {AuditPlanCode}", request.AuditPlan.Code);
 
 
             var auditPlan = request.AuditPlan; //existingPlanResult.Value!;
@@ -324,7 +324,7 @@ public class ScheduleSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseReques
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS audit plan: {AuditPlanCode}", request.AuditPlan.Code);
+                _logger.LogApplicationInformation("Successfully updated SMS audit plan: {AuditPlanCode}", request.AuditPlan.Code);
             }
             else
             {
@@ -335,7 +335,7 @@ public class ScheduleSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseReques
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSMSAuditPlanCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSMSAuditPlanCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -345,3 +345,4 @@ public class ScheduleSMSAuditPlanCommandHandler : BaseCommandBundle, IBaseReques
         }
     }
 }
+

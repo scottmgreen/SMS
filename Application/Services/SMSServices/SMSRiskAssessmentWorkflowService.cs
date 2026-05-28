@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSRiskAssessmentWorkflowService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -112,7 +112,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
     {
         try
         {
-            _logger.LogInformation("Creating new risk assessment: {AssessmentName} for assessor: {AssessorId}", assessmentName, leadAssessorId);
+            _logger.LogApplicationInformation("Creating new risk assessment: {AssessmentName} for assessor: {AssessorId}", assessmentName, leadAssessorId);
 
             // Validate lead assessor exists
             var assessorResult = await _userRepository.GetByIdAsync(leadAssessorId);
@@ -147,12 +147,12 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 return Result<RiskAssessment>.Failure<RiskAssessment>(saveResult.Error);
             }
 
-            _logger.LogInformation("Risk assessment created successfully: {AssessmentId}", assessmentId.Value);
+            _logger.LogApplicationInformation("Risk assessment created successfully: {AssessmentId}", assessmentId.Value);
             return Result<RiskAssessment>.Success(riskAssessment.Value);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating risk assessment");
+            _logger.LogApplicationError(ex, "Error creating risk assessment");
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.CreationFailed);
         }
     }
@@ -161,7 +161,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
     {
         try
         {
-            _logger.LogInformation("Creating new residual risk assessment: {AssessmentName} for parent: {ParentId}", assessmentName, parentAssessmentId);
+            _logger.LogApplicationInformation("Creating new residual risk assessment: {AssessmentName} for parent: {ParentId}", assessmentName, parentAssessmentId);
 
             // Validate parent assessment exists
             var parentResult = await GetRiskAssessmentAsync(parentAssessmentId);
@@ -194,12 +194,12 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 return Result<RiskAssessment>.Failure<RiskAssessment>(saveResult.Error);
             }
 
-            _logger.LogInformation("Residual risk assessment created successfully: {AssessmentId}", assessmentId.Value);
+            _logger.LogApplicationInformation("Residual risk assessment created successfully: {AssessmentId}", assessmentId.Value);
             return Result<RiskAssessment>.Success(residualAssessment.Value);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating residual risk assessment");
+            _logger.LogApplicationError(ex, "Error creating residual risk assessment");
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.CreationFailed);
         }
     }
@@ -212,7 +212,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
             var result = await _riskAssessmentRepository.GetByIdAsync(id);
             if (result.IsFailure)
             {
-                _logger.LogWarning("Risk assessment not found: {AssessmentId}", assessmentId);
+                _logger.LogApplicationWarning("Risk assessment not found: {AssessmentId}", assessmentId);
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
             }
 
@@ -220,7 +220,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving risk assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationError(ex, "Error retrieving risk assessment: {AssessmentId}", assessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
@@ -229,7 +229,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
     {
         try
         {
-            _logger.LogInformation("Updating Step 1 for assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationInformation("Updating Step 1 for assessment: {AssessmentId}", assessmentId);
 
             // Get existing assessment
             var assessmentResult = await GetRiskAssessmentAsync(assessmentId);
@@ -273,12 +273,12 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 return Result<RiskAssessment>.Failure<RiskAssessment>(saveResult.Error);
             }
 
-            _logger.LogInformation("Step 1 updated successfully for assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationInformation("Step 1 updated successfully for assessment: {AssessmentId}", assessmentId);
             return Result<RiskAssessment>.Success(assessment);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating Step 1 for assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationError(ex, "Error updating Step 1 for assessment: {AssessmentId}", assessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -290,7 +290,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
     {
         try
         {
-            _logger.LogInformation("Updating Step 2 Hazard Identification for assessment {AssessmentId} with {HazardCount} hazards",
+            _logger.LogApplicationInformation("Updating Step 2 Hazard Identification for assessment {AssessmentId} with {HazardCount} hazards",
                 assessmentId, identifiedHazards.Count);
 
             // Get existing risk assessment
@@ -321,7 +321,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
 
                 if (hazardResult.IsFailure)
                 {
-                    _logger.LogError("Failed to create hazard {HazardCode}: {Error}",
+                    _logger.LogApplicationError("Failed to create hazard {HazardCode}: {Error}",
                         hazard.Code, hazardResult.Error.Message);
                     continue; // Skip this hazard but continue with others
                 }
@@ -330,7 +330,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 //var addResult = assessment.AddIdentifiedHazard(hazardResult.Value.Code, hazardResult.Value.Description);
                 //if (addResult.IsFailure)
                 //{
-                //    _logger.LogWarning("Failed to add hazard {HazardCode} to assessment: {Error}", 
+                //    _logger.LogApplicationWarning("Failed to add hazard {HazardCode} to assessment: {Error}", 
                 //        hazard.Code, addResult.Error.Message);
                 //}
             }
@@ -344,19 +344,19 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
 
             if (updateResult.IsFailure)
             {
-                _logger.LogError("Failed to update risk assessment {AssessmentId}: {Error}",
+                _logger.LogApplicationError("Failed to update risk assessment {AssessmentId}: {Error}",
                     assessmentId, updateResult.Error.Message);
                 return updateResult;
             }
 
-            _logger.LogInformation("Successfully updated Step 2 for assessment {AssessmentId} with {HazardCount} hazards",
+            _logger.LogApplicationInformation("Successfully updated Step 2 for assessment {AssessmentId} with {HazardCount} hazards",
                 assessmentId, identifiedHazards.Count);
 
             return updateResult;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating Step 2 hazard identification for assessment {AssessmentId}", assessmentId);
+            _logger.LogApplicationError(ex, "Error updating Step 2 hazard identification for assessment {AssessmentId}", assessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -365,7 +365,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
     {
         try
         {
-            _logger.LogInformation("Updating Step 3 for assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationInformation("Updating Step 3 for assessment: {AssessmentId}", assessmentId);
 
             var assessmentResult = await GetRiskAssessmentAsync(assessmentId);
             if (assessmentResult.IsFailure)
@@ -402,12 +402,12 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 return Result<RiskAssessment>.Failure<RiskAssessment>(saveResult.Error);
             }
 
-            _logger.LogInformation("Step 3 updated successfully for assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationInformation("Step 3 updated successfully for assessment: {AssessmentId}", assessmentId);
             return Result<RiskAssessment>.Success(assessment);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating Step 3 for assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationError(ex, "Error updating Step 3 for assessment: {AssessmentId}", assessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -416,7 +416,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
     {
         try
         {
-            _logger.LogInformation("Updating Step 4 for assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationInformation("Updating Step 4 for assessment: {AssessmentId}", assessmentId);
 
             var assessmentResult = await GetRiskAssessmentAsync(assessmentId);
             if (assessmentResult.IsFailure)
@@ -461,12 +461,12 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 return Result<RiskAssessment>.Failure<RiskAssessment>(saveResult.Error);
             }
 
-            _logger.LogInformation("Step 4 updated successfully for assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationInformation("Step 4 updated successfully for assessment: {AssessmentId}", assessmentId);
             return Result<RiskAssessment>.Success(assessment);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating Step 4 for assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationError(ex, "Error updating Step 4 for assessment: {AssessmentId}", assessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -475,7 +475,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
     {
         try
         {
-            _logger.LogInformation("Updating Step 5 for assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationInformation("Updating Step 5 for assessment: {AssessmentId}", assessmentId);
 
             var assessmentResult = await GetRiskAssessmentAsync(assessmentId);
             if (assessmentResult.IsFailure)
@@ -514,12 +514,12 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 return Result<RiskAssessment>.Failure<RiskAssessment>(saveResult.Error);
             }
 
-            _logger.LogInformation("Step 5 updated successfully for assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationInformation("Step 5 updated successfully for assessment: {AssessmentId}", assessmentId);
             return Result<RiskAssessment>.Success(assessment);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating Step 5 for assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationError(ex, "Error updating Step 5 for assessment: {AssessmentId}", assessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -528,7 +528,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
     {
         try
         {
-            _logger.LogInformation("Completing risk assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationInformation("Completing risk assessment: {AssessmentId}", assessmentId);
 
             var assessmentResult = await GetRiskAssessmentAsync(assessmentId);
             if (assessmentResult.IsFailure)
@@ -551,12 +551,12 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
                 return Result<RiskAssessment>.Failure<RiskAssessment>(saveResult.Error);
             }
 
-            _logger.LogInformation("Risk assessment completed successfully: {AssessmentId}", assessmentId);
+            _logger.LogApplicationInformation("Risk assessment completed successfully: {AssessmentId}", assessmentId);
             return Result<RiskAssessment>.Success(assessment);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error completing risk assessment: {AssessmentId}", assessmentId);
+            _logger.LogApplicationError(ex, "Error completing risk assessment: {AssessmentId}", assessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -581,7 +581,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving available assessors");
+            _logger.LogApplicationError(ex, "Error retrieving available assessors");
             return Result<List<SMSApplicationUser>>.Failure<List<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -602,8 +602,9 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving available hazards for assessment");
+            _logger.LogApplicationError(ex, "Error retrieving available hazards for assessment");
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NotFound);
         }
     }
 }
+

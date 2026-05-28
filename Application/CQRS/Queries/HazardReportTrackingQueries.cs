@@ -11,7 +11,7 @@
 using SMS_Domain.Entities;
 using SMS_Domain.Entities;
 
-namespace SMS_Application.Messaging.Queries;
+namespace SMS_Application.Queries;
 
 // =============================================
 // HAZARD REPORT TRACKING QUERIES

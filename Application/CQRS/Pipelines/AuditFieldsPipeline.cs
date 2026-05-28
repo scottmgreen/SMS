@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="AuditFieldsPipeline.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -11,10 +11,10 @@
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 
-namespace SMS_Application.Messaging.Pipelines;
+namespace SMS_Application.Pipelines;
 
 /// <summary>
-/// ⚠️ DEPRECATED MEGA-PIPELINE - DO NOT USE ⚠️
+/// ? DEPRECATED MEGA-PIPELINE - DO NOT USE ?
 /// 
 /// This pipeline was refactored into single-responsibility pipelines:
 /// - AuditFieldsSetterPipeline: Sets audit fields only
@@ -34,14 +34,15 @@ public class AuditFieldsPipeline<TRequest, TResult> : IBasePipeline<TRequest, TR
     public AuditFieldsPipeline()
     {
         throw new InvalidOperationException(
-            "⚠️ DEPRECATED MEGA-PIPELINE - This pipeline violates Single Responsibility Principle. " +
+            "? DEPRECATED MEGA-PIPELINE - This pipeline violates Single Responsibility Principle. " +
             "Use individual pipelines instead: AuditFieldsSetterPipeline, CommandAuditPipeline, QueryAuditPipeline, etc.");
     }
 
     public Task<TResult> HandleAsync(TRequest request, RequestPipelineDelegate<TResult> next, CancellationToken cancellationToken = default)
     {
         throw new InvalidOperationException(
-            "⚠️ DEPRECATED MEGA-PIPELINE - This pipeline should not be executed. " +
+            "? DEPRECATED MEGA-PIPELINE - This pipeline should not be executed. " +
             "Check ServiceCollectionExtensions.cs to ensure proper single-responsibility pipelines are registered.");
     }
 }
+

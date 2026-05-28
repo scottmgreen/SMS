@@ -105,7 +105,7 @@ public class AuthorizationService : IAuthorizationService
             var httpContext = _httpContextAccessor.HttpContext;
             if (httpContext == null)
             {
-                _logger.LogWarning("HttpContext not available for authorization context");
+                _logger.LogApplicationWarning("HttpContext not available for authorization context", ApplicationEventIds.Warning);
                 return null;
             }
 
@@ -113,7 +113,9 @@ public class AuthorizationService : IAuthorizationService
             var sessionUserId = httpContext.Session?.GetString("SMS_UserId");
             if (sessionUserId != userId)
             {
-                _logger.LogDebug("User ID {UserId} does not match session user {SessionUserId}", userId, sessionUserId);
+                _logger.LogApplicationDebug("User ID {UserId} does not match session user {SessionUserId}",
+                    ApplicationEventIds.Debug,
+                    userId, sessionUserId);
                 return null;
             }
 
@@ -121,7 +123,9 @@ public class AuthorizationService : IAuthorizationService
             var isAuthenticated = IsUserAuthenticated(httpContext);
             if (!isAuthenticated)
             {
-                _logger.LogDebug("User {UserId} is not authenticated", userId);
+                _logger.LogApplicationDebug("User {UserId} is not authenticated",
+                    ApplicationEventIds.Debug,
+                    userId);
                 return null;
             }
 
@@ -137,14 +141,18 @@ public class AuthorizationService : IAuthorizationService
                 IsAuthenticated = isAuthenticated
             };
 
-            _logger.LogDebug("Authorization context loaded for user: {UserId}, Permissions: {PermissionCount}", 
+            _logger.LogApplicationDebug("Authorization context loaded for user: {UserId}, Permissions: {PermissionCount}",
+                ApplicationEventIds.Debug,
                 userId, context.Permissions.Count);
 
             return context;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading authorization context for user: {UserId}", userId);
+            _logger.LogApplicationError("Error loading authorization context for user: {UserId}",
+                ApplicationEventIds.Error,
+                ex,
+                userId);
             return null;
         }
     }
@@ -187,9 +195,9 @@ public class AuthorizationService : IAuthorizationService
 
             return false;
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogWarning(ex, "Error checking authentication status");
+            _logger.LogApplicationWarning("Error checking authentication status", ApplicationEventIds.Warning);
             return false;
         }
     }
@@ -203,9 +211,11 @@ public class AuthorizationService : IAuthorizationService
         {
             return httpContext.Session?.GetString(key);
         }
-        catch (Exception ex)
+        catch (Exception)
         {
-            _logger.LogDebug(ex, "Error getting session value for key: {Key}", key);
+            _logger.LogApplicationDebug("Error getting session value for key: {Key}",
+                ApplicationEventIds.Debug,
+                key);
             return null;
         }
     }
@@ -256,7 +266,7 @@ public class AuthorizationService : IAuthorizationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error loading user permissions from session");
+            _logger.LogApplicationError("Error loading user permissions from session", ApplicationEventIds.Error, ex);
             return new List<SMSUserRolePermission>();
         }
     }

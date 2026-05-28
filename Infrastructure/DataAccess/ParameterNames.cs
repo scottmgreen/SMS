@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ParameterNames.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -130,7 +130,7 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmSMSApplicationUserLoginDate = new Lazy<string>(() => "@pLoginDate");
     public static string pmSMSApplicationUserLoginDate => _pmSMSApplicationUserLoginDate.Value;
 
-    // 🔐 Two-Factor Authentication Parameters for SMS Application Users
+    // ?? Two-Factor Authentication Parameters for SMS Application Users
     private static readonly Lazy<string> _pmSMSUserTwoFactorSecretKey = new Lazy<string>(() => "@pTwoFactorSecretKey");
     public static string pmSMSUserTwoFactorSecretKey => _pmSMSUserTwoFactorSecretKey.Value;
 
@@ -1254,7 +1254,7 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmUserId = new Lazy<string>(() => "@pUserID");
     public static string pmUserId => _pmUserId.Value;
 
-    // ✅ ADDITIONAL MISSING PARAMETERS - ADDED TO ALIGN WITH STORED PROCEDURES 
+    // ADDITIONAL MISSING PARAMETERS - ADDED TO ALIGN WITH STORED PROCEDURES 
 
     /// <summary>
     /// NEW: Missing output parameters used in Mitigation stored procedures
@@ -1980,3 +1980,4 @@ public static class ParameterNames
 
     #endregion
 }
+

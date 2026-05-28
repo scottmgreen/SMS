@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSApplicationUserQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -10,9 +10,9 @@
 
 using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // SMS APPLICATION USER QUERY HANDLERS
@@ -33,16 +33,16 @@ public class GetAllSMSApplicationUsersQueryHandler : BaseQueryBundle, IBaseReque
     {
         try
         {
-            _logger.LogInformation("Processing GetAllSMSApplicationUsersQuery");
+            _logger.LogApplicationInformation("Processing GetAllSMSApplicationUsersQuery");
             var result = await _applicationUserService.GetAllSMSApplicationUsersAsync(ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS Application Users", result.Value?.Count() ?? 0);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS Application Users", result.Value?.Count() ?? 0);
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve SMS Application Users");
+                _logger.LogApplicationWarning("Failed to retrieve SMS Application Users");
             }
 
             return result;
@@ -71,16 +71,16 @@ public class GetSMSApplicationUserByCodeQueryHandler : BaseQueryBundle, IBaseReq
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSApplicationUserByCodeQuery for Code: {UserCode}", request.UserCode);
+            _logger.LogApplicationInformation("Processing GetSMSApplicationUserByCodeQuery for Code: {UserCode}", request.UserCode);
             var result = await _applicationUserService.GetSMSApplicationUserByCodeAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved SMS Application User with Code: {UserCode}", request.UserCode);
+                _logger.LogApplicationInformation("Successfully retrieved SMS Application User with Code: {UserCode}", request.UserCode);
             }
             else
             {
-                _logger.LogWarning("SMS Application User not found with Code: {UserCode}", request.UserCode);
+                _logger.LogApplicationWarning("SMS Application User not found with Code: {UserCode}", request.UserCode);
             }
 
             return result;
@@ -108,17 +108,17 @@ public class GetSMSApplicationUserByUserNameQueryHandler : BaseQueryBundle, IBas
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSApplicationUserByUserNameQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationInformation("Processing GetSMSApplicationUserByUserNameQuery for UserName: {UserName}", request.UserName);
 
             var result = await _applicationUserService.GetSMSApplicationUserByUserNameAsync(request.UserName, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved SMS Application User with UserName: {UserName}", request.UserName);
+                _logger.LogApplicationInformation("Successfully retrieved SMS Application User with UserName: {UserName}", request.UserName);
             }
             else
             {
-                _logger.LogWarning("SMS Application User not found with UserName: {UserName}", request.UserName);
+                _logger.LogApplicationWarning("SMS Application User not found with UserName: {UserName}", request.UserName);
             }
 
             return result;
@@ -146,16 +146,16 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IBaseRe
     {
         try
         {
-            _logger.LogInformation("Processing GetActiveSMSApplicationUsersQuery");
+            _logger.LogApplicationInformation("Processing GetActiveSMSApplicationUsersQuery");
             var result = await _applicationUserService.GetActiveSMSApplicationUsersAsync(ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} active SMS Application Users", result.Value?.Count() ?? 0);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} active SMS Application Users", result.Value?.Count() ?? 0);
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve active SMS Application Users");
+                _logger.LogApplicationWarning("Failed to retrieve active SMS Application Users");
             }
 
             return result;
@@ -183,17 +183,17 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IBaseRe
 //    {
 //        try
 //        {
-//            _logger.LogInformation("Processing GetSMSApplicationUsersByPermissionLevelQuery for Permission Level: {PermissionLevel}", request.PermissionLevel);
+//            _logger.LogApplicationInformation("Processing GetSMSApplicationUsersByPermissionLevelQuery for Permission Level: {PermissionLevel}", request.PermissionLevel);
 //            var result = await _repository.GetSMSApplicationUserByPermissionLevelAsync(request.PermissionLevel);
 
 //            if (result.IsSuccess)
 //            {
-//                _logger.LogInformation("Successfully retrieved {Count} SMS Application Users with Permission Level: {PermissionLevel}", 
+//                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS Application Users with Permission Level: {PermissionLevel}", 
 //                    result.Value?.Count() ?? 0, request.PermissionLevel);
 //            }
 //            else
 //            {
-//                _logger.LogWarning("Failed to retrieve SMS Application Users with Permission Level: {PermissionLevel}: {Error}", 
+//                _logger.LogApplicationWarning("Failed to retrieve SMS Application Users with Permission Level: {PermissionLevel}: {Error}", 
 //                    request.PermissionLevel, result.Error?.Message);
 //            }
 
@@ -201,7 +201,7 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IBaseRe
 //        }
 //        catch (Exception ex)
 //        {
-//            _logger.LogError(ex, "Error processing GetSMSApplicationUsersByPermissionLevelQuery for Permission Level: {PermissionLevel}", request.PermissionLevel);
+//            _logger.LogApplicationError(ex, "Error processing GetSMSApplicationUsersByPermissionLevelQuery for Permission Level: {PermissionLevel}", request.PermissionLevel);
 //            return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
 //        }
 //    }
@@ -222,7 +222,7 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IBaseRe
 //    {
 //        try
 //        {
-//            _logger.LogInformation("Processing GetSMSApplicationUsersWithMinimumPermissionQuery for Minimum Permission: {MinimumPermissionLevel}", request.MinimumPermissionLevel);
+//            _logger.LogApplicationInformation("Processing GetSMSApplicationUsersWithMinimumPermissionQuery for Minimum Permission: {MinimumPermissionLevel}", request.MinimumPermissionLevel);
 
 //            // Get all users and filter by minimum permission level
 //            var allUsersResult = await _repository.GetAllAsync();
@@ -237,19 +237,19 @@ public class GetActiveSMSApplicationUsersQueryHandler : BaseQueryBundle, IBaseRe
 //                    return userLevelIndex >= requiredLevelIndex;
 //                }) ?? new List<SMSApplicationUser>();
 
-//                _logger.LogInformation("Successfully retrieved {Count} SMS Application Users with minimum permission: {MinimumPermissionLevel}", 
+//                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS Application Users with minimum permission: {MinimumPermissionLevel}", 
 //                    filteredUsers.Count(), request.MinimumPermissionLevel);
 //                return Result<IEnumerable<SMSApplicationUser>>.Success<IEnumerable<SMSApplicationUser>>(filteredUsers);
 //            }
 //            else
 //            {
-//                _logger.LogWarning("Failed to retrieve SMS Application Users for minimum permission filtering: {Error}", allUsersResult.Error?.Message);
+//                _logger.LogApplicationWarning("Failed to retrieve SMS Application Users for minimum permission filtering: {Error}", allUsersResult.Error?.Message);
 //                return allUsersResult;
 //            }
 //        }
 //        catch (Exception ex)
 //        {
-//            _logger.LogError(ex, "Error processing GetSMSApplicationUsersWithMinimumPermissionQuery for Minimum Permission: {MinimumPermissionLevel}", request.MinimumPermissionLevel);
+//            _logger.LogApplicationError(ex, "Error processing GetSMSApplicationUsersWithMinimumPermissionQuery for Minimum Permission: {MinimumPermissionLevel}", request.MinimumPermissionLevel);
 //            return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
 //        }
 //    }
@@ -270,12 +270,12 @@ public class CheckSMSApplicationUserNameExistsQueryHandler : BaseQueryBundle, IB
     {
         try
         {
-            _logger.LogInformation("Processing CheckSMSApplicationUserNameExistsQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationInformation("Processing CheckSMSApplicationUserNameExistsQuery for UserName: {UserName}", request.UserName);
             var result = await _dataService.GetAllSMSApplicationUsersAsync(); //request.UserName);
             var checkresult = result.Value.Any(x => x.UserName.Value == request.UserName);
 
 
-            _logger.LogInformation("Username {UserName} exists: {Exists}", request.UserName, result.Value);
+            _logger.LogApplicationInformation("Username {UserName} exists: {Exists}", request.UserName, result.Value);
 
             return checkresult;
         }
@@ -302,12 +302,12 @@ public class ValidateSMSApplicationUserCredentialsQueryHandler : BaseQueryBundle
     {
         try
         {
-            _logger.LogInformation("Processing ValidateSMSApplicationUserCredentialsQuery for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationInformation("Processing ValidateSMSApplicationUserCredentialsQuery for UserName: {UserName}", request.UserName);
 
             var userResult = await _dataService.GetSMSApplicationUserByUserNameAsync(request.UserName);
             if (userResult.IsFailure)
             {
-                _logger.LogWarning("User not found for credential validation: {UserName}", request.UserName);
+                _logger.LogApplicationWarning("User not found for credential validation: {UserName}", request.UserName);
                 return Result<bool>.Success(false);
             }
 
@@ -319,7 +319,7 @@ public class ValidateSMSApplicationUserCredentialsQueryHandler : BaseQueryBundle
             await _dataService.UpdateSMSApplicationUserAsync(user, ct);
 
 
-            _logger.LogInformation("Credential validation for {UserName}: {IsValid}", request.UserName, isValid);
+            _logger.LogApplicationInformation("Credential validation for {UserName}: {IsValid}", request.UserName, isValid);
 
             return Result<bool>.Success(isValid);
         }
@@ -346,18 +346,18 @@ public class GetSMSApplicationUsersRequiringPasswordChangeQueryHandler : BaseQue
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSApplicationUsersRequiringPasswordChangeQuery");
+            _logger.LogApplicationInformation("Processing GetSMSApplicationUsersRequiringPasswordChangeQuery");
 
             var allUsersResult = await _dataService.GetAllSMSApplicationUsersAsync(ct);
             if (allUsersResult.IsSuccess)
             {
                 var usersRequiringChange = allUsersResult.Value?.Where(u => u.RequiresPasswordChange) ?? new List<SMSApplicationUser>();
-                _logger.LogInformation("Successfully retrieved {Count} users requiring password change", usersRequiringChange.Count());
+                _logger.LogApplicationInformation("Successfully retrieved {Count} users requiring password change", usersRequiringChange.Count());
                 return Result<IEnumerable<SMSApplicationUser>>.Success<IEnumerable<SMSApplicationUser>>(usersRequiringChange);
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve users requiring password change: {Error}", allUsersResult.Error?.Message);
+                _logger.LogApplicationWarning("Failed to retrieve users requiring password change: {Error}", allUsersResult.Error?.Message);
                 return allUsersResult;
             }
         }
@@ -384,7 +384,7 @@ public class GetStaleSMSApplicationUsersQueryHandler : BaseQueryBundle, IBaseReq
     {
         try
         {
-            _logger.LogInformation("Processing GetStaleSMSApplicationUsersQuery for {StaleDays} days", request.StaleDays);
+            _logger.LogApplicationInformation("Processing GetStaleSMSApplicationUsersQuery for {StaleDays} days", request.StaleDays);
 
             var allUsersResult = await _dataService.GetAllSMSApplicationUsersAsync(ct);
             if (allUsersResult.IsSuccess)
@@ -393,12 +393,12 @@ public class GetStaleSMSApplicationUsersQueryHandler : BaseQueryBundle, IBaseReq
                 var staleUsers = allUsersResult.Value?.Where(u =>
                     !u.LastLoginDate.HasValue || u.LastLoginDate < cutoffDate) ?? new List<SMSApplicationUser>();
 
-                _logger.LogInformation("Successfully retrieved {Count} stale users (>{StaleDays} days)", staleUsers.Count(), request.StaleDays);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} stale users (>{StaleDays} days)", staleUsers.Count(), request.StaleDays);
                 return Result<IEnumerable<SMSApplicationUser>>.Success<IEnumerable<SMSApplicationUser>>(staleUsers);
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve stale users: {Error}", allUsersResult.Error?.Message);
+                _logger.LogApplicationWarning("Failed to retrieve stale users: {Error}", allUsersResult.Error?.Message);
                 return allUsersResult;
             }
         }
@@ -425,7 +425,7 @@ public class GetSMSApplicationUserStatisticsQueryHandler : BaseQueryBundle, IBas
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSApplicationUserStatisticsQuery");
+            _logger.LogApplicationInformation("Processing GetSMSApplicationUserStatisticsQuery");
 
             var statsResult = await _dataService.GetSMSApplicationUserStatisticsAsync();
             if (statsResult.IsSuccess)
@@ -441,12 +441,12 @@ public class GetSMSApplicationUserStatisticsQueryHandler : BaseQueryBundle, IBas
                     ["LastLoginDate"] = userStats.LastLoginDate
                 };
 
-                _logger.LogInformation("Successfully retrieved SMS Application User statistics");
+                _logger.LogApplicationInformation("Successfully retrieved SMS Application User statistics");
                 return Result<Dictionary<string, object>>.Success<Dictionary<string, object>>(stats);
             }
             else
             {
-                _logger.LogWarning("Failed to retrieve SMS Application User statistics: {Error}", statsResult.Error?.Message);
+                _logger.LogApplicationWarning("Failed to retrieve SMS Application User statistics: {Error}", statsResult.Error?.Message);
                 return Result<Dictionary<string, object>>.Failure<Dictionary<string, object>>(statsResult.Error);
             }
         }
@@ -457,3 +457,4 @@ public class GetSMSApplicationUserStatisticsQueryHandler : BaseQueryBundle, IBas
         }
     }
 }
+

@@ -8,8 +8,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Application.Interfaces.CommonInterfaces;
-using Application.Services.EventBusServices; // NEW: For EventBus domain events
+using SMS_Application.Interfaces;
+using SMS_Application.Services; // NEW: For EventBus domain events
 
 using Microsoft.Extensions.Configuration;
 

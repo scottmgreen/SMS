@@ -9,9 +9,9 @@
 
 using Microsoft.Extensions.Logging;
 using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 public class GetQueuedEventsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetQueuedEventsQuery, Result<IEnumerable<QueuedEvent>>>
 {
@@ -30,14 +30,14 @@ public class GetQueuedEventsQueryHandler : BaseQueryBundle, IBaseRequestHandler<
     {
         try
         {
-            _logger.LogInformation("Processing GetQueuedEventsQuery (Status: {Status}, Type: {Type}, Max: {Max})",
+            _logger.LogApplicationInformation("Processing GetQueuedEventsQuery (Status: {Status}, Type: {Type}, Max: {Max})",
                 request.Status, request.EventType, request.MaxResults);
 
             return await _service.GetQueuedEventsAsync(request.Status, request.EventType, request.MaxResults).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetQueuedEventsQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetQueuedEventsQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -70,12 +70,12 @@ public class GetQueuedEventByIdQueryHandler : BaseQueryBundle, IBaseRequestHandl
                 return Result<QueuedEvent>.Failure<QueuedEvent>(DomainErrors.GeneralError.InvalidParameters);
             }
 
-            _logger.LogInformation("Processing GetQueuedEventByIdQuery for EventId: {EventId}", request.EventId);
+            _logger.LogApplicationInformation("Processing GetQueuedEventByIdQuery for EventId: {EventId}", request.EventId);
             return await _service.GetQueuedEventAsync(request.EventId).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetQueuedEventByIdQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetQueuedEventByIdQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -103,12 +103,12 @@ public class GetEventQueueStatisticsQueryHandler : BaseQueryBundle, IBaseRequest
     {
         try
         {
-            _logger.LogInformation("Processing GetEventQueueStatisticsQuery");
+            _logger.LogApplicationInformation("Processing GetEventQueueStatisticsQuery");
             return await _service.GetQueueStatisticsAsync().ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetEventQueueStatisticsQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetEventQueueStatisticsQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -118,3 +118,4 @@ public class GetEventQueueStatisticsQueryHandler : BaseQueryBundle, IBaseRequest
         }
     }
 }
+

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardLocationCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -8,7 +8,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 // =============================================
 // HAZARD LOCATION COMMAND HANDLERS - Clean Architecture Pattern
 // =============================================
@@ -34,13 +34,13 @@ public class CreateHazardLocationCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateHazardLocationCommand for Code: {Code}", request.HazardLocation.Code);
+            _logger.LogApplicationInformation(" Processing CreateHazardLocationCommand for Code: {Code}", request.HazardLocation.Code);
 
             var result = await _hazardLocationService.CreateHazardLocationAsync(request.HazardLocation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created HazardLocation with ID: {Id}, Code: {Code}",
+                _logger.LogApplicationInformation(" Successfully created HazardLocation with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -53,7 +53,7 @@ public class CreateHazardLocationCommandHandler : BaseCommandBundle, IBaseReques
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateHazardLocationCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateHazardLocationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -85,14 +85,14 @@ public class UpdateHazardLocationCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateHazardLocationCommand for ID: {Id}, Code: {Code}",
+            _logger.LogApplicationInformation(" Processing UpdateHazardLocationCommand for ID: {Id}, Code: {Code}",
                 request.HazardLocation.Id, request.HazardLocation.Code);
 
             var result = await _hazardLocationService.UpdateHazardLocationAsync(request.HazardLocation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated HazardLocation with ID: {Id}", request.HazardLocation.Id);
+                _logger.LogApplicationInformation(" Successfully updated HazardLocation with ID: {Id}", request.HazardLocation.Id);
             }
             else
             {
@@ -104,7 +104,7 @@ public class UpdateHazardLocationCommandHandler : BaseCommandBundle, IBaseReques
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateHazardLocationCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateHazardLocationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -136,13 +136,13 @@ public class DeleteHazardLocationCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteHazardLocationCommand for ID: {Id}", request.HazardLocationId);
+            _logger.LogApplicationInformation(" Processing DeleteHazardLocationCommand for ID: {Id}", request.HazardLocationId);
 
             var result = await _hazardLocationService.DeleteHazardLocationAsync(request.HazardLocationId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted HazardLocation with ID: {Id}", request.HazardLocationId);
+                _logger.LogApplicationInformation(" Successfully deleted HazardLocation with ID: {Id}", request.HazardLocationId);
             }
             else
             {
@@ -154,7 +154,7 @@ public class DeleteHazardLocationCommandHandler : BaseCommandBundle, IBaseReques
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteHazardLocationCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteHazardLocationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -164,3 +164,4 @@ public class DeleteHazardLocationCommandHandler : BaseCommandBundle, IBaseReques
         }
     }
 }
+

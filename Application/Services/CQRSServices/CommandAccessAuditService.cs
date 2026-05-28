@@ -8,7 +8,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Application.Interfaces.CommonInterfaces;
+
 
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
@@ -42,7 +42,8 @@ public class CommandAccessAuditService : ICommandAccessAuditService
     {
         try
         {
-            _logger.LogInformation("?? Command Execution: User '{UserId}' executed {ResourceIdentifier} via {CommandType} ({ActionType})", 
+            _logger.LogApplicationInformation("Command Execution: User '{UserId}' executed {ResourceIdentifier} via {CommandType} ({ActionType})",
+                ApplicationEventIds.Information,
                 userId, resourceIdentifier, commandType, actionType);
 
             // Extract entity name from command type for better module organization (SAME PATTERN as QueryAccessAuditService)
@@ -69,12 +70,17 @@ public class CommandAccessAuditService : ICommandAccessAuditService
 
             if (!result.IsSuccess)
             {
-                _logger.LogWarning("?? Failed to log command execution audit for user {UserId}", userId);
+                _logger.LogApplicationWarning("Failed to log command execution audit for user {UserId}",
+                    ApplicationEventIds.Warning,
+                    userId);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error logging command execution audit for user {UserId}", userId);
+            _logger.LogApplicationError("Error logging command execution audit for user {UserId}",
+                ApplicationEventIds.Error,
+                ex,
+                userId);
             // Don't throw - audit logging failure shouldn't break command operations
         }
     }

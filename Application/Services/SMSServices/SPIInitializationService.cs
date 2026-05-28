@@ -36,7 +36,7 @@ public class SPIInitializationService
     {
         try
         {
-            _logger.LogInformation("?? SPI Initialization: Starting default SPI setup");
+            _logger.LogApplicationInformation("SPI Initialization: Starting default SPI setup");
 
             var defaultSPIs = GetDefaultSPIConfigurations();
             var createdCount = 0;
@@ -50,7 +50,7 @@ public class SPIInitializationService
                     var existingResult = await _spiService.GetSafetyPerformanceIndicatorByCodeAsync(spiConfig.Code, cancellationToken);
                     if (existingResult.IsSuccess)
                     {
-                        _logger.LogInformation("?? SPI Initialization: SPI {Code} already exists - skipping", spiConfig.Code);
+                        _logger.LogApplicationInformation("SPI Initialization: SPI {Code} already exists - skipping", spiConfig.Code);
                         skippedCount++;
                         continue;
                     }
@@ -59,29 +59,29 @@ public class SPIInitializationService
                     var createResult = await _spiService.CreateSafetyPerformanceIndicatorAsync(spiConfig, cancellationToken);
                     if (createResult.IsSuccess)
                     {
-                        _logger.LogInformation("? SPI Initialization: Created SPI {Code} - {Name}", spiConfig.Code, spiConfig.Name);
+                        _logger.LogApplicationInformation("SPI Initialization: Created SPI {Code} - {Name}", spiConfig.Code, spiConfig.Name);
                         createdCount++;
                     }
                     else
                     {
-                        _logger.LogWarning("?? SPI Initialization: Failed to create SPI {Code} - {Error}", 
+                        _logger.LogApplicationWarning("SPI Initialization: Failed to create SPI {Code} - {Error}", 
                             spiConfig.Code, createResult.Error?.Message);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "?? SPI Initialization: Error creating SPI {Code}", spiConfig.Code);
+                    _logger.LogApplicationError(ex, "SPI Initialization: Error creating SPI {Code}", spiConfig.Code);
                 }
             }
 
-            _logger.LogInformation("?? SPI Initialization: Complete - {Created} created, {Skipped} skipped", 
+            _logger.LogApplicationInformation("SPI Initialization: Complete - {Created} created, {Skipped} skipped", 
                 createdCount, skippedCount);
 
             return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? SPI Initialization: Error during initialization");
+            _logger.LogApplicationError(ex, "SPI Initialization: Error during initialization");
             return Result<bool>.Failure<bool>(DomainErrors.SPIError.CreateFailed);
         }
     }
@@ -252,3 +252,4 @@ public class SPIInitializationService
         return spis;
     }
 }
+

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="AuditLogPipeline.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 using SMS_Application.Common;
 
-namespace SMS_Application.Messaging.Pipelines;
+namespace SMS_Application.Pipelines;
 
 /// <summary>
 /// Enhanced pipeline for comprehensive audit logging of business actions
@@ -51,7 +51,7 @@ public class AuditLogPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResu
         // Check if business audit logging is enabled via feature flag
         var isBusinessAuditEnabled = await _featureManager.IsEnabledAsync("EnableBusinessAuditLog").ConfigureAwait(false);
 
-        _logger.LogDebug("📋 Business Audit: Processing {CommandType} by user {UserId} - Feature Enabled: {Enabled}", 
+        _logger.LogApplicationDebug("Business Audit: Processing {CommandType} by user {UserId} - Feature Enabled: {Enabled}", 
             commandName, currentUserId, isBusinessAuditEnabled);
 
         try
@@ -105,17 +105,17 @@ public class AuditLogPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResu
             
             if (auditResult.IsSuccess)
             {
-                _logger.LogDebug("✅ Business Audit: Entry created for {CommandType}", request.GetType().Name);
+                _logger.LogApplicationDebug("Business Audit: Entry created for {CommandType}", request.GetType().Name);
             }
             else
             {
-                _logger.LogWarning("⚠️ Business Audit: Failed to create entry for {CommandType}: {Error}", 
+                _logger.LogApplicationWarning("Business Audit: Failed to create entry for {CommandType}: {Error}", 
                     request.GetType().Name, auditResult.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ Error creating business audit log entry for {CommandType}", request.GetType().Name);
+            _logger.LogApplicationError(ex, "Error creating business audit log entry for {CommandType}", request.GetType().Name);
             // Don't throw - audit logging failure shouldn't break business operations
         }
     }
@@ -143,7 +143,7 @@ public class AuditLogPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResu
         }
         catch (Exception auditEx)
         {
-            _logger.LogError(auditEx, "❌ Critical: Failed to log error audit entry for {CommandType}", request.GetType().Name);
+            _logger.LogApplicationError(auditEx, "Critical: Failed to log error audit entry for {CommandType}", request.GetType().Name);
         }
     }
 
@@ -197,6 +197,8 @@ public class AuditLogPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResu
         return $"User {action.ToLower().Replace('_', ' ')} {status} via {request.GetType().Name}. Entity: {entityInfo}";
     }
 }
+
+
 
 
 

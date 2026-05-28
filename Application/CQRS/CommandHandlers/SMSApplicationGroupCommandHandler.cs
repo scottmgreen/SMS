@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSApplicationGroupCommandHandler.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 /// <summary>
 /// Command handler for creating SMS application groups
@@ -34,11 +34,11 @@ public class CreateSMSApplicationGroupCommandHandler : BaseCommandBundle, IBaseR
     {
         try
         {
-            _logger.LogInformation("Processing CreateSMSApplicationGroupCommand for group: {GroupCode}", request.ApplicationGroup?.Code);
+            _logger.LogApplicationInformation("Processing CreateSMSApplicationGroupCommand for group: {GroupCode}", request.ApplicationGroup?.Code);
 
             if (request?.ApplicationGroup == null)
             {
-                _logger.LogWarning("CreateSMSApplicationGroupCommand received with null application group");
+                _logger.LogApplicationWarning("CreateSMSApplicationGroupCommand received with null application group");
                 return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.NullOrEmpty);
             }
 
@@ -46,11 +46,11 @@ public class CreateSMSApplicationGroupCommandHandler : BaseCommandBundle, IBaseR
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS application group: {GroupCode}", request.ApplicationGroup.Code);
+                _logger.LogApplicationInformation("Successfully created SMS application group: {GroupCode}", request.ApplicationGroup.Code);
             }
             else
             {
-                _logger.LogError("Failed to create SMS application group: {GroupCode}, Error: {Error}",
+                _logger.LogApplicationError("Failed to create SMS application group: {GroupCode}, Error: {Error}",
                     request.ApplicationGroup.Code, result.Error?.Message);
             }
 
@@ -58,12 +58,12 @@ public class CreateSMSApplicationGroupCommandHandler : BaseCommandBundle, IBaseR
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateSMSApplicationGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateSMSApplicationGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing CreateSMSApplicationGroupCommand for group: {GroupCode}",
+            _logger.LogApplicationError(ex, "Error processing CreateSMSApplicationGroupCommand for group: {GroupCode}",
                 request.ApplicationGroup?.Code);
             return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.CreateFailed);
         }
@@ -90,11 +90,11 @@ public class UpdateSMSApplicationGroupCommandHandler : BaseCommandBundle, IBaseR
     {
         try
         {
-            _logger.LogInformation("Processing UpdateSMSApplicationGroupCommand for group: {GroupCode}", request.ApplicationGroup?.Code);
+            _logger.LogApplicationInformation("Processing UpdateSMSApplicationGroupCommand for group: {GroupCode}", request.ApplicationGroup?.Code);
 
             if (request?.ApplicationGroup == null)
             {
-                _logger.LogWarning("UpdateSMSApplicationGroupCommand received with null application group");
+                _logger.LogApplicationWarning("UpdateSMSApplicationGroupCommand received with null application group");
                 return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.NullOrEmpty);
             }
 
@@ -102,11 +102,11 @@ public class UpdateSMSApplicationGroupCommandHandler : BaseCommandBundle, IBaseR
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS application group: {GroupCode}", request.ApplicationGroup.Code);
+                _logger.LogApplicationInformation("Successfully updated SMS application group: {GroupCode}", request.ApplicationGroup.Code);
             }
             else
             {
-                _logger.LogError("Failed to update SMS application group: {GroupCode}, Error: {Error}",
+                _logger.LogApplicationError("Failed to update SMS application group: {GroupCode}, Error: {Error}",
                     request.ApplicationGroup.Code, result.Error?.Message);
             }
 
@@ -114,12 +114,12 @@ public class UpdateSMSApplicationGroupCommandHandler : BaseCommandBundle, IBaseR
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSMSApplicationGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSMSApplicationGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing UpdateSMSApplicationGroupCommand for group: {GroupCode}",
+            _logger.LogApplicationError(ex, "Error processing UpdateSMSApplicationGroupCommand for group: {GroupCode}",
                 request.ApplicationGroup?.Code);
             return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.UpdateFailed);
         }
@@ -146,11 +146,11 @@ public class DeleteSMSApplicationGroupCommandHandler : BaseCommandBundle, IBaseR
     {
         try
         {
-            _logger.LogInformation("Processing DeleteSMSApplicationGroupCommand for group: {GroupCode}", request.GroupCode);
+            _logger.LogApplicationInformation("Processing DeleteSMSApplicationGroupCommand for group: {GroupCode}", request.GroupCode);
 
             if (string.IsNullOrWhiteSpace(request.GroupCode))
             {
-                _logger.LogWarning("DeleteSMSApplicationGroupCommand received with null or empty group code");
+                _logger.LogApplicationWarning("DeleteSMSApplicationGroupCommand received with null or empty group code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.CodeRequired);
             }
 
@@ -158,11 +158,11 @@ public class DeleteSMSApplicationGroupCommandHandler : BaseCommandBundle, IBaseR
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS application group: {GroupCode}", request.GroupCode);
+                _logger.LogApplicationInformation("Successfully deleted SMS application group: {GroupCode}", request.GroupCode);
             }
             else
             {
-                _logger.LogError("Failed to delete SMS application group: {GroupCode}, Error: {Error}",
+                _logger.LogApplicationError("Failed to delete SMS application group: {GroupCode}, Error: {Error}",
                     request.GroupCode, result.Error?.Message);
             }
 
@@ -170,12 +170,12 @@ public class DeleteSMSApplicationGroupCommandHandler : BaseCommandBundle, IBaseR
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteSMSApplicationGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteSMSApplicationGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing DeleteSMSApplicationGroupCommand for group: {GroupCode}", request.GroupCode);
+            _logger.LogApplicationError(ex, "Error processing DeleteSMSApplicationGroupCommand for group: {GroupCode}", request.GroupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.DeleteFailed);
         }
     }
@@ -201,12 +201,12 @@ public class AssignUserToApplicationGroupCommandHandler : BaseCommandBundle, IBa
     {
         try
         {
-            _logger.LogInformation("Processing AssignUserToApplicationGroupCommand for user: {UserCode} to group: {GroupCode}",
+            _logger.LogApplicationInformation("Processing AssignUserToApplicationGroupCommand for user: {UserCode} to group: {GroupCode}",
                 request.UserCode, request.GroupCode);
 
             if (string.IsNullOrWhiteSpace(request.UserCode) || string.IsNullOrWhiteSpace(request.GroupCode))
             {
-                _logger.LogWarning("AssignUserToApplicationGroupCommand received with null or empty user/group code");
+                _logger.LogApplicationWarning("AssignUserToApplicationGroupCommand received with null or empty user/group code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
@@ -214,11 +214,11 @@ public class AssignUserToApplicationGroupCommandHandler : BaseCommandBundle, IBa
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned user {UserCode} to group {GroupCode}", request.UserCode, request.GroupCode);
+                _logger.LogApplicationInformation("Successfully assigned user {UserCode} to group {GroupCode}", request.UserCode, request.GroupCode);
             }
             else
             {
-                _logger.LogError("Failed to assign user {UserCode} to group {GroupCode}, Error: {Error}",
+                _logger.LogApplicationError("Failed to assign user {UserCode} to group {GroupCode}, Error: {Error}",
                     request.UserCode, request.GroupCode, result.Error?.Message);
             }
 
@@ -226,12 +226,12 @@ public class AssignUserToApplicationGroupCommandHandler : BaseCommandBundle, IBa
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("AssignUserToApplicationGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("AssignUserToApplicationGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing AssignUserToApplicationGroupCommand for user: {UserCode} to group: {GroupCode}",
+            _logger.LogApplicationError(ex, "Error processing AssignUserToApplicationGroupCommand for user: {UserCode} to group: {GroupCode}",
                 request.UserCode, request.GroupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.AssignmentFailed);
         }
@@ -258,12 +258,12 @@ public class RemoveUserFromApplicationGroupCommandHandler : BaseCommandBundle, I
     {
         try
         {
-            _logger.LogInformation("Processing RemoveUserFromApplicationGroupCommand for user: {UserCode} from group: {GroupCode}",
+            _logger.LogApplicationInformation("Processing RemoveUserFromApplicationGroupCommand for user: {UserCode} from group: {GroupCode}",
                 request.UserCode, request.GroupCode);
 
             if (string.IsNullOrWhiteSpace(request.UserCode) || string.IsNullOrWhiteSpace(request.GroupCode))
             {
-                _logger.LogWarning("RemoveUserFromApplicationGroupCommand received with null or empty user/group code");
+                _logger.LogApplicationWarning("RemoveUserFromApplicationGroupCommand received with null or empty user/group code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
@@ -271,11 +271,11 @@ public class RemoveUserFromApplicationGroupCommandHandler : BaseCommandBundle, I
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully removed user {UserCode} from group {GroupCode}", request.UserCode, request.GroupCode);
+                _logger.LogApplicationInformation("Successfully removed user {UserCode} from group {GroupCode}", request.UserCode, request.GroupCode);
             }
             else
             {
-                _logger.LogError("Failed to remove user {UserCode} from group {GroupCode}, Error: {Error}",
+                _logger.LogApplicationError("Failed to remove user {UserCode} from group {GroupCode}, Error: {Error}",
                     request.UserCode, request.GroupCode, result.Error?.Message);
             }
 
@@ -283,12 +283,12 @@ public class RemoveUserFromApplicationGroupCommandHandler : BaseCommandBundle, I
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("RemoveUserFromApplicationGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("RemoveUserFromApplicationGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing RemoveUserFromApplicationGroupCommand for user: {UserCode} from group: {GroupCode}",
+            _logger.LogApplicationError(ex, "Error processing RemoveUserFromApplicationGroupCommand for user: {UserCode} from group: {GroupCode}",
                 request.UserCode, request.GroupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.RemovalFailed);
         }
@@ -315,11 +315,11 @@ public class ClearUserApplicationGroupsCommandHandler : BaseCommandBundle, IBase
     {
         try
         {
-            _logger.LogInformation("Processing ClearUserApplicationGroupsCommand for user: {UserCode}", request.UserCode);
+            _logger.LogApplicationInformation("Processing ClearUserApplicationGroupsCommand for user: {UserCode}", request.UserCode);
 
             if (string.IsNullOrWhiteSpace(request.UserCode))
             {
-                _logger.LogWarning("ClearUserApplicationGroupsCommand received with null or empty user code");
+                _logger.LogApplicationWarning("ClearUserApplicationGroupsCommand received with null or empty user code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
@@ -327,11 +327,11 @@ public class ClearUserApplicationGroupsCommandHandler : BaseCommandBundle, IBase
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully cleared all group memberships for user: {UserCode}", request.UserCode);
+                _logger.LogApplicationInformation("Successfully cleared all group memberships for user: {UserCode}", request.UserCode);
             }
             else
             {
-                _logger.LogError("Failed to clear group memberships for user {UserCode}, Error: {Error}",
+                _logger.LogApplicationError("Failed to clear group memberships for user {UserCode}, Error: {Error}",
                     request.UserCode, result.Error?.Message);
             }
 
@@ -339,13 +339,14 @@ public class ClearUserApplicationGroupsCommandHandler : BaseCommandBundle, IBase
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("ClearUserApplicationGroupsCommand operation was cancelled");
+            _logger.LogApplicationWarning("ClearUserApplicationGroupsCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error processing ClearUserApplicationGroupsCommand for user: {UserCode}", request.UserCode);
+            _logger.LogApplicationError(ex, "Error processing ClearUserApplicationGroupsCommand for user: {UserCode}", request.UserCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.ClearGroupsFailed);
         }
     }
 }
+

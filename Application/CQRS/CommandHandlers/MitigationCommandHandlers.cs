@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="MitigationCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // MITIGATION COMMAND HANDLERS - Clean Architecture Pattern
@@ -39,13 +39,13 @@ public class CreateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateMitigationCommand for Code: {Code}", request.Mitigation.Code);
+            _logger.LogApplicationInformation(" Processing CreateMitigationCommand for Code: {Code}", request.Mitigation.Code);
 
             var result = await _mitigationService.CreateMitigationAsync(request.Mitigation, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created Mitigation with ID: {Id}, Code: {Code}",
+                _logger.LogApplicationInformation(" Successfully created Mitigation with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -58,7 +58,7 @@ public class CreateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateMitigationCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateMitigationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -90,13 +90,13 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateMitigationCommand for ID: {Id}", request.Mitigation.Id);
+            _logger.LogApplicationInformation(" Processing UpdateMitigationCommand for ID: {Id}", request.Mitigation.Id);
 
             var result = await _mitigationService.UpdateMitigationAsync(request.Mitigation, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated Mitigation with ID: {Id}", request.Mitigation.Id);
+                _logger.LogApplicationInformation(" Successfully updated Mitigation with ID: {Id}", request.Mitigation.Id);
             }
             else
             {
@@ -108,7 +108,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateMitigationCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateMitigationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -140,13 +140,13 @@ public class DeleteMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<bool>.Failure<bool>(DomainErrors.MitigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteMitigationCommand for ID: {Id}", request.MitigationId);
+            _logger.LogApplicationInformation(" Processing DeleteMitigationCommand for ID: {Id}", request.MitigationId);
 
             var result = await _mitigationService.DeleteMitigationAsync(request.MitigationId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted Mitigation with ID: {Id}", request.MitigationId);
+                _logger.LogApplicationInformation(" Successfully deleted Mitigation with ID: {Id}", request.MitigationId);
             }
             else
             {
@@ -158,7 +158,7 @@ public class DeleteMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteMitigationCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteMitigationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -168,3 +168,4 @@ public class DeleteMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
         }
     }
 }
+

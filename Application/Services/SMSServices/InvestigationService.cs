@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="InvestigationService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -30,23 +30,23 @@ public sealed class InvestigationService
     {
         try
         {
-            _logger.LogInformation("Creating investigation with code: {Code}", investigation?.Code);
+            _logger.LogApplicationInformation("Creating investigation with code: {Code}", investigation?.Code);
             var result = await _dataService.CreateInvestigationAsync(investigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created investigation with ID: {Id}", result.Value?.Id);
+                _logger.LogApplicationInformation("Successfully created investigation with ID: {Id}", result.Value?.Id);
             }
             else
             {
-                _logger.LogError("Failed to create investigation. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create investigation. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating investigation");
+            _logger.LogApplicationError(ex, "Unexpected error creating investigation");
             return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.CreateFailed);
         }
     }
@@ -55,12 +55,12 @@ public sealed class InvestigationService
     {
         try
         {
-            _logger.LogInformation("Retrieving investigation with Code: {Code}", code.Value);
+            _logger.LogApplicationInformation("Retrieving investigation with Code: {Code}", code.Value);
             return await _dataService.GetInvestigationByCodeAsync(code.Value, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving investigation with Code: {Code}", code.Value);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving investigation with Code: {Code}", code.Value);
             return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NotFound);
         }
     }
@@ -69,12 +69,12 @@ public sealed class InvestigationService
     {
         try
         {
-            _logger.LogInformation("Retrieving all investigations");
+            _logger.LogApplicationInformation("Retrieving all investigations");
             return await _dataService.GetAllInvestigationsAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all investigations");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all investigations");
             return Result<List<Investigation>>.Failure<List<Investigation>>(DomainErrors.InvestigationError.NullOrEmpty);
         }
     }
@@ -83,23 +83,23 @@ public sealed class InvestigationService
     {
         try
         {
-            _logger.LogInformation("Updating investigation with ID: {Id}", investigation?.Id);
+            _logger.LogApplicationInformation("Updating investigation with ID: {Id}", investigation?.Id);
             var result = await _dataService.UpdateInvestigationAsync(investigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated investigation with ID: {Id}", investigation?.Id);
+                _logger.LogApplicationInformation("Successfully updated investigation with ID: {Id}", investigation?.Id);
             }
             else
             {
-                _logger.LogError("Failed to update investigation. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update investigation. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating investigation with ID: {Id}", investigation?.Id);
+            _logger.LogApplicationError(ex, "Unexpected error updating investigation with ID: {Id}", investigation?.Id);
             return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.UpdateFailed);
         }
     }
@@ -108,24 +108,25 @@ public sealed class InvestigationService
     {
         try
         {
-            _logger.LogInformation("Deleting investigation with ID: {Id}", id);
+            _logger.LogApplicationInformation("Deleting investigation with ID: {Id}", id);
             var result = await _dataService.DeleteInvestigationAsync(id, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted investigation with ID: {Id}", id);
+                _logger.LogApplicationInformation("Successfully deleted investigation with ID: {Id}", id);
             }
             else
             {
-                _logger.LogError("Failed to delete investigation. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete investigation. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting investigation with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error deleting investigation with ID: {Id}", id);
             return Result<bool>.Failure<bool>(DomainErrors.InvestigationError.DeleteFailed);
         }
     }
 }
+

@@ -1,6 +1,6 @@
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Commands;
+using SMS_Application.Queries;
 
 using SMS_Domain.Events;
 using SMS_Domain.ValueObjects;
@@ -23,7 +23,7 @@ public partial class ApplicationGroups : ComponentBase
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
 
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     #endregion
 

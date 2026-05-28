@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSStakeholderGroupService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -38,18 +38,18 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     {
         try
         {
-            _logger.LogInformation("Creating SMS Stakeholder Group with code: {Code}", group?.Code);
+            _logger.LogApplicationInformation("Creating SMS Stakeholder Group with code: {Code}", group?.Code);
 
             if (group is null)
             {
-                _logger.LogError("CreateSMSStakeholderGroupAsync received null group");
+                _logger.LogApplicationError("CreateSMSStakeholderGroupAsync received null group");
                 return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NullOrEmpty);
             }
 
             // Business validation - ensure group is active by default
             if (!group.IsActive)
             {
-                _logger.LogInformation("Activating group during creation: {Code}", group.Code);
+                _logger.LogApplicationInformation("Activating group during creation: {Code}", group.Code);
                 group.IsActive = true;
             }
 
@@ -57,18 +57,18 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS Stakeholder Group with code: {Code}", result.Value?.Code);
+                _logger.LogApplicationInformation("Successfully created SMS Stakeholder Group with code: {Code}", result.Value?.Code);
             }
             else
             {
-                _logger.LogError("Failed to create SMS Stakeholder Group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS Stakeholder Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating SMS Stakeholder Group");
+            _logger.LogApplicationError(ex, "Unexpected error creating SMS Stakeholder Group");
             return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.CreateFailed);
         }
     }
@@ -80,12 +80,12 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Stakeholder Group with code: {Code}", groupCode);
+            _logger.LogApplicationInformation("Retrieving SMS Stakeholder Group with code: {Code}", groupCode);
             return await _dataService.GetByCodeAsync(groupCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder Group with code: {Code}", groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving SMS Stakeholder Group with code: {Code}", groupCode);
             return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NotFound);
         }
     }
@@ -97,12 +97,12 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     {
         try
         {
-            _logger.LogInformation("Retrieving all SMS Stakeholder Groups");
+            _logger.LogApplicationInformation("Retrieving all SMS Stakeholder Groups");
             return await _dataService.GetAllAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all SMS Stakeholder Groups");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all SMS Stakeholder Groups");
             return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.SMSStakeholderGroupError.NotFound);
         }
     }
@@ -114,11 +114,11 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     {
         try
         {
-            _logger.LogInformation("Updating SMS Stakeholder Group with code: {Code}", group?.Code);
+            _logger.LogApplicationInformation("Updating SMS Stakeholder Group with code: {Code}", group?.Code);
 
             if (group is null)
             {
-                _logger.LogError("UpdateSMSStakeholderGroupAsync received null group");
+                _logger.LogApplicationError("UpdateSMSStakeholderGroupAsync received null group");
                 return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NullOrEmpty);
             }
 
@@ -126,7 +126,7 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
             var existingGroupResult = await _dataService.GetByCodeAsync(group.Code, ct).ConfigureAwait(false);
             if (existingGroupResult.IsFailure)
             {
-                _logger.LogWarning("Cannot update non-existent SMS Stakeholder Group with code: {Code}", group.Code);
+                _logger.LogApplicationWarning("Cannot update non-existent SMS Stakeholder Group with code: {Code}", group.Code);
                 return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NotFound);
             }
 
@@ -134,18 +134,18 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS Stakeholder Group with code: {Code}", group.Code);
+                _logger.LogApplicationInformation("Successfully updated SMS Stakeholder Group with code: {Code}", group.Code);
             }
             else
             {
-                _logger.LogError("Failed to update SMS Stakeholder Group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS Stakeholder Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating SMS Stakeholder Group with code: {Code}", group?.Code);
+            _logger.LogApplicationError(ex, "Unexpected error updating SMS Stakeholder Group with code: {Code}", group?.Code);
             return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.UpdateFailed);
         }
     }
@@ -157,11 +157,11 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     {
         try
         {
-            _logger.LogInformation("Deleting SMS Stakeholder Group with code: {Code}", groupCode);
+            _logger.LogApplicationInformation("Deleting SMS Stakeholder Group with code: {Code}", groupCode);
 
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("DeleteSMSStakeholderGroupAsync received null or empty group code");
+                _logger.LogApplicationError("DeleteSMSStakeholderGroupAsync received null or empty group code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.CodeRequired);
             }
 
@@ -169,18 +169,18 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS Stakeholder Group with code: {Code}", groupCode);
+                _logger.LogApplicationInformation("Successfully deleted SMS Stakeholder Group with code: {Code}", groupCode);
             }
             else
             {
-                _logger.LogError("Failed to delete SMS Stakeholder Group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete SMS Stakeholder Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting SMS Stakeholder Group with code: {Code}", groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error deleting SMS Stakeholder Group with code: {Code}", groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.DeleteFailed);
         }
     }
@@ -192,11 +192,11 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Stakeholder Groups for user: {UserCode}", userCode);
+            _logger.LogApplicationInformation("Retrieving SMS Stakeholder Groups for user: {UserCode}", userCode);
 
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogWarning("Invalid user code provided for group lookup");
+                _logger.LogApplicationWarning("Invalid user code provided for group lookup");
                 return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
             }
 
@@ -204,7 +204,7 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder Groups for user: {UserCode}", userCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving SMS Stakeholder Groups for user: {UserCode}", userCode);
             return Result<IEnumerable<SMSStakeholderGroup>>.Failure<IEnumerable<SMSStakeholderGroup>>(DomainErrors.SMSStakeholderGroupError.NotFound);
         }
     }
@@ -216,11 +216,11 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     {
         try
         {
-            _logger.LogInformation("Retrieving users for SMS Stakeholder Group: {GroupCode}", groupCode);
+            _logger.LogApplicationInformation("Retrieving users for SMS Stakeholder Group: {GroupCode}", groupCode);
 
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogWarning("Invalid group code provided for user lookup");
+                _logger.LogApplicationWarning("Invalid group code provided for user lookup");
                 return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderGroupError.CodeRequired);
             }
 
@@ -228,7 +228,7 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving users for SMS Stakeholder Group: {GroupCode}", groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving users for SMS Stakeholder Group: {GroupCode}", groupCode);
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderGroupError.NotFound);
         }
     }
@@ -244,11 +244,11 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     {
         try
         {
-            _logger.LogInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
+            _logger.LogApplicationInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
 
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogWarning("Invalid user code provided for group assignment");
+                _logger.LogApplicationWarning("Invalid user code provided for group assignment");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
             }
 
@@ -256,11 +256,11 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned user {UserCode} to group {GroupCode}", userCode, groupCode);
+                _logger.LogApplicationInformation("Successfully assigned user {UserCode} to group {GroupCode}", userCode, groupCode);
             }
             else
             {
-                _logger.LogError("Failed to assign user {UserCode} to group {GroupCode}: {Error}",
+                _logger.LogApplicationError("Failed to assign user {UserCode} to group {GroupCode}: {Error}",
                     userCode, groupCode, result.Error?.Message);
             }
 
@@ -268,7 +268,7 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.AssignmentFailed);
         }
     }
@@ -280,11 +280,11 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     {
         try
         {
-            _logger.LogInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
+            _logger.LogApplicationInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
 
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogWarning("Invalid user code provided for group removal");
+                _logger.LogApplicationWarning("Invalid user code provided for group removal");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
             }
 
@@ -292,11 +292,11 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully removed user {UserCode} from group {GroupCode}", userCode, groupCode);
+                _logger.LogApplicationInformation("Successfully removed user {UserCode} from group {GroupCode}", userCode, groupCode);
             }
             else
             {
-                _logger.LogError("Failed to remove user {UserCode} from group {GroupCode}: {Error}",
+                _logger.LogApplicationError("Failed to remove user {UserCode} from group {GroupCode}: {Error}",
                     userCode, groupCode, result.Error?.Message);
             }
 
@@ -304,7 +304,7 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.RemovalFailed);
         }
     }
@@ -316,11 +316,11 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     {
         try
         {
-            _logger.LogInformation("Clearing all group memberships for user: {UserCode}", userCode);
+            _logger.LogApplicationInformation("Clearing all group memberships for user: {UserCode}", userCode);
 
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogWarning("Invalid user code provided for clearing group memberships");
+                _logger.LogApplicationWarning("Invalid user code provided for clearing group memberships");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
             }
 
@@ -328,11 +328,11 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully cleared all group memberships for user: {UserCode}", userCode);
+                _logger.LogApplicationInformation("Successfully cleared all group memberships for user: {UserCode}", userCode);
             }
             else
             {
-                _logger.LogError("Failed to clear group memberships for user {UserCode}: {Error}",
+                _logger.LogApplicationError("Failed to clear group memberships for user {UserCode}: {Error}",
                     userCode, result.Error?.Message);
             }
 
@@ -340,7 +340,7 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error clearing group memberships for user: {UserCode}", userCode);
+            _logger.LogApplicationError(ex, "Unexpected error clearing group memberships for user: {UserCode}", userCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.ClearGroupsFailed);
         }
     }
@@ -356,11 +356,11 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     {
         try
         {
-            _logger.LogInformation("Updating group memberships for user: {UserCode}", userCode);
+            _logger.LogApplicationInformation("Updating group memberships for user: {UserCode}", userCode);
 
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogWarning("Invalid user code provided for updating group memberships");
+                _logger.LogApplicationWarning("Invalid user code provided for updating group memberships");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
             }
 
@@ -377,19 +377,20 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
                 var assignResult = await AssignUserToGroupAsync(userCode, groupCode, assignedBy, ct).ConfigureAwait(false);
                 if (!assignResult.IsSuccess)
                 {
-                    _logger.LogError("Failed to assign user {UserCode} to group {GroupCode} during batch update: {Error}",
+                    _logger.LogApplicationError("Failed to assign user {UserCode} to group {GroupCode} during batch update: {Error}",
                         userCode, groupCode, assignResult.Error?.Message);
                     // Continue with other assignments rather than failing completely
                 }
             }
 
-            _logger.LogInformation("Successfully updated group memberships for user: {UserCode}", userCode);
+            _logger.LogApplicationInformation("Successfully updated group memberships for user: {UserCode}", userCode);
             return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating group memberships for user: {UserCode}", userCode);
+            _logger.LogApplicationError(ex, "Unexpected error updating group memberships for user: {UserCode}", userCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UpdateFailed);
         }
     }
 }
+

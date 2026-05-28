@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSApplicationUserCommands.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -10,7 +10,7 @@
 
 using SMS_Domain.Entities;
 
-namespace SMS_Application.Messaging.Commands;
+namespace SMS_Application.Commands;
 
 /// <summary>
 /// Commands for SMS Application User management operations
@@ -88,7 +88,7 @@ public class UpdateSMSApplicationUserCommand : BaseCommandBundle, IRequest<Resul
 
 /// <summary>
 /// Command to deactivate an existing SMS Application User (soft delete)
-/// ✅ NEW: Proper CQRS command for user deactivation with audit pipeline support
+/// NEW: Proper CQRS command for user deactivation with audit pipeline support
 /// </summary>
 public class DeactivateSMSApplicationUserCommand : BaseCommandBundle, IRequest<Result<SMSApplicationUser>>, IUpdateCommand
 {
@@ -288,5 +288,6 @@ public class DeleteSMSApplicationUserCommand : BaseCommandBundle, IRequest<Resul
 }
 
 #endregion
+
 
 

@@ -68,7 +68,7 @@ public static class AuthenticationStatusEndpoints
     {
         try
         {
-            logger.LogInformation("?? Authentication status requested");
+            logger.LogInformation("Authentication status requested");
 
             var status = await strategyManager.GetStrategyStatusAsync();
             var isAuthenticated = await strategyManager.IsUserAuthenticatedAsync();
@@ -89,7 +89,7 @@ public static class AuthenticationStatusEndpoints
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "? Error getting authentication status");
+            logger.LogError(ex, "Error getting authentication status");
             return Results.Problem(
                 detail: ex.Message,
                 title: "Authentication Status Error",
@@ -108,7 +108,7 @@ public static class AuthenticationStatusEndpoints
     {
         try
         {
-            logger.LogInformation("?? Testing user instantiation for {UserCode} ({UserType})", userCode, userType);
+            logger.LogInformation("Testing user instantiation for {UserCode} ({UserType})", userCode, userType);
 
             var smsUserType = SMS_Domain.Enums.SMSUserType.FromValue(userType);
             if (smsUserType == null)
@@ -156,7 +156,7 @@ public static class AuthenticationStatusEndpoints
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "? Error testing user instantiation for {UserCode} ({UserType})", userCode, userType);
+            logger.LogError(ex, "Error testing user instantiation for {UserCode} ({UserType})", userCode, userType);
             return Results.Problem(
                 detail: ex.Message,
                 title: "User Instantiation Test Error",
@@ -173,7 +173,7 @@ public static class AuthenticationStatusEndpoints
     {
         try
         {
-            logger.LogInformation("?? Validating all authentication strategies");
+            logger.LogInformation("Validating all authentication strategies");
 
             var strategies = strategyManager.GetAllStrategies().ToList();
             var validationResults = await strategyManager.ValidateAllStrategiesAsync();
@@ -198,7 +198,7 @@ public static class AuthenticationStatusEndpoints
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "? Error validating authentication strategies");
+            logger.LogError(ex, "Error validating authentication strategies");
             return Results.Problem(
                 detail: ex.Message,
                 title: "Strategy Validation Error",

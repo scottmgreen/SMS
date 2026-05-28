@@ -13,7 +13,7 @@ public partial class ReportValidation : ComponentBase
 {
     [Parameter] public string ReportId { get; set; } = "";
 
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportValidation> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
@@ -131,7 +131,7 @@ public partial class ReportValidation : ComponentBase
 
                 // Set defaults for new validation
                 SelectedValidationDecision = null;
-                ValidatedBy = CurrentUserService?.UserDisplayName ?? string.Empty;
+                ValidatedBy = _currentUserService?.UserDisplayName ?? string.Empty;
                 ValidationType = RiskAssessmentCategory.Technical;
                 ValidationComments = "";
             }
@@ -310,7 +310,7 @@ public partial class ReportValidation : ComponentBase
         var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
         var getReportQueryResult = await _mediator.SendAsync(getReportQuery, CancellationToken.None);
 
-        var cmd = new UpdateReportStatusCommand(reportId, status, CurrentUserService?.UserDisplayName ?? "SYSTEM");
+        var cmd = new UpdateReportStatusCommand(reportId, status, _currentUserService?.UserDisplayName ?? "SYSTEM");
         var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
         if (!cmdResult.IsSuccess)
         {
@@ -340,7 +340,7 @@ public partial class ReportValidation : ComponentBase
                 ExistingValidation.Stage = "COMPLETE";
                 ExistingValidation.ValidatedDate = DateTime.UtcNow;
 
-                ExistingValidation.UpdatedBy = CurrentUserService?.UserDisplayName; 
+                ExistingValidation.UpdatedBy = _currentUserService?.UserDisplayName; 
                 ExistingValidation.UpdatedDate = DateTime.UtcNow;
 
                 var updateCommand = new UpdateReportValidationCommand(ExistingValidation);
@@ -379,7 +379,7 @@ public partial class ReportValidation : ComponentBase
                     Status = ReportValidationStatus.ValidationComplete,
                     Stage = "NEW",
                     ValidatedDate = DateTime.UtcNow,
-                    CreatedBy = CurrentUserService?.UserDisplayName,
+                    CreatedBy = _currentUserService?.UserDisplayName,
                     CreatedDate = DateTime.UtcNow
                 };
 
@@ -420,7 +420,7 @@ public partial class ReportValidation : ComponentBase
     {
         try
         {
-            _logger.LogInformation("?? SPI Automation: Triggering validation decision event for {ValidationCode} - Decision: {Decision}", 
+            _logger.LogInformation("SPI Automation: Triggering validation decision event for {ValidationCode} - Decision: {Decision}", 
                 validationCode, validationDecision);
 
             await _spiCoordinator.OnValidationDecisionMade(
@@ -431,12 +431,12 @@ public partial class ReportValidation : ComponentBase
                 validatedBy: ValidatedBy,
                 validationComments: ValidationComments);
 
-            _logger.LogInformation("? SPI Automation: Successfully processed validation decision event for {ValidationCode}", validationCode);
+            _logger.LogInformation("SPI Automation: Successfully processed validation decision event for {ValidationCode}", validationCode);
         }
         catch (Exception spiEx)
         {
             // Don't fail the validation process if SPI automation fails
-            _logger.LogWarning(spiEx, "?? SPI Automation: Failed to process validation decision event for {ValidationCode} - continuing with validation", validationCode);
+            _logger.LogWarning(spiEx, "SPI Automation: Failed to process validation decision event for {ValidationCode} - continuing with validation", validationCode);
         }
     }
 
@@ -540,7 +540,7 @@ public partial class ReportValidation : ComponentBase
                 Investigation investigation = new Investigation(investigationId);
                 investigation.HazardCode = ReportHazard.Code;
                 investigation.Status = InvestigationStatus.InvestigatorAssigned;
-                investigation.CreatedBy = CurrentUserService?.UserDisplayName;
+                investigation.CreatedBy = _currentUserService?.UserDisplayName;
                 investigation.ReportCode = ReportId;
                 investigation.AssignedInvestigatorId = LeadInvestigator;
                 investigation.InvestigationObjectives = $"Investigation required based on validation decision for hazard {ReportHazard.Code}";
@@ -823,7 +823,7 @@ public partial class ReportValidation : ComponentBase
             Status = RiskAssessmentStatus.AssessmentCreate,
             CurrentStep = 1,
             UpdatedDate = DateTime.UtcNow,
-            UpdatedBy = CurrentUserService?.UserDisplayName
+            UpdatedBy = _currentUserService?.UserDisplayName
         };
     }
 

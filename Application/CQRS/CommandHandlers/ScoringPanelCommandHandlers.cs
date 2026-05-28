@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ScoringPanelCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // SCORING PANEL COMMAND HANDLERS - Clean Architecture Pattern
@@ -39,13 +39,13 @@ public class CreateScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateScoringPanelCommand for Code: {Code}", request.ScoringPanel.Code);
+            _logger.LogApplicationInformation(" Processing CreateScoringPanelCommand for Code: {Code}", request.ScoringPanel.Code);
 
             var result = await _scoringPanelService.CreateScoringPanelAsync(request.ScoringPanel, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created ScoringPanel with ID: {Id}, Code: {Code}",
+                _logger.LogApplicationInformation(" Successfully created ScoringPanel with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -58,7 +58,7 @@ public class CreateScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateScoringPanelCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateScoringPanelCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -90,13 +90,13 @@ public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateScoringPanelCommand for ID: {Id}", request.ScoringPanel.Id);
+            _logger.LogApplicationInformation(" Processing UpdateScoringPanelCommand for ID: {Id}", request.ScoringPanel.Id);
 
             var result = await _scoringPanelService.UpdateScoringPanelAsync(request.ScoringPanel, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated ScoringPanel with ID: {Id}", request.ScoringPanel.Id);
+                _logger.LogApplicationInformation(" Successfully updated ScoringPanel with ID: {Id}", request.ScoringPanel.Id);
             }
             else
             {
@@ -108,7 +108,7 @@ public class UpdateScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateScoringPanelCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateScoringPanelCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -140,13 +140,13 @@ public class DeleteScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<bool>.Failure<bool>(DomainErrors.ScoringPanelError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteScoringPanelCommand for ID: {Id}", request.ScoringPanelId);
+            _logger.LogApplicationInformation(" Processing DeleteScoringPanelCommand for ID: {Id}", request.ScoringPanelId);
 
             var result = await _scoringPanelService.DeleteScoringPanelAsync(request.ScoringPanelId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted ScoringPanel with ID: {Id}", request.ScoringPanelId);
+                _logger.LogApplicationInformation(" Successfully deleted ScoringPanel with ID: {Id}", request.ScoringPanelId);
             }
             else
             {
@@ -158,7 +158,7 @@ public class DeleteScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteScoringPanelCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteScoringPanelCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -168,3 +168,4 @@ public class DeleteScoringPanelCommandHandler : BaseCommandBundle, IBaseRequestH
         }
     }
 }
+

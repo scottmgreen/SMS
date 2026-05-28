@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAnalysisCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // RISK ANALYSIS COMMAND HANDLERS - Clean Architecture Pattern
@@ -39,13 +39,13 @@ public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateRiskAnalysisCommand for Code: {Code}", request.RiskAnalysis.Code);
+            _logger.LogApplicationInformation(" Processing CreateRiskAnalysisCommand for Code: {Code}", request.RiskAnalysis.Code);
 
             var result = await _riskAnalysisService.CreateRiskAnalysisAsync(request.RiskAnalysis, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created RiskAnalysis with ID: {Id}, Code: {Code}",
+                _logger.LogApplicationInformation(" Successfully created RiskAnalysis with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -58,7 +58,7 @@ public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateRiskAnalysisCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateRiskAnalysisCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -90,14 +90,14 @@ public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateRiskAnalysisCommand for ID: {Id}, Code: {Code}",
+            _logger.LogApplicationInformation(" Processing UpdateRiskAnalysisCommand for ID: {Id}, Code: {Code}",
                 request.RiskAnalysis.Id, request.RiskAnalysis.Code);
 
             var result = await _riskAnalysisService.UpdateRiskAnalysisAsync(request.RiskAnalysis, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated RiskAnalysis with ID: {Id}", request.RiskAnalysis.Id);
+                _logger.LogApplicationInformation(" Successfully updated RiskAnalysis with ID: {Id}", request.RiskAnalysis.Id);
             }
             else
             {
@@ -109,7 +109,7 @@ public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateRiskAnalysisCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateRiskAnalysisCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -141,13 +141,13 @@ public class DeleteRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<bool>.Failure<bool>(DomainErrors.RiskAnalysisError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteRiskAnalysisCommand for ID: {Id}", request.RiskAnalysisId);
+            _logger.LogApplicationInformation(" Processing DeleteRiskAnalysisCommand for ID: {Id}", request.RiskAnalysisId);
 
             var result = await _riskAnalysisService.DeleteRiskAnalysisAsync(request.RiskAnalysisId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted RiskAnalysis with ID: {Id}", request.RiskAnalysisId);
+                _logger.LogApplicationInformation(" Successfully deleted RiskAnalysis with ID: {Id}", request.RiskAnalysisId);
             }
             else
             {
@@ -159,7 +159,7 @@ public class DeleteRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteRiskAnalysisCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteRiskAnalysisCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -169,3 +169,4 @@ public class DeleteRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestH
         }
     }
 }
+

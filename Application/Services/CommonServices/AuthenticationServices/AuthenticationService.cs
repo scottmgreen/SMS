@@ -9,7 +9,7 @@
 
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 using SMS_Domain.Enums;
 
 namespace SMS_Application.Services;
@@ -40,13 +40,17 @@ public class AuthenticationService : IAuthenticationService
             return AuthenticationResult.Failure("Email and password are required");
         }
 
-        _logger.LogInformation("Attempting smart authentication for user: {Email}", email);
+        _logger.LogApplicationInformation("Attempting smart authentication for user: {Email}",
+            ApplicationEventIds.Information,
+            email);
 
         // Try SMSApplicationUser first
         var applicationResult = await TryAuthenticateApplicationUserAsync(email, password, cancellationToken);
         if (applicationResult.IsSuccess)
         {
-            _logger.LogInformation("Application User authenticated successfully: {Email}", email);
+            _logger.LogApplicationInformation("Application User authenticated successfully: {Email}",
+                ApplicationEventIds.Information,
+                email);
             return applicationResult;
         }
 
@@ -54,7 +58,9 @@ public class AuthenticationService : IAuthenticationService
         var organizationalResult = await TryAuthenticateOrganizationalUserAsync(email, password, cancellationToken);
         if (organizationalResult.IsSuccess)
         {
-            _logger.LogInformation("Organizational User authenticated successfully: {Email}", email);
+            _logger.LogApplicationInformation("Organizational User authenticated successfully: {Email}",
+                ApplicationEventIds.Information,
+                email);
             return organizationalResult;
         }
 
@@ -62,12 +68,16 @@ public class AuthenticationService : IAuthenticationService
         var stakeholderResult = await TryAuthenticateStakeholderUserAsync(email, password, cancellationToken);
         if (stakeholderResult.IsSuccess)
         {
-            _logger.LogInformation("Stakeholder User authenticated successfully: {Email}", email);
+            _logger.LogApplicationInformation("Stakeholder User authenticated successfully: {Email}",
+                ApplicationEventIds.Information,
+                email);
             return stakeholderResult;
         }
 
         // No user found or authentication failed
-        _logger.LogWarning("Authentication failed - user not found or invalid credentials: {Email}", email);
+        _logger.LogApplicationWarning("Authentication failed - user not found or invalid credentials: {Email}",
+            ApplicationEventIds.Warning,
+            email);
         return AuthenticationResult.Failure("Invalid email or password");
     }
 
@@ -78,7 +88,9 @@ public class AuthenticationService : IAuthenticationService
     {
         try
         {
-            _logger.LogDebug("Checking Application User: {Email}", email);
+            _logger.LogApplicationDebug("Checking Application User: {Email}",
+                ApplicationEventIds.Debug,
+                email);
             var query = new GetSMSApplicationUserByUserNameQuery(email);
             var result = await _mediator.SendAsync(query, cancellationToken);
 
@@ -98,11 +110,16 @@ public class AuthenticationService : IAuthenticationService
                         Guid.NewGuid().ToString()
                     );
                     var auditResult = await _mediator.SendAsync(authSuccessCommand, cancellationToken);
-                    _logger.LogInformation("? Authentication success audit recorded for Application User: {Email}", email);
+                    _logger.LogApplicationInformation("Authentication success audit recorded for Application User: {Email}",
+                        ApplicationEventIds.Information,
+                        email);
                 }
                 catch (Exception auditEx)
                 {
-                    _logger.LogError(auditEx, "? Failed to record authentication audit for Application User: {Email}", email);
+                    _logger.LogApplicationError("Failed to record authentication audit for Application User: {Email}",
+                        ApplicationEventIds.Error,
+                        auditEx,
+                        email);
                     // Don't fail authentication due to audit failure
                 }
 
@@ -113,7 +130,9 @@ public class AuthenticationService : IAuthenticationService
         }
         catch (Exception ex)
         {
-            _logger.LogDebug("Application user authentication failed: {Error}", ex.Message);
+            _logger.LogApplicationDebug("Application user authentication failed: {Error}",
+                ApplicationEventIds.Debug,
+                ex.Message);
             return AuthenticationResult.Failure($"Application user authentication error: {ex.Message}");
         }
     }
@@ -125,7 +144,9 @@ public class AuthenticationService : IAuthenticationService
     {
         try
         {
-            _logger.LogDebug("Checking Organizational User: {Email}", email);
+            _logger.LogApplicationDebug("Checking Organizational User: {Email}",
+                ApplicationEventIds.Debug,
+                email);
             var query = new GetSMSOrganizationalUserByUserNameQuery(email);
             var result = await _mediator.SendAsync(query, cancellationToken);
 
@@ -145,11 +166,16 @@ public class AuthenticationService : IAuthenticationService
                         Guid.NewGuid().ToString()
                     );
                     var auditResult = await _mediator.SendAsync(authSuccessCommand, cancellationToken);
-                    _logger.LogInformation("? Authentication success audit recorded for Organizational User: {Email}", email);
+                    _logger.LogApplicationInformation("Authentication success audit recorded for Organizational User: {Email}",
+                        ApplicationEventIds.Information,
+                        email);
                 }
                 catch (Exception auditEx)
                 {
-                    _logger.LogError(auditEx, "? Failed to record authentication audit for Organizational User: {Email}", email);
+                    _logger.LogApplicationError("Failed to record authentication audit for Organizational User: {Email}",
+                        ApplicationEventIds.Error,
+                        auditEx,
+                        email);
                     // Don't fail authentication due to audit failure
                 }
 
@@ -160,7 +186,9 @@ public class AuthenticationService : IAuthenticationService
         }
         catch (Exception ex)
         {
-            _logger.LogDebug("Organizational user authentication failed: {Error}", ex.Message);
+            _logger.LogApplicationDebug("Organizational user authentication failed: {Error}",
+                ApplicationEventIds.Debug,
+                ex.Message);
             return AuthenticationResult.Failure($"Organizational user authentication error: {ex.Message}");
         }
     }
@@ -172,7 +200,9 @@ public class AuthenticationService : IAuthenticationService
     {
         try
         {
-            _logger.LogDebug("Checking Stakeholder User: {Email}", email);
+            _logger.LogApplicationDebug("Checking Stakeholder User: {Email}",
+                ApplicationEventIds.Debug,
+                email);
             var query = new GetSMSStakeholderUserByUserNameQuery(email);
             var result = await _mediator.SendAsync(query, cancellationToken);
 
@@ -192,11 +222,16 @@ public class AuthenticationService : IAuthenticationService
                         Guid.NewGuid().ToString()
                     );
                     var auditResult = await _mediator.SendAsync(authSuccessCommand, cancellationToken);
-                    _logger.LogInformation("? Authentication success audit recorded for Stakeholder User: {Email}", email);
+                    _logger.LogApplicationInformation("Authentication success audit recorded for Stakeholder User: {Email}",
+                        ApplicationEventIds.Information,
+                        email);
                 }
                 catch (Exception auditEx)
                 {
-                    _logger.LogError(auditEx, "? Failed to record authentication audit for Stakeholder User: {Email}", email);
+                    _logger.LogApplicationError("Failed to record authentication audit for Stakeholder User: {Email}",
+                        ApplicationEventIds.Error,
+                        auditEx,
+                        email);
                     // Don't fail authentication due to audit failure
                 }
 
@@ -207,7 +242,9 @@ public class AuthenticationService : IAuthenticationService
         }
         catch (Exception ex)
         {
-            _logger.LogDebug("Stakeholder user authentication failed: {Error}", ex.Message);
+            _logger.LogApplicationDebug("Stakeholder user authentication failed: {Error}",
+                ApplicationEventIds.Debug,
+                ex.Message);
             return AuthenticationResult.Failure($"Stakeholder user authentication error: {ex.Message}");
         }
     }

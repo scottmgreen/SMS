@@ -13,8 +13,8 @@ global using Radzen;
 global using Radzen.Blazor;
 
 global using SMS_Application.Interfaces;
-global using SMS_Application.Messaging.Commands;
-global using SMS_Application.Messaging.Queries;
+global using SMS_Application.Commands;
+global using SMS_Application.Queries;
 
 global using SMS_Domain.Common;
 // SMS Domain and Application namespaces

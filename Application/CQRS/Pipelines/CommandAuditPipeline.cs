@@ -12,9 +12,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using SMS_Application.Interfaces;
 using SMS_Application.Common;
-using Application.Interfaces.CommonInterfaces;
 
-namespace SMS_Application.Messaging.Pipelines;
+
+namespace SMS_Application.Pipelines;
 
 /// <summary>
 /// Pipeline behavior that audits all command operations implementing ICreateCommand, IUpdateCommand, IDeleteCommand
@@ -61,7 +61,7 @@ public class CommandAuditPipeline<TRequest, TResult> : IBasePipeline<TRequest, T
             var commandAction = EntityInformationExtractor.GetActionType(request);
             var resourceIdentifier = EntityInformationExtractor.GetResourceIdentifier(request);
             
-            _logger.LogDebug("?? Command Audit: Processing {CommandAction} command {CommandType} by user {UserId}", 
+            _logger.LogApplicationDebug("Command Audit: Processing {CommandAction} command {CommandType} by user {UserId}", 
                 commandAction, commandType, currentUserId);
 
             try
@@ -79,7 +79,7 @@ public class CommandAuditPipeline<TRequest, TResult> : IBasePipeline<TRequest, T
                         commandAction,
                         cancellationToken);
 
-                    _logger.LogDebug("? Command Audit: Successfully audited {CommandAction} {CommandType} by {UserId}", 
+                    _logger.LogApplicationDebug("Command Audit: Successfully audited {CommandAction} {CommandType} by {UserId}", 
                         commandAction, commandType, currentUserId);
                 }
                 else
@@ -93,7 +93,7 @@ public class CommandAuditPipeline<TRequest, TResult> : IBasePipeline<TRequest, T
                         $"Command failed: {result.Error?.Message}",
                         cancellationToken);
 
-                    _logger.LogWarning("?? Command Audit: Logged failed {CommandAction} {CommandType} by {UserId}", 
+                    _logger.LogApplicationWarning("Command Audit: Logged failed {CommandAction} {CommandType} by {UserId}", 
                         commandAction, commandType, currentUserId);
                 }
 
@@ -110,7 +110,7 @@ public class CommandAuditPipeline<TRequest, TResult> : IBasePipeline<TRequest, T
                     $"Command exception: {ex.Message}",
                     cancellationToken);
 
-                _logger.LogError(ex, "? Command Audit: Logged command exception for {CommandAction} {CommandType} by {UserId}", 
+                _logger.LogApplicationError(ex, "Command Audit: Logged command exception for {CommandAction} {CommandType} by {UserId}", 
                     commandAction, commandType, currentUserId);
 
                 throw; // Re-throw the original exception
@@ -119,9 +119,10 @@ public class CommandAuditPipeline<TRequest, TResult> : IBasePipeline<TRequest, T
         else
         {
             // Command auditing disabled or not an auditable command - just execute without audit logging
-            _logger.LogTrace("?? Command Audit: Skipping audit - Feature: {Enabled}, IsAuditable: {IsAuditable}", 
+            _logger.LogApplicationTrace("Command Audit: Skipping audit - Feature: {Enabled}, IsAuditable: {IsAuditable}", 
                 isCommandAuditEnabled, EntityInformationExtractor.IsAuditableCommand(request));
             return await next().ConfigureAwait(false);
         }
     }
 }
+

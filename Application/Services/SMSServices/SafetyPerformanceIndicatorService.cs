@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SafetyPerformanceIndicatorService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -10,7 +10,7 @@
 
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 using SMS_Domain.Entities;
 
 namespace SMS_Application.Services;
@@ -43,16 +43,16 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         {
             if (spi is null)
             {
-                _logger.LogError("CreateSafetyPerformanceIndicatorAsync received null SPI");
+                _logger.LogApplicationError("CreateSafetyPerformanceIndicatorAsync received null SPI");
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Creating safety performance indicator: {Name} (Code: {Code})", spi.Name, spi.Code);
+            _logger.LogApplicationInformation("Creating safety performance indicator: {Name} (Code: {Code})", spi.Name, spi.Code);
             return await _dataService.CreateSafetyPerformanceIndicatorAsync(spi, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating safety performance indicator");
+            _logger.LogApplicationError(ex, "Unexpected error creating safety performance indicator");
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.CreateFailed);
         }
     }
@@ -66,16 +66,16 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         {
             if (code is null)
             {
-                _logger.LogError("GetSafetyPerformanceIndicatorByIdAsync received null Code");
+                _logger.LogApplicationError("GetSafetyPerformanceIndicatorByIdAsync received null Code");
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving safety performance indicator with Code: {Code}", code.Value);
+            _logger.LogApplicationInformation("Retrieving safety performance indicator with Code: {Code}", code.Value);
             return await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(code.Value, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving safety performance indicator with Code: {Code}", code?.Value);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving safety performance indicator with Code: {Code}", code?.Value);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -89,16 +89,16 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         {
             if (string.IsNullOrWhiteSpace(code))
             {
-                _logger.LogError("GetSafetyPerformanceIndicatorByCodeAsync received null or empty code");
+                _logger.LogApplicationError("GetSafetyPerformanceIndicatorByCodeAsync received null or empty code");
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving safety performance indicator with Code: {Code}", code);
+            _logger.LogApplicationInformation("Retrieving safety performance indicator with Code: {Code}", code);
             return await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(code, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving safety performance indicator with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving safety performance indicator with Code: {Code}", code);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -110,7 +110,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     {
         try
         {
-            _logger.LogInformation("Retrieving all safety performance indicators");
+            _logger.LogApplicationInformation("Retrieving all safety performance indicators");
             var result = await _dataService.GetAllSafetyPerformanceIndicatorsAsync(ct);
             
             if (result.IsSuccess)
@@ -124,7 +124,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all safety performance indicators");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all safety performance indicators");
             return Result<IEnumerable<SafetyPerformanceIndicator>>.Failure<IEnumerable<SafetyPerformanceIndicator>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -138,16 +138,16 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         {
             if (spi is null)
             {
-                _logger.LogError("UpdateSafetyPerformanceIndicatorAsync received null SPI");
+                _logger.LogApplicationError("UpdateSafetyPerformanceIndicatorAsync received null SPI");
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Updating safety performance indicator with ID: {Id}", spi.Id);
+            _logger.LogApplicationInformation("Updating safety performance indicator with ID: {Id}", spi.Id);
             return await _dataService.UpdateSafetyPerformanceIndicatorAsync(spi, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating safety performance indicator with ID: {Id}", spi?.Id);
+            _logger.LogApplicationError(ex, "Unexpected error updating safety performance indicator with ID: {Id}", spi?.Id);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
         }
     }
@@ -161,16 +161,16 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         {
             if (id is null)
             {
-                _logger.LogError("DeleteSafetyPerformanceIndicatorAsync received null ID");
+                _logger.LogApplicationError("DeleteSafetyPerformanceIndicatorAsync received null ID");
                 return Result<bool>.Failure<bool>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Deleting safety performance indicator with ID: {Id}", id.Value);
+            _logger.LogApplicationInformation("Deleting safety performance indicator with ID: {Id}", id.Value);
             return await _dataService.DeleteSafetyPerformanceIndicatorAsync(id, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting safety performance indicator with ID: {Id}", id?.Value);
+            _logger.LogApplicationError(ex, "Unexpected error deleting safety performance indicator with ID: {Id}", id?.Value);
             return Result<bool>.Failure<bool>(DomainErrors.SPIError.DeleteFailed);
         }
     }
@@ -184,32 +184,32 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         {
             if (string.IsNullOrWhiteSpace(spiCode) || dataPoint is null)
             {
-                _logger.LogError("AddSPIDataPointAsync received null or empty parameters");
+                _logger.LogApplicationError("AddSPIDataPointAsync received null or empty parameters");
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Adding data point to SPI: {SPICode} - Value: {Value}, Date: {Date}", 
+            _logger.LogApplicationInformation("Adding data point to SPI: {SPICode} - Value: {Value}, Date: {Date}", 
                 spiCode, dataPoint.Value, dataPoint.MeasurementDate);
 
             // First verify the SPI exists
             var spiResult = await GetSafetyPerformanceIndicatorByCodeAsync(spiCode, ct);
             if (spiResult.IsFailure)
             {
-                _logger.LogError("SPI not found with code: {SPICode}", spiCode);
+                _logger.LogApplicationError("SPI not found with code: {SPICode}", spiCode);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(spiResult.Error);
             }
 
             var spi = spiResult.Value;
-            _logger.LogInformation("Found SPI: {SPIName} (ID: {SPIId}) for data point addition", spi.Name, spi.Id.Value);
+            _logger.LogApplicationInformation("Found SPI: {SPIName} (ID: {SPIId}) for data point addition", spi.Name, spi.Id.Value);
 
             // Use Infrastructure's specialized AddSPIDataPointAsync method
             // Pass the SPI's database ID (like "3", "4", etc.) not the Code (like "PI-0007")
-            _logger.LogInformation("Calling Infrastructure AddSPIDataPointAsync with SPI ID: {SPIId}", spi.Id.Value);
+            _logger.LogApplicationInformation("Calling Infrastructure AddSPIDataPointAsync with SPI ID: {SPIId}", spi.Id.Value);
             var dataPointResult = await _dataService.AddSPIDataPointAsync(spi.Id.Value, dataPoint, ct);
 
             if (dataPointResult.IsSuccess)
             {
-                _logger.LogInformation("✅ Successfully added data point to SPI: {SPICode} - DataPoint ID: {DataPointId}", 
+                _logger.LogApplicationInformation("Successfully added data point to SPI: {SPICode} - DataPoint ID: {DataPointId}", 
                     spiCode, dataPointResult.Value.Id.Value);
 
                 // Return the updated SPI (get fresh copy with new data point)
@@ -217,14 +217,14 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
             }
             else
             {
-                _logger.LogError("❌ Failed to add data point to SPI: {SPICode} - Error: {Error}", 
+                _logger.LogApplicationError("Failed to add data point to SPI: {SPICode} - Error: {Error}", 
                     spiCode, dataPointResult.Error?.Message);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(dataPointResult.Error);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "💥 Unexpected error adding data point to SPI: {SPICode}", spiCode);
+            _logger.LogApplicationError(ex, "Unexpected error adding data point to SPI: {SPICode}", spiCode);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
         }
     }
@@ -238,11 +238,11 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         {
             if (dataPoint is null)
             {
-                _logger.LogError("UpdateSPIDataPointAsync received null data point");
+                _logger.LogApplicationError("UpdateSPIDataPointAsync received null data point");
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Updating SPI data point: {Code}", dataPoint.Code);
+            _logger.LogApplicationInformation("Updating SPI data point: {Code}", dataPoint.Code);
 
             // Get the SPI that contains this data point
             var spiResult = await GetSafetyPerformanceIndicatorByCodeAsync(dataPoint.SPIId, ct);
@@ -266,7 +266,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating SPI data point: {Code}", dataPoint?.Code);
+            _logger.LogApplicationError(ex, "Unexpected error updating SPI data point: {Code}", dataPoint?.Code);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
         }
     }
@@ -280,11 +280,11 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         {
             if (string.IsNullOrWhiteSpace(dataPointCode))
             {
-                _logger.LogError("DeleteSPIDataPointAsync received null or empty data point code");
+                _logger.LogApplicationError("DeleteSPIDataPointAsync received null or empty data point code");
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Deleting SPI data point: {Code}", dataPointCode);
+            _logger.LogApplicationInformation("Deleting SPI data point: {Code}", dataPointCode);
 
             // Get all SPIs and find the one containing the data point
             var allSPIsResult = await GetAllSafetyPerformanceIndicatorsAsync(ct);
@@ -298,7 +298,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
 
             if (targetSPI == null)
             {
-                _logger.LogWarning("Data point {Code} not found in any SPI", dataPointCode);
+                _logger.LogApplicationWarning("Data point {Code} not found in any SPI", dataPointCode);
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NotFound);
             }
 
@@ -314,7 +314,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting SPI data point: {Code}", dataPointCode);
+            _logger.LogApplicationError(ex, "Unexpected error deleting SPI data point: {Code}", dataPointCode);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.DeleteFailed);
         }
     }
@@ -331,7 +331,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     {
         try
         {
-            _logger.LogInformation("Updating SPI configuration for ID: {Id}", spiId);
+            _logger.LogApplicationInformation("Updating SPI configuration for ID: {Id}", spiId);
 
             // Get existing SPI
             var existingResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(spiId, ct);
@@ -365,7 +365,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating SPI configuration for ID: {Id}", spiId);
+            _logger.LogApplicationError(ex, "Error updating SPI configuration for ID: {Id}", spiId);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
         }
     }
@@ -379,7 +379,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     {
         try
         {
-            _logger.LogInformation("Setting SPI targets for ID: {Id}", spiId);
+            _logger.LogApplicationInformation("Setting SPI targets for ID: {Id}", spiId);
 
             // Get existing SPI
             var existingResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(spiId, ct);
@@ -402,7 +402,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error setting SPI targets for ID: {Id}", spiId);
+            _logger.LogApplicationError(ex, "Error setting SPI targets for ID: {Id}", spiId);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.TargetUpdateFailed);
         }
     }
@@ -415,7 +415,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     {
         try
         {
-            _logger.LogInformation("Updating SPI status for ID: {Id} to {Status}", spiId, status);
+            _logger.LogApplicationInformation("Updating SPI status for ID: {Id} to {Status}", spiId, status);
 
             // Get existing SPI
             var existingResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(spiId, ct);
@@ -442,7 +442,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating SPI status for ID: {Id}", spiId);
+            _logger.LogApplicationError(ex, "Error updating SPI status for ID: {Id}", spiId);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.StatusUpdateFailed);
         }
     }
@@ -456,7 +456,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     //{
     //    try
     //    {
-    //        _logger.LogInformation("Adding data point to SPI ID: {Id}, Value: {Value}", spiId, value);
+    //        _logger.LogApplicationInformation("Adding data point to SPI ID: {Id}, Value: {Value}", spiId, value);
 
     //        // Get existing SPI
     //        var existingResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(spiId, ct);
@@ -485,7 +485,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     //    }
     //    catch (Exception ex)
     //    {
-    //        _logger.LogError(ex, "Error adding data point to SPI ID: {Id}", spiId);
+    //        _logger.LogApplicationError(ex, "Error adding data point to SPI ID: {Id}", spiId);
     //        return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.DataPointAddFailed);
     //    }
     //}
@@ -498,7 +498,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     {
         try
         {
-            _logger.LogInformation("Scheduling SPI review for ID: {Id}", spiId);
+            _logger.LogApplicationInformation("Scheduling SPI review for ID: {Id}", spiId);
 
             // Get existing SPI
             var existingResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(spiId, ct);
@@ -521,7 +521,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error scheduling SPI review for ID: {Id}", spiId);
+            _logger.LogApplicationError(ex, "Error scheduling SPI review for ID: {Id}", spiId);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.ReviewScheduleFailed);
         }
     }
@@ -534,7 +534,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     {
         try
         {
-            _logger.LogInformation("Completing SPI review for ID: {Id}", spiId);
+            _logger.LogApplicationInformation("Completing SPI review for ID: {Id}", spiId);
 
             // Get existing SPI
             var existingResult = await _dataService.GetSafetyPerformanceIndicatorByCodeAsync(spiId, ct);
@@ -557,7 +557,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error completing SPI review for ID: {Id}", spiId);
+            _logger.LogApplicationError(ex, "Error completing SPI review for ID: {Id}", spiId);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.ReviewCompletionFailed);
         }
     }
@@ -570,7 +570,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     {
         try
         {
-            _logger.LogInformation("Getting SPI trend analysis");
+            _logger.LogApplicationInformation("Getting SPI trend analysis");
 
             // Get SPIs
             var allSpisResult = await _dataService.GetAllSafetyPerformanceIndicatorsAsync(ct);
@@ -590,7 +590,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting SPI trend analysis");
+            _logger.LogApplicationError(ex, "Error getting SPI trend analysis");
             return Result<List<SPITrendAnalysis>>.Failure<List<SPITrendAnalysis>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -604,16 +604,16 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     {
         try
         {
-            _logger.LogInformation("Getting SPI performance summary");
+            _logger.LogApplicationInformation("Getting SPI performance summary");
 
             // TODO: Replace with CQRS query when needed
-            _logger.LogWarning("GetPerformanceSummaryAsync temporarily returns empty data - use CQRS queries instead");
+            _logger.LogApplicationWarning("GetPerformanceSummaryAsync temporarily returns empty data - use CQRS queries instead");
 
             return Result<SPIPerformanceSummary>.Success(new SPIPerformanceSummary());
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting SPI performance summary");
+            _logger.LogApplicationError(ex, "Error getting SPI performance summary");
             return Result<SPIPerformanceSummary>.Failure<SPIPerformanceSummary>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -627,7 +627,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     {
         try
         {
-            _logger.LogInformation("Getting SPI alerts");
+            _logger.LogApplicationInformation("Getting SPI alerts");
 
             var allSpisResult = await _dataService.GetAllSafetyPerformanceIndicatorsAsync(ct);
             if (allSpisResult.IsFailure)
@@ -651,7 +651,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting SPI alerts");
+            _logger.LogApplicationError(ex, "Error getting SPI alerts");
             return Result<List<SPIAlert>>.Failure<List<SPIAlert>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -664,7 +664,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     {
         try
         {
-            _logger.LogInformation("Getting SPI compliance status");
+            _logger.LogApplicationInformation("Getting SPI compliance status");
 
             var allSpisResult = await _dataService.GetAllSafetyPerformanceIndicatorsAsync(ct);
             if (allSpisResult.IsFailure)
@@ -701,7 +701,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting SPI compliance status");
+            _logger.LogApplicationError(ex, "Error getting SPI compliance status");
             return Result<List<SPIComplianceStatus>>.Failure<List<SPIComplianceStatus>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -714,7 +714,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     {
         try
         {
-            _logger.LogInformation("Getting SPI review schedule");
+            _logger.LogApplicationInformation("Getting SPI review schedule");
 
             var allSpisResult = await _dataService.GetAllSafetyPerformanceIndicatorsAsync(ct);
             if (allSpisResult.IsFailure)
@@ -765,7 +765,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting SPI review schedule");
+            _logger.LogApplicationError(ex, "Error getting SPI review schedule");
             return Result<List<SPIReviewItem>>.Failure<List<SPIReviewItem>>(DomainErrors.SPIError.NotFound);
         }
     }
@@ -807,3 +807,5 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
 
     #endregion
 }
+
+

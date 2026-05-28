@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardLocationQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,9 +12,9 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // HAZARD LOCATION QUERY HANDLERS - Following Exact SMS Pattern
@@ -35,7 +35,7 @@ public class GetHazardLocationByCodeQueryHandler : BaseQueryBundle, IBaseRequest
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardLocationByIdQuery for HazardLocationId: {HazardLocationId}", request.HazardLocationId);
+            _logger.LogApplicationInformation("Processing GetHazardLocationByIdQuery for HazardLocationId: {HazardLocationId}", request.HazardLocationId);
             var result = await _hazardLocationDataService.GetHazardLocationByCodeAsync(request.HazardLocationId, ct).ConfigureAwait(false);
             return result;
         }
@@ -62,7 +62,7 @@ public class GetAllHazardLocationsQueryHandler : BaseQueryBundle, IBaseRequestHa
     {
         try
         {
-            _logger.LogInformation("Processing GetAllHazardLocationsQuery");
+            _logger.LogApplicationInformation("Processing GetAllHazardLocationsQuery");
             var result = await _hazardLocationDataService.GetAllHazardLocationsAsync(ct).ConfigureAwait(false);
             return result;
         }
@@ -89,7 +89,7 @@ public class GetHazardLocationsByHazardCodeQueryHandler : BaseQueryBundle, IBase
     {
         try
         {
-            _logger.LogInformation("Processing GetHazardLocationsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationInformation("Processing GetHazardLocationsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
             var result = await _hazardLocationDataService.GetHazardLocationsByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
@@ -100,3 +100,4 @@ public class GetHazardLocationsByHazardCodeQueryHandler : BaseQueryBundle, IBase
         }
     }
 }
+

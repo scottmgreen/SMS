@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardReportTrackingCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // HAZARD REPORT TRACKING COMMAND HANDLERS - Clean Architecture Pattern
@@ -39,13 +39,13 @@ public class CreateHazardReportTrackingCommandHandler : BaseCommandBundle, IBase
                 return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateHazardReportTrackingCommand for ID: {Id}", request.HazardReportTracking.Id);
+            _logger.LogApplicationInformation(" Processing CreateHazardReportTrackingCommand for ID: {Id}", request.HazardReportTracking.Id);
 
             var result = await _hazardReportTrackingService.CreateHazardReportTrackingAsync(request.HazardReportTracking, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created HazardReportTracking with ID: {Id}",
+                _logger.LogApplicationInformation(" Successfully created HazardReportTracking with ID: {Id}",
                     result.Value?.Id);
             }
             else
@@ -58,7 +58,7 @@ public class CreateHazardReportTrackingCommandHandler : BaseCommandBundle, IBase
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateHazardReportTrackingCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateHazardReportTrackingCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -90,13 +90,13 @@ public class UpdateHazardReportTrackingCommandHandler : BaseCommandBundle, IBase
                 return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateHazardReportTrackingCommand for ID: {Id}", request.HazardReportTracking.Id);
+            _logger.LogApplicationInformation(" Processing UpdateHazardReportTrackingCommand for ID: {Id}", request.HazardReportTracking.Id);
 
             var result = await _hazardReportTrackingService.UpdateHazardReportTrackingAsync(request.HazardReportTracking, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated HazardReportTracking with ID: {Id}", request.HazardReportTracking.Id);
+                _logger.LogApplicationInformation(" Successfully updated HazardReportTracking with ID: {Id}", request.HazardReportTracking.Id);
             }
             else
             {
@@ -108,7 +108,7 @@ public class UpdateHazardReportTrackingCommandHandler : BaseCommandBundle, IBase
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateHazardReportTrackingCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateHazardReportTrackingCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -140,13 +140,13 @@ public class DeleteHazardReportTrackingCommandHandler : BaseCommandBundle, IBase
                 return Result<bool>.Failure<bool>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteHazardReportTrackingCommand for ID: {Id}", request.HazardReportTrackingId);
+            _logger.LogApplicationInformation(" Processing DeleteHazardReportTrackingCommand for ID: {Id}", request.HazardReportTrackingId);
 
             var result = await _hazardReportTrackingService.DeleteHazardReportTrackingAsync(request.HazardReportTrackingId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted HazardReportTracking with ID: {Id}", request.HazardReportTrackingId);
+                _logger.LogApplicationInformation(" Successfully deleted HazardReportTracking with ID: {Id}", request.HazardReportTrackingId);
             }
             else
             {
@@ -158,7 +158,7 @@ public class DeleteHazardReportTrackingCommandHandler : BaseCommandBundle, IBase
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteHazardReportTrackingCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteHazardReportTrackingCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -192,14 +192,14 @@ public class CreateHazardReportWithTrackingCommandHandler : BaseCommandBundle, I
                 return Result<HazardReportTrackingResult>.Failure<HazardReportTrackingResult>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing CreateHazardReportWithTrackingCommand for HazardCode: {HazardCode}, ReportCode: {ReportCode}",
+            _logger.LogApplicationInformation("Processing CreateHazardReportWithTrackingCommand for HazardCode: {HazardCode}, ReportCode: {ReportCode}",
                 request.HazardCode, request.ReportCode);
 
             var result = await _service.CreateHazardReportWithTrackingAsync(request.HazardCode, request.ReportCode, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created HazardReport with TrackingCode: {TrackingCode}",
+                _logger.LogApplicationInformation("Successfully created HazardReport with TrackingCode: {TrackingCode}",
                     result.Value?.TrackingCode);
             }
             else
@@ -212,7 +212,7 @@ public class CreateHazardReportWithTrackingCommandHandler : BaseCommandBundle, I
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateHazardReportWithTrackingCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateHazardReportWithTrackingCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -222,3 +222,4 @@ public class CreateHazardReportWithTrackingCommandHandler : BaseCommandBundle, I
         }
     }
 }
+

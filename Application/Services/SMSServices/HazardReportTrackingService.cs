@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardReportTrackingService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
 namespace SMS_Application.Services;
 
@@ -47,30 +47,30 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
         {
             if (hazardReportTracking == null)
             {
-                _logger.LogError("CreateHazardReportTrackingAsync called with null hazardReportTracking");
+                _logger.LogApplicationError("CreateHazardReportTrackingAsync called with null hazardReportTracking");
                 return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Creating hazard report tracking for HazardCode: {HazardCode}, ReportCode: {ReportCode}",
+            _logger.LogApplicationInformation("Creating hazard report tracking for HazardCode: {HazardCode}, ReportCode: {ReportCode}",
                 hazardReportTracking.HazardCode, hazardReportTracking.ReportCode);
 
             var result = await _dataService.CreateHazardReportTrackingAsync(hazardReportTracking, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created hazard report tracking with TrackingCode: {TrackingCode}",
+                _logger.LogApplicationInformation("Successfully created hazard report tracking with TrackingCode: {TrackingCode}",
                     result.Value?.TrackingCode);
             }
             else
             {
-                _logger.LogError("Failed to create hazard report tracking. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create hazard report tracking. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating hazard report tracking");
+            _logger.LogApplicationError(ex, "Unexpected error creating hazard report tracking");
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.CreateFailed);
         }
     }
@@ -84,11 +84,11 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
         {
             if (string.IsNullOrWhiteSpace(hazardCode) || string.IsNullOrWhiteSpace(reportCode))
             {
-                _logger.LogError("CreateHazardReportWithTrackingAsync called with invalid parameters");
+                _logger.LogApplicationError("CreateHazardReportWithTrackingAsync called with invalid parameters");
                 return Result<HazardReportTrackingResult>.Failure<HazardReportTrackingResult>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Creating hazard report with tracking for HazardCode: {HazardCode}, ReportCode: {ReportCode}",
+            _logger.LogApplicationInformation("Creating hazard report with tracking for HazardCode: {HazardCode}, ReportCode: {ReportCode}",
                 hazardCode, reportCode);
 
             // Generate unique tracking code
@@ -116,18 +116,18 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
                     Message = $"Hazard report successfully submitted. Your tracking code is: {trackingCode}"
                 };
 
-                _logger.LogInformation("Successfully created hazard report with tracking code: {TrackingCode}", trackingCode);
+                _logger.LogApplicationInformation("Successfully created hazard report with tracking code: {TrackingCode}", trackingCode);
                 return Result<HazardReportTrackingResult>.Success(trackingResult);
             }
             else
             {
-                _logger.LogError("Failed to create hazard report with tracking. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create hazard report with tracking. Error: {Error}", result.Error?.Message);
                 return Result<HazardReportTrackingResult>.Failure<HazardReportTrackingResult>(result.Error);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating hazard report with tracking");
+            _logger.LogApplicationError(ex, "Unexpected error creating hazard report with tracking");
             return Result<HazardReportTrackingResult>.Failure<HazardReportTrackingResult>(DomainErrors.HazardReportTrackingError.CreateFailed);
         }
     }
@@ -141,16 +141,16 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
         {
             if (id == null)
             {
-                _logger.LogError("GetHazardReportTrackingByIdAsync called with null id");
+                _logger.LogApplicationError("GetHazardReportTrackingByIdAsync called with null id");
                 return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving hazard report tracking with ID: {Id}", id.Value);
+            _logger.LogApplicationInformation("Retrieving hazard report tracking with ID: {Id}", id.Value);
             return await _dataService.GetHazardReportTrackingByCodeAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazard report tracking with ID: {Id}", id?.Value);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving hazard report tracking with ID: {Id}", id?.Value);
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NotFound);
         }
     }
@@ -164,18 +164,18 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
         {
             if (string.IsNullOrWhiteSpace(trackingCode))
             {
-                _logger.LogError("GetHazardReportTrackingDetailsByTrackingCodeAsync called with null or empty tracking code");
+                _logger.LogApplicationError("GetHazardReportTrackingDetailsByTrackingCodeAsync called with null or empty tracking code");
                 return Result<HazardReportTrackingDetails>.Failure<HazardReportTrackingDetails>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving detailed tracking information for TrackingCode: {TrackingCode}", trackingCode);
+            _logger.LogApplicationInformation("Retrieving detailed tracking information for TrackingCode: {TrackingCode}", trackingCode);
 
             // Get the basic tracking record
             var trackingResult = await _dataService.GetHazardReportTrackingByTrackingCodeAsync(trackingCode, ct).ConfigureAwait(false);
 
             if (!trackingResult.IsSuccess || trackingResult.Value == null)
             {
-                _logger.LogWarning("Tracking code not found: {TrackingCode}", trackingCode);
+                _logger.LogApplicationWarning("Tracking code not found: {TrackingCode}", trackingCode);
                 return Result<HazardReportTrackingDetails>.Failure<HazardReportTrackingDetails>(DomainErrors.HazardReportTrackingError.NotFound);
             }
 
@@ -213,12 +213,12 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
                 }
             }
 
-            _logger.LogInformation("Successfully retrieved detailed tracking information for TrackingCode: {TrackingCode}", trackingCode);
+            _logger.LogApplicationInformation("Successfully retrieved detailed tracking information for TrackingCode: {TrackingCode}", trackingCode);
             return Result<HazardReportTrackingDetails>.Success(details);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving tracking details for TrackingCode: {TrackingCode}", trackingCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving tracking details for TrackingCode: {TrackingCode}", trackingCode);
             return Result<HazardReportTrackingDetails>.Failure<HazardReportTrackingDetails>(DomainErrors.HazardReportTrackingError.NotFound);
         }
     }
@@ -230,12 +230,12 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
     {
         try
         {
-            _logger.LogInformation("Retrieving all hazard report tracking records");
+            _logger.LogApplicationInformation("Retrieving all hazard report tracking records");
             return await _dataService.GetAllHazardReportTrackingAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all hazard report tracking records");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all hazard report tracking records");
             return Result<List<HazardReportTracking>>.Failure<List<HazardReportTracking>>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
         }
     }
@@ -249,16 +249,16 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
         {
             if (string.IsNullOrWhiteSpace(hazardCode))
             {
-                _logger.LogError("GetHazardReportTrackingByHazardCodeAsync called with null or empty hazard code");
+                _logger.LogApplicationError("GetHazardReportTrackingByHazardCodeAsync called with null or empty hazard code");
                 return Result<List<HazardReportTracking>>.Failure<List<HazardReportTracking>>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving tracking records for HazardCode: {HazardCode}", hazardCode);
+            _logger.LogApplicationInformation("Retrieving tracking records for HazardCode: {HazardCode}", hazardCode);
             return await _dataService.GetHazardReportTrackingByHazardCodeAsync(hazardCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving tracking records for HazardCode: {HazardCode}", hazardCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving tracking records for HazardCode: {HazardCode}", hazardCode);
             return Result<List<HazardReportTracking>>.Failure<List<HazardReportTracking>>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
         }
     }
@@ -272,16 +272,16 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
         {
             if (string.IsNullOrWhiteSpace(reportCode))
             {
-                _logger.LogError("GetHazardReportTrackingByReportCodeAsync called with null or empty report code");
+                _logger.LogApplicationError("GetHazardReportTrackingByReportCodeAsync called with null or empty report code");
                 return Result<List<HazardReportTracking>>.Failure<List<HazardReportTracking>>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving tracking records for ReportCode: {ReportCode}", reportCode);
+            _logger.LogApplicationInformation("Retrieving tracking records for ReportCode: {ReportCode}", reportCode);
             return await _dataService.GetHazardReportTrackingByReportCodeAsync(reportCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving tracking records for ReportCode: {ReportCode}", reportCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving tracking records for ReportCode: {ReportCode}", reportCode);
             return Result<List<HazardReportTracking>>.Failure<List<HazardReportTracking>>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
         }
     }
@@ -295,30 +295,30 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
         {
             if (hazardReportTracking == null)
             {
-                _logger.LogError("UpdateHazardReportTrackingAsync called with null hazardReportTracking");
+                _logger.LogApplicationError("UpdateHazardReportTrackingAsync called with null hazardReportTracking");
                 return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Updating hazard report tracking with TrackingCode: {TrackingCode}",
+            _logger.LogApplicationInformation("Updating hazard report tracking with TrackingCode: {TrackingCode}",
                 hazardReportTracking.TrackingCode);
 
             var result = await _dataService.UpdateHazardReportTrackingAsync(hazardReportTracking, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated hazard report tracking with TrackingCode: {TrackingCode}",
+                _logger.LogApplicationInformation("Successfully updated hazard report tracking with TrackingCode: {TrackingCode}",
                     hazardReportTracking.TrackingCode);
             }
             else
             {
-                _logger.LogError("Failed to update hazard report tracking. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update hazard report tracking. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating hazard report tracking with TrackingCode: {TrackingCode}",
+            _logger.LogApplicationError(ex, "Unexpected error updating hazard report tracking with TrackingCode: {TrackingCode}",
                 hazardReportTracking?.TrackingCode);
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.UpdateFailed);
         }
@@ -333,28 +333,28 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
         {
             if (id == null)
             {
-                _logger.LogError("DeleteHazardReportTrackingAsync called with null id");
+                _logger.LogApplicationError("DeleteHazardReportTrackingAsync called with null id");
                 return Result<bool>.Failure<bool>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Deleting hazard report tracking with ID: {Id}", id.Value);
+            _logger.LogApplicationInformation("Deleting hazard report tracking with ID: {Id}", id.Value);
 
             var result = await _dataService.DeleteHazardReportTrackingAsync(id, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted hazard report tracking with ID: {Id}", id.Value);
+                _logger.LogApplicationInformation("Successfully deleted hazard report tracking with ID: {Id}", id.Value);
             }
             else
             {
-                _logger.LogError("Failed to delete hazard report tracking. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete hazard report tracking. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting hazard report tracking with ID: {Id}", id?.Value);
+            _logger.LogApplicationError(ex, "Unexpected error deleting hazard report tracking with ID: {Id}", id?.Value);
             return Result<bool>.Failure<bool>(DomainErrors.HazardReportTrackingError.DeleteFailed);
         }
     }
@@ -414,3 +414,4 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
 
     #endregion
 }
+

@@ -38,32 +38,32 @@ public partial class SPIInitialization : ComponentBase
             StatusMessage = "Initializing default Safety Performance Indicators...";
             StateHasChanged();
 
-            _logger.LogInformation("?? Starting SPI initialization from UI");
+            _logger.LogInformation("Starting SPI initialization from UI");
 
             var result = await _initService.InitializeDefaultSPIsAsync();
 
             if (result.IsSuccess)
             {
-                StatusMessage = "? Default SPIs initialized successfully!";
+                StatusMessage = "Default SPIs initialized successfully!";
                 InitializationComplete = true;
                 await _notificationHelper.ShowSuccessAsync("Default SPIs have been initialized successfully!");
 
-                _logger.LogInformation("? SPI initialization completed successfully");
+                _logger.LogInformation("SPI initialization completed successfully");
             }
             else
             {
-                StatusMessage = $"? Failed to initialize SPIs: {result.Error?.Message}";
+                StatusMessage = $"Failed to initialize SPIs: {result.Error?.Message}";
                 await _notificationHelper.ShowErrorAsync($"Failed to initialize SPIs: {result.Error?.Message}");
 
-                _logger.LogError("? SPI initialization failed: {Error}", result.Error?.Message);
+                _logger.LogError("SPI initialization failed: {Error}", result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            StatusMessage = "?? Error during SPI initialization";
+            StatusMessage = "Error during SPI initialization";
             await _notificationHelper.ShowErrorAsync("An error occurred during SPI initialization");
 
-            _logger.LogError(ex, "?? Exception during SPI initialization");
+            _logger.LogError(ex, "Exception during SPI initialization");
         }
         finally
         {

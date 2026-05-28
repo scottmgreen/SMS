@@ -7,7 +7,7 @@ public partial class CreateInterviewDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<CreateInterviewDialog> Logger { get; set; } = default!;
     [Inject] public DialogService DialogService { get; set; } = default!;
@@ -99,7 +99,7 @@ public partial class CreateInterviewDialog : ComponentBase
             StateHasChanged();
 
             // Create interview entity with current user
-            var currentUserId = CurrentUserService.UserCode;
+            var currentUserId = _currentUserService.UserCode;
             var interviewResult = Interview.CreateForInvestigation(
                 model.InvestigationCode,
                 model.PersonInterviewed,

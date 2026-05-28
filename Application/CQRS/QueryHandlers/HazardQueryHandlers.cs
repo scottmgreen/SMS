@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -11,9 +11,9 @@
 using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // HAZARD QUERY HANDLERS - Clean Architecture Pattern
@@ -34,7 +34,7 @@ public class GetHazardByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<
     {
         try
         {
-            _logger.LogInformation(" Processing GetHazardByIdQuery for Code: {Code}", request.HazardId);
+            _logger.LogApplicationInformation(" Processing GetHazardByIdQuery for Code: {Code}", request.HazardId);
             var result = await _hazardService.GetHazardByCodeAsync(new HazardID(request.HazardId.Value), ct).ConfigureAwait(false);
             return result;
         }
@@ -61,7 +61,7 @@ public class GetAllHazardsQueryHandler : BaseQueryBundle, IBaseRequestHandler<Ge
     {
         try
         {
-            _logger.LogInformation(" Processing GetAllHazardsQuery");
+            _logger.LogApplicationInformation(" Processing GetAllHazardsQuery");
             var result = await _hazardService.GetAllHazardsAsync(ct).ConfigureAwait(false);
             return result;
         }
@@ -89,7 +89,7 @@ public class GetAllHazardsQueryHandler : BaseQueryBundle, IBaseRequestHandler<Ge
 //        try
 //        {
 //            ReportID reportid = request.ReportId;
-//            _logger.LogInformation(" Processing GetAllHazardsByReportIdQuery");
+//            _logger.LogApplicationInformation(" Processing GetAllHazardsByReportIdQuery");
 //            var result = await _hazardService.GetAllHazardsByReportCodeAsync(new ReportID(request.ReportId.Value), ct).ConfigureAwait(false);
 //            return result;
 //        }
@@ -116,7 +116,7 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IBaseRequestH
     {
         try
         {
-            _logger.LogInformation(" Processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", request.ReportId.Value);
+            _logger.LogApplicationInformation(" Processing GetHazardsByReportCodeQuery for ReportCode: {ReportCode}", request.ReportId.Value);
             var result = await _hazardService.GetHazardsByReportCodeAsync(request.ReportId, ct).ConfigureAwait(false);
             return result;
         }
@@ -127,3 +127,4 @@ public class GetHazardsByReportCodeQueryHandler : BaseQueryBundle, IBaseRequestH
         }
     }
 }
+

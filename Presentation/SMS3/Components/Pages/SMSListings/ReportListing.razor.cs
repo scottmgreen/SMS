@@ -1,4 +1,4 @@
-Ôªøusing System.Linq.Expressions;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.IO.Compression;
@@ -10,7 +10,7 @@ using Microsoft.JSInterop;
 using Radzen;
 // NEW: EventBus Integration
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
@@ -754,22 +754,22 @@ public partial class ReportListing : ComponentBase
 
             //var confirmationMessage = $"Are you sure you want to delete report '{report.Code}'?\n\n" +
             //                        $"Report Details:\n\n" +
-            //                        $"‚Ä¢ Name: {report.Name ?? "Unnamed Report"}\n" +
-            //                        $"‚Ä¢ Status: {report.Status ?? "Unknown"}\n" +
-            //                        $"‚Ä¢ Associated Hazards: {hazardCount}\n\n" +
-            //                        (hazardCount > 0 ? "??  WARNING: This report has associated hazards that may also be affected.\n\n" : "") +
-            //                        "?? This action cannot be undone!";
+            //                        $"ï Name: {report.Name ?? "Unnamed Report"}\n" +
+            //                        $"ï Status: {report.Status ?? "Unknown"}\n" +
+            //                        $"ï Associated Hazards: {hazardCount}\n\n" +
+            //                        (hazardCount > 0 ? "WARNING: This report has associated hazards that may also be affected.\n\n" : "") +
+            //                        "This action cannot be undone!";
 
             string htmlMessage = $"<div style=\"white-space: pre-line;\">" +
                      $"<p>Are you sure you want to delete report '<b>{report.Code}</b>'?</p>" +
                      $"<p><b>Report Details:</b></p>" +
                      $"<ul style=\"list-style-type: none; padding-left: 10px;\">" +
-                     $"<li>‚Ä¢ Name: {report.Name ?? "Unnamed Report"}</li>" +
-                     $"<li>‚Ä¢ Status: {report.Status ?? "Unknown"}</li>" +
-                     $"<li>‚Ä¢ Associated Hazards: {hazardCount}</li>" +
+                     $"<li>ï Name: {report.Name ?? "Unnamed Report"}</li>" +
+                     $"<li>ï Status: {report.Status ?? "Unknown"}</li>" +
+                     $"<li>ï Associated Hazards: {hazardCount}</li>" +
                      $"</ul>" +
-                     (hazardCount > 0 ? $"<p style=\"color: #dc3545; font-weight: bold; margin-top: 15px;\">‚ö†Ô∏è WARNING: This report has associated hazards that may also be affected.</p>" : "") +
-                     $"<p style=\"font-weight: bold; margin-top: 15px;\">‚ö†Ô∏è This action cannot be undone!</p>" +
+                     (hazardCount > 0 ? $"<p style=\"color: #dc3545; font-weight: bold; margin-top: 15px;\">? WARNING: This report has associated hazards that may also be affected.</p>" : "") +
+                     $"<p style=\"font-weight: bold; margin-top: 15px;\">? This action cannot be undone!</p>" +
                      $"</div>";
             RenderFragment messageFragment = builder => builder.AddContent(0, (MarkupString)htmlMessage);
             var confirmed = await _dialogService.Confirm(
@@ -869,7 +869,7 @@ public partial class ReportListing : ComponentBase
                             if (locationResult.IsSuccess && locationResult.Value?.Any() == true)
                             {
                                 hazard.HazardLocation = locationResult.Value.FirstOrDefault();
-                                _logger.LogInformation("? Loaded location for hazard {HazardCode}: Lat={Lat}, Lng={Lng}, Desc={Desc}",
+                                _logger.LogInformation("Loaded location for hazard {HazardCode}: Lat={Lat}, Lng={Lng}, Desc={Desc}",
                                     hazard.Code,
                                     hazard.HazardLocation?.Latitude,
                                     hazard.HazardLocation?.Longitude,
@@ -877,7 +877,7 @@ public partial class ReportListing : ComponentBase
                             }
                             else
                             {
-                                _logger.LogInformation("?? No location found for hazard {HazardCode}", hazard.Code);
+                                _logger.LogInformation("No location found for hazard {HazardCode}", hazard.Code);
                             }
                         }
                     }
@@ -889,7 +889,7 @@ public partial class ReportListing : ComponentBase
 
                 // Log summary of locations loaded
                 var hazardsWithLocation = AssociatedHazards.Count(h => h.HazardLocation?.Latitude.HasValue == true && h.HazardLocation?.Longitude.HasValue == true);
-                _logger.LogInformation("?? Location summary: {WithLocation}/{Total} hazards have valid coordinates", hazardsWithLocation, AssociatedHazards.Count);
+                _logger.LogInformation("Location summary: {WithLocation}/{Total} hazards have valid coordinates", hazardsWithLocation, AssociatedHazards.Count);
             }
             else
             {
@@ -1218,10 +1218,10 @@ public async Task OnResetReportAsync(Report report)
         }
 
         message += "This action will:\n" +
-                   "? Reset the report validation status\n" +
-                   "? Clear any validation history\n" +
-                   "? Potentially affect associated hazards\n" +
-                   "? Require re-validation of the report";
+                   "Reset the report validation status\n" +
+                   "Clear any validation history\n" +
+                   "Potentially affect associated hazards\n" +
+                   "Require re-validation of the report";
 
         return message;
     }
@@ -1293,7 +1293,7 @@ public async Task OnResetReportAsync(Report report)
 
                     builder.OpenElement(23, "h6");
                     builder.AddAttribute(24, "class", "text-primary mb-2");
-                    builder.AddContent(25, "?? Location Details");
+                    builder.AddContent(25, "Location Details");
                     builder.CloseElement();
 
                     builder.OpenElement(26, "div");
@@ -1450,3 +1450,4 @@ public async Task OnResetReportAsync(Report report)
 
     #endregion
 }
+

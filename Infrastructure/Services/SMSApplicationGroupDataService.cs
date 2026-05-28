@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSApplicationGroupDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -41,28 +41,28 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
         {
             if (group is null)
             {
-                _logger.LogError("CreateSMSApplicationGroupAsync received null group");
+                _logger.LogInfrastructureError("CreateSMSApplicationGroupAsync received null group");
                 return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Creating SMS Application Group with code: {Code}", group.Code);
+            _logger.LogInfrastructureInformation("Creating SMS Application Group with code: {Code}", group.Code);
 
             var result = await _repository.CreateAsync(group, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS Application Group with code: {Code}", result.Value?.Code);
+                _logger.LogInfrastructureInformation("Successfully created SMS Application Group with code: {Code}", result.Value?.Code);
             }
             else
             {
-                _logger.LogError("Failed to create SMS Application Group. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to create SMS Application Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating SMS Application Group");
+            _logger.LogInfrastructureError(ex, "Unexpected error creating SMS Application Group");
             return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.CreateFailed);
         }
     }
@@ -76,16 +76,16 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
         {
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("GetSMSApplicationGroupByCodeAsync received null or empty group code");
+                _logger.LogInfrastructureError("GetSMSApplicationGroupByCodeAsync received null or empty group code");
                 return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.CodeRequired);
             }
 
-            _logger.LogInformation("Retrieving SMS Application Group with code: {Code}", groupCode);
+            _logger.LogInfrastructureInformation("Retrieving SMS Application Group with code: {Code}", groupCode);
             return await _repository.GetByCodeAsync(groupCode, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Application Group with code: {Code}", groupCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Application Group with code: {Code}", groupCode);
             return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.NotFound);
         }
     }
@@ -99,16 +99,16 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
         {
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("GetSMSApplicationGroupByCodeWithMembersAsync received null or empty group code");
+                _logger.LogInfrastructureError("GetSMSApplicationGroupByCodeWithMembersAsync received null or empty group code");
                 return Result<(SMSApplicationGroup, List<SMSApplicationUser>)>.Failure<(SMSApplicationGroup, List<SMSApplicationUser>)>(DomainErrors.SMSApplicationGroupError.CodeRequired);
             }
 
-            _logger.LogInformation("Retrieving SMS Application Group with members for code: {Code}", groupCode);
+            _logger.LogInfrastructureInformation("Retrieving SMS Application Group with members for code: {Code}", groupCode);
             return await _repository.GetByCodeWithMembersAsync(groupCode, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Application Group with members for code: {Code}", groupCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Application Group with members for code: {Code}", groupCode);
             return Result<(SMSApplicationGroup, List<SMSApplicationUser>)>.Failure<(SMSApplicationGroup, List<SMSApplicationUser>)>(DomainErrors.SMSApplicationGroupError.NotFound);
         }
     }
@@ -120,12 +120,12 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
     {
         try
         {
-            _logger.LogInformation("Retrieving all SMS Application Groups");
+            _logger.LogInfrastructureInformation("Retrieving all SMS Application Groups");
             return await _repository.GetAllAsync(ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all SMS Application Groups");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving all SMS Application Groups");
             return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.NotFound);
         }
     }
@@ -139,16 +139,16 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
     //    {
     //        if (string.IsNullOrWhiteSpace(userCode))
     //        {
-    //            _logger.LogError("GetSMSApplicationGroupsByUserCodeAsync received null or empty user code");
+    //            _logger.LogInfrastructureError("GetSMSApplicationGroupsByUserCodeAsync received null or empty user code");
     //            return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
     //        }
 
-    //        _logger.LogInformation("Retrieving SMS Application Groups by user code: {UserCode}", userCode);
+    //        _logger.LogInfrastructureInformation("Retrieving SMS Application Groups by user code: {UserCode}", userCode);
     //        return await _repository.GetGroupsByUserCodeAsync(userCode, ct);
     //    }
     //    catch (Exception ex)
     //    {
-    //        _logger.LogError(ex, "Unexpected error retrieving SMS Application Groups by user code: {UserCode}", userCode);
+    //        _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Application Groups by user code: {UserCode}", userCode);
     //        return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.NotFound);
     //    }
     //}
@@ -162,28 +162,28 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
         {
             if (group is null)
             {
-                _logger.LogError("UpdateSMSApplicationGroupAsync received null group");
+                _logger.LogInfrastructureError("UpdateSMSApplicationGroupAsync received null group");
                 return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Updating SMS Application Group with code: {Code}", group.Code);
+            _logger.LogInfrastructureInformation("Updating SMS Application Group with code: {Code}", group.Code);
 
             var result = await _repository.UpdateAsync(group, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS Application Group with code: {Code}", group.Code);
+                _logger.LogInfrastructureInformation("Successfully updated SMS Application Group with code: {Code}", group.Code);
             }
             else
             {
-                _logger.LogError("Failed to update SMS Application Group. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to update SMS Application Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating SMS Application Group with code: {Code}", group?.Code);
+            _logger.LogInfrastructureError(ex, "Unexpected error updating SMS Application Group with code: {Code}", group?.Code);
             return Result<SMSApplicationGroup>.Failure<SMSApplicationGroup>(DomainErrors.SMSApplicationGroupError.UpdateFailed);
         }
     }
@@ -197,28 +197,28 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
         {
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("DeleteSMSApplicationGroupAsync received null or empty group code");
+                _logger.LogInfrastructureError("DeleteSMSApplicationGroupAsync received null or empty group code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.CodeRequired);
             }
 
-            _logger.LogInformation("Deleting SMS Application Group with code: {Code}", groupCode);
+            _logger.LogInfrastructureInformation("Deleting SMS Application Group with code: {Code}", groupCode);
 
             var result = await _repository.DeleteAsync(groupCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS Application Group with code: {Code}", groupCode);
+                _logger.LogInfrastructureInformation("Successfully deleted SMS Application Group with code: {Code}", groupCode);
             }
             else
             {
-                _logger.LogError("Failed to delete SMS Application Group. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to delete SMS Application Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting SMS Application Group with code: {Code}", groupCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error deleting SMS Application Group with code: {Code}", groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.DeleteFailed);
         }
     }
@@ -232,28 +232,28 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
         {
             if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("AssignUserToGroupAsync received null or empty parameters. UserCode: {UserCode}, GroupCode: {GroupCode}", userCode, groupCode);
+                _logger.LogInfrastructureError("AssignUserToGroupAsync received null or empty parameters. UserCode: {UserCode}, GroupCode: {GroupCode}", userCode, groupCode);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
-            _logger.LogInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
+            _logger.LogInfrastructureInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
 
             var result = await _repository.AssignUserToGroupAsync(userCode, groupCode, assignedBy, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned user {UserCode} to group {GroupCode}", userCode, groupCode);
+                _logger.LogInfrastructureInformation("Successfully assigned user {UserCode} to group {GroupCode}", userCode, groupCode);
             }
             else
             {
-                _logger.LogError("Failed to assign user to group. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to assign user to group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.AssignmentFailed);
         }
     }
@@ -267,28 +267,28 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
         {
             if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("RemoveUserFromGroupAsync received null or empty parameters. UserCode: {UserCode}, GroupCode: {GroupCode}", userCode, groupCode);
+                _logger.LogInfrastructureError("RemoveUserFromGroupAsync received null or empty parameters. UserCode: {UserCode}, GroupCode: {GroupCode}", userCode, groupCode);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
-            _logger.LogInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
+            _logger.LogInfrastructureInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
 
             var result = await _repository.RemoveUserFromGroupAsync(userCode, groupCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully removed user {UserCode} from group {GroupCode}", userCode, groupCode);
+                _logger.LogInfrastructureInformation("Successfully removed user {UserCode} from group {GroupCode}", userCode, groupCode);
             }
             else
             {
-                _logger.LogError("Failed to remove user from group. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to remove user from group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.RemovalFailed);
         }
     }
@@ -302,17 +302,17 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
         {
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogError("GetUsersByGroupCodeAsync received null or empty group code");
+                _logger.LogInfrastructureError("GetUsersByGroupCodeAsync received null or empty group code");
                 return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.CodeRequired);
             }
 
-            _logger.LogInformation("Retrieving users for SMS Application Group: {GroupCode}", userCode);
+            _logger.LogInfrastructureInformation("Retrieving users for SMS Application Group: {GroupCode}", userCode);
 
             return await _repository.GetGroupsByUserCodeAsync(userCode, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving users for SMS Application Group: {GroupCode}", userCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving users for SMS Application Group: {GroupCode}", userCode);
             return Result<IEnumerable<SMSApplicationGroup>>.Failure<IEnumerable<SMSApplicationGroup>>(DomainErrors.SMSApplicationGroupError.NotFound);
         }
     }
@@ -324,17 +324,17 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
         {
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("GetUsersByGroupCodeAsync received null or empty group code");
+                _logger.LogInfrastructureError("GetUsersByGroupCodeAsync received null or empty group code");
                 return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationGroupError.CodeRequired);
             }
 
-            _logger.LogInformation("Retrieving users for SMS Application Group: {GroupCode}", groupCode);
+            _logger.LogInfrastructureInformation("Retrieving users for SMS Application Group: {GroupCode}", groupCode);
 
             return await _repository.GetUsersByGroupCodeAsync(groupCode, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving users for SMS Application Group: {GroupCode}", groupCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving users for SMS Application Group: {GroupCode}", groupCode);
             return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationGroupError.NotFound);
         }
     }
@@ -347,29 +347,30 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
         {
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogError("ClearUserGroupsAsync received null or empty user code");
+                _logger.LogInfrastructureError("ClearUserGroupsAsync received null or empty user code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserCodeRequired);
             }
 
-            _logger.LogInformation("Clearing all group memberships for user {UserCode}", userCode);
+            _logger.LogInfrastructureInformation("Clearing all group memberships for user {UserCode}", userCode);
 
             var result = await _repository.ClearUserGroupsAsync(userCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully cleared all group memberships for user {UserCode}", userCode);
+                _logger.LogInfrastructureInformation("Successfully cleared all group memberships for user {UserCode}", userCode);
             }
             else
             {
-                _logger.LogError("Failed to clear user groups. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to clear user groups. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error clearing group memberships for user {UserCode}", userCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error clearing group memberships for user {UserCode}", userCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.ClearGroupsFailed);
         }
     }
 }
+

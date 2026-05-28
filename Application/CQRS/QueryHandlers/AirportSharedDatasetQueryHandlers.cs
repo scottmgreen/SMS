@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="AirportSharedDatasetQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,9 +12,9 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // AIRPORT SHARED DATASET QUERY HANDLERS
@@ -35,7 +35,7 @@ public class GetAirportSharedDatasetByIdQueryHandler : BaseQueryBundle, IBaseReq
     {
         try
         {
-            _logger.LogInformation("Processing GetAirportSharedDatasetByCodeQuery for Code: {Code}", request.AirportSharedDatasetCode);
+            _logger.LogApplicationInformation("Processing GetAirportSharedDatasetByCodeQuery for Code: {Code}", request.AirportSharedDatasetCode);
             var result = await _airportSharedDatasetDataService.GetAirportSharedDatasetByCodeAsync(request.AirportSharedDatasetCode, ct).ConfigureAwait(false);
             return result;
         }
@@ -62,7 +62,7 @@ public class GetAllAirportSharedDatasetsQueryHandler : BaseQueryBundle, IBaseReq
     {
         try
         {
-            _logger.LogInformation("Processing GetAllAirportSharedDatasetsQuery");
+            _logger.LogApplicationInformation("Processing GetAllAirportSharedDatasetsQuery");
             var result = await _airportSharedDatasetDataService.GetAllAirportSharedDatasetsAsync(ct).ConfigureAwait(false);
             return result;
         }
@@ -73,3 +73,4 @@ public class GetAllAirportSharedDatasetsQueryHandler : BaseQueryBundle, IBaseReq
         }
     }
 }
+

@@ -235,11 +235,11 @@ public partial class SPIDataPointDialog : ComponentBase
             foreach (var category in eventSources.Keys)
             {
                 var sourceNames = eventSources[category].Select(eds => eds.DisplayName).ToList();
-                grouped[$"?? {category}"] = sourceNames;
+                grouped[$"{category}"] = sourceNames;
             }
 
             // Manual sources as a separate group
-            grouped["?? Manual Sources"] = SPIConstants.SPIDataSources.GetManualSources();
+            grouped["Manual Sources"] = SPIConstants.SPIDataSources.GetManualSources();
         }
         catch (Exception ex)
         {

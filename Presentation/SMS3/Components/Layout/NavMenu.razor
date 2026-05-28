@@ -70,7 +70,7 @@
                         </div>
                     }
 
-                    <!-- Listings Menu NEEDS THE PERMISSIONS if (CurrentUserService.CanRead("SMS_Listings_Reports")) APPLIED
+                    <!-- Listings Menu NEEDS THE PERMISSIONS if (_currentUserService.CanRead("SMS_Listings_Reports")) APPLIED
 
                     SMS_Listings
                     SMS_Listings_HazardFiles
@@ -165,7 +165,7 @@
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                                 <RadzenMenuItem Text="System" Icon="settings" class="sms-menu-item">
-                                    <RadzenMenuItem Text="System Configuration" Value='"/SMSSystem/SMSConfiguration/SMSConfiguration"' Icon="settings"></RadzenMenuItem>
+                                    <!-- <RadzenMenuItem Text="System Configuration" Value='"/SMSSystem/SMSConfiguration/SMSConfiguration"' Icon="settings"></RadzenMenuItem> -->
                                     <!-- EVENT BUS /SMSSystem/EventBus/QueueManager-->
                                     <RadzenMenuItem Text="Event Queue Manager" Value='"/SMSSystem/EventBus/QueueManager"' Icon="person"></RadzenMenuItem>
                                     <!-- User Management -->
@@ -490,7 +490,7 @@
         await _dialogService.OpenAsync<UserProfileDialog>("User Profile & Permissions",
             new Dictionary<string, object?>()
             {
-                { "CurrentUserService", _currentUserService }                
+                { "_currentUserService", _currentUserService }                
             },
             options);
     }

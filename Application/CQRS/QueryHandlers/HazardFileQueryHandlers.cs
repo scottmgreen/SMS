@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardFileQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,9 +12,9 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // HAZARD FILE QUERY HANDLERS - Clean Architecture Pattern
@@ -35,7 +35,7 @@ public class GetHazardFileByCodeQueryHandler : BaseQueryBundle, IBaseRequestHand
     {
         try
         {
-            _logger.LogInformation(" Processing GetHazardFileByCodeQuery for Code: {Code}", request.Code);
+            _logger.LogApplicationInformation(" Processing GetHazardFileByCodeQuery for Code: {Code}", request.Code);
             var result = await _hazardFileService.GetHazardFileByCodeAsync(request.Code, ct).ConfigureAwait(false);
             return result;
         }
@@ -62,7 +62,7 @@ public class GetHazardFilesByHazardCodeQueryHandler : BaseQueryBundle, IBaseRequ
     {
         try
         {
-            _logger.LogInformation(" Processing GetHazardFilesByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationInformation(" Processing GetHazardFilesByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
             var result = await _hazardFileService.GetHazardFilesByHazardCodeAsync(request.HazardCode, request.IncludeFileData, request.Category, ct).ConfigureAwait(false);
             return result;
         }
@@ -89,7 +89,7 @@ public class GetHazardFilesByReportCodeQueryHandler : BaseQueryBundle, IBaseRequ
     {
         try
         {
-            _logger.LogInformation(" Processing GetHazardFilesByReportCodeQuery for ReportCode: {ReportCode}", request.ReportCode);
+            _logger.LogApplicationInformation(" Processing GetHazardFilesByReportCodeQuery for ReportCode: {ReportCode}", request.ReportCode);
             var result = await _hazardFileService.GetHazardFilesByReportCodeAsync(request.ReportCode, request.IncludeFileData, ct).ConfigureAwait(false);
             return result;
         }
@@ -116,7 +116,7 @@ public class GetHazardFileDataQueryHandler : BaseQueryBundle, IBaseRequestHandle
     {
         try
         {
-            _logger.LogInformation(" Processing GetHazardFileDataQuery for Code: {Code}", request.Code);
+            _logger.LogApplicationInformation(" Processing GetHazardFileDataQuery for Code: {Code}", request.Code);
             var result = await _hazardFileService.GetHazardFileDataAsync(request.Code, ct).ConfigureAwait(false);
             return result;
         }
@@ -143,7 +143,7 @@ public class GetActiveHazardFilesQueryHandler : BaseQueryBundle, IBaseRequestHan
     {
         try
         {
-            _logger.LogInformation(" Processing GetActiveHazardFilesQuery");
+            _logger.LogApplicationInformation(" Processing GetActiveHazardFilesQuery");
             var result = await _hazardFileService.GetActiveHazardFilesAsync(ct).ConfigureAwait(false);
             return result;
         }
@@ -170,7 +170,7 @@ public class SearchHazardFilesQueryHandler : BaseQueryBundle, IBaseRequestHandle
     {
         try
         {
-            _logger.LogInformation(" Processing SearchHazardFilesQuery with criteria");
+            _logger.LogApplicationInformation(" Processing SearchHazardFilesQuery with criteria");
             var result = await _hazardFileService.SearchHazardFilesAsync(
                 request.HazardCode, request.ReportCode, request.FileType, request.Category,
                 request.SearchText, request.UploadedBy, request.DateFrom, request.DateTo,
@@ -200,7 +200,7 @@ public class GetHazardPhotosQueryHandler : BaseQueryBundle, IBaseRequestHandler<
     {
         try
         {
-            _logger.LogInformation(" Processing GetHazardPhotosQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationInformation(" Processing GetHazardPhotosQuery for HazardCode: {HazardCode}", request.HazardCode);
             var result = await _hazardFileService.GetHazardPhotosAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
@@ -227,7 +227,7 @@ public class GetHazardDocumentsQueryHandler : BaseQueryBundle, IBaseRequestHandl
     {
         try
         {
-            _logger.LogInformation(" Processing GetHazardDocumentsQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationInformation(" Processing GetHazardDocumentsQuery for HazardCode: {HazardCode}", request.HazardCode);
             var result = await _hazardFileService.GetHazardDocumentsAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
@@ -254,7 +254,7 @@ public class GetHazardVideosQueryHandler : BaseQueryBundle, IBaseRequestHandler<
     {
         try
         {
-            _logger.LogInformation(" Processing GetHazardVideosQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationInformation(" Processing GetHazardVideosQuery for HazardCode: {HazardCode}", request.HazardCode);
             var result = await _hazardFileService.GetHazardVideosAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
@@ -281,7 +281,7 @@ public class GetConfidentialHazardFilesQueryHandler : BaseQueryBundle, IBaseRequ
     {
         try
         {
-            _logger.LogInformation(" Processing GetConfidentialHazardFilesQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationInformation(" Processing GetConfidentialHazardFilesQuery for HazardCode: {HazardCode}", request.HazardCode);
             var result = await _hazardFileService.GetConfidentialHazardFilesAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
@@ -292,3 +292,4 @@ public class GetConfidentialHazardFilesQueryHandler : BaseQueryBundle, IBaseRequ
         }
     }
 }
+

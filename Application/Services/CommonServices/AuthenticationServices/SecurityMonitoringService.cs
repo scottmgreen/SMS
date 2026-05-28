@@ -59,7 +59,8 @@ public class SecurityMonitoringService
         });
 
         // Log with structured data
-        _logger.LogWarning("?? SQL INJECTION ATTEMPT DETECTED | IP: {ClientIp} | Pattern: {AttackPattern} | Field: {FieldName} | Path: {RequestPath} | Severity: {Severity}",
+        _logger.LogApplicationWarning("SQL INJECTION ATTEMPT DETECTED | IP: {ClientIp} | Pattern: {AttackPattern} | Field: {FieldName} | Path: {RequestPath} | Severity: {Severity}",
+            ApplicationEventIds.Warning,
             clientIp, attackPattern, fieldName, requestPath, attemptInfo.Severity);
 
         // Check for attack escalation
@@ -91,7 +92,8 @@ public class SecurityMonitoringService
             return existing;
         });
 
-        _logger.LogWarning("?? XSS ATTEMPT DETECTED | IP: {ClientIp} | Pattern: {AttackPattern} | Field: {FieldName} | Path: {RequestPath} | Severity: {Severity}",
+        _logger.LogApplicationWarning("XSS ATTEMPT DETECTED | IP: {ClientIp} | Pattern: {AttackPattern} | Field: {FieldName} | Path: {RequestPath} | Severity: {Severity}",
+            ApplicationEventIds.Warning,
             clientIp, attackPattern, fieldName, requestPath, attemptInfo.Severity);
 
         CheckForAttackEscalation(clientIp, attemptInfo.Severity);
@@ -137,7 +139,9 @@ public class SecurityMonitoringService
         // Escalate if multiple attempts or high severity
         if (totalAttempts >= 5 || severity == "HIGH")
         {
-            _logger.LogCritical("?? ATTACK ESCALATION | IP: {ClientIp} | Total Attempts: {TotalAttempts} | Severity: {Severity} | CONSIDER IP BLOCKING",
+            _logger.LogApplicationCritical("ATTACK ESCALATION | IP: {ClientIp} | Total Attempts: {TotalAttempts} | Severity: {Severity} | CONSIDER IP BLOCKING",
+                ApplicationEventIds.Critical,
+                null,
                 clientIp, totalAttempts, severity);
         }
     }

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditPlanService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -10,7 +10,7 @@
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 using SMS_Domain.Entities;
 
 namespace SMS_Application.Services;
@@ -38,12 +38,12 @@ public class SMSAuditPlanService
     {
         try
         {
-            _logger.LogInformation("Creating audit plan: {AuditPlanCode}", auditPlan.Code);
+            _logger.LogApplicationInformation("Creating audit plan: {AuditPlanCode}", auditPlan.Code);
             return await _auditPlanDataService.CreateAuditPlanAsync(auditPlan, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating audit plan: {AuditPlanCode}", auditPlan?.Code);
+            _logger.LogApplicationError(ex, "Error creating audit plan: {AuditPlanCode}", auditPlan?.Code);
             return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("CREATE_FAILED", "Failed to create audit plan"));
         }
     }
@@ -55,12 +55,12 @@ public class SMSAuditPlanService
     {
         try
         {
-            _logger.LogInformation("Updating audit plan: {AuditPlanCode}", auditPlan.Code);
+            _logger.LogApplicationInformation("Updating audit plan: {AuditPlanCode}", auditPlan.Code);
             return await _auditPlanDataService.UpdateAuditPlanAsync(auditPlan, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating audit plan: {AuditPlanCode}", auditPlan?.Code);
+            _logger.LogApplicationError(ex, "Error updating audit plan: {AuditPlanCode}", auditPlan?.Code);
             return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("UPDATE_FAILED", "Failed to update audit plan"));
         }
     }
@@ -72,12 +72,12 @@ public class SMSAuditPlanService
     {
         try
         {
-            _logger.LogInformation("Getting audit plan by code: {AuditPlanCode}", auditPlanCode);
+            _logger.LogApplicationInformation("Getting audit plan by code: {AuditPlanCode}", auditPlanCode);
             return await _auditPlanDataService.GetAuditPlanByCodeAsync(auditPlanCode, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting audit plan by code: {AuditPlanCode}", auditPlanCode);
+            _logger.LogApplicationError(ex, "Error getting audit plan by code: {AuditPlanCode}", auditPlanCode);
             return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(new Error("GET_FAILED", "Failed to get audit plan"));
         }
     }
@@ -89,12 +89,12 @@ public class SMSAuditPlanService
     {
         try
         {
-            _logger.LogInformation("Getting all audit plans");
+            _logger.LogApplicationInformation("Getting all audit plans");
             return await _auditPlanDataService.GetAllAuditPlansAsync(cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting all audit plans");
+            _logger.LogApplicationError(ex, "Error getting all audit plans");
             return Result<List<SMSAuditPlan>>.Failure<List<SMSAuditPlan>>(new Error("GET_ALL_FAILED", "Failed to get audit plans"));
         }
     }
@@ -106,12 +106,12 @@ public class SMSAuditPlanService
     {
         try
         {
-            _logger.LogInformation("Deleting audit plan: {AuditPlanCode} by {DeletedBy}", auditPlanCode, deletedBy);
+            _logger.LogApplicationInformation("Deleting audit plan: {AuditPlanCode} by {DeletedBy}", auditPlanCode, deletedBy);
             return await _auditPlanDataService.DeleteAuditPlanAsync(auditPlanCode, deletedBy, reason, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting audit plan: {AuditPlanCode}", auditPlanCode);
+            _logger.LogApplicationError(ex, "Error deleting audit plan: {AuditPlanCode}", auditPlanCode);
             return Result<bool>.Failure<bool>(new Error("DELETE_FAILED", "Failed to delete audit plan"));
         }
     }
@@ -125,7 +125,7 @@ public class SMSAuditPlanService
     {
         try
         {
-            _logger.LogInformation("Getting SMS audit calendar data for date range: {StartDate} to {EndDate}",
+            _logger.LogApplicationInformation("Getting SMS audit calendar data for date range: {StartDate} to {EndDate}",
                 startDate, endDate);
 
             var result = await _auditPlanDataService.GetAuditCalendarDataAsync(
@@ -139,7 +139,7 @@ public class SMSAuditPlanService
                 // Apply additional business logic or calculations here if needed
                 // For example: calculate workload distribution, resource conflicts, etc.
 
-                _logger.LogInformation("Successfully retrieved SMS audit calendar data with {ScheduledAudits} scheduled audits",
+                _logger.LogApplicationInformation("Successfully retrieved SMS audit calendar data with {ScheduledAudits} scheduled audits",
                     calendarData.ScheduledAudits?.Count ?? 0);
 
                 return Result<SMSAuditCalendarData>.Success(calendarData);
@@ -149,7 +149,7 @@ public class SMSAuditPlanService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting SMS audit calendar data");
+            _logger.LogApplicationError(ex, "Error getting SMS audit calendar data");
             return Result<SMSAuditCalendarData>.Failure<SMSAuditCalendarData>(new Error("CALENDAR_DATA_FAILED", "Failed to get audit calendar data"));
         }
     }
@@ -162,12 +162,12 @@ public class SMSAuditPlanService
     {
         try
         {
-            _logger.LogInformation("Getting audit plans by type: {AuditType}", auditType);
+            _logger.LogApplicationInformation("Getting audit plans by type: {AuditType}", auditType);
             return await _auditPlanDataService.GetAuditPlansByTypeAsync(auditType, statusFilter, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting audit plans by type: {AuditType}", auditType);
+            _logger.LogApplicationError(ex, "Error getting audit plans by type: {AuditType}", auditType);
             return Result<List<SMSAuditPlan>>.Failure<List<SMSAuditPlan>>(new Error("GET_BY_TYPE_FAILED", "Failed to get audit plans by type"));
         }
     }
@@ -180,12 +180,12 @@ public class SMSAuditPlanService
     {
         try
         {
-            _logger.LogInformation("Getting audit plans by department: {Department}", department);
+            _logger.LogApplicationInformation("Getting audit plans by department: {Department}", department);
             return await _auditPlanDataService.GetAuditPlansByDepartmentAsync(department, statusFilter, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting audit plans by department: {Department}", department);
+            _logger.LogApplicationError(ex, "Error getting audit plans by department: {Department}", department);
             return Result<List<SMSAuditPlan>>.Failure<List<SMSAuditPlan>>(new Error("GET_BY_DEPARTMENT_FAILED", "Failed to get audit plans by department"));
         }
     }
@@ -197,7 +197,7 @@ public class SMSAuditPlanService
     {
         try
         {
-            _logger.LogInformation("Getting audit plans requiring approval");
+            _logger.LogApplicationInformation("Getting audit plans requiring approval");
 
             var result = await _auditPlanDataService.GetAuditPlansRequiringApprovalAsync(ct);
 
@@ -218,7 +218,7 @@ public class SMSAuditPlanService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting audit plans requiring approval");
+            _logger.LogApplicationError(ex, "Error getting audit plans requiring approval");
             return Result<List<SMSAuditPlan>>.Failure<List<SMSAuditPlan>>(new Error("GET_APPROVAL_FAILED", "Failed to get audit plans requiring approval"));
         }
     }
@@ -252,7 +252,7 @@ public class SMSAuditPlanService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating audit plan: {AuditPlanCode}", auditPlan?.Code);
+            _logger.LogApplicationError(ex, "Error validating audit plan: {AuditPlanCode}", auditPlan?.Code);
             return Result.Failure(new Error("VALIDATION_ERROR", "Error occurred during audit plan validation"));
         }
     }
@@ -289,7 +289,7 @@ public class SMSAuditPlanService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating recommended duration for audit type: {AuditType}", auditType);
+            _logger.LogApplicationError(ex, "Error calculating recommended duration for audit type: {AuditType}", auditType);
             return 8; // Default to 1 day
         }
     }
@@ -318,7 +318,7 @@ public class SMSAuditPlanService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating next recommended date");
+            _logger.LogApplicationError(ex, "Error calculating next recommended date");
             return DateTime.UtcNow.AddYears(1); // Default to 1 year
         }
     }
@@ -352,7 +352,7 @@ public class SMSAuditPlanService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating audit scheduling");
+            _logger.LogApplicationError(ex, "Error validating audit scheduling");
             return Result.Failure(new Error("VALIDATION_ERROR", "Error occurred during scheduling validation"));
         }
     }
@@ -381,7 +381,7 @@ public class SMSAuditPlanService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating approval authority");
+            _logger.LogApplicationError(ex, "Error validating approval authority");
             return Result.Failure(new Error("VALIDATION_ERROR", "Error occurred during approval validation"));
         }
     }
@@ -423,3 +423,4 @@ public class SMSAuditPlanService
 
     #endregion
 }
+

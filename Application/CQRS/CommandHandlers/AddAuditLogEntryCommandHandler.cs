@@ -10,7 +10,7 @@
 
 
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 public class AddAuditLogEntryCommandHandler : BaseCommandBundle, IBaseRequestHandler<AddAuditLogEntryCommand, Result<bool>>
 {

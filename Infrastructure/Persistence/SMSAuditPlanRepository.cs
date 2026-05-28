@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditPlanRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -224,28 +224,28 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
             // DEBUG: Log the actual parameter value being sent
             foreach (SqlParameter param in cmd.Parameters)
             {
-                _logger.LogInformation("DEBUG: Parameter {Name} = {Value}", param.ParameterName, param.Value);
+                _logger.LogInfrastructureInformation("DEBUG: Parameter {Name} = {Value}", param.ParameterName, param.Value);
             }
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
 
             // DEBUG: Add a test to see what's actually happening
-            _logger.LogInformation("DEBUG: About to execute stored procedure");
+            _logger.LogInfrastructureInformation("DEBUG: About to execute stored procedure");
 
             try
             {
                 var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-                _logger.LogInformation("DEBUG: Stored procedure returned: {RowsAffected}", rowsAffected);
+                _logger.LogInfrastructureInformation("DEBUG: Stored procedure returned: {RowsAffected}", rowsAffected);
 
                 // Even if it returns -1, let's check if the record was actually updated
                 if (rowsAffected == -1)
                 {
-                    _logger.LogWarning("DEBUG: Got -1, but let's check if record was actually updated");
+                    _logger.LogInfrastructureWarning("DEBUG: Got -1, but let's check if record was actually updated");
                     // Try to get the record to see if it was updated
                     var checkResult = await GetSMSAuditPlanByCodeAsync(auditPlan.Code, ct).ConfigureAwait(false);
                     if (checkResult.IsSuccess && checkResult.Value?.Status == auditPlan.Status)
                     {
-                        _logger.LogInformation("DEBUG: Record was actually updated despite -1 return");
+                        _logger.LogInfrastructureInformation("DEBUG: Record was actually updated despite -1 return");
                         await sql.CloseAsync().ConfigureAwait(false);
                         return Result.Success(auditPlan);
                     }
@@ -255,22 +255,22 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
 
                 if (rowsAffected > 0)
                 {
-                    _logger.LogInformation("DEBUG: Update successful, returning success");
+                    _logger.LogInfrastructureInformation("DEBUG: Update successful, returning success");
                     return Result.Success(auditPlan);
                 }
 
-                _logger.LogWarning("DEBUG: No rows affected, returning not found");
+                _logger.LogInfrastructureWarning("DEBUG: No rows affected, returning not found");
                 return Result<SMSAuditPlan>.Failure<SMSAuditPlan>(DomainErrors.SMSAuditPlanError.NotFound);
             }
             catch (SqlException ex)
             {
-                _logger.LogError(ex, "DEBUG: SqlException during ExecuteNonQueryAsync: {Message}, ErrorNumber: {ErrorNumber}", ex.Message, ex.Number);
+                _logger.LogInfrastructureError(ex, "DEBUG: SqlException during ExecuteNonQueryAsync: {Message}, ErrorNumber: {ErrorNumber}", ex.Message, ex.Number);
                 await sql.CloseAsync().ConfigureAwait(false);
                 throw;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "DEBUG: Exception during ExecuteNonQueryAsync: {Message}", ex.Message);
+                _logger.LogInfrastructureError(ex, "DEBUG: Exception during ExecuteNonQueryAsync: {Message}", ex.Message);
                 await sql.CloseAsync().ConfigureAwait(false);
                 throw;
             }
@@ -316,3 +316,4 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
 
     #endregion
 }
+

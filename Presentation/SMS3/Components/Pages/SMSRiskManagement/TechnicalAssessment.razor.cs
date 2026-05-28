@@ -1,4 +1,4 @@
-﻿using System.Runtime.Intrinsics.X86;
+using System.Runtime.Intrinsics.X86;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
@@ -23,7 +23,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     // Keep query parameters for backward compatibility
     // [SupplyParameterFromQuery(Name = "reportId")] public string? ReportId { get; set; }
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<TechnicalAssessment> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
@@ -134,9 +134,9 @@ public partial class TechnicalAssessment : ComponentBase
         _logger.LogInformation("TechnicalAssessment OnInitializedAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}", ReportId, StepNumber, HazardId);
 
         // Initialize step models that require dependency injection
-        Step3 = new Step3Model(_mediator, CurrentUserService);
-        Step4 = new Step4Model(_mediator, CurrentUserService);
-        Step5 = new Step5Model(_mediator, CurrentUserService);
+        Step3 = new Step3Model(_mediator, _currentUserService);
+        Step4 = new Step4Model(_mediator, _currentUserService);
+        Step5 = new Step5Model(_mediator, _currentUserService);
 
 
 
@@ -166,7 +166,7 @@ public partial class TechnicalAssessment : ComponentBase
         if (currentStep == 3)
         {
             _logger.LogInformation("Navigating to Step 3 - reloading Step3 data to ensure HazardRiskAnalyses is complete");
-            // ✅ FIRST: Refresh ReportHazards to include any newly added hazards from Step 2
+            // FIRST: Refresh ReportHazards to include any newly added hazards from Step 2
             await LoadReportHazardsAsync();
 
             if (TechRiskAssessment is not null && ReportHazards?.Any() == true)
@@ -371,7 +371,7 @@ public partial class TechnicalAssessment : ComponentBase
                 Status = RiskAssessmentStatus.AssessmentCreate,
                 CurrentStep = 1,
                 UpdatedDate = DateTime.UtcNow,
-                UpdatedBy = CurrentUserService?.UserDisplayName
+                UpdatedBy = _currentUserService?.UserDisplayName
             };
 
             // Save Technical assessment
@@ -656,7 +656,7 @@ public partial class TechnicalAssessment : ComponentBase
         if (targetStep == 3)
         {
             _logger.LogInformation("Navigating to Step 3 - reloading Step3 data to ensure HazardRiskAnalyses is complete");
-            // ✅ FIRST: Refresh ReportHazards to include any newly added hazards from Step 2
+            // FIRST: Refresh ReportHazards to include any newly added hazards from Step 2
             await LoadReportHazardsAsync();
 
             if (TechRiskAssessment is not null && ReportHazards?.Any() == true)
@@ -800,10 +800,10 @@ public partial class TechnicalAssessment : ComponentBase
 
             // Update last modified info
             TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
-            TechRiskAssessment.UpdatedBy = CurrentUserService?.UserDisplayName;
+            TechRiskAssessment.UpdatedBy = _currentUserService?.UserDisplayName;
             if (CurrentStep == 5)
             {
-                TechRiskAssessment.CompletedBy = CurrentUserService?.UserDisplayName;
+                TechRiskAssessment.CompletedBy = _currentUserService?.UserDisplayName;
                 TechRiskAssessment.CompletedDate = DateTime.UtcNow;
             }
             
@@ -822,7 +822,7 @@ public partial class TechnicalAssessment : ComponentBase
                 _ => ReportStatus.RiskAssessmentInProgress
             };
 
-            var cmd = new UpdateReportStatusCommand(ReportId ?? "", status, CurrentUserService?.UserDisplayName ?? "System");
+            var cmd = new UpdateReportStatusCommand(ReportId ?? "", status, _currentUserService?.UserDisplayName ?? "System");
             var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
 
 
@@ -889,7 +889,7 @@ public partial class TechnicalAssessment : ComponentBase
             {
                 var hazard = hazardResult.Value;
 
-                // ✅ Use shared method to load scoring panels and get current risk level
+                // Use shared method to load scoring panels and get current risk level
                 var scoringPanels = await LoadScoringPanelsForHazard(HazardId, CurrentStep, TechRiskAssessment?.Code);
                 var (averageScore, matrixCode, riskLevel) = CalculateHazardScoringData(scoringPanels, HazardId);
 
@@ -897,10 +897,10 @@ public partial class TechnicalAssessment : ComponentBase
                 var originalStatus = hazard.Status?.ToString();
                 hazard.Status = DetermineHazardStatusFromStep(CurrentStep);
                 
-                // ✅ Use calculated risk level from scoring panels
+                // Use calculated risk level from scoring panels
                 hazard.HazardRiskLevel = riskLevel;
 
-                hazard.UpdatedBy = CurrentUserService?.UserDisplayName;  
+                hazard.UpdatedBy = _currentUserService?.UserDisplayName;  
                 hazard.UpdatedDate = DateTime.UtcNow;   
 
                 // Only update if status changed
@@ -1114,18 +1114,18 @@ public partial class TechnicalAssessment : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    _logger.LogInformation("✅ Successfully copied Initial scores to empty Residual for panel {PanelCode}", panel.Code);
+                    _logger.LogInformation("Successfully copied Initial scores to empty Residual for panel {PanelCode}", panel.Code);
                     anyUpdated = true;
                 }
                 else
                 {
-                    _logger.LogError("❌ Failed to copy scores for panel {PanelCode}: {Error}", panel.Code, result.Error?.Message ?? "Unknown error");
+                    _logger.LogError("Failed to copy scores for panel {PanelCode}: {Error}", panel.Code, result.Error?.Message ?? "Unknown error");
                 }
             }
 
             if (anyUpdated)
             {
-                _logger.LogInformation("✅ Completed copying Initial scores to empty Residual scores for assessment {AssessmentCode}", targetAssessmentCode);
+                _logger.LogInformation("Completed copying Initial scores to empty Residual scores for assessment {AssessmentCode}", targetAssessmentCode);
             }
         }
         catch (Exception ex)
@@ -1164,7 +1164,7 @@ public partial class TechnicalAssessment : ComponentBase
             var roundedLikelihood = (int)Math.Round(averageLikelihood);
             var riskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
 
-            _logger.LogInformation("Calculated hazard {HazardCode} scoring: AvgSev={Severity:F2}→{RoundedSev}, AvgLike={Likelihood:F2}→{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}", 
+            _logger.LogInformation("Calculated hazard {HazardCode} scoring: AvgSev={Severity:F2}?{RoundedSev}, AvgLike={Likelihood:F2}?{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}", 
                 hazardCode, averageSeverity, roundedSeverity, averageLikelihood, roundedLikelihood, matrixCode, riskLevel?.Value ?? "Unknown");
 
             return (averageScore, matrixCode, riskLevel);
@@ -1254,17 +1254,17 @@ public partial class TechnicalAssessment : ComponentBase
         var completedDate = DateTime.UtcNow;
         var assessmentStartDate = TechRiskAssessment.CreatedDate ?? DateTime.UtcNow.AddDays(-7); // Default to 7 days ago if no start date
         var targetCompletionDate = assessmentStartDate.AddDays(14); // Assume 14-day target for technical assessments
-        var completedBy = CurrentUserService?.UserDisplayName ?? "Unknown User";
+        var completedBy = _currentUserService?.UserDisplayName ?? "Unknown User";
         var finalRiskLevel = GetAssessmentFinalRiskLevel(); // Get the determined risk level
 
         // Update risk assessment - pipeline will automatically set UpdatedBy/UpdatedDate
         var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
         await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
-        var cmd = new UpdateReportStatusCommand(ReportId ?? "", ReportStatus.ValidationCompleted, CurrentUserService?.UserDisplayName ?? "System");
+        var cmd = new UpdateReportStatusCommand(ReportId ?? "", ReportStatus.ValidationCompleted, _currentUserService?.UserDisplayName ?? "System");
         var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
 
-        // NEW: SPI AUTOMATION - Trigger risk assessment completion event 🎯
+        // NEW: SPI AUTOMATION - Trigger risk assessment completion event ??
         await TriggerRiskAssessmentSPIAutomation(
             TechRiskAssessment?.Code ?? "",
             assessmentStartDate,
@@ -1277,9 +1277,9 @@ public partial class TechnicalAssessment : ComponentBase
    
     private async Task ApplyCurrentStepToAssessmentAsync()
     {
-        // ✅ FIXED: Removed manual audit field assignments - pipeline handles automatically
-        // ❌ REMOVED: TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
-        // ❌ REMOVED: TechRiskAssessment.UpdatedBy = CurrentUserService?.UserDisplayName;
+        // FIXED: Removed manual audit field assignments - pipeline handles automatically
+        // REMOVED: TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
+        // REMOVED: TechRiskAssessment.UpdatedBy = _currentUserService?.UserDisplayName;
 
         switch (CurrentStep)
         {
@@ -1375,7 +1375,7 @@ public partial class TechnicalAssessment : ComponentBase
                 _logger.LogWarning("Hazard {HazardCode} already exists in Step2 model, skipping Step2 update", newHazard.Code);
             }
 
-            // ✅ FIXED: Also update the assessment's IdentifiedHazardIds list
+            // FIXED: Also update the assessment's IdentifiedHazardIds list
             if (TechRiskAssessment is not null && !TechRiskAssessment.IdentifiedHazardIds.Contains(newHazard.Code))
             {
                 TechRiskAssessment.AddIdentifiedHazard(newHazard.Code, newHazard.Description ?? string.Empty);
@@ -1467,7 +1467,7 @@ public partial class TechnicalAssessment : ComponentBase
                         Step2.HazardCategories.RemoveAt(indexToRemove);
                 }
 
-                // ✅ FIXED: Also remove from assessment's IdentifiedHazardIds
+                // FIXED: Also remove from assessment's IdentifiedHazardIds
                 if (TechRiskAssessment is not null)
                 {
                     // Clear and re-add all remaining hazards
@@ -1515,7 +1515,7 @@ public partial class TechnicalAssessment : ComponentBase
     {
         try
         {
-            _logger.LogInformation("🎯 SPI Automation: Triggering risk assessment completion events for {AssessmentCode}", assessmentCode);
+            _logger.LogInformation("SPI Automation: Triggering risk assessment completion events for {AssessmentCode}", assessmentCode);
 
             // Trigger Risk Assessment Completion Rate SPI
             await _spiCoordinator.OnRiskAssessmentCompleted(
@@ -1532,10 +1532,10 @@ public partial class TechnicalAssessment : ComponentBase
                 assessmentType: "Technical");
 
             // If this is a high risk assessment, also trigger High Risk Exposure SPI
-            _logger.LogInformation("🔍 Checking if {RiskLevel} is high risk for SPI automation", riskLevel);
+            _logger.LogInformation("Checking if {RiskLevel} is high risk for SPI automation", riskLevel);
             if (IsHighRiskLevel(riskLevel))
             {
-                _logger.LogInformation("🔴 HIGH RISK DETECTED! Triggering High Risk Exposure SPI for {RiskLevel}", riskLevel);
+                _logger.LogInformation("HIGH RISK DETECTED! Triggering High Risk Exposure SPI for {RiskLevel}", riskLevel);
 
                 await _spiCoordinator.OnHighRiskIdentified(
                     assessmentId: assessmentCode,
@@ -1548,20 +1548,20 @@ public partial class TechnicalAssessment : ComponentBase
                     riskDescription: $"Technical assessment identified {riskLevel} risk level",
                     impactArea: TechRiskAssessment?.SystemDescription ?? "");
 
-                _logger.LogInformation("✅ SPI Automation: High risk SPI automation completed for {AssessmentCode} - Level: {RiskLevel}", 
+                _logger.LogInformation("SPI Automation: High risk SPI automation completed for {AssessmentCode} - Level: {RiskLevel}", 
                     assessmentCode, riskLevel);
             }
             else
             {
-                _logger.LogInformation("ℹ️ Risk level {RiskLevel} is not considered high risk - skipping High Risk Exposure SPI", riskLevel);
+                _logger.LogInformation("Risk level {RiskLevel} is not considered high risk - skipping High Risk Exposure SPI", riskLevel);
             }
 
-            _logger.LogInformation("✅ SPI Automation: Successfully processed risk assessment completion events for {AssessmentCode}", assessmentCode);
+            _logger.LogInformation("SPI Automation: Successfully processed risk assessment completion events for {AssessmentCode}", assessmentCode);
         }
         catch (Exception spiEx)
         {
             // Don't fail the assessment completion if SPI automation fails
-            _logger.LogWarning(spiEx, "⚠️ SPI Automation: Failed to process risk assessment completion events for {AssessmentCode} - continuing with assessment", assessmentCode);
+            _logger.LogWarning(spiEx, "? SPI Automation: Failed to process risk assessment completion events for {AssessmentCode} - continuing with assessment", assessmentCode);
         }
     }
 
@@ -1575,7 +1575,7 @@ public partial class TechnicalAssessment : ComponentBase
         {
             if (ReportHazards?.Any() != true)
             {
-                _logger.LogInformation("🔍 No hazards found, defaulting to Low risk");
+                _logger.LogInformation("No hazards found, defaulting to Low risk");
                 return RiskLevel.Low.Value; // Default to low risk if no hazards
             }
 
@@ -1584,25 +1584,25 @@ public partial class TechnicalAssessment : ComponentBase
 
             foreach (var hazard in ReportHazards)
             {
-                _logger.LogInformation("🔍 Analyzing hazard {HazardCode}: Initial={InitialMatrix}, Residual={ResidualMatrix}", 
+                _logger.LogInformation("Analyzing hazard {HazardCode}: Initial={InitialMatrix}, Residual={ResidualMatrix}", 
                     hazard.Code, hazard.InitialRiskMatrixCode, hazard.ResidualRiskMatrixCode);
 
                 // Check both initial and residual matrix codes to determine risk levels
                 var initialRisk = GetRiskLevelFromMatrixCode(hazard.InitialRiskMatrixCode);
                 var residualRisk = GetRiskLevelFromMatrixCode(hazard.ResidualRiskMatrixCode);
 
-                _logger.LogInformation("🔍 Risk levels for {HazardCode}: Initial={InitialRisk}, Residual={ResidualRisk}", 
+                _logger.LogInformation("Risk levels for {HazardCode}: Initial={InitialRisk}, Residual={ResidualRisk}", 
                     hazard.Code, initialRisk.Value, residualRisk.Value);
 
                 // Use the higher of initial or residual risk
                 var hazardMaxRisk = GetHigherRiskLevel(initialRisk, residualRisk);
                 highestRisk = GetHigherRiskLevel(highestRisk, hazardMaxRisk);
 
-                _logger.LogInformation("🔍 Hazard {HazardCode} max risk: {MaxRisk}, Overall highest: {HighestRisk}", 
+                _logger.LogInformation("Hazard {HazardCode} max risk: {MaxRisk}, Overall highest: {HighestRisk}", 
                     hazard.Code, hazardMaxRisk.Value, highestRisk.Value);
             }
 
-            _logger.LogInformation("📊 Assessment {AssessmentCode} final risk level determined: {RiskLevel}", 
+            _logger.LogInformation("Assessment {AssessmentCode} final risk level determined: {RiskLevel}", 
                 TechRiskAssessment?.Code, highestRisk.Value);
 
             return highestRisk.Value;
@@ -1668,18 +1668,18 @@ public partial class TechnicalAssessment : ComponentBase
     {
         if (string.IsNullOrEmpty(matrixCode))
         {
-            _logger.LogDebug("🔍 Empty matrix code, returning Low risk");
+            _logger.LogDebug("Empty matrix code, returning Low risk");
             return RiskLevel.Low;
         }
 
         var code = matrixCode.ToUpperInvariant().Trim();
-        _logger.LogDebug("🔍 Parsing matrix code: '{MatrixCode}' -> '{CleanCode}'", matrixCode, code);
+        _logger.LogDebug("Parsing matrix code: '{MatrixCode}' -> '{CleanCode}'", matrixCode, code);
 
         // Handle aviation matrix codes (e.g., "4E", "3C", "5D")
         if (TryParseAviationMatrixCode(code, out int severity, out int likelihood))
         {
             var riskLevel = GetRiskLevelFromSeverityLikelihood(severity, likelihood);
-            _logger.LogDebug("🔍 Aviation matrix: {Code} -> Severity:{Severity}, Likelihood:{Likelihood} -> {RiskLevel}", 
+            _logger.LogDebug("Aviation matrix: {Code} -> Severity:{Severity}, Likelihood:{Likelihood} -> {RiskLevel}", 
                 code, severity, likelihood, riskLevel.Value);
             return riskLevel;
         }
@@ -1694,7 +1694,7 @@ public partial class TechnicalAssessment : ComponentBase
             _ => RiskLevel.Low
         };
 
-        _logger.LogDebug("🔍 Text-based matrix: {Code} -> {RiskLevel}", code, textRisk.Value);
+        _logger.LogDebug("Text-based matrix: {Code} -> {RiskLevel}", code, textRisk.Value);
         return textRisk;
     }
 
@@ -1789,3 +1789,4 @@ public partial class TechnicalAssessment : ComponentBase
 
     #endregion
 }
+

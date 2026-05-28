@@ -16,7 +16,7 @@ using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
-namespace Application.Services.Strategies;
+namespace SMS_Application.Strategies;
 
 /// <summary>
 /// Circuit-based authentication strategy using Blazor Server circuit storage
@@ -66,7 +66,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "?? Error checking CircuitBased availability - defaulting to TRUE");
+                _logger.LogApplicationWarning(ex, "Error checking CircuitBased availability - defaulting to TRUE");
                 return true; // Always try to be available
             }
         }
@@ -91,11 +91,11 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             var circuitId = GetOrGenerateCircuitId(); // Only generate when storing
             if (string.IsNullOrEmpty(circuitId))
             {
-                _logger.LogError("? CRITICAL: Could not generate any circuit ID for CircuitBasedAuthenticationStrategy");
+                _logger.LogApplicationError("CRITICAL: Could not generate any circuit ID for CircuitBasedAuthenticationStrategy");
                 return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
-            _logger.LogInformation("?? Storing user {UserCode} ({UserType}) in circuit storage with ID: {CircuitId}", user.Code, userType.Value, circuitId);
+            _logger.LogApplicationInformation("Storing user {UserCode} ({UserType}) in circuit storage with ID: {CircuitId}", user.Code, userType.Value, circuitId);
 
             // Get serialized user data with all roles/permissions
             var userData = _userInstantiationService.SerializeCompleteUser(user, userType);
@@ -112,7 +112,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                 foreach (var kvp in additionalData)
                 {
                     userData[kvp.Key] = kvp.Value;
-                    _logger.LogDebug("?? Added additional data: {Key} = {Value}", kvp.Key, kvp.Value?.Length > 50 ? $"{kvp.Value[..50]}..." : kvp.Value);
+                    _logger.LogApplicationDebug("Added additional data: {Key} = {Value}", kvp.Key, kvp.Value?.Length > 50 ? $"{kvp.Value[..50]}..." : kvp.Value);
                 }
             }
 
@@ -131,14 +131,14 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             userData["SMS_UserCircuitKey"] = userCircuitKey;
             _circuitAuthStorage.SetAuthData(userCircuitKey, userData);
 
-            _logger.LogInformation("? User {UserCode} ({UserType}) stored successfully in circuit storage - Circuit: {CircuitId}, Fields: {FieldCount}", 
+            _logger.LogApplicationInformation("User {UserCode} ({UserType}) stored successfully in circuit storage - Circuit: {CircuitId}, Fields: {FieldCount}", 
                 user.Code, userType.Value, circuitId, userData.Count);
 
             return Result.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error storing user {UserCode} in circuit storage", user.Code);
+            _logger.LogApplicationError(ex, "Error storing user {UserCode} in circuit storage", user.Code);
             return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -151,7 +151,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
     {
         try
         {
-            _logger.LogDebug("?? Attempting to retrieve user from circuit storage");
+            _logger.LogApplicationDebug("Attempting to retrieve user from circuit storage");
 
             Dictionary<string, string>? userData = null;
             string? foundCircuitId = null;
@@ -165,7 +165,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                 {
                     userData = kvp.Value;
                     foundCircuitId = kvp.Key;
-                    _logger.LogInformation("? Found user data by scanning stored circuit IDs: {FoundKey}", kvp.Key);
+                    _logger.LogApplicationDebug("Found user data by scanning stored circuit IDs: {FoundKey}", kvp.Key);
                     break;
                 }
             }
@@ -174,7 +174,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             if (userData == null)
             {
                 var currentCircuitId = GetCachedOrGenerateCircuitId(); // Use cached version to reduce generation
-                _logger.LogDebug("?? No existing data found, trying current circuit ID: {CircuitId}", currentCircuitId ?? "NULL");
+                _logger.LogApplicationDebug("No existing data found, trying current circuit ID: {CircuitId}", currentCircuitId ?? "NULL");
                 
                 if (!string.IsNullOrEmpty(currentCircuitId))
                 {
@@ -182,7 +182,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                     if (userData != null)
                     {
                         foundCircuitId = currentCircuitId;
-                        _logger.LogDebug("? Found user data with current circuit ID: {CircuitId}", currentCircuitId);
+                        _logger.LogApplicationDebug("Found user data with current circuit ID: {CircuitId}", currentCircuitId);
                     }
                 }
             }
@@ -203,7 +203,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                     if (userData != null)
                     {
                         foundCircuitId = key;
-                        _logger.LogInformation("? Found user data with alternate circuit key: {FoundKey}", key);
+                        _logger.LogApplicationDebug("Found user data with alternate circuit key: {FoundKey}", key);
                         break;
                     }
                 }
@@ -211,13 +211,13 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
 
             if (userData == null)
             {
-                _logger.LogDebug("?? No authenticated user data found in circuit storage");
+                _logger.LogApplicationDebug("No authenticated user data found in circuit storage");
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             if (userData.GetValueOrDefault("IsAuthenticated") != "true")
             {
-                _logger.LogDebug("?? User data found but not authenticated");
+                _logger.LogApplicationDebug("User data found but not authenticated");
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
@@ -226,11 +226,11 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
 
             if (string.IsNullOrEmpty(userCode))
             {
-                _logger.LogWarning("?? Incomplete user data in circuit storage - missing UserCode");
+                _logger.LogApplicationWarning("Incomplete user data in circuit storage - missing UserCode");
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
-            _logger.LogInformation("?? Retrieving user {UserCode} ({UserType}) from circuit storage using key: {CircuitKey}", 
+            _logger.LogApplicationDebug("Retrieving user {UserCode} ({UserType}) from circuit storage using key: {CircuitKey}", 
                 userCode, userTypeValue, foundCircuitId);
 
             // Deserialize user via UserInstantiationService
@@ -238,20 +238,20 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             
             if (result.IsSuccess)
             {
-                _logger.LogInformation("? User {UserCode} ({UserType}) retrieved successfully from circuit storage", 
+                _logger.LogApplicationDebug("User {UserCode} ({UserType}) retrieved successfully from circuit storage", 
                     userCode, userTypeValue);
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)result.Value);
             }
             else
             {
-                _logger.LogWarning("?? Failed to deserialize user {UserCode} from circuit storage: {Error}", 
+                _logger.LogApplicationWarning("Failed to deserialize user {UserCode} from circuit storage: {Error}", 
                     userCode, result.Error?.Message);
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error retrieving user from circuit storage");
+            _logger.LogApplicationError(ex, "Error retrieving user from circuit storage");
             return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
         }
     }
@@ -264,7 +264,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
         try
         {
             var userCode = await GetCurrentUserIdAsync(cancellationToken) ?? "Unknown";
-            _logger.LogInformation("??? Clearing user {UserCode} from circuit storage", userCode);
+            _logger.LogApplicationInformation("??? Clearing user {UserCode} from circuit storage", userCode);
 
             // Method 1: Clear by stored circuit ID
             var context = _httpContextAccessor.HttpContext;
@@ -272,7 +272,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             {
                 var circuitId = storedCircuitId.ToString();
                 _circuitAuthStorage.ClearAuthData(circuitId);
-                _logger.LogDebug("??? Cleared circuit data by stored ID: {CircuitId}", circuitId);
+                _logger.LogApplicationDebug("??? Cleared circuit data by stored ID: {CircuitId}", circuitId);
             }
 
             // Method 2: Clear by current circuit ID
@@ -280,12 +280,12 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             if (!string.IsNullOrEmpty(currentCircuitId))
             {
                 _circuitAuthStorage.ClearAuthData(currentCircuitId);
-                _logger.LogDebug("??? Cleared circuit data by current ID: {CircuitId}", currentCircuitId);
+                _logger.LogApplicationDebug("??? Cleared circuit data by current ID: {CircuitId}", currentCircuitId);
             }
 
             // Method 3: Clear by user ID
             _circuitAuthStorage.ClearAuthDataByUserId(userCode);
-            _logger.LogDebug("??? Cleared circuit data by user ID: {UserCode}", userCode);
+            _logger.LogApplicationDebug("??? Cleared circuit data by user ID: {UserCode}", userCode);
 
             // Method 4: Clear context items
             if (context != null)
@@ -300,15 +300,15 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                 {
                     context.Items.Remove(key);
                 }
-                _logger.LogDebug("??? Cleared {Count} context items", keysToRemove.Count);
+                _logger.LogApplicationDebug("??? Cleared {Count} context items", keysToRemove.Count);
             }
 
-            _logger.LogInformation("? Circuit storage cleared successfully for user {UserCode}", userCode);
+            _logger.LogApplicationInformation("Circuit storage cleared successfully for user {UserCode}", userCode);
             return Result.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error clearing circuit storage");
+            _logger.LogApplicationError(ex, "Error clearing circuit storage");
             return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -435,7 +435,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "Error getting current circuit ID");
+            _logger.LogApplicationDebug(ex, "Error getting current circuit ID");
             return null;
         }
     }
@@ -457,7 +457,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
         _cachedCircuitId = newCircuitId;
         _cacheExpiry = DateTime.UtcNow.Add(TimeSpan.FromSeconds(30)); // Shorter cache for circuit IDs
         
-        _logger.LogDebug("?? Generated and cached new circuit ID: {CircuitId}", newCircuitId);
+        _logger.LogApplicationDebug("Generated and cached new circuit ID: {CircuitId}", newCircuitId);
         return newCircuitId;
     }
 
@@ -484,7 +484,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                     var circuitId = circuitFeature.Value.GetType().GetProperty("CircuitId")?.GetValue(circuitFeature.Value)?.ToString();
                     if (!string.IsNullOrEmpty(circuitId))
                     {
-                        _logger.LogDebug("?? Found actual circuit ID: {CircuitId}", circuitId);
+                        _logger.LogApplicationDebug("Found actual circuit ID: {CircuitId}", circuitId);
                         return circuitId;
                     }
                 }
@@ -494,18 +494,18 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             if (context?.Connection?.Id != null)
             {
                 var connectionId = $"conn_{context.Connection.Id}";
-                _logger.LogDebug("?? Using connection ID as circuit: {ConnectionId}", connectionId);
+                _logger.LogApplicationDebug("Using connection ID as circuit: {ConnectionId}", connectionId);
                 return connectionId;
             }
 
             // Method 3: PRODUCTION FALLBACK - Generate deterministic ID from request characteristics
             var fallbackId = GenerateProductionFallbackId(context);
-            _logger.LogInformation("?? PRODUCTION FALLBACK: Generated circuit ID: {FallbackId}", fallbackId);
+            _logger.LogApplicationInformation("PRODUCTION FALLBACK: Generated circuit ID: {FallbackId}", fallbackId);
             return fallbackId;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error getting circuit ID - generating emergency fallback");
+            _logger.LogApplicationError(ex, "Error getting circuit ID - generating emergency fallback");
             return $"emergency_{Guid.NewGuid():N}";
         }
     }
@@ -533,14 +533,15 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             var hash = combined.GetHashCode().ToString("X8");
             
             var fallbackId = $"fallback_{hash}_{DateTime.UtcNow:ss}";
-            _logger.LogDebug("?? Generated fallback circuit ID for IP {RemoteIp}: {FallbackId}", remoteIp, fallbackId);
+            _logger.LogApplicationDebug("Generated fallback circuit ID for IP {RemoteIp}: {FallbackId}", remoteIp, fallbackId);
             
             return fallbackId;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error generating production fallback ID");
+            _logger.LogApplicationError(ex, "Error generating production fallback ID");
             return $"emergency_{Guid.NewGuid():N}";
         }
     }
 }
+

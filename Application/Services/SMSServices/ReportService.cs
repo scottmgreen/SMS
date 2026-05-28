@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ReportService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -8,7 +8,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Application.Interfaces;
+using SMS_Application.Interfaces;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
@@ -32,23 +32,23 @@ public sealed class ReportService : IReportService
     {
         try
         {
-            _logger.LogInformation("Creating report with code: {Code}", report?.Code);
+            _logger.LogApplicationInformation("Creating report with code: {Code}", report?.Code);
             var result = await _dataService.CreateReportAsync(report, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created report with ID: {Id}", result.Value?.Id);
+                _logger.LogApplicationInformation("Successfully created report with ID: {Id}", result.Value?.Id);
             }
             else
             {
-                _logger.LogError("Failed to create report. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create report. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating report");
+            _logger.LogApplicationError(ex, "Unexpected error creating report");
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.CreateFailed);
         }
     }
@@ -57,12 +57,12 @@ public sealed class ReportService : IReportService
     {
         try
         {
-            _logger.LogInformation("Retrieving report with ID: {Id}", id);
+            _logger.LogApplicationInformation("Retrieving report with ID: {Id}", id);
             return await _dataService.GetReportByCodeAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving report with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving report with ID: {Id}", id);
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.NotFound);
         }
     }
@@ -71,12 +71,12 @@ public sealed class ReportService : IReportService
     {
         try
         {
-            _logger.LogInformation("Retrieving report with Code: {Id}", code);
+            _logger.LogApplicationInformation("Retrieving report with Code: {Id}", code);
             return await _dataService.GetReportByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving report with Code: {Id}", code);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving report with Code: {Id}", code);
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.NotFound);
         }
     }
@@ -85,12 +85,12 @@ public sealed class ReportService : IReportService
     {
         try
         {
-            _logger.LogInformation("Retrieving all reports");
+            _logger.LogApplicationInformation("Retrieving all reports");
             return await _dataService.GetAllReportsAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all reports");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all reports");
             return Result<List<Report>>.Failure<List<Report>>(DomainErrors.ReportError.NullOrEmpty);
         }
     }
@@ -99,23 +99,23 @@ public sealed class ReportService : IReportService
     {
         try
         {
-            _logger.LogInformation("Updating report with ID: {Id}", report?.Id);
+            _logger.LogApplicationInformation("Updating report with ID: {Id}", report?.Id);
             var result = await _dataService.UpdateReportAsync(report, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated report with ID: {Id}", report?.Id);
+                _logger.LogApplicationInformation("Successfully updated report with ID: {Id}", report?.Id);
             }
             else
             {
-                _logger.LogError("Failed to update report. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update report. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating report with ID: {Id}", report?.Id);
+            _logger.LogApplicationError(ex, "Unexpected error updating report with ID: {Id}", report?.Id);
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.UpdateFailed);
         }
     }
@@ -124,23 +124,23 @@ public sealed class ReportService : IReportService
     {
         try
         {
-            _logger.LogInformation("Deleting report with ID: {Id}", id);
+            _logger.LogApplicationInformation("Deleting report with ID: {Id}", id);
             var result = await _dataService.DeleteReportAsync(id, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted report with ID: {Id}", id);
+                _logger.LogApplicationInformation("Successfully deleted report with ID: {Id}", id);
             }
             else
             {
-                _logger.LogError("Failed to delete report. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete report. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting report with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error deleting report with ID: {Id}", id);
             return Result<bool>.Failure<bool>(DomainErrors.ReportError.DeleteFailed);
         }
     }
@@ -149,7 +149,7 @@ public sealed class ReportService : IReportService
     {
         try
         {
-            _logger.LogInformation("Updating report status for Code: {Code} to {Status}", reportCode, status);
+            _logger.LogApplicationInformation("Updating report status for Code: {Code} to {Status}", reportCode, status);
             
             // Get the current report
             var reportResult = await _dataService.GetReportByCodeAsync(new ReportID(reportCode), ct);
@@ -167,18 +167,18 @@ public sealed class ReportService : IReportService
             
             if (updateResult.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated report status for Code: {Code}", reportCode);
+                _logger.LogApplicationInformation("Successfully updated report status for Code: {Code}", reportCode);
                 return Result<bool>.Success(true);
             }
             else
             {
-                _logger.LogError("Failed to update report status. Error: {Error}", updateResult.Error?.Message);
+                _logger.LogApplicationError("Failed to update report status. Error: {Error}", updateResult.Error?.Message);
                 return Result<bool>.Failure<bool>(updateResult.Error);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating report status for Code: {Code}", reportCode);
+            _logger.LogApplicationError(ex, "Unexpected error updating report status for Code: {Code}", reportCode);
             return Result<bool>.Failure<bool>(DomainErrors.ReportError.UpdateFailed);
         }
     }
@@ -187,7 +187,7 @@ public sealed class ReportService : IReportService
     {
         try
         {
-            _logger.LogInformation("Submitting report with ID: {Id}", id);
+            _logger.LogApplicationInformation("Submitting report with ID: {Id}", id);
             
             var reportResult = await _dataService.GetReportByCodeAsync(id, ct);
             if (reportResult.IsFailure || reportResult.Value == null)
@@ -203,15 +203,16 @@ public sealed class ReportService : IReportService
             var result = await _dataService.UpdateReportAsync(report, ct);
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully submitted report with ID: {Id}", id);
+                _logger.LogApplicationInformation("Successfully submitted report with ID: {Id}", id);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error submitting report with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error submitting report with ID: {Id}", id);
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.UpdateFailed);
         }
     }
 }
+

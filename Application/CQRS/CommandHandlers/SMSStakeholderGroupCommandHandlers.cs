@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSStakeholderGroupCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // SMS STAKEHOLDER GROUP COMMAND HANDLERS - Clean Architecture Pattern
@@ -38,11 +38,11 @@ public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
     {
         try
         {
-            _logger.LogInformation(" Processing CreateSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup?.Code);
+            _logger.LogApplicationInformation(" Processing CreateSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup?.Code);
 
             if (request?.StakeholderGroup == null)
             {
-                _logger.LogWarning("CreateSMSStakeholderGroupCommand received with null stakeholder group");
+                _logger.LogApplicationWarning("CreateSMSStakeholderGroupCommand received with null stakeholder group");
                 return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NullOrEmpty);
             }
 
@@ -50,7 +50,7 @@ public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
+                _logger.LogApplicationInformation(" Successfully created SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
             }
             else
             {
@@ -62,7 +62,7 @@ public class CreateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateSMSStakeholderGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateSMSStakeholderGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -94,11 +94,11 @@ public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
     {
         try
         {
-            _logger.LogInformation(" Processing UpdateSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup?.Code);
+            _logger.LogApplicationInformation(" Processing UpdateSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup?.Code);
 
             if (request?.StakeholderGroup == null)
             {
-                _logger.LogWarning("UpdateSMSStakeholderGroupCommand received with null stakeholder group");
+                _logger.LogApplicationWarning("UpdateSMSStakeholderGroupCommand received with null stakeholder group");
                 return Result<SMSStakeholderGroup>.Failure<SMSStakeholderGroup>(DomainErrors.SMSStakeholderGroupError.NullOrEmpty);
             }
 
@@ -106,7 +106,7 @@ public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
+                _logger.LogApplicationInformation(" Successfully updated SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
             }
             else
             {
@@ -118,7 +118,7 @@ public class UpdateSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSMSStakeholderGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSMSStakeholderGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -150,11 +150,11 @@ public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
     {
         try
         {
-            _logger.LogInformation(" Processing DeleteSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup.Code);
+            _logger.LogApplicationInformation(" Processing DeleteSMSStakeholderGroupCommand for group: {GroupCode}", request.StakeholderGroup.Code);
 
             if (string.IsNullOrWhiteSpace(request.StakeholderGroup.Code))
             {
-                _logger.LogWarning("DeleteSMSStakeholderGroupCommand received with null or empty group code");
+                _logger.LogApplicationWarning("DeleteSMSStakeholderGroupCommand received with null or empty group code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.CodeRequired);
             }
 
@@ -162,7 +162,7 @@ public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
+                _logger.LogApplicationInformation(" Successfully deleted SMS stakeholder group: {GroupCode}", request.StakeholderGroup.Code);
             }
             else
             {
@@ -174,7 +174,7 @@ public class DeleteSMSStakeholderGroupCommandHandler : BaseCommandBundle, IBaseR
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteSMSStakeholderGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteSMSStakeholderGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -205,12 +205,12 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IBa
     {
         try
         {
-            _logger.LogInformation(" Processing AssignUserToStakeholderGroupCommand for user: {UserCode} to group: {GroupCode}",
+            _logger.LogApplicationInformation(" Processing AssignUserToStakeholderGroupCommand for user: {UserCode} to group: {GroupCode}",
                 request.UserCode, request.StakeholderGroupID);
 
             if (string.IsNullOrWhiteSpace(request.UserCode) || string.IsNullOrWhiteSpace(request.StakeholderGroupID.Value))
             {
-                _logger.LogWarning("AssignUserToStakeholderGroupCommand received with null or empty user/group code");
+                _logger.LogApplicationWarning("AssignUserToStakeholderGroupCommand received with null or empty user/group code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
             }
 
@@ -218,7 +218,7 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IBa
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully assigned user {UserCode} to group {GroupCode}", request.UserCode, request.StakeholderGroupID.Value);
+                _logger.LogApplicationInformation(" Successfully assigned user {UserCode} to group {GroupCode}", request.UserCode, request.StakeholderGroupID.Value);
             }
             else
             {
@@ -229,7 +229,7 @@ public class AssignUserToStakeholderGroupCommandHandler : BaseCommandBundle, IBa
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("AssignUserToStakeholderGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("AssignUserToStakeholderGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -260,12 +260,12 @@ public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, I
     {
         try
         {
-            _logger.LogInformation(" Processing RemoveUserFromStakeholderGroupCommand for user: {UserCode} from group: {GroupCode}",
+            _logger.LogApplicationInformation(" Processing RemoveUserFromStakeholderGroupCommand for user: {UserCode} from group: {GroupCode}",
                 request.UserCode, request.StakeholderGroupID.Value);
 
             if (string.IsNullOrWhiteSpace(request.UserCode) || string.IsNullOrWhiteSpace(request.StakeholderGroupID.Value))
             {
-                _logger.LogWarning("RemoveUserFromStakeholderGroupCommand received with null or empty user/group code");
+                _logger.LogApplicationWarning("RemoveUserFromStakeholderGroupCommand received with null or empty user/group code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
             }
 
@@ -273,7 +273,7 @@ public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, I
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully removed user {UserCode} from group {GroupCode}", request.UserCode, request.StakeholderGroupID.Value);
+                _logger.LogApplicationInformation(" Successfully removed user {UserCode} from group {GroupCode}", request.UserCode, request.StakeholderGroupID.Value);
             }
             else
             {
@@ -285,7 +285,7 @@ public class RemoveUserFromStakeholderGroupCommandHandler : BaseCommandBundle, I
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("RemoveUserFromStakeholderGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("RemoveUserFromStakeholderGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -317,11 +317,11 @@ public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IBase
     {
         try
         {
-            _logger.LogInformation(" Processing ClearUserStakeholderGroupsCommand for user: {UserCode}", request.UserCode);
+            _logger.LogApplicationInformation(" Processing ClearUserStakeholderGroupsCommand for user: {UserCode}", request.UserCode);
 
             if (string.IsNullOrWhiteSpace(request.UserCode))
             {
-                _logger.LogWarning("ClearUserStakeholderGroupsCommand received with null or empty user code");
+                _logger.LogApplicationWarning("ClearUserStakeholderGroupsCommand received with null or empty user code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
             }
 
@@ -329,7 +329,7 @@ public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IBase
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully cleared all group memberships for user: {UserCode}", request.UserCode);
+                _logger.LogApplicationInformation(" Successfully cleared all group memberships for user: {UserCode}", request.UserCode);
             }
             else
             {
@@ -341,7 +341,7 @@ public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IBase
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("ClearUserStakeholderGroupsCommand operation was cancelled");
+            _logger.LogApplicationWarning("ClearUserStakeholderGroupsCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -351,3 +351,4 @@ public class ClearUserStakeholderGroupsCommandHandler : BaseCommandBundle, IBase
         }
     }
 }
+

@@ -44,7 +44,7 @@ public class ProtocolDetectionService : IProtocolDetectionService
             // Check for override first
             if (!string.IsNullOrEmpty(_authConfig.OverrideProtocol))
             {
-                _logger.LogDebug("?? Using protocol override: {OverrideProtocol}", _authConfig.OverrideProtocol);
+                _logger.LogApplicationDebug("Using protocol override: {OverrideProtocol}", _authConfig.OverrideProtocol);
                 return _authConfig.OverrideProtocol.ToUpper();
             }
 
@@ -52,17 +52,17 @@ public class ProtocolDetectionService : IProtocolDetectionService
             var context = _httpContextAccessor.HttpContext;
             if (context == null)
             {
-                _logger.LogWarning("?? HttpContext not available for protocol detection, defaulting to HTTPS");
+                _logger.LogApplicationWarning("HttpContext not available for protocol detection, defaulting to HTTPS");
                 return "HTTPS";
             }
 
             var detectedProtocol = context.Request.IsHttps ? "HTTPS" : "HTTP";
-            _logger.LogDebug("?? Detected protocol: {Protocol}", detectedProtocol);
+            _logger.LogApplicationDebug("Detected protocol: {Protocol}", detectedProtocol);
             return detectedProtocol;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error detecting protocol, defaulting to HTTPS");
+            _logger.LogApplicationError(ex, "Error detecting protocol, defaulting to HTTPS");
             return "HTTPS";
         }
     }
@@ -85,18 +85,18 @@ public class ProtocolDetectionService : IProtocolDetectionService
             // Check if fallback is allowed
             if (_authConfig.AllowProtocolFallback)
             {
-                _logger.LogInformation("?? Protocol fallback allowed - Current: {Current}, Required: {Required}", 
+                _logger.LogApplicationInformation("Protocol fallback allowed - Current: {Current}, Required: {Required}", 
                     currentProtocol, requiredProtocol);
                 return true;
             }
 
-            _logger.LogWarning("? Protocol mismatch - Current: {Current}, Required: {Required}, Fallback: {AllowFallback}", 
+            _logger.LogApplicationWarning("Protocol mismatch - Current: {Current}, Required: {Required}, Fallback: {AllowFallback}", 
                 currentProtocol, requiredProtocol, _authConfig.AllowProtocolFallback);
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error checking protocol compatibility");
+            _logger.LogApplicationError(ex, "Error checking protocol compatibility");
             return false;
         }
     }
@@ -126,19 +126,19 @@ public class ProtocolDetectionService : IProtocolDetectionService
             // If fallback is allowed, use current
             if (_authConfig.AllowProtocolFallback)
             {
-                _logger.LogInformation("?? Using fallback protocol: {CurrentProtocol} (required: {RequiredProtocol})", 
+                _logger.LogApplicationInformation("Using fallback protocol: {CurrentProtocol} (required: {RequiredProtocol})", 
                     currentProtocol, requiredProtocol);
                 return currentProtocol;
             }
 
             // Default to required protocol
-            _logger.LogWarning("?? Forcing required protocol: {RequiredProtocol} (current: {CurrentProtocol})", 
+            _logger.LogApplicationWarning("Forcing required protocol: {RequiredProtocol} (current: {CurrentProtocol})", 
                 requiredProtocol, currentProtocol);
             return requiredProtocol;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error determining effective protocol, defaulting to HTTPS");
+            _logger.LogApplicationError(ex, "Error determining effective protocol, defaulting to HTTPS");
             return "HTTPS";
         }
     }
@@ -156,14 +156,14 @@ public class ProtocolDetectionService : IProtocolDetectionService
             // But secure cookies only work with HTTPS
             var canUseSecure = CanUseSecureCookies();
             
-            _logger.LogDebug("?? Session auth compatibility - Protocol: {Protocol}, SecureCookies: {CanUseSecure}", 
+            _logger.LogApplicationDebug("Session auth compatibility - Protocol: {Protocol}, SecureCookies: {CanUseSecure}", 
                 effectiveProtocol, canUseSecure);
                 
             return true; // Session auth can work with any protocol, but security varies
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error checking session auth compatibility");
+            _logger.LogApplicationError(ex, "Error checking session auth compatibility");
             return false;
         }
     }
@@ -178,14 +178,14 @@ public class ProtocolDetectionService : IProtocolDetectionService
             var effectiveProtocol = GetEffectiveProtocol();
             var canUse = effectiveProtocol == "HTTPS";
             
-            _logger.LogDebug("?? Secure cookies compatibility - Protocol: {Protocol}, CanUse: {CanUse}", 
+            _logger.LogApplicationDebug("Secure cookies compatibility - Protocol: {Protocol}, CanUse: {CanUse}", 
                 effectiveProtocol, canUse);
                 
             return canUse;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error checking secure cookies compatibility");
+            _logger.LogApplicationError(ex, "Error checking secure cookies compatibility");
             return false;
         }
     }
@@ -212,3 +212,4 @@ public class ProtocolDetectionService : IProtocolDetectionService
         }
     }
 }
+

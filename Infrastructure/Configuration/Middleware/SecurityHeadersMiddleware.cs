@@ -115,7 +115,7 @@ namespace SMS_Infrastructure.Configuration.Middleware
                 }
 
                 // Log security headers application (debug level to avoid spam)
-                _logger.LogDebug("Security headers applied to {Method} {Path} from {RemoteIP}", 
+                _logger.LogInfrastructureDebug("Security headers applied to {Method} {Path} from {RemoteIP}", 
                     request.Method, 
                     request.Path, 
                     GetClientIpAddress(context));
@@ -123,7 +123,7 @@ namespace SMS_Infrastructure.Configuration.Middleware
             catch (Exception ex)
             {
                 // Log error but don't break the pipeline
-                _logger.LogWarning(ex, "Failed to add security headers for {Path}", request.Path);
+                _logger.LogInfrastructureWarning(ex, "Failed to add security headers for {Path}", request.Path);
             }
         }
 

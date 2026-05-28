@@ -28,62 +28,229 @@ namespace SMS_Application.Common;
 /// </summary>
 public static class ApplicationLogMessages
 {
-
-    private static readonly Action<ILogger, int, string, Exception?> _LogInformation =
-            LoggerMessage.Define<int, string>(LogLevel.Information, LoggingEventIds.SMS_ApplicationEventIds.Information, "{message} {ApplicationEventId} ");
-
-    public static void LogApplicationInformation(this ILogger logger, int? ApplicationEventId, string message, params object[] args)
+    public static void LogApplicationInformation(this ILogger logger, string message, int? applicationEventId = null, params object[] args)
     {
-        _LogInformation(logger, LoggingEventIds.SMS_ApplicationEventIds.Information, message, null);
+        LogWithOptionalEventIdFallback(logger, LogLevel.Information, applicationEventId, ApplicationEventIds.Information, null, message, args);
     }
 
-
-    private static readonly Action<ILogger, string, int, Exception?> _LogDebug =
-            LoggerMessage.Define<string, int>(LogLevel.Debug, LoggingEventIds.SMS_ApplicationEventIds.Debug, "{message} {ApplicationEventId} ");
-
-    public static void LogApplicationDebug(this ILogger logger, string message, int? ApplicationEventId)
+    public static void LogApplicationInformation(this ILogger logger, string message, params object[] args)
     {
-        _LogDebug(logger, message, LoggingEventIds.SMS_ApplicationEventIds.Debug, null);
+        logger.Log(LogLevel.Information, CreateEventId(null, ApplicationEventIds.Information), null, message, args);
     }
 
-
-    private static readonly Action<ILogger, string, int, Exception?> _LogError =
-            LoggerMessage.Define<string, int>(LogLevel.Error, LoggingEventIds.SMS_ApplicationEventIds.Error, "{message} {ApplicationEventId} ");
-
-    public static void LogApplicationError(this ILogger logger, string message, int? ApplicationEventId, Exception ex)
+    public static void LogApplicationInformation(this ILogger logger, int? applicationEventId, string message, params object[] args)
     {
-        _LogError(logger, message, LoggingEventIds.SMS_ApplicationEventIds.Error, ex);
+        logger.Log(LogLevel.Information, CreateEventId(applicationEventId, ApplicationEventIds.Information), null, message, args);
     }
 
-    private static readonly Action<ILogger, string, int, Exception?> _LogCritical =
-            LoggerMessage.Define<string, int>(LogLevel.Error, LoggingEventIds.SMS_ApplicationEventIds.Error, "{message} {ApplicationEventId} ");
-
-    public static void LogApplicationCritical(this ILogger logger, string message, int? ApplicationEventId, Exception ex)
+    public static void LogApplicationInformation(this ILogger logger, Exception ex, string message, params object[] args)
     {
-        _LogCritical(logger, message, LoggingEventIds.SMS_ApplicationEventIds.Error, ex);
-    }
-    private static readonly Action<ILogger, string, int, Exception?> _LogNone =
-            LoggerMessage.Define<string, int>(LogLevel.None, LoggingEventIds.SMS_ApplicationEventIds.None, "{message} {ApplicationEventId} ");
-
-    public static void LogApplicationNone(this ILogger logger, string message, int? ApplicationEventId)
-    {
-        _LogNone(logger, message, LoggingEventIds.SMS_ApplicationEventIds.None, null);
+        logger.Log(LogLevel.Information, CreateEventId(null, ApplicationEventIds.Information), ex, message, args);
     }
 
-    private static readonly Action<ILogger, string, int, Exception?> _LogTrace =
-            LoggerMessage.Define<string, int>(LogLevel.Trace, LoggingEventIds.SMS_ApplicationEventIds.Trace, "{message} {ApplicationEventId} ");
-
-    public static void LogApplicationTrace(this ILogger logger, string message, int? ApplicationEventId)
+    public static void LogApplicationInformation(this ILogger logger, Exception ex, string message, int? applicationEventId, params object[] args)
     {
-        _LogTrace(logger, message, LoggingEventIds.SMS_ApplicationEventIds.Trace, null);
+        logger.Log(LogLevel.Information, CreateEventId(applicationEventId, ApplicationEventIds.Information), ex, message, args);
     }
 
-    private static readonly Action<ILogger, string, int, Exception?> _LogWarning =
-            LoggerMessage.Define<string, int>(LogLevel.Warning, LoggingEventIds.SMS_ApplicationEventIds.Warning, "{message} {ApplicationEventId} ");
-
-    public static void LogApplicationWarning(this ILogger logger, string message, int? ApplicationEventId)
+    public static void LogApplicationDebug(this ILogger logger, string message, int? applicationEventId = null, params object[] args)
     {
-        _LogWarning(logger, message, LoggingEventIds.SMS_ApplicationEventIds.Warning, null);
+        LogWithOptionalEventIdFallback(logger, LogLevel.Debug, applicationEventId, ApplicationEventIds.Debug, null, message, args);
+    }
+
+    public static void LogApplicationDebug(this ILogger logger, string message, params object[] args)
+    {
+        logger.Log(LogLevel.Debug, CreateEventId(null, ApplicationEventIds.Debug), null, message, args);
+    }
+
+    public static void LogApplicationDebug(this ILogger logger, Exception ex, string message, params object[] args)
+    {
+        logger.Log(LogLevel.Debug, CreateEventId(null, ApplicationEventIds.Debug), ex, message, args);
+    }
+
+    public static void LogApplicationDebug(this ILogger logger, Exception ex, string message, int? applicationEventId, params object[] args)
+    {
+        logger.Log(LogLevel.Debug, CreateEventId(applicationEventId, ApplicationEventIds.Debug), ex, message, args);
+    }
+
+    public static void LogApplicationError(this ILogger logger, string message, int? applicationEventId = null, Exception? ex = null, params object[] args)
+    {
+        LogWithOptionalEventIdFallback(logger, LogLevel.Error, applicationEventId, ApplicationEventIds.Error, ex, message, args);
+    }
+
+    public static void LogApplicationError(this ILogger logger, string message, params object[] args)
+    {
+        logger.Log(LogLevel.Error, CreateEventId(null, ApplicationEventIds.Error), null, message, args);
+    }
+
+    public static void LogApplicationError(this ILogger logger, Exception ex, string message, params object[] args)
+    {
+        logger.Log(LogLevel.Error, CreateEventId(null, ApplicationEventIds.Error), ex, message, args);
+    }
+
+    public static void LogApplicationError(this ILogger logger, Exception ex, string message, int? applicationEventId, params object[] args)
+    {
+        logger.Log(LogLevel.Error, CreateEventId(applicationEventId, ApplicationEventIds.Error), ex, message, args);
+    }
+
+    public static void LogApplicationCritical(this ILogger logger, string message, int? applicationEventId = null, Exception? ex = null, params object[] args)
+    {
+        LogWithOptionalEventIdFallback(logger, LogLevel.Critical, applicationEventId, ApplicationEventIds.Critical, ex, message, args);
+    }
+
+    public static void LogApplicationCritical(this ILogger logger, string message, params object[] args)
+    {
+        logger.Log(LogLevel.Critical, CreateEventId(null, ApplicationEventIds.Critical), null, message, args);
+    }
+
+    public static void LogApplicationCritical(this ILogger logger, Exception ex, string message, params object[] args)
+    {
+        logger.Log(LogLevel.Critical, CreateEventId(null, ApplicationEventIds.Critical), ex, message, args);
+    }
+
+    public static void LogApplicationCritical(this ILogger logger, Exception ex, string message, int? applicationEventId, params object[] args)
+    {
+        logger.Log(LogLevel.Critical, CreateEventId(applicationEventId, ApplicationEventIds.Critical), ex, message, args);
+    }
+
+    public static void LogApplicationNone(this ILogger logger, string message, int? applicationEventId = null, params object[] args)
+    {
+        LogWithOptionalEventIdFallback(logger, LogLevel.None, applicationEventId, ApplicationEventIds.None, null, message, args);
+    }
+
+    public static void LogApplicationTrace(this ILogger logger, string message, int? applicationEventId = null, params object[] args)
+    {
+        LogWithOptionalEventIdFallback(logger, LogLevel.Trace, applicationEventId, ApplicationEventIds.Trace, null, message, args);
+    }
+
+    public static void LogApplicationTrace(this ILogger logger, string message, params object[] args)
+    {
+        logger.Log(LogLevel.Trace, CreateEventId(null, ApplicationEventIds.Trace), null, message, args);
+    }
+
+    public static void LogApplicationTrace(this ILogger logger, Exception ex, string message, params object[] args)
+    {
+        logger.Log(LogLevel.Trace, CreateEventId(null, ApplicationEventIds.Trace), ex, message, args);
+    }
+
+    public static void LogApplicationTrace(this ILogger logger, Exception ex, string message, int? applicationEventId, params object[] args)
+    {
+        logger.Log(LogLevel.Trace, CreateEventId(applicationEventId, ApplicationEventIds.Trace), ex, message, args);
+    }
+
+    public static void LogApplicationWarning(this ILogger logger, string message, int? applicationEventId = null, params object[] args)
+    {
+        LogWithOptionalEventIdFallback(logger, LogLevel.Warning, applicationEventId, ApplicationEventIds.Warning, null, message, args);
+    }
+
+    public static void LogApplicationWarning(this ILogger logger, string message, params object[] args)
+    {
+        logger.Log(LogLevel.Warning, CreateEventId(null, ApplicationEventIds.Warning), null, message, args);
+    }
+
+    public static void LogApplicationWarning(this ILogger logger, Exception ex, string message, params object[] args)
+    {
+        logger.Log(LogLevel.Warning, CreateEventId(null, ApplicationEventIds.Warning), ex, message, args);
+    }
+
+    public static void LogApplicationWarning(this ILogger logger, Exception ex, string message, int? applicationEventId, params object[] args)
+    {
+        logger.Log(LogLevel.Warning, CreateEventId(applicationEventId, ApplicationEventIds.Warning), ex, message, args);
+    }
+
+    private static EventId CreateEventId(int? eventId, int fallbackId)
+    {
+        var effectiveEventId = eventId ?? fallbackId;
+        return new EventId(effectiveEventId, nameof(ApplicationLogMessages));
+    }
+
+    private static void LogWithOptionalEventIdFallback(
+        ILogger logger,
+        LogLevel level,
+        int? applicationEventId,
+        int fallbackEventId,
+        Exception? ex,
+        string message,
+        object[] args)
+    {
+        var eventId = CreateEventId(applicationEventId, fallbackEventId);
+        var safeArgs = args ?? Array.Empty<object>();
+
+        if (applicationEventId.HasValue && HasMorePlaceholdersThanArgs(message, safeArgs.Length))
+        {
+            var adjustedArgs = new object[safeArgs.Length + 1];
+            adjustedArgs[0] = applicationEventId.Value;
+            Array.Copy(safeArgs, 0, adjustedArgs, 1, safeArgs.Length);
+            logger.Log(level, eventId, ex, message, adjustedArgs);
+            return;
+        }
+
+        try
+        {
+            logger.Log(level, eventId, ex, message, safeArgs);
+        }
+        catch (Exception logException) when (IsFormatException(logException) && applicationEventId.HasValue)
+        {
+            // Backward compatibility: callers may have intended structured args, but overload
+            // resolution bound the first int argument to applicationEventId.
+            var adjustedArgs = new object[safeArgs.Length + 1];
+            adjustedArgs[0] = applicationEventId.Value;
+            Array.Copy(safeArgs, 0, adjustedArgs, 1, safeArgs.Length);
+
+            logger.Log(level, eventId, ex, message, adjustedArgs);
+        }
+    }
+
+    private static bool IsFormatException(Exception exception)
+    {
+        if (exception is FormatException)
+        {
+            return true;
+        }
+
+        if (exception is AggregateException aggregateException)
+        {
+            return aggregateException.Flatten().InnerExceptions.Any(IsFormatException);
+        }
+
+        if (exception.InnerException is not null)
+        {
+            return IsFormatException(exception.InnerException);
+        }
+
+        return false;
+    }
+
+    private static bool HasMorePlaceholdersThanArgs(string message, int argsCount)
+    {
+        if (string.IsNullOrEmpty(message))
+        {
+            return false;
+        }
+
+        var placeholders = 0;
+        for (var i = 0; i < message.Length; i++)
+        {
+            if (message[i] == '{')
+            {
+                // Skip escaped '{{'
+                if (i + 1 < message.Length && message[i + 1] == '{')
+                {
+                    i++;
+                    continue;
+                }
+
+                // Count only templated placeholders with a closing brace
+                var closeIndex = message.IndexOf('}', i + 1);
+                if (closeIndex > i + 1)
+                {
+                    placeholders++;
+                    i = closeIndex;
+                }
+            }
+        }
+
+        return placeholders > argsCount;
     }
 
 

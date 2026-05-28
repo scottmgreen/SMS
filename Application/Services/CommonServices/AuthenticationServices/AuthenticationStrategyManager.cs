@@ -40,17 +40,17 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
         // Build strategy dictionary
         _strategies = strategies.ToDictionary(s => s.Method, s => s);
         
-        _logger.LogInformation("?? AuthenticationStrategyManager initialized with {StrategyCount} strategies: {Strategies}", 
+        _logger.LogApplicationDebug("AuthenticationStrategyManager initialized with {StrategyCount} strategies: {Strategies}", 
             _strategies.Count, string.Join(", ", _strategies.Keys));
 
         // Log configuration
-        _logger.LogInformation("?? Authentication Configuration: {ConfigSummary}", _config.GetConfigurationSummary());
+        _logger.LogApplicationDebug("Authentication Configuration: {ConfigSummary}", _config.GetConfigurationSummary());
 
         // Subscribe to configuration changes
         _configOptions.OnChange(config =>
         {
             _config = config;
-            _logger.LogInformation("?? Authentication configuration updated: {ConfigSummary}", config.GetConfigurationSummary());
+            _logger.LogApplicationDebug("Authentication configuration updated: {ConfigSummary}", config.GetConfigurationSummary());
         });
     }
 
@@ -68,7 +68,7 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
     {
         try
         {
-            _logger.LogInformation("?? Storing user {UserCode} ({UserType}) using strategy chain", user.Code, userType.Value);
+            _logger.LogApplicationInformation("Storing user {UserCode} ({UserType}) using strategy chain", user.Code, userType.Value);
 
             // Try primary strategy first
             var primaryStrategy = GetStrategy(_config.PreferredMethod);
@@ -79,19 +79,19 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
                 {
                     if (_config.LogAuthenticationDecisions)
                     {
-                        _logger.LogInformation("? User {UserCode} stored successfully using primary strategy: {Strategy}", 
+                        _logger.LogApplicationInformation("User {UserCode} stored successfully using primary strategy: {Strategy}", 
                             user.Code, primaryStrategy.StrategyName);
                     }
                     return primaryResult;
                 }
                 else
                 {
-                    _logger.LogWarning("?? Primary strategy failed for user {UserCode}: {Error}", user.Code, primaryResult.Error?.Message);
+                    _logger.LogApplicationWarning("Primary strategy failed for user {UserCode}: {Error}", user.Code, primaryResult.Error?.Message);
                 }
             }
             else
             {
-                _logger.LogWarning("?? Primary strategy {Method} not available for user {UserCode}", _config.PreferredMethod, user.Code);
+                _logger.LogApplicationWarning("Primary strategy {Method} not available for user {UserCode}", _config.PreferredMethod, user.Code);
             }
 
             // Try fallback strategy if enabled
@@ -103,18 +103,18 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
                     var fallbackResult = await fallbackStrategy.StoreUserAsync(user, userType, cancellationToken);
                     if (fallbackResult.IsSuccess)
                     {
-                        _logger.LogInformation("? User {UserCode} stored successfully using fallback strategy: {Strategy}", 
+                        _logger.LogApplicationInformation("User {UserCode} stored successfully using fallback strategy: {Strategy}", 
                             user.Code, fallbackStrategy.StrategyName);
                         return fallbackResult;
                     }
                     else
                     {
-                        _logger.LogError("? Fallback strategy also failed for user {UserCode}: {Error}", user.Code, fallbackResult.Error?.Message);
+                        _logger.LogApplicationError("Fallback strategy also failed for user {UserCode}: {Error}", user.Code, fallbackResult.Error?.Message);
                     }
                 }
                 else
                 {
-                    _logger.LogWarning("?? Fallback strategy {Method} not available for user {UserCode}", _config.FallbackMethod, user.Code);
+                    _logger.LogApplicationWarning("Fallback strategy {Method} not available for user {UserCode}", _config.FallbackMethod, user.Code);
                 }
             }
 
@@ -122,7 +122,7 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
             if (_config.StrictMode)
             {
                 var error = "Authentication storage failed in strict mode - no fallback attempted";
-                _logger.LogError("? {Error} for user {UserCode}", error, user.Code);
+                _logger.LogApplicationError("{Error} for user {UserCode}", error, user.Code);
                 return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
@@ -137,23 +137,23 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
                     var lastResortResult = await strategy.StoreUserAsync(user, userType, cancellationToken);
                     if (lastResortResult.IsSuccess)
                     {
-                        _logger.LogWarning("?? User {UserCode} stored using last resort strategy: {Strategy}", 
+                        _logger.LogApplicationWarning("User {UserCode} stored using last resort strategy: {Strategy}", 
                             user.Code, strategy.StrategyName);
                         return lastResortResult;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogDebug(ex, "Last resort strategy {Strategy} failed for user {UserCode}", strategy.StrategyName, user.Code);
+                    _logger.LogApplicationDebug(ex, "Last resort strategy {Strategy} failed for user {UserCode}", strategy.StrategyName, user.Code);
                 }
             }
 
-            _logger.LogError("? All authentication strategies failed for user {UserCode}", user.Code);
+            _logger.LogApplicationError("All authentication strategies failed for user {UserCode}", user.Code);
             return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error in authentication strategy chain for user {UserCode}", user.Code);
+            _logger.LogApplicationError(ex, "Error in authentication strategy chain for user {UserCode}", user.Code);
             return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -165,7 +165,7 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
     {
         try
         {
-            _logger.LogDebug("?? Retrieving user using strategy chain");
+            _logger.LogApplicationDebug("Retrieving user using strategy chain");
 
             // Try primary strategy first
             var primaryStrategy = GetStrategy(_config.PreferredMethod);
@@ -176,7 +176,7 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
                 {
                     if (_config.LogAuthenticationDecisions)
                     {
-                        _logger.LogDebug("? User retrieved using primary strategy: {Strategy}", primaryStrategy.StrategyName);
+                        _logger.LogApplicationDebug("User retrieved using primary strategy: {Strategy}", primaryStrategy.StrategyName);
                     }
                     return primaryResult;
                 }
@@ -191,7 +191,7 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
                     var fallbackResult = await fallbackStrategy.RetrieveUserAsync(cancellationToken);
                     if (fallbackResult.IsSuccess && fallbackResult.Value.HasValue)
                     {
-                        _logger.LogDebug("? User retrieved using fallback strategy: {Strategy}", fallbackStrategy.StrategyName);
+                        _logger.LogApplicationDebug("User retrieved using fallback strategy: {Strategy}", fallbackStrategy.StrategyName);
                         return fallbackResult;
                     }
                 }
@@ -200,7 +200,7 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
             // If strict mode, return null here
             if (_config.StrictMode)
             {
-                _logger.LogDebug("?? No user found in strict mode - no additional fallback attempted");
+                _logger.LogApplicationDebug("No user found in strict mode - no additional fallback attempted");
                 return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
@@ -214,22 +214,22 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
                     var lastResortResult = await strategy.RetrieveUserAsync(cancellationToken);
                     if (lastResortResult.IsSuccess && lastResortResult.Value.HasValue)
                     {
-                        _logger.LogDebug("?? User retrieved using last resort strategy: {Strategy}", strategy.StrategyName);
+                        _logger.LogApplicationDebug("User retrieved using last resort strategy: {Strategy}", strategy.StrategyName);
                         return lastResortResult;
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogDebug(ex, "Last resort strategy {Strategy} failed during retrieval", strategy.StrategyName);
+                    _logger.LogApplicationDebug(ex, "Last resort strategy {Strategy} failed during retrieval", strategy.StrategyName);
                 }
             }
 
-            _logger.LogDebug("?? No authenticated user found in any strategy");
+            _logger.LogApplicationDebug("No authenticated user found in any strategy");
             return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error retrieving user from strategy chain");
+            _logger.LogApplicationError(ex, "Error retrieving user from strategy chain");
             return Result<(BaseUser, SMSUserType)?>.Success((ValueTuple<BaseUser, SMSUserType>?)null);
         }
     }
@@ -241,7 +241,7 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
     {
         try
         {
-            _logger.LogInformation("??? Clearing user from all authentication strategies");
+            _logger.LogApplicationInformation("??? Clearing user from all authentication strategies");
 
             var clearResults = new List<(string Strategy, bool Success, string? Error)>();
 
@@ -255,17 +255,17 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
                     
                     if (result.IsSuccess)
                     {
-                        _logger.LogDebug("? User cleared from strategy: {Strategy}", strategy.StrategyName);
+                        _logger.LogApplicationDebug("User cleared from strategy: {Strategy}", strategy.StrategyName);
                     }
                     else
                     {
-                        _logger.LogWarning("?? Failed to clear user from strategy {Strategy}: {Error}", 
+                        _logger.LogApplicationWarning("Failed to clear user from strategy {Strategy}: {Error}", 
                             strategy.StrategyName, result.Error?.Message);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "? Error clearing user from strategy: {Strategy}", strategy.StrategyName);
+                    _logger.LogApplicationError(ex, "Error clearing user from strategy: {Strategy}", strategy.StrategyName);
                     clearResults.Add((strategy.StrategyName, false, ex.Message));
                 }
             }
@@ -273,14 +273,14 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
             var successCount = clearResults.Count(r => r.Success);
             var totalCount = clearResults.Count;
 
-            _logger.LogInformation("? User clearing completed - Success: {Success}/{Total} strategies", successCount, totalCount);
+            _logger.LogApplicationInformation("User clearing completed - Success: {Success}/{Total} strategies", successCount, totalCount);
 
             // Return success if at least one strategy succeeded
             return Result<bool>.Success(successCount > 0);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error clearing user from authentication strategies");
+            _logger.LogApplicationError(ex, "Error clearing user from authentication strategies");
             return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -293,19 +293,19 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
     {
         try
         {
-            _logger.LogDebug("?? IsUserAuthenticatedAsync - Starting strategy chain check");
+            _logger.LogApplicationDebug("IsUserAuthenticatedAsync - Starting strategy chain check");
             
             // Check primary strategy first
             var primaryStrategy = GetStrategy(_config.PreferredMethod);
-            _logger.LogDebug("?? Primary strategy ({Method}): Available={IsAvailable}", _config.PreferredMethod, primaryStrategy?.IsAvailable);
+            _logger.LogApplicationDebug("Primary strategy ({Method}): Available={IsAvailable}", _config.PreferredMethod, primaryStrategy?.IsAvailable);
             
             if (primaryStrategy?.IsAvailable == true)
             {
                 var primaryResult = await primaryStrategy.IsUserAuthenticatedAsync(cancellationToken);
-                _logger.LogDebug("?? Primary strategy result: {Result}", primaryResult);
+                _logger.LogApplicationDebug("Primary strategy result: {Result}", primaryResult);
                 if (primaryResult)
                 {
-                    _logger.LogDebug("?? User authenticated via primary strategy: {Strategy}", primaryStrategy.StrategyName);
+                    _logger.LogApplicationDebug("User authenticated via primary strategy: {Strategy}", primaryStrategy.StrategyName);
                     return true;
                 }
             }
@@ -314,15 +314,15 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
             if (_config.EnableFallbackChain)
             {
                 var fallbackStrategy = GetStrategy(_config.FallbackMethod);
-                _logger.LogDebug("?? Fallback strategy ({Method}): Available={IsAvailable}", _config.FallbackMethod, fallbackStrategy?.IsAvailable);
+                _logger.LogApplicationDebug("Fallback strategy ({Method}): Available={IsAvailable}", _config.FallbackMethod, fallbackStrategy?.IsAvailable);
                 
                 if (fallbackStrategy?.IsAvailable == true)
                 {
                     var fallbackResult = await fallbackStrategy.IsUserAuthenticatedAsync(cancellationToken);
-                    _logger.LogDebug("?? Fallback strategy result: {Result}", fallbackResult);
+                    _logger.LogApplicationDebug("Fallback strategy result: {Result}", fallbackResult);
                     if (fallbackResult)
                     {
-                        _logger.LogDebug("?? User authenticated via fallback strategy: {Strategy}", fallbackStrategy.StrategyName);
+                        _logger.LogApplicationDebug("User authenticated via fallback strategy: {Strategy}", fallbackStrategy.StrategyName);
                         return true;
                     }
                 }
@@ -331,33 +331,33 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
             // If not in strict mode, check other strategies
             if (!_config.StrictMode)
             {
-                _logger.LogDebug("?? Checking other strategies (not strict mode)");
+                _logger.LogApplicationDebug("Checking other strategies (not strict mode)");
                 foreach (var strategy in _strategies.Values.Where(s => s.IsAvailable && 
                     s.Method != _config.PreferredMethod && s.Method != _config.FallbackMethod))
                 {
                     try
                     {
                         var otherResult = await strategy.IsUserAuthenticatedAsync(cancellationToken);
-                        _logger.LogDebug("?? Other strategy {Strategy} result: {Result}", strategy.StrategyName, otherResult);
+                        _logger.LogApplicationDebug("Other strategy {Strategy} result: {Result}", strategy.StrategyName, otherResult);
                         if (otherResult)
                         {
-                            _logger.LogDebug("?? User authenticated via other strategy: {Strategy}", strategy.StrategyName);
+                            _logger.LogApplicationDebug("User authenticated via other strategy: {Strategy}", strategy.StrategyName);
                             return true;
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "Error checking authentication in strategy {Strategy}", strategy.StrategyName);
+                        _logger.LogApplicationWarning(ex, "Error checking authentication in strategy {Strategy}", strategy.StrategyName);
                     }
                 }
             }
 
-            _logger.LogDebug("?? No authentication found in any strategy");
+            _logger.LogApplicationDebug("No authentication found in any strategy");
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? Error checking authentication status");
+            _logger.LogApplicationError(ex, "Error checking authentication status");
             return false;
         }
     }
@@ -475,7 +475,7 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Error validating strategy {Strategy}", strategy.StrategyName);
+                _logger.LogApplicationDebug(ex, "Error validating strategy {Strategy}", strategy.StrategyName);
                 results[strategy.Method] = false;
             }
         }
@@ -489,6 +489,7 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
     public void RefreshConfiguration()
     {
         _config = _configOptions.CurrentValue;
-        _logger.LogInformation("?? Authentication configuration refreshed: {ConfigSummary}", _config.GetConfigurationSummary());
+        _logger.LogApplicationInformation("Authentication configuration refreshed: {ConfigSummary}", _config.GetConfigurationSummary());
     }
 }
+

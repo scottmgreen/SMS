@@ -4,8 +4,8 @@
 @using SMS3.Components.Pages.SMSRiskManagement.Models
 @using SMS3.Components.Shared.UIHelpers
 @using SMS_Application.Interfaces
-@using SMS_Application.Messaging.Commands
-@using SMS_Application.Messaging.Queries
+@using SMS_Application.Commands
+@using SMS_Application.Queries
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 @using SMS_Domain.ValueObjects
@@ -356,7 +356,7 @@
     [Parameter] public EventCallback<string> OnMitigationUpdated { get; set; }
     [Parameter] public EventCallback<string> OnResidualHazardScored { get; set; } // ✅ NEW: For residual scoring callbacks
 
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
 
     // State properties
@@ -855,7 +855,7 @@
                 
                 // Update audit fields
                 currentHazard.UpdatedDate = DateTime.UtcNow;
-                currentHazard.UpdatedBy = CurrentUserService.UserCode;  // You might want to get the current user
+                currentHazard.UpdatedBy = _currentUserService.UserCode;  // You might want to get the current user
 
                 // Save hazard using CQRS UpdateHazardCommand
                 var updateHazardCommand = new UpdateHazardCommand(currentHazard);

@@ -7,10 +7,8 @@
 // </copyright>
 //-------------------------------------------------------------------------------
 
-using SMS_Application.Messaging.Pipelines;
+using SMS_Application.Pipelines;
 using SMS_Application.Interfaces;
-using Application.Interfaces.CommonInterfaces;
-
 namespace SMS_Application.Configuration;
 
 /// <summary>

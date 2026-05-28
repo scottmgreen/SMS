@@ -23,7 +23,7 @@ using Microsoft.Extensions.Logging;
 using System.Text.Json;
 using System.Reflection;
 
-namespace Application.Services.EventBusServices;
+namespace SMS_Application.Services;
 
 /// <summary>
 /// Service for managing queued events and manual execution
@@ -69,14 +69,14 @@ public class EventQueueService : IEventQueueService
 
             var queuedEvent = result.Value;
 
-            _logger.LogInformation("Queued domain event {EventType} with ID {EventId} (Queue ID: {QueueId})",
+            _logger.LogApplicationInformation("Queued domain event {EventType} with ID {EventId} (Queue ID: {QueueId})",
                 domainEvent.EventType, domainEvent.EventId, queuedEvent.Id);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to queue domain event {EventType}", typeof(T).Name);
+            _logger.LogApplicationError(ex, "Failed to queue domain event {EventType}", typeof(T).Name);
             return Result.Failure(new Error("QUEUE_DOMAIN_FAILED", $"Failed to queue domain event: {ex.Message}"));
         }
     }
@@ -101,14 +101,14 @@ public class EventQueueService : IEventQueueService
 
             var queuedEvent = result.Value;
 
-            _logger.LogInformation("Queued integration event {EventType} for {TargetSystem} (Queue ID: {QueueId})",
+            _logger.LogApplicationInformation("Queued integration event {EventType} for {TargetSystem} (Queue ID: {QueueId})",
                 integrationEvent.EventType, integrationEvent.TargetSystem, queuedEvent.Id);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to queue integration event {EventType}", typeof(T).Name);
+            _logger.LogApplicationError(ex, "Failed to queue integration event {EventType}", typeof(T).Name);
             return Result.Failure(new Error("QUEUE_INTEGRATION_FAILED", $"Failed to queue integration event: {ex.Message}"));
         }
     }
@@ -133,14 +133,14 @@ public class EventQueueService : IEventQueueService
 
             var queuedEvent = result.Value;
 
-            _logger.LogInformation("Queued UI event {EventType} for {TargetComponent} (Queue ID: {QueueId})",
+            _logger.LogApplicationInformation("Queued UI event {EventType} for {TargetComponent} (Queue ID: {QueueId})",
                 uiEvent.EventType, uiEvent.TargetComponent, queuedEvent.Id);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to queue UI event {EventType}", typeof(T).Name);
+            _logger.LogApplicationError(ex, "Failed to queue UI event {EventType}", typeof(T).Name);
             return Result.Failure(new Error("QUEUE_UI_FAILED", $"Failed to queue UI event: {ex.Message}"));
         }
     }
@@ -218,14 +218,14 @@ public class EventQueueService : IEventQueueService
 
             var filtered = events.ToList();
 
-            _logger.LogDebug("Retrieved {EventCount} queued events (Status: {Status}, Type: {EventType})",
+            _logger.LogApplicationDebug("Retrieved {EventCount} queued events (Status: {Status}, Type: {EventType})",
                 filtered.Count, status, eventType);
 
             return Result.Success<IEnumerable<QueuedEvent>>(filtered);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve queued events");
+            _logger.LogApplicationError(ex, "Failed to retrieve queued events");
             return Result.Failure<IEnumerable<QueuedEvent>>(new Error("QUEUE_RETRIEVE_FAILED", $"Failed to retrieve events: {ex.Message}"));
         }
     }
@@ -241,7 +241,7 @@ public class EventQueueService : IEventQueueService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve queued event {EventId}", eventId);
+            _logger.LogApplicationError(ex, "Failed to retrieve queued event {EventId}", eventId);
             return Result.Failure<QueuedEvent>(new Error("QUEUE_RETRIEVE_EVENT_FAILED", $"Failed to retrieve event: {ex.Message}"));
         }
     }
@@ -274,7 +274,7 @@ public class EventQueueService : IEventQueueService
                 return Result.Failure(new Error("QUEUE_LEASE_FAILED", $"Failed to lease event {eventId} for processing."));
             }
 
-            _logger.LogInformation("Executing queued event {EventType} (Queue ID: {QueueId}) by {ExecutedBy}",
+            _logger.LogApplicationInformation("Executing queued event {EventType} (Queue ID: {QueueId}) by {ExecutedBy}",
                 queuedEvent.EventType, eventId, executedBy ?? "System");
 
             Result executionResult;
@@ -308,7 +308,7 @@ public class EventQueueService : IEventQueueService
                     return Result.Failure(new Error("QUEUE_MARK_PROCESSED_FAILED", $"Event {eventId} executed but could not be marked as processed."));
                 }
 
-                _logger.LogInformation("Successfully executed queued event {EventType} (Queue ID: {QueueId})",
+                _logger.LogApplicationInformation("Successfully executed queued event {EventType} (Queue ID: {QueueId})",
                     queuedEvent.EventType, eventId);
             }
             else
@@ -316,10 +316,10 @@ public class EventQueueService : IEventQueueService
                 var markFailedResult = await _eventQueueDataService.MarkFailedAsync(eventId, worker, executionResult.Error.Message);
                 if (markFailedResult.IsFailure || !markFailedResult.Value)
                 {
-                    _logger.LogWarning("Event execution failed and status update to failed did not persist for Queue ID: {QueueId}", eventId);
+                    _logger.LogApplicationWarning("Event execution failed and status update to failed did not persist for Queue ID: {QueueId}", eventId);
                 }
 
-                _logger.LogWarning("Failed to execute queued event {EventType} (Queue ID: {QueueId}): {Error}",
+                _logger.LogApplicationWarning("Failed to execute queued event {EventType} (Queue ID: {QueueId}): {Error}",
                     queuedEvent.EventType, eventId, executionResult.Error.Message);
             }
 
@@ -327,7 +327,7 @@ public class EventQueueService : IEventQueueService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to execute queued event {EventId}", eventId);
+            _logger.LogApplicationError(ex, "Failed to execute queued event {EventId}", eventId);
 
             await _eventQueueDataService.MarkFailedAsync(eventId, "EventQueueService", ex.Message);
 
@@ -354,7 +354,7 @@ public class EventQueueService : IEventQueueService
                 .ThenBy(e => e.QueuedAt)
                 .ToList();
 
-            _logger.LogInformation("Executing {EventCount} pending events (Type: {EventType}) by {ExecutedBy}",
+            _logger.LogApplicationInformation("Executing {EventCount} pending events (Type: {EventType}) by {ExecutedBy}",
                 pendingEvents.Count, eventType, executedBy ?? "System");
 
             int successCount = 0;
@@ -376,16 +376,16 @@ public class EventQueueService : IEventQueueService
             if (errors.Any())
             {
                 var errorMessage = $"Executed {successCount}/{pendingEvents.Count} events successfully. Errors: {string.Join("; ", errors)}";
-                _logger.LogWarning(errorMessage);
+                _logger.LogApplicationWarning(errorMessage);
                 return Result.Failure<int>(new Error("QUEUE_BATCH_PARTIAL_FAILURE", errorMessage));
             }
 
-            _logger.LogInformation("Successfully executed all {EventCount} pending events", successCount);
+            _logger.LogApplicationInformation("Successfully executed all {EventCount} pending events", successCount);
             return Result.Success(successCount);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to execute pending events");
+            _logger.LogApplicationError(ex, "Failed to execute pending events");
             return Result.Failure<int>(new Error("QUEUE_BATCH_EXECUTE_FAILED", $"Failed to execute pending events: {ex.Message}"));
         }
     }
@@ -416,14 +416,14 @@ public class EventQueueService : IEventQueueService
                 return Result.Failure(new Error("QUEUE_CANCEL_FAILED", $"Failed to cancel event {eventId}"));
             }
 
-            _logger.LogInformation("Cancelled queued event {EventType} (Queue ID: {QueueId}) by {CancelledBy}",
+            _logger.LogApplicationInformation("Cancelled queued event {EventType} (Queue ID: {QueueId}) by {CancelledBy}",
                 queuedEvent.EventType, eventId, cancelledBy ?? "System");
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to cancel queued event {EventId}", eventId);
+            _logger.LogApplicationError(ex, "Failed to cancel queued event {EventId}", eventId);
             return Result.Failure(new Error("QUEUE_CANCEL_FAILED", $"Failed to cancel event: {ex.Message}"));
         }
     }
@@ -443,12 +443,12 @@ public class EventQueueService : IEventQueueService
 
             var removedCount = clearResult.Value;
 
-            _logger.LogInformation("Cleared {RemovedCount} completed events from queue", removedCount);
+            _logger.LogApplicationInformation("Cleared {RemovedCount} completed events from queue", removedCount);
             return Result.Success(removedCount);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to clear completed events");
+            _logger.LogApplicationError(ex, "Failed to clear completed events");
             return Result.Failure<int>(new Error("QUEUE_CLEAR_FAILED", $"Failed to clear events: {ex.Message}"));
         }
     }
@@ -470,7 +470,7 @@ public class EventQueueService : IEventQueueService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to get queue statistics");
+            _logger.LogApplicationError(ex, "Failed to get queue statistics");
             return Result.Failure<QueueStatistics>(new Error("QUEUE_STATS_FAILED", $"Failed to get statistics: {ex.Message}"));
         }
     }
@@ -501,7 +501,7 @@ public class EventQueueService : IEventQueueService
     {
         try
         {
-            _logger.LogInformation("[QUEUE] Executing domain event {EventType} (Queue ID: {QueueId})", queuedEvent.EventType, queuedEvent.Id);
+            _logger.LogApplicationInformation("[QUEUE] Executing domain event {EventType} (Queue ID: {QueueId})", queuedEvent.EventType, queuedEvent.Id);
 
             if (!DomainEventTypeMap.TryGetValue(queuedEvent.EventType, out var eventType))
             {
@@ -533,7 +533,7 @@ public class EventQueueService : IEventQueueService
 
             if (executionResult.IsFailure)
             {
-                _logger.LogError("[QUEUE] Failed to execute domain event {EventType}: {Error}", queuedEvent.EventType, executionResult.Error.Message);
+                _logger.LogApplicationError("[QUEUE] Failed to execute domain event {EventType}: {Error}", queuedEvent.EventType, executionResult.Error.Message);
             }
             
 
@@ -541,7 +541,7 @@ public class EventQueueService : IEventQueueService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[QUEUE] Exception executing domain event {EventType}", queuedEvent.EventType);
+            _logger.LogApplicationError(ex, "[QUEUE] Exception executing domain event {EventType}", queuedEvent.EventType);
             return Result.Failure(new Error("DOMAIN_EVENT_EXECUTION_FAILED", $"Failed to execute domain event: {ex.Message}"));
         }
     }
@@ -553,7 +553,7 @@ public class EventQueueService : IEventQueueService
 
         if (isDomainEvent && !hasParameterlessConstructor)
         {
-            _logger.LogDebug("[QUEUE] Using constructor fallback deserialization for {EventType}", eventType.Name);
+            _logger.LogApplicationDebug("[QUEUE] Using constructor fallback deserialization for {EventType}", eventType.Name);
             return DeserializeWithIdCtorFallback(eventData, eventType);
         }
 
@@ -563,7 +563,7 @@ public class EventQueueService : IEventQueueService
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "[QUEUE] Standard deserialization failed for {EventType}. Attempting fallback construction.", eventType.Name);
+            _logger.LogApplicationDebug(ex, "[QUEUE] Standard deserialization failed for {EventType}. Attempting fallback construction.", eventType.Name);
             return DeserializeWithIdCtorFallback(eventData, eventType);
         }
     }
@@ -584,7 +584,7 @@ public class EventQueueService : IEventQueueService
 
         if (ctor == null)
         {
-            _logger.LogWarning("[QUEUE] No compatible constructor found for fallback on {EventType}", eventType.Name);
+            _logger.LogApplicationWarning("[QUEUE] No compatible constructor found for fallback on {EventType}", eventType.Name);
             return null;
         }
 
@@ -731,14 +731,14 @@ public class EventQueueService : IEventQueueService
 
             if (executionResult.IsFailure)
             {
-                _logger.LogError("[QUEUE] Failed to execute integration event {EventType}: {Error}", queuedEvent.EventType, executionResult.Error.Message);
+                _logger.LogApplicationError("[QUEUE] Failed to execute integration event {EventType}: {Error}", queuedEvent.EventType, executionResult.Error.Message);
             }
             
             return executionResult;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[QUEUE] Exception executing integration event {EventType}", queuedEvent.EventType);
+            _logger.LogApplicationError(ex, "[QUEUE] Exception executing integration event {EventType}", queuedEvent.EventType);
             return Result.Failure(new Error("INTEGRATION_EVENT_EXECUTION_FAILED", $"Failed to execute integration event: {ex.Message}"));
         }
     }
@@ -768,14 +768,14 @@ public class EventQueueService : IEventQueueService
 
             if (executionResult.IsFailure)
             {
-                _logger.LogError("[QUEUE] Failed to execute UI event {EventType}: {Error}", queuedEvent.EventType, executionResult.Error.Message);
+                _logger.LogApplicationError("[QUEUE] Failed to execute UI event {EventType}: {Error}", queuedEvent.EventType, executionResult.Error.Message);
             }
 
             return executionResult;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[QUEUE] Exception executing UI event {EventType}", queuedEvent.EventType);
+            _logger.LogApplicationError(ex, "[QUEUE] Exception executing UI event {EventType}", queuedEvent.EventType);
             return Result.Failure(new Error("UI_EVENT_EXECUTION_FAILED", $"Failed to execute UI event: {ex.Message}"));
         }
     }
@@ -800,15 +800,16 @@ public class EventQueueService : IEventQueueService
 
             var totalCount = clearResult.Value;
 
-            _logger.LogWarning("Cleared ALL {Count} events from queue - Complete reset", totalCount);
+            _logger.LogApplicationWarning("Cleared ALL {Count} events from queue - Complete reset", totalCount);
             return Result<int>.Success(totalCount);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to clear all events from queue");
+            _logger.LogApplicationError(ex, "Failed to clear all events from queue");
             return Result<int>.Failure<int>(new Error("CLEAR_ALL_FAILED", $"Failed to clear all events: {ex.Message}"));
         }
     }
 
     #endregion
 }
+

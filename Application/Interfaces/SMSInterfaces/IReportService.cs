@@ -10,7 +10,7 @@
 
 using SMS_Domain.Entities;
 
-namespace Application.Interfaces;
+namespace SMS_Application.Interfaces;
 
 public interface IReportService
 {

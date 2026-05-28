@@ -12,9 +12,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.FeatureManagement;
 using SMS_Application.Interfaces;
 using SMS_Application.Common;
-using Application.Interfaces.CommonInterfaces;
 
-namespace SMS_Application.Messaging.Pipelines;
+
+namespace SMS_Application.Pipelines;
 
 /// <summary>
 /// Pipeline behavior that audits all query operations implementing IReadQuery
@@ -62,7 +62,7 @@ public class QueryAuditPipeline<TRequest, TResult> : IBasePipeline<TRequest, TRe
             var resourceIdentifier = EntityInformationExtractor.GetResourceIdentifier(request);
             var accessType = EntityInformationExtractor.GetActionType(request);
             
-            _logger.LogDebug("?? Query Audit: Processing read query {QueryType} by user {UserId}", 
+            _logger.LogApplicationDebug("Query Audit: Processing read query {QueryType} by user {UserId}", 
                 queryType, currentUserId);
 
             try
@@ -80,7 +80,7 @@ public class QueryAuditPipeline<TRequest, TResult> : IBasePipeline<TRequest, TRe
                         accessType,
                         cancellationToken);
 
-                    _logger.LogDebug("? Query Audit: Successfully audited {QueryType} access by {UserId}", 
+                    _logger.LogApplicationDebug("Query Audit: Successfully audited {QueryType} access by {UserId}", 
                         queryType, currentUserId);
                 }
                 else
@@ -94,7 +94,7 @@ public class QueryAuditPipeline<TRequest, TResult> : IBasePipeline<TRequest, TRe
                         $"Query failed: {result.Error?.Message}",
                         cancellationToken);
 
-                    _logger.LogWarning("?? Query Audit: Logged failed query {QueryType} by {UserId}", 
+                    _logger.LogApplicationWarning("Query Audit: Logged failed query {QueryType} by {UserId}", 
                         queryType, currentUserId);
                 }
 
@@ -111,7 +111,7 @@ public class QueryAuditPipeline<TRequest, TResult> : IBasePipeline<TRequest, TRe
                     $"Query exception: {ex.Message}",
                     cancellationToken);
 
-                _logger.LogError(ex, "? Query Audit: Logged query exception for {QueryType} by {UserId}", 
+                _logger.LogApplicationError(ex, "Query Audit: Logged query exception for {QueryType} by {UserId}", 
                     queryType, currentUserId);
 
                 throw; // Re-throw the original exception
@@ -120,9 +120,10 @@ public class QueryAuditPipeline<TRequest, TResult> : IBasePipeline<TRequest, TRe
         else
         {
             // Query auditing disabled or not a read query - just execute without audit logging
-            _logger.LogTrace("?? Query Audit: Skipping audit - Feature: {Enabled}, IsReadQuery: {IsRead}", 
+            _logger.LogApplicationTrace("Query Audit: Skipping audit - Feature: {Enabled}, IsReadQuery: {IsRead}", 
                 isQueryAuditEnabled, EntityInformationExtractor.IsReadQuery(request));
             return await next().ConfigureAwait(false);
         }
     }
 }
+

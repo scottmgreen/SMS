@@ -10,7 +10,7 @@
 using SMS_Application.Interfaces;
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.Commands;
+namespace SMS_Application.Commands;
 
 /// <summary>
 /// Test command to verify pipeline execution
@@ -55,8 +55,8 @@ public class TestPipelineCommandHandler : BaseCommandBundle, IBaseRequestHandler
     {
         try
         {
-            _logger.LogInformation("? Clean Architecture: TestPipelineCommandHandler executing with message: {Message}", request.TestMessage);
-            _logger.LogInformation("? Clean Architecture: Audit fields set - CreatedBy: {CreatedBy}, CreatedDate: {CreatedDate}", 
+            _logger.LogApplicationInformation("Clean Architecture: TestPipelineCommandHandler executing with message: {Message}", request.TestMessage);
+            _logger.LogApplicationInformation("Clean Architecture: Audit fields set - CreatedBy: {CreatedBy}, CreatedDate: {CreatedDate}", 
                 request.CreatedByTest, request.CreatedDateTest);
 
             // Simulate some work
@@ -64,14 +64,15 @@ public class TestPipelineCommandHandler : BaseCommandBundle, IBaseRequestHandler
 
             var result = $"Pipeline test successful! Message: {request.TestMessage}, CreatedBy: {request.CreatedByTest}, CreatedDate: {request.CreatedDateTest:yyyy-MM-dd HH:mm:ss}";
             
-            _logger.LogInformation("? Clean Architecture: TestPipelineCommandHandler completed successfully");
+            _logger.LogApplicationInformation("Clean Architecture: TestPipelineCommandHandler completed successfully");
             
             return Result<string>.Success(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error in TestPipelineCommandHandler");
+            _logger.LogApplicationError(ex, "Error in TestPipelineCommandHandler");
             return Result<string>.Failure<string>(new Error("TEST_ERROR", ex.Message));
         }
     }
 }
+

@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 using Microsoft.Extensions.Logging;
 using Radzen;
 using Radzen.Blazor;

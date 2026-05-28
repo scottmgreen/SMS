@@ -7,7 +7,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace SMS_Application.Messaging.Queries;
+namespace SMS_Application.Queries;
 
 /// <summary>
 /// Handler for retrieving comprehensive SPI dashboard data
@@ -29,14 +29,14 @@ public class GetSPIDashboardDataQueryHandler : IBaseRequestHandler<GetSPIDashboa
     {
         try
         {
-            _logger.LogInformation("?? SPI Dashboard: Loading dashboard data for period {StartDate} to {EndDate}", 
+            _logger.LogApplicationInformation("SPI Dashboard: Loading dashboard data for period {StartDate} to {EndDate}", 
                 query.StartDate, query.EndDate);
 
             // Get all SPIs
             var spiResult = await _spiService.GetAllSafetyPerformanceIndicatorsAsync(cancellationToken);
             if (spiResult.IsFailure)
             {
-                _logger.LogError("? SPI Dashboard: Failed to load SPIs - {Error}", spiResult.Error?.Message);
+                _logger.LogApplicationError("SPI Dashboard: Failed to load SPIs - {Error}", spiResult.Error?.Message);
                 return Result<SPIDashboard>.Failure<SPIDashboard>(spiResult.Error);
             }
 
@@ -69,14 +69,14 @@ public class GetSPIDashboardDataQueryHandler : IBaseRequestHandler<GetSPIDashboa
                 dashboardData.ActiveAlerts = BuildActiveAlerts(dashboardData.SPICards);
             }
 
-            _logger.LogInformation("? SPI Dashboard: Successfully loaded dashboard data - {TotalSPIs} SPIs, {ActiveSPIs} active, {Alerts} alerts",
+            _logger.LogApplicationInformation("SPI Dashboard: Successfully loaded dashboard data - {TotalSPIs} SPIs, {ActiveSPIs} active, {Alerts} alerts",
                 dashboardData.TotalSPIs, dashboardData.ActiveSPIs, dashboardData.ActiveAlerts.Count);
 
             return Result<SPIDashboard>.Success(dashboardData);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? SPI Dashboard: Error loading dashboard data");
+            _logger.LogApplicationError(ex, "SPI Dashboard: Error loading dashboard data");
             return Result<SPIDashboard>.Failure<SPIDashboard>(DomainErrors.SPIError.DataValidationFailed);
         }
     }
@@ -155,7 +155,7 @@ public class GetSPIDashboardDataQueryHandler : IBaseRequestHandler<GetSPIDashboa
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "?? SPI Dashboard: Error building card for SPI {SPIId}", spi.Code);
+                _logger.LogApplicationWarning(ex, "SPI Dashboard: Error building card for SPI {SPIId}", spi.Code);
             }
         }
 
@@ -361,3 +361,4 @@ public class GetSPIDashboardDataQueryHandler : IBaseRequestHandler<GetSPIDashboa
 
     #endregion
 }
+

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="InterviewStatus.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -31,7 +31,7 @@ public abstract class InterviewStatus : BaseEnum<InterviewStatus>
     public bool AllowsModification { get; }
     public int WorkflowOrder { get; }
 
-    #region ✅ APPROVED FINAL INTERVIEW STATUS VALUES FROM StatusList.txt
+    #region APPROVED FINAL INTERVIEW STATUS VALUES FROM StatusList.txt
 
     /// <summary>Interviewee has been identified for the interview</summary>
     public static readonly InterviewStatus IntervieweeIdentified = new IntervieweeIdentifiedStatus();
@@ -118,3 +118,4 @@ public abstract class InterviewStatus : BaseEnum<InterviewStatus>
             .OrderBy(ins => ins.WorkflowOrder);
     }
 }
+

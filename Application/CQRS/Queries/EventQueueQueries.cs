@@ -10,7 +10,7 @@
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Enums;
 
-namespace SMS_Application.Messaging.Queries;
+namespace SMS_Application.Queries;
 
 public class GetQueuedEventsQuery : BaseQueryBundle, IRequest<Result<IEnumerable<QueuedEvent>>>, IReadQuery
 {

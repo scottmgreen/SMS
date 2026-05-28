@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditPlan.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -66,7 +66,7 @@ public class SMSAuditPlan : BaseAuditableEntity
     // Navigation Properties
     public List<SMSAudit> AuditCalendarEntries { get; set; }
 
-    // Business Methods - ✅ PIPELINE APPROACH: Removed manual audit field setting
+    // Business Methods - PIPELINE APPROACH: Removed manual audit field setting
     public Result ScheduleAudit(DateTime scheduledDate, string scheduledBy)
     {
         try
@@ -156,3 +156,4 @@ public class SMSAuditPlan : BaseAuditableEntity
         return Status != "Completed";
     }
 }
+

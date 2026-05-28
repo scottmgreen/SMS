@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -39,23 +39,23 @@ public sealed class HazardService : IHazardService
     {
         try
         {
-            _logger.LogInformation("Creating hazard with code: {Code}", hazard?.Code);
+            _logger.LogApplicationInformation("Creating hazard with code: {Code}", hazard?.Code);
             var result = await _dataService.CreateHazardAsync(hazard, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created hazard with ID: {Id}", result.Value?.Id);
+                _logger.LogApplicationInformation("Successfully created hazard with ID: {Id}", result.Value?.Id);
             }
             else
             {
-                _logger.LogError("Failed to create hazard. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create hazard. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating hazard");
+            _logger.LogApplicationError(ex, "Unexpected error creating hazard");
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.CreateFailed);
         }
     }
@@ -64,12 +64,12 @@ public sealed class HazardService : IHazardService
     {
         try
         {
-            _logger.LogInformation("Retrieving hazard with ID: {Id}", id);
+            _logger.LogApplicationInformation("Retrieving hazard with ID: {Id}", id);
             return await _dataService.GetHazardByCodeAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazard with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving hazard with ID: {Id}", id);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NotFound);
         }
     }
@@ -78,12 +78,12 @@ public sealed class HazardService : IHazardService
     {
         try
         {
-            _logger.LogInformation("Retrieving hazard with Code: {Code}", code);
+            _logger.LogApplicationInformation("Retrieving hazard with Code: {Code}", code);
             return await _dataService.GetHazardByCodeAsync(new HazardID(code), ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazard with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving hazard with Code: {Code}", code);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NotFound);
         }
     }
@@ -92,12 +92,12 @@ public sealed class HazardService : IHazardService
     {
         try
         {
-            _logger.LogInformation("Retrieving all hazards");
+            _logger.LogApplicationInformation("Retrieving all hazards");
             return await _dataService.GetAllHazardsAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all hazards");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all hazards");
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
         }
     }
@@ -106,23 +106,23 @@ public sealed class HazardService : IHazardService
     {
         try
         {
-            _logger.LogInformation("Updating hazard with ID: {Id}", hazard?.Id);
+            _logger.LogApplicationInformation("Updating hazard with ID: {Id}", hazard?.Id);
             var result = await _dataService.UpdateHazardAsync(hazard, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated hazard with ID: {Id}", hazard?.Id);
+                _logger.LogApplicationInformation("Successfully updated hazard with ID: {Id}", hazard?.Id);
             }
             else
             {
-                _logger.LogError("Failed to update hazard. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update hazard. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating hazard with ID: {Id}", hazard?.Id);
+            _logger.LogApplicationError(ex, "Unexpected error updating hazard with ID: {Id}", hazard?.Id);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.UpdateFailed);
         }
     }
@@ -131,23 +131,23 @@ public sealed class HazardService : IHazardService
     {
         try
         {
-            _logger.LogInformation("Deleting hazard with ID: {Id}", id);
+            _logger.LogApplicationInformation("Deleting hazard with ID: {Id}", id);
             var result = await _dataService.DeleteHazardAsync(id, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted hazard with ID: {Id}", id);
+                _logger.LogApplicationInformation("Successfully deleted hazard with ID: {Id}", id);
             }
             else
             {
-                _logger.LogError("Failed to delete hazard. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete hazard. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting hazard with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error deleting hazard with ID: {Id}", id);
             return Result<bool>.Failure<bool>(DomainErrors.HazardError.DeleteFailed);
         }
     }
@@ -156,12 +156,12 @@ public sealed class HazardService : IHazardService
     {
         try
         {
-            _logger.LogInformation("Retrieving hazards for report code: {ReportCode}", reportCode);
+            _logger.LogApplicationInformation("Retrieving hazards for report code: {ReportCode}", reportCode);
             return await _dataService.GetHazardsByReportCodeAsync(new ReportID(reportCode), ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazards for report code: {ReportCode}", reportCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving hazards for report code: {ReportCode}", reportCode);
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
         }
     }
@@ -174,12 +174,12 @@ public sealed class HazardService : IHazardService
     {
         try
         {
-            _logger.LogInformation("Retrieving hazard with Code: {Id}", code);
+            _logger.LogApplicationInformation("Retrieving hazard with Code: {Id}", code);
             return await _dataService.GetHazardByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazard with Code: {Id}", code);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving hazard with Code: {Id}", code);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NotFound);
         }
     }
@@ -192,7 +192,7 @@ public sealed class HazardService : IHazardService
     {
         try
         {
-            _logger.LogInformation("Retrieving hazard with location data for ID: {Id}", id);
+            _logger.LogApplicationInformation("Retrieving hazard with location data for ID: {Id}", id);
 
             // First get the basic hazard
             var hazardResult = await _dataService.GetHazardByCodeAsync(id, ct).ConfigureAwait(false);
@@ -206,12 +206,12 @@ public sealed class HazardService : IHazardService
             // Then populate the complex HazardLocation entity
             await PopulateHazardLocationAsync(hazard, ct);
 
-            _logger.LogInformation("Successfully retrieved hazard with location data for ID: {Id}", id);
+            _logger.LogApplicationInformation("Successfully retrieved hazard with location data for ID: {Id}", id);
             return Result<Hazard>.Success(hazard);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazard with location for ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving hazard with location for ID: {Id}", id);
             return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NotFound);
         }
     }
@@ -220,12 +220,12 @@ public sealed class HazardService : IHazardService
     {
         try
         {
-            _logger.LogInformation("Retrieving hazards for report ID: {ReportId}", reportId);
+            _logger.LogApplicationInformation("Retrieving hazards for report ID: {ReportId}", reportId);
             return await _dataService.GetHazardsByReportCodeAsync(reportId, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazards for report ID: {ReportId}", reportId);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving hazards for report ID: {ReportId}", reportId);
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
         }
     }
@@ -238,7 +238,7 @@ public sealed class HazardService : IHazardService
     {
         try
         {
-            _logger.LogInformation("Retrieving all hazards with location data");
+            _logger.LogApplicationInformation("Retrieving all hazards with location data");
 
             // First get all basic hazards
             var hazardsResult = await _dataService.GetAllHazardsAsync(ct).ConfigureAwait(false);
@@ -253,12 +253,12 @@ public sealed class HazardService : IHazardService
             var tasks = hazards.Select(hazard => PopulateHazardLocationAsync(hazard, ct));
             await Task.WhenAll(tasks);
 
-            _logger.LogInformation("Successfully retrieved {Count} hazards with location data", hazards.Count);
+            _logger.LogApplicationInformation("Successfully retrieved {Count} hazards with location data", hazards.Count);
             return Result<List<Hazard>>.Success(hazards);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all hazards with location");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all hazards with location");
             return Result<List<Hazard>>.Failure<List<Hazard>>(DomainErrors.HazardError.NullOrEmpty);
         }
     }
@@ -293,19 +293,20 @@ public sealed class HazardService : IHazardService
                 // Populate the HazardLocation property
                 hazard.HazardLocation = primaryLocation;
 
-                _logger.LogDebug("Populated HazardLocation for hazard {HazardCode}", hazard.Code);
+                _logger.LogApplicationDebug("Populated HazardLocation for hazard {HazardCode}", hazard.Code);
             }
             else
             {
-                _logger.LogDebug("No HazardLocation found for hazard {HazardCode}", hazard.Code);
+                _logger.LogApplicationDebug("No HazardLocation found for hazard {HazardCode}", hazard.Code);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Failed to populate HazardLocation for hazard {HazardCode}", hazard.Code);
+            _logger.LogApplicationWarning(ex, "Failed to populate HazardLocation for hazard {HazardCode}", hazard.Code);
             // Don't throw - continue without location data
         }
     }
 
     #endregion
 }
+

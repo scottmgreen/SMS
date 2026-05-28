@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSOrganizationalGroupService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -36,18 +36,18 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
     {
         try
         {
-            _logger.LogInformation("Creating SMS Organizational Group with code: {Code}", group?.Code);
+            _logger.LogApplicationInformation("Creating SMS Organizational Group with code: {Code}", group?.Code);
 
             if (group is null)
             {
-                _logger.LogError("CreateSMSOrganizationalGroupAsync received null group");
+                _logger.LogApplicationError("CreateSMSOrganizationalGroupAsync received null group");
                 return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.NullOrEmpty);
             }
 
             // Business validation - ensure group is active by default
             if (!group.IsActive)
             {
-                _logger.LogInformation("Activating group during creation: {Code}", group.Code);
+                _logger.LogApplicationInformation("Activating group during creation: {Code}", group.Code);
                 group.Activate("SYSTEM");
             }
 
@@ -58,18 +58,18 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS Organizational Group with code: {Code}", result.Value?.Code);
+                _logger.LogApplicationInformation("Successfully created SMS Organizational Group with code: {Code}", result.Value?.Code);
             }
             else
             {
-                _logger.LogError("Failed to create SMS Organizational Group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS Organizational Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating SMS Organizational Group");
+            _logger.LogApplicationError(ex, "Unexpected error creating SMS Organizational Group");
             return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.CreateFailed);
         }
     }
@@ -81,12 +81,12 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Organizational Group with code: {Code}", code);
+            _logger.LogApplicationInformation("Retrieving SMS Organizational Group with code: {Code}", code);
             return await _dataService.GetByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Organizational Group with code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving SMS Organizational Group with code: {Code}", code);
             return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.NotFound);
         }
     }
@@ -98,12 +98,12 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
     {
         try
         {
-            _logger.LogInformation("Retrieving all SMS Organizational Groups");
+            _logger.LogApplicationInformation("Retrieving all SMS Organizational Groups");
             return await _dataService.GetAllAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all SMS Organizational Groups");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all SMS Organizational Groups");
             return Result<IEnumerable<SMSOrganizationalGroup>>.Failure<IEnumerable<SMSOrganizationalGroup>>(DomainErrors.SMSOrganizationalGroupError.NotFound);
         }
     }
@@ -115,11 +115,11 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Organizational Groups for user: {UserCode}", userCode);
+            _logger.LogApplicationInformation("Retrieving SMS Organizational Groups for user: {UserCode}", userCode);
 
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogWarning("Invalid user code provided for group lookup");
+                _logger.LogApplicationWarning("Invalid user code provided for group lookup");
                 return Result<IEnumerable<SMSOrganizationalGroup>>.Failure<IEnumerable<SMSOrganizationalGroup>>(DomainErrors.SMSOrganizationalGroupError.UserCodeRequired);
             }
 
@@ -127,7 +127,7 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Organizational Groups for user: {UserCode}", userCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving SMS Organizational Groups for user: {UserCode}", userCode);
             return Result<IEnumerable<SMSOrganizationalGroup>>.Failure<IEnumerable<SMSOrganizationalGroup>>(DomainErrors.SMSOrganizationalGroupError.NotFound);
         }
     }
@@ -139,11 +139,11 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
     {
         try
         {
-            _logger.LogInformation("Retrieving users for SMS Organizational Group: {GroupCode}", groupCode);
+            _logger.LogApplicationInformation("Retrieving users for SMS Organizational Group: {GroupCode}", groupCode);
 
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogWarning("Invalid group code provided for user lookup");
+                _logger.LogApplicationWarning("Invalid group code provided for user lookup");
                 return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalGroupError.CodeRequired);
             }
 
@@ -151,7 +151,7 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving users for SMS Organizational Group: {GroupCode}", groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving users for SMS Organizational Group: {GroupCode}", groupCode);
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalGroupError.NotFound);
         }
     }
@@ -163,11 +163,11 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
     {
         try
         {
-            _logger.LogInformation("Updating SMS Organizational Group with code: {Code}", group?.Code);
+            _logger.LogApplicationInformation("Updating SMS Organizational Group with code: {Code}", group?.Code);
 
             if (group is null)
             {
-                _logger.LogError("UpdateSMSOrganizationalGroupAsync received null group");
+                _logger.LogApplicationError("UpdateSMSOrganizationalGroupAsync received null group");
                 return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.NullOrEmpty);
             }
 
@@ -175,7 +175,7 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
             var existingGroupResult = await _dataService.GetByCodeAsync(group.Code, ct).ConfigureAwait(false);
             if (existingGroupResult.IsFailure)
             {
-                _logger.LogWarning("Cannot update non-existent SMS Organizational Group with code: {Code}", group.Code);
+                _logger.LogApplicationWarning("Cannot update non-existent SMS Organizational Group with code: {Code}", group.Code);
                 return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.NotFound);
             }
 
@@ -186,18 +186,18 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS Organizational Group with code: {Code}", group.Code);
+                _logger.LogApplicationInformation("Successfully updated SMS Organizational Group with code: {Code}", group.Code);
             }
             else
             {
-                _logger.LogError("Failed to update SMS Organizational Group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS Organizational Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating SMS Organizational Group with code: {Code}", group?.Code);
+            _logger.LogApplicationError(ex, "Unexpected error updating SMS Organizational Group with code: {Code}", group?.Code);
             return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.UpdateFailed);
         }
     }
@@ -209,11 +209,11 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
     {
         try
         {
-            _logger.LogInformation("Deleting SMS Organizational Group with code: {Code}", groupCode);
+            _logger.LogApplicationInformation("Deleting SMS Organizational Group with code: {Code}", groupCode);
 
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("DeleteSMSOrganizationalGroupAsync received null or empty group code");
+                _logger.LogApplicationError("DeleteSMSOrganizationalGroupAsync received null or empty group code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.CodeRequired);
             }
 
@@ -221,7 +221,7 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
             var usersResult = await _dataService.GetUsersByGroupCodeAsync(groupCode, ct).ConfigureAwait(false);
             if (usersResult.IsSuccess && usersResult.Value.Any())
             {
-                _logger.LogWarning("Cannot delete SMS Organizational Group with active members: {Code}", groupCode);
+                _logger.LogApplicationWarning("Cannot delete SMS Organizational Group with active members: {Code}", groupCode);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.GroupHasMembers);
             }
 
@@ -229,18 +229,18 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS Organizational Group with code: {Code}", groupCode);
+                _logger.LogApplicationInformation("Successfully deleted SMS Organizational Group with code: {Code}", groupCode);
             }
             else
             {
-                _logger.LogError("Failed to delete SMS Organizational Group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete SMS Organizational Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting SMS Organizational Group with code: {Code}", groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error deleting SMS Organizational Group with code: {Code}", groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.DeleteFailed);
         }
     }
@@ -252,11 +252,11 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
     {
         try
         {
-            _logger.LogInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
+            _logger.LogApplicationInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
 
             if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("AssignUserToGroupAsync received null or empty parameters");
+                _logger.LogApplicationError("AssignUserToGroupAsync received null or empty parameters");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.UserCodeRequired);
             }
 
@@ -264,13 +264,13 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
             var groupResult = await _dataService.GetByCodeAsync(groupCode, ct).ConfigureAwait(false);
             if (groupResult.IsFailure)
             {
-                _logger.LogWarning("Cannot assign user to non-existent group: {GroupCode}", groupCode);
+                _logger.LogApplicationWarning("Cannot assign user to non-existent group: {GroupCode}", groupCode);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.NotFound);
             }
 
             if (!groupResult.Value.IsActive)
             {
-                _logger.LogWarning("Cannot assign user to inactive group: {GroupCode}", groupCode);
+                _logger.LogApplicationWarning("Cannot assign user to inactive group: {GroupCode}", groupCode);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.CannotAssignToInactiveGroup);
             }
 
@@ -278,18 +278,18 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned user {UserCode} to group {GroupCode}", userCode, groupCode);
+                _logger.LogApplicationInformation("Successfully assigned user {UserCode} to group {GroupCode}", userCode, groupCode);
             }
             else
             {
-                _logger.LogError("Failed to assign user to group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to assign user to group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.AssignmentFailed);
         }
     }
@@ -301,11 +301,11 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
     {
         try
         {
-            _logger.LogInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
+            _logger.LogApplicationInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
 
             if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("RemoveUserFromGroupAsync received null or empty parameters");
+                _logger.LogApplicationError("RemoveUserFromGroupAsync received null or empty parameters");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.UserCodeRequired);
             }
 
@@ -313,18 +313,18 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully removed user {UserCode} from group {GroupCode}", userCode, groupCode);
+                _logger.LogApplicationInformation("Successfully removed user {UserCode} from group {GroupCode}", userCode, groupCode);
             }
             else
             {
-                _logger.LogError("Failed to remove user from group. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to remove user from group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
+            _logger.LogApplicationError(ex, "Unexpected error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.RemovalFailed);
         }
     }
@@ -336,11 +336,11 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
     {
         try
         {
-            _logger.LogInformation("Clearing all group memberships for user {UserCode}", userCode);
+            _logger.LogApplicationInformation("Clearing all group memberships for user {UserCode}", userCode);
 
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogError("ClearUserGroupsAsync received null or empty user code");
+                _logger.LogApplicationError("ClearUserGroupsAsync received null or empty user code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.UserCodeRequired);
             }
 
@@ -348,18 +348,18 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully cleared all group memberships for user {UserCode}", userCode);
+                _logger.LogApplicationInformation("Successfully cleared all group memberships for user {UserCode}", userCode);
             }
             else
             {
-                _logger.LogError("Failed to clear user groups. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to clear user groups. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error clearing group memberships for user {UserCode}", userCode);
+            _logger.LogApplicationError(ex, "Unexpected error clearing group memberships for user {UserCode}", userCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.ClearGroupsFailed);
         }
     }
@@ -385,7 +385,7 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
             var validAuthorityLevels = restrictedCombinations[groupType];
             if (!validAuthorityLevels.Contains(authorityLevel, StringComparer.OrdinalIgnoreCase))
             {
-                _logger.LogInformation("Authority level {AuthorityLevel} for group type {GroupType} requires validation",
+                _logger.LogApplicationInformation("Authority level {AuthorityLevel} for group type {GroupType} requires validation",
                     authorityLevel, groupType);
                 // Could implement additional validation logic here
             }
@@ -428,3 +428,4 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
 
     #endregion
 }
+

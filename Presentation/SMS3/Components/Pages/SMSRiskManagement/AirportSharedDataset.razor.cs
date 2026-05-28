@@ -19,7 +19,7 @@ public partial class AirportSharedDataset : ComponentBase
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private ILogger<AirportSharedDataset> _logger { get; set; } = default!;
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Parameters

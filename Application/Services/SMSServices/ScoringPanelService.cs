@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ScoringPanelService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -32,23 +32,23 @@ public sealed class ScoringPanelService : IScoringPanelService
     {
         try
         {
-            _logger.LogInformation("Creating scoring panel with code: {Code}", panel?.Code);
+            _logger.LogApplicationInformation("Creating scoring panel with code: {Code}", panel?.Code);
             var result = await _dataService.CreateScoringPanelAsync(panel, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created scoring panel with ID: {Id}", result.Value?.Id);
+                _logger.LogApplicationInformation("Successfully created scoring panel with ID: {Id}", result.Value?.Id);
             }
             else
             {
-                _logger.LogError("Failed to create scoring panel. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create scoring panel. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating scoring panel");
+            _logger.LogApplicationError(ex, "Unexpected error creating scoring panel");
             return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.CreateFailed);
         }
     }
@@ -57,12 +57,12 @@ public sealed class ScoringPanelService : IScoringPanelService
     {
         try
         {
-            _logger.LogInformation("Retrieving scoring panel with ID: {Id}", id);
+            _logger.LogApplicationInformation("Retrieving scoring panel with ID: {Id}", id);
             return await _dataService.GetScoringPanelByIdAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving scoring panel with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving scoring panel with ID: {Id}", id);
             return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.NotFound);
         }
     }
@@ -71,17 +71,17 @@ public sealed class ScoringPanelService : IScoringPanelService
     {
         try
         {
-            _logger.LogInformation("Retrieving scoring panels for hazard code: {HazardCode}", hazardCode);
+            _logger.LogApplicationInformation("Retrieving scoring panels for hazard code: {HazardCode}", hazardCode);
             var result = await _dataService.GetScoringPanelsByHazardCodeAsync(hazardCode, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} scoring panels for hazard code: {HazardCode}",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} scoring panels for hazard code: {HazardCode}",
                     result.Value?.Count ?? 0, hazardCode);
             }
             else
             {
-                _logger.LogWarning("No scoring panels found for hazard code: {HazardCode}. Error: {Error}",
+                _logger.LogApplicationWarning("No scoring panels found for hazard code: {HazardCode}. Error: {Error}",
                     hazardCode, result.Error?.Message);
             }
 
@@ -89,7 +89,7 @@ public sealed class ScoringPanelService : IScoringPanelService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving scoring panels for hazard code: {HazardCode}", hazardCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving scoring panels for hazard code: {HazardCode}", hazardCode);
             return Result<List<ScoringPanel>>.Failure<List<ScoringPanel>>(DomainErrors.ScoringPanelError.NullOrEmpty);
         }
     }
@@ -98,23 +98,23 @@ public sealed class ScoringPanelService : IScoringPanelService
     {
         try
         {
-            _logger.LogInformation("Updating scoring panel with ID: {Id}", panel?.Id);
+            _logger.LogApplicationInformation("Updating scoring panel with ID: {Id}", panel?.Id);
             var result = await _dataService.UpdateScoringPanelAsync(panel, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated scoring panel with ID: {Id}", panel?.Id);
+                _logger.LogApplicationInformation("Successfully updated scoring panel with ID: {Id}", panel?.Id);
             }
             else
             {
-                _logger.LogError("Failed to update scoring panel. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update scoring panel. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating scoring panel with ID: {Id}", panel?.Id);
+            _logger.LogApplicationError(ex, "Unexpected error updating scoring panel with ID: {Id}", panel?.Id);
             return Result<ScoringPanel>.Failure<ScoringPanel>(DomainErrors.ScoringPanelError.UpdateFailed);
         }
     }
@@ -123,23 +123,23 @@ public sealed class ScoringPanelService : IScoringPanelService
     {
         try
         {
-            _logger.LogInformation("Deleting scoring panel with ID: {Id}", id);
+            _logger.LogApplicationInformation("Deleting scoring panel with ID: {Id}", id);
             var result = await _dataService.DeleteScoringPanelAsync(id, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted scoring panel with ID: {Id}", id);
+                _logger.LogApplicationInformation("Successfully deleted scoring panel with ID: {Id}", id);
             }
             else
             {
-                _logger.LogError("Failed to delete scoring panel. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete scoring panel. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting scoring panel with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error deleting scoring panel with ID: {Id}", id);
             return Result<bool>.Failure<bool>(DomainErrors.ScoringPanelError.DeleteFailed);
         }
     }
@@ -152,15 +152,16 @@ public sealed class ScoringPanelService : IScoringPanelService
     {
         try
         {
-            _logger.LogInformation("Retrieving all scoring panels");
+            _logger.LogApplicationInformation("Retrieving all scoring panels");
             return await _dataService.GetAllScoringPanelsAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all scoring panels");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all scoring panels");
             return Result<List<ScoringPanel>>.Failure<List<ScoringPanel>>(DomainErrors.ScoringPanelError.NullOrEmpty);
         }
     }
 
     #endregion
 }
+

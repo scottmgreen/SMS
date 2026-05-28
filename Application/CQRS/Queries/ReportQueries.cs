@@ -10,7 +10,7 @@
 
 using SMS_Domain.Entities;
 
-namespace SMS_Application.Messaging.Queries;
+namespace SMS_Application.Queries;
 
 // =============================================
 // REPORT QUERIES WITH AUDIT TRACKING

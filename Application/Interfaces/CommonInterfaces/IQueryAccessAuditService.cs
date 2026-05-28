@@ -7,7 +7,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace Application.Interfaces.CommonInterfaces;
+namespace SMS_Application.Interfaces;
 
 /// <summary>
 /// Service for auditing query access and data retrieval operations

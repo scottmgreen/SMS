@@ -1,5 +1,5 @@
 
-namespace SMS_Application.Messaging.Commands;
+namespace SMS_Application.Commands;
 #region Authentication Audit Commands
 
 /// <summary>

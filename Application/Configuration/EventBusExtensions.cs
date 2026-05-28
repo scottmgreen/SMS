@@ -39,12 +39,12 @@ public static class EventBusExtensions
             using var scope = app.ApplicationServices.CreateScope();
             var logger = scope.ServiceProvider.GetRequiredService<ILogger<IBaseEventBus>>();
 
-            logger.LogInformation("Initializing EventBus subscriptions (auto-discovery)...");
+            logger.LogApplicationInformation("Initializing EventBus subscriptions (auto-discovery)...");
 
             // Automatically subscribe all event handlers using reflection
             AddSubscribeEventHandlers(app);
 
-            logger.LogInformation("EventBus auto-subscription completed successfully");
+            logger.LogApplicationInformation("EventBus auto-subscription completed successfully");
 
             return app;
         }
@@ -54,7 +54,7 @@ public static class EventBusExtensions
             var logger = loggerFactory?.CreateLogger("EventBus.Initialization") ??
                          Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
 
-            logger.LogError(ex, "Failed to initialize EventBus subscriptions");
+            logger.LogApplicationError(ex, "Failed to initialize EventBus subscriptions");
             throw;
         }
     }
@@ -86,25 +86,25 @@ public static class EventBusExtensions
                     var subscribeMethod = typeof(IBaseEventBus).GetMethod("Subscribe")!
                         .MakeGenericMethod(eventType, handlerType);
                     subscribeMethod.Invoke(eventBus, null);
-                    logger.LogInformation("Auto-subscribed {Handler} to DOMAIN event {EventType}", handlerType.Name, eventType.Name);
+                    logger.LogApplicationDebug("Auto-subscribed {Handler} to DOMAIN event {EventType}", handlerType.Name, eventType.Name);
                 }
                 else if (typeof(IBaseIntegrationEvent).IsAssignableFrom(eventType))
                 {
                     var subscribeMethod = typeof(IBaseEventBus).GetMethod("SubscribeIntegration")!
                         .MakeGenericMethod(eventType, handlerType);
                     subscribeMethod.Invoke(eventBus, null);
-                    logger.LogInformation("Auto-subscribed {Handler} to INTEGRATION event {EventType}", handlerType.Name, eventType.Name);
+                    logger.LogApplicationDebug("Auto-subscribed {Handler} to INTEGRATION event {EventType}", handlerType.Name, eventType.Name);
                 }
                 else if (typeof(IBaseUIEvent).IsAssignableFrom(eventType))
                 {
                     var subscribeMethod = typeof(IBaseEventBus).GetMethod("SubscribeUI")!
                         .MakeGenericMethod(eventType, handlerType);
                     subscribeMethod.Invoke(eventBus, null);
-                    logger.LogInformation("Auto-subscribed {Handler} to UI event {EventType}", handlerType.Name, eventType.Name);
+                    logger.LogApplicationDebug("Auto-subscribed {Handler} to UI event {EventType}", handlerType.Name, eventType.Name);
                 }
                 else
                 {
-                    logger.LogWarning("Handler {Handler} for event {EventType} does not match any known event category interface.", handlerType.Name, eventType.Name);
+                    logger.LogApplicationWarning("Handler {Handler} for event {EventType} does not match any known event category interface.", handlerType.Name, eventType.Name);
                 }
             }
         }

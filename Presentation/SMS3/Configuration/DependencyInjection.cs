@@ -1,4 +1,4 @@
-﻿using Microsoft.FeatureManagement;
+using Microsoft.FeatureManagement;
 using Microsoft.OpenApi;
 using Asp.Versioning.ApiExplorer;
 using Microsoft.Extensions.Options;
@@ -28,7 +28,7 @@ namespace SMS3.Configuration;
 /// </summary>
 
 /*
-✅ SMS PRESENTATION CONFIGURATION - SESSION-BASED AUTHENTICATION APPROACH:
+SMS PRESENTATION CONFIGURATION - SESSION-BASED AUTHENTICATION APPROACH:
 
 The SMS application now uses secure session-based authentication instead of static storage:
 
@@ -38,15 +38,15 @@ SESSION-BASED AUTHENTICATION FLOW:
 3. SMSSessionService.CreateSMSSessionAsync() stores user data in secure session
 4. SessionCurrentUserService reads user data from session per request
 5. NavMenu and authorization checks use ICurrentUserService (SessionCurrentUserService)
-6. Logout calls CurrentUserService.ClearAuthentication() and SessionService.ClearSMSSessionAsync()
+6. Logout calls _currentUserService.ClearAuthentication() and SessionService.ClearSMSSessionAsync()
 
 SECURITY BENEFITS:
-✅ Proper per-user session isolation - eliminates static field vulnerabilities
-✅ Automatic session timeout and cleanup - enhanced security
-✅ HttpContext-based authentication - follows ASP.NET Core best practices
-✅ Session encryption and secure cookies - data protection
-✅ Same interface and functionality as static version - zero breaking changes
-✅ Uses existing SMSSessionService serialization - no new dependencies
+Proper per-user session isolation - eliminates static field vulnerabilities
+Automatic session timeout and cleanup - enhanced security
+HttpContext-based authentication - follows ASP.NET Core best practices
+Session encryption and secure cookies - data protection
+Same interface and functionality as static version - zero breaking changes
+Uses existing SMSSessionService serialization - no new dependencies
 
 TECHNICAL IMPLEMENTATION:
 - SessionCurrentUserService implements identical ICurrentUserService interface
@@ -121,25 +121,25 @@ public static class DependencyInjection
     /// </summary>
     private static IServiceCollection AddSessionAuthenticationServices(this IServiceCollection services)
     {
-        // 🔐 SESSION-BASED AUTHENTICATION - Secure per-user session isolation
+        // ?? SESSION-BASED AUTHENTICATION - Secure per-user session isolation
         services.AddScoped<ISMSSessionService, SMSSessionService>();
         
-        // 🔧 TEMPORARY: Add both services for safe rollback during startup issues
+        // ?? TEMPORARY: Add both services for safe rollback during startup issues
         services.AddScoped<StaticCurrentUserService>();
         services.AddScoped<SessionCurrentUserService>();
         
-        // 🚀 PERFORMANCE: Add authentication state caching
+        // ?? PERFORMANCE: Add authentication state caching
         services.AddScoped<IAuthenticationStateCache, AuthenticationStateCache>();
         
-        // 🔧 DISABLED: Strategy-based authentication is now handled in Program.cs
+        // ?? DISABLED: Strategy-based authentication is now handled in Program.cs
         // Register the session-based version as the primary implementation
         // services.AddScoped<ICurrentUserService>(provider => 
         //     provider.GetRequiredService<SessionCurrentUserService>());
 
-        // 🔐 SESSION TIMER SERVICE - For session timeout management
+        // ?? SESSION TIMER SERVICE - For session timeout management
         services.AddScoped<SessionTimerService>();
 
-        // 🔐 TWO-FACTOR AUTHENTICATION SERVICES - TOTP and Microsoft Authenticator integration
+        // ?? TWO-FACTOR AUTHENTICATION SERVICES - TOTP and Microsoft Authenticator integration
         services.AddScoped<TwoFactorAuthService>();
 
         // Add any additional authentication-related services here
@@ -189,7 +189,7 @@ public static class DependencyInjection
     //        var logger = loggerFactory?.CreateLogger("EventBus.UI.Initialization") ?? 
     //                    Microsoft.Extensions.Logging.Abstractions.NullLogger.Instance;
 
-    //        logger.LogError(ex, "❌ Failed to initialize UI EventBus subscriptions");
+    //        logger.LogError(ex, "Failed to initialize UI EventBus subscriptions");
     //        throw; // Re-throw to prevent silent failures during startup
     //    }
     //}

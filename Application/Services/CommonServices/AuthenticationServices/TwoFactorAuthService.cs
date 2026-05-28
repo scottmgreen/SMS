@@ -63,7 +63,9 @@ public class TwoFactorAuthService
                   $"digits={_config.TotpDigits}&" +
                   $"period={_config.TimeWindowSeconds}";
 
-        _logger.LogDebug("Generated 2FA QR code URI for user: {UserEmail}", userEmail);
+        _logger.LogApplicationDebug("Generated 2FA QR code URI for user: {UserEmail}",
+            ApplicationEventIds.Debug,
+            userEmail);
         return uri;
     }
 
@@ -97,17 +99,19 @@ public class TwoFactorAuthService
                 
                 if (expectedCode == providedCode)
                 {
-                    _logger.LogInformation("? TOTP code validated successfully (time window offset: {Offset})", i);
+                    _logger.LogApplicationInformation("TOTP code validated successfully (time window offset: {Offset})",
+                        ApplicationEventIds.Information,
+                        i);
                     return true;
                 }
             }
 
-            _logger.LogWarning("? TOTP code validation failed - invalid code provided");
+            _logger.LogApplicationWarning("TOTP code validation failed - invalid code provided", ApplicationEventIds.Warning);
             return false;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating TOTP code");
+            _logger.LogApplicationError("Error validating TOTP code", ApplicationEventIds.Error, ex);
             return false;
         }
     }
@@ -134,7 +138,9 @@ public class TwoFactorAuthService
             backupCodes.Add(formattedCode);
         }
 
-        _logger.LogInformation("Generated {BackupCodeCount} backup codes", _config.BackupCodeCount);
+        _logger.LogApplicationInformation("Generated {BackupCodeCount} backup codes",
+            ApplicationEventIds.Information,
+            _config.BackupCodeCount);
         return backupCodes;
     }
 
@@ -158,11 +164,13 @@ public class TwoFactorAuthService
         {
             // Remove used backup code
             remainingCodes.Remove(matchingCode);
-            _logger.LogInformation("? Backup code validated and consumed. {RemainingCount} codes remaining", remainingCodes.Count);
+            _logger.LogApplicationInformation("Backup code validated and consumed. {RemainingCount} codes remaining",
+                ApplicationEventIds.Information,
+                remainingCodes.Count);
             return true;
         }
 
-        _logger.LogWarning("? Invalid backup code provided");
+        _logger.LogApplicationWarning("Invalid backup code provided", ApplicationEventIds.Warning);
         return false;
     }
 
@@ -184,7 +192,7 @@ public class TwoFactorAuthService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error generating current TOTP code for debugging");
+            _logger.LogApplicationError("Error generating current TOTP code for debugging", ApplicationEventIds.Error, ex);
             return "000000";
         }
     }

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSOrganizationalUserService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -37,18 +37,18 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
     {
         try
         {
-            _logger.LogInformation("Creating SMS Organizational User with code: {Code}", user?.Code);
+            _logger.LogApplicationInformation("Creating SMS Organizational User with code: {Code}", user?.Code);
 
             if (user is null)
             {
-                _logger.LogError("CreateSMSOrganizationalUserAsync received null user");
+                _logger.LogApplicationError("CreateSMSOrganizationalUserAsync received null user");
                 return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
             // Business validation - ensure user is active by default
             if (!user.IsActive)
             {
-                _logger.LogInformation("Activating user during creation: {Code}", user.Code);
+                _logger.LogApplicationInformation("Activating user during creation: {Code}", user.Code);
                 user.Activate();
             }
 
@@ -59,18 +59,18 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS Organizational User with ID: {Id}", result.Value?.UserId);
+                _logger.LogApplicationInformation("Successfully created SMS Organizational User with ID: {Id}", result.Value?.UserId);
             }
             else
             {
-                _logger.LogError("Failed to create SMS Organizational User. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS Organizational User. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating SMS Organizational User");
+            _logger.LogApplicationError(ex, "Unexpected error creating SMS Organizational User");
             return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.CreateFailed);
         }
     }
@@ -82,12 +82,12 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Organizational User with Code: {Code}", code);
+            _logger.LogApplicationInformation("Retrieving SMS Organizational User with Code: {Code}", code);
             return await _dataService.GetSMSOrganizationalUserByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Organizational User with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving SMS Organizational User with Code: {Code}", code);
             return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -99,12 +99,12 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
     {
         try
         {
-            _logger.LogInformation("Retrieving all SMS Organizational Users");
+            _logger.LogApplicationInformation("Retrieving all SMS Organizational Users");
             return await _dataService.GetAllSMSOrganizationalUsersAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all SMS Organizational Users");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all SMS Organizational Users");
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -116,12 +116,12 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Organizational Users by department: {Department}", department);
+            _logger.LogApplicationInformation("Retrieving SMS Organizational Users by department: {Department}", department);
 
             // Business validation - ensure department is valid
             if (!IsValidDepartment(department))
             {
-                _logger.LogWarning("Invalid department requested: {Department}", department);
+                _logger.LogApplicationWarning("Invalid department requested: {Department}", department);
                 return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
@@ -129,7 +129,7 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Organizational Users by department: {Department}", department);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving SMS Organizational Users by department: {Department}", department);
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -141,20 +141,20 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
     //{
     //    try
     //    {
-    //        _logger.LogInformation("Retrieving supervisors for department: {Department}", department);
+    //        _logger.LogApplicationInformation("Retrieving supervisors for department: {Department}", department);
 
     //        var result = await _dataService.GetDepartmentSupervisorsAsync(department, ct).ConfigureAwait(false);
 
     //        if (result.IsSuccess)
     //        {
     //            var supervisors = result.Value;
-    //            _logger.LogInformation("Found {Count} supervisors for department: {Department}", 
+    //            _logger.LogApplicationInformation("Found {Count} supervisors for department: {Department}", 
     //                supervisors.Count(), department);
 
     //            // Business analysis - warn if department has no supervisors
     //            if (!supervisors.Any())
     //            {
-    //                _logger.LogWarning("Department {Department} has no supervisors assigned", department);
+    //                _logger.LogApplicationWarning("Department {Department} has no supervisors assigned", department);
     //            }
     //        }
 
@@ -162,7 +162,7 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
     //    }
     //    catch (Exception ex)
     //    {
-    //        _logger.LogError(ex, "Unexpected error retrieving supervisors for department: {Department}", department);
+    //        _logger.LogApplicationError(ex, "Unexpected error retrieving supervisors for department: {Department}", department);
     //        return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
     //    }
     //}
@@ -174,11 +174,11 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
     {
         try
         {
-            _logger.LogInformation("Updating SMS Organizational User with ID: {Id}", user?.UserId);
+            _logger.LogApplicationInformation("Updating SMS Organizational User with ID: {Id}", user?.UserId);
 
             if (user is null)
             {
-                _logger.LogError("UpdateSMSOrganizationalUserAsync received null user");
+                _logger.LogApplicationError("UpdateSMSOrganizationalUserAsync received null user");
                 return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
@@ -186,7 +186,7 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
             var existingUserResult = await _dataService.GetSMSOrganizationalUserByCodeAsync(user.Code, ct).ConfigureAwait(false);
             if (existingUserResult.IsFailure)
             {
-                _logger.LogWarning("Cannot update non-existent SMS Organizational User with ID: {Id}", user.UserId);
+                _logger.LogApplicationWarning("Cannot update non-existent SMS Organizational User with ID: {Id}", user.UserId);
                 return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
             }
 
@@ -197,18 +197,18 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS Organizational User with ID: {Id}", user.UserId);
+                _logger.LogApplicationInformation("Successfully updated SMS Organizational User with ID: {Id}", user.UserId);
             }
             else
             {
-                _logger.LogError("Failed to update SMS Organizational User. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS Organizational User. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating SMS Organizational User with ID: {Id}", user?.UserId);
+            _logger.LogApplicationError(ex, "Unexpected error updating SMS Organizational User with ID: {Id}", user?.UserId);
             return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.UpdateFailed);
         }
     }
@@ -220,18 +220,18 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
     {
         try
         {
-            _logger.LogInformation("Authenticating SMS Organizational User: {UserName}", userName);
+            _logger.LogApplicationInformation("Authenticating SMS Organizational User: {UserName}", userName);
 
             // Business validation
             if (string.IsNullOrWhiteSpace(userName))
             {
-                _logger.LogWarning("Authentication failed - empty username");
+                _logger.LogApplicationWarning("Authentication failed - empty username");
                 return Result<bool>.Failure<bool>(DomainErrors.UserNameError.NullOrEmpty);
             }
 
             if (string.IsNullOrWhiteSpace(plainTextPassword))
             {
-                _logger.LogWarning("Authentication failed - empty password for user: {UserName}", userName);
+                _logger.LogApplicationWarning("Authentication failed - empty password for user: {UserName}", userName);
                 return Result<bool>.Failure<bool>(DomainErrors.PasswordError.NullOrEmpty);
             }
 
@@ -244,23 +244,23 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
                 // Business rule - check if user is active
                 //if (!user.IsActive)
                 //{
-                //    _logger.LogWarning("Authentication failed - user is inactive: {UserName}", userName);
+                //    _logger.LogApplicationWarning("Authentication failed - user is inactive: {UserName}", userName);
                 //    return Result<bool>.Failure<bool>(DomainErrors.BaseUserError.InactiveUser);
                 //}
 
-                //_logger.LogInformation("Successfully authenticated SMS Organizational User: {UserName} from department: {Department}",
+                //_logger.LogApplicationInformation("Successfully authenticated SMS Organizational User: {UserName} from department: {Department}",
                 //    userName, user.Department);
             }
             else
             {
-                _logger.LogWarning("Authentication failed for user: {UserName}", userName);
+                _logger.LogApplicationWarning("Authentication failed for user: {UserName}", userName);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error during authentication for user: {UserName}", userName);
+            _logger.LogApplicationError(ex, "Unexpected error during authentication for user: {UserName}", userName);
             return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.LoginFailed);
         }
     }
@@ -307,7 +307,7 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
             var validPositions = restrictedCombinations[department];
             if (!validPositions.Contains(position, StringComparer.OrdinalIgnoreCase))
             {
-                _logger.LogInformation("Position {Position} in department {Department} requires validation", position, department);
+                _logger.LogApplicationInformation("Position {Position} in department {Department} requires validation", position, department);
                 // Could implement additional validation logic here
             }
         }
@@ -317,3 +317,4 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
 
     #endregion
 }
+

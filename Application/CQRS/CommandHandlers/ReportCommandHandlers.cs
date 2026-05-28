@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ReportCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // REPORT COMMAND HANDLERS - Clean Architecture Pattern
@@ -39,13 +39,13 @@ public class CreateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateReportCommand for Code: {Code}", request.Report.Code);
+            _logger.LogApplicationInformation(" Processing CreateReportCommand for Code: {Code}", request.Report.Code);
 
             var result = await _reportService.CreateReportAsync(request.Report, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created Report with ID: {Id}, Code: {Code}",
+                _logger.LogApplicationInformation(" Successfully created Report with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -58,7 +58,7 @@ public class CreateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateReportCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateReportCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -90,13 +90,13 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateReportCommand for ID: {Id}", request.Report.Id);
+            _logger.LogApplicationInformation(" Processing UpdateReportCommand for ID: {Id}", request.Report.Id);
 
             var result = await _reportService.UpdateReportAsync(request.Report, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated Report with ID: {Id}", request.Report.Id);
+                _logger.LogApplicationInformation(" Successfully updated Report with ID: {Id}", request.Report.Id);
             }
             else
             {
@@ -108,7 +108,7 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateReportCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateReportCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -140,13 +140,13 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                 return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteReportCommand for ID: {Id}", request.ReportId);
+            _logger.LogApplicationInformation(" Processing DeleteReportCommand for ID: {Id}", request.ReportId);
 
             var result = await _reportService.DeleteReportAsync(request.ReportId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted Report with ID: {Id}", request.ReportId);
+                _logger.LogApplicationInformation(" Successfully deleted Report with ID: {Id}", request.ReportId);
             }
             else
             {
@@ -158,7 +158,7 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteReportCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteReportCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -190,14 +190,14 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateReportStatusCommand for ReportCode: {ReportCode}, Status: {Status}",
+            _logger.LogApplicationInformation(" Processing UpdateReportStatusCommand for ReportCode: {ReportCode}, Status: {Status}",
                 request.ReportCode, request.ReportStatus);
 
             var result = await _reportService.UpdateReportStatusAsync(request.ReportCode, request.ReportStatus, request.UpdatedBy, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated Report status for Code: {ReportCode} to {Status}",
+                _logger.LogApplicationInformation(" Successfully updated Report status for Code: {ReportCode} to {Status}",
                     request.ReportCode, request.ReportStatus);
             }
             else
@@ -210,7 +210,7 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateReportStatusCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateReportStatusCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -220,3 +220,4 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestH
         }
     }
 }
+

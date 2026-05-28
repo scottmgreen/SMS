@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardReportTrackingDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -37,14 +37,14 @@ public sealed class HazardReportTrackingDataService : BaseDataService<HazardRepo
     {
         try
         {
-            _logger.LogInformation("Creating hazard report tracking for HazardCode: {HazardCode}, ReportCode: {ReportCode}, TrackingCode: {TrackingCode}",
+            _logger.LogInfrastructureInformation("Creating hazard report tracking for HazardCode: {HazardCode}, ReportCode: {ReportCode}, TrackingCode: {TrackingCode}",
                 hazardReportTracking?.HazardCode, hazardReportTracking?.ReportCode, hazardReportTracking?.TrackingCode);
 
             return await _repository.CreateHazardReportTrackingAsync(hazardReportTracking, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating hazard report tracking");
+            _logger.LogInfrastructureError(ex, "Error creating hazard report tracking");
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.CreateFailed);
         }
     }
@@ -56,12 +56,12 @@ public sealed class HazardReportTrackingDataService : BaseDataService<HazardRepo
     {
         try
         {
-            _logger.LogInformation("Retrieving hazard report tracking with ID: {Id}", id?.Value);
+            _logger.LogInfrastructureInformation("Retrieving hazard report tracking with ID: {Id}", id?.Value);
             return await _repository.GetHazardReportTrackingByCodeAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving hazard report tracking by ID: {Id}", id?.Value);
+            _logger.LogInfrastructureError(ex, "Error retrieving hazard report tracking by ID: {Id}", id?.Value);
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NotFound);
         }
     }
@@ -73,12 +73,12 @@ public sealed class HazardReportTrackingDataService : BaseDataService<HazardRepo
     {
         try
         {
-            _logger.LogInformation("Retrieving hazard report tracking with TrackingCode: {TrackingCode}", trackingCode);
+            _logger.LogInfrastructureInformation("Retrieving hazard report tracking with TrackingCode: {TrackingCode}", trackingCode);
             return await _repository.GetHazardReportTrackingByTrackingCodeAsync(trackingCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving hazard report tracking by TrackingCode: {TrackingCode}", trackingCode);
+            _logger.LogInfrastructureError(ex, "Error retrieving hazard report tracking by TrackingCode: {TrackingCode}", trackingCode);
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NotFound);
         }
     }
@@ -90,12 +90,12 @@ public sealed class HazardReportTrackingDataService : BaseDataService<HazardRepo
     {
         try
         {
-            _logger.LogInformation("Retrieving all hazard report tracking records");
+            _logger.LogInfrastructureInformation("Retrieving all hazard report tracking records");
             return await _repository.GetAllHazardReportTrackingAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving all hazard report tracking records");
+            _logger.LogInfrastructureError(ex, "Error retrieving all hazard report tracking records");
             return Result<List<HazardReportTracking>>.Failure<List<HazardReportTracking>>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
         }
     }
@@ -107,12 +107,12 @@ public sealed class HazardReportTrackingDataService : BaseDataService<HazardRepo
     {
         try
         {
-            _logger.LogInformation("Retrieving tracking records for HazardCode: {HazardCode}", hazardCode);
+            _logger.LogInfrastructureInformation("Retrieving tracking records for HazardCode: {HazardCode}", hazardCode);
             return await _repository.GetHazardReportTrackingByHazardCodeAsync(hazardCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving tracking records for HazardCode: {HazardCode}", hazardCode);
+            _logger.LogInfrastructureError(ex, "Error retrieving tracking records for HazardCode: {HazardCode}", hazardCode);
             return Result<List<HazardReportTracking>>.Failure<List<HazardReportTracking>>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
         }
     }
@@ -124,12 +124,12 @@ public sealed class HazardReportTrackingDataService : BaseDataService<HazardRepo
     {
         try
         {
-            _logger.LogInformation("Retrieving tracking records for ReportCode: {ReportCode}", reportCode);
+            _logger.LogInfrastructureInformation("Retrieving tracking records for ReportCode: {ReportCode}", reportCode);
             return await _repository.GetHazardReportTrackingByReportCodeAsync(reportCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error retrieving tracking records for ReportCode: {ReportCode}", reportCode);
+            _logger.LogInfrastructureError(ex, "Error retrieving tracking records for ReportCode: {ReportCode}", reportCode);
             return Result<List<HazardReportTracking>>.Failure<List<HazardReportTracking>>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
         }
     }
@@ -141,14 +141,14 @@ public sealed class HazardReportTrackingDataService : BaseDataService<HazardRepo
     {
         try
         {
-            _logger.LogInformation("Updating hazard report tracking with TrackingCode: {TrackingCode}",
+            _logger.LogInfrastructureInformation("Updating hazard report tracking with TrackingCode: {TrackingCode}",
                 hazardReportTracking?.TrackingCode);
 
             return await _repository.UpdateHazardReportTrackingAsync(hazardReportTracking, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating hazard report tracking with TrackingCode: {TrackingCode}",
+            _logger.LogInfrastructureError(ex, "Error updating hazard report tracking with TrackingCode: {TrackingCode}",
                 hazardReportTracking?.TrackingCode);
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.UpdateFailed);
         }
@@ -161,13 +161,14 @@ public sealed class HazardReportTrackingDataService : BaseDataService<HazardRepo
     {
         try
         {
-            _logger.LogInformation("Deleting hazard report tracking with ID: {Id}", id?.Value);
+            _logger.LogInfrastructureInformation("Deleting hazard report tracking with ID: {Id}", id?.Value);
             return await _repository.DeleteHazardReportTrackingAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting hazard report tracking with ID: {Id}", id?.Value);
+            _logger.LogInfrastructureError(ex, "Error deleting hazard report tracking with ID: {Id}", id?.Value);
             return Result<bool>.Failure<bool>(DomainErrors.HazardReportTrackingError.DeleteFailed);
         }
     }
 }
+

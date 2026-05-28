@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="InterviewService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -34,23 +34,23 @@ public sealed class InterviewService : IInterviewService
     {
         try
         {
-            _logger.LogInformation("Creating interview with code: {Code}", interview?.Code);
+            _logger.LogApplicationInformation("Creating interview with code: {Code}", interview?.Code);
             var result = await _dataService.CreateInterviewAsync(interview, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created interview with Code: {Code}", result.Value?.Code);
+                _logger.LogApplicationInformation("Successfully created interview with Code: {Code}", result.Value?.Code);
             }
             else
             {
-                _logger.LogError("Failed to create interview. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create interview. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating interview");
+            _logger.LogApplicationError(ex, "Unexpected error creating interview");
             return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.CreateFailed);
         }
     }
@@ -59,12 +59,12 @@ public sealed class InterviewService : IInterviewService
     {
         try
         {
-            _logger.LogInformation("Retrieving interview with Code: {Code}", code);
+            _logger.LogApplicationInformation("Retrieving interview with Code: {Code}", code);
             return await _dataService.GetInterviewByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving interview with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving interview with Code: {Code}", code);
             return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NotFound);
         }
     }
@@ -73,12 +73,12 @@ public sealed class InterviewService : IInterviewService
     {
         try
         {
-            _logger.LogInformation("Retrieving all interviews");
+            _logger.LogApplicationInformation("Retrieving all interviews");
             return await _dataService.GetAllInterviewsAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all interviews");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all interviews");
             return Result<List<Interview>>.Failure<List<Interview>>(DomainErrors.InterviewError.NullOrEmpty);
         }
     }
@@ -87,7 +87,7 @@ public sealed class InterviewService : IInterviewService
     {
         try
         {
-            _logger.LogInformation("Retrieving interviews for investigation Code: {InvestigationCode}", investigationCode);
+            _logger.LogApplicationInformation("Retrieving interviews for investigation Code: {InvestigationCode}", investigationCode);
             var result = await _dataService.GetByInvestigationAsync(investigationCode.Value, ct).ConfigureAwait(false);
             
             if (result.IsSuccess && result.Value != null)
@@ -100,7 +100,7 @@ public sealed class InterviewService : IInterviewService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving interviews for investigation Code: {InvestigationCode}", investigationCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving interviews for investigation Code: {InvestigationCode}", investigationCode);
             return Result<List<Interview>>.Failure<List<Interview>>(DomainErrors.InterviewError.NotFound);
         }
     }
@@ -109,23 +109,23 @@ public sealed class InterviewService : IInterviewService
     {
         try
         {
-            _logger.LogInformation("Updating interview with Code: {Code}", interview?.Code);
+            _logger.LogApplicationInformation("Updating interview with Code: {Code}", interview?.Code);
             var result = await _dataService.UpdateInterviewAsync(interview, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated interview with Code: {Code}", interview?.Code);
+                _logger.LogApplicationInformation("Successfully updated interview with Code: {Code}", interview?.Code);
             }
             else
             {
-                _logger.LogError("Failed to update interview. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update interview. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating interview with Code: {Code}", interview?.Code);
+            _logger.LogApplicationError(ex, "Unexpected error updating interview with Code: {Code}", interview?.Code);
             return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.UpdateFailed);
         }
     }
@@ -134,23 +134,23 @@ public sealed class InterviewService : IInterviewService
     {
         try
         {
-            _logger.LogInformation("Deleting interview with Code: {Code}", code);
+            _logger.LogApplicationInformation("Deleting interview with Code: {Code}", code);
             var result = await _dataService.DeleteInterviewAsync(code, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted interview with Code: {Code}", code);
+                _logger.LogApplicationInformation("Successfully deleted interview with Code: {Code}", code);
             }
             else
             {
-                _logger.LogError("Failed to delete interview. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete interview. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting interview with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error deleting interview with Code: {Code}", code);
             return Result<bool>.Failure<bool>(DomainErrors.InterviewError.DeleteFailed);
         }
     }
@@ -159,7 +159,7 @@ public sealed class InterviewService : IInterviewService
     {
         try
         {
-            _logger.LogInformation("Scheduling interview {Code} for {DateTime} by {ScheduledBy}", code, scheduledDateTime, scheduledBy);
+            _logger.LogApplicationInformation("Scheduling interview {Code} for {DateTime} by {ScheduledBy}", code, scheduledDateTime, scheduledBy);
             
             var interviewResult = await _dataService.GetInterviewByCodeAsync(code, ct);
             if (interviewResult.IsFailure || interviewResult.Value == null)
@@ -175,14 +175,14 @@ public sealed class InterviewService : IInterviewService
             var result = await _dataService.UpdateInterviewAsync(interview, ct);
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully scheduled interview {Code}", code);
+                _logger.LogApplicationInformation("Successfully scheduled interview {Code}", code);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error scheduling interview with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error scheduling interview with Code: {Code}", code);
             return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.UpdateFailed);
         }
     }
@@ -191,7 +191,7 @@ public sealed class InterviewService : IInterviewService
     {
         try
         {
-            _logger.LogInformation("Completing interview {Code} by {CompletedBy}", code, completedBy);
+            _logger.LogApplicationInformation("Completing interview {Code} by {CompletedBy}", code, completedBy);
             
             var interviewResult = await _dataService.GetInterviewByCodeAsync(code, ct);
             if (interviewResult.IsFailure || interviewResult.Value == null)
@@ -208,17 +208,18 @@ public sealed class InterviewService : IInterviewService
             var result = await _dataService.UpdateInterviewAsync(interview, ct);
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully completed interview {Code}", code);
+                _logger.LogApplicationInformation("Successfully completed interview {Code}", code);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error completing interview with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error completing interview with Code: {Code}", code);
             return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.UpdateFailed);
         }
     }
 
     #endregion
 }
+

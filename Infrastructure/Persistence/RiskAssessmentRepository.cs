@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAssessmentRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -49,7 +49,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
                 CommandType = CommandType.StoredProcedure
             };
 
-            // ✅ CORRECTED: Updated parameters to match the fixed stored procedure exactly
+            // ? CORRECTED: Updated parameters to match the fixed stored procedure exactly
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessment.Code ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentName, riskAssessment.Name ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentDescription, riskAssessment.Description ?? (object)DBNull.Value));
@@ -94,7 +94,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to create RiskAssessment: {Code}", riskAssessment?.Code ?? "NULL");
+            _logger.LogInfrastructureError(ex, "Failed to create RiskAssessment: {Code}", riskAssessment?.Code ?? "NULL");
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.CreateFailed);
         }
     }
@@ -103,7 +103,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
     {
         try
         {
-            _logger.LogInformation("Retrieving RiskAssessment by Code: {Code}", riskAssessmentCode);
+            _logger.LogInfrastructureInformation("Retrieving RiskAssessment by Code: {Code}", riskAssessmentCode);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_GetByCode, sql)
@@ -127,16 +127,16 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
 
             if (riskAssessment == null)
             {
-                _logger.LogWarning("RiskAssessment not found with Code: {Code}", riskAssessmentCode);
+                _logger.LogInfrastructureWarning("RiskAssessment not found with Code: {Code}", riskAssessmentCode);
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
             }
 
-            _logger.LogInformation("Successfully retrieved RiskAssessment: {Code}", riskAssessmentCode);
+            _logger.LogInfrastructureInformation("Successfully retrieved RiskAssessment: {Code}", riskAssessmentCode);
             return Result<RiskAssessment>.Success(riskAssessment);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve RiskAssessment by ID: {Code}", riskAssessmentCode);
+            _logger.LogInfrastructureError(ex, "Failed to retrieve RiskAssessment by ID: {Code}", riskAssessmentCode);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
@@ -145,7 +145,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
     {
         try
         {
-            _logger.LogInformation("Retrieving RiskAssessment by Hazard Code: {Code}", hazardCode);
+            _logger.LogInfrastructureInformation("Retrieving RiskAssessment by Hazard Code: {Code}", hazardCode);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_GetByHazardCode, sql)
@@ -175,7 +175,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve RiskAssessments by Code: {Code}", hazardCode);
+            _logger.LogInfrastructureError(ex, "Failed to retrieve RiskAssessments by Code: {Code}", hazardCode);
             return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
@@ -351,7 +351,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update Step 1 for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Failed to update Step 1 for RiskAssessment: {Id}", riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -389,7 +389,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update Step 3 for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Failed to update Step 3 for RiskAssessment: {Id}", riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -429,7 +429,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update Step 4 for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Failed to update Step 4 for RiskAssessment: {Id}", riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -463,7 +463,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update Step 5 for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Failed to update Step 5 for RiskAssessment: {Id}", riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -507,7 +507,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to update progress for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Failed to update progress for RiskAssessment: {Id}", riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -612,3 +612,4 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
 
     #endregion
 }
+

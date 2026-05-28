@@ -28,7 +28,7 @@ public partial class HazardReportSearch : ComponentBase
 
     [Inject] private DialogService _dialogService { get; set; } = default!;
 
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     
     /// <summary>
     /// Optional tracking ID parameter from URL for direct search
@@ -198,7 +198,7 @@ public partial class HazardReportSearch : ComponentBase
         // Check for exact HT-YYYY-NNNN format
         if (global::System.Text.RegularExpressions.Regex.IsMatch(cleaned, @"^HT-\d{4}-\d{4}$"))
         {
-            TrackingIdFormatMessage = "? Valid tracking ID format";
+            TrackingIdFormatMessage = "Valid tracking ID format";
             TrackingIdFormatColor = "#28a745";
             TrackingIdFormatIcon = "fa-check-circle";
         }
@@ -210,20 +210,20 @@ public partial class HazardReportSearch : ComponentBase
                 ? $"HT-{currentYear}-{cleaned.PadLeft(4, '0')}"
                 : $"HT-{currentYear}-{cleaned}";
 
-            TrackingIdFormatMessage = $"? Will search for format: {suggestion}";
+            TrackingIdFormatMessage = $"Will search for format: {suggestion}";
             TrackingIdFormatColor = "#ffc107";
             TrackingIdFormatIcon = "fa-exclamation-triangle";
         }
         // Check for partial HT- format
         else if (cleaned.StartsWith("HT-"))
         {
-            TrackingIdFormatMessage = "? Incomplete format - continue typing or search anyway";
+            TrackingIdFormatMessage = "Incomplete format - continue typing or search anyway";
             TrackingIdFormatColor = "#17a2b8";
             TrackingIdFormatIcon = "fa-info-circle";
         }
         else
         {
-            TrackingIdFormatMessage = "? Expected format: HT-YYYY-NNNN (e.g., HT-2026-0006)";
+            TrackingIdFormatMessage = "Expected format: HT-YYYY-NNNN (e.g., HT-2026-0006)";
             TrackingIdFormatColor = "#dc3545";
             TrackingIdFormatIcon = "fa-times-circle";
         }

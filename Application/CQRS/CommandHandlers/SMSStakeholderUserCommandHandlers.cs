@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSStakeholderUserCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 using SMS_Infrastructure.Services;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // SMS STAKEHOLDER USER COMMAND HANDLERS - Clean Architecture Pattern
@@ -41,13 +41,13 @@ public class CreateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRe
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateSMSStakeholderUserCommand for UserName: {UserName}", request.SMSStakeholderUser.UserName);
+            _logger.LogApplicationInformation(" Processing CreateSMSStakeholderUserCommand for UserName: {UserName}", request.SMSStakeholderUser.UserName);
 
             var result = await _stakeholderUserService.CreateSMSStakeholderUserAsync(request.SMSStakeholderUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created SMS Stakeholder User with ID: {Id}, UserName: {UserName}",
+                _logger.LogApplicationInformation(" Successfully created SMS Stakeholder User with ID: {Id}, UserName: {UserName}",
                     result.Value?.UserId, result.Value?.UserName);
             }
             else
@@ -60,7 +60,7 @@ public class CreateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRe
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateSMSStakeholderUserCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateSMSStakeholderUserCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -92,13 +92,13 @@ public class UpdateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRe
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateSMSStakeholderUserCommand for UserID: {UserId}", request.SMSStakeholderUser.UserId);
+            _logger.LogApplicationInformation(" Processing UpdateSMSStakeholderUserCommand for UserID: {UserId}", request.SMSStakeholderUser.UserId);
 
             var result = await _stakeholderUserService.UpdateSMSStakeholderUserAsync(request.SMSStakeholderUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUser.UserId);
+                _logger.LogApplicationInformation(" Successfully updated SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUser.UserId);
             }
             else
             {
@@ -110,7 +110,7 @@ public class UpdateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRe
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSMSStakeholderUserCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSMSStakeholderUserCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -142,7 +142,7 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateSMSStakeholderUserPasswordCommand for UserID: {UserId}", request.UserId);
+            _logger.LogApplicationInformation(" Processing UpdateSMSStakeholderUserPasswordCommand for UserID: {UserId}", request.UserId);
 
             // Create new password with proper hashing
             var passwordResult = Password.Create(request.NewPassword);
@@ -165,7 +165,7 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated password for SMS Stakeholder User with ID: {UserId}", request.UserId);
+                _logger.LogApplicationInformation(" Successfully updated password for SMS Stakeholder User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else
@@ -177,7 +177,7 @@ public class UpdateSMSStakeholderUserPasswordCommandHandler : BaseCommandBundle,
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSMSStakeholderUserPasswordCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSMSStakeholderUserPasswordCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -209,24 +209,24 @@ public class AuthenticateSMSStakeholderUserCommandHandler : BaseCommandBundle, I
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing authentication request for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationInformation(" Processing authentication request for UserName: {UserName}", request.UserName);
 
             var result = await _stakeholderUserService.AuthenticateSMSStakeholderUserAsync(request.UserName, request.Password, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully authenticated SMS Stakeholder User: {UserName}", request.UserName);
+                _logger.LogApplicationInformation(" Successfully authenticated SMS Stakeholder User: {UserName}", request.UserName);
             }
             else
             {
-                _logger.LogWarning("Authentication failed for user: {UserName}", request.UserName);
+                _logger.LogApplicationWarning("Authentication failed for user: {UserName}", request.UserName);
             }
 
             return result;
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("AuthenticateSMSStakeholderUserCommand operation was cancelled");
+            _logger.LogApplicationWarning("AuthenticateSMSStakeholderUserCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -258,7 +258,7 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IB
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing RecordSMSStakeholderUserLoginCommand for UserID: {UserId}", request.UserId);
+            _logger.LogApplicationInformation(" Processing RecordSMSStakeholderUserLoginCommand for UserID: {UserId}", request.UserId);
 
             // Get the existing user and record login
             var userResult = await _stakeholderUserService.GetSMSStakeholderUserByCodeAsync(request.UserId, cancellationToken);
@@ -274,7 +274,7 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IB
 
             if (updateResult.IsSuccess)
             {
-                _logger.LogInformation(" Successfully recorded login for SMS Stakeholder User with ID: {UserId}", request.UserId);
+                _logger.LogApplicationInformation(" Successfully recorded login for SMS Stakeholder User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else
@@ -286,7 +286,7 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IB
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("RecordSMSStakeholderUserLoginCommand operation was cancelled");
+            _logger.LogApplicationWarning("RecordSMSStakeholderUserLoginCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -298,7 +298,7 @@ public class RecordSMSStakeholderUserLoginCommandHandler : BaseCommandBundle, IB
 }
 
 /// <summary>
-/// ✅ NEW: Command handler for deactivating SMS Stakeholder Users using CQRS/Mediator pattern
+/// ? NEW: Command handler for deactivating SMS Stakeholder Users using CQRS/Mediator pattern
 /// Implements proper CQRS pattern with audit pipeline support for soft delete operations
 /// </summary>
 public class DeactivateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeactivateSMSStakeholderUserCommand, Result<SMSStakeholderUser>>
@@ -322,7 +322,7 @@ public class DeactivateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBa
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("🚀 CQRS: Handling DeactivateSMSStakeholderUserCommand for user: {UserCode} - Reason: {Reason}", 
+            _logger.LogApplicationInformation("CQRS: Handling DeactivateSMSStakeholderUserCommand for user: {UserCode} - Reason: {Reason}", 
                 request.SMSStakeholderUser.Code, request.DeactivationReason);
 
             // Business logic: Deactivate the user
@@ -334,23 +334,23 @@ public class DeactivateSMSStakeholderUserCommandHandler : BaseCommandBundle, IBa
             
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ CQRS: Successfully deactivated SMS Stakeholder User: {UserCode}", result.Value.Code);
+                _logger.LogApplicationInformation("CQRS: Successfully deactivated SMS Stakeholder User: {UserCode}", result.Value.Code);
             }
             else
             {
-                _logger.LogError("❌ CQRS: Failed to deactivate SMS Stakeholder User. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("CQRS: Failed to deactivate SMS Stakeholder User. Error: {Error}", result.Error?.Message);
             }
             
             return result;
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeactivateSMSStakeholderUserCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeactivateSMSStakeholderUserCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "💥 CQRS: Exception in DeactivateSMSStakeholderUserCommandHandler for user: {UserCode}", 
+            _logger.LogApplicationError(ex, "CQRS: Exception in DeactivateSMSStakeholderUserCommandHandler for user: {UserCode}", 
                 request.SMSStakeholderUser?.Code);
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.DeleteFailed);
         }
@@ -383,14 +383,14 @@ public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRe
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("🚀 CQRS: Handling DeleteSMSStakeholderUserCommand (legacy) for user ID: {UserId} - Redirecting to deactivation", 
+            _logger.LogApplicationInformation("CQRS: Handling DeleteSMSStakeholderUserCommand (legacy) for user ID: {UserId} - Redirecting to deactivation", 
                 request.SMSStakeholderUserId.Value);
 
-            // Get the user first - ✅ FIXED: Use correct method name
+            // Get the user first - ? FIXED: Use correct method name
             var userResult = await _stakeholderUserService.GetSMSStakeholderUserByCodeAsync(request.SMSStakeholderUserId.Value, cancellationToken);
             if (userResult.IsFailure)
             {
-                _logger.LogWarning("❌ CQRS: Cannot delete non-existent SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUserId.Value);
+                _logger.LogApplicationWarning("CQRS: Cannot delete non-existent SMS Stakeholder User with ID: {UserId}", request.SMSStakeholderUserId.Value);
                 return Result<bool>.Failure<bool>(userResult.Error);
             }
 
@@ -400,18 +400,18 @@ public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRe
 
             if (deactivateResult.IsSuccess)
             {
-                _logger.LogInformation("✅ CQRS: Successfully processed delete as deactivation for user: {UserCode}", deactivateResult.Value.Code);
+                _logger.LogApplicationInformation("CQRS: Successfully processed delete as deactivation for user: {UserCode}", deactivateResult.Value.Code);
                 return Result<bool>.Success(true);
             }
             else
             {
-                _logger.LogError("❌ CQRS: Failed to process delete as deactivation. Error: {Error}", deactivateResult.Error?.Message);
+                _logger.LogApplicationError("CQRS: Failed to process delete as deactivation. Error: {Error}", deactivateResult.Error?.Message);
                 return Result<bool>.Failure<bool>(deactivateResult.Error);
             }
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteSMSStakeholderUserCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteSMSStakeholderUserCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -421,3 +421,5 @@ public class DeleteSMSStakeholderUserCommandHandler : BaseCommandBundle, IBaseRe
         }
     }
 }
+
+

@@ -20,27 +20,28 @@ public class UINotificationEventHandler : BaseUIEventHandler<UINotificationEvent
     {
         try
         {
-            _logger.LogInformation("[UI HANDLER] Processing notification: {Severity} - {Title} - {Message} (ReportId: {ReportId})",
+            _logger.LogApplicationInformation("[UI HANDLER] Processing notification: {Severity} - {Title} - {Message} (ReportId: {ReportId})",
                 uiEvent.Severity, uiEvent.Title, uiEvent.Message, uiEvent.ReportId);
 
             // Here you would call your NotificationService or UI logic
-            _logger.LogInformation("[UI HANDLER] Notification Details: Severity={Severity}, Title={Title}, Message={Message}, Duration={Duration}, Category={Category}, Target={TargetComponent}, ReportId={ReportId}",
+            _logger.LogApplicationInformation("[UI HANDLER] Notification Details: Severity={Severity}, Title={Title}, Message={Message}, Duration={Duration}, Category={Category}, Target={TargetComponent}, ReportId={ReportId}",
                 uiEvent.Severity, uiEvent.Title, uiEvent.Message, uiEvent.Duration, uiEvent.Category, uiEvent.TargetComponent, uiEvent.ReportId);
 
             if (uiEvent.Metadata != null && uiEvent.Metadata.Count > 0)
             {
-                _logger.LogInformation("[UI HANDLER] Metadata: {Metadata}",
+                _logger.LogApplicationInformation("[UI HANDLER] Metadata: {Metadata}",
                     System.Text.Json.JsonSerializer.Serialize(uiEvent.Metadata));
             }
 
             await Task.Delay(100, cancellationToken); // Simulate UI update
-            _logger.LogInformation("[UI HANDLER] Successfully processed UI notification for {EventType}", uiEvent.EventType);
+            _logger.LogApplicationInformation("[UI HANDLER] Successfully processed UI notification for {EventType}", uiEvent.EventType);
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[UI HANDLER] Failed to process UI notification event: {EventType}", uiEvent.EventType);
+            _logger.LogApplicationError(ex, "[UI HANDLER] Failed to process UI notification event: {EventType}", uiEvent.EventType);
             return Result.Failure(new Error("UI_EVENT_PROCESSING_FAILED", $"UI notification event processing failed: {ex.Message}"));
         }
     }
 }
+

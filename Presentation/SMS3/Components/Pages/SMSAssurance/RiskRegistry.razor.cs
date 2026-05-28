@@ -4,7 +4,7 @@ using System.Data.Common;
 using Radzen;
 
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
 using SMS_Domain.Enums;
 
@@ -73,7 +73,7 @@ public partial class RiskRegistry : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        _logger.LogInformation("?? Risk Registry: Initializing page...");
+        _logger.LogInformation("Risk Registry: Initializing page...");
         try
         {
             GetRiskLevelFilters();
@@ -82,9 +82,9 @@ public partial class RiskRegistry : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? Risk Registry: Exception during initialization");
+            _logger.LogError(ex, "Risk Registry: Exception during initialization");
         }
-        _logger.LogInformation("?? Risk Registry: Initialization complete");
+        _logger.LogInformation("Risk Registry: Initialization complete");
     }
 
     #endregion
@@ -101,7 +101,7 @@ public partial class RiskRegistry : ComponentBase
             IsLoading = true;
             StateHasChanged();
 
-            _logger.LogInformation("?? Risk Registry: Starting data load...");
+            _logger.LogInformation("Risk Registry: Starting data load...");
 
             // Load all required data in parallel
             var reportsTask = LoadAllReportsAsync();
@@ -116,33 +116,33 @@ public partial class RiskRegistry : ComponentBase
             var assessments = await assessmentsTask;
             var mitigations = await mitigationsTask;
 
-            _logger.LogInformation("?? Risk Registry: Data loaded - Hazards: {HazardCount}, Assessments: {AssessmentCount}, Mitigations: {MitigationCount}",
+            _logger.LogInformation("Risk Registry: Data loaded - Hazards: {HazardCount}, Assessments: {AssessmentCount}, Mitigations: {MitigationCount}",
                 hazards.Count, assessments.Count, mitigations.Count);
 
             // Log some sample data for debugging
             if (hazards.Any())
             {
                 var sampleHazard = hazards.First();
-                _logger.LogInformation("?? Sample Hazard: Code={Code}, Description={Description}, ReportCode={ReportCode}, RiskLevel={RiskLevel}, InitialRiskMatrixCode={MatrixCode}",
+                _logger.LogInformation("Sample Hazard: Code={Code}, Description={Description}, ReportCode={ReportCode}, RiskLevel={RiskLevel}, InitialRiskMatrixCode={MatrixCode}",
                     sampleHazard.Code, sampleHazard.Description, sampleHazard.ReportCode, sampleHazard.HazardRiskLevel, sampleHazard.InitialRiskMatrixCode);
             }
 
             // Build risk registry entries
             RiskRegistryEntries = BuildRiskRegistryEntries(reports,hazards, assessments, mitigations);
 
-            _logger.LogInformation("?? Risk Registry: Built {EntryCount} registry entries", RiskRegistryEntries.Count);
+            _logger.LogInformation("Risk Registry: Built {EntryCount} registry entries", RiskRegistryEntries.Count);
 
             // Apply current filters
             ApplyFilters();
 
-            _logger.LogInformation("? Risk Registry: After filtering - {FilteredCount} entries visible", FilteredRiskRegistryEntries.Count);
+            _logger.LogInformation("Risk Registry: After filtering - {FilteredCount} entries visible", FilteredRiskRegistryEntries.Count);
 
             // Force UI refresh
             await InvokeAsync(StateHasChanged);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error loading Risk Registry data");
+            _logger.LogError(ex, "Error loading Risk Registry data");
             await _notificationHelper.ShowErrorAsync("Error loading Risk Registry data");
 
         }
@@ -163,25 +163,25 @@ public partial class RiskRegistry : ComponentBase
     {
         try
         {
-            _logger.LogInformation("?? Loading all hazards...");
+            _logger.LogInformation("Loading all hazards...");
             var query = new GetAllReportsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value is not null)
             {
                 var reports = result.Value.ToList();
-                _logger.LogInformation("? Loaded {Count} reports successfully", reports.Count);
+                _logger.LogInformation("Loaded {Count} reports successfully", reports.Count);
                 return reports;
             }
             else
             {
-                _logger.LogWarning("?? GetAllReportsQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
+                _logger.LogWarning("GetAllReportsQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
                     result.IsSuccess, result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Exception loading hazards");
+            _logger.LogError(ex, "Exception loading hazards");
         }
 
         return new List<Report>();
@@ -194,25 +194,25 @@ public partial class RiskRegistry : ComponentBase
     {
         try
         {
-            _logger.LogInformation("?? Loading all hazards...");
+            _logger.LogInformation("Loading all hazards...");
             var query = new GetAllHazardsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value is not null)
             {
                 var hazards = result.Value.ToList();
-                _logger.LogInformation("? Loaded {Count} hazards successfully", hazards.Count);
+                _logger.LogInformation("Loaded {Count} hazards successfully", hazards.Count);
                 return hazards;
             }
             else
             {
-                _logger.LogWarning("?? GetAllHazardsQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
+                _logger.LogWarning("GetAllHazardsQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
                     result.IsSuccess, result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Exception loading hazards");
+            _logger.LogError(ex, "Exception loading hazards");
         }
 
         return new List<Hazard>();
@@ -225,25 +225,25 @@ public partial class RiskRegistry : ComponentBase
     {
         try
         {
-            _logger.LogInformation("?? Loading all risk assessments...");
+            _logger.LogInformation("Loading all risk assessments...");
             var query = new GetAllRiskAssessmentsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value is not null)
             {
                 var assessments = result.Value.ToList();
-                _logger.LogInformation("? Loaded {Count} risk assessments successfully", assessments.Count);
+                _logger.LogInformation("Loaded {Count} risk assessments successfully", assessments.Count);
                 return assessments;
             }
             else
             {
-                _logger.LogWarning("?? GetAllRiskAssessmentsQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
+                _logger.LogWarning("GetAllRiskAssessmentsQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
                     result.IsSuccess, result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Exception loading risk assessments");
+            _logger.LogError(ex, "Exception loading risk assessments");
         }
 
         return new List<RiskAssessment>();
@@ -256,25 +256,25 @@ public partial class RiskRegistry : ComponentBase
     {
         try
         {
-            _logger.LogInformation("?? Loading all mitigations...");
+            _logger.LogInformation("Loading all mitigations...");
             var query = new GetAllMitigationsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
             if (result.IsSuccess && result.Value is not null)
             {
                 var mitigations = result.Value.ToList();
-                _logger.LogInformation("? Loaded {Count} mitigations successfully", mitigations.Count);
+                _logger.LogInformation("Loaded {Count} mitigations successfully", mitigations.Count);
                 return mitigations;
             }
             else
             {
-                _logger.LogWarning("?? GetAllMitigationsQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
+                _logger.LogWarning("GetAllMitigationsQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
                     result.IsSuccess, result.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Exception loading mitigations");
+            _logger.LogError(ex, "Exception loading mitigations");
         }
 
         return new List<Mitigation>();
@@ -296,7 +296,7 @@ public partial class RiskRegistry : ComponentBase
         {
             try
             {
-                _logger.LogDebug("?? Processing hazard: {HazardCode} - {Description}", hazard.Code, hazard.Description);
+                _logger.LogDebug("Processing hazard: {HazardCode} - {Description}", hazard.Code, hazard.Description);
 
                 // Find associated risk assessment
 
@@ -310,11 +310,11 @@ public partial class RiskRegistry : ComponentBase
 
                 if (assessment is not null)
                 {
-                    _logger.LogDebug("? Found assessment {AssessmentCode} for hazard {HazardCode}", assessment.Code, hazard.Code);
+                    _logger.LogDebug("Found assessment {AssessmentCode} for hazard {HazardCode}", assessment.Code, hazard.Code);
                 }
                 else
                 {
-                    _logger.LogDebug("?? No assessment found for hazard {HazardCode}", hazard.Code);
+                    _logger.LogDebug("No assessment found for hazard {HazardCode}", hazard.Code);
                 }
 
                 // Find associated mitigations for this hazard
@@ -329,7 +329,7 @@ public partial class RiskRegistry : ComponentBase
                     {
                         var entry = CreateRiskRegistryEntry(report ?? throw new ArgumentNullException(nameof(report)), hazard, assessment, mitigation);
                         entries.Add(entry);
-                        _logger.LogDebug("? Added entry for hazard {HazardCode} with mitigation {MitigationCode}", hazard.Code, mitigation.Code);
+                        _logger.LogDebug("Added entry for hazard {HazardCode} with mitigation {MitigationCode}", hazard.Code, mitigation.Code);
                     }
                 }
                 else
@@ -337,16 +337,16 @@ public partial class RiskRegistry : ComponentBase
                     // Create entry without mitigation
                     var entry = CreateRiskRegistryEntry(report ?? throw new ArgumentNullException(nameof(report)), hazard, assessment, null);
                     entries.Add(entry);
-                    _logger.LogDebug("? Added entry for hazard {HazardCode} without mitigation", hazard.Code);
+                    _logger.LogDebug("Added entry for hazard {HazardCode} without mitigation", hazard.Code);
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "? Error processing hazard {HazardCode} for risk registry", hazard.Code);
+                _logger.LogWarning(ex, "Error processing hazard {HazardCode} for risk registry", hazard.Code);
             }
         }
 
-        _logger.LogInformation("?? Built {TotalEntries} total registry entries", entries.Count);
+        _logger.LogInformation("Built {TotalEntries} total registry entries", entries.Count);
         return entries.OrderByDescending(e => e.LastUpdated).ToList();
     }
 
@@ -423,7 +423,7 @@ public partial class RiskRegistry : ComponentBase
             MitigationCode = mitigation?.Code
         };
 
-        _logger.LogDebug("? Created entry: {HazardId} -> MitigationStatus: '{Status}'", hazard.Code, entry.MitigationStatus);
+        _logger.LogDebug("Created entry: {HazardId} -> MitigationStatus: '{Status}'", hazard.Code, entry.MitigationStatus);
         return entry;
     }
 
@@ -492,25 +492,25 @@ public partial class RiskRegistry : ComponentBase
     /// </summary>
     private void ApplyFilters()
     {
-        _logger.LogInformation("?? Applying filters - SelectedStatusFilter: {StatusFilter}, SelectedRiskLevelFilter: {RiskFilter}, SearchText: {SearchText}",
+        _logger.LogInformation("Applying filters - SelectedStatusFilter: {StatusFilter}, SelectedRiskLevelFilter: {RiskFilter}, SearchText: {SearchText}",
             SelectedStatusFilter, SelectedRiskLevelFilter, SearchText);
 
         var filtered = RiskRegistryEntries.AsEnumerable();
 
-        _logger.LogInformation("?? Starting with {Count} total entries", RiskRegistryEntries.Count);
+        _logger.LogInformation("Starting with {Count} total entries", RiskRegistryEntries.Count);
 
         // Apply status filter - ? FIXED: Add null checking
         if (!string.IsNullOrEmpty(SelectedStatusFilter))
         {
             filtered = filtered.Where(e => e.MitigationStatus?.Value == SelectedStatusFilter);
-            _logger.LogInformation("?? After status filter: {Count} entries", filtered.Count());
+            _logger.LogInformation("After status filter: {Count} entries", filtered.Count());
         }
 
         // Apply risk level filter - ? FIXED: Add null checking
         if (!string.IsNullOrEmpty(SelectedRiskLevelFilter))
         {
             filtered = filtered.Where(e => e.ResidualHazardRiskLevel?.Value == SelectedRiskLevelFilter);
-            _logger.LogInformation("?? After risk level filter: {Count} entries", filtered.Count());
+            _logger.LogInformation("After risk level filter: {Count} entries", filtered.Count());
         }
 
         // Apply search filter
@@ -523,11 +523,11 @@ public partial class RiskRegistry : ComponentBase
                 (e.HazardDescription?.ToLowerInvariant().Contains(searchLower) ?? false) ||
                 (e.MitigationDescription?.ToLowerInvariant().Contains(searchLower) ?? false) ||
                 (e.AssignedTo?.ToLowerInvariant().Contains(searchLower) ?? false));
-            _logger.LogInformation("?? After search filter: {Count} entries", filtered.Count());
+            _logger.LogInformation("After search filter: {Count} entries", filtered.Count());
         }
 
         FilteredRiskRegistryEntries = filtered.ToList();
-        _logger.LogInformation("? Final filtered entries: {Count}", FilteredRiskRegistryEntries.Count);
+        _logger.LogInformation("Final filtered entries: {Count}", FilteredRiskRegistryEntries.Count);
 
         
     }

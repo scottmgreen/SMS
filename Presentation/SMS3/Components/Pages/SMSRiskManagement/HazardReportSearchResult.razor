@@ -1,6 +1,6 @@
 @page "/SMSRiskManagement/HazardReportSearchResult/{TrackingCode}"
 @using SMS3.Components.Shared
-@using SMS_Application.Messaging.Queries
+@using SMS_Application.Queries
 @using SMS_Domain.Entities
 @using SMS_Domain.ValueObjects
 @inherits ComponentBase
@@ -160,7 +160,7 @@ else if (ReportDetails is not null)
                     }
 
                     <!-- Anonymous Alert (if applicable) -->
-                    @if (ReportDetails.IsAnonymous && CurrentUserService.CanRead("SMS_Anonymous"))
+                    @if (ReportDetails.IsAnonymous && _currentUserService.CanRead("SMS_Anonymous"))
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Warning" ShowIcon="true" Variant="Variant.Flat">
                             <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
@@ -168,7 +168,7 @@ else if (ReportDetails is not null)
                             </RadzenText>
                         </RadzenAlert>
                         <!-- Contact Info for Reporter (if not anonymous) -->
-                        @if (!ReportDetails.IsAnonymous && CurrentUserService.CanRead("SMS_Anonymous") && (!string.IsNullOrEmpty(ReportDetails.ContactName) || !string.IsNullOrEmpty(ReportDetails.ContactCell) || !string.IsNullOrEmpty(ReportDetails.ContactEmail)))
+                        @if (!ReportDetails.IsAnonymous && _currentUserService.CanRead("SMS_Anonymous") && (!string.IsNullOrEmpty(ReportDetails.ContactName) || !string.IsNullOrEmpty(ReportDetails.ContactCell) || !string.IsNullOrEmpty(ReportDetails.ContactEmail)))
                         {
                             <RadzenCard class="guidance-card mb-4">
                                 <h6 class="mb-3">

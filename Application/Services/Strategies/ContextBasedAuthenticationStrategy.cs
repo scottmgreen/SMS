@@ -16,7 +16,7 @@ using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
-namespace Application.Services.Strategies;
+namespace SMS_Application.Strategies;
 
 /// <summary>
 /// Context-based authentication strategy using HttpContext.Items
@@ -68,11 +68,11 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             var context = _httpContextAccessor.HttpContext;
             if (context == null)
             {
-                _logger.LogWarning("? HttpContext not available for ContextBasedAuthenticationStrategy");
+                _logger.LogApplicationWarning("HttpContext not available for ContextBasedAuthenticationStrategy");
                 return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
-            _logger.LogInformation("?? Storing user {UserCode} ({UserType}) in HttpContext.Items for 2FA", user.Code, userType.Value);
+            _logger.LogApplicationInformation("Storing user {UserCode} ({UserType}) in HttpContext.Items for 2FA", user.Code, userType.Value);
 
             // Get serialized user data with all roles/permissions
             var userData = _userInstantiationService.SerializeCompleteUser(user, userType);
@@ -89,7 +89,7 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
                 foreach (var kvp in additionalData)
                 {
                     userData[kvp.Key] = kvp.Value;
-                    _logger.LogDebug("?? Added additional data to context: {Key} = {Value}", kvp.Key, kvp.Value?.Length > 50 ? $"{kvp.Value[..50]}..." : kvp.Value);
+                    _logger.LogApplicationDebug("Added additional data to context: {Key} = {Value}", kvp.Key, kvp.Value?.Length > 50 ? $"{kvp.Value[..50]}..." : kvp.Value);
                 }
             }
 
@@ -102,14 +102,14 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             // Store keys for cleanup tracking
             context.Items["SMS_AUTH_KEYS"] = string.Join("|", userData.Keys);
 
-            _logger.LogInformation("? SUCCESS: User {UserCode} ({UserType}) stored in HttpContext.Items with {FieldCount} fields (REQUEST-SCOPED)", 
+            _logger.LogApplicationInformation("SUCCESS: User {UserCode} ({UserType}) stored in HttpContext.Items with {FieldCount} fields (REQUEST-SCOPED)", 
                 user.Code, userType.Value, userData.Count);
 
             return Result.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error storing user {UserCode} in HttpContext.Items", user.Code);
+            _logger.LogApplicationError(ex, "Error storing user {UserCode} in HttpContext.Items", user.Code);
             return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -124,14 +124,14 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             var context = _httpContextAccessor.HttpContext;
             if (context == null)
             {
-                _logger.LogDebug("?? HttpContext not available for user retrieval");
+                _logger.LogApplicationDebug("HttpContext not available for user retrieval");
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             var isAuthenticated = context.Items["IsAuthenticated"]?.ToString();
             if (isAuthenticated != "true")
             {
-                _logger.LogDebug("?? No authenticated user in HttpContext.Items");
+                _logger.LogApplicationDebug("No authenticated user in HttpContext.Items");
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
@@ -140,12 +140,12 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
 
             if (string.IsNullOrEmpty(userCode) || string.IsNullOrEmpty(userTypeValue))
             {
-                _logger.LogWarning("?? Incomplete user data in HttpContext.Items - UserCode: {UserCode}, UserType: {UserType}", 
+                _logger.LogApplicationWarning("Incomplete user data in HttpContext.Items - UserCode: {UserCode}, UserType: {UserType}", 
                     userCode ?? "NULL", userTypeValue ?? "NULL");
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
-            _logger.LogInformation("?? Retrieving user {UserCode} ({UserType}) from HttpContext.Items", userCode, userTypeValue);
+            _logger.LogApplicationInformation("Retrieving user {UserCode} ({UserType}) from HttpContext.Items", userCode, userTypeValue);
 
             // Build user data dictionary from context items
             var userData = new Dictionary<string, string>();
@@ -179,7 +179,7 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
 
             if (!userData.Any())
             {
-                _logger.LogWarning("?? No user data found in HttpContext.Items");
+                _logger.LogApplicationWarning("No user data found in HttpContext.Items");
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
@@ -188,20 +188,20 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             
             if (result.IsSuccess)
             {
-                _logger.LogInformation("? User {UserCode} ({UserType}) retrieved successfully from HttpContext.Items", 
+                _logger.LogApplicationInformation("User {UserCode} ({UserType}) retrieved successfully from HttpContext.Items", 
                     userCode, userTypeValue);
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)result.Value);
             }
             else
             {
-                _logger.LogWarning("?? Failed to deserialize user {UserCode} from HttpContext.Items: {Error}", 
+                _logger.LogApplicationWarning("Failed to deserialize user {UserCode} from HttpContext.Items: {Error}", 
                     userCode, result.Error?.Message);
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error retrieving user from HttpContext.Items");
+            _logger.LogApplicationError(ex, "Error retrieving user from HttpContext.Items");
             return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
         }
     }
@@ -216,12 +216,12 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             var context = _httpContextAccessor.HttpContext;
             if (context == null)
             {
-                _logger.LogDebug("?? HttpContext not available for clearing");
+                _logger.LogApplicationDebug("HttpContext not available for clearing");
                 return Result.Success(true);
             }
 
             var userCode = context.Items["SMS_UserCode"]?.ToString() ?? "Unknown";
-            _logger.LogInformation("??? Clearing user {UserCode} from HttpContext.Items", userCode);
+            _logger.LogApplicationInformation("??? Clearing user {UserCode} from HttpContext.Items", userCode);
 
             // Method 1: Use tracked keys for precise cleanup
             var authKeysStr = context.Items["SMS_AUTH_KEYS"]?.ToString();
@@ -235,7 +235,7 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
                     context.Items.Remove(key);
                 }
                 
-                _logger.LogDebug("??? Cleared {Count} tracked context items", keysToRemove.Count);
+                _logger.LogApplicationDebug("??? Cleared {Count} tracked context items", keysToRemove.Count);
             }
             else
             {
@@ -251,15 +251,15 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
                     context.Items.Remove(key);
                 }
                 
-                _logger.LogDebug("??? Cleared {Count} pattern-matched context items", keysToRemove.Count);
+                _logger.LogApplicationDebug("??? Cleared {Count} pattern-matched context items", keysToRemove.Count);
             }
 
-            _logger.LogInformation("? HttpContext.Items cleared successfully for user {UserCode}", userCode);
+            _logger.LogApplicationInformation("HttpContext.Items cleared successfully for user {UserCode}", userCode);
             return Result.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error clearing HttpContext.Items");
+            _logger.LogApplicationError(ex, "Error clearing HttpContext.Items");
             return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -342,3 +342,4 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
         }
     }
 }
+

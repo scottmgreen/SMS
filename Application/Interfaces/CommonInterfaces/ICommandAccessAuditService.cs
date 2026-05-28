@@ -8,7 +8,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace Application.Interfaces.CommonInterfaces;
+namespace SMS_Application.Interfaces;
 
 /// <summary>
 /// Service for auditing command execution and business action operations

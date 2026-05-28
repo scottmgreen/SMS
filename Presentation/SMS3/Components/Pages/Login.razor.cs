@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 using SMS_Domain.Entities;
 
@@ -33,59 +33,59 @@ public partial class Login : ComponentBase
             ErrorMessage = string.Empty;
             StateHasChanged();
 
-            Logger.LogInformation("🔐 Starting Smart Login for user: {Username}", model.Username);
+            Logger.LogInformation("Starting Smart Login for user: {Username}", model.Username);
 
             var authResult = await AuthenticationService.AuthenticateAsync(model.Username, model.Password, CancellationToken.None);
 
             if (authResult.IsSuccess && authResult.User is not null)
             {
-                Logger.LogInformation("✅ Authentication successful for user: {Username}, Type: {UserType}", model.Username, authResult.UserType.Value);
-                Logger.LogInformation("🔐 2FA Enabled: {TwoFactorEnabled}", authResult.User.TwoFactorEnabled);
+                Logger.LogInformation("Authentication successful for user: {Username}, Type: {UserType}", model.Username, authResult.UserType.Value);
+                Logger.LogInformation("2FA Enabled: {TwoFactorEnabled}", authResult.User.TwoFactorEnabled);
 
                 
-                // 🔐 CHECK FOR TWO-FACTOR AUTHENTICATION
+                // ?? CHECK FOR TWO-FACTOR AUTHENTICATION
                 if (authResult.User.TwoFactorEnabled)
                 {
                     // User has 2FA enabled - redirect to 2FA verification
-                    Logger.LogInformation("🔐 User {Username} has 2FA enabled, initiating 2FA flow", model.Username);
+                    Logger.LogInformation("User {Username} has 2FA enabled, initiating 2FA flow", model.Username);
                     
                     try
                     {
-                        // 🚨 CRITICAL SESSION ISOLATION FIX: Clear any previous user's 2FA data first
-                        Logger.LogInformation("🧹 Clearing any previous 2FA session data for session isolation...");
+                        // ?? CRITICAL SESSION ISOLATION FIX: Clear any previous user's 2FA data first
+                        Logger.LogInformation("Clearing any previous 2FA session data for session isolation...");
                         await SessionService.ClearPending2FAUserAsync();
                         
                         // Store user temporarily for 2FA verification with explicit wait
-                        Logger.LogInformation("🔐 Storing pending 2FA user data for {Username}...", model.Username);
+                        Logger.LogInformation("Storing pending 2FA user data for {Username}...", model.Username);
                         await SessionService.StorePending2FAUserAsync(authResult.User, authResult.UserType);
                         
                         // Wait longer to ensure session is committed
-                        Logger.LogInformation("🔐 Waiting for session commit...");
+                        Logger.LogInformation("Waiting for session commit...");
                         await Task.Delay(300);
                         
                         // Verify the user was stored before navigation
-                        Logger.LogInformation("🔐 Verifying pending 2FA user was stored...");
+                        Logger.LogInformation("Verifying pending 2FA user was stored...");
                         var storedUser = SessionService.GetPending2FAUser();
                         if (storedUser is null)
                         {
-                            Logger.LogError("❌ FAILED to store pending 2FA user - session storage verification failed");
+                            Logger.LogError("FAILED to store pending 2FA user - session storage verification failed");
                             ErrorMessage = "Failed to initiate 2FA process. Please try again.";
                             return;
                         }
                         
-                        // 🚨 VERIFICATION: Ensure stored user matches current user (prevent contamination)
+                        // ?? VERIFICATION: Ensure stored user matches current user (prevent contamination)
                         if (storedUser.Value.User.UserName.Value != model.Username)
                         {
-                            Logger.LogError("❌ CRITICAL SESSION CONTAMINATION: Stored user {StoredUser} does not match login user {LoginUser}",
+                            Logger.LogError("CRITICAL SESSION CONTAMINATION: Stored user {StoredUser} does not match login user {LoginUser}",
                                 storedUser.Value.User.UserName.Value, model.Username);
                             ErrorMessage = "Session error detected. Please try logging in again.";
                             await SessionService.ClearPending2FAUserAsync(); // Clear contaminated data
                             return;
                         }
                         
-                        Logger.LogInformation("✅ Pending 2FA user stored and verified successfully: {UserCode} matches {Username}", 
+                        Logger.LogInformation("Pending 2FA user stored and verified successfully: {UserCode} matches {Username}", 
                             storedUser?.User.Code, model.Username);
-                        Logger.LogInformation("🔐 Navigating to /verify-2fa...");
+                        Logger.LogInformation("Navigating to /verify-2fa...");
                         
                         // Clear any existing error messages
                         ErrorMessage = string.Empty;
@@ -95,12 +95,12 @@ public partial class Login : ComponentBase
                         Navigation.NavigateToSecure("/verify-2fa", forceLoad: false);
 
                         // Add additional logging after navigation
-                        Logger.LogInformation("✅ Navigation to /verify-2fa initiated successfully");
+                        Logger.LogInformation("Navigation to /verify-2fa initiated successfully");
                         return;
                     }
                     catch (Exception ex)
                     {
-                        Logger.LogError(ex, "❌ Exception during 2FA flow setup for {Username}", model.Username);
+                        Logger.LogError(ex, "Exception during 2FA flow setup for {Username}", model.Username);
                         ErrorMessage = "Failed to initiate 2FA process. Please try again.";
                         return;
                     }
@@ -108,20 +108,20 @@ public partial class Login : ComponentBase
                 else
                 {
                     // No 2FA required - proceed with normal login
-                    Logger.LogInformation("🔐 User {Username} does not have 2FA enabled, proceeding with normal login", model.Username);
+                    Logger.LogInformation("User {Username} does not have 2FA enabled, proceeding with normal login", model.Username);
                     await CompleteLoginAsync(authResult.User, authResult.UserType);
                     return;
                 }
             }
             else
             {
-                Logger.LogWarning("❌ Authentication failed for user: {Username}", model.Username);
+                Logger.LogWarning("Authentication failed for user: {Username}", model.Username);
                 await HandleLoginFailureAsync(model.Username, authResult.ErrorMessage ?? "Invalid username or password");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "❌ Exception during Smart Login for user: {Username}", model.Username);
+            Logger.LogError(ex, "Exception during Smart Login for user: {Username}", model.Username);
             ErrorMessage = "An error occurred during login. Please try again.";
         }
         finally
@@ -132,7 +132,7 @@ public partial class Login : ComponentBase
     }
 
     /// <summary>
-    /// ✅ NEW: Get client IP address for audit logging
+    /// NEW: Get client IP address for audit logging
     /// </summary>
     private string GetClientIPAddress()
     {
@@ -167,7 +167,7 @@ public partial class Login : ComponentBase
     }
 
     /// <summary>
-    /// ✅ NEW: Get user agent for audit logging
+    /// NEW: Get user agent for audit logging
     /// </summary>
     private string GetUserAgent()
     {
@@ -184,10 +184,10 @@ public partial class Login : ComponentBase
 
     private async Task CompleteLoginAsync(BaseUser user, SMSUserType userType)
     {
-        // 🔐 CREATE SESSION-BASED AUTHENTICATION - Replaces static authentication
+        // ?? CREATE SESSION-BASED AUTHENTICATION - Replaces static authentication
         await SessionService.CreateSMSSessionAsync(user, userType);
         
-        // 🔐 START SESSION TIMER - Begin countdown for automatic logout
+        // ?? START SESSION TIMER - Begin countdown for automatic logout
         SessionTimerService.StartTimer();
         
         // Navigate to home page
@@ -196,7 +196,7 @@ public partial class Login : ComponentBase
 
     private async Task HandleLoginFailureAsync(string username, string errorMessage)
     {
-        // 🔐 Record failed authentication audit with simplified data
+        // ?? Record failed authentication audit with simplified data
         try
         {
             var authFailureCommand = new RecordAuthenticationFailureCommand(
@@ -207,12 +207,12 @@ public partial class Login : ComponentBase
                 1
             );
             var auditResult = await Mediator.SendAsync(authFailureCommand, CancellationToken.None);
-            Logger.LogInformation("✅ Authentication failure audit recorded for user: {Username}, Result: {IsSuccess}", 
+            Logger.LogInformation("Authentication failure audit recorded for user: {Username}, Result: {IsSuccess}", 
                 username, auditResult.IsSuccess);
         }
         catch (Exception auditEx)
         {
-            Logger.LogError(auditEx, "❌ Failed to record authentication failure audit for {Username}", username);
+            Logger.LogError(auditEx, "Failed to record authentication failure audit for {Username}", username);
             // Continue - don't block user from seeing error message
         }
 
@@ -229,3 +229,4 @@ public partial class Login : ComponentBase
         public string Password { get; set; } = string.Empty;
     }
 }
+

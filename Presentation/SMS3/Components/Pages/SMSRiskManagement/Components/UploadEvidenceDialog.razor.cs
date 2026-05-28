@@ -100,7 +100,7 @@ public partial class UploadEvidenceDialog : ComponentBase
     public async Task OnInputFileChange(InputFileChangeEventArgs e)
     {
         var newFiles = e.GetMultipleFiles(10); // Allow up to 10 files at once
-        Logger.LogInformation("?? OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
+        Logger.LogInformation("OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
 
         if (newFiles?.Any() == true)
         {
@@ -119,14 +119,14 @@ public partial class UploadEvidenceDialog : ComponentBase
 
                     if (isDuplicate)
                     {
-                        Logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
+                        Logger.LogInformation("Skipped duplicate file: {FileName}", newFile.Name);
                         continue;
                     }
 
                     // Check file size (50MB limit)
                     if (newFile.Size > 52428800)
                     {
-                        Logger.LogWarning("? File {FileName} exceeds 50MB limit", newFile.Name);
+                        Logger.LogWarning("File {FileName} exceeds 50MB limit", newFile.Name);
                         await NotificationHelper.ShowWarningAsync($"File '{newFile.Name}' exceeds 50MB limit and will be skipped");
                         failedFiles.Add(newFile.Name);
                         continue;
@@ -152,11 +152,11 @@ public partial class UploadEvidenceDialog : ComponentBase
                     };
 
                     successfullyProcessedFiles.Add(attachedFile);
-                    Logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
+                    Logger.LogInformation("Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
+                    Logger.LogError(ex, "Error processing file: {FileName}", newFile.Name);
                     failedFiles.Add(newFile.Name);
                     await NotificationHelper.ShowErrorAsync($"Error processing file '{newFile.Name}': {ex.Message}");
                 }
@@ -182,12 +182,12 @@ public partial class UploadEvidenceDialog : ComponentBase
                 await NotificationHelper.ShowErrorAsync($"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions.");
             }
 
-            Logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
+            Logger.LogInformation("File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
                 successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
         }
         else
         {
-            Logger.LogInformation("?? No files provided to OnInputFileChange");
+            Logger.LogInformation("No files provided to OnInputFileChange");
         }
 
         StateHasChanged();
@@ -256,7 +256,7 @@ public partial class UploadEvidenceDialog : ComponentBase
             CurrentUploadStatus = "Preparing upload...";
             StateHasChanged();
 
-            Logger.LogInformation("?? Starting upload of {Count} evidence files for Hazard: {HazardCode}",
+            Logger.LogInformation("Starting upload of {Count} evidence files for Hazard: {HazardCode}",
                 AttachedFiles.Count, HazardCode);
 
             var uploadedFileIds = new List<string>();
@@ -308,7 +308,7 @@ public partial class UploadEvidenceDialog : ComponentBase
                     };
 
                     // Send CreateHazardFileCommand
-                    Logger.LogInformation("?? Creating HazardFile: {FileName} with Code: {FileCode} for Evidence",
+                    Logger.LogInformation("Creating HazardFile: {FileName} with Code: {FileCode} for Evidence",
                         file.FileName, fileCode);
 
                     var createCommand = new CreateHazardFileCommand(hazardFile);
@@ -319,12 +319,12 @@ public partial class UploadEvidenceDialog : ComponentBase
                         var createdFileId = result.Value.Code;
                         uploadedFileIds.Add(createdFileId);
 
-                        Logger.LogInformation("? Successfully created evidence file: {FileName} with ID: {FileId}",
+                        Logger.LogInformation("Successfully created evidence file: {FileName} with ID: {FileId}",
                             file.FileName, createdFileId);
                     }
                     else
                     {
-                        Logger.LogError("? Failed to create evidence file: {FileName}. Error: {Error}",
+                        Logger.LogError("Failed to create evidence file: {FileName}. Error: {Error}",
                             file.FileName, result.Error?.Message);
 
                         await NotificationHelper.ShowErrorAsync($"Failed to upload '{file.FileName}': {result.Error?.Message}");
@@ -332,7 +332,7 @@ public partial class UploadEvidenceDialog : ComponentBase
                 }
                 catch (Exception fileEx)
                 {
-                    Logger.LogError(fileEx, "? Exception uploading evidence file: {FileName}", file.FileName);
+                    Logger.LogError(fileEx, "Exception uploading evidence file: {FileName}", file.FileName);
                     await NotificationHelper.ShowErrorAsync($"Error uploading '{file.FileName}': {fileEx.Message}");
                 }
 
@@ -350,7 +350,7 @@ public partial class UploadEvidenceDialog : ComponentBase
             // Show completion message
             if (uploadedFileIds.Count == totalFiles)
             {
-                Logger.LogInformation("? All evidence files uploaded successfully: {SuccessCount}/{TotalCount} files",
+                Logger.LogInformation("All evidence files uploaded successfully: {SuccessCount}/{TotalCount} files",
                     uploadedFileIds.Count, totalFiles);
 
                 await NotificationHelper.ShowSuccessAsync($"Successfully uploaded {uploadedFileIds.Count} evidence file(s)");
@@ -362,7 +362,7 @@ public partial class UploadEvidenceDialog : ComponentBase
             else
             {
                 var failedCount = totalFiles - uploadedFileIds.Count;
-                Logger.LogWarning("?? Partial upload success: {SuccessCount}/{TotalCount} files uploaded, {FailedCount} failed",
+                Logger.LogWarning("Partial upload success: {SuccessCount}/{TotalCount} files uploaded, {FailedCount} failed",
                     uploadedFileIds.Count, totalFiles, failedCount);
 
                 await NotificationHelper.ShowWarningAsync($"Uploaded {uploadedFileIds.Count} of {totalFiles} files. {failedCount} file(s) failed.");
@@ -377,7 +377,7 @@ public partial class UploadEvidenceDialog : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Critical error during evidence upload process");
+            Logger.LogError(ex, "Critical error during evidence upload process");
             await NotificationHelper.ShowErrorAsync("Critical error during upload process. Please try again.");
         }
         finally

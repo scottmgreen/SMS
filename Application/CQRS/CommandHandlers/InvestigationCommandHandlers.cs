@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="InvestigationCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // INVESTIGATION COMMAND HANDLERS - Clean Architecture Pattern
@@ -39,13 +39,13 @@ public class CreateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
                 return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateInvestigationCommand for Code: {Code}", request.Investigation.Code);
+            _logger.LogApplicationInformation(" Processing CreateInvestigationCommand for Code: {Code}", request.Investigation.Code);
 
             var result = await _investigationService.CreateInvestigationAsync(request.Investigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created Investigation with ID: {Id}, Code: {Code}",
+                _logger.LogApplicationInformation(" Successfully created Investigation with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -58,7 +58,7 @@ public class CreateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateInvestigationCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateInvestigationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -90,14 +90,14 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
                 return Result<Investigation>.Failure<Investigation>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateInvestigationCommand for ID: {Id}, Code: {Code}",
+            _logger.LogApplicationInformation(" Processing UpdateInvestigationCommand for ID: {Id}, Code: {Code}",
                 request.Investigation.Id, request.Investigation.Code);
 
             var result = await _investigationService.UpdateInvestigationAsync(request.Investigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated Investigation with ID: {Id}", request.Investigation.Id);
+                _logger.LogApplicationInformation(" Successfully updated Investigation with ID: {Id}", request.Investigation.Id);
             }
             else
             {
@@ -109,7 +109,7 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateInvestigationCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateInvestigationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -141,13 +141,13 @@ public class DeleteInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
                 return Result<bool>.Failure<bool>(DomainErrors.InvestigationError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteInvestigationCommand for ID: {Id}", request.InvestigationId);
+            _logger.LogApplicationInformation(" Processing DeleteInvestigationCommand for ID: {Id}", request.InvestigationId);
 
             var result = await _investigationService.DeleteInvestigationAsync(request.InvestigationId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted Investigation with ID: {Id}", request.InvestigationId);
+                _logger.LogApplicationInformation(" Successfully deleted Investigation with ID: {Id}", request.InvestigationId);
             }
             else
             {
@@ -159,7 +159,7 @@ public class DeleteInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteInvestigationCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteInvestigationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -169,3 +169,4 @@ public class DeleteInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
         }
     }
 }
+

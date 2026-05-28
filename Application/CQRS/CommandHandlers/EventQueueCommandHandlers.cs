@@ -8,9 +8,9 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Commands;
+using SMS_Application.Commands;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 public class ExecuteQueuedEventCommandHandler : BaseCommandBundle, IBaseRequestHandler<ExecuteQueuedEventCommand, Result>
 {
@@ -34,12 +34,12 @@ public class ExecuteQueuedEventCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result.Failure(DomainErrors.GeneralError.InvalidParameters);
             }
 
-            _logger.LogInformation("Processing ExecuteQueuedEventCommand for EventId: {EventId}", request.EventId);
+            _logger.LogApplicationInformation("Processing ExecuteQueuedEventCommand for EventId: {EventId}", request.EventId);
             return await _service.ExecuteQueuedEventAsync(request.EventId, request.ExecutedBy).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("ExecuteQueuedEventCommand operation was cancelled");
+            _logger.LogApplicationWarning("ExecuteQueuedEventCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -67,12 +67,12 @@ public class ExecuteAllPendingQueuedEventsCommandHandler : BaseCommandBundle, IB
     {
         try
         {
-            _logger.LogInformation("Processing ExecuteAllPendingQueuedEventsCommand (Type: {Type})", request.EventType);
+            _logger.LogApplicationInformation("Processing ExecuteAllPendingQueuedEventsCommand (Type: {Type})", request.EventType);
             return await _service.ExecuteAllPendingEventsAsync(request.EventType, request.ExecutedBy).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("ExecuteAllPendingQueuedEventsCommand operation was cancelled");
+            _logger.LogApplicationWarning("ExecuteAllPendingQueuedEventsCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -105,12 +105,12 @@ public class CancelQueuedEventCommandHandler : BaseCommandBundle, IBaseRequestHa
                 return Result.Failure(DomainErrors.GeneralError.InvalidParameters);
             }
 
-            _logger.LogInformation("Processing CancelQueuedEventCommand for EventId: {EventId}", request.EventId);
+            _logger.LogApplicationInformation("Processing CancelQueuedEventCommand for EventId: {EventId}", request.EventId);
             return await _service.CancelQueuedEventAsync(request.EventId, request.CancelledBy).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CancelQueuedEventCommand operation was cancelled");
+            _logger.LogApplicationWarning("CancelQueuedEventCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -138,12 +138,12 @@ public class ClearCompletedQueuedEventsCommandHandler : BaseCommandBundle, IBase
     {
         try
         {
-            _logger.LogInformation("Processing ClearCompletedQueuedEventsCommand");
+            _logger.LogApplicationInformation("Processing ClearCompletedQueuedEventsCommand");
             return await _service.ClearCompletedEventsAsync().ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("ClearCompletedQueuedEventsCommand operation was cancelled");
+            _logger.LogApplicationWarning("ClearCompletedQueuedEventsCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -171,12 +171,12 @@ public class ClearAllQueuedEventsCommandHandler : BaseCommandBundle, IBaseReques
     {
         try
         {
-            _logger.LogInformation("Processing ClearAllQueuedEventsCommand");
+            _logger.LogApplicationInformation("Processing ClearAllQueuedEventsCommand");
             return await _service.ClearAllEventsAsync().ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("ClearAllQueuedEventsCommand operation was cancelled");
+            _logger.LogApplicationWarning("ClearAllQueuedEventsCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -186,3 +186,4 @@ public class ClearAllQueuedEventsCommandHandler : BaseCommandBundle, IBaseReques
         }
     }
 }
+

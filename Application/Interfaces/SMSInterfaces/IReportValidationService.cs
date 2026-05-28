@@ -9,7 +9,7 @@
 
 using SMS_Domain.Entities;
 
-namespace Application.Interfaces;
+namespace SMS_Application.Interfaces;
 
 /// <summary>
 /// Application service interface for ReportValidation management and business operations

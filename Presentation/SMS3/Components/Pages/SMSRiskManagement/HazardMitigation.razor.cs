@@ -16,7 +16,7 @@ public partial class HazardMitigation : ComponentBase
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private ILogger<HazardMitigation> _logger { get; set; } = default!;
 
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     #endregion
 
@@ -279,7 +279,7 @@ public partial class HazardMitigation : ComponentBase
     /// </summary>
     protected string GetCurrentUserId()
     {
-        return CurrentUserService?.UserCode ?? "SYSTEM";
+        return _currentUserService?.UserCode ?? "SYSTEM";
     }
 
     

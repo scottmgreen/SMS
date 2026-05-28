@@ -52,7 +52,7 @@ namespace SMS_Infrastructure.Configuration.Extensions
             if (logSecurityHeaders)
             {
                 var logger = app.ApplicationServices.GetService<ILogger<SecurityHeadersMiddleware>>();
-                logger?.LogInformation("Security headers middleware enabled with logging");
+                logger?.LogInfrastructureInformation("Security headers middleware enabled with logging");
             }
 
             return app.UseMiddleware<SecurityHeadersMiddleware>();

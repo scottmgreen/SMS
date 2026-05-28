@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAudit.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -88,7 +88,7 @@ public class SMSAudit : BaseAuditableEntity
     public List<SMSAuditFinding> Findings { get; set; }
     public List<SMSAuditEvidence> Evidence { get; set; }
 
-    // Business Methods - ✅ PIPELINE APPROACH: Removed manual audit field setting
+    // Business Methods - PIPELINE APPROACH: Removed manual audit field setting
     public Result StartAudit(string startedBy)
     {
         try
@@ -100,7 +100,7 @@ public class SMSAudit : BaseAuditableEntity
             ActualStartDate = DateTime.UtcNow;
             CurrentPhase = "Opening";
             
-            // ✅ REMOVED: Manual audit field setting - pipeline handles this
+            // REMOVED: Manual audit field setting - pipeline handles this
             // UpdatedBy = startedBy;
             // UpdatedDate = DateTime.UtcNow;
 
@@ -126,7 +126,7 @@ public class SMSAudit : BaseAuditableEntity
             KeyFindings = keyFindings;
             ProgressPercentage = 100;
             
-            // ✅ REMOVED: Manual audit field setting - pipeline handles this
+            // REMOVED: Manual audit field setting - pipeline handles this
             // UpdatedBy = completedBy;
             // UpdatedDate = DateTime.UtcNow;
 
@@ -159,7 +159,7 @@ public class SMSAudit : BaseAuditableEntity
             Findings.Add(finding);
             UpdateFindingCounts();
             
-            // ✅ REMOVED: Manual audit field setting - pipeline handles this
+            // REMOVED: Manual audit field setting - pipeline handles this
             // UpdatedBy = foundBy;
             // UpdatedDate = DateTime.UtcNow;
 
@@ -180,3 +180,4 @@ public class SMSAudit : BaseAuditableEntity
         Observations = Findings.Count(f => f.Severity == "Observation");
     }
 }
+

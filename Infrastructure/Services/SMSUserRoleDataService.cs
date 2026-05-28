@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSUserRoleDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -43,28 +43,28 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
         {
             if (userRole is null)
             {
-                _logger.LogError("CreateSMSUserRoleAsync received null userRole");
+                _logger.LogInfrastructureError("CreateSMSUserRoleAsync received null userRole");
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Creating SMS User Role with code: {Code}", userRole.Code);
+            _logger.LogInfrastructureInformation("Creating SMS User Role with code: {Code}", userRole.Code);
 
             var result = await _repository.AddAsync(userRole);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS User Role with ID: {Id}", result.Value?.Id);
+                _logger.LogInfrastructureInformation("Successfully created SMS User Role with ID: {Id}", result.Value?.Id);
             }
             else
             {
-                _logger.LogError("Failed to create SMS User Role. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to create SMS User Role. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating SMS User Role");
+            _logger.LogInfrastructureError(ex, "Unexpected error creating SMS User Role");
             return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.CreateFailed);
         }
     }
@@ -76,12 +76,12 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
     {
         try
         {
-            _logger.LogInformation("Retrieving all SMS User Roles");
+            _logger.LogInfrastructureInformation("Retrieving all SMS User Roles");
             return await _repository.GetAllAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all SMS User Roles");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving all SMS User Roles");
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -93,12 +93,12 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
     {
         try
         {
-            _logger.LogInformation("Retrieving all active SMS User Roles");
+            _logger.LogInfrastructureInformation("Retrieving all active SMS User Roles");
             return await _repository.GetAllActiveAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving active SMS User Roles");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving active SMS User Roles");
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -110,12 +110,12 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS User Role with ID: {Id}", id);
+            _logger.LogInfrastructureInformation("Retrieving SMS User Role with ID: {Id}", id);
             return await _repository.GetByIdAsync(id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS User Role with ID: {Id}", id);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS User Role with ID: {Id}", id);
             return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -129,16 +129,16 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                _logger.LogError("GetSMSUserRolesByUserIdAsync received null or empty userId");
+                _logger.LogInfrastructureError("GetSMSUserRolesByUserIdAsync received null or empty userId");
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving SMS User Roles for user: {UserId}", userId);
+            _logger.LogInfrastructureInformation("Retrieving SMS User Roles for user: {UserId}", userId);
             return await _repository.GetByApplicationUserIdAsync(userId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS User Roles for user: {UserId}", userId);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS User Roles for user: {UserId}", userId);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -148,16 +148,16 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                _logger.LogError("GetSMSUserRolesByUserIdAsync received null or empty userId");
+                _logger.LogInfrastructureError("GetSMSUserRolesByUserIdAsync received null or empty userId");
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving SMS User Roles for user: {UserId}", userId);
+            _logger.LogInfrastructureInformation("Retrieving SMS User Roles for user: {UserId}", userId);
             return await _repository.GetByStakeholderUserIdAsync(userId);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS User Roles for user: {UserId}", userId);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS User Roles for user: {UserId}", userId);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -171,16 +171,16 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
     //    {
     //        if (string.IsNullOrWhiteSpace(userId))
     //        {
-    //            _logger.LogError("GetActiveSMSUserRolesByUserIdAsync received null or empty userId");
+    //            _logger.LogInfrastructureError("GetActiveSMSUserRolesByUserIdAsync received null or empty userId");
     //            return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
     //        }
 
-    //        _logger.LogInformation("Retrieving active SMS User Roles for user: {UserId}", userId);
+    //        _logger.LogInfrastructureInformation("Retrieving active SMS User Roles for user: {UserId}", userId);
     //        return await _repository.GetActiveRolesByUserIdAsync(userId);
     //    }
     //    catch (Exception ex)
     //    {
-    //        _logger.LogError(ex, "Unexpected error retrieving active SMS User Roles for user: {UserId}", userId);
+    //        _logger.LogInfrastructureError(ex, "Unexpected error retrieving active SMS User Roles for user: {UserId}", userId);
     //        return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
     //    }
     //}
@@ -194,16 +194,16 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
         {
             if (string.IsNullOrWhiteSpace(roleValue))
             {
-                _logger.LogError("GetSMSUserRolesByRoleValueAsync received null or empty roleValue");
+                _logger.LogInfrastructureError("GetSMSUserRolesByRoleValueAsync received null or empty roleValue");
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving SMS User Roles for role value: {RoleValue}", roleValue);
+            _logger.LogInfrastructureInformation("Retrieving SMS User Roles for role value: {RoleValue}", roleValue);
             return await _repository.GetByRoleValueAsync(roleValue);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS User Roles for role value: {RoleValue}", roleValue);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS User Roles for role value: {RoleValue}", roleValue);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -217,16 +217,16 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
         {
             if (string.IsNullOrWhiteSpace(department))
             {
-                _logger.LogError("GetSMSUserRolesByDepartmentAsync received null or empty department");
+                _logger.LogInfrastructureError("GetSMSUserRolesByDepartmentAsync received null or empty department");
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving SMS User Roles for department: {Department}", department);
+            _logger.LogInfrastructureInformation("Retrieving SMS User Roles for department: {Department}", department);
             return await _repository.GetByDepartmentAsync(department);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS User Roles for department: {Department}", department);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS User Roles for department: {Department}", department);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -240,16 +240,16 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
         {
             if (string.IsNullOrWhiteSpace(userType))
             {
-                _logger.LogError("GetSMSUserRolesByUserTypeAsync received null or empty userType");
+                _logger.LogInfrastructureError("GetSMSUserRolesByUserTypeAsync received null or empty userType");
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving SMS User Roles for user type: {UserType}", userType);
+            _logger.LogInfrastructureInformation("Retrieving SMS User Roles for user type: {UserType}", userType);
             return await _repository.GetByUserTypeAsync(userType);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS User Roles for user type: {UserType}", userType);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS User Roles for user type: {UserType}", userType);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -261,12 +261,12 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
     {
         try
         {
-            _logger.LogInformation("Retrieving expiring SMS User Roles before: {CutoffDate}", cutoffDate);
+            _logger.LogInfrastructureInformation("Retrieving expiring SMS User Roles before: {CutoffDate}", cutoffDate);
             return await _repository.GetExpiringRolesAsync(cutoffDate);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving expiring SMS User Roles");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving expiring SMS User Roles");
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -280,16 +280,16 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
         {
             if (userRole is null)
             {
-                _logger.LogError("UpdateSMSUserRoleAsync received null userRole");
+                _logger.LogInfrastructureError("UpdateSMSUserRoleAsync received null userRole");
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Updating SMS User Role with ID: {Id}", userRole.Id);
+            _logger.LogInfrastructureInformation("Updating SMS User Role with ID: {Id}", userRole.Id);
 
             var updateResult = await _repository.UpdateAsync(userRole);
             if (updateResult.IsFailure)
             {
-                _logger.LogError("Failed to update SMS User Role. Error: {Error}", updateResult.Error?.Message);
+                _logger.LogInfrastructureError("Failed to update SMS User Role. Error: {Error}", updateResult.Error?.Message);
                 return Result<SMSUserRole>.Failure<SMSUserRole>(updateResult.Error);
             }
 
@@ -298,7 +298,7 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating SMS User Role with ID: {Id}", userRole?.Id);
+            _logger.LogInfrastructureError(ex, "Unexpected error updating SMS User Role with ID: {Id}", userRole?.Id);
             return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.UpdateFailed);
         }
     }
@@ -312,27 +312,27 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                _logger.LogError("DeleteSMSUserRoleAsync received null or empty id");
+                _logger.LogInfrastructureError("DeleteSMSUserRoleAsync received null or empty id");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Deleting SMS User Role with ID: {Id}", id);
+            _logger.LogInfrastructureInformation("Deleting SMS User Role with ID: {Id}", id);
             var result = await _repository.DeleteAsync(id);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS User Role with ID: {Id}", id);
+                _logger.LogInfrastructureInformation("Successfully deleted SMS User Role with ID: {Id}", id);
             }
             else
             {
-                _logger.LogError("Failed to delete SMS User Role. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to delete SMS User Role. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting SMS User Role with ID: {Id}", id);
+            _logger.LogInfrastructureError(ex, "Unexpected error deleting SMS User Role with ID: {Id}", id);
             return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.DeleteFailed);
         }
     }
@@ -344,12 +344,12 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
     //{
     //    try
     //    {
-    //        _logger.LogInformation("Retrieving SMS User Role statistics");
+    //        _logger.LogInfrastructureInformation("Retrieving SMS User Role statistics");
     //        return await _repository.GetUserRoleStatisticsAsync();
     //    }
     //    catch (Exception ex)
     //    {
-    //        _logger.LogError(ex, "Unexpected error retrieving SMS User Role statistics");
+    //        _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS User Role statistics");
     //        return Result<UserRoleStatistics>.Failure<UserRoleStatistics>(DomainErrors.GeneralError.UnProcessableRequest);
     //    }
     //}
@@ -363,11 +363,11 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
     //    {
     //        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(roleValue))
     //        {
-    //            _logger.LogError("ValidateUserRoleAsync received null or empty parameters");
+    //            _logger.LogInfrastructureError("ValidateUserRoleAsync received null or empty parameters");
     //            return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
     //        }
 
-    //        _logger.LogInformation("Validating role {RoleValue} for user {UserId}", roleValue, userId);
+    //        _logger.LogInfrastructureInformation("Validating role {RoleValue} for user {UserId}", roleValue, userId);
 
     //        var activeRolesResult = await _repository.GetActiveRolesByUserIdAsync(userId);
     //        if (activeRolesResult.IsFailure)
@@ -382,8 +382,9 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
     //    }
     //    catch (Exception ex)
     //    {
-    //        _logger.LogError(ex, "Unexpected error validating user role");
+    //        _logger.LogInfrastructureError(ex, "Unexpected error validating user role");
     //        return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
     //    }
     //}
 }
+

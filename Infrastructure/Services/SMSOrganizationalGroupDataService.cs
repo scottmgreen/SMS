@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSOrganizationalGroupDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -41,28 +41,28 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
         {
             if (group is null)
             {
-                _logger.LogError("CreateSMSOrganizationalGroupAsync received null group");
+                _logger.LogInfrastructureError("CreateSMSOrganizationalGroupAsync received null group");
                 return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Creating SMS Organizational Group with code: {Code}", group.Code);
+            _logger.LogInfrastructureInformation("Creating SMS Organizational Group with code: {Code}", group.Code);
 
             var result = await _repository.AddAsync(group);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS Organizational Group with code: {Code}", result.Value?.Code);
+                _logger.LogInfrastructureInformation("Successfully created SMS Organizational Group with code: {Code}", result.Value?.Code);
             }
             else
             {
-                _logger.LogError("Failed to create SMS Organizational Group. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to create SMS Organizational Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating SMS Organizational Group");
+            _logger.LogInfrastructureError(ex, "Unexpected error creating SMS Organizational Group");
             return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.CreateFailed);
         }
     }
@@ -76,16 +76,16 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
         {
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("GetSMSOrganizationalGroupByCodeAsync received null or empty group code");
+                _logger.LogInfrastructureError("GetSMSOrganizationalGroupByCodeAsync received null or empty group code");
                 return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.CodeRequired);
             }
 
-            _logger.LogInformation("Retrieving SMS Organizational Group with code: {Code}", groupCode);
+            _logger.LogInfrastructureInformation("Retrieving SMS Organizational Group with code: {Code}", groupCode);
             return await _repository.GetByCodeAsync(groupCode);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Organizational Group with code: {Code}", groupCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Organizational Group with code: {Code}", groupCode);
             return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.NotFound);
         }
     }
@@ -97,12 +97,12 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
     {
         try
         {
-            _logger.LogInformation("Retrieving all SMS Organizational Groups");
+            _logger.LogInfrastructureInformation("Retrieving all SMS Organizational Groups");
             return await _repository.GetAllAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all SMS Organizational Groups");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving all SMS Organizational Groups");
             return Result<IEnumerable<SMSOrganizationalGroup>>.Failure<IEnumerable<SMSOrganizationalGroup>>(DomainErrors.SMSOrganizationalGroupError.NotFound);
         }
     }
@@ -116,11 +116,11 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
         {
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogError("GetSMSOrganizationalGroupsByUserCodeAsync received null or empty user code");
+                _logger.LogInfrastructureError("GetSMSOrganizationalGroupsByUserCodeAsync received null or empty user code");
                 return Result<IEnumerable<SMSOrganizationalGroup>>.Failure<IEnumerable<SMSOrganizationalGroup>>(DomainErrors.SMSOrganizationalGroupError.UserCodeRequired);
             }
 
-            _logger.LogInformation("Retrieving SMS Organizational Groups by user code: {UserCode}", userCode);
+            _logger.LogInfrastructureInformation("Retrieving SMS Organizational Groups by user code: {UserCode}", userCode);
 
             // Note: This method would need to be implemented in the repository if needed
             // For now, return an empty list as this functionality may not be implemented yet
@@ -131,7 +131,7 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Organizational Groups by user code: {UserCode}", userCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Organizational Groups by user code: {UserCode}", userCode);
             return Result<IEnumerable<SMSOrganizationalGroup>>.Failure<IEnumerable<SMSOrganizationalGroup>>(DomainErrors.SMSOrganizationalGroupError.NotFound);
         }
     }
@@ -145,29 +145,29 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
         {
             if (group is null)
             {
-                _logger.LogError("UpdateSMSOrganizationalGroupAsync received null group");
+                _logger.LogInfrastructureError("UpdateSMSOrganizationalGroupAsync received null group");
                 return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Updating SMS Organizational Group with code: {Code}", group.Code);
+            _logger.LogInfrastructureInformation("Updating SMS Organizational Group with code: {Code}", group.Code);
 
             var result = await _repository.UpdateAsync(group);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS Organizational Group with code: {Code}", group.Code);
+                _logger.LogInfrastructureInformation("Successfully updated SMS Organizational Group with code: {Code}", group.Code);
                 // Return the updated group by getting it from the repository
                 return await _repository.GetByCodeAsync(group.Code);
             }
             else
             {
-                _logger.LogError("Failed to update SMS Organizational Group. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to update SMS Organizational Group. Error: {Error}", result.Error?.Message);
                 return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.UpdateFailed);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating SMS Organizational Group with code: {Code}", group?.Code);
+            _logger.LogInfrastructureError(ex, "Unexpected error updating SMS Organizational Group with code: {Code}", group?.Code);
             return Result<SMSOrganizationalGroup>.Failure<SMSOrganizationalGroup>(DomainErrors.SMSOrganizationalGroupError.UpdateFailed);
         }
     }
@@ -181,28 +181,28 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
         {
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("DeleteSMSOrganizationalGroupAsync received null or empty group code");
+                _logger.LogInfrastructureError("DeleteSMSOrganizationalGroupAsync received null or empty group code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.CodeRequired);
             }
 
-            _logger.LogInformation("Deleting SMS Organizational Group with code: {Code}", groupCode);
+            _logger.LogInfrastructureInformation("Deleting SMS Organizational Group with code: {Code}", groupCode);
 
             var result = await _repository.DeleteAsync(groupCode);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS Organizational Group with code: {Code}", groupCode);
+                _logger.LogInfrastructureInformation("Successfully deleted SMS Organizational Group with code: {Code}", groupCode);
             }
             else
             {
-                _logger.LogError("Failed to delete SMS Organizational Group. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to delete SMS Organizational Group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting SMS Organizational Group with code: {Code}", groupCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error deleting SMS Organizational Group with code: {Code}", groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.DeleteFailed);
         }
     }
@@ -216,28 +216,28 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
         {
             if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("AssignUserToGroupAsync received null or empty parameters. UserCode: {UserCode}, GroupCode: {GroupCode}", userCode, groupCode);
+                _logger.LogInfrastructureError("AssignUserToGroupAsync received null or empty parameters. UserCode: {UserCode}, GroupCode: {GroupCode}", userCode, groupCode);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.UserCodeRequired);
             }
 
-            _logger.LogInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
+            _logger.LogInfrastructureInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
 
             var result = await _repository.AssignUserToGroupAsync(userCode, groupCode);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned user {UserCode} to group {GroupCode}", userCode, groupCode);
+                _logger.LogInfrastructureInformation("Successfully assigned user {UserCode} to group {GroupCode}", userCode, groupCode);
             }
             else
             {
-                _logger.LogError("Failed to assign user to group. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to assign user to group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.AssignmentFailed);
         }
     }
@@ -251,28 +251,28 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
         {
             if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("RemoveUserFromGroupAsync received null or empty parameters. UserCode: {UserCode}, GroupCode: {GroupCode}", userCode, groupCode);
+                _logger.LogInfrastructureError("RemoveUserFromGroupAsync received null or empty parameters. UserCode: {UserCode}, GroupCode: {GroupCode}", userCode, groupCode);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.UserCodeRequired);
             }
 
-            _logger.LogInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
+            _logger.LogInfrastructureInformation("Removing user {UserCode} from group {GroupCode}", userCode, groupCode);
 
             var result = await _repository.RemoveUserFromGroupAsync(userCode, groupCode);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully removed user {UserCode} from group {GroupCode}", userCode, groupCode);
+                _logger.LogInfrastructureInformation("Successfully removed user {UserCode} from group {GroupCode}", userCode, groupCode);
             }
             else
             {
-                _logger.LogError("Failed to remove user from group. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to remove user from group. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error removing user {UserCode} from group {GroupCode}", userCode, groupCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.RemovalFailed);
         }
     }
@@ -286,28 +286,28 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
         {
             if (string.IsNullOrWhiteSpace(userCode))
             {
-                _logger.LogError("ClearUserGroupsAsync received null or empty user code");
+                _logger.LogInfrastructureError("ClearUserGroupsAsync received null or empty user code");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.UserCodeRequired);
             }
 
-            _logger.LogInformation("Clearing all group memberships for user {UserCode}", userCode);
+            _logger.LogInfrastructureInformation("Clearing all group memberships for user {UserCode}", userCode);
 
             var result = await _repository.ClearUserGroupsAsync(userCode, "SYSTEM");
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully cleared all group memberships for user {UserCode}", userCode);
+                _logger.LogInfrastructureInformation("Successfully cleared all group memberships for user {UserCode}", userCode);
             }
             else
             {
-                _logger.LogError("Failed to clear user groups. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to clear user groups. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error clearing group memberships for user {UserCode}", userCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error clearing group memberships for user {UserCode}", userCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.ClearGroupsFailed);
         }
     }
@@ -321,19 +321,20 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
         {
             if (string.IsNullOrWhiteSpace(groupCode))
             {
-                _logger.LogError("GetUsersByGroupCodeAsync received null or empty group code");
+                _logger.LogInfrastructureError("GetUsersByGroupCodeAsync received null or empty group code");
                 return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalGroupError.CodeRequired);
             }
 
-            _logger.LogInformation("Retrieving users for group {GroupCode}", groupCode);
+            _logger.LogInfrastructureInformation("Retrieving users for group {GroupCode}", groupCode);
 
             return await _repository.GetUsersByGroupCodeAsync(groupCode);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving users for group {GroupCode}", groupCode);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving users for group {GroupCode}", groupCode);
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalGroupError.NotFound);
         }
     }
 }
+
 

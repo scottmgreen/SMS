@@ -8,7 +8,7 @@ public partial class EditInterviewDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     [Inject] private IBaseEventBus EventBus { get; set; } = default!;
     [Inject] private ILogger<EditInterviewDialog> Logger { get; set; } = default!;
@@ -335,7 +335,7 @@ public partial class EditInterviewDialog : ComponentBase
             }
 
             // Set audit fields
-            Interview.UpdatedBy = CurrentUserService.UserCode;
+            Interview.UpdatedBy = _currentUserService.UserCode;
             Interview.UpdatedDate = DateTime.UtcNow;
 
             // Save interview using CQRS command
@@ -345,7 +345,7 @@ public partial class EditInterviewDialog : ComponentBase
             if (result.IsSuccess)
             {
                 Logger.LogInformation("Interview updated successfully: {Code} by user {UserId}",
-                    Interview.Code, CurrentUserService.UserCode);
+                    Interview.Code, _currentUserService.UserCode);
 
                 await ShowSuccessAsyncNotification("Interview updated successfully");
 

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="Mappers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -44,7 +44,7 @@ public static partial class Mappers
             applicationUser.IsActive = reader.GetBoolean(FieldNames.fSMSApplicationUserIsActive);
             applicationUser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSApplicationUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSApplicationUserLastLoginDate);
             
-            // 🔐 Two-Factor Authentication Properties - FIXED: Safe NULL handling
+            // ?? Two-Factor Authentication Properties - FIXED: Safe NULL handling
             applicationUser.TwoFactorSecretKey = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorSecretKey) ? 
                 string.Empty : 
                 reader.GetString(FieldNames.fSMSApplicationUserTwoFactorSecretKey) ?? string.Empty;
@@ -118,7 +118,7 @@ public static partial class Mappers
             orgUser.IsActive = reader.GetBoolean(FieldNames.fSMSOrganizationalUserIsActive);
             orgUser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSOrganizationalUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSOrganizationalUserLastLoginDate);
             
-            // 🔐 Two-Factor Authentication Properties
+            // ?? Two-Factor Authentication Properties
             orgUser.TwoFactorSecretKey = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserTwoFactorSecretKey);
             orgUser.TwoFactorEnabled = reader.IsDBNull(FieldNames.fSMSOrganizationalUserTwoFactorEnabled) ? false : reader.GetBoolean(FieldNames.fSMSOrganizationalUserTwoFactorEnabled);
             orgUser.BackupCodes = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserBackupCodes);
@@ -199,7 +199,7 @@ public static partial class Mappers
             stakeholderuser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSStakeholderUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSStakeholderUserLastLoginDate);
             stakeholderuser.IsPOPEmployee = reader.GetBoolean(FieldNames.fSMSStakeholderIsPOPEmployee);
             
-            // 🔐 Two-Factor Authentication Properties
+            // ?? Two-Factor Authentication Properties
             stakeholderuser.TwoFactorSecretKey = reader.GetValue<string>(FieldNames.fSMSStakeholderUserTwoFactorSecretKey);
             stakeholderuser.TwoFactorEnabled = reader.IsDBNull(FieldNames.fSMSStakeholderUserTwoFactorEnabled) ? false : reader.GetBoolean(FieldNames.fSMSStakeholderUserTwoFactorEnabled);
             stakeholderuser.BackupCodes = reader.GetValue<string>(FieldNames.fSMSStakeholderUserBackupCodes);
@@ -544,32 +544,32 @@ public static partial class Mappers
     /// </summary>
     public static RiskAssessment MapToRiskAssessment(SqlDataReader reader)
     {
-        // ✅ Clean pattern: Direct field extraction and entity creation
+        // Clean pattern: Direct field extraction and entity creation
         var code = reader.GetValue<string>(FieldNames.fRiskAssessmentCode);
         var riskAssessmentId = new RiskAssessmentID(code);
         var riskAssessment = new RiskAssessment(riskAssessmentId);
 
-        // ✅ SIMPLIFIED: Direct property assignment - NO REFLECTION!
+        // SIMPLIFIED: Direct property assignment - NO REFLECTION!
         riskAssessment.Name = reader.GetValue<string>(FieldNames.fRiskAssessmentName);
         riskAssessment.Description = reader.GetValue<string>(FieldNames.fRiskAssessmentDescription);
         riskAssessment.HazardCode = reader.GetValue<string>(FieldNames.fRiskAssessmentHazardCode);
         riskAssessment.Code = code;
 
-        // ✅ SmartEnum parsing for AssessmentType
+        // SmartEnum parsing for AssessmentType
         var assessmentTypeValue = reader.GetValue<string>(FieldNames.fRiskAssessmentType)?.Trim();
         if (!string.IsNullOrEmpty(assessmentTypeValue))
         {
             riskAssessment.AssessmentType = RiskAssessmentType.FromValue(assessmentTypeValue) ?? RiskAssessmentType.Initial;
         }
 
-        // ✅ SmartEnum parsing for Status
+        // SmartEnum parsing for Status
         var statusValue = reader.GetValue<string>(FieldNames.fRiskAssessmentStatus)?.Trim();
         if (!string.IsNullOrEmpty(statusValue))
         {
             riskAssessment.Status = RiskAssessmentStatus.FromValue(statusValue) ?? RiskAssessmentStatus.AssessmentCreate;
         }
 
-        // ✅ Direct assignment for simple properties
+        // Direct assignment for simple properties
         var stageValue = reader.GetValue<string>(FieldNames.fRiskAssessmentStage)?.Trim();
         if (!string.IsNullOrEmpty(stageValue))
         {
@@ -581,26 +581,26 @@ public static partial class Mappers
         riskAssessment.ReportCode = reader.GetValue<string>(FieldNames.fRiskAssessmentReportCode);
 
 
-        // ✅ SmartEnum parsing for HazardCategory
+        // SmartEnum parsing for HazardCategory
         var categoryValue = reader.GetValue<string>(FieldNames.fRiskAssessmentCategory)?.Trim();
         if (!string.IsNullOrEmpty(categoryValue))
         {
             riskAssessment.RiskAssessmentCategory = RiskAssessmentCategory.FromValue(categoryValue) ?? RiskAssessmentCategory.Technical;
         }
 
-        // ✅ Integer fields with null handling
+        // Integer fields with null handling
         riskAssessment.CurrentStep = reader.IsDBNull(FieldNames.fRiskAssessmentCurrentStep) ? 1 : reader.GetValue<int>(FieldNames.fRiskAssessmentCurrentStep);
 
-        // ✅ DateTime fields with null handling  
+        // DateTime fields with null handling  
         riskAssessment.CompletedDate = reader.IsDBNull(FieldNames.fRiskAssessmentCompletedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fRiskAssessmentCompletedDate);
         riskAssessment.CompletedBy = reader.GetValue<string>(FieldNames.fRiskAssessmentCompletedBy);
         
-        // ✅ Step 1 - System Description Fields (now with public setters!)
+        // Step 1 - System Description Fields (now with public setters!)
         riskAssessment.SystemDescription = reader.GetValue<string>(FieldNames.fRiskAssessmentSystemDescription) ?? string.Empty;
         riskAssessment.SystemBoundaries = reader.GetValue<string>(FieldNames.fRiskAssessmentSystemBoundaries) ?? string.Empty;
         riskAssessment.SystemPurpose = reader.GetValue<string>(FieldNames.fRiskAssessmentSystemPurpose) ?? string.Empty;
 
-        // ✅ 5M Framework Fields - Direct assignment!
+        // 5M Framework Fields - Direct assignment!
         riskAssessment.FiveMPersonnel = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMPersonnel) ?? string.Empty;
         riskAssessment.FiveMEquipment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMEquipment) ?? string.Empty;
         riskAssessment.FiveMProcedures = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMProcedures) ?? string.Empty;
@@ -611,15 +611,15 @@ public static partial class Mappers
         riskAssessment.SelectedStakeholderGroups = reader.GetValue<string>(FieldNames.fRiskAssessmentSelectedStakeholderGroups) ?? string.Empty;
 
 
-        // ✅ Step 3 - Risk Analysis Fields
+        // Step 3 - Risk Analysis Fields
 
 
-        // ✅ Step 4 - Risk Assessment Fields
+        // Step 4 - Risk Assessment Fields
         riskAssessment.FinalSeverityScore = reader.IsDBNull(FieldNames.fRiskAssessmentFinalSeverityScore) ? null : reader.GetValue<int?>(FieldNames.fRiskAssessmentFinalSeverityScore);
         riskAssessment.FinalLikelihoodScore = reader.IsDBNull(FieldNames.fRiskAssessmentFinalLikelihoodScore) ? null : reader.GetValue<int?>(FieldNames.fRiskAssessmentFinalLikelihoodScore);
         riskAssessment.FinalRiskLevel = reader.GetValue<string>(FieldNames.fRiskAssessmentFinalRiskLevel);
         
-        // ✅ Step 5 - Implementation Fields
+        // Step 5 - Implementation Fields
 
         riskAssessment.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy);
         riskAssessment.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fCreatedDate);
@@ -655,7 +655,7 @@ public static partial class Mappers
         mitigation.AssignedTo = reader.GetValue<string>(FieldNames.fMitigationAssignedTo);
         
 
-        // Progress Properties - ✅ FIXED: Progress is int (not nullable)
+        // Progress Properties - FIXED: Progress is int (not nullable)
         mitigation.Progress = reader.IsDBNull(FieldNames.fMitigationProgress) ? 0 : reader.GetValue<int>(FieldNames.fMitigationProgress);
         
 
@@ -1148,3 +1148,4 @@ public static partial class Mappers
 
     #endregion
 }
+

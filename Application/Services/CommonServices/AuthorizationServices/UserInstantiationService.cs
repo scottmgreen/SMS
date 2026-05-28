@@ -11,7 +11,7 @@
 using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 using System.Text.Json;
@@ -45,7 +45,7 @@ public class UserInstantiationService : IUserInstantiationService
     {
         try
         {
-            _logger.LogInformation("?? Getting complete user instantiation for {UserCode} ({UserType}) via CQRS", userCode, userType.Value);
+            _logger.LogApplicationInformation("Getting complete user instantiation for {UserCode} ({UserType}) via CQRS", userCode, userType.Value);
 
             BaseUser? user = null;
             Result result;
@@ -59,7 +59,7 @@ public class UserInstantiationService : IUserInstantiationService
                     if (appResult.IsSuccess)
                     {
                         user = appResult.Value;
-                        _logger.LogInformation("? Application user retrieved via CQRS with {PermissionCount} permissions", 
+                        _logger.LogApplicationInformation("Application user retrieved via CQRS with {PermissionCount} permissions", 
                             user.UserRole?.Permissions?.Count ?? 0);
                     }
                     result = appResult;
@@ -71,7 +71,7 @@ public class UserInstantiationService : IUserInstantiationService
                     if (orgResult.IsSuccess)
                     {
                         user = orgResult.Value;
-                        _logger.LogInformation("? Organizational user retrieved via CQRS with {PermissionCount} permissions", 
+                        _logger.LogApplicationInformation("Organizational user retrieved via CQRS with {PermissionCount} permissions", 
                             user.UserRole?.Permissions?.Count ?? 0);
                     }
                     result = orgResult;
@@ -83,21 +83,21 @@ public class UserInstantiationService : IUserInstantiationService
                     if (stakeResult.IsSuccess)
                     {
                         user = stakeResult.Value;
-                        _logger.LogInformation("? Stakeholder user retrieved via CQRS with {PermissionCount} permissions", 
+                        _logger.LogApplicationInformation("Stakeholder user retrieved via CQRS with {PermissionCount} permissions", 
                             user.UserRole?.Permissions?.Count ?? 0);
                     }
                     result = stakeResult;
                     break;
 
                 default:
-                    _logger.LogError("? Unknown user type: {UserType}", userType.Value);
+                    _logger.LogApplicationError("Unknown user type: {UserType}", userType.Value);
                     return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(
                         DomainErrors.BaseUserError.InvalidUserType);
             }
 
             if (result.IsFailure)
             {
-                _logger.LogError("? Failed to retrieve user {UserCode} ({UserType}) via CQRS: {Error}", 
+                _logger.LogApplicationError("Failed to retrieve user {UserCode} ({UserType}) via CQRS: {Error}", 
                     userCode, userType.Value, result.Error?.Message);
                 return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(result.Error);
             }
@@ -106,19 +106,19 @@ public class UserInstantiationService : IUserInstantiationService
             if (!_completenessValidator.IsUserComplete(user!))
             {
                 var missing = _completenessValidator.GetMissingComponents(user!);
-                _logger.LogWarning("?? User {UserCode} ({UserType}) is incomplete - Missing: {MissingComponents}", 
+                _logger.LogApplicationWarning("User {UserCode} ({UserType}) is incomplete - Missing: {MissingComponents}", 
                     userCode, userType.Value, string.Join(", ", missing));
             }
 
             var completenessScore = _completenessValidator.GetCompletenessScore(user!, userType);
-            _logger.LogInformation("? Complete user instantiation successful for {UserCode} ({UserType}) - Score: {Score}/100, Role: {RoleCode}, Permissions: {PermissionCount}", 
+            _logger.LogApplicationInformation("Complete user instantiation successful for {UserCode} ({UserType}) - Score: {Score}/100, Role: {RoleCode}, Permissions: {PermissionCount}", 
                 userCode, userType.Value, completenessScore, user!.UserRole?.Code ?? "None", user.UserRole?.Permissions?.Count ?? 0);
 
             return Result<(BaseUser, SMSUserType)>.Success((user, userType));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error getting complete user {UserCode} ({UserType}) via CQRS", userCode, userType.Value);
+            _logger.LogApplicationError(ex, "Error getting complete user {UserCode} ({UserType}) via CQRS", userCode, userType.Value);
             return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(
                 DomainErrors.GeneralError.UnProcessableRequest);
         }
@@ -132,7 +132,7 @@ public class UserInstantiationService : IUserInstantiationService
     {
         try
         {
-            _logger.LogInformation("?? Getting complete user instantiation by username {Username} ({UserType}) via CQRS", username, userType.Value);
+            _logger.LogApplicationInformation("Getting complete user instantiation by username {Username} ({UserType}) via CQRS", username, userType.Value);
 
             BaseUser? user = null;
             Result result;
@@ -146,7 +146,7 @@ public class UserInstantiationService : IUserInstantiationService
                     if (appResult.IsSuccess)
                     {
                         user = appResult.Value;
-                        _logger.LogInformation("? Application user retrieved by username via CQRS with {PermissionCount} permissions", 
+                        _logger.LogApplicationInformation("Application user retrieved by username via CQRS with {PermissionCount} permissions", 
                             user.UserRole?.Permissions?.Count ?? 0);
                     }
                     result = appResult;
@@ -158,7 +158,7 @@ public class UserInstantiationService : IUserInstantiationService
                     if (orgResult.IsSuccess)
                     {
                         user = orgResult.Value;
-                        _logger.LogInformation("? Organizational user retrieved by username via CQRS with {PermissionCount} permissions", 
+                        _logger.LogApplicationInformation("Organizational user retrieved by username via CQRS with {PermissionCount} permissions", 
                             user.UserRole?.Permissions?.Count ?? 0);
                     }
                     result = orgResult;
@@ -170,21 +170,21 @@ public class UserInstantiationService : IUserInstantiationService
                     if (stakeResult.IsSuccess)
                     {
                         user = stakeResult.Value;
-                        _logger.LogInformation("? Stakeholder user retrieved by username via CQRS with {PermissionCount} permissions", 
+                        _logger.LogApplicationInformation("Stakeholder user retrieved by username via CQRS with {PermissionCount} permissions", 
                             user.UserRole?.Permissions?.Count ?? 0);
                     }
                     result = stakeResult;
                     break;
 
                 default:
-                    _logger.LogError("? Unknown user type: {UserType}", userType.Value);
+                    _logger.LogApplicationError("Unknown user type: {UserType}", userType.Value);
                     return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(
                         DomainErrors.BaseUserError.InvalidUserType);
             }
 
             if (result.IsFailure)
             {
-                _logger.LogError("? Failed to retrieve user by username {Username} ({UserType}) via CQRS: {Error}", 
+                _logger.LogApplicationError("Failed to retrieve user by username {Username} ({UserType}) via CQRS: {Error}", 
                     username, userType.Value, result.Error?.Message);
                 return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(result.Error);
             }
@@ -193,19 +193,19 @@ public class UserInstantiationService : IUserInstantiationService
             if (!_completenessValidator.IsUserComplete(user!))
             {
                 var missing = _completenessValidator.GetMissingComponents(user!);
-                _logger.LogWarning("?? User {Username} ({UserType}) is incomplete - Missing: {MissingComponents}", 
+                _logger.LogApplicationWarning("User {Username} ({UserType}) is incomplete - Missing: {MissingComponents}", 
                     username, userType.Value, string.Join(", ", missing));
             }
 
             var completenessScore = _completenessValidator.GetCompletenessScore(user!, userType);
-            _logger.LogInformation("? Complete user instantiation by username successful for {Username} ({UserType}) - Score: {Score}/100, Role: {RoleCode}, Permissions: {PermissionCount}", 
+            _logger.LogApplicationInformation("Complete user instantiation by username successful for {Username} ({UserType}) - Score: {Score}/100, Role: {RoleCode}, Permissions: {PermissionCount}", 
                 username, userType.Value, completenessScore, user!.UserRole?.Code ?? "None", user.UserRole?.Permissions?.Count ?? 0);
 
             return Result<(BaseUser, SMSUserType)>.Success((user, userType));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error getting complete user by username {Username} ({UserType}) via CQRS", username, userType.Value);
+            _logger.LogApplicationError(ex, "Error getting complete user by username {Username} ({UserType}) via CQRS", username, userType.Value);
             return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(
                 DomainErrors.GeneralError.UnProcessableRequest);
         }
@@ -274,7 +274,7 @@ public class UserInstantiationService : IUserInstantiationService
                     }
                     userData["SMS_UserPermissions"] = string.Join("|", permissionPairs);
                     
-                    _logger.LogInformation("?? Serialized {PermissionCount} permissions for user {UserCode}", user.UserRole.Permissions.Count, user.Code);
+                    _logger.LogApplicationInformation("Serialized {PermissionCount} permissions for user {UserCode}", user.UserRole.Permissions.Count, user.Code);
                 }
             }
 
@@ -295,13 +295,13 @@ public class UserInstantiationService : IUserInstantiationService
                     break;
             }
 
-            _logger.LogInformation("? Complete user serialization successful for {UserCode} ({UserType}) - {DataCount} fields", user.Code, userType.Value, userData.Count);
+            _logger.LogApplicationInformation("Complete user serialization successful for {UserCode} ({UserType}) - {DataCount} fields", user.Code, userType.Value, userData.Count);
 
             return userData;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error serializing complete user {UserCode} ({UserType})", user.Code, userType.Value);
+            _logger.LogApplicationError(ex, "Error serializing complete user {UserCode} ({UserType})", user.Code, userType.Value);
             throw;
         }
     }
@@ -320,12 +320,12 @@ public class UserInstantiationService : IUserInstantiationService
 
             if (string.IsNullOrEmpty(userCode))
             {
-                _logger.LogError("? Cannot deserialize user - missing UserCode");
+                _logger.LogApplicationError("Cannot deserialize user - missing UserCode");
                 return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(
                     DomainErrors.BaseUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("?? Deserializing complete user {UserCode} ({UserType})", userCode, userType.Value);
+            _logger.LogApplicationDebug("Deserializing complete user {UserCode} ({UserType})", userCode, userType.Value);
 
             // Check if we have JSON permission data (complete format)
             var hasJsonPermissions = userData.ContainsKey("SMS_UserPermissionsJson");
@@ -334,7 +334,7 @@ public class UserInstantiationService : IUserInstantiationService
             if (hasJsonPermissions && completenessScore >= 90)
             {
                 // We have complete serialized data, use it directly instead of refetching
-                _logger.LogInformation("? Found complete JSON permission data for user {UserCode} (Score: {Score}) - using cached data", userCode, completenessScore);
+                _logger.LogApplicationDebug("Found complete JSON permission data for user {UserCode} (Score: {Score}) - using cached data", userCode, completenessScore);
                 
                 // ?? CRITICAL FIX: Don't call GetCompleteUserAsync - it creates infinite loops!
                 // Instead, create a minimal user object from the existing data
@@ -346,19 +346,19 @@ public class UserInstantiationService : IUserInstantiationService
                     var minimalUser = CreateMinimalUserFromCachedData(userData, reconstructedUserType);
                     if (minimalUser != null)
                     {
-                        _logger.LogInformation("?? Created minimal user from cached data for {UserCode} - avoiding database call", userCode);
+                        _logger.LogApplicationDebug("Created minimal user from cached data for {UserCode} - avoiding database call", userCode);
                         return Result<(BaseUser, SMSUserType)>.Success((minimalUser, reconstructedUserType));
                     }
                     else
                     {
-                        _logger.LogWarning("?? Failed to create minimal user from cached data for {UserCode}", userCode);
+                        _logger.LogApplicationWarning("Failed to create minimal user from cached data for {UserCode}", userCode);
                         return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(
                             DomainErrors.GeneralError.UnProcessableRequest);
                     }
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "?? Failed to create minimal user from cached data for {UserCode}", userCode);
+                    _logger.LogApplicationWarning(ex, "Failed to create minimal user from cached data for {UserCode}", userCode);
                     return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(
                         DomainErrors.GeneralError.UnProcessableRequest);
                 }
@@ -368,25 +368,25 @@ public class UserInstantiationService : IUserInstantiationService
                 // In modern runtime flows we can still have valid authenticated cached payloads
                 // with lower completeness scores (for example, missing non-critical profile fields).
                 // Avoid turning those into hard auth failures.
-                _logger.LogWarning("?? Incomplete cached user data found (Score: {Score}) for {UserCode}; attempting minimal reconstruction", 
+                _logger.LogApplicationWarning("Incomplete cached user data found (Score: {Score}) for {UserCode}; attempting minimal reconstruction", 
                     completenessScore, userCode);
 
                 var reconstructedUserType = SMSUserType.FromValue(userTypeValue);
                 var minimalUser = CreateMinimalUserFromCachedData(userData, reconstructedUserType);
                 if (minimalUser != null)
                 {
-                    _logger.LogInformation("? Minimal reconstruction succeeded for incomplete cached user {UserCode}", userCode);
+                    _logger.LogApplicationInformation("Minimal reconstruction succeeded for incomplete cached user {UserCode}", userCode);
                     return Result<(BaseUser, SMSUserType)>.Success((minimalUser, reconstructedUserType));
                 }
 
-                _logger.LogError("? Minimal reconstruction failed for incomplete cached user {UserCode}", userCode);
+                _logger.LogApplicationError("Minimal reconstruction failed for incomplete cached user {UserCode}", userCode);
                 return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(
                     DomainErrors.GeneralError.UnProcessableRequest);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error deserializing complete user");
+            _logger.LogApplicationError(ex, "Error deserializing complete user");
             return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(
                 DomainErrors.GeneralError.UnProcessableRequest);
         }
@@ -418,11 +418,11 @@ public class UserInstantiationService : IUserInstantiationService
         {
             if (_completenessValidator.IsUserComplete(user))
             {
-                _logger.LogDebug("? User {UserCode} is already complete", user.Code);
+                _logger.LogApplicationDebug("User {UserCode} is already complete", user.Code);
                 return Result<BaseUser>.Success(user);
             }
 
-            _logger.LogInformation("?? User {UserCode} is incomplete, refetching via CQRS", user.Code);
+            _logger.LogApplicationInformation("User {UserCode} is incomplete, refetching via CQRS", user.Code);
             var result = await GetCompleteUserAsync(user.Code, userType, cancellationToken);
             
             if (result.IsSuccess)
@@ -436,7 +436,7 @@ public class UserInstantiationService : IUserInstantiationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error ensuring user completeness for {UserCode}", user.Code);
+            _logger.LogApplicationError(ex, "Error ensuring user completeness for {UserCode}", user.Code);
             return Result<BaseUser>.Failure<BaseUser>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -491,7 +491,7 @@ public class UserInstantiationService : IUserInstantiationService
                     break;
 
                 default:
-                    _logger.LogWarning("Unknown user type for minimal user creation: {UserType}", userType.Value);
+                    _logger.LogApplicationWarning("Unknown user type for minimal user creation: {UserType}", userType.Value);
                     return null;
             }
 
@@ -550,13 +550,13 @@ public class UserInstantiationService : IUserInstantiationService
                                 user.UserRole.Permissions.Add(permission);
                             }
 
-                            _logger.LogInformation("? Reconstructed {PermissionCount} permissions for user {UserCode} from cached JSON data", 
+                            _logger.LogApplicationDebug("Reconstructed {PermissionCount} permissions for user {UserCode} from cached JSON data", 
                                 user.UserRole.Permissions.Count, userCode);
                         }
                     }
                     catch (Exception ex)
                     {
-                        _logger.LogWarning(ex, "?? Failed to deserialize permissions JSON for user {UserCode}, will use legacy format", userCode);
+                        _logger.LogApplicationWarning(ex, "Failed to deserialize permissions JSON for user {UserCode}, will use legacy format", userCode);
                         
                         // Fallback to legacy permission format
                         var legacyPermissions = userData.GetValueOrDefault("SMS_UserPermissions", "");
@@ -568,14 +568,14 @@ public class UserInstantiationService : IUserInstantiationService
                 }
             }
 
-            _logger.LogInformation("? Created minimal user from cached data for {UserCode} with role {RoleCode} and {PermissionCount} permissions", 
+            _logger.LogApplicationDebug("Created minimal user from cached data for {UserCode} with role {RoleCode} and {PermissionCount} permissions", 
                 userCode, roleCode ?? "None", user.UserRole?.Permissions?.Count ?? 0);
 
             return user;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error creating minimal user from cached data");
+            _logger.LogApplicationError(ex, "Error creating minimal user from cached data");
             return null;
         }
     }
@@ -611,11 +611,11 @@ public class UserInstantiationService : IUserInstantiationService
                 }
             }
             
-            _logger.LogInformation("? Parsed {PermissionCount} permissions from legacy format", userRole.Permissions.Count);
+            _logger.LogApplicationInformation("Parsed {PermissionCount} permissions from legacy format", userRole.Permissions.Count);
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "?? Error parsing legacy permissions");
+            _logger.LogApplicationWarning(ex, "Error parsing legacy permissions");
         }
     }
 
@@ -632,3 +632,4 @@ public class UserInstantiationService : IUserInstantiationService
         public string? Code { get; set; }
     }
 }
+

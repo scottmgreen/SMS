@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAnalysisQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -10,9 +10,9 @@
 
 using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // RISK ANALYSIS QUERY HANDLERS - Clean Architecture Pattern
@@ -33,7 +33,7 @@ public class GetRiskAnalysisByCodeQueryHandler : BaseQueryBundle, IBaseRequestHa
     {
         try
         {
-            _logger.LogInformation(" Processing GetRiskAnalysisByCodeQuery for Code: {Code}", request.RiskAnalysisCode);
+            _logger.LogApplicationInformation(" Processing GetRiskAnalysisByCodeQuery for Code: {Code}", request.RiskAnalysisCode);
             var result = await _riskAnalysisService.GetRiskAnalysisByIdAsync(new RiskAnalysisID(request.RiskAnalysisCode.Value), ct).ConfigureAwait(false);
             return result;
         }
@@ -60,7 +60,7 @@ public class GetRiskAnalysisByIdQueryHandler : BaseQueryBundle, IBaseRequestHand
     {
         try
         {
-            _logger.LogInformation(" Processing GetRiskAnalysisByIdQuery for ID: {Id}", request.RiskAnalysisId);
+            _logger.LogApplicationInformation(" Processing GetRiskAnalysisByIdQuery for ID: {Id}", request.RiskAnalysisId);
             var result = await _riskAnalysisService.GetRiskAnalysisByIdAsync(new RiskAnalysisID(request.RiskAnalysisId.Value), ct).ConfigureAwait(false);
             return result;
         }
@@ -87,7 +87,7 @@ public class GetRiskAnalysisByHazardCodeQueryHandler : BaseQueryBundle, IBaseReq
     {
         try
         {
-            _logger.LogInformation(" Processing GetRiskAnalysisByHazardCodeQuery for Code: {Code}", request.HazardCode);
+            _logger.LogApplicationInformation(" Processing GetRiskAnalysisByHazardCodeQuery for Code: {Code}", request.HazardCode);
             var result = await _riskAnalysisService.GetRiskAnalysisByHazardCodeAsync(request.HazardCode.Value, ct).ConfigureAwait(false);
  
             return result;
@@ -115,18 +115,18 @@ public class GetRiskAnalysisByHazardAndAssessmentQueryHandler : BaseQueryBundle,
     {
         try
         {
-            _logger.LogInformation("🔍 Processing GetRiskAnalysisByHazardAndAssessmentQuery for Hazard: {HazardCode}, Assessment: {AssessmentCode}",   request.HazardCode, request.RiskAssessmentCode);
+            _logger.LogApplicationInformation("Processing GetRiskAnalysisByHazardAndAssessmentQuery for Hazard: {HazardCode}, Assessment: {AssessmentCode}",   request.HazardCode, request.RiskAssessmentCode);
 
             // Use LINQ filtering approach to eliminate database round trip
             var getAllResult = await _riskAnalysisService.GetAllRiskAnalysisAsync(ct).ConfigureAwait(false);
             
             if (!getAllResult.IsSuccess || getAllResult.Value == null)
             {
-                _logger.LogWarning("❌ Failed to get all RiskAnalysis records");
+                _logger.LogApplicationWarning("Failed to get all RiskAnalysis records");
                 return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
             }
 
-            _logger.LogInformation("📊 Searching through {Count} RiskAnalysis records", getAllResult.Value.Count);
+            _logger.LogApplicationInformation("Searching through {Count} RiskAnalysis records", getAllResult.Value.Count);
 
             // Filter in-memory using LINQ
             var matchingAnalysis = getAllResult.Value
@@ -137,24 +137,24 @@ public class GetRiskAnalysisByHazardAndAssessmentQueryHandler : BaseQueryBundle,
 
             if (matchingAnalysis != null)
             {
-                _logger.LogInformation("✅ Found RiskAnalysis {Code} for Hazard {HazardCode} and Assessment {AssessmentCode}", 
+                _logger.LogApplicationInformation("Found RiskAnalysis {Code} for Hazard {HazardCode} and Assessment {AssessmentCode}", 
                     matchingAnalysis.Code, request.HazardCode, request.RiskAssessmentCode);
                 
                 return Result<RiskAnalysis>.Success(matchingAnalysis);
             }
             else
             {
-                _logger.LogWarning("⚠️ No RiskAnalysis found for HazardCode: {HazardCode} and AssessmentCode: {AssessmentCode}", 
+                _logger.LogApplicationWarning("No RiskAnalysis found for HazardCode: {HazardCode} and AssessmentCode: {AssessmentCode}", 
                     request.HazardCode, request.RiskAssessmentCode);
 
                 // Log some debugging info
                 var hazardMatches = getAllResult.Value.Where(ra => 
                     string.Equals(ra.HazardCode?.Trim(), request.HazardCode?.Trim(), StringComparison.OrdinalIgnoreCase)).ToList();
-                _logger.LogInformation("🔍 Found {Count} RiskAnalysis records for Hazard {HazardCode}", hazardMatches.Count, request.HazardCode);
+                _logger.LogApplicationInformation("Found {Count} RiskAnalysis records for Hazard {HazardCode}", hazardMatches.Count, request.HazardCode);
                 
                 foreach (var match in hazardMatches.Take(5)) // Log first 5 matches
                 {
-                    _logger.LogInformation("    └─ RiskAnalysis {Code}: Hazard={Hazard}, Assessment={Assessment}", 
+                    _logger.LogApplicationInformation("    +- RiskAnalysis {Code}: Hazard={Hazard}, Assessment={Assessment}", 
                         match.Code, match.HazardCode, match.RiskAssessmentCode);
                 }
                 
@@ -184,7 +184,7 @@ public class GetAllRiskAnalysisQueryHandler : BaseQueryBundle, IBaseRequestHandl
     {
         try
         {
-            _logger.LogInformation(" Processing GetAllRiskAnalysisQuery");
+            _logger.LogApplicationInformation(" Processing GetAllRiskAnalysisQuery");
             var result = await _riskAnalysisService.GetAllRiskAnalysisAsync(ct).ConfigureAwait(false);
             return result;
         }
@@ -195,3 +195,5 @@ public class GetAllRiskAnalysisQueryHandler : BaseQueryBundle, IBaseRequestHandl
         }
     }
 }
+
+

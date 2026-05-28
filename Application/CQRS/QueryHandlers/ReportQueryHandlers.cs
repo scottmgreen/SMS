@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ReportQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -11,9 +11,9 @@
 using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // REPORT QUERY HANDLERS - Clean Architecture Pattern
@@ -34,7 +34,7 @@ public class GetReportByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<
     {
         try
         {
-            _logger.LogInformation(" Processing GetReportByCodeQuery for Code: {Code}", request.ReportCode);
+            _logger.LogApplicationInformation(" Processing GetReportByCodeQuery for Code: {Code}", request.ReportCode);
             var result = await _reportService.GetReportByCodeAsync(request.ReportCode, ct).ConfigureAwait(false);
             return result;
         }
@@ -61,7 +61,7 @@ public class GetAllReportsQueryHandler : BaseQueryBundle, IBaseRequestHandler<Ge
     {
         try
         {
-            _logger.LogInformation(" Processing GetAllReportsQuery");
+            _logger.LogApplicationInformation(" Processing GetAllReportsQuery");
             var result = await _reportService.GetAllReportsAsync(ct).ConfigureAwait(false);
             return result;
         }
@@ -72,3 +72,4 @@ public class GetAllReportsQueryHandler : BaseQueryBundle, IBaseRequestHandler<Ge
         }
     }
 }
+

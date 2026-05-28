@@ -63,8 +63,7 @@
 	<Using Include="SMS_Shared.Common" />
     <Using Include="SMS_Application.Common" />
     <Using Include="SMS_Application.Interfaces" />
-    <Using Include="SMS_Application.Messaging" />
-    <Using Include="SMS_Application.Messaging.Commands" />
+    <Using Include="SMS_Application.Commands" />
     <Using Include="SMS_Application.Services" />
     
     <Using Include="SMS_Domain.Common" />

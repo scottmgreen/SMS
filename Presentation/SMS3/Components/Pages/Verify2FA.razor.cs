@@ -54,8 +54,8 @@ public partial class Verify2FA : ComponentBase
     {
         try
         {
-            Logger.LogInformation("?? 2FA Verification page initialized for user: {User}", User);
-            Logger.LogInformation("?? Current URL: {CurrentUrl}", Navigation.Uri);
+            Logger.LogInformation("2FA Verification page initialized for user: {User}", User);
+            Logger.LogInformation("Current URL: {CurrentUrl}", Navigation.Uri);
 
             // Add delay to ensure session is fully available
             await Task.Delay(200);
@@ -64,13 +64,13 @@ public partial class Verify2FA : ComponentBase
             var initialPendingCheck = SessionService.GetPending2FAUser();
             if (initialPendingCheck is not null)
             {
-                Logger.LogInformation("?? Found existing pending 2FA user: {ExistingUser} - verifying it's not contaminated", 
+                Logger.LogInformation("Found existing pending 2FA user: {ExistingUser} - verifying it's not contaminated", 
                     initialPendingCheck.Value.User.UserName.Value);
                 
                 // If we have a query parameter user and it doesn't match the pending user, clear contaminated data
                 if (!string.IsNullOrEmpty(User) && initialPendingCheck.Value.User.UserName.Value != User)
                 {
-                    Logger.LogError("?? SESSION CONTAMINATION DETECTED: Pending user {PendingUser} does not match URL user {UrlUser}",
+                    Logger.LogError("SESSION CONTAMINATION DETECTED: Pending user {PendingUser} does not match URL user {UrlUser}",
                         initialPendingCheck.Value.User.UserName.Value, User);
                     
                     // Clear contaminated data
@@ -78,7 +78,7 @@ public partial class Verify2FA : ComponentBase
                     await Task.Delay(200);
                     
                     ErrorMessage = "Session contamination detected. Please log in again.";
-                    Logger.LogError("? Redirecting to login due to session contamination");
+                    Logger.LogError("Redirecting to login due to session contamination");
                     Navigation.NavigateTo("/login", forceLoad: true);
                     return;
                 }
@@ -86,30 +86,30 @@ public partial class Verify2FA : ComponentBase
 
             // Get pending 2FA user from session
             var pendingUserTuple = SessionService.GetPending2FAUser();
-            Logger.LogInformation("?? First attempt to get pending user: {Found}", pendingUserTuple is not null ? "FOUND" : "NOT FOUND");
+            Logger.LogInformation("First attempt to get pending user: {Found}", pendingUserTuple is not null ? "FOUND" : "NOT FOUND");
             
             if (pendingUserTuple is null)
             {
-                Logger.LogWarning("?? No pending 2FA user found in session - checking again in 500ms");
+                Logger.LogWarning("No pending 2FA user found in session - checking again in 500ms");
                 
                 // Try again after a short delay in case of timing issues
                 await Task.Delay(500);
                 pendingUserTuple = SessionService.GetPending2FAUser();
-                Logger.LogInformation("?? Second attempt to get pending user: {Found}", pendingUserTuple is not null ? "FOUND" : "NOT FOUND");
+                Logger.LogInformation("Second attempt to get pending user: {Found}", pendingUserTuple is not null ? "FOUND" : "NOT FOUND");
                 
                 if (pendingUserTuple is null)
                 {
-                    Logger.LogError("? No pending 2FA user found in session after retry");
+                    Logger.LogError("No pending 2FA user found in session after retry");
                     
                     // Try one more time with longer delay
                     await Task.Delay(1000);
                     pendingUserTuple = SessionService.GetPending2FAUser();
-                    Logger.LogInformation("?? Third attempt to get pending user: {Found}", pendingUserTuple is not null ? "FOUND" : "NOT FOUND");
+                    Logger.LogInformation("Third attempt to get pending user: {Found}", pendingUserTuple is not null ? "FOUND" : "NOT FOUND");
                     
                     if (pendingUserTuple is null)
                     {
                         ErrorMessage = "Session expired or invalid. Please log in again.";
-                        Logger.LogError("? Final attempt failed - redirecting to login");
+                        Logger.LogError("Final attempt failed - redirecting to login");
                         
                         // Use JavaScript redirect instead of Blazor navigation to avoid NavigationException
                         await Task.Delay(100);
@@ -123,7 +123,7 @@ public partial class Verify2FA : ComponentBase
             }
 
             var (pendingUser, userType) = pendingUserTuple.Value;
-            Logger.LogInformation("?? Retrieved pending 2FA user: {UserCode} ({UserType})", pendingUser.Code, userType.Value);
+            Logger.LogInformation("Retrieved pending 2FA user: {UserCode} ({UserType})", pendingUser.Code, userType.Value);
             
             UserDisplayName = pendingUser.UserName;
             UserSecretKey = pendingUser.TwoFactorSecretKey ?? string.Empty;
@@ -131,27 +131,27 @@ public partial class Verify2FA : ComponentBase
             // Check if user needs to set up 2FA (no secret key)
             if (string.IsNullOrEmpty(UserSecretKey))
             {
-                Logger.LogInformation("?? User {User} needs to set up 2FA - showing setup page", pendingUser.Code);
+                Logger.LogInformation("User {User} needs to set up 2FA - showing setup page", pendingUser.Code);
                 ShowSetupPage = true;
                 await GenerateQRCodeAsync(pendingUser);
             }
             else
             {
-                Logger.LogInformation("?? User {User} has 2FA already set up - showing verification page", pendingUser.Code);
+                Logger.LogInformation("User {User} has 2FA already set up - showing verification page", pendingUser.Code);
                 ShowSetupPage = false;
                 StartTotpTimer();
             }
             
             // ?? START 2FA SESSION TIMER - User has 10 minutes to complete 2FA verification
             TwoFactorTimer.StartTimer();
-            Logger.LogInformation("?? 2FA session timer started - user has {TimeoutMinutes} minutes to complete verification", 10);
+            Logger.LogInformation("2FA session timer started - user has {TimeoutMinutes} minutes to complete verification", 10);
             
             // Force a state change to ensure UI updates
             StateHasChanged();
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Error initializing 2FA verification page");
+            Logger.LogError(ex, "Error initializing 2FA verification page");
             ErrorMessage = "An error occurred loading the 2FA page. Please try logging in again.";
             await Task.Delay(2000); // Show error message longer
             Navigation.NavigateTo("/login", forceLoad: true);
@@ -165,7 +165,7 @@ public partial class Verify2FA : ComponentBase
     {
         try
         {
-            Logger.LogInformation("?? Generating QR code for 2FA setup for user: {User}", user.Code);
+            Logger.LogInformation("Generating QR code for 2FA setup for user: {User}", user.Code);
 
             // Generate new secret key for setup
             UserSecretKey = TwoFactorAuthService.GenerateSecretKey();
@@ -177,11 +177,11 @@ public partial class Verify2FA : ComponentBase
                 secretKey: UserSecretKey
             );
 
-            Logger.LogInformation("? QR code URL generated successfully for user: {User}", user.Code);
+            Logger.LogInformation("QR code URL generated successfully for user: {User}", user.Code);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Error generating QR code for user: {User}", user.Code);
+            Logger.LogError(ex, "Error generating QR code for user: {User}", user.Code);
             ErrorMessage = "Failed to generate QR code. Please contact IT support.";
         }
         await Task.CompletedTask; // Ensure async method
@@ -207,13 +207,13 @@ public partial class Verify2FA : ComponentBase
             }
 
             var (pendingUser, userType) = pendingUserTuple.Value;
-            Logger.LogInformation("?? Completing 2FA setup for user: {User} ({UserType})", pendingUser.Code, userType.Value);
+            Logger.LogInformation("Completing 2FA setup for user: {User} ({UserType})", pendingUser.Code, userType.Value);
 
             // Validate the verification code
             var isValid = TwoFactorAuthService.ValidateTotpCode(UserSecretKey, model.Code);
             if (!isValid)
             {
-                Logger.LogWarning("? Invalid 2FA setup verification code for user: {User} ({UserType})", pendingUser.Code, userType.Value);
+                Logger.LogWarning("Invalid 2FA setup verification code for user: {User} ({UserType})", pendingUser.Code, userType.Value);
                 ErrorMessage = "Invalid verification code. Please check your authenticator app and try again.";
                 SetupModel.Code = string.Empty;
                 return;
@@ -228,20 +228,20 @@ public partial class Verify2FA : ComponentBase
 
             if (setupResult.IsFailure)
             {
-                Logger.LogError("? Failed to save 2FA setup for user: {User} ({UserType}) - Error: {Error}", 
+                Logger.LogError("Failed to save 2FA setup for user: {User} ({UserType}) - Error: {Error}", 
                     pendingUser.Code, userType.Value, setupResult.Error?.Message);
                 ErrorMessage = "Failed to save 2FA setup. Please try again.";
                 return;
             }
 
-            Logger.LogInformation("? 2FA setup completed successfully for user: {User} ({UserType})", pendingUser.Code, userType.Value);
+            Logger.LogInformation("2FA setup completed successfully for user: {User} ({UserType})", pendingUser.Code, userType.Value);
 
             // ?? CRITICAL FIX: Refresh user data from database after 2FA setup
-            Logger.LogInformation("?? Refreshing user data after 2FA setup to ensure complete user object...");
+            Logger.LogInformation("Refreshing user data after 2FA setup to ensure complete user object...");
             var refreshedUserResult = await RefreshUserFromDatabaseAsync(pendingUser.Code, userType);
             if (refreshedUserResult.IsFailure || refreshedUserResult.Value is null)
             {
-                Logger.LogError("? Failed to refresh user data after 2FA setup - using original user object");
+                Logger.LogError("Failed to refresh user data after 2FA setup - using original user object");
                 // Use original user, but manually update the 2FA fields
                 pendingUser.TwoFactorSecretKey = UserSecretKey;
                 pendingUser.TwoFactorEnabled = true;
@@ -250,7 +250,7 @@ public partial class Verify2FA : ComponentBase
             }
             else
             {
-                Logger.LogInformation("? User data refreshed successfully after 2FA setup");
+                Logger.LogInformation("User data refreshed successfully after 2FA setup");
                 pendingUser = refreshedUserResult.Value; // Use refreshed user with complete 2FA data
             }
 
@@ -259,7 +259,7 @@ public partial class Verify2FA : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Error completing 2FA setup");
+            Logger.LogError(ex, "Error completing 2FA setup");
             ErrorMessage = "An error occurred during setup. Please try again.";
         }
         finally
@@ -289,19 +289,19 @@ public partial class Verify2FA : ComponentBase
             }
 
             var (pendingUser, userType) = pendingUserTuple.Value;
-            Logger.LogInformation("?? Verifying 2FA code for user: {User} ({UserType})", pendingUser.Code, userType.Value);
+            Logger.LogInformation("Verifying 2FA code for user: {User} ({UserType})", pendingUser.Code, userType.Value);
 
             // Validate TOTP code
             var isValid = TwoFactorAuthService.ValidateTotpCode(UserSecretKey, model.Code);
             if (isValid)
             {
-                Logger.LogInformation("? 2FA verification successful for user: {User} ({UserType})", pendingUser.Code, userType.Value);
+                Logger.LogInformation("2FA verification successful for user: {User} ({UserType})", pendingUser.Code, userType.Value);
 
                 // ?? SMART REPOSITORY USAGE - Reset failed attempts using the correct repository
                 var resetResult = await Reset2FAFailedAttemptsAsync(pendingUser.Code, userType);
                 if (resetResult.IsFailure)
                 {
-                    Logger.LogWarning("?? Failed to reset 2FA attempts for user: {User} ({UserType}) - continuing with login", 
+                    Logger.LogWarning("Failed to reset 2FA attempts for user: {User} ({UserType}) - continuing with login", 
                         pendingUser.Code, userType.Value);
                 }
 
@@ -310,7 +310,7 @@ public partial class Verify2FA : ComponentBase
             }
             else
             {
-                Logger.LogWarning("? Invalid 2FA code for user: {User} ({UserType})", pendingUser.Code, userType.Value);
+                Logger.LogWarning("Invalid 2FA code for user: {User} ({UserType})", pendingUser.Code, userType.Value);
 
                 // Increment failed attempts
                 var failedAttempts = pendingUser.FailedTwoFactorAttempts + 1;
@@ -319,7 +319,7 @@ public partial class Verify2FA : ComponentBase
                 if (failedAttempts >= 5)
                 {
                     lockoutUntil = DateTime.UtcNow.AddMinutes(15);
-                    Logger.LogWarning("?? User {User} ({UserType}) locked out due to too many failed 2FA attempts", 
+                    Logger.LogWarning("User {User} ({UserType}) locked out due to too many failed 2FA attempts", 
                         pendingUser.Code, userType.Value);
                 }
 
@@ -327,7 +327,7 @@ public partial class Verify2FA : ComponentBase
                 var updateResult = await Update2FAFailedAttemptsAsync(pendingUser.Code, failedAttempts, lockoutUntil, userType);
                 if (updateResult.IsFailure)
                 {
-                    Logger.LogError("? Failed to update 2FA failed attempts for user: {User} ({UserType}) - Error: {Error}",
+                    Logger.LogError("Failed to update 2FA failed attempts for user: {User} ({UserType}) - Error: {Error}",
                         pendingUser.Code, userType.Value, updateResult.Error?.Message);
                 }
 
@@ -340,7 +340,7 @@ public partial class Verify2FA : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Error during 2FA verification");
+            Logger.LogError(ex, "Error during 2FA verification");
             ErrorMessage = "An error occurred during verification. Please try again.";
         }
         finally
@@ -357,7 +357,7 @@ public partial class Verify2FA : ComponentBase
     {
         try
         {
-            Logger.LogInformation("?? Completing login process for user: {User}", user.Code);
+            Logger.LogInformation("Completing login process for user: {User}", user.Code);
 
             // ?? STOP 2FA TIMER
             TwoFactorTimer.StopTimer();
@@ -371,14 +371,14 @@ public partial class Verify2FA : ComponentBase
             var verifyCleared = SessionService.GetPending2FAUser();
             if (verifyCleared is not null)
             {
-                Logger.LogWarning("?? Pending 2FA data not fully cleared, forcing additional cleanup...");
+                Logger.LogWarning("Pending 2FA data not fully cleared, forcing additional cleanup...");
                 await SessionService.ClearPending2FAUserAsync();
                 await Task.Delay(300);
             }
-            Logger.LogInformation("? Pending 2FA user data cleared successfully");
+            Logger.LogInformation("Pending 2FA user data cleared successfully");
 
             // ?? CRITICAL FIX: Create full SMS session with multiple retry attempts and fallback strategies
-            Logger.LogInformation("?? Creating full SMS session...");
+            Logger.LogInformation("Creating full SMS session...");
             var sessionCreated = false;
             var maxAttempts = 5;
             Exception? lastException = null;
@@ -387,37 +387,37 @@ public partial class Verify2FA : ComponentBase
             {
                 try
                 {
-                    Logger.LogInformation("?? Session creation attempt {Attempt} of {MaxAttempts}", attempt, maxAttempts);
+                    Logger.LogInformation("Session creation attempt {Attempt} of {MaxAttempts}", attempt, maxAttempts);
                     
                     // Add progressive delay to allow system state to settle
                     if (attempt > 1)
                     {
                         var delayMs = 200 * attempt;
-                        Logger.LogInformation("?? Waiting {DelayMs}ms before retry...", delayMs);
+                        Logger.LogInformation("Waiting {DelayMs}ms before retry...", delayMs);
                         await Task.Delay(delayMs);
                     }
                     
                     await SessionService.CreateSMSSessionAsync(user, userType);
                     sessionCreated = true;
-                    Logger.LogInformation("? Full SMS session created successfully on attempt {Attempt}", attempt);
+                    Logger.LogInformation("Full SMS session created successfully on attempt {Attempt}", attempt);
                     break;
                 }
                 catch (Exception sessionEx)
                 {
                     lastException = sessionEx;
-                    Logger.LogWarning(sessionEx, "?? Session creation failed on attempt {Attempt}: {Error}", attempt, sessionEx.Message);
+                    Logger.LogWarning(sessionEx, "Session creation failed on attempt {Attempt}: {Error}", attempt, sessionEx.Message);
                     
                     // If this isn't the last attempt, continue trying
                     if (attempt < maxAttempts)
                     {
-                        Logger.LogInformation("?? Will retry session creation...");
+                        Logger.LogInformation("Will retry session creation...");
                     }
                 }
             }
             
             if (!sessionCreated)
             {
-                Logger.LogError(lastException, "? CRITICAL: Failed to create SMS session after {MaxAttempts} attempts", maxAttempts);
+                Logger.LogError(lastException, "CRITICAL: Failed to create SMS session after {MaxAttempts} attempts", maxAttempts);
 
                 // Do not navigate when session creation failed.
                 // This previously caused users to land on Home without an authenticated NavMenu state.
@@ -425,11 +425,11 @@ public partial class Verify2FA : ComponentBase
                 if (!isAuthenticatedAfterRetries)
                 {
                     ErrorMessage = "2FA verification succeeded, but sign-in session could not be established. Please try signing in again.";
-                    Logger.LogError("? Blocking navigation because no authenticated session exists after 2FA completion");
+                    Logger.LogError("Blocking navigation because no authenticated session exists after 2FA completion");
                     return;
                 }
 
-                Logger.LogWarning("?? Session creation retries failed, but authentication state is present; continuing to navigation");
+                Logger.LogWarning("Session creation retries failed, but authentication state is present; continuing to navigation");
             }
 
             // Start session timer regardless of session creation success
@@ -437,14 +437,14 @@ public partial class Verify2FA : ComponentBase
             try
             {
                 SessionTimerService.StartTimer();
-                Logger.LogInformation("? Session timer started");
+                Logger.LogInformation("Session timer started");
             }
             catch (Exception timerEx)
             {
-                Logger.LogWarning(timerEx, "?? Failed to start session timer, continuing anyway");
+                Logger.LogWarning(timerEx, "Failed to start session timer, continuing anyway");
             }
 
-            Logger.LogInformation("? Login completed for user: {User} (SessionCreated: {SessionCreated})", user.Code, sessionCreated);
+            Logger.LogInformation("Login completed for user: {User} (SessionCreated: {SessionCreated})", user.Code, sessionCreated);
 
             // Force multiple state changes to ensure UI updates
             await InvokeAsync(StateHasChanged);
@@ -453,17 +453,17 @@ public partial class Verify2FA : ComponentBase
             
             // Navigate with a small delay to ensure state changes are processed
             await Task.Delay(100);
-            Logger.LogInformation("?? Navigating to home page without force reload to preserve Blazor auth state...");
+            Logger.LogInformation("Navigating to home page without force reload to preserve Blazor auth state...");
             Navigation.NavigateTo("/", forceLoad: false);
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Error completing login process for user: {UserCode}", user.Code);
+            Logger.LogError(ex, "Error completing login process for user: {UserCode}", user.Code);
             ErrorMessage = "Login verification successful, but there was an error completing the process. You may already be logged in.";
             
             // Force navigation anyway - user might still be authenticated
             await Task.Delay(2000);
-            Logger.LogInformation("?? Navigating to home page after error without force reload...");
+            Logger.LogInformation("Navigating to home page after error without force reload...");
             Navigation.NavigateTo("/", forceLoad: false);
         }
     }
@@ -490,7 +490,7 @@ public partial class Verify2FA : ComponentBase
     /// </summary>
     private async Task<Result> Setup2FAAsync(string userCode, string secretKey, string backupCodesJson, SMSUserType userType)
     {
-        Logger.LogInformation("?? Setting up 2FA for user {UserCode} with type {UserType}", userCode, userType.Value);
+        Logger.LogInformation("Setting up 2FA for user {UserCode} with type {UserType}", userCode, userType.Value);
         
         if (userType == SMSUserType.Application)
             return await ApplicationUserRepository.Setup2FAAsync(userCode, secretKey, backupCodesJson);
@@ -507,7 +507,7 @@ public partial class Verify2FA : ComponentBase
     /// </summary>
     private async Task<Result> Reset2FAFailedAttemptsAsync(string userCode, SMSUserType userType)
     {
-        Logger.LogInformation("?? Resetting 2FA failed attempts for user {UserCode} with type {UserType}", userCode, userType.Value);
+        Logger.LogInformation("Resetting 2FA failed attempts for user {UserCode} with type {UserType}", userCode, userType.Value);
         
         if (userType == SMSUserType.Application)
             return await ApplicationUserRepository.Reset2FAFailedAttemptsAsync(userCode);
@@ -524,7 +524,7 @@ public partial class Verify2FA : ComponentBase
     /// </summary>
     private async Task<Result> Update2FAFailedAttemptsAsync(string userCode, int failedAttempts, DateTime? lockoutUntil, SMSUserType userType)
     {
-        Logger.LogInformation("?? Updating 2FA failed attempts for user {UserCode} with type {UserType} - Attempts: {Attempts}", 
+        Logger.LogInformation("Updating 2FA failed attempts for user {UserCode} with type {UserType} - Attempts: {Attempts}", 
             userCode, userType.Value, failedAttempts);
         
         if (userType == SMSUserType.Application)
@@ -544,14 +544,14 @@ public partial class Verify2FA : ComponentBase
     {
         try
         {
-            Logger.LogInformation("?? Refreshing user {UserCode} with type {UserType} from database", userCode, userType.Value);
+            Logger.LogInformation("Refreshing user {UserCode} with type {UserType} from database", userCode, userType.Value);
             
             if (userType == SMSUserType.Application)
             {
                 var result = await ApplicationUserRepository.GetByCodeAsync(userCode);
                 if (result.IsSuccess)
                 {
-                    Logger.LogInformation("? Application user refreshed successfully from database");
+                    Logger.LogInformation("Application user refreshed successfully from database");
                     return Result<BaseUser>.Success((BaseUser)result.Value);
                 }
                 return Result<BaseUser>.Failure<BaseUser>(result.Error);
@@ -561,7 +561,7 @@ public partial class Verify2FA : ComponentBase
                 var result = await OrganizationalUserRepository.GetByCodeAsync(userCode);
                 if (result.IsSuccess)
                 {
-                    Logger.LogInformation("? Organizational user refreshed successfully from database");
+                    Logger.LogInformation("Organizational user refreshed successfully from database");
                     return Result<BaseUser>.Success((BaseUser)result.Value);
                 }
                 return Result<BaseUser>.Failure<BaseUser>(result.Error);
@@ -571,7 +571,7 @@ public partial class Verify2FA : ComponentBase
                 var result = await StakeholderUserRepository.GetByCodeAsync(userCode);
                 if (result.IsSuccess)
                 {
-                    Logger.LogInformation("? Stakeholder user refreshed successfully from database");
+                    Logger.LogInformation("Stakeholder user refreshed successfully from database");
                     return Result<BaseUser>.Success((BaseUser)result.Value);
                 }
                 return Result<BaseUser>.Failure<BaseUser>(result.Error);
@@ -583,7 +583,7 @@ public partial class Verify2FA : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Error refreshing user {UserCode} from database", userCode);
+            Logger.LogError(ex, "Error refreshing user {UserCode} from database", userCode);
             return Result<BaseUser>.Failure<BaseUser>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -604,14 +604,14 @@ public partial class Verify2FA : ComponentBase
     private async Task VerifyBackupCode()
     {
         // TODO: Implement backup code verification
-        Logger.LogInformation("?? Backup code verification requested");
+        Logger.LogInformation("Backup code verification requested");
         ErrorMessage = "Backup code verification is not yet implemented. Please use your authenticator app.";
         await Task.CompletedTask;
     }
 
     private void ContactSupport()
     {
-        Logger.LogInformation("?? IT support contact requested");
+        Logger.LogInformation("IT support contact requested");
         ErrorMessage = "Please contact IT Support at it-support@flypdx.com for assistance with 2FA.";
     }
 
@@ -658,7 +658,7 @@ public partial class Verify2FA : ComponentBase
     {
         try
         {
-            Logger.LogInformation("?? User chose to start over from 2FA timeout modal");
+            Logger.LogInformation("User chose to start over from 2FA timeout modal");
             
             // Stop the 2FA timer
             TwoFactorTimer.StopTimer();
@@ -671,7 +671,7 @@ public partial class Verify2FA : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "?? Error handling start over from 2FA timeout modal");
+            Logger.LogError(ex, "Error handling start over from 2FA timeout modal");
             // Fallback - force navigate to login
             Navigation.NavigateTo("/login", forceLoad: true);
         }
@@ -684,7 +684,7 @@ public partial class Verify2FA : ComponentBase
     {
         try
         {
-            Logger.LogInformation("?? User dismissed 2FA timeout warning - continuing with verification");
+            Logger.LogInformation("User dismissed 2FA timeout warning - continuing with verification");
             
             // User dismissed the warning but wants to continue
             // The timer continues running in the background
@@ -694,7 +694,7 @@ public partial class Verify2FA : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "?? Error handling dismiss warning from 2FA timeout modal");
+            Logger.LogError(ex, "Error handling dismiss warning from 2FA timeout modal");
         }
     }
 

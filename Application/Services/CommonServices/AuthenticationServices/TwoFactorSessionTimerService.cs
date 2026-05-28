@@ -48,7 +48,7 @@ public class TwoFactorSessionTimerService : IDisposable
     {
         if (!_sessionService.HasPending2FAUser())
         {
-            _logger.LogDebug("Cannot start 2FA timer - no pending 2FA user");
+            _logger.LogApplicationDebug("Cannot start 2FA timer - no pending 2FA user", ApplicationEventIds.Debug);
             return;
         }
 
@@ -58,7 +58,9 @@ public class TwoFactorSessionTimerService : IDisposable
         // Create timer that checks every 10 seconds during 2FA
         _timer = new Timer(CheckSessionTimeout, null, TimeSpan.FromSeconds(10), TimeSpan.FromSeconds(10));
         
-        _logger.LogDebug("?? 2FA session timer started - timeout in {TimeoutMinutes} minutes", _twoFactorConfig.TwoFASessionTimeoutMinutes);
+        _logger.LogApplicationDebug("2FA session timer started - timeout in {TimeoutMinutes} minutes",
+            ApplicationEventIds.Debug,
+            _twoFactorConfig.TwoFASessionTimeoutMinutes);
     }
 
     /// <summary>
@@ -69,7 +71,7 @@ public class TwoFactorSessionTimerService : IDisposable
         _isActive = false;
         _timer?.Dispose();
         _timer = null;
-        _logger.LogDebug("?? 2FA session timer stopped");
+        _logger.LogApplicationDebug("2FA session timer stopped", ApplicationEventIds.Debug);
     }
 
     /// <summary>
@@ -146,7 +148,7 @@ public class TwoFactorSessionTimerService : IDisposable
             // Double-check if we still have a pending 2FA user
             if (!_sessionService.HasPending2FAUser())
             {
-                _logger.LogInformation("?? No pending 2FA user found - stopping 2FA timer");
+                _logger.LogApplicationInformation("No pending 2FA user found - stopping 2FA timer", ApplicationEventIds.Information);
                 StopTimer();
                 return;
             }
@@ -159,21 +161,25 @@ public class TwoFactorSessionTimerService : IDisposable
             // Check for warning threshold (2 minutes remaining)
             if (remaining <= TimeSpan.FromMinutes(2) && remaining > TimeSpan.FromMinutes(1.5))
             {
-                _logger.LogWarning("?? 2FA session approaching timeout - {RemainingMinutes} minutes remaining", remaining.TotalMinutes);
+                _logger.LogApplicationWarning("2FA session approaching timeout - {RemainingMinutes} minutes remaining",
+                    ApplicationEventIds.Warning,
+                    remaining.TotalMinutes);
                 OnWarningThreshold?.Invoke();
             }
 
             // Check for session expiry
             if (remaining <= TimeSpan.Zero)
             {
-                _logger.LogWarning("?? 2FA session expired - {TimeoutMinutes} minutes elapsed", _twoFactorConfig.TwoFASessionTimeoutMinutes);
+                _logger.LogApplicationWarning("2FA session expired - {TimeoutMinutes} minutes elapsed",
+                    ApplicationEventIds.Warning,
+                    _twoFactorConfig.TwoFASessionTimeoutMinutes);
                 _isActive = false;
                 OnSessionExpired?.Invoke();
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "?? Error in 2FA session timeout check");
+            _logger.LogApplicationError("Error in 2FA session timeout check", ApplicationEventIds.Error, ex);
         }
     }
 

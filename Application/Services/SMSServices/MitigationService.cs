@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="MitigationService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -34,7 +34,7 @@ public sealed class MitigationService : IMitigationService
     {
         try
         {
-            _logger.LogInformation("Creating mitigation with code: {Code}", mitigation?.Code);
+            _logger.LogApplicationInformation("Creating mitigation with code: {Code}", mitigation?.Code);
             
             // Set default status for new mitigations
             if (mitigation != null)
@@ -46,18 +46,18 @@ public sealed class MitigationService : IMitigationService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created mitigation with Code: {Code}", result.Value?.Code);
+                _logger.LogApplicationInformation("Successfully created mitigation with Code: {Code}", result.Value?.Code);
             }
             else
             {
-                _logger.LogError("Failed to create mitigation. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create mitigation. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating mitigation");
+            _logger.LogApplicationError(ex, "Unexpected error creating mitigation");
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.CreateFailed);
         }
     }
@@ -66,12 +66,12 @@ public sealed class MitigationService : IMitigationService
     {
         try
         {
-            _logger.LogInformation("Retrieving mitigation with Code: {Code}", code);
+            _logger.LogApplicationInformation("Retrieving mitigation with Code: {Code}", code);
             return await _dataService.GetMitigationByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving mitigation with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving mitigation with Code: {Code}", code);
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NotFound);
         }
     }
@@ -80,12 +80,12 @@ public sealed class MitigationService : IMitigationService
     {
         try
         {
-            _logger.LogInformation("Retrieving all mitigations");
+            _logger.LogApplicationInformation("Retrieving all mitigations");
             return await _dataService.GetAllMitigationsAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all mitigations");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all mitigations");
             return Result<List<Mitigation>>.Failure<List<Mitigation>>(DomainErrors.MitigationError.NullOrEmpty);
         }
     }
@@ -94,12 +94,12 @@ public sealed class MitigationService : IMitigationService
     {
         try
         {
-            _logger.LogInformation("Retrieving mitigations for hazard code: {HazardCode}", hazardCode);
+            _logger.LogApplicationInformation("Retrieving mitigations for hazard code: {HazardCode}", hazardCode);
             return await _dataService.GetMitigationsByHazardCodeAsync(hazardCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving mitigations for hazard code: {HazardCode}", hazardCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving mitigations for hazard code: {HazardCode}", hazardCode);
             return Result<List<Mitigation>>.Failure<List<Mitigation>>(DomainErrors.MitigationError.NotFound);
         }
     }
@@ -108,7 +108,7 @@ public sealed class MitigationService : IMitigationService
     {
         try
         {
-            _logger.LogInformation("Retrieving mitigations with status: {Status}", status);
+            _logger.LogApplicationInformation("Retrieving mitigations with status: {Status}", status);
             
             // Since the DataService doesn't have this method, get all mitigations and filter by status
             var allMitigationsResult = await _dataService.GetAllMitigationsAsync(ct).ConfigureAwait(false);
@@ -126,7 +126,7 @@ public sealed class MitigationService : IMitigationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving mitigations with status: {Status}", status);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving mitigations with status: {Status}", status);
             return Result<List<Mitigation>>.Failure<List<Mitigation>>(DomainErrors.MitigationError.NotFound);
         }
     }
@@ -135,23 +135,23 @@ public sealed class MitigationService : IMitigationService
     {
         try
         {
-            _logger.LogInformation("Updating mitigation with Code: {Code}", mitigation?.Code);
+            _logger.LogApplicationInformation("Updating mitigation with Code: {Code}", mitigation?.Code);
             var result = await _dataService.UpdateMitigationAsync(mitigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated mitigation with Code: {Code}", mitigation?.Code);
+                _logger.LogApplicationInformation("Successfully updated mitigation with Code: {Code}", mitigation?.Code);
             }
             else
             {
-                _logger.LogError("Failed to update mitigation. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update mitigation. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating mitigation with Code: {Code}", mitigation?.Code);
+            _logger.LogApplicationError(ex, "Unexpected error updating mitigation with Code: {Code}", mitigation?.Code);
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.UpdateFailed);
         }
     }
@@ -160,23 +160,23 @@ public sealed class MitigationService : IMitigationService
     {
         try
         {
-            _logger.LogInformation("Deleting mitigation with Code: {Code}", code);
+            _logger.LogApplicationInformation("Deleting mitigation with Code: {Code}", code);
             var result = await _dataService.DeleteMitigationAsync(code, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted mitigation with Code: {Code}", code);
+                _logger.LogApplicationInformation("Successfully deleted mitigation with Code: {Code}", code);
             }
             else
             {
-                _logger.LogError("Failed to delete mitigation. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete mitigation. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting mitigation with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error deleting mitigation with Code: {Code}", code);
             return Result<bool>.Failure<bool>(DomainErrors.MitigationError.DeleteFailed);
         }
     }
@@ -185,7 +185,7 @@ public sealed class MitigationService : IMitigationService
     {
         try
         {
-            _logger.LogInformation("Approving mitigation {Code} by {ApprovedBy}", code, approvedBy);
+            _logger.LogApplicationInformation("Approving mitigation {Code} by {ApprovedBy}", code, approvedBy);
             
             var mitigationResult = await _dataService.GetMitigationByCodeAsync(code, ct);
             if (mitigationResult.IsFailure || mitigationResult.Value == null)
@@ -195,7 +195,7 @@ public sealed class MitigationService : IMitigationService
 
             var mitigation = mitigationResult.Value;
             mitigation.Status = MitigationStatus.Approved;
-            mitigation.ApprovedBy = approvedBy;  // ✅ FIXED: Set ApprovedBy property
+            mitigation.ApprovedBy = approvedBy;  // ? FIXED: Set ApprovedBy property
             mitigation.UpdatedBy = approvedBy;
             mitigation.UpdatedDate = DateTime.UtcNow;
             // Note: Add approval notes to existing notes or use a specific approval notes field if available
@@ -203,14 +203,14 @@ public sealed class MitigationService : IMitigationService
             var result = await _dataService.UpdateMitigationAsync(mitigation, ct);
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully approved mitigation {Code}", code);
+                _logger.LogApplicationInformation("Successfully approved mitigation {Code}", code);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error approving mitigation with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error approving mitigation with Code: {Code}", code);
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.UpdateFailed);
         }
     }
@@ -219,7 +219,7 @@ public sealed class MitigationService : IMitigationService
     {
         try
         {
-            _logger.LogInformation("Implementing mitigation {Code} by {ImplementedBy}", code, implementedBy);
+            _logger.LogApplicationInformation("Implementing mitigation {Code} by {ImplementedBy}", code, implementedBy);
             
             var mitigationResult = await _dataService.GetMitigationByCodeAsync(code, ct);
             if (mitigationResult.IsFailure || mitigationResult.Value == null)
@@ -236,14 +236,14 @@ public sealed class MitigationService : IMitigationService
             var result = await _dataService.UpdateMitigationAsync(mitigation, ct);
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully implemented mitigation {Code}", code);
+                _logger.LogApplicationInformation("Successfully implemented mitigation {Code}", code);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error implementing mitigation with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error implementing mitigation with Code: {Code}", code);
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.UpdateFailed);
         }
     }
@@ -252,7 +252,7 @@ public sealed class MitigationService : IMitigationService
     {
         try
         {
-            _logger.LogInformation("Closing mitigation {Code} by {ClosedBy}", code, closedBy);
+            _logger.LogApplicationInformation("Closing mitigation {Code} by {ClosedBy}", code, closedBy);
             
             var mitigationResult = await _dataService.GetMitigationByCodeAsync(code, ct);
             if (mitigationResult.IsFailure || mitigationResult.Value == null)
@@ -269,17 +269,18 @@ public sealed class MitigationService : IMitigationService
             var result = await _dataService.UpdateMitigationAsync(mitigation, ct);
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully closed mitigation {Code}", code);
+                _logger.LogApplicationInformation("Successfully closed mitigation {Code}", code);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error closing mitigation with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error closing mitigation with Code: {Code}", code);
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.UpdateFailed);
         }
     }
 
     #endregion
 }
+

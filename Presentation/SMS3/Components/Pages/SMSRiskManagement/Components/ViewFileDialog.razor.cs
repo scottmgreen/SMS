@@ -1,6 +1,6 @@
 using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Commands;
+using SMS_Application.Queries;
 using SMS3.Components.Shared.UIHelpers;
 using Radzen;
 

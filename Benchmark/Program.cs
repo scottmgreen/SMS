@@ -1,4 +1,4 @@
-﻿namespace BenchmarkProject;
+namespace BenchmarkProject;
 
 using System.Net.NetworkInformation;
 using BenchmarkDotNet.Attributes;
@@ -64,27 +64,27 @@ public class Program
 {
     static void Main(string[] args)
     {
-        Console.WriteLine("🚀 SMS Performance Benchmarking Suite");
+        Console.WriteLine("?? SMS Performance Benchmarking Suite");
         Console.WriteLine("=====================================");
         
         // Initialize SMS services
-        Console.WriteLine("🔧 Initializing SMS services...");
+        Console.WriteLine("?? Initializing SMS services...");
         ServiceProviderContainer.Initialize();
         
         // Validate environment
         if (!SMSBenchmarkUtilities.ValidateEnvironment())
         {
-            Console.WriteLine("❌ Environment validation failed! Please check your configuration.");
+            Console.WriteLine("Environment validation failed! Please check your configuration.");
             return;
         }
         
-        Console.WriteLine("✅ SMS services initialized successfully!");
+        Console.WriteLine("SMS services initialized successfully!");
         
         // Parse command line arguments for benchmark selection
         var benchmarkType = GetBenchmarkTypeFromArgs(args);
         
-        Console.WriteLine($"🎯 Running benchmark type: {benchmarkType}");
-        Console.WriteLine("📊 This may take several minutes depending on the benchmark scope...");
+        Console.WriteLine($"?? Running benchmark type: {benchmarkType}");
+        Console.WriteLine("?? This may take several minutes depending on the benchmark scope...");
         Console.WriteLine();
         
         var config = new SMSBenchmarkConfig();
@@ -108,14 +108,14 @@ public class Program
             };
             
             Console.WriteLine();
-            Console.WriteLine("🎉 SMS Benchmarking Complete!");
-            Console.WriteLine("📊 Results have been exported to the BenchmarkDotNet.Artifacts folder");
-            Console.WriteLine("📁 Check for HTML, Markdown, CSV, and JSON reports");
+            Console.WriteLine("?? SMS Benchmarking Complete!");
+            Console.WriteLine("?? Results have been exported to the BenchmarkDotNet.Artifacts folder");
+            Console.WriteLine("?? Check for HTML, Markdown, CSV, and JSON reports");
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"❌ Benchmark execution failed: {ex.Message}");
-            Console.WriteLine($"💡 Stack trace: {ex.StackTrace}");
+            Console.WriteLine($"Benchmark execution failed: {ex.Message}");
+            Console.WriteLine($"?? Stack trace: {ex.StackTrace}");
         }
     }
     
@@ -123,8 +123,8 @@ public class Program
     {
         if (args.Length == 0)
         {
-            Console.WriteLine("ℹ️  No benchmark type specified. Running all benchmarks.");
-            Console.WriteLine("💡 Available options: --mediator, --database, --entity, --memory, --concurrency, --caching, --serialization, --valueobject, --comparison, --lightweight");
+            Console.WriteLine("?  No benchmark type specified. Running all benchmarks.");
+            Console.WriteLine("?? Available options: --mediator, --database, --entity, --memory, --concurrency, --caching, --serialization, --valueobject, --comparison, --lightweight");
             return BenchmarkType.All;
         }
         
@@ -149,7 +149,7 @@ public class Program
     
     private static Summary RunLightweightBenchmarks(IConfig config)
     {
-        Console.WriteLine("🏃‍♂️ Running lightweight benchmarks (suitable for CI/CD)...");
+        Console.WriteLine("????? Running lightweight benchmarks (suitable for CI/CD)...");
         
         // Run a subset of benchmarks with reduced iterations
         var lightConfig = ManualConfig.Create(config)

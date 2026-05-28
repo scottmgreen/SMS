@@ -10,9 +10,9 @@
 
 using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 /// <summary>
 /// Query handler for getting all SMS stakeholder groups
@@ -34,13 +34,13 @@ public class GetAllSMSStakeholderGroupsQueryHandler : BaseQueryBundle, IBaseRequ
     {
         try
         {
-            _logger.LogInformation("Processing GetAllSMSStakeholderGroupsQuery");
+            _logger.LogApplicationInformation("Processing GetAllSMSStakeholderGroupsQuery");
 
             var result = await _stakeholderGroupService.GetAllSMSStakeholderGroupsAsync(ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS stakeholder groups", result.Value?.Count() ?? 0);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS stakeholder groups", result.Value?.Count() ?? 0);
             }
             else
             {
@@ -51,7 +51,7 @@ public class GetAllSMSStakeholderGroupsQueryHandler : BaseQueryBundle, IBaseRequ
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetAllSMSStakeholderGroupsQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetAllSMSStakeholderGroupsQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -82,24 +82,24 @@ public class GetSMSStakeholderGroupByCodeQueryHandler : BaseQueryBundle, IBaseRe
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSStakeholderGroupByCodeQuery for group: {GroupCode}", request.GroupCode);
+            _logger.LogApplicationInformation("Processing GetSMSStakeholderGroupByCodeQuery for group: {GroupCode}", request.GroupCode);
 
             var result = await _stakeholderGroupService.GetSMSStakeholderGroupByCodeAsync(request.GroupCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved SMS stakeholder group: {GroupCode}", request.GroupCode);
+                _logger.LogApplicationInformation("Successfully retrieved SMS stakeholder group: {GroupCode}", request.GroupCode);
             }
             else
             {
-                _logger.LogWarning("SMS stakeholder group not found: {GroupCode}", request.GroupCode);
+                _logger.LogApplicationWarning("SMS stakeholder group not found: {GroupCode}", request.GroupCode);
             }
 
             return result;
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetSMSStakeholderGroupByCodeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetSMSStakeholderGroupByCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -130,13 +130,13 @@ public class GetSMSStakeholderGroupsByUserCodeQueryHandler : BaseQueryBundle, IB
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSStakeholderGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
+            _logger.LogApplicationInformation("Processing GetSMSStakeholderGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
 
             var result = await _stakeholderGroupService.GetSMSStakeholderGroupsByUserCodeAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS stakeholder groups for user: {UserCode}",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS stakeholder groups for user: {UserCode}",
                     result.Value?.Count() ?? 0, request.UserCode);
             }
             else
@@ -149,7 +149,7 @@ public class GetSMSStakeholderGroupsByUserCodeQueryHandler : BaseQueryBundle, IB
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetSMSStakeholderGroupsByUserCodeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetSMSStakeholderGroupsByUserCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -180,13 +180,13 @@ public class GetUsersByStakeholderGroupCodeQueryHandler : BaseQueryBundle, IBase
     {
         try
         {
-            _logger.LogInformation("Processing GetUsersByStakeholderGroupCodeQuery for group: {GroupCode}", request.GroupCode);
+            _logger.LogApplicationInformation("Processing GetUsersByStakeholderGroupCodeQuery for group: {GroupCode}", request.GroupCode);
 
             var result = await _stakeholderGroupService.GetUsersByGroupCodeAsync(request.GroupCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} users for stakeholder group: {GroupCode}",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} users for stakeholder group: {GroupCode}",
                     result.Value?.Count() ?? 0, request.GroupCode);
             }
             else
@@ -199,7 +199,7 @@ public class GetUsersByStakeholderGroupCodeQueryHandler : BaseQueryBundle, IBase
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetUsersByStakeholderGroupCodeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetUsersByStakeholderGroupCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)

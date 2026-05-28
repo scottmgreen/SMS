@@ -6,7 +6,7 @@ using Radzen;
 using Radzen.Blazor;
 
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Events;
@@ -488,7 +488,7 @@ public partial class HazardLocationListing : ComponentBase
                 return;
             }
 
-            var title = $"?? {location.Code} - Location Map";
+            var title = $"{location.Code} - Location Map";
             var subtitle = !string.IsNullOrEmpty(location.Description) 
                 ? location.Description 
                 : $"Hazard: {location.HazardCode}";
@@ -528,7 +528,7 @@ public partial class HazardLocationListing : ComponentBase
                         
                         builder.OpenElement(23, "h6");
                         builder.AddAttribute(24, "class", "text-primary mb-2");
-                        builder.AddContent(25, "?? Location Details");
+                        builder.AddContent(25, "Location Details");
                         builder.CloseElement();
                         
                         builder.OpenElement(26, "div");
@@ -617,3 +617,4 @@ public partial class HazardLocationListing : ComponentBase
     }
     #endregion
 }
+

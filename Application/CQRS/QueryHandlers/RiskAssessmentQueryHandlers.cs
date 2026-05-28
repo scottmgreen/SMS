@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAssessmentQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -10,10 +10,10 @@
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 using SMS_Domain.Entities;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // RISK ASSESSMENT QUERY HANDLERS
@@ -40,13 +40,13 @@ public class GetRiskAssessmentByCodeQueryHandler : BaseQueryBundle, IBaseRequest
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
             }
 
-            _logger.LogInformation("Processing GetRiskAssessmentByIdQuery for ID: {Id}", request.RiskAssessmentId.Value);
+            _logger.LogApplicationInformation("Processing GetRiskAssessmentByIdQuery for ID: {Id}", request.RiskAssessmentId.Value);
 
             var result = await _appService.GetRiskAssessmentByCodeAsync(request.RiskAssessmentId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved RiskAssessment with ID: {Id}", request.RiskAssessmentId.Value);
+                _logger.LogApplicationInformation("Successfully retrieved RiskAssessment with ID: {Id}", request.RiskAssessmentId.Value);
             }
             else
             {
@@ -58,7 +58,7 @@ public class GetRiskAssessmentByCodeQueryHandler : BaseQueryBundle, IBaseRequest
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetRiskAssessmentByIdQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetRiskAssessmentByIdQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -90,13 +90,13 @@ public class GetRiskAssessmentByHazardCodeQueryHandler : BaseQueryBundle, IBaseR
                 return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
             }
 
-            _logger.LogInformation("Processing GetRiskAssessmentByIdQuery for ID: {Id}", request.HazardCode.Value);
+            _logger.LogApplicationInformation("Processing GetRiskAssessmentByIdQuery for ID: {Id}", request.HazardCode.Value);
 
             var result = await _dataService.GetRiskAssessmentsByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved RiskAssessment with Hazard Code: {Code}", request.HazardCode.Value);
+                _logger.LogApplicationInformation("Successfully retrieved RiskAssessment with Hazard Code: {Code}", request.HazardCode.Value);
             }
             else
             {
@@ -107,7 +107,7 @@ public class GetRiskAssessmentByHazardCodeQueryHandler : BaseQueryBundle, IBaseR
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetRiskAssessmentByIdQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetRiskAssessmentByIdQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -135,13 +135,13 @@ public class GetAllRiskAssessmentsQueryHandler : BaseQueryBundle, IBaseRequestHa
     {
         try
         {
-            _logger.LogInformation("Processing GetAllRiskAssessmentsQuery");
+            _logger.LogApplicationInformation("Processing GetAllRiskAssessmentsQuery");
 
             var result = await _appService.GetAllRiskAssessmentsAsync(ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} RiskAssessments", result.Value?.Count ?? 0);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} RiskAssessments", result.Value?.Count ?? 0);
             }
             else
             {
@@ -152,7 +152,7 @@ public class GetAllRiskAssessmentsQueryHandler : BaseQueryBundle, IBaseRequestHa
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetAllRiskAssessmentsQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetAllRiskAssessmentsQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -162,3 +162,4 @@ public class GetAllRiskAssessmentsQueryHandler : BaseQueryBundle, IBaseRequestHa
         }
     }
 }
+

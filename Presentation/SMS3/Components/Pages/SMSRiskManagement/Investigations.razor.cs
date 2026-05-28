@@ -18,7 +18,7 @@ public partial class Investigations : ComponentBase
     #endregion
 
     #region Injected Services
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
@@ -254,7 +254,7 @@ public partial class Investigations : ComponentBase
             if(InvestigationEntity.Status == InvestigationStatus.InvestigationComplete)
             {
                 InvestigationEntity.CompletedDate = DateTime.UtcNow;
-                InvestigationEntity.UpdatedBy = CurrentUserService?.UserDisplayName;
+                InvestigationEntity.UpdatedBy = _currentUserService?.UserDisplayName;
                 InvestigationEntity.UpdatedDate = DateTime.UtcNow;  
             }
 
@@ -374,7 +374,7 @@ public partial class Investigations : ComponentBase
                 return;
             }
                         
-            InvestigationEntity.DecisionMaker = CurrentUserService?.UserDisplayName ?? "SYSTEM";
+            InvestigationEntity.DecisionMaker = _currentUserService?.UserDisplayName ?? "SYSTEM";
             InvestigationEntity.Status = InvestigationStatus.FromValue(InvestigationStatusId) ?? InvestigationStatus.StatusUnknown;
 
             // Check if user is trying to set status to complete
@@ -596,7 +596,7 @@ public partial class Investigations : ComponentBase
                 var report = reportResult.Value;
 
                 // Create new ReportValidation using the static factory method
-                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, CurrentUserService?.UserDisplayName ?? "SYSTEM");
+                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, _currentUserService?.UserDisplayName ?? "SYSTEM");
                 validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
 
                 var createCommand = new CreateReportValidationCommand(validation);
@@ -636,7 +636,7 @@ public partial class Investigations : ComponentBase
 
     private async Task<bool> UpdateReportStatus(string reportcode, ReportStatus status)
     {
-        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, CurrentUserService?.UserDisplayName ?? "SYSTEM");
+        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, _currentUserService?.UserDisplayName ?? "SYSTEM");
         var getupdateResult = await _mediator.SendAsync(updatestatuscmd, CancellationToken.None);
         if (!getupdateResult.IsSuccess)
         {
@@ -676,11 +676,11 @@ public partial class Investigations : ComponentBase
         }
 
         message += "This action will:\n" +
-                   "? Complete and close this investigation\n" +
-                   "? Reset the report validation status\n" +
-                   "? Clear any validation history\n" +
-                   "? Return the report to the validation workflow\n" +
-                   "? Require re-validation of the entire report";
+                   "Complete and close this investigation\n" +
+                   "Reset the report validation status\n" +
+                   "Clear any validation history\n" +
+                   "Return the report to the validation workflow\n" +
+                   "Require re-validation of the entire report";
 
         return message;
     }

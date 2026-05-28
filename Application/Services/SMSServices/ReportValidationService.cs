@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ReportValidationService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -8,7 +8,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Application.Interfaces;
+using SMS_Application.Interfaces;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Entities;
@@ -51,41 +51,41 @@ public sealed class ReportValidationService : IReportValidationService
     {
         try
         {
-            _logger.LogInformation(" Creating report validation with code: {Code}", reportValidation?.Code);
+            _logger.LogApplicationInformation(" Creating report validation with code: {Code}", reportValidation?.Code);
             
             var result = await _dataService.CreateReportValidationAsync(reportValidation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created report validation with Code: {Code}", result.Value?.Code);
+                _logger.LogApplicationInformation(" Successfully created report validation with Code: {Code}", result.Value?.Code);
 
-                // 🎯 COMPLEX BUSINESS LOGIC: Handle SMS Risk validation decision
+                // ?? COMPLEX BUSINESS LOGIC: Handle SMS Risk validation decision
                 if (reportValidation?.ValidationDecision == ValidationDecision.SmsRisk.Value)
                 {
-                    _logger.LogInformation("🎯 Business Logic: Processing SMS Risk decision for Report: {ReportCode}", reportValidation.ReportCode);
+                    _logger.LogApplicationInformation("Business Logic: Processing SMS Risk decision for Report: {ReportCode}", reportValidation.ReportCode);
                     
                     var riskCreationResult = await CreateSmsRiskAssessmentsAsync(reportValidation.ReportCode, ct);
                     if (riskCreationResult.IsFailure)
                     {
-                        _logger.LogWarning("⚠️ Business Logic: Failed to create SMS Risk assessments for Report: {ReportCode}", reportValidation.ReportCode);
+                        _logger.LogApplicationWarning("Business Logic: Failed to create SMS Risk assessments for Report: {ReportCode}", reportValidation.ReportCode);
                         // Don't fail the entire operation - log and continue
                     }
                     else
                     {
-                        _logger.LogInformation("✅ Business Logic: Successfully created SMS Risk assessments for Report: {ReportCode}", reportValidation.ReportCode);
+                        _logger.LogApplicationInformation("Business Logic: Successfully created SMS Risk assessments for Report: {ReportCode}", reportValidation.ReportCode);
                     }
                 }
             }
             else
             {
-                _logger.LogError("Failed to create report validation. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create report validation. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating report validation");
+            _logger.LogApplicationError(ex, "Unexpected error creating report validation");
             return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.CreateFailed);
         }
     }
@@ -94,12 +94,12 @@ public sealed class ReportValidationService : IReportValidationService
     {
         try
         {
-            _logger.LogInformation("Retrieving report validation with ID: {Id}", id);
+            _logger.LogApplicationInformation("Retrieving report validation with ID: {Id}", id);
             return await _dataService.GetReportValidationByIdAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving report validation with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving report validation with ID: {Id}", id);
             return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.NotFound);
         }
     }
@@ -108,12 +108,12 @@ public sealed class ReportValidationService : IReportValidationService
     {
         try
         {
-            _logger.LogInformation("Retrieving all report validations");
+            _logger.LogApplicationInformation("Retrieving all report validations");
             return await _dataService.GetAllReportValidationsAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all report validations");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all report validations");
             return Result<List<ReportValidation>>.Failure<List<ReportValidation>>(DomainErrors.ReportError.NullOrEmpty);
         }
     }
@@ -122,7 +122,7 @@ public sealed class ReportValidationService : IReportValidationService
     {
         try
         {
-            _logger.LogInformation("Retrieving report validations for report code: {ReportCode}", reportCode);
+            _logger.LogApplicationInformation("Retrieving report validations for report code: {ReportCode}", reportCode);
             
             // Since DataService may not have this method, get all and filter
             var allValidationsResult = await _dataService.GetAllReportValidationsAsync(ct);
@@ -139,7 +139,7 @@ public sealed class ReportValidationService : IReportValidationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving report validations for report code: {ReportCode}", reportCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving report validations for report code: {ReportCode}", reportCode);
             return Result<List<ReportValidation>>.Failure<List<ReportValidation>>(DomainErrors.ReportError.NotFound);
         }
     }
@@ -148,23 +148,23 @@ public sealed class ReportValidationService : IReportValidationService
     {
         try
         {
-            _logger.LogInformation(" Updating report validation with Code: {Code}", reportValidation?.Code);
+            _logger.LogApplicationInformation(" Updating report validation with Code: {Code}", reportValidation?.Code);
             var result = await _dataService.UpdateReportValidationAsync(reportValidation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated report validation with Code: {Code}", reportValidation?.Code);
+                _logger.LogApplicationInformation(" Successfully updated report validation with Code: {Code}", reportValidation?.Code);
             }
             else
             {
-                _logger.LogError("Failed to update report validation. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update report validation. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating report validation with Code: {Code}", reportValidation?.Code);
+            _logger.LogApplicationError(ex, "Unexpected error updating report validation with Code: {Code}", reportValidation?.Code);
             return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.UpdateFailed);
         }
     }
@@ -173,23 +173,23 @@ public sealed class ReportValidationService : IReportValidationService
     {
         try
         {
-            _logger.LogInformation(" Deleting report validation with Code: {Code}", id);
+            _logger.LogApplicationInformation(" Deleting report validation with Code: {Code}", id);
             var result = await _dataService.DeleteReportValidationAsync(id, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted report validation with Code: {Code}", id);
+                _logger.LogApplicationInformation(" Successfully deleted report validation with Code: {Code}", id);
             }
             else
             {
-                _logger.LogError("Failed to delete report validation. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete report validation. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting report validation with Code: {Code}", id);
+            _logger.LogApplicationError(ex, "Unexpected error deleting report validation with Code: {Code}", id);
             return Result<bool>.Failure<bool>(DomainErrors.ReportError.DeleteFailed);
         }
     }
@@ -198,7 +198,7 @@ public sealed class ReportValidationService : IReportValidationService
     {
         try
         {
-            _logger.LogInformation("🔄 Business Logic: Resetting report validation {Code} for re-validation", code);
+            _logger.LogApplicationInformation("Business Logic: Resetting report validation {Code} for re-validation", code);
             
             var validationResult = await _dataService.GetReportValidationByIdAsync(code, ct);
             if (validationResult.IsFailure || validationResult.Value == null)
@@ -226,18 +226,18 @@ public sealed class ReportValidationService : IReportValidationService
             
             if (updateResult.IsSuccess)
             {
-                _logger.LogInformation("🔄 Business Logic: Successfully reset report validation {Code}", code);
+                _logger.LogApplicationInformation("Business Logic: Successfully reset report validation {Code}", code);
                 return Result<bool>.Success(true);
             }
             else
             {
-                _logger.LogError("Failed to reset report validation {Code}. Error: {Error}", code, updateResult.Error?.Message);
+                _logger.LogApplicationError("Failed to reset report validation {Code}. Error: {Error}", code, updateResult.Error?.Message);
                 return Result<bool>.Failure<bool>(updateResult.Error);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error resetting report validation with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error resetting report validation with Code: {Code}", code);
             return Result<bool>.Failure<bool>(DomainErrors.ReportError.UpdateFailed);
         }
     }
@@ -246,7 +246,7 @@ public sealed class ReportValidationService : IReportValidationService
     {
         try
         {
-            _logger.LogInformation("🎯 Business Logic: Validating report {Code} with decision {Decision} by {ValidatedBy}", code, decision.Value, validatedBy);
+            _logger.LogApplicationInformation("Business Logic: Validating report {Code} with decision {Decision} by {ValidatedBy}", code, decision.Value, validatedBy);
             
             var validationResult = await _dataService.GetReportValidationByIdAsync(code, ct);
             if (validationResult.IsFailure || validationResult.Value == null)
@@ -274,7 +274,7 @@ public sealed class ReportValidationService : IReportValidationService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error validating report with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error validating report with Code: {Code}", code);
             return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportError.UpdateFailed);
         }
     }
@@ -284,20 +284,20 @@ public sealed class ReportValidationService : IReportValidationService
     #region Complex Business Logic - SMS Risk Assessment Creation
 
     /// <summary>
-    /// 🎯 COMPLEX BUSINESS LOGIC: Creates risk assessments and analysis for SMS Risk validation decisions
+    /// ?? COMPLEX BUSINESS LOGIC: Creates risk assessments and analysis for SMS Risk validation decisions
     /// This encapsulates the complex logic previously scattered in CommandHandlers
     /// </summary>
     public async Task<Result<bool>> CreateSmsRiskAssessmentsAsync(string reportCode, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInformation("🎯 Complex Business Logic: Creating SMS Risk assessments for Report: {ReportCode}", reportCode);
+            _logger.LogApplicationInformation("Complex Business Logic: Creating SMS Risk assessments for Report: {ReportCode}", reportCode);
 
             // Step 1: Get hazards for this report using HazardDataService
             var hazardsResult = await _hazardDataService.GetHazardsByReportCodeAsync(new ReportID(reportCode), ct);
             if (hazardsResult.IsFailure || !hazardsResult.Value?.Any() == true)
             {
-                _logger.LogWarning("No hazards found for report {ReportCode}", reportCode);
+                _logger.LogApplicationWarning("No hazards found for report {ReportCode}", reportCode);
                 return Result<bool>.Success(false); // Not an error - just no hazards to process
             }
 
@@ -307,7 +307,7 @@ public sealed class ReportValidationService : IReportValidationService
                 return Result<bool>.Success(false);
             }
 
-            _logger.LogInformation("🎯 Found hazard {HazardCode} for report {ReportCode}", hazard.Code, reportCode);
+            _logger.LogApplicationInformation("Found hazard {HazardCode} for report {ReportCode}", hazard.Code, reportCode);
 
             // Step 2: Check for existing RiskAssessments for this report (avoid duplicates)
             var existingAssessments = await FindExistingRiskAssessmentsForReportAsync(reportCode, ct);
@@ -318,24 +318,24 @@ public sealed class ReportValidationService : IReportValidationService
             {
                 // Use existing shared RiskAssessments - perfect for multiple hazards per report!
                 initialRiskAssessmentCode = existingAssessments.InitialAssessment.Code;
-                _logger.LogInformation("🎯 Using existing Risk Assessment: {Code}", initialRiskAssessmentCode);
+                _logger.LogApplicationInformation("Using existing Risk Assessment: {Code}", initialRiskAssessmentCode);
             }
             else
             {
                 // Create NEW shared RiskAssessments only if none exist (first hazard in the report)
                 initialRiskAssessmentCode = await CreateRiskAssessmentsForReportAsync(hazard, ct);
-                _logger.LogInformation("🎯 Created new Risk Assessment: {Code}", initialRiskAssessmentCode);
+                _logger.LogApplicationInformation("Created new Risk Assessment: {Code}", initialRiskAssessmentCode);
             }
 
             // Step 3: ALWAYS create RiskAnalysis records linking this hazard to the shared assessments
             await CreateRiskAnalysisForHazardAsync(hazard.Code, initialRiskAssessmentCode, ct);
 
-            _logger.LogInformation("✅ Successfully completed SMS Risk assessment creation for Report: {ReportCode}", reportCode);
+            _logger.LogApplicationInformation("Successfully completed SMS Risk assessment creation for Report: {ReportCode}", reportCode);
             return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating SMS Risk assessments for report {ReportCode}", reportCode);
+            _logger.LogApplicationError(ex, "Error creating SMS Risk assessments for report {ReportCode}", reportCode);
             return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.CreateFailed);
         }
     }
@@ -348,7 +348,7 @@ public sealed class ReportValidationService : IReportValidationService
     {
         try
         {
-            _logger.LogInformation("🔍 Searching for existing RiskAssessments for Report: {ReportCode}", reportCode);
+            _logger.LogApplicationInformation("Searching for existing RiskAssessments for Report: {ReportCode}", reportCode);
 
             // Get hazards for this specific report using HazardDataService
             var reportHazardsResult = await _hazardDataService.GetHazardsByReportCodeAsync(new ReportID(reportCode), ct);
@@ -358,7 +358,7 @@ public sealed class ReportValidationService : IReportValidationService
                 var reportHazards = reportHazardsResult.Value;
                 var reportHazardCodes = reportHazards.Select(h => h.Code).ToList();
                 
-                _logger.LogInformation("🔍 Found {Count} hazards for Report {ReportCode}: {HazardCodes}", 
+                _logger.LogApplicationInformation("Found {Count} hazards for Report {ReportCode}: {HazardCodes}", 
                     reportHazards.Count, reportCode, string.Join(", ", reportHazardCodes));
 
                 // Get risk assessments by hazard codes
@@ -377,19 +377,19 @@ public sealed class ReportValidationService : IReportValidationService
                     var initialAssessment = allAssessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Initial);
                     // Note: Only using Initial for now since Residual may not be available
                     
-                    _logger.LogInformation("🔍 Found existing assessments: Initial={Initial}", 
+                    _logger.LogApplicationInformation("Found existing assessments: Initial={Initial}", 
                         initialAssessment?.Code ?? "None");
                     
                     return (initialAssessment, null);
                 }
             }
 
-            _logger.LogInformation("🔍 No existing RiskAssessments found for Report {ReportCode}", reportCode);
+            _logger.LogApplicationInformation("No existing RiskAssessments found for Report {ReportCode}", reportCode);
             return (null, null);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error finding existing RiskAssessments for report {ReportCode}", reportCode);
+            _logger.LogApplicationError(ex, "Error finding existing RiskAssessments for report {ReportCode}", reportCode);
             return (null, null);
         }
     }
@@ -399,7 +399,7 @@ public sealed class ReportValidationService : IReportValidationService
     /// </summary>
     private async Task<string> CreateRiskAssessmentsForReportAsync(Hazard hazard, CancellationToken ct)
     {
-        _logger.LogInformation("🏗️ Creating new Risk Assessment for hazard {HazardCode}", hazard.Code);
+        _logger.LogApplicationInformation("??? Creating new Risk Assessment for hazard {HazardCode}", hazard.Code);
 
         var initialRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"))
         {
@@ -417,12 +417,12 @@ public sealed class ReportValidationService : IReportValidationService
         
         if (initialResult.IsSuccess)
         {
-            _logger.LogInformation("🏗️ Successfully created Risk Assessment: {Code}", initialResult.Value.Code);
+            _logger.LogApplicationInformation("??? Successfully created Risk Assessment: {Code}", initialResult.Value.Code);
             return initialResult.Value.Code;
         }
         else
         {
-            _logger.LogError("Failed to create Risk Assessment: {Error}", initialResult.Error?.Message);
+            _logger.LogApplicationError("Failed to create Risk Assessment: {Error}", initialResult.Error?.Message);
             throw new InvalidOperationException($"Failed to create Risk Assessment: {initialResult.Error?.Message}");
         }
     }
@@ -432,7 +432,7 @@ public sealed class ReportValidationService : IReportValidationService
     /// </summary>
     private async Task CreateRiskAnalysisForHazardAsync(string hazardCode, string initialAssessmentCode, CancellationToken ct)
     {
-        _logger.LogInformation("🔗 Creating Risk Analysis link: Hazard {HazardCode} -> Assessment {AssessmentCode}", 
+        _logger.LogApplicationInformation("Creating Risk Analysis link: Hazard {HazardCode} -> Assessment {AssessmentCode}", 
             hazardCode, initialAssessmentCode);
 
         var initialRiskAnalysis = new RiskAnalysis(new RiskAnalysisID("RA-0000"))
@@ -446,13 +446,15 @@ public sealed class ReportValidationService : IReportValidationService
         
         if (result.IsSuccess)
         {
-            _logger.LogInformation("🔗 Successfully created Risk Analysis: {Code}", result.Value.Code);
+            _logger.LogApplicationInformation("Successfully created Risk Analysis: {Code}", result.Value.Code);
         }
         else
         {
-            _logger.LogError("Failed to create Risk Analysis: {Error}", result.Error?.Message);
+            _logger.LogApplicationError("Failed to create Risk Analysis: {Error}", result.Error?.Message);
         }
     }
 
     #endregion
 }
+
+

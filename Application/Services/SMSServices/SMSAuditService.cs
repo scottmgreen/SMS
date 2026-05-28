@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -10,7 +10,7 @@
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 using SMS_Domain.Entities;
 
 namespace SMS_Application.Services;
@@ -38,12 +38,12 @@ public class SMSAuditService
     {
         try
         {
-            _logger.LogInformation("Creating audit: {AuditCode}", audit.Code);
+            _logger.LogApplicationInformation("Creating audit: {AuditCode}", audit.Code);
             return await _auditDataService.CreateAuditAsync(audit, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating audit: {AuditCode}", audit?.Code);
+            _logger.LogApplicationError(ex, "Error creating audit: {AuditCode}", audit?.Code);
             return Result<SMSAudit>.Failure<SMSAudit>(DomainErrors.SMSAuditError.CreateFailed);
         }
     }
@@ -55,12 +55,12 @@ public class SMSAuditService
     {
         try
         {
-            _logger.LogInformation("Updating audit: {AuditCode}", audit.Code);
+            _logger.LogApplicationInformation("Updating audit: {AuditCode}", audit.Code);
             return await _auditDataService.UpdateAuditAsync(audit, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating audit: {AuditCode}", audit?.Code);
+            _logger.LogApplicationError(ex, "Error updating audit: {AuditCode}", audit?.Code);
             return Result<SMSAudit>.Failure<SMSAudit>(DomainErrors.SMSAuditError.UpdateFailed);
         }
     }
@@ -72,12 +72,12 @@ public class SMSAuditService
     {
         try
         {
-            _logger.LogInformation("Getting audit by code: {AuditCode}", auditCode);
+            _logger.LogApplicationInformation("Getting audit by code: {AuditCode}", auditCode);
             return await _auditDataService.GetAuditByCodeAsync(auditCode, includeFindings, includeEvidence, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting audit by code: {AuditCode}", auditCode);
+            _logger.LogApplicationError(ex, "Error getting audit by code: {AuditCode}", auditCode);
             return Result<SMSAudit>.Failure<SMSAudit>(DomainErrors.SMSAuditError.NotFound);
         }
     }
@@ -89,12 +89,12 @@ public class SMSAuditService
     {
         try
         {
-            _logger.LogInformation("Getting all audits");
+            _logger.LogApplicationInformation("Getting all audits");
             return await _auditDataService.GetAllAuditsAsync(cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting all audits");
+            _logger.LogApplicationError(ex, "Error getting all audits");
             return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -106,12 +106,12 @@ public class SMSAuditService
     {
         try
         {
-            _logger.LogInformation("Deleting audit: {AuditCode} by {DeletedBy}", auditCode, deletedBy);
+            _logger.LogApplicationInformation("Deleting audit: {AuditCode} by {DeletedBy}", auditCode, deletedBy);
             return await _auditDataService.DeleteAuditAsync(auditCode, deletedBy, reason, cancellationToken);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting audit: {AuditCode}", auditCode);
+            _logger.LogApplicationError(ex, "Error deleting audit: {AuditCode}", auditCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSAuditError.DeleteFailed);
         }
     }
@@ -125,7 +125,7 @@ public class SMSAuditService
     {
         try
         {
-            _logger.LogInformation("Getting SMS audit execution dashboard data");
+            _logger.LogApplicationInformation("Getting SMS audit execution dashboard data");
 
             var result = await _auditDataService.GetAuditExecutionDashboardAsync(
                 startDate ?? DateTime.UtcNow.AddMonths(-12),
@@ -142,7 +142,7 @@ public class SMSAuditService
                 // Apply additional business logic calculations here
                 CalculatePerformanceMetrics(dashboardData);
 
-                _logger.LogInformation("Successfully retrieved SMS audit execution dashboard with {TotalAudits} audits",
+                _logger.LogApplicationInformation("Successfully retrieved SMS audit execution dashboard with {TotalAudits} audits",
                     dashboardData.TotalAudits);
 
                 return Result<SMSAuditExecutionDashboard>.Success(dashboardData);
@@ -152,7 +152,7 @@ public class SMSAuditService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting SMS audit execution dashboard");
+            _logger.LogApplicationError(ex, "Error getting SMS audit execution dashboard");
             return Result<SMSAuditExecutionDashboard>.Failure<SMSAuditExecutionDashboard>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -165,12 +165,12 @@ public class SMSAuditService
     {
         try
         {
-            _logger.LogInformation("Getting audits by plan: {AuditPlanCode}", auditPlanCode);
+            _logger.LogApplicationInformation("Getting audits by plan: {AuditPlanCode}", auditPlanCode);
             return await _auditDataService.GetAuditsByPlanAsync(auditPlanCode, statusFilter, includeFindings, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting audits by plan: {AuditPlanCode}", auditPlanCode);
+            _logger.LogApplicationError(ex, "Error getting audits by plan: {AuditPlanCode}", auditPlanCode);
             return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(DomainErrors.SMSAuditError.NotFound);
         }
     }
@@ -183,12 +183,12 @@ public class SMSAuditService
     {
         try
         {
-            _logger.LogInformation("Getting audits by status: {Status}", status);
+            _logger.LogApplicationInformation("Getting audits by status: {Status}", status);
             return await _auditDataService.GetAuditsByStatusAsync(status, departmentFilter, includeFindings, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting audits by status: {Status}", status);
+            _logger.LogApplicationError(ex, "Error getting audits by status: {Status}", status);
             return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(DomainErrors.SMSAuditError.NotFound);
         }
     }
@@ -201,12 +201,12 @@ public class SMSAuditService
     {
         try
         {
-            _logger.LogInformation("Getting audits by auditor: {Auditor}", auditor);
+            _logger.LogApplicationInformation("Getting audits by auditor: {Auditor}", auditor);
             return await _auditDataService.GetAuditsByAuditorAsync(auditor, statusFilter, startDateFrom, startDateTo, ct);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting audits by auditor: {Auditor}", auditor);
+            _logger.LogApplicationError(ex, "Error getting audits by auditor: {Auditor}", auditor);
             return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(DomainErrors.SMSAuditError.NotFound);
         }
     }
@@ -219,7 +219,7 @@ public class SMSAuditService
     {
         try
         {
-            _logger.LogInformation("Getting overdue audits");
+            _logger.LogApplicationInformation("Getting overdue audits");
 
             var result = await _auditDataService.GetOverdueAuditsAsync(departmentFilter, auditorFilter, ct);
 
@@ -241,7 +241,7 @@ public class SMSAuditService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting overdue audits");
+            _logger.LogApplicationError(ex, "Error getting overdue audits");
             return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(DomainErrors.SMSAuditError.NotFound);
         }
     }
@@ -254,7 +254,7 @@ public class SMSAuditService
     {
         try
         {
-            _logger.LogInformation("Scheduling audit from plan: {AuditPlanCode} for date: {ScheduledDate}",
+            _logger.LogApplicationInformation("Scheduling audit from plan: {AuditPlanCode} for date: {ScheduledDate}",
                 auditPlanCode, scheduledDate);
 
             return await _auditDataService.ScheduleAuditFromPlanAsync(
@@ -262,7 +262,7 @@ public class SMSAuditService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error scheduling audit from plan: {AuditPlanCode}", auditPlanCode);
+            _logger.LogApplicationError(ex, "Error scheduling audit from plan: {AuditPlanCode}", auditPlanCode);
             return Result<SMSAudit>.Failure<SMSAudit>(DomainErrors.SMSAuditError.CreateFailed);
         }
     }
@@ -296,7 +296,7 @@ public class SMSAuditService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating audit: {AuditCode}", audit?.Code);
+            _logger.LogApplicationError(ex, "Error validating audit: {AuditCode}", audit?.Code);
             return Result.Failure(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -316,7 +316,7 @@ public class SMSAuditService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error generating audit code for type: {AuditType}", auditType);
+            _logger.LogApplicationError(ex, "Error generating audit code for type: {AuditType}", auditType);
             return $"AUD-GEN-{DateTime.UtcNow:yyyyMMddHHmmss}";
         }
     }
@@ -383,12 +383,12 @@ public class SMSAuditService
 
             // The FindingClosureRate is now a calculated property, so no need to set it
             // It's automatically calculated from FindingsResolved and TotalFindings
-            _logger.LogInformation("Performance metrics calculated for dashboard with {FindingClosureRate}% finding closure rate",
+            _logger.LogApplicationInformation("Performance metrics calculated for dashboard with {FindingClosureRate}% finding closure rate",
                 dashboardData.FindingClosureRate);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error calculating performance metrics for dashboard");
+            _logger.LogApplicationError(ex, "Error calculating performance metrics for dashboard");
             // Don't fail the entire operation for metric calculation errors
         }
     }
@@ -405,3 +405,4 @@ public class SMSAuditService
 
     #endregion
 }
+

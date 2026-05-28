@@ -11,7 +11,7 @@
 using Microsoft.IdentityModel.Tokens;
 
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
+using SMS_Application.Commands;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
@@ -60,7 +60,7 @@ namespace SMS3.Api.Services
                 }
 
                 var actualReportCode = reportResult.Value.Code;
-                _logger.LogInformation("?? External report created: {ReportCode}", actualReportCode);
+                _logger.LogInformation("External report created: {ReportCode}", actualReportCode);
 
                 // Step 3: Create associated hazard
                 var hazardResult = await CreateHazardAsync(request, actualReportCode);
@@ -70,7 +70,7 @@ namespace SMS3.Api.Services
                 }
 
                 var createdHazard = hazardResult.Value;
-                _logger.LogInformation("?? External hazard created: {HazardCode} for Report: {ReportCode}", 
+                _logger.LogInformation("External hazard created: {HazardCode} for Report: {ReportCode}", 
                     createdHazard.Code, actualReportCode);
 
                 // Step 4: Create hazard location if coordinates provided
@@ -87,7 +87,7 @@ namespace SMS3.Api.Services
                 }
 
                 var actualTrackingCode = trackingResult.Value.TrackingCode;
-                _logger.LogInformation("?? External tracking created: {TrackingCode}", actualTrackingCode);
+                _logger.LogInformation("External tracking created: {TrackingCode}", actualTrackingCode);
 
                 // Step 6: Process file attachments
                 var (processedFiles, failedFiles) = await ProcessAttachmentsAsync(
@@ -107,7 +107,7 @@ namespace SMS3.Api.Services
                     FailedFiles = failedFiles
                 };
 
-                _logger.LogInformation("?? PDX SMS API report submitted successfully. " +
+                _logger.LogInformation("PDX SMS API report submitted successfully. " +
                     "TrackingId: {TrackingId}, ReportId: {ReportId}, HazardId: {HazardId}, Files: {ProcessedFiles}/{TotalFiles}", 
                     actualTrackingCode, actualReportCode, createdHazard.Code, processedFiles, 
                     request.ReportAttachments?.Count ?? 0);
@@ -116,7 +116,7 @@ namespace SMS3.Api.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "?? Unexpected error processing external confidential report submission");
+                _logger.LogError(ex, "Unexpected error processing external confidential report submission");
                 return Result<PDXSMSReportApiResponse>.Failure<PDXSMSReportApiResponse>(
                     new Error("PDXSMS.ProcessingFailed", "An unexpected error occurred while processing your confidential report."));
             }
@@ -376,24 +376,24 @@ namespace SMS3.Api.Services
                     if (fileResult.IsSuccess)
                     {
                         processedFiles++;
-                        _logger.LogInformation("? Processed attachment: {FileName} ({Size} bytes)", 
+                        _logger.LogInformation("Processed attachment: {FileName} ({Size} bytes)", 
                             attachment.FileName, fileData.Length);
                     }
                     else
                     {
                         failedFiles++;
-                        _logger.LogWarning("? Failed to save attachment: {FileName}. Error: {Error}", 
+                        _logger.LogWarning("Failed to save attachment: {FileName}. Error: {Error}", 
                             attachment.FileName, fileResult.Error?.Message);
                     }
                 }
                 catch (Exception fileEx)
                 {
                     failedFiles++;
-                    _logger.LogWarning(fileEx, "? Exception processing attachment: {FileName}", attachment.FileName);
+                    _logger.LogWarning(fileEx, "Exception processing attachment: {FileName}", attachment.FileName);
                 }
             }
 
-            _logger.LogInformation("?? File processing completed: {Processed} successful, {Failed} failed", 
+            _logger.LogInformation("File processing completed: {Processed} successful, {Failed} failed", 
                 processedFiles, failedFiles);
 
             return (processedFiles, failedFiles);

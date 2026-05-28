@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardStatus.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -34,7 +34,7 @@ public abstract class HazardStatus : BaseEnum<HazardStatus>
     public string Stage { get; }
     public int WorkflowOrder { get; }
 
-    #region ✅ APPROVED FINAL HAZARD STATUS REVISED VALUES FROM StatusList.txt
+    #region APPROVED FINAL HAZARD STATUS REVISED VALUES FROM StatusList.txt
 
     /// <summary>Step 1 & Step 2 - Initial Risk Assessment phase (System Description & Hazard Identification)</summary>
     public static readonly HazardStatus StatusUnknown = new InitialRiskAssessmentStatus();
@@ -296,3 +296,4 @@ public abstract class HazardStatus : BaseEnum<HazardStatus>
         };
     }
 }
+

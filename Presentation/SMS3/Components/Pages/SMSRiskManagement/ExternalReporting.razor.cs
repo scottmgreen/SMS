@@ -285,7 +285,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     /// </summary>
     public async Task OnFilesSelected(IReadOnlyList<IBrowserFile> newFiles)
     {
-        _logger.LogInformation("?? OnFilesSelected called with {Count} new files", newFiles?.Count ?? 0);
+        _logger.LogInformation("OnFilesSelected called with {Count} new files", newFiles?.Count ?? 0);
 
         if (newFiles?.Any() == true)
         {
@@ -304,7 +304,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
                     if (isDuplicate)
                     {
-                        _logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
+                        _logger.LogInformation("Skipped duplicate file: {FileName}", newFile.Name);
                         continue;
                     }
 
@@ -328,11 +328,11 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                     };
 
                     successfullyProcessedFiles.Add(attachedFile);
-                    _logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
+                    _logger.LogInformation("Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
+                    _logger.LogError(ex, "Error processing file: {FileName}", newFile.Name);
                     failedFiles.Add(newFile.Name);
                 }
             }
@@ -359,7 +359,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         }
         else
         {
-            _logger.LogInformation("?? No files provided to OnFilesSelected");
+            _logger.LogInformation("No files provided to OnFilesSelected");
         }
 
         StateHasChanged();
@@ -371,7 +371,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     public async Task OnInputFileChange(InputFileChangeEventArgs args)
     {
         var newFiles = args.GetMultipleFiles(10); // Allow up to 10 files at once
-        _logger.LogInformation("?? OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
+        _logger.LogInformation("OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
 
         if (newFiles?.Any() == true)
         {
@@ -390,7 +390,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
                     if (isDuplicate)
                     {
-                        _logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
+                        _logger.LogInformation("Skipped duplicate file: {FileName}", newFile.Name);
                         continue;
                     }
 
@@ -414,11 +414,11 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                     };
 
                     successfullyProcessedFiles.Add(attachedFile);
-                    _logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
+                    _logger.LogInformation("Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
+                    _logger.LogError(ex, "Error processing file: {FileName}", newFile.Name);
                     failedFiles.Add(newFile.Name);
                 }
             }
@@ -451,12 +451,12 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                 await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions."));
             }
 
-            _logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
+            _logger.LogInformation("File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",
                 successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
         }
         else
         {
-            _logger.LogInformation("?? No files provided to OnInputFileChange");
+            _logger.LogInformation("No files provided to OnInputFileChange");
         }
 
         StateHasChanged();
@@ -719,7 +719,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             var actualReportCode = reportResult.Value.Code;
             GeneratedReportId = actualReportCode;
 
-            _logger.LogInformation("? Confidential report created with Code: {ReportCode}", actualReportCode);
+            _logger.LogInformation("Confidential report created with Code: {ReportCode}", actualReportCode);
 
             // ===============================
             // STEP 2: Create new Hazard
@@ -753,7 +753,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             await UpdateHazardLocation(createdHazard);
 
             GeneratedHazardId = createdHazard.Code;
-            _logger.LogInformation("? Confidential hazard created with Code: {HazardCode}, linked to Report: {ReportCode}",
+            _logger.LogInformation("Confidential hazard created with Code: {HazardCode}, linked to Report: {ReportCode}",
                 createdHazard.Code, actualReportCode);
 
             // NEW: SPI AUTOMATION - Notify hazard creation for external reports ??
@@ -768,12 +768,12 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                     hazardType: createdHazard.HazardType ?? string.Empty,
                     hazardCategory: createdHazard.HazardCategory ?? string.Empty);
 
-                _logger.LogInformation("? SPI Automation: External hazard creation event processed for {HazardCode}", createdHazard.Code);
+                _logger.LogInformation("SPI Automation: External hazard creation event processed for {HazardCode}", createdHazard.Code);
             }
             catch (Exception spiEx)
             {
                 // Don't fail the entire submission if SPI automation fails
-                _logger.LogWarning(spiEx, "?? SPI Automation: Failed to process hazard creation event for {HazardCode} - continuing with submission", createdHazard.Code);
+                _logger.LogWarning(spiEx, "SPI Automation: Failed to process hazard creation event for {HazardCode} - continuing with submission", createdHazard.Code);
             }
 
             // ===============================
@@ -783,7 +783,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             var createdTracking = createdtrackingcodeResult.Value;
 
             GeneratedTrackingId = createdTracking.TrackingCode;
-            _logger.LogInformation("? Tracking code created: {TrackingCode}", createdTracking.TrackingCode);
+            _logger.LogInformation("Tracking code created: {TrackingCode}", createdTracking.TrackingCode);
 
             // ===============================
             // STEP 4: Process files for confidential hazard
@@ -797,14 +797,14 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             ShowSubmissionConfirmation = false;
             ShowFinalSuccessConfirmation = true;
 
-            _logger.LogInformation("? External report submission completed - Report: {ReportCode}, Hazard: {HazardCode}, Tracking: {TrackingCode}",
+            _logger.LogInformation("External report submission completed - Report: {ReportCode}, Hazard: {HazardCode}, Tracking: {TrackingCode}",
                 createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Your external report has been securely submitted with tracking ID: {createdTracking.TrackingCode}"));
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error during confidential report submission");
+            _logger.LogError(ex, "Error during confidential report submission");
 
             ShowSubmissionConfirmation = false;
 
@@ -836,12 +836,12 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
             if (createdTrackingResult.IsSuccess)
             {
-                _logger.LogInformation("? Confidential tracking code generated: {TrackingCode} for Hazard: {HazardCode}", 
+                _logger.LogInformation("Confidential tracking code generated: {TrackingCode} for Hazard: {HazardCode}", 
                     createdTrackingResult.Value.TrackingCode, createdHazard.Code);
             }
             else
             {
-                _logger.LogError("? Failed to generate confidential tracking code for Hazard: {HazardCode}. Error: {Error}", 
+                _logger.LogError("Failed to generate confidential tracking code for Hazard: {HazardCode}. Error: {Error}", 
                     createdHazard.Code, createdTrackingResult.Error?.Message);
             }
 
@@ -849,7 +849,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Exception generating confidential tracking code for Hazard: {HazardCode}", createdHazard.Code);
+            _logger.LogError(ex, "Exception generating confidential tracking code for Hazard: {HazardCode}", createdHazard.Code);
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.CreateFailed);
         }
     }
@@ -890,7 +890,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
 
                         if (locationUpdateResult.IsSuccess)
                         {
-                            _logger.LogInformation("? HazardLocation updated with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
+                            _logger.LogInformation("HazardLocation updated with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
                                 hazardLocation.Code, SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
                         }
                     }
@@ -926,7 +926,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
         {
             if (AttachedFiles?.Any() == true)
             {
-                _logger.LogInformation("?? Processing {Count} cached files for confidential Hazard: {HazardCode}",
+                _logger.LogInformation("Processing {Count} cached files for confidential Hazard: {HazardCode}",
                     AttachedFiles.Count, hazard.Code);
 
                 foreach (var attachedFile in AttachedFiles.Where(f => f?.Data?.Length > 0))
@@ -961,30 +961,30 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                             var createdFileId = hazardFileResult.Value.Code;
                             hazard.AddHazardFile(new HazardFileID(createdFileId));
 
-                            _logger.LogInformation("? Created confidential HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}",
+                            _logger.LogInformation("Created confidential HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}",
                                 attachedFile.FileName, createdFileId, hazard.Code);
                         }
                         else
                         {
-                            _logger.LogError("? Failed to create confidential HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}",
+                            _logger.LogError("Failed to create confidential HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}",
                                 attachedFile.FileName, hazard.Code, hazardFileResult.Error?.Message);
                         }
                     }
                     catch (Exception fileEx)
                     {
-                        _logger.LogError(fileEx, "? Exception creating confidential HazardFile: {FileName} for Hazard: {HazardCode}",
+                        _logger.LogError(fileEx, "Exception creating confidential HazardFile: {FileName} for Hazard: {HazardCode}",
                             attachedFile.FileName, hazard.Code);
                     }
                 }
             }
             else
             {
-                _logger.LogInformation("?? No files to process for confidential Hazard: {HazardCode}", hazard.Code);
+                _logger.LogInformation("No files to process for confidential Hazard: {HazardCode}", hazard.Code);
             }
         }
         catch (Exception fileEx)
         {
-            _logger.LogError(fileEx, "?? Error processing confidential files, but continuing with hazard operation");
+            _logger.LogError(fileEx, "Error processing confidential files, but continuing with hazard operation");
         }
     }
 

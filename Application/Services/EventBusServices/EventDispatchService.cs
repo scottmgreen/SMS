@@ -63,11 +63,11 @@ public sealed class EventDispatchService : IBaseEventBus
         {
             if (domainEvent == null)
             {
-                _logger.LogWarning("Attempted to publish null domain event");
+                _logger.LogApplicationWarning("Attempted to publish null domain event");
                 return Result.Failure(new Error("EVENTBUS_NULL_EVENT", "Domain event cannot be null"));
             }
 
-            _logger.LogInformation("?? Publishing event {EventType} (ID: {EventId}) with mode {ExecutionMode}", 
+            _logger.LogApplicationInformation("Publishing event {EventType} (ID: {EventId}) with mode {ExecutionMode}", 
                 domainEvent.EventType, domainEvent.EventId, mode);
 
             switch (mode)
@@ -82,13 +82,13 @@ public sealed class EventDispatchService : IBaseEventBus
                     return await StoreEventForManualExecution(domainEvent, cancellationToken);
 
                 default:
-                    _logger.LogWarning("Unknown execution mode {ExecutionMode} for event {EventType}", mode, domainEvent.EventType);
+                    _logger.LogApplicationWarning("Unknown execution mode {ExecutionMode} for event {EventType}", mode, domainEvent.EventType);
                     return Result.Failure(new Error("EVENTBUS_UNKNOWN_MODE", $"Unknown execution mode: {mode}"));
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish event {EventType} (ID: {EventId})", 
+            _logger.LogApplicationError(ex, "Failed to publish event {EventType} (ID: {EventId})", 
                 domainEvent.EventType, domainEvent.EventId);
             return Result.Failure(new Error("EVENTBUS_PUBLISH_FAILED", $"Event publishing failed: {ex.Message}"));
         }
@@ -111,9 +111,9 @@ public sealed class EventDispatchService : IBaseEventBus
     public async Task<Result> PublishDomainEventAsync<T>(T domainEvent, EventExecutionMode mode, CancellationToken cancellationToken = default) where T : IBaseDomainEvent
     {
         // Route to existing domain event implementation
-        _logger.LogDebug("?? PublishDomainEventAsync called for {EventType} with mode {Mode}", typeof(T).FullName, mode);
+        _logger.LogApplicationDebug("PublishDomainEventAsync called for {EventType} with mode {Mode}", typeof(T).FullName, mode);
         var result = await PublishAsync(domainEvent, mode, cancellationToken);
-        _logger.LogDebug("?? PublishDomainEventAsync result: {IsSuccess}", result.IsSuccess);
+        _logger.LogApplicationDebug("PublishDomainEventAsync result: {IsSuccess}", result.IsSuccess);
         return result;
     }
     #endregion
@@ -138,11 +138,11 @@ public sealed class EventDispatchService : IBaseEventBus
         {
             if (uiEvent == null)
             {
-                _logger.LogWarning("Attempted to publish null UI event");
+                _logger.LogApplicationWarning("Attempted to publish null UI event");
                 return Result.Failure(new Error("EVENTBUS_NULL_UI_EVENT", "UI event cannot be null"));
             }
 
-            _logger.LogInformation("Publishing UI event {EventType} for {TargetComponent} with mode {ExecutionMode}", 
+            _logger.LogApplicationInformation("Publishing UI event {EventType} for {TargetComponent} with mode {ExecutionMode}", 
                 uiEvent.EventType, uiEvent.TargetComponent, mode);
 
             switch (mode)
@@ -157,13 +157,13 @@ public sealed class EventDispatchService : IBaseEventBus
                     return await StoreUIEventForManualExecution(uiEvent, cancellationToken);
 
                 default:
-                    _logger.LogWarning("Unknown execution mode {ExecutionMode} for UI event {EventType}", mode, uiEvent.EventType);
+                    _logger.LogApplicationWarning("Unknown execution mode {ExecutionMode} for UI event {EventType}", mode, uiEvent.EventType);
                     return Result.Failure(new Error("EVENTBUS_UNKNOWN_UI_MODE", $"Unknown execution mode for UI event: {mode}"));
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish UI event {EventType} for {TargetComponent}", 
+            _logger.LogApplicationError(ex, "Failed to publish UI event {EventType} for {TargetComponent}", 
                 uiEvent.EventType, uiEvent.TargetComponent);
             return Result.Failure(new Error("EVENTBUS_UI_PUBLISH_FAILED", $"UI event publishing failed: {ex.Message}"));
         }
@@ -191,11 +191,11 @@ public sealed class EventDispatchService : IBaseEventBus
         {
             if (integrationEvent == null)
             {
-                _logger.LogWarning("Attempted to publish null integration event");
+                _logger.LogApplicationWarning("Attempted to publish null integration event");
                 return Result.Failure(new Error("EVENTBUS_NULL_INTEGRATION_EVENT", "Integration event cannot be null"));
             }
 
-            _logger.LogInformation("Publishing integration event {EventType} for {TargetSystem} with mode {ExecutionMode} (Delivery: {DeliveryMode})", 
+            _logger.LogApplicationInformation("Publishing integration event {EventType} for {TargetSystem} with mode {ExecutionMode} (Delivery: {DeliveryMode})", 
                 integrationEvent.EventType, integrationEvent.TargetSystem, mode, integrationEvent.DeliveryMode);
 
             switch (mode)
@@ -210,13 +210,13 @@ public sealed class EventDispatchService : IBaseEventBus
                     return await StoreIntegrationEventForManualExecution(integrationEvent, cancellationToken);
 
                 default:
-                    _logger.LogWarning("Unknown execution mode {ExecutionMode} for integration event {EventType}", mode, integrationEvent.EventType);
+                    _logger.LogApplicationWarning("Unknown execution mode {ExecutionMode} for integration event {EventType}", mode, integrationEvent.EventType);
                     return Result.Failure(new Error("EVENTBUS_UNKNOWN_INTEGRATION_MODE", $"Unknown execution mode for integration event: {mode}"));
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to publish integration event {EventType} for {TargetSystem}", 
+            _logger.LogApplicationError(ex, "Failed to publish integration event {EventType} for {TargetSystem}", 
                 integrationEvent.EventType, integrationEvent.TargetSystem);
             return Result.Failure(new Error("EVENTBUS_INTEGRATION_PUBLISH_FAILED", $"Integration event publishing failed: {ex.Message}"));
         }
@@ -239,12 +239,12 @@ public sealed class EventDispatchService : IBaseEventBus
             if (!_eventHandlerMappings[eventType].Contains(handlerType))
             {
                 _eventHandlerMappings[eventType].Add(handlerType);
-                _logger.LogInformation("Subscribed handler {HandlerType} to event {EventTypeFullName}", 
+                _logger.LogApplicationDebug("Subscribed handler {HandlerType} to event {EventTypeFullName}", 
                     handlerType.Name, eventType.FullName);
             }
             else
             {
-                _logger.LogWarning("Handler {HandlerType} already subscribed to event {EventTypeFullName}", 
+                _logger.LogApplicationWarning("Handler {HandlerType} already subscribed to event {EventTypeFullName}", 
                     handlerType.Name, eventType.FullName);
             }
         }
@@ -269,12 +269,12 @@ public sealed class EventDispatchService : IBaseEventBus
             if (!_eventHandlerMappings[eventType].Contains(handlerType))
             {
                 _eventHandlerMappings[eventType].Add(handlerType);
-                _logger.LogInformation("Subscribed UI handler {HandlerType} to event {EventType}", 
+                _logger.LogApplicationDebug("Subscribed UI handler {HandlerType} to event {EventType}", 
                     handlerType.Name, eventType.Name);
             }
             else
             {
-                _logger.LogWarning("UI Handler {HandlerType} already subscribed to event {EventType}", 
+                _logger.LogApplicationWarning("UI Handler {HandlerType} already subscribed to event {EventType}", 
                     handlerType.Name, eventType.Name);
             }
         }
@@ -299,12 +299,12 @@ public sealed class EventDispatchService : IBaseEventBus
             if (!_eventHandlerMappings[eventType].Contains(handlerType))
             {
                 _eventHandlerMappings[eventType].Add(handlerType);
-                _logger.LogInformation("Subscribed integration handler {HandlerType} to event {EventType}", 
+                _logger.LogApplicationDebug("Subscribed integration handler {HandlerType} to event {EventType}", 
                     handlerType.Name, eventType.Name);
             }
             else
             {
-                _logger.LogWarning("Integration Handler {HandlerType} already subscribed to event {EventType}", 
+                _logger.LogApplicationWarning("Integration Handler {HandlerType} already subscribed to event {EventType}", 
                     handlerType.Name, eventType.Name);
             }
         }
@@ -338,17 +338,17 @@ public sealed class EventDispatchService : IBaseEventBus
     {
         var eventType = typeof(T);
 
-        _logger.LogDebug("?? Looking up handlers for event type: {EventTypeFullName} (Name: {EventTypeName})", 
+        _logger.LogApplicationDebug("Looking up handlers for event type: {EventTypeFullName} (Name: {EventTypeName})", 
             eventType.FullName, eventType.Name);
 
         lock (_lock)
         {
-            _logger.LogDebug("?? Registered event types: {RegisteredTypes}", 
+            _logger.LogApplicationDebug("Registered event types: {RegisteredTypes}", 
                 string.Join(", ", _eventHandlerMappings.Keys.Select(k => k.FullName)));
 
             if (!_eventHandlerMappings.ContainsKey(eventType) || !_eventHandlerMappings[eventType].Any())
             {
-                _logger.LogWarning("No handlers registered for event type {EventTypeFullName}", eventType.FullName);
+                _logger.LogApplicationWarning("No handlers registered for event type {EventTypeFullName}", eventType.FullName);
                 return Result.Success(); // Not an error - just no handlers
             }
         }
@@ -364,7 +364,7 @@ public sealed class EventDispatchService : IBaseEventBus
                 var handler = scope.ServiceProvider.GetService(handlerType) as IBaseEventHandler<T>;
                 if (handler != null)
                 {
-                    _logger.LogDebug("Executing handler {HandlerType} for event {EventType} (ID: {EventId})", 
+                    _logger.LogApplicationDebug("Executing handler {HandlerType} for event {EventType} (ID: {EventId})", 
                         handlerType.Name, domainEvent.EventType, domainEvent.EventId);
 
                     var result = await handler.HandleAsync(domainEvent, cancellationToken);
@@ -372,20 +372,20 @@ public sealed class EventDispatchService : IBaseEventBus
 
                     if (!result.IsSuccess)
                     {
-                        _logger.LogWarning("Handler {HandlerType} failed for event {EventType} (ID: {EventId}): {Error}",
+                        _logger.LogApplicationWarning("Handler {HandlerType} failed for event {EventType} (ID: {EventId}): {Error}",
                             handlerType.Name, domainEvent.EventType, domainEvent.EventId, result.Error);
                     }
                 }
                 else
                 {
-                    _logger.LogWarning("Could not resolve handler {HandlerType} for event {EventType}",
+                    _logger.LogApplicationWarning("Could not resolve handler {HandlerType} for event {EventType}",
                         handlerType.Name, domainEvent.EventType);
                     results.Add(Result.Failure(new Error("EVENTBUS_HANDLER_RESOLVE_FAILED", $"Handler {handlerType.Name} could not be resolved")));
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error executing handler {HandlerType} for event {EventType} (ID: {EventId})",
+                _logger.LogApplicationError(ex, "Error executing handler {HandlerType} for event {EventType} (ID: {EventId})",
                     handlerType.Name, domainEvent.EventType, domainEvent.EventId);
                 results.Add(Result.Failure(new Error("EVENTBUS_HANDLER_EXECUTION_FAILED", $"Handler execution failed: {ex.Message}")));
             }
@@ -399,7 +399,7 @@ public sealed class EventDispatchService : IBaseEventBus
             return Result.Failure(new Error("EVENTBUS_HANDLERS_FAILED", $"Some event handlers failed: {errorMessages}"));
         }
 
-        _logger.LogInformation("Successfully executed {HandlerCount} handlers for event {EventType} (ID: {EventId})",
+        _logger.LogApplicationInformation("Successfully executed {HandlerCount} handlers for event {EventType} (ID: {EventId})",
             results.Count, domainEvent.EventType, domainEvent.EventId);
 
         return Result.Success();
@@ -417,7 +417,7 @@ public sealed class EventDispatchService : IBaseEventBus
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to queue domain event {EventType} (ID: {EventId}). Falling back to immediate execution.",
+            _logger.LogApplicationError(ex, "Failed to queue domain event {EventType} (ID: {EventId}). Falling back to immediate execution.",
                 domainEvent.EventType, domainEvent.EventId);
 
             // Fallback to immediate execution if queue service is not available
@@ -435,13 +435,13 @@ public sealed class EventDispatchService : IBaseEventBus
         {
             return await ExecuteWithQueueServiceAsync(async queueService =>
             {
-                _logger.LogDebug("?? Got EventQueueService instance for manual execution: {ServiceType}", queueService.GetType().Name);
+                _logger.LogApplicationDebug("Got EventQueueService instance for manual execution: {ServiceType}", queueService.GetType().Name);
                 return await queueService.QueueDomainEventAsync(domainEvent, "ManualExecution");
             });
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to store domain event {EventType} (ID: {EventId}) for manual execution. Falling back to immediate execution.",
+            _logger.LogApplicationError(ex, "Failed to store domain event {EventType} (ID: {EventId}) for manual execution. Falling back to immediate execution.",
                 domainEvent.EventType, domainEvent.EventId);
 
             // Fallback to immediate execution if queue service is not available
@@ -462,7 +462,7 @@ public sealed class EventDispatchService : IBaseEventBus
         {
             if (!_eventHandlerMappings.ContainsKey(eventType) || !_eventHandlerMappings[eventType].Any())
             {
-                _logger.LogDebug("No handlers registered for UI event type {EventType}", eventType.Name);
+                _logger.LogApplicationDebug("No handlers registered for UI event type {EventType}", eventType.Name);
                 return Result.Success(); // Not an error - just no handlers
             }
         }
@@ -480,7 +480,7 @@ public sealed class EventDispatchService : IBaseEventBus
 
                 if (handler != null)
                 {
-                    _logger.LogDebug("Executing UI handler {HandlerType} for event {EventType}", 
+                    _logger.LogApplicationDebug("Executing UI handler {HandlerType} for event {EventType}", 
                         handlerType.Name, uiEvent.EventType);
 
                     var result = await handler.HandleAsync(uiEvent, cancellationToken);
@@ -488,20 +488,20 @@ public sealed class EventDispatchService : IBaseEventBus
 
                     if (!result.IsSuccess)
                     {
-                        _logger.LogWarning("UI Handler {HandlerType} failed for event {EventType}: {Error}",
+                        _logger.LogApplicationWarning("UI Handler {HandlerType} failed for event {EventType}: {Error}",
                             handlerType.Name, uiEvent.EventType, result.Error.Message);
                     }
                 }
                 else
                 {
-                    _logger.LogWarning("Could not resolve UI handler {HandlerType} for event {EventType}",
+                    _logger.LogApplicationWarning("Could not resolve UI handler {HandlerType} for event {EventType}",
                         handlerType.Name, uiEvent.EventType);
                     results.Add(Result.Failure(new Error("EVENTBUS_UI_HANDLER_RESOLVE_FAILED", $"UI Handler {handlerType.Name} could not be resolved")));
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error executing UI handler {HandlerType} for event {EventType}",
+                _logger.LogApplicationError(ex, "Error executing UI handler {HandlerType} for event {EventType}",
                     handlerType.Name, uiEvent.EventType);
                 results.Add(Result.Failure(new Error("EVENTBUS_UI_HANDLER_EXECUTION_FAILED", $"UI Handler execution failed: {ex.Message}")));
             }
@@ -515,7 +515,7 @@ public sealed class EventDispatchService : IBaseEventBus
             return Result.Failure(new Error("EVENTBUS_UI_HANDLERS_FAILED", $"Some UI event handlers failed: {errorMessages}"));
         }
 
-        _logger.LogDebug("Successfully executed {HandlerCount} UI handlers for event {EventType}",
+        _logger.LogApplicationDebug("Successfully executed {HandlerCount} UI handlers for event {EventType}",
             results.Count, uiEvent.EventType);
 
         return Result.Success();
@@ -535,7 +535,7 @@ public sealed class EventDispatchService : IBaseEventBus
         {
             if (!_eventHandlerMappings.ContainsKey(eventType) || !_eventHandlerMappings[eventType].Any())
             {
-                _logger.LogInformation("No handlers registered for integration event type {EventType}", eventType.Name);
+                _logger.LogApplicationInformation("No handlers registered for integration event type {EventType}", eventType.Name);
                 return Result.Success(); // Not an error - just no handlers
             }
         }
@@ -551,7 +551,7 @@ public sealed class EventDispatchService : IBaseEventBus
                 var handler = scope.ServiceProvider.GetService(handlerType) as IBaseEventHandler<T>;
                 if (handler != null)
                 {
-                    _logger.LogInformation("Executing integration handler {HandlerType} for event {EventType} to {TargetSystem}", 
+                    _logger.LogApplicationInformation("Executing integration handler {HandlerType} for event {EventType} to {TargetSystem}", 
                         handlerType.Name, integrationEvent.EventType, integrationEvent.TargetSystem);
 
                     var result = await handler.HandleAsync(integrationEvent, cancellationToken);
@@ -559,20 +559,20 @@ public sealed class EventDispatchService : IBaseEventBus
 
                     if (!result.IsSuccess)
                     {
-                        _logger.LogWarning("Integration Handler {HandlerType} failed for event {EventType} to {TargetSystem}: {Error}",
+                        _logger.LogApplicationWarning("Integration Handler {HandlerType} failed for event {EventType} to {TargetSystem}: {Error}",
                             handlerType.Name, integrationEvent.EventType, integrationEvent.TargetSystem, result.Error.Message);
                     }
                 }
                 else
                 {
-                    _logger.LogWarning("Could not resolve integration handler {HandlerType} for event {EventType}",
+                    _logger.LogApplicationWarning("Could not resolve integration handler {HandlerType} for event {EventType}",
                         handlerType.Name, integrationEvent.EventType);
                     results.Add(Result.Failure(new Error("EVENTBUS_INTEGRATION_HANDLER_RESOLVE_FAILED", $"Integration Handler {handlerType.Name} could not be resolved")));
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error executing integration handler {HandlerType} for event {EventType}",
+                _logger.LogApplicationError(ex, "Error executing integration handler {HandlerType} for event {EventType}",
                     handlerType.Name, integrationEvent.EventType);
                 results.Add(Result.Failure(new Error("EVENTBUS_INTEGRATION_HANDLER_EXECUTION_FAILED", $"Integration Handler execution failed: {ex.Message}")));
             }
@@ -586,7 +586,7 @@ public sealed class EventDispatchService : IBaseEventBus
             return Result.Failure(new Error("EVENTBUS_INTEGRATION_HANDLERS_FAILED", $"Some integration event handlers failed: {errorMessages}"));
         }
 
-        _logger.LogInformation("Successfully executed {HandlerCount} integration handlers for event {EventType} to {TargetSystem}",
+        _logger.LogApplicationInformation("Successfully executed {HandlerCount} integration handlers for event {EventType} to {TargetSystem}",
             results.Count, integrationEvent.EventType, integrationEvent.TargetSystem);
 
         return Result.Success();
@@ -604,7 +604,7 @@ public sealed class EventDispatchService : IBaseEventBus
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to queue integration event {EventType} to {TargetSystem}. Falling back to immediate execution.",
+            _logger.LogApplicationError(ex, "Failed to queue integration event {EventType} to {TargetSystem}. Falling back to immediate execution.",
                 integrationEvent.EventType, integrationEvent.TargetSystem);
 
             // Fallback to immediate execution if queue service is not available
@@ -624,7 +624,7 @@ public sealed class EventDispatchService : IBaseEventBus
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to store integration event {EventType} to {TargetSystem} for manual execution. Falling back to immediate execution.",
+            _logger.LogApplicationError(ex, "Failed to store integration event {EventType} to {TargetSystem} for manual execution. Falling back to immediate execution.",
                 integrationEvent.EventType, integrationEvent.TargetSystem);
 
             // Fallback to immediate execution if queue service is not available
@@ -646,7 +646,7 @@ public sealed class EventDispatchService : IBaseEventBus
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to queue UI event {EventType} for {TargetComponent}. Falling back to immediate execution.",
+            _logger.LogApplicationError(ex, "Failed to queue UI event {EventType} for {TargetComponent}. Falling back to immediate execution.",
                 uiEvent.EventType, uiEvent.TargetComponent);
 
             // Fallback to immediate execution if queue service is not available
@@ -666,7 +666,7 @@ public sealed class EventDispatchService : IBaseEventBus
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to store UI event {EventType} for {TargetComponent} for manual execution. Falling back to immediate execution.",
+            _logger.LogApplicationError(ex, "Failed to store UI event {EventType} for {TargetComponent} for manual execution. Falling back to immediate execution.",
                 uiEvent.EventType, uiEvent.TargetComponent);
 
             // Fallback to immediate execution if queue service is not available
@@ -677,3 +677,4 @@ public sealed class EventDispatchService : IBaseEventBus
 
     #endregion
 }
+

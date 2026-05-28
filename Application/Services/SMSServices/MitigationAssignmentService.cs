@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="MitigationAssignmentService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -28,23 +28,23 @@ public sealed class MitigationAssignmentService
     {
         try
         {
-            _logger.LogInformation("Creating mitigation assignment with code: {Code}", mitigationAssignment?.Code);
+            _logger.LogApplicationInformation("Creating mitigation assignment with code: {Code}", mitigationAssignment?.Code);
             var result = await _dataService.CreateMitigationAssignmentAsync(mitigationAssignment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created mitigation assignment with ID: {Id}", result.Value?.Id);
+                _logger.LogApplicationInformation("Successfully created mitigation assignment with ID: {Id}", result.Value?.Id);
             }
             else
             {
-                _logger.LogError("Failed to create mitigation assignment. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create mitigation assignment. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating mitigation assignment");
+            _logger.LogApplicationError(ex, "Unexpected error creating mitigation assignment");
             return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.CreateFailed);
         }
     }
@@ -53,12 +53,12 @@ public sealed class MitigationAssignmentService
     {
         try
         {
-            _logger.LogInformation("Retrieving mitigation assignment with ID: {Id}", id);
+            _logger.LogApplicationInformation("Retrieving mitigation assignment with ID: {Id}", id);
             return await _dataService.GetMitigationAssignmentByIdAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving mitigation assignment with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving mitigation assignment with ID: {Id}", id);
             return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.NotFound);
         }
     }
@@ -67,12 +67,12 @@ public sealed class MitigationAssignmentService
     {
         try
         {
-            _logger.LogInformation("Retrieving all mitigation assignments");
+            _logger.LogApplicationInformation("Retrieving all mitigation assignments");
             return await _dataService.GetAllMitigationAssignmentsAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all mitigation assignments");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all mitigation assignments");
             return Result<List<MitigationAssignment>>.Failure<List<MitigationAssignment>>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
         }
     }
@@ -81,23 +81,23 @@ public sealed class MitigationAssignmentService
     {
         try
         {
-            _logger.LogInformation("Updating mitigation assignment with ID: {Id}", mitigationAssignment?.Id);
+            _logger.LogApplicationInformation("Updating mitigation assignment with ID: {Id}", mitigationAssignment?.Id);
             var result = await _dataService.UpdateMitigationAssignmentAsync(mitigationAssignment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated mitigation assignment with ID: {Id}", mitigationAssignment?.Id);
+                _logger.LogApplicationInformation("Successfully updated mitigation assignment with ID: {Id}", mitigationAssignment?.Id);
             }
             else
             {
-                _logger.LogError("Failed to update mitigation assignment. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update mitigation assignment. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating mitigation assignment with ID: {Id}", mitigationAssignment?.Id);
+            _logger.LogApplicationError(ex, "Unexpected error updating mitigation assignment with ID: {Id}", mitigationAssignment?.Id);
             return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.UpdateFailed);
         }
     }
@@ -106,24 +106,25 @@ public sealed class MitigationAssignmentService
     {
         try
         {
-            _logger.LogInformation("Deleting mitigation assignment with ID: {Id}", id);
+            _logger.LogApplicationInformation("Deleting mitigation assignment with ID: {Id}", id);
             var result = await _dataService.DeleteMitigationAssignmentAsync(id, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted mitigation assignment with ID: {Id}", id);
+                _logger.LogApplicationInformation("Successfully deleted mitigation assignment with ID: {Id}", id);
             }
             else
             {
-                _logger.LogError("Failed to delete mitigation assignment. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete mitigation assignment. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting mitigation assignment with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error deleting mitigation assignment with ID: {Id}", id);
             return Result<bool>.Failure<bool>(DomainErrors.MitigationAssignmentError.DeleteFailed);
         }
     }
 }
+

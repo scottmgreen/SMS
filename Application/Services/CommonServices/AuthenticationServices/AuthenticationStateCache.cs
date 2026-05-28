@@ -85,7 +85,7 @@ public class AuthenticationStateCache : IAuthenticationStateCache
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking cached authentication state");
+                _logger.LogApplicationError("Error checking cached authentication state", ApplicationEventIds.Error, ex);
                 InvalidateCache();
                 return false;
             }
@@ -118,7 +118,7 @@ public class AuthenticationStateCache : IAuthenticationStateCache
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting cached user code");
+                _logger.LogApplicationError("Error getting cached user code", ApplicationEventIds.Error, ex);
                 InvalidateUserCache();
                 return "SYSTEM";
             }
@@ -151,7 +151,7 @@ public class AuthenticationStateCache : IAuthenticationStateCache
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking cached full authentication state");
+                _logger.LogApplicationError("Error checking cached full authentication state", ApplicationEventIds.Error, ex);
                 InvalidateFullAuthCache();
                 return false;
             }
@@ -169,7 +169,7 @@ public class AuthenticationStateCache : IAuthenticationStateCache
         InvalidateUserCache();
         InvalidateFullAuthCache();
         
-        _logger.LogDebug("?? Authentication state cache invalidated");
+        _logger.LogApplicationDebug("Authentication state cache invalidated", ApplicationEventIds.Debug);
     }
 
     /// <summary>
@@ -202,7 +202,7 @@ public class AuthenticationStateCache : IAuthenticationStateCache
         _ = UserCode;
         _ = IsFullyAuthenticated;
         
-        _logger.LogDebug("?? Authentication state cache refreshed");
+        _logger.LogApplicationDebug("Authentication state cache refreshed", ApplicationEventIds.Debug);
     }
 
     /// <summary>

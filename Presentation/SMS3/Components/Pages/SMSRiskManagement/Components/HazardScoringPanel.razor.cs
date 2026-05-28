@@ -1,7 +1,7 @@
 using SMS_Domain.Enums;
 using SMS_Domain.ValueObjects;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Commands;
+using SMS_Application.Queries;
 using SMS_Application.Interfaces;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
@@ -27,7 +27,7 @@ public partial class HazardScoringPanel : ComponentBase
     [Inject] private ILogger<HazardScoringPanel> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
 
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     private RadzenDataGrid<ScoringPanel>? ScoringGrid;
     private List<ScoringPanel> HazardScoringPanels = new();
@@ -678,7 +678,7 @@ public partial class HazardScoringPanel : ComponentBase
                 CalculatedMatrixCode = calculation.MatrixCode;
                 CalculatedRiskLevel = calculation.RiskLevel;
 
-                Logger.LogInformation("? Recalculated hazard {HazardCode} scoring data: AvgSev={Severity:F2}?{RoundedSev}, AvgLike={Likelihood:F2}?{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}",
+                Logger.LogInformation("Recalculated hazard {HazardCode} scoring data: AvgSev={Severity:F2}?{RoundedSev}, AvgLike={Likelihood:F2}?{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}",
                     Hazard.Code, calculation.AverageSeverity, calculation.RoundedSeverity, 
                     calculation.AverageLikelihood, calculation.RoundedLikelihood, 
                     calculation.MatrixCode, calculation.RiskLevel?.Value ?? "Unknown");
@@ -698,7 +698,7 @@ public partial class HazardScoringPanel : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "?? Error recalculating hazard {HazardCode} scoring data", Hazard.Code);
+            Logger.LogError(ex, "Error recalculating hazard {HazardCode} scoring data", Hazard.Code);
         }
     }
 
@@ -740,7 +740,7 @@ public partial class HazardScoringPanel : ComponentBase
                     Step4.HazardRiskLevels[Hazard.Code] = calculation.RiskLevel;
                     Step4.HazardMatrixCodes[Hazard.Code] = calculation.MatrixCode;
                     
-                    Logger.LogInformation("? Updated Step4 model dictionaries for hazard {HazardCode}", Hazard.Code);
+                    Logger.LogInformation("Updated Step4 model dictionaries for hazard {HazardCode}", Hazard.Code);
                 }
                 else if (Step4 is not null)
                 {
@@ -748,11 +748,11 @@ public partial class HazardScoringPanel : ComponentBase
                     Step4.HazardRiskLevels.Remove(Hazard.Code);
                     Step4.HazardMatrixCodes.Remove(Hazard.Code);
                     
-                    Logger.LogInformation("? Cleared Step4 model dictionaries for hazard {HazardCode}", Hazard.Code);
+                    Logger.LogInformation("Cleared Step4 model dictionaries for hazard {HazardCode}", Hazard.Code);
                 }
                 else
                 {
-                    Logger.LogWarning("?? Step4 model is null - cannot update dictionaries for hazard {HazardCode} (CurrentStep: {CurrentStep})", 
+                    Logger.LogWarning("Step4 model is null - cannot update dictionaries for hazard {HazardCode} (CurrentStep: {CurrentStep})", 
                         Hazard.Code, CurrentStep);
                 }
 
@@ -795,7 +795,7 @@ public partial class HazardScoringPanel : ComponentBase
             }
 
             Hazard.UpdatedDate = DateTime.UtcNow;
-            Hazard.UpdatedBy = CurrentUserService.UserCode;
+            Hazard.UpdatedBy = _currentUserService.UserCode;
 
             Logger.LogInformation("Calculated scoring data for hazard {HazardCode}: Step={Step}, IsValid={IsValid}, CalculatedRiskLevel={CalculatedRiskLevel}, MatrixCode={MatrixCode}, AverageScore={AverageScore}",
                 Hazard.Code, CurrentStep, calculation.IsValid, calculation.RiskLevel?.Value ?? "Unknown", calculation.MatrixCode, calculation.AverageScore);
@@ -806,7 +806,7 @@ public partial class HazardScoringPanel : ComponentBase
 
             if (result.IsSuccess)
             {
-                Logger.LogInformation("? Successfully updated hazard {HazardCode} in database: AverageScore={AverageScore}, RiskMatrixCode={RiskMatrixCode}, BaseHazardRiskLevel={BaseRiskLevel}",
+                Logger.LogInformation("Successfully updated hazard {HazardCode} in database: AverageScore={AverageScore}, RiskMatrixCode={RiskMatrixCode}, BaseHazardRiskLevel={BaseRiskLevel}",
                     Hazard.Code, 
                     CurrentStep == 4 ? Hazard.InitialAverageScore?.ToString("F2") : Hazard.ResidualAverageScore?.ToString("F2") ?? "null", 
                     CurrentStep == 4 ? Hazard.InitialRiskMatrixCode : Hazard.ResidualRiskMatrixCode ?? "null", 
@@ -814,12 +814,12 @@ public partial class HazardScoringPanel : ComponentBase
             }
             else
             {
-                Logger.LogError("? Failed to update hazard {HazardCode} in database: {Error}", Hazard.Code, result.Error?.Message ?? "Unknown error");
+                Logger.LogError("Failed to update hazard {HazardCode} in database: {Error}", Hazard.Code, result.Error?.Message ?? "Unknown error");
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "?? Error updating hazard {HazardCode} with scoring data in database", Hazard.Code);
+            Logger.LogError(ex, "Error updating hazard {HazardCode} with scoring data in database", Hazard.Code);
         }
     }
 
@@ -956,19 +956,19 @@ public partial class HazardScoringPanel : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    Logger.LogInformation("? Successfully copied Initial scores to empty Residual for panel {PanelCode}", panel.Code);
+                    Logger.LogInformation("Successfully copied Initial scores to empty Residual for panel {PanelCode}", panel.Code);
                     anyUpdated = true;
                 }
                 else
                 {
-                    Logger.LogError("? Failed to copy scores for panel {PanelCode}: {Error}",
+                    Logger.LogError("Failed to copy scores for panel {PanelCode}: {Error}",
                         panel.Code, result.Error?.Message ?? "Unknown error");
                 }
             }
 
             if (anyUpdated)
             {
-                Logger.LogInformation("? Completed copying Initial scores to empty Residual scores for hazard {HazardCode}", Hazard.Code);
+                Logger.LogInformation("Completed copying Initial scores to empty Residual scores for hazard {HazardCode}", Hazard.Code);
             }
         }
         catch (Exception ex)
@@ -999,3 +999,4 @@ public partial class HazardScoringPanel : ComponentBase
         return $"{category.ToUpper()} - {type.ToUpper()}";
     }
 }
+

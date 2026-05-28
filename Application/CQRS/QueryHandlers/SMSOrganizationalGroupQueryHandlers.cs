@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSOrganizationalGroupQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -10,9 +10,9 @@
 
 using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 /// <summary>
 /// Query handler for getting all SMS organizational groups
@@ -34,13 +34,13 @@ public class GetAllSMSOrganizationalGroupsQueryHandler : BaseQueryBundle, IBaseR
     {
         try
         {
-            _logger.LogInformation("Processing GetAllSMSOrganizationalGroupsQuery");
+            _logger.LogApplicationInformation("Processing GetAllSMSOrganizationalGroupsQuery");
 
             var result = await _organizationalGroupService.GetAllSMSOrganizationalGroupsAsync(ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS organizational groups", result.Value?.Count() ?? 0);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS organizational groups", result.Value?.Count() ?? 0);
             }
             else
             {
@@ -51,7 +51,7 @@ public class GetAllSMSOrganizationalGroupsQueryHandler : BaseQueryBundle, IBaseR
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetAllSMSOrganizationalGroupsQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetAllSMSOrganizationalGroupsQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -82,24 +82,24 @@ public class GetSMSOrganizationalGroupByCodeQueryHandler : BaseQueryBundle, IBas
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSOrganizationalGroupByCodeQuery for group: {GroupCode}", request.GroupCode);
+            _logger.LogApplicationInformation("Processing GetSMSOrganizationalGroupByCodeQuery for group: {GroupCode}", request.GroupCode);
 
             var result = await _organizationalGroupService.GetSMSOrganizationalGroupByCodeAsync(request.GroupCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved SMS organizational group: {GroupCode}", request.GroupCode);
+                _logger.LogApplicationInformation("Successfully retrieved SMS organizational group: {GroupCode}", request.GroupCode);
             }
             else
             {
-                _logger.LogWarning("SMS organizational group not found: {GroupCode}", request.GroupCode);
+                _logger.LogApplicationWarning("SMS organizational group not found: {GroupCode}", request.GroupCode);
             }
 
             return result;
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetSMSOrganizationalGroupByCodeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetSMSOrganizationalGroupByCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -130,13 +130,13 @@ public class GetSMSOrganizationalGroupsByUserCodeQueryHandler : BaseQueryBundle,
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSOrganizationalGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
+            _logger.LogApplicationInformation("Processing GetSMSOrganizationalGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
 
             var result = await _organizationalGroupService.GetSMSOrganizationalGroupsByUserCodeAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS organizational groups for user: {UserCode}",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS organizational groups for user: {UserCode}",
                     result.Value?.Count() ?? 0, request.UserCode);
             }
             else
@@ -149,7 +149,7 @@ public class GetSMSOrganizationalGroupsByUserCodeQueryHandler : BaseQueryBundle,
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetSMSOrganizationalGroupsByUserCodeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetSMSOrganizationalGroupsByUserCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -180,13 +180,13 @@ public class GetUsersByOrganizationalGroupCodeQueryHandler : BaseQueryBundle, IB
     {
         try
         {
-            _logger.LogInformation("Processing GetUsersByOrganizationalGroupCodeQuery for group: {GroupCode}", request.GroupCode);
+            _logger.LogApplicationInformation("Processing GetUsersByOrganizationalGroupCodeQuery for group: {GroupCode}", request.GroupCode);
 
             var result = await _organizationalGroupService.GetUsersByGroupCodeAsync(request.GroupCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} users for organizational group: {GroupCode}",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} users for organizational group: {GroupCode}",
                     result.Value?.Count() ?? 0, request.GroupCode);
             }
             else
@@ -199,7 +199,7 @@ public class GetUsersByOrganizationalGroupCodeQueryHandler : BaseQueryBundle, IB
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetUsersByOrganizationalGroupCodeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetUsersByOrganizationalGroupCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -209,3 +209,4 @@ public class GetUsersByOrganizationalGroupCodeQueryHandler : BaseQueryBundle, IB
         }
     }
 }
+

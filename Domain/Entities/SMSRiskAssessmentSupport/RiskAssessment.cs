@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAssessment.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -53,7 +53,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
 
        
 
-    // ✅ PROPERTIES WITH BUSINESS RULE ENFORCEMENT
+    // PROPERTIES WITH BUSINESS RULE ENFORCEMENT
     public string Name { get; set; } = string.Empty;
     public string? Code { get; set; }
     public string? Description { get; set; }
@@ -110,7 +110,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
    
     // Step 5 - Implementation Properties
    
-    // ✅ Stakeholder Persistence Properties - Comma-delimited codes
+    // Stakeholder Persistence Properties - Comma-delimited codes
     /// <summary>
     /// Selected Stakeholder Groups (comma-delimited codes: SG-0001,SG-0002,SG-0003)
     /// </summary>
@@ -129,7 +129,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
         
 
 
-    // ✅ METHODS WITH BUSINESS RULE ENFORCEMENT
+    // METHODS WITH BUSINESS RULE ENFORCEMENT
 
     /// <summary>
     /// Add Stakeholder - SIMPLIFIED (for backward compatibility)
@@ -217,4 +217,5 @@ public sealed class RiskAssessment : BaseAuditableEntity
         };
     }
 }
+
 

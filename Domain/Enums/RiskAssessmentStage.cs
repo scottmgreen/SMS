@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAssessmentStage.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -21,7 +21,7 @@ public abstract class RiskAssessmentStage : BaseEnum<RiskAssessmentStage>
     }
 
 
-    #region ✅ APPROVED FINAL RISK ASSESSMENT STATUS VALUES FROM StatusList.txt
+    #region APPROVED FINAL RISK ASSESSMENT STATUS VALUES FROM StatusList.txt
 
     /// <summary>Risk assessor has been assigned to the assessment</summary>
     public static readonly RiskAssessmentStage DescribingSystem = new DescribeSystemStage();
@@ -87,3 +87,4 @@ public abstract class RiskAssessmentStage : BaseEnum<RiskAssessmentStage>
     }
 
 }
+

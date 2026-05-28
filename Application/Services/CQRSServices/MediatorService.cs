@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="MediatorService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -40,8 +40,8 @@ namespace SMS_Application.Services
 
             RequestPipelineDelegate<TResponse> next = () => (Task<TResponse>)methodInfo!.Invoke(handler, new object[] { request, cancellation }!);
 
-            // 🔥 FIX: Don't reverse! Keep the registration order
-            // behaviors.Reverse(); // ❌ REMOVED - This was causing audit fields to set AFTER command execution
+            // ?? FIX: Don't reverse! Keep the registration order
+            // behaviors.Reverse(); // REMOVED - This was causing audit fields to set AFTER command execution
 
             foreach (var behavior in behaviors)
             {
@@ -65,6 +65,7 @@ namespace SMS_Application.Services
 
 
 }
+
 
 
 

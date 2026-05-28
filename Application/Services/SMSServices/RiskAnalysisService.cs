@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAnalysisService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -33,23 +33,23 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
     {
         try
         {
-            _logger.LogInformation("Creating risk analysis with code: {Code}", analysis?.Code);
+            _logger.LogApplicationInformation("Creating risk analysis with code: {Code}", analysis?.Code);
             var result = await _dataService.CreateRiskAnalysisAsync(analysis, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created risk analysis with ID: {Id}", result.Value?.Id);
+                _logger.LogApplicationInformation("Successfully created risk analysis with ID: {Id}", result.Value?.Id);
             }
             else
             {
-                _logger.LogError("Failed to create risk analysis. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create risk analysis. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating risk analysis");
+            _logger.LogApplicationError(ex, "Unexpected error creating risk analysis");
             return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.CreateFailed);
         }
     }
@@ -58,12 +58,12 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
     {
         try
         {
-            _logger.LogInformation("Retrieving risk analysis with ID: {Id}", id);
+            _logger.LogApplicationInformation("Retrieving risk analysis with ID: {Id}", id);
             return await _dataService.GetRiskAnalysisByCodeAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving risk analysis with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving risk analysis with ID: {Id}", id);
             return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
         }
     }
@@ -72,7 +72,7 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
     {
         try
         {
-            _logger.LogInformation("Retrieving risk analyses for hazard: {HazardCode}", hazardCode);
+            _logger.LogApplicationInformation("Retrieving risk analyses for hazard: {HazardCode}", hazardCode);
             var hazardId = new HazardID(hazardCode);
             
             // The data service returns a single RiskAnalysis, so we wrap it in a list
@@ -90,7 +90,7 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving risk analyses for hazard: {HazardCode}", hazardCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving risk analyses for hazard: {HazardCode}", hazardCode);
             return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
         }
     }
@@ -99,23 +99,23 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
     {
         try
         {
-            _logger.LogInformation("Updating risk analysis with ID: {Id}", analysis?.Id);
+            _logger.LogApplicationInformation("Updating risk analysis with ID: {Id}", analysis?.Id);
             var result = await _dataService.UpdateRiskAnalysisAsync(analysis, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated risk analysis with ID: {Id}", analysis?.Id);
+                _logger.LogApplicationInformation("Successfully updated risk analysis with ID: {Id}", analysis?.Id);
             }
             else
             {
-                _logger.LogError("Failed to update risk analysis. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update risk analysis. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating risk analysis with ID: {Id}", analysis?.Id);
+            _logger.LogApplicationError(ex, "Unexpected error updating risk analysis with ID: {Id}", analysis?.Id);
             return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.UpdateFailed);
         }
     }
@@ -124,23 +124,23 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
     {
         try
         {
-            _logger.LogInformation("Deleting risk analysis with ID: {Id}", id);
+            _logger.LogApplicationInformation("Deleting risk analysis with ID: {Id}", id);
             var result = await _dataService.DeleteRiskAnalysisAsync(id, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted risk analysis with ID: {Id}", id);
+                _logger.LogApplicationInformation("Successfully deleted risk analysis with ID: {Id}", id);
             }
             else
             {
-                _logger.LogError("Failed to delete risk analysis. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete risk analysis. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting risk analysis with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error deleting risk analysis with ID: {Id}", id);
             return Result<bool>.Failure<bool>(DomainErrors.RiskAnalysisError.DeleteFailed);
         }
     }
@@ -149,7 +149,7 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
     {
         try
         {
-            _logger.LogInformation("Performing risk analysis for hazard: {HazardCode}", parameters?.HazardCode);
+            _logger.LogApplicationInformation("Performing risk analysis for hazard: {HazardCode}", parameters?.HazardCode);
             
             if (parameters == null)
             {
@@ -177,14 +177,14 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
                 AnalyzedDate = DateTime.UtcNow
             };
 
-            _logger.LogInformation("Completed risk analysis for hazard {HazardCode} with level {RiskLevel}", 
+            _logger.LogApplicationInformation("Completed risk analysis for hazard {HazardCode} with level {RiskLevel}", 
                 parameters.HazardCode, riskLevel);
 
             return Result<RiskAnalysisResult>.Success(result);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error performing risk analysis for hazard: {HazardCode}", parameters?.HazardCode);
+            _logger.LogApplicationError(ex, "Unexpected error performing risk analysis for hazard: {HazardCode}", parameters?.HazardCode);
             return Result<RiskAnalysisResult>.Failure<RiskAnalysisResult>(DomainErrors.RiskAnalysisError.UpdateFailed);
         }
     }
@@ -197,12 +197,12 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
     {
         try
         {
-            _logger.LogInformation("Retrieving risk analysis with hazard ID: {Id}", id);
+            _logger.LogApplicationInformation("Retrieving risk analysis with hazard ID: {Id}", id);
             return await _dataService.GetRiskAnalysisByHazardCodeAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving risk analysis with hazard ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving risk analysis with hazard ID: {Id}", id);
             return Result<RiskAnalysis>.Failure<RiskAnalysis>(DomainErrors.RiskAnalysisError.NotFound);
         }
     }
@@ -211,12 +211,12 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
     {
         try
         {
-            _logger.LogInformation("Retrieving all risk analysis");
+            _logger.LogApplicationInformation("Retrieving all risk analysis");
             return await _dataService.GetAllRiskAnalysisAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all risk analysis");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all risk analysis");
             return Result<List<RiskAnalysis>>.Failure<List<RiskAnalysis>>(DomainErrors.RiskAnalysisError.NullOrEmpty);
         }
     }
@@ -239,3 +239,4 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
 
     #endregion
 }
+

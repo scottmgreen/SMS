@@ -1,4 +1,4 @@
-﻿namespace PasswordHashGenerator
+namespace PasswordHashGenerator
 {
     /// <summary>
     /// SMS Password Hash Generator - FIXED VERSION
@@ -73,25 +73,25 @@
                 string hash = BCrypt.Net.BCrypt.HashPassword(password, 12);
 
                 Console.WriteLine();
-                Console.WriteLine($"✅ SUCCESS!");
+                Console.WriteLine($"SUCCESS!");
                 Console.WriteLine($"Password: {password}");
                 Console.WriteLine($"BCrypt Hash: {hash}");
                 Console.WriteLine();
-                Console.WriteLine("📋 SQL Command to reset admin@flypdx.com:");
+                Console.WriteLine("?? SQL Command to reset admin@flypdx.com:");
                 Console.WriteLine($"EXEC [dbo].[pr_PasswordReset] @pUserName = 'admin@flypdx.com', @pNewPasswordHash = '{hash}';");
                 Console.WriteLine();
-                Console.WriteLine("🧪 Test the hash:");
+                Console.WriteLine("?? Test the hash:");
 
                 // Test the hash immediately
                 bool isValid = BCrypt.Net.BCrypt.Verify(password, hash);
-                Console.WriteLine($"Hash verification: {(isValid ? "✅ VALID" : "❌ INVALID")}");
+                Console.WriteLine($"Hash verification: {(isValid ? "VALID" : "INVALID")}");
                 Console.WriteLine();
                 Console.WriteLine("=".PadRight(80, '='));
                 Console.WriteLine();
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error generating hash: {ex.Message}");
+                Console.WriteLine($"Error generating hash: {ex.Message}");
                 Console.WriteLine();
             }
         }
@@ -103,10 +103,10 @@
 
 BCrypt is a secure password hashing algorithm that:
 
-1. 🧂 SALT: Adds random data to prevent rainbow table attacks
-2. 🔄 WORK FACTOR: Uses configurable "rounds" to make hashing slow (cost factor 12 = 2^12 iterations)  
-3. 🔒 ONE-WAY: Cannot be "decrypted" - only verified by hashing input and comparing
-4. 🛡️ ADAPTIVE: Can increase work factor over time as computers get faster
+1. ?? SALT: Adds random data to prevent rainbow table attacks
+2. ?? WORK FACTOR: Uses configurable "rounds" to make hashing slow (cost factor 12 = 2^12 iterations)  
+3. ?? ONE-WAY: Cannot be "decrypted" - only verified by hashing input and comparing
+4. ??? ADAPTIVE: Can increase work factor over time as computers get faster
 
 Example BCrypt hash: $2a$12$randomsalt22charactersxxxcryptedpassword30characters
                      |  |  |                    |

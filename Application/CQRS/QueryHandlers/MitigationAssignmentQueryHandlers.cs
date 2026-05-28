@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="MitigationAssignmentQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,9 +12,9 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // MITIGATION ASSIGNMENT QUERY HANDLERS
@@ -35,7 +35,7 @@ public class GetMitigationAssignmentByIdQueryHandler : BaseQueryBundle, IBaseReq
     {
         try
         {
-            _logger.LogInformation("Processing GetMitigationAssignmentByIdQuery for ID: {Id}", request.MitigationAssignmentId);
+            _logger.LogApplicationInformation("Processing GetMitigationAssignmentByIdQuery for ID: {Id}", request.MitigationAssignmentId);
             var result = await _mitigationAssignmentDataService.GetMitigationAssignmentByIdAsync(request.MitigationAssignmentId, ct).ConfigureAwait(false);
             return result;
         }
@@ -62,7 +62,7 @@ public class GetAllMitigationAssignmentsQueryHandler : BaseQueryBundle, IBaseReq
     {
         try
         {
-            _logger.LogInformation("Processing GetAllMitigationAssignmentsQuery");
+            _logger.LogApplicationInformation("Processing GetAllMitigationAssignmentsQuery");
             var result = await _mitigationAssignmentDataService.GetAllMitigationAssignmentsAsync(ct).ConfigureAwait(false);
             return result;
         }
@@ -73,3 +73,4 @@ public class GetAllMitigationAssignmentsQueryHandler : BaseQueryBundle, IBaseReq
         }
     }
 }
+

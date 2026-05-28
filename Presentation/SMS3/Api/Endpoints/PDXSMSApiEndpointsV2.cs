@@ -13,7 +13,7 @@ using Microsoft.FeatureManagement;
 using Microsoft.OpenApi;
 
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
+using SMS_Application.Commands;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;

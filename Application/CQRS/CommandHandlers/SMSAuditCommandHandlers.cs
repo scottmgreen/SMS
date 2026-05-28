@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 /// <summary>
 /// SMS Audit Command Handlers following established patterns
@@ -41,7 +41,7 @@ public class CreateSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandl
                 return Result<SMSAudit>.Failure<SMSAudit>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing CreateSMSAuditCommand for audit: {Name}", request.Name);
+            _logger.LogApplicationInformation("Processing CreateSMSAuditCommand for audit: {Name}", request.Name);
 
             // Generate audit code
             var auditCode = _auditService.GenerateAuditCode(request.AuditType, request.ScheduledStartDate);
@@ -73,7 +73,7 @@ public class CreateSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandl
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS audit: {AuditCode}", auditCode);
+                _logger.LogApplicationInformation("Successfully created SMS audit: {AuditCode}", auditCode);
             }
             else
             {
@@ -84,7 +84,7 @@ public class CreateSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandl
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateSMSAuditCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateSMSAuditCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -118,7 +118,7 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandle
                 return Result<SMSAudit>.Failure<SMSAudit>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing StartSMSAuditCommand for audit: {AuditCode}", request.AuditCode);
+            _logger.LogApplicationInformation("Processing StartSMSAuditCommand for audit: {AuditCode}", request.AuditCode);
 
             //Get existing audit
             var existingAuditResult = await _auditService.GetAuditByCodeAsync(request.AuditCode, cancellationToken);
@@ -143,7 +143,7 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandle
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully started SMS audit: {AuditCode} by {StartedBy}",
+                _logger.LogApplicationInformation("Successfully started SMS audit: {AuditCode} by {StartedBy}",
                     request.AuditCode, request.StartedBy);
             }
             else
@@ -155,7 +155,7 @@ public class StartSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandle
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("StartSMSAuditCommand operation was cancelled");
+            _logger.LogApplicationWarning("StartSMSAuditCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -192,7 +192,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<SMSAudit>.Failure<SMSAudit>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing CompleteSMSAuditCommand for audit: {AuditCode}", request.AuditCode);
+            _logger.LogApplicationInformation("Processing CompleteSMSAuditCommand for audit: {AuditCode}", request.AuditCode);
 
             // Get existing audit with findings
             var existingAuditResult = await _auditService.GetAuditByCodeAsync(request.AuditCode, cancellationToken, includeFindings: true);
@@ -221,7 +221,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHan
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully completed SMS audit: {AuditCode} by {CompletedBy}",
+                _logger.LogApplicationInformation("Successfully completed SMS audit: {AuditCode} by {CompletedBy}",
                     request.AuditCode, request.CompletedBy);
 
                 // NEW: Check if associated audit plan should be completed
@@ -236,7 +236,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHan
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CompleteSMSAuditCommand operation was cancelled");
+            _logger.LogApplicationWarning("CompleteSMSAuditCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -255,17 +255,17 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHan
         {
             if (string.IsNullOrEmpty(auditPlanCode))
             {
-                _logger.LogInformation("No audit plan code provided, skipping plan completion check");
+                _logger.LogApplicationInformation("No audit plan code provided, skipping plan completion check");
                 return;
             }
 
-            _logger.LogInformation("Checking if audit plan {AuditPlanCode} should be completed", auditPlanCode);
+            _logger.LogApplicationInformation("Checking if audit plan {AuditPlanCode} should be completed", auditPlanCode);
 
             // Get the audit plan
             var auditPlanResult = await _auditPlanService.GetAuditPlanByCodeAsync(auditPlanCode, cancellationToken);
             if (auditPlanResult.IsFailure)
             {
-                _logger.LogWarning("Could not find audit plan {AuditPlanCode} for completion check", auditPlanCode);
+                _logger.LogApplicationWarning("Could not find audit plan {AuditPlanCode} for completion check", auditPlanCode);
                 return;
             }
 
@@ -274,7 +274,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHan
             // Skip if already completed
             if (auditPlan.Status == "Completed")
             {
-                _logger.LogInformation("Audit plan {AuditPlanCode} is already completed", auditPlanCode);
+                _logger.LogApplicationInformation("Audit plan {AuditPlanCode} is already completed", auditPlanCode);
                 return;
             }
 
@@ -282,7 +282,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHan
             var allAuditsResult = await _auditService.GetAuditsByPlanAsync(auditPlanCode, null, false, cancellationToken);
             if (allAuditsResult.IsFailure || !allAuditsResult.Value.Any())
             {
-                _logger.LogInformation("No audits found for plan {AuditPlanCode}, cannot complete plan", auditPlanCode);
+                _logger.LogApplicationInformation("No audits found for plan {AuditPlanCode}, cannot complete plan", auditPlanCode);
                 return;
             }
 
@@ -290,13 +290,13 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHan
             var completedAudits = allAudits.Count(a => a.Status == "Completed");
             var totalAudits = allAudits.Count;
 
-            _logger.LogInformation("Audit plan {AuditPlanCode}: {CompletedAudits}/{TotalAudits} audits completed",
+            _logger.LogApplicationInformation("Audit plan {AuditPlanCode}: {CompletedAudits}/{TotalAudits} audits completed",
                 auditPlanCode, completedAudits, totalAudits);
 
             // If all audits are completed, complete the plan
             if (completedAudits == totalAudits && allAudits.All(a => a.Status == "Completed"))
             {
-                _logger.LogInformation("All audits completed for plan {AuditPlanCode}, marking plan as completed", auditPlanCode);
+                _logger.LogApplicationInformation("All audits completed for plan {AuditPlanCode}, marking plan as completed", auditPlanCode);
 
                 // Complete the audit plan using domain method
                 var completePlanResult = auditPlan.CompleteAuditPlan("SYSTEM", "All associated audits completed");
@@ -306,7 +306,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHan
                     var updatePlanResult = await _auditPlanService.UpdateAuditPlanAsync(auditPlan, cancellationToken);
                     if (updatePlanResult.IsSuccess)
                     {
-                        _logger.LogInformation("Successfully completed audit plan {AuditPlanCode}", auditPlanCode);
+                        _logger.LogApplicationInformation("Successfully completed audit plan {AuditPlanCode}", auditPlanCode);
                     }
                     else
                     {
@@ -322,13 +322,13 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHan
             }
             else
             {
-                _logger.LogInformation("Not all audits completed yet for plan {AuditPlanCode}, keeping plan status as {Status}",
+                _logger.LogApplicationInformation("Not all audits completed yet for plan {AuditPlanCode}, keeping plan status as {Status}",
                     auditPlanCode, auditPlan.Status);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking audit plan completion for {AuditPlanCode}", auditPlanCode);
+            _logger.LogApplicationError(ex, "Error checking audit plan completion for {AuditPlanCode}", auditPlanCode);
             // Don't throw - this is a secondary operation that shouldn't fail the primary audit completion
         }
     }
@@ -357,7 +357,7 @@ public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing AddSMSAuditFindingCommand for audit: {AuditCode}", request.AuditCode);
+            _logger.LogApplicationInformation("Processing AddSMSAuditFindingCommand for audit: {AuditCode}", request.AuditCode);
 
             // Get existing audit
             var existingAuditResult = await _auditService.GetAuditByCodeAsync(request.AuditCode, cancellationToken, includeFindings: true);
@@ -396,7 +396,7 @@ public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseRequestH
 
             if (newFinding != null)
             {
-                _logger.LogInformation("Successfully added finding to SMS audit: {AuditCode}, Finding: {FindingCode}",
+                _logger.LogApplicationInformation("Successfully added finding to SMS audit: {AuditCode}, Finding: {FindingCode}",
                     request.AuditCode, newFinding.Code);
                 return Result<SMSAuditFinding>.Success(newFinding);
             }
@@ -407,7 +407,7 @@ public class AddSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("AddSMSAuditFindingCommand operation was cancelled");
+            _logger.LogApplicationWarning("AddSMSAuditFindingCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -441,7 +441,7 @@ public class UpdateSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandl
                 return Result<SMSAudit>.Failure<SMSAudit>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing UpdateSMSAuditCommand for audit: {Name}", request.Audit.Name);
+            _logger.LogApplicationInformation("Processing UpdateSMSAuditCommand for audit: {Name}", request.Audit.Name);
 
             // Validate audit
             var validationResult = _auditService.ValidateAudit(request.Audit);
@@ -456,7 +456,7 @@ public class UpdateSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandl
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS audit: {AuditCode}", request.Audit.Code);
+                _logger.LogApplicationInformation("Successfully created SMS audit: {AuditCode}", request.Audit.Code);
             }
             else
             {
@@ -467,7 +467,7 @@ public class UpdateSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandl
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateSMSAuditCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateSMSAuditCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -477,3 +477,4 @@ public class UpdateSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHandl
         }
     }
 }
+

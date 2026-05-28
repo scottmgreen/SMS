@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="InterviewCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // INTERVIEW COMMAND HANDLERS - Clean Architecture Pattern
@@ -39,13 +39,13 @@ public class CreateInterviewCommandHandler : BaseCommandBundle, IBaseRequestHand
                 return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateInterviewCommand for Code: {Code}", request.Interview.Code);
+            _logger.LogApplicationInformation(" Processing CreateInterviewCommand for Code: {Code}", request.Interview.Code);
 
             var result = await _interviewService.CreateInterviewAsync(request.Interview, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created Interview with ID: {Id}, Code: {Code}",
+                _logger.LogApplicationInformation(" Successfully created Interview with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -58,7 +58,7 @@ public class CreateInterviewCommandHandler : BaseCommandBundle, IBaseRequestHand
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateInterviewCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateInterviewCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -90,13 +90,13 @@ public class UpdateInterviewCommandHandler : BaseCommandBundle, IBaseRequestHand
                 return Result<Interview>.Failure<Interview>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateInterviewCommand for ID: {Id}", request.Interview.Id);
+            _logger.LogApplicationInformation(" Processing UpdateInterviewCommand for ID: {Id}", request.Interview.Id);
 
             var result = await _interviewService.UpdateInterviewAsync(request.Interview, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated Interview with ID: {Id}", request.Interview.Id);
+                _logger.LogApplicationInformation(" Successfully updated Interview with ID: {Id}", request.Interview.Id);
             }
             else
             {
@@ -108,7 +108,7 @@ public class UpdateInterviewCommandHandler : BaseCommandBundle, IBaseRequestHand
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateInterviewCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateInterviewCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -140,13 +140,13 @@ public class DeleteInterviewCommandHandler : BaseCommandBundle, IBaseRequestHand
                 return Result<bool>.Failure<bool>(DomainErrors.InterviewError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteInterviewCommand for ID: {Id}", request.InterviewId);
+            _logger.LogApplicationInformation(" Processing DeleteInterviewCommand for ID: {Id}", request.InterviewId);
 
             var result = await _interviewService.DeleteInterviewAsync(request.InterviewId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted Interview with ID: {Id}", request.InterviewId);
+                _logger.LogApplicationInformation(" Successfully deleted Interview with ID: {Id}", request.InterviewId);
             }
             else
             {
@@ -158,7 +158,7 @@ public class DeleteInterviewCommandHandler : BaseCommandBundle, IBaseRequestHand
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteInterviewCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteInterviewCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -168,3 +168,4 @@ public class DeleteInterviewCommandHandler : BaseCommandBundle, IBaseRequestHand
         }
     }
 }
+

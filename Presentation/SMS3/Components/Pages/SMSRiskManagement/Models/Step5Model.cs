@@ -7,12 +7,12 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 public class Step5Model
 {
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
-    public Step5Model(IBaseMediator mediator, ICurrentUserService currentUserService)
+    public Step5Model(IBaseMediator mediator, ICurrentUserService _currentUserService)
     {
         Mediator = mediator;
-        CurrentUserService = currentUserService;
+        _currentUserService = _currentUserService;
     }
 
     public Dictionary<string, List<string>> SavedMitigationStrategies { get; set; } = new();
@@ -216,16 +216,16 @@ public class Step5Model
                     if (updateResult.IsSuccess)
                     {
                         HazardResidualRiskAnalyses[hazardCode] = updateResult.Value;
-                        Console.WriteLine($"? Updated RiskAnalysis {existingAnalysis.Code} for {hazardCode} - PRESERVED Initial properties");
+                        Console.WriteLine($"Updated RiskAnalysis {existingAnalysis.Code} for {hazardCode} - PRESERVED Initial properties");
                     }
                     else
                     {
-                        Console.WriteLine($"? Failed to update RiskAnalysis for {hazardCode}: {updateResult.Error?.Message}");
+                        Console.WriteLine($"Failed to update RiskAnalysis for {hazardCode}: {updateResult.Error?.Message}");
                     }
                 }
                 else
                 {
-                    Console.WriteLine($"? Could not load existing RiskAnalysis for {hazardCode} to preserve Initial properties");
+                    Console.WriteLine($"Could not load existing RiskAnalysis for {hazardCode} to preserve Initial properties");
                 }
             }
             catch (Exception ex)

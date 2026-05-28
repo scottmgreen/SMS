@@ -63,7 +63,7 @@ public partial class EvidenceFilesManager : ComponentBase
     {
         await InvokeAsync(() =>
         {
-            Logger.LogInformation("?? ForceRefresh called - Files count: {Count}", EvidenceFiles.Count);
+            Logger.LogInformation("ForceRefresh called - Files count: {Count}", EvidenceFiles.Count);
             StateHasChanged();
         });
     }
@@ -82,7 +82,7 @@ public partial class EvidenceFilesManager : ComponentBase
 
             IsLoading = true;
 
-            Logger.LogInformation("?? Loading evidence files for HazardCode: {HazardCode}", HazardCode);
+            Logger.LogInformation("Loading evidence files for HazardCode: {HazardCode}", HazardCode);
 
             // Load ALL files for this hazard, not just those with HazardCategory = "Evidence"
             // This will include both files uploaded during initial reporting and investigation
@@ -92,39 +92,39 @@ public partial class EvidenceFilesManager : ComponentBase
             if (result.IsSuccess && result.Value is not null)
             {
                 var allFiles = result.Value.ToList();
-                Logger.LogInformation("?? Retrieved {Count} total files from database for HazardCode: {HazardCode}", allFiles.Count, HazardCode);
+                Logger.LogInformation("Retrieved {Count} total files from database for HazardCode: {HazardCode}", allFiles.Count, HazardCode);
 
                 EvidenceFiles = allFiles
                     .Where(f => f.IsActive) // Only show active files
                     .OrderByDescending(f => f.UploadedDate)
                     .ToList();
 
-                Logger.LogInformation("? Filtered to {Count} active evidence files for hazard {HazardCode}",
+                Logger.LogInformation("Filtered to {Count} active evidence files for hazard {HazardCode}",
                     EvidenceFiles.Count, HazardCode);
 
                 // Log details about each file for debugging
                 foreach (var file in EvidenceFiles)
                 {
-                    Logger.LogInformation("?? File: {FileName} | Category: {Category} | Size: {Size} | Type: {Type} | Active: {Active} | Uploaded: {Date}",
+                    Logger.LogInformation("File: {FileName} | Category: {Category} | Size: {Size} | Type: {Type} | Active: {Active} | Uploaded: {Date}",
                         file.FileName, file.Category ?? "NULL", file.FileSizeBytes, file.FileType, file.IsActive, file.UploadedDate);
                 }
             }
             else
             {
-                Logger.LogError("? Failed to load evidence files for HazardCode {HazardCode}: {Error}", HazardCode, result.Error?.Message);
+                Logger.LogError("Failed to load evidence files for HazardCode {HazardCode}: {Error}", HazardCode, result.Error?.Message);
                 EvidenceFiles = new List<HazardFile>();
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Exception loading evidence files for hazard: {HazardCode}", HazardCode);
+            Logger.LogError(ex, "Exception loading evidence files for hazard: {HazardCode}", HazardCode);
             await NotificationHelper.ShowErrorAsync("Error loading evidence files");
             EvidenceFiles = new List<HazardFile>();
         }
         finally
         {
             IsLoading = false;
-            Logger.LogInformation("?? LoadEvidenceFiles completed. Final count: {Count}", EvidenceFiles.Count);
+            Logger.LogInformation("LoadEvidenceFiles completed. Final count: {Count}", EvidenceFiles.Count);
             StateHasChanged();
         }
     }

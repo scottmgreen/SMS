@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ReportValidationCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -13,7 +13,7 @@ using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // REPORT VALIDATION COMMAND HANDLERS - Clean Architecture Pattern
@@ -40,13 +40,13 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
                 return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateReportValidationCommand for Code: {Code}", request.ReportValidation.Code);
+            _logger.LogApplicationInformation(" Processing CreateReportValidationCommand for Code: {Code}", request.ReportValidation.Code);
 
             var result = await _reportValidationService.CreateReportValidationAsync(request.ReportValidation, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created Report Validation with ID: {Id}, Code: {Code}",
+                _logger.LogApplicationInformation(" Successfully created Report Validation with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -59,7 +59,7 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateReportValidationCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateReportValidationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -91,13 +91,13 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
                 return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateReportValidationCommand for ID: {Id}", request.ReportValidation.Id);
+            _logger.LogApplicationInformation(" Processing UpdateReportValidationCommand for ID: {Id}", request.ReportValidation.Id);
 
             var result = await _reportValidationService.UpdateReportValidationAsync(request.ReportValidation, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated Report Validation with ID: {Id}", request.ReportValidation.Id);
+                _logger.LogApplicationInformation(" Successfully updated Report Validation with ID: {Id}", request.ReportValidation.Id);
             }
             else
             {
@@ -109,7 +109,7 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateReportValidationCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateReportValidationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -141,13 +141,13 @@ public class DeleteReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
                 return Result<bool>.Failure<bool>(DomainErrors.ReportValidationError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteReportValidationCommand for ID: {Id}", request.ReportValidationId);
+            _logger.LogApplicationInformation(" Processing DeleteReportValidationCommand for ID: {Id}", request.ReportValidationId);
 
             var result = await _reportValidationService.DeleteReportValidationAsync(request.ReportValidationId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted Report Validation with ID: {Id}", request.ReportValidationId);
+                _logger.LogApplicationInformation(" Successfully deleted Report Validation with ID: {Id}", request.ReportValidationId);
             }
             else
             {
@@ -159,7 +159,7 @@ public class DeleteReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteReportValidationCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteReportValidationCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -169,3 +169,4 @@ public class DeleteReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
         }
     }
 }
+

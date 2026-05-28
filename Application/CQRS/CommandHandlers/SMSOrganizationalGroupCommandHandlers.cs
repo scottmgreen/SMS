@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSOrganizationalGroupCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -13,7 +13,7 @@ using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // SMS ORGANIZATIONAL GROUP COMMAND HANDLERS - Clean Architecture Pattern
@@ -39,13 +39,13 @@ public class CreateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IBa
     {
         try
         {
-            _logger.LogInformation(" Processing CreateSMSOrganizationalGroupCommand for group: {GroupName}", request.OrganizationalGroup?.Name);
+            _logger.LogApplicationInformation(" Processing CreateSMSOrganizationalGroupCommand for group: {GroupName}", request.OrganizationalGroup?.Name);
 
             var result = await _organizationalGroupService.CreateSMSOrganizationalGroupAsync(request.OrganizationalGroup, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created SMS organizational group: {GroupCode}", result.Value?.Code);
+                _logger.LogApplicationInformation(" Successfully created SMS organizational group: {GroupCode}", result.Value?.Code);
             }
             else
             {
@@ -56,7 +56,7 @@ public class CreateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IBa
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateSMSOrganizationalGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateSMSOrganizationalGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -87,13 +87,13 @@ public class UpdateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IBa
     {
         try
         {
-            _logger.LogInformation(" Processing UpdateSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
+            _logger.LogApplicationInformation(" Processing UpdateSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
 
             var result = await _organizationalGroupService.UpdateSMSOrganizationalGroupAsync(request.OrganizationalGroup, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated SMS organizational group: {GroupCode}", request.OrganizationalGroup?.Code);
+                _logger.LogApplicationInformation(" Successfully updated SMS organizational group: {GroupCode}", request.OrganizationalGroup?.Code);
             }
             else
             {
@@ -104,7 +104,7 @@ public class UpdateSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IBa
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSMSOrganizationalGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSMSOrganizationalGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -135,13 +135,13 @@ public class DeleteSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IBa
     {
         try
         {
-            _logger.LogInformation(" Processing DeleteSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
+            _logger.LogApplicationInformation(" Processing DeleteSMSOrganizationalGroupCommand for group: {GroupCode}", request.OrganizationalGroup?.Code);
 
             var result = await _organizationalGroupService.DeleteSMSOrganizationalGroupAsync(request.OrganizationalGroup.Code, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted SMS organizational group: {GroupCode}", request.OrganizationalGroup?.Code);
+                _logger.LogApplicationInformation(" Successfully deleted SMS organizational group: {GroupCode}", request.OrganizationalGroup?.Code);
             }
             else
             {
@@ -152,7 +152,7 @@ public class DeleteSMSOrganizationalGroupCommandHandler : BaseCommandBundle, IBa
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteSMSOrganizationalGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteSMSOrganizationalGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -183,14 +183,14 @@ public class AssignUserToOrganizationalGroupCommandHandler : BaseCommandBundle, 
     {
         try
         {
-            _logger.LogInformation(" Processing AssignUserToOrganizationalGroupCommand for user: {UserCode} to group: {GroupId}",
+            _logger.LogApplicationInformation(" Processing AssignUserToOrganizationalGroupCommand for user: {UserCode} to group: {GroupId}",
                 request.UserCode, request.GroupId);
 
             var result = await _organizationalGroupService.AssignUserToGroupAsync(request.UserCode, request.GroupId, request.AssignedBy, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully assigned user {UserCode} to organizational group {GroupId}",
+                _logger.LogApplicationInformation(" Successfully assigned user {UserCode} to organizational group {GroupId}",
                     request.UserCode, request.GroupId);
             }
             else
@@ -202,7 +202,7 @@ public class AssignUserToOrganizationalGroupCommandHandler : BaseCommandBundle, 
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("AssignUserToOrganizationalGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("AssignUserToOrganizationalGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -233,14 +233,14 @@ public class RemoveUserFromOrganizationalGroupCommandHandler : BaseCommandBundle
     {
         try
         {
-            _logger.LogInformation(" Processing RemoveUserFromOrganizationalGroupCommand for user: {UserCode} from group: {GroupId}",
+            _logger.LogApplicationInformation(" Processing RemoveUserFromOrganizationalGroupCommand for user: {UserCode} from group: {GroupId}",
                 request.UserCode, request.GroupId);
 
             var result = await _organizationalGroupService.RemoveUserFromGroupAsync(request.UserCode, request.GroupId.Value, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully removed user {UserCode} from organizational group {GroupId}",
+                _logger.LogApplicationInformation(" Successfully removed user {UserCode} from organizational group {GroupId}",
                     request.UserCode, request.GroupId);
             }
             else
@@ -252,7 +252,7 @@ public class RemoveUserFromOrganizationalGroupCommandHandler : BaseCommandBundle
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("RemoveUserFromOrganizationalGroupCommand operation was cancelled");
+            _logger.LogApplicationWarning("RemoveUserFromOrganizationalGroupCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -283,13 +283,13 @@ public class ClearUserOrganizationalGroupsCommandHandler : BaseCommandBundle, IB
     {
         try
         {
-            _logger.LogInformation(" Processing ClearUserOrganizationalGroupsCommand for user: {UserCode}", request.UserCode);
+            _logger.LogApplicationInformation(" Processing ClearUserOrganizationalGroupsCommand for user: {UserCode}", request.UserCode);
 
             var result = await _organizationalGroupService.ClearUserGroupsAsync(request.UserCode, ct);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully cleared organizational group memberships for user {UserCode}", request.UserCode);
+                _logger.LogApplicationInformation(" Successfully cleared organizational group memberships for user {UserCode}", request.UserCode);
             }
             else
             {
@@ -300,7 +300,7 @@ public class ClearUserOrganizationalGroupsCommandHandler : BaseCommandBundle, IB
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("ClearUserOrganizationalGroupsCommand operation was cancelled");
+            _logger.LogApplicationWarning("ClearUserOrganizationalGroupsCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -310,3 +310,4 @@ public class ClearUserOrganizationalGroupsCommandHandler : BaseCommandBundle, IB
         }
     }
 }
+

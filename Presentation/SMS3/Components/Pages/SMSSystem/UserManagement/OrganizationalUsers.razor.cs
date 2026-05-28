@@ -1,7 +1,7 @@
 using Microsoft.Extensions.Options;
 
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Commands;
+using SMS_Application.Queries;
 
 using SMS_Application.Interfaces;
 using SMS_Domain.Events;
@@ -22,7 +22,7 @@ public partial class OrganizationalUsers : ComponentBase
 
     [Inject] private DialogService _dialogService { get; set; } = default!;
 
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Properties

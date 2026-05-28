@@ -31,14 +31,14 @@ public partial class EventDataSourceDiscoveryTest
     {
         try
         {
-            Logger.LogInformation("?? Discovering dynamic event data sources...");
+            Logger.LogInformation("Discovering dynamic event data sources...");
 
             // Test the dynamic discovery
             _eventDataSources = SPIConstants.SPIDataSources.GetEventDrivenSources();
             _groupedSources = SPIConstants.SPIDataSources.GetEventDrivenSourcesByCategory();
             _dataSourceNames = SPIConstants.SPIDataSources.GetEventDrivenSourceNames();
 
-            Logger.LogInformation("? Discovered {Count} event data sources", _eventDataSources.Count);
+            Logger.LogInformation("Discovered {Count} event data sources", _eventDataSources.Count);
 
             foreach (var source in _eventDataSources)
             {
@@ -48,7 +48,7 @@ public partial class EventDataSourceDiscoveryTest
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "? Failed to discover event data sources");
+            Logger.LogError(ex, "Failed to discover event data sources");
         }
         finally
         {

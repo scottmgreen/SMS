@@ -58,7 +58,8 @@ public class SecurityFeatureService : ISecurityFeatureService
             bool allowHttpInDev = await _featureManager.IsEnabledAsync(SecurityFeatures.AllowHttpInDevelopment);
 
             // Log the decision-making process
-            _logger.LogInformation("Security Policy Decision: Feature={Feature}, AllowHttp={AllowHttp}, IsDevelopment={IsDevelopment}, AllowHttpInDev={AllowHttpInDev}", 
+            _logger.LogApplicationInformation("Security Policy Decision: Feature={Feature}, AllowHttp={AllowHttp}, IsDevelopment={IsDevelopment}, AllowHttpInDev={AllowHttpInDev}",
+                ApplicationEventIds.Information,
                 featureName, allowHttp, isDevelopment, allowHttpInDev);
 
             // Decision matrix:
@@ -69,29 +70,31 @@ public class SecurityFeatureService : ISecurityFeatureService
 
             if (allowHttp)
             {
-                _logger.LogWarning("HTTP cookies explicitly enabled via feature flag: {Feature}", featureName);
+                _logger.LogApplicationWarning("HTTP cookies explicitly enabled via feature flag: {Feature}",
+                    ApplicationEventIds.Warning,
+                    featureName);
                 return CookieSecurePolicy.SameAsRequest;
             }
 
             if (isDevelopment && allowHttpInDev)
             {
-                _logger.LogInformation("HTTP cookies enabled for development environment");
+                _logger.LogApplicationInformation("HTTP cookies enabled for development environment", ApplicationEventIds.Information);
                 return CookieSecurePolicy.SameAsRequest;
             }
 
             if (_sessionConfig.EnableDevelopmentMode && isDevelopment)
             {
-                _logger.LogInformation("HTTP cookies enabled via session configuration development mode");
+                _logger.LogApplicationInformation("HTTP cookies enabled via session configuration development mode", ApplicationEventIds.Information);
                 return CookieSecurePolicy.SameAsRequest;
             }
 
             // Default to secure
-            _logger.LogInformation("Using secure cookie policy (HTTPS required)");
+            _logger.LogApplicationInformation("Using secure cookie policy (HTTPS required)", ApplicationEventIds.Information);
             return CookieSecurePolicy.Always;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error determining cookie security policy, defaulting to secure");
+            _logger.LogApplicationError("Error determining cookie security policy, defaulting to secure", ApplicationEventIds.Error, ex);
             return CookieSecurePolicy.Always;
         }
     }

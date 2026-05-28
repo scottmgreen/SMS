@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="AuditFieldsPipelineBehavior.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team  
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -9,7 +9,7 @@
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 
-namespace SMS_Application.Common.Behaviors;
+namespace SMS_Application.Behaviors;
 
 /// <summary>
 /// Delegate representing the next behavior in the pipeline
@@ -63,14 +63,14 @@ public class AuditFieldsPipelineBehavior<TRequest, TResponse> : IPipelineBehavio
 
         if (shouldAudit)
         {
-            _logger.LogInformation("🔍 Audit Pipeline: Processing {CommandName} by {User}", commandName, _currentUserService.UserCode);
+            _logger.LogApplicationInformation("Audit Pipeline: Processing {CommandName} by {User}", commandName, _currentUserService.UserCode);
             SetAuditFields(request, "AUTO");
         }
 
         // Execute the command
         var response = await next();
 
-        _logger.LogInformation("✅ Audit Pipeline: Completed {CommandName}", commandName);
+        _logger.LogApplicationInformation("Audit Pipeline: Completed {CommandName}", commandName);
         return response;
     }
 
@@ -106,6 +106,7 @@ public class AuditFieldsPipelineBehavior<TRequest, TResponse> : IPipelineBehavio
         else if (request is IReadQuery readQuery)
             readQuery.SetAccessedBy(currentUser, currentTime);
 
-        _logger.LogInformation("🔧 Audit fields set for {CommandName} by {User}", typeof(TRequest).Name, currentUser);
+        _logger.LogApplicationInformation("Audit fields set for {CommandName} by {User}", typeof(TRequest).Name, currentUser);
     }
 }
+

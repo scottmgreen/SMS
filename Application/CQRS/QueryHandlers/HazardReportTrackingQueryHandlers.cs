@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardReportTrackingQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,9 +12,9 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // HAZARD REPORT TRACKING QUERY HANDLERS
@@ -43,13 +43,13 @@ public class GetHazardReportTrackingByIdQueryHandler : BaseQueryBundle, IBaseReq
                 return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing GetHazardReportTrackingByIdQuery for ID: {Id}", request.HazardReportTrackingId.Value);
+            _logger.LogApplicationInformation("Processing GetHazardReportTrackingByIdQuery for ID: {Id}", request.HazardReportTrackingId.Value);
 
             return await _service.GetHazardReportTrackingByIdAsync(request.HazardReportTrackingId, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetHazardReportTrackingByIdQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetHazardReportTrackingByIdQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -77,13 +77,13 @@ public class GetAllHazardReportTrackingQueryHandler : BaseQueryBundle, IBaseRequ
     {
         try
         {
-            _logger.LogInformation("Processing GetAllHazardReportTrackingQuery");
+            _logger.LogApplicationInformation("Processing GetAllHazardReportTrackingQuery");
 
             return await _service.GetAllHazardReportTrackingAsync(ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetAllHazardReportTrackingQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetAllHazardReportTrackingQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -117,13 +117,13 @@ public class GetHazardReportTrackingByTrackingCodeQueryHandler : BaseQueryBundle
                 return Result<HazardReportTrackingDetails>.Failure<HazardReportTrackingDetails>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing GetHazardReportTrackingByTrackingCodeQuery for TrackingCode: {TrackingCode}", request.TrackingCode);
+            _logger.LogApplicationInformation("Processing GetHazardReportTrackingByTrackingCodeQuery for TrackingCode: {TrackingCode}", request.TrackingCode);
 
             return await _service.GetHazardReportTrackingDetailsByTrackingCodeAsync(request.TrackingCode, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetHazardReportTrackingByTrackingCodeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetHazardReportTrackingByTrackingCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -157,13 +157,13 @@ public class GetHazardReportTrackingByHazardCodeQueryHandler : BaseQueryBundle, 
                 return Result<List<HazardReportTracking>>.Failure<List<HazardReportTracking>>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing GetHazardReportTrackingByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationInformation("Processing GetHazardReportTrackingByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
 
             return await _service.GetHazardReportTrackingByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetHazardReportTrackingByHazardCodeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetHazardReportTrackingByHazardCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -197,13 +197,13 @@ public class GetHazardReportTrackingByReportCodeQueryHandler : BaseQueryBundle, 
                 return Result<List<HazardReportTracking>>.Failure<List<HazardReportTracking>>(DomainErrors.HazardReportTrackingError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing GetHazardReportTrackingByReportCodeQuery for ReportCode: {ReportCode}", request.ReportCode);
+            _logger.LogApplicationInformation("Processing GetHazardReportTrackingByReportCodeQuery for ReportCode: {ReportCode}", request.ReportCode);
 
             return await _service.GetHazardReportTrackingByReportCodeAsync(request.ReportCode, ct).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetHazardReportTrackingByReportCodeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetHazardReportTrackingByReportCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -213,3 +213,4 @@ public class GetHazardReportTrackingByReportCodeQueryHandler : BaseQueryBundle, 
         }
     }
 }
+

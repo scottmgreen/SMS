@@ -40,7 +40,7 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
         // Use configuration-based simulation setting
         _useSimulation = smtpConfig?.Value?.UseSimulation ?? false;
 
-        _logger.LogInformation("[EMAIL HANDLER] Email handler initialized with UseSimulation: {UseSimulation}", _useSimulation);
+        _logger.LogApplicationInformation("[EMAIL HANDLER] Email handler initialized with UseSimulation: {UseSimulation}", _useSimulation);
     }
 
     /// <summary>
@@ -51,13 +51,13 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
     {
         try
         {
-            _logger.LogInformation("[EMAIL HANDLER] Processing email notification: '{Subject}' to {RecipientCount} recipients (Priority: {Priority}) - UseSimulation: {UseSimulation}",
+            _logger.LogApplicationInformation("[EMAIL HANDLER] Processing email notification: '{Subject}' to {RecipientCount} recipients (Priority: {Priority}) - UseSimulation: {UseSimulation}",
                 integrationEvent.Subject, integrationEvent.ToRecipients.Count, integrationEvent.Priority, _useSimulation);
 
             // Validate email event before processing
             if (!ValidateEmailEvent(integrationEvent))
             {
-                _logger.LogError("[EMAIL HANDLER] Email event validation failed for: {Subject}", integrationEvent.Subject);
+                _logger.LogApplicationError("[EMAIL HANDLER] Email event validation failed for: {Subject}", integrationEvent.Subject);
                 return Result.Failure(new Error("INVALID_EMAIL_EVENT", "Email event validation failed"));
             }
 
@@ -65,31 +65,31 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
 
             if (_useSimulation)
             {
-                _logger.LogInformation("[EMAIL HANDLER] Using simulation mode for email: {Subject}", integrationEvent.Subject);
+                _logger.LogApplicationInformation("[EMAIL HANDLER] Using simulation mode for email: {Subject}", integrationEvent.Subject);
                 // Use simulation for development/testing
                 deliveryResult = await SimulateEmailDelivery(integrationEvent, cancellationToken);
             }
             else
             {
-                _logger.LogInformation("[EMAIL HANDLER] Using real email delivery for: {Subject}", integrationEvent.Subject);
+                _logger.LogApplicationInformation("[EMAIL HANDLER] Using real email delivery for: {Subject}", integrationEvent.Subject);
                 // Use real email delivery for production
                 deliveryResult = await SendRealEmail(integrationEvent, cancellationToken);
             }
 
             if (deliveryResult.IsSuccess)
             {
-                _logger.LogInformation("[EMAIL HANDLER] Email notification sent successfully: '{Subject}' to {RecipientCount} recipients", integrationEvent.Subject, integrationEvent.ToRecipients.Count);
+                _logger.LogApplicationInformation("[EMAIL HANDLER] Email notification sent successfully: '{Subject}' to {RecipientCount} recipients", integrationEvent.Subject, integrationEvent.ToRecipients.Count);
             }
             else
             {
-                _logger.LogError("[EMAIL HANDLER] Email notification failed: '{Subject}' - {Error}",integrationEvent.Subject, deliveryResult.Error.Message);
+                _logger.LogApplicationError("[EMAIL HANDLER] Email notification failed: '{Subject}' - {Error}",integrationEvent.Subject, deliveryResult.Error.Message);
             }
 
             return deliveryResult;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[EMAIL HANDLER] Failed to process email notification: '{Subject}'", integrationEvent.Subject);
+            _logger.LogApplicationError(ex, "[EMAIL HANDLER] Failed to process email notification: '{Subject}'", integrationEvent.Subject);
             return Result.Failure(new Error("EMAIL_NOTIFICATION_FAILED", $"Email notification failed: {ex.Message}"));
         }
     }
@@ -106,13 +106,13 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
     {
         try
         {
-            _logger.LogInformation("?? [EMAIL SIM] Starting email simulation for: {Subject}", emailEvent.Subject);
+            _logger.LogApplicationInformation("[EMAIL SIM] Starting email simulation for: {Subject}", emailEvent.Subject);
 
             // Use original simulation directory
             var simulationDir = @"C:\temp\sms_emails";
             Directory.CreateDirectory(simulationDir);
 
-            _logger.LogInformation("?? [EMAIL SIM] Using simulation directory: {Directory}", simulationDir);
+            _logger.LogApplicationInformation("[EMAIL SIM] Using simulation directory: {Directory}", simulationDir);
 
             // Generate unique filename with timestamp in .eml format (email message format)
             var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
@@ -129,21 +129,21 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
             // Write to file
             await File.WriteAllTextAsync(filePath, emlContent, System.Text.Encoding.UTF8, cancellationToken);
 
-            _logger.LogInformation("?? [EMAIL SIM] SIMULATED EMAIL: '{Subject}' to {RecipientCount} recipients - EML file saved to: {FilePath}", 
+            _logger.LogApplicationInformation("[EMAIL SIM] SIMULATED EMAIL: '{Subject}' to {RecipientCount} recipients - EML file saved to: {FilePath}", 
                 emailEvent.Subject, emailEvent.ToRecipients.Count, filePath);
 
             // Also log key details to console for immediate feedback
-            _logger.LogInformation("?? [EMAIL SIM] Email Details: To: {Recipients} | Subject: {Subject} | Priority: {Priority}", 
+            _logger.LogApplicationInformation("[EMAIL SIM] Email Details: To: {Recipients} | Subject: {Subject} | Priority: {Priority}", 
                 string.Join(", ", emailEvent.ToRecipients), emailEvent.Subject, emailEvent.Priority);
 
-            _logger.LogInformation("?? [EMAIL SIM] File written successfully: {FileName} ({FileSize} bytes)", 
+            _logger.LogApplicationInformation("[EMAIL SIM] File written successfully: {FileName} ({FileSize} bytes)", 
                 Path.GetFileName(filePath), emlContent.Length);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Failed to simulate email delivery for: {Subject}", emailEvent.Subject);
+            _logger.LogApplicationError(ex, "Failed to simulate email delivery for: {Subject}", emailEvent.Subject);
             return Result.Failure(new Error("EMAIL_SIMULATION_FAILED", $"Email simulation failed: {ex.Message}"));
         }
     }
@@ -257,3 +257,4 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
         return !string.IsNullOrEmpty(emailEvent.Subject) && emailEvent.ToRecipients.Any();
     }
 }
+

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="LoggingPipeline.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Infrastructure.Configuration;
 using SMS_Application.Interfaces;
 using SMS_Application.Common;
 
-namespace SMS_Application.Messaging.Pipelines;
+namespace SMS_Application.Pipelines;
 
 /// <summary>
 /// Single-responsibility logging pipeline for request/response monitoring and performance tracking
@@ -46,7 +46,7 @@ public class LoggingPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResul
         var startTimestamp = TimeProvider.System.GetTimestamp();
 
         // Enhanced pre-execution logging
-        _logger.LogInformation("📝 Request Logging: {LogHeader} PreExecute => {CommandType} | User: {UserId} | Correlation: {CorrelationId} | Time: {Timestamp}", 
+        _logger.LogApplicationInformation("Request Logging: {LogHeader} PreExecute => {CommandType} | User: {UserId} | Correlation: {CorrelationId} | Time: {Timestamp}", 
             _logHeader, commandType, currentUserId, correlationId, DateTime.UtcNow.ToString("HH:mm:ss.fff"));
 
         try
@@ -59,19 +59,19 @@ public class LoggingPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResul
             // Enhanced post-execution logging based on result
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ Request Logging: {LogHeader} PostExecute => {CommandType} | SUCCESS | Duration: {Duration}ms | Correlation: {CorrelationId}", 
+                _logger.LogApplicationInformation("Request Logging: {LogHeader} PostExecute => {CommandType} | SUCCESS | Duration: {Duration}ms | Correlation: {CorrelationId}", 
                     _logHeader, commandType, elapsedTime.TotalMilliseconds, correlationId);
 
                 // Log performance warnings for slow operations
                 if (elapsedTime.TotalMilliseconds > 5000) // 5 second threshold
                 {
-                    _logger.LogWarning("⚠️ Performance Warning: {CommandType} took {Duration}ms (>5s) | User: {UserId} | Correlation: {CorrelationId}", 
+                    _logger.LogApplicationWarning("Performance Warning: {CommandType} took {Duration}ms (>5s) | User: {UserId} | Correlation: {CorrelationId}", 
                         commandType, elapsedTime.TotalMilliseconds, currentUserId, correlationId);
                 }
             }
             else
             {
-                _logger.LogError("❌ Request Logging: {LogHeader} PostExecute => {CommandType} | FAILED | Duration: {Duration}ms | Error: {ErrorMessage} | Correlation: {CorrelationId}", 
+                _logger.LogApplicationError("Request Logging: {LogHeader} PostExecute => {CommandType} | FAILED | Duration: {Duration}ms | Error: {ErrorMessage} | Correlation: {CorrelationId}", 
                     _logHeader, commandType, elapsedTime.TotalMilliseconds, result.Error?.Message ?? "Unknown error", correlationId);
             }
 
@@ -83,14 +83,14 @@ public class LoggingPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResul
         catch (OperationCanceledException)
         {
             var elapsedTime = TimeProvider.System.GetElapsedTime(startTimestamp);
-            _logger.LogWarning("🚫 Request Logging: {LogHeader} Cancelled => {CommandType} | Duration: {Duration}ms | User: {UserId} | Correlation: {CorrelationId}", 
+            _logger.LogApplicationWarning("Request Logging: {LogHeader} Cancelled => {CommandType} | Duration: {Duration}ms | User: {UserId} | Correlation: {CorrelationId}", 
                 _logHeader, commandType, elapsedTime.TotalMilliseconds, currentUserId, correlationId);
             throw;
         }
         catch (Exception ex)
         {
             var elapsedTime = TimeProvider.System.GetElapsedTime(startTimestamp);
-            _logger.LogCritical(ex, "💥 Request Logging: {LogHeader} Exception => {CommandType} | Duration: {Duration}ms | User: {UserId} | Correlation: {CorrelationId} | Exception: {ExceptionMessage}", 
+            _logger.LogApplicationCritical(ex, "Request Logging: {LogHeader} Exception => {CommandType} | Duration: {Duration}ms | User: {UserId} | Correlation: {CorrelationId} | Exception: {ExceptionMessage}", 
                 _logHeader, commandType, elapsedTime.TotalMilliseconds, currentUserId, correlationId, ex.Message);
             throw;
         }
@@ -111,23 +111,25 @@ public class LoggingPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResul
             var actionType = EntityInformationExtractor.GetActionType(request);
             var entityInfo = EntityInformationExtractor.GetEntityInfo(request);
 
-            _logger.LogInformation("📊 Request Context: {CommandType} | Action: {ActionType} | Entity: {EntityInfo} | Success: {IsSuccess} | Duration: {Duration}ms | Correlation: {CorrelationId}", 
+            _logger.LogApplicationInformation("Request Context: {CommandType} | Action: {ActionType} | Entity: {EntityInfo} | Success: {IsSuccess} | Duration: {Duration}ms | Correlation: {CorrelationId}", 
                 commandType, actionType, entityInfo, result.IsSuccess, duration.TotalMilliseconds, correlationId);
 
             // Log business impact for critical operations
             if (EntityInformationExtractor.IsBusinessCriticalCommand(commandType))
             {
-                _logger.LogInformation("🏢 Business Impact: {CommandType} | User: {UserId} | Entity: {EntityInfo} | Correlation: {CorrelationId}", 
+                _logger.LogApplicationInformation("Business Impact: {CommandType} | User: {UserId} | Entity: {EntityInfo} | Correlation: {CorrelationId}", 
                     commandType, _currentUserService.UserCode, entityInfo, correlationId);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "⚠️ Error logging additional context for {CommandType} | Correlation: {CorrelationId}", 
+            _logger.LogApplicationWarning(ex, "Error logging additional context for {CommandType} | Correlation: {CorrelationId}", 
                 request.GetType().Name, correlationId);
         }
     }
 }
+
+
 
 
 

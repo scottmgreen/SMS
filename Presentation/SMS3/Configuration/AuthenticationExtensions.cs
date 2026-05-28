@@ -1,4 +1,4 @@
-using Application.Services.Strategies;
+using SMS_Application.Strategies;
 
 using Microsoft.AspNetCore.Authentication.Cookies;
 using SMS_Application.Configuration;

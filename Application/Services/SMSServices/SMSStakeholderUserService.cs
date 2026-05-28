@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSStakeholderUserService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -39,18 +39,18 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
     {
         try
         {
-            _logger.LogInformation("Creating SMS Stakeholder User with code: {Code}", user?.Code);
+            _logger.LogApplicationInformation("Creating SMS Stakeholder User with code: {Code}", user?.Code);
 
             if (user is null)
             {
-                _logger.LogError("CreateSMSStakeholderUserAsync received null user");
+                _logger.LogApplicationError("CreateSMSStakeholderUserAsync received null user");
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
             // Business validation - ensure user is active by default
             if (!user.IsActive)
             {
-                _logger.LogInformation("Activating user during creation: {Code}", user.Code);
+                _logger.LogApplicationInformation("Activating user during creation: {Code}", user.Code);
                 user.Activate();
             }
 
@@ -64,18 +64,18 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS Stakeholder User with ID: {Id}", result.Value?.UserId);
+                _logger.LogApplicationInformation("Successfully created SMS Stakeholder User with ID: {Id}", result.Value?.UserId);
             }
             else
             {
-                _logger.LogError("Failed to create SMS Stakeholder User. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create SMS Stakeholder User. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating SMS Stakeholder User");
+            _logger.LogApplicationError(ex, "Unexpected error creating SMS Stakeholder User");
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.CreateFailed);
         }
     }
@@ -87,12 +87,12 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Stakeholder User with ID: {Id}", id);
+            _logger.LogApplicationInformation("Retrieving SMS Stakeholder User with ID: {Id}", id);
             return await _dataService.GetByCodeAsync(id, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder User with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving SMS Stakeholder User with ID: {Id}", id);
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -104,12 +104,12 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
     {
         try
         {
-            _logger.LogInformation("Retrieving all SMS Stakeholder Users");
+            _logger.LogApplicationInformation("Retrieving all SMS Stakeholder Users");
             return await _dataService.GetAllAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all SMS Stakeholder Users");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all SMS Stakeholder Users");
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -121,12 +121,12 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
+            _logger.LogApplicationInformation("Retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
 
             // Business validation - ensure stakeholder type is valid
             if (!IsValidStakeholderType(stakeholderType))
             {
-                _logger.LogWarning("Invalid stakeholder type requested: {StakeholderType}", stakeholderType);
+                _logger.LogApplicationWarning("Invalid stakeholder type requested: {StakeholderType}", stakeholderType);
                 return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(GeneralError.UnProcessableRequest);
             }
 
@@ -134,7 +134,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -147,26 +147,26 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
     {
         try
         {
-            _logger.LogInformation("Retrieving users requiring AOA access");
+            _logger.LogApplicationInformation("Retrieving users requiring AOA access");
 
             var result = await _dataService.GetAllAsync(ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
                 var aoaUsers = result.Value;
-                _logger.LogInformation("Found {Count} users requiring AOA access", aoaUsers.Count());
+                _logger.LogApplicationInformation("Found {Count} users requiring AOA access", aoaUsers.Count());
 
                 // Business analysis - security monitoring
                 //foreach (var user in aoaUsers.Where(u => u.AccessLevel == "Full"))
                 //{
-                //    _logger.LogInformation("Full access AOA user: {UserName} from {Organization}",
+                //    _logger.LogApplicationInformation("Full access AOA user: {UserName} from {Organization}",
                 //        user.UserName.Value, user.Organization);
                 //}
 
                 // Business rule - log if too many users have AOA access
                 if (aoaUsers.Count() > 100)
                 {
-                    _logger.LogWarning("High number of users with AOA access: {Count}. Review access levels.", aoaUsers.Count());
+                    _logger.LogApplicationWarning("High number of users with AOA access: {Count}. Review access levels.", aoaUsers.Count());
                 }
             }
 
@@ -174,7 +174,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving users requiring AOA access");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving users requiring AOA access");
             return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
         }
     }
@@ -186,11 +186,11 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
     {
         try
         {
-            _logger.LogInformation("Updating SMS Stakeholder User with ID: {Id}", user?.UserId);
+            _logger.LogApplicationInformation("Updating SMS Stakeholder User with ID: {Id}", user?.UserId);
 
             if (user is null)
             {
-                _logger.LogError("UpdateSMSStakeholderUserAsync received null user");
+                _logger.LogApplicationError("UpdateSMSStakeholderUserAsync received null user");
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NullOrEmpty);
             }
 
@@ -198,7 +198,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
             var existingUserResult = await _dataService.GetByCodeAsync(user.Code, ct).ConfigureAwait(false);
             if (existingUserResult.IsFailure)
             {
-                _logger.LogWarning("Cannot update non-existent SMS Stakeholder User with ID: {Id}", user.UserId);
+                _logger.LogApplicationWarning("Cannot update non-existent SMS Stakeholder User with ID: {Id}", user.UserId);
                 return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.NotFound);
             }
 
@@ -207,7 +207,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
             // Business rule - log access level changes for security
             //if (existingUser.AccessLevel != user.AccessLevel)
             //{
-            //    _logger.LogWarning("Access level change for user {UserName}: {OldLevel} -> {NewLevel}",
+            //    _logger.LogApplicationWarning("Access level change for user {UserName}: {OldLevel} -> {NewLevel}",
             //        user.UserName.Value, existingUser.AccessLevel, user.AccessLevel);
             //}
 
@@ -218,18 +218,18 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS Stakeholder User with ID: {Id}", user.UserId);
+                _logger.LogApplicationInformation("Successfully updated SMS Stakeholder User with ID: {Id}", user.UserId);
             }
             else
             {
-                _logger.LogError("Failed to update SMS Stakeholder User. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update SMS Stakeholder User. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating SMS Stakeholder User with ID: {Id}", user?.UserId);
+            _logger.LogApplicationError(ex, "Unexpected error updating SMS Stakeholder User with ID: {Id}", user?.UserId);
             return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.SMSStakeholderUserError.UpdateFailed);
         }
     }
@@ -241,18 +241,18 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
     {
         try
         {
-            _logger.LogInformation("Authenticating SMS Stakeholder User: {UserName}", userName);
+            _logger.LogApplicationInformation("Authenticating SMS Stakeholder User: {UserName}", userName);
 
             // Business validation
             if (string.IsNullOrWhiteSpace(userName))
             {
-                _logger.LogWarning("Authentication failed - empty username");
+                _logger.LogApplicationWarning("Authentication failed - empty username");
                 return Result<bool>.Failure<bool>(DomainErrors.UserNameError.NullOrEmpty);
             }
 
             if (string.IsNullOrWhiteSpace(plainTextPassword))
             {
-                _logger.LogWarning("Authentication failed - empty password for user: {UserName}", userName);
+                _logger.LogApplicationWarning("Authentication failed - empty password for user: {UserName}", userName);
                 return Result<bool>.Failure<bool>(DomainErrors.PasswordError.NullOrEmpty);
             }
 
@@ -265,30 +265,30 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
                 // Business rule - check if user is active
                 //if (!user.IsActive)
                 //{
-                //    _logger.LogWarning("Authentication failed - user is inactive: {UserName}", userName);
+                //    _logger.LogApplicationWarning("Authentication failed - user is inactive: {UserName}", userName);
                 //    return Result<SMSStakeholderUser>.Failure<SMSStakeholderUser>(DomainErrors.BaseUserError.InactiveUser);
                 //}
 
                 // Business rule - security logging for external users
-                //_logger.LogInformation("External stakeholder authenticated: {UserName} from {Organization} ({StakeholderType})",
+                //_logger.LogApplicationInformation("External stakeholder authenticated: {UserName} from {Organization} ({StakeholderType})",
                 //    userName, user.Organization, user.StakeholderType);
 
                 //// Business rule - additional validation for high-access users
                 //if (user.AccessLevel == "Full")
                 //{
-                //    _logger.LogInformation("High-privilege stakeholder login: {UserName} with Full access", userName);
+                //    _logger.LogApplicationInformation("High-privilege stakeholder login: {UserName} with Full access", userName);
                 //}
             }
             else
             {
-                _logger.LogWarning("Authentication failed for stakeholder user: {UserName}", userName);
+                _logger.LogApplicationWarning("Authentication failed for stakeholder user: {UserName}", userName);
             }
 
             return result.Value;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error during authentication for user: {UserName}", userName);
+            _logger.LogApplicationError(ex, "Unexpected error during authentication for user: {UserName}", userName);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.LoginFailed);
         }
     }
@@ -300,21 +300,21 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
     {
         try
         {
-            _logger.LogInformation("Retrieving stakeholder type statistics");
+            _logger.LogApplicationInformation("Retrieving stakeholder type statistics");
 
             var result = await _dataService.GetStakeholderTypeStatisticsAsync(ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
                 var stats = result.Value;
-                _logger.LogInformation("Retrieved statistics for {Count} stakeholder types", stats.Count);
+                _logger.LogApplicationInformation("Retrieved statistics for {Count} stakeholder types", stats.Count);
 
                 // Business analysis - identify dominant stakeholder types
                 var totalStakeholders = stats.Values.Sum();
                 foreach (var stat in stats.OrderByDescending(s => s.Value))
                 {
                     var percentage = (double)stat.Value / totalStakeholders * 100;
-                    _logger.LogInformation("Stakeholder type {Type}: {Count} users ({Percentage:F1}%)",
+                    _logger.LogApplicationInformation("Stakeholder type {Type}: {Count} users ({Percentage:F1}%)",
                         stat.Key, stat.Value, percentage);
                 }
             }
@@ -323,7 +323,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving stakeholder type statistics");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving stakeholder type statistics");
             return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(GeneralError.UnProcessableRequest);
         }
     }
@@ -360,7 +360,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
         {
             if (!stakeholderType.Equals("Airline", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Organization {Organization} appears to be an airline but stakeholder type is {Type}",
+                _logger.LogApplicationWarning("Organization {Organization} appears to be an airline but stakeholder type is {Type}",
                     organization, stakeholderType);
             }
         }
@@ -369,7 +369,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
         {
             if (!stakeholderType.Equals("Ground Handler", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Organization {Organization} appears to be a ground handler but stakeholder type is {Type}",
+                _logger.LogApplicationWarning("Organization {Organization} appears to be a ground handler but stakeholder type is {Type}",
                     organization, stakeholderType);
             }
         }
@@ -388,7 +388,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
     //    {
     //        if (user.AccessLevel == "Limited")
     //        {
-    //            _logger.LogInformation("Upgrading access level for government/regulatory user: {UserName}", user.UserName.Value);
+    //            _logger.LogApplicationInformation("Upgrading access level for government/regulatory user: {UserName}", user.UserName.Value);
     //            user.UpdateStakeholderInfo(user.StakeholderType, user.Organization, "Extended");
     //        }
     //    }
@@ -399,7 +399,7 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
     //    {
     //        if (user.AccessLevel == "Full")
     //        {
-    //            _logger.LogWarning("Full access granted to vendor/service provider: {UserName} - requires approval", user.UserName.Value);
+    //            _logger.LogApplicationWarning("Full access granted to vendor/service provider: {UserName} - requires approval", user.UserName.Value);
     //        }
     //    }
 
@@ -408,3 +408,4 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
 
     #endregion
 }
+

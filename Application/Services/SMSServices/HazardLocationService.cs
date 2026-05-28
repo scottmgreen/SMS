@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardLocationService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -36,23 +36,23 @@ public sealed class HazardLocationService
     {
         try
         {
-            _logger.LogInformation("Creating hazard location with code: {Code}", hazardLocation?.Code);
+            _logger.LogApplicationInformation("Creating hazard location with code: {Code}", hazardLocation?.Code);
             var result = await _dataService.CreateHazardLocationAsync(hazardLocation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created hazard location with ID: {Id}", result.Value?.Id);
+                _logger.LogApplicationInformation("Successfully created hazard location with ID: {Id}", result.Value?.Id);
             }
             else
             {
-                _logger.LogError("Failed to create hazard location. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create hazard location. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating hazard location");
+            _logger.LogApplicationError(ex, "Unexpected error creating hazard location");
             return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.CreateFailed);
         }
     }
@@ -61,12 +61,12 @@ public sealed class HazardLocationService
     {
         try
         {
-            _logger.LogInformation("Retrieving hazard location with Code: {Code}", code);
+            _logger.LogApplicationInformation("Retrieving hazard location with Code: {Code}", code);
             return await _dataService.GetHazardLocationByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazard location with Code:{Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving hazard location with Code:{Code}", code);
             return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.NotFound);
         }
     }
@@ -75,12 +75,12 @@ public sealed class HazardLocationService
     {
         try
         {
-            _logger.LogInformation("Retrieving all hazard locations");
+            _logger.LogApplicationInformation("Retrieving all hazard locations");
             return await _dataService.GetAllHazardLocationsAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all hazard locations");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all hazard locations");
             return Result<List<HazardLocation>>.Failure<List<HazardLocation>>(DomainErrors.HazardLocationError.NullOrEmpty);
         }
     }
@@ -89,12 +89,12 @@ public sealed class HazardLocationService
     {
         try
         {
-            _logger.LogInformation("Retrieving hazard locations for hazard code: {HazardCode}", hazardCode);
+            _logger.LogApplicationInformation("Retrieving hazard locations for hazard code: {HazardCode}", hazardCode);
             return await _dataService.GetHazardLocationsByHazardCodeAsync(hazardCode, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving hazard locations for hazard code: {HazardCode}", hazardCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving hazard locations for hazard code: {HazardCode}", hazardCode);
             return Result<List<HazardLocation>>.Failure<List<HazardLocation>>(DomainErrors.HazardLocationError.NullOrEmpty);
         }
     }
@@ -103,23 +103,23 @@ public sealed class HazardLocationService
     {
         try
         {
-            _logger.LogInformation("Updating hazard location with ID: {Id}", hazardLocation?.Id);
+            _logger.LogApplicationInformation("Updating hazard location with ID: {Id}", hazardLocation?.Id);
             var result = await _dataService.UpdateHazardLocationAsync(hazardLocation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated hazard location with ID: {Id}", hazardLocation?.Id);
+                _logger.LogApplicationInformation("Successfully updated hazard location with ID: {Id}", hazardLocation?.Id);
             }
             else
             {
-                _logger.LogError("Failed to update hazard location. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update hazard location. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating hazard location with ID: {Id}", hazardLocation?.Id);
+            _logger.LogApplicationError(ex, "Unexpected error updating hazard location with ID: {Id}", hazardLocation?.Id);
             return Result<HazardLocation>.Failure<HazardLocation>(DomainErrors.HazardLocationError.UpdateFailed);
         }
     }
@@ -128,26 +128,27 @@ public sealed class HazardLocationService
     {
         try
         {
-            _logger.LogInformation("Deleting hazard location with ID: {Id}", id);
+            _logger.LogApplicationInformation("Deleting hazard location with ID: {Id}", id);
             var result = await _dataService.DeleteHazardLocationAsync(id, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted hazard location with ID: {Id}", id);
+                _logger.LogApplicationInformation("Successfully deleted hazard location with ID: {Id}", id);
             }
             else
             {
-                _logger.LogError("Failed to delete hazard location. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete hazard location. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting hazard location with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error deleting hazard location with ID: {Id}", id);
             return Result<bool>.Failure<bool>(DomainErrors.HazardLocationError.DeleteFailed);
         }
     }
 
     #endregion
 }
+

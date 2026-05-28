@@ -10,7 +10,7 @@
 
 using SMS_Domain.Entities;
 
-namespace SMS_Application.Messaging.Commands;
+namespace SMS_Application.Commands;
 
 public class CreateMitigationCommand : BaseCommandBundle, IRequest<Result<Mitigation>>, ICreateCommand
 {

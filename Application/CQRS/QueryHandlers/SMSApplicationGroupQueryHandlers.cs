@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSApplicationGroupQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,9 +12,9 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 /// <summary>
 /// Query handler for getting all SMS application groups
@@ -36,13 +36,13 @@ public class GetAllSMSApplicationGroupsQueryHandler : BaseQueryBundle, IBaseRequ
     {
         try
         {
-            _logger.LogInformation("Processing GetAllSMSApplicationGroupsQuery");
+            _logger.LogApplicationInformation("Processing GetAllSMSApplicationGroupsQuery");
 
             var result = await _applicationGroupService.GetAllSMSApplicationGroupsAsync();
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS application groups", result.Value?.Count() ?? 0);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS application groups", result.Value?.Count() ?? 0);
             }
             else
             {
@@ -53,7 +53,7 @@ public class GetAllSMSApplicationGroupsQueryHandler : BaseQueryBundle, IBaseRequ
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetAllSMSApplicationGroupsQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetAllSMSApplicationGroupsQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -84,24 +84,24 @@ public class GetSMSApplicationGroupByCodeQueryHandler : BaseQueryBundle, IBaseRe
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSApplicationGroupByCodeQuery for group: {GroupCode}", request.GroupCode);
+            _logger.LogApplicationInformation("Processing GetSMSApplicationGroupByCodeQuery for group: {GroupCode}", request.GroupCode);
 
             var result = await _applicationGroupService.GetSMSApplicationGroupByCodeAsync(request.GroupCode);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved SMS application group: {GroupCode}", request.GroupCode);
+                _logger.LogApplicationInformation("Successfully retrieved SMS application group: {GroupCode}", request.GroupCode);
             }
             else
             {
-                _logger.LogWarning("SMS application group not found: {GroupCode}", request.GroupCode);
+                _logger.LogApplicationWarning("SMS application group not found: {GroupCode}", request.GroupCode);
             }
 
             return result;
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetSMSApplicationGroupByCodeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetSMSApplicationGroupByCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -132,13 +132,13 @@ public class GetSMSApplicationGroupsByUserCodeQueryHandler : BaseQueryBundle, IB
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSApplicationGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
+            _logger.LogApplicationInformation("Processing GetSMSApplicationGroupsByUserCodeQuery for user: {UserCode}", request.UserCode);
 
             var result = await _applicationGroupService.GetSMSApplicationGroupsByUserCodeAsync(request.UserCode);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS application groups for user: {UserCode}",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS application groups for user: {UserCode}",
                     result.Value?.Count() ?? 0, request.UserCode);
             }
             else
@@ -151,7 +151,7 @@ public class GetSMSApplicationGroupsByUserCodeQueryHandler : BaseQueryBundle, IB
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetSMSApplicationGroupsByUserCodeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetSMSApplicationGroupsByUserCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -182,13 +182,13 @@ public class GetUsersByApplicationGroupCodeQueryHandler : BaseQueryBundle, IBase
     {
         try
         {
-            _logger.LogInformation("Processing GetUsersByApplicationGroupCodeQuery for group: {GroupCode}", request.GroupCode);
+            _logger.LogApplicationInformation("Processing GetUsersByApplicationGroupCodeQuery for group: {GroupCode}", request.GroupCode);
 
             var result = await _applicationGroupService.GetUsersByGroupCodeAsync(request.GroupCode);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} users for application group: {GroupCode}",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} users for application group: {GroupCode}",
                     result.Value?.Count() ?? 0, request.GroupCode);
             }
             else
@@ -201,7 +201,7 @@ public class GetUsersByApplicationGroupCodeQueryHandler : BaseQueryBundle, IBase
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetUsersByApplicationGroupCodeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetUsersByApplicationGroupCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -211,3 +211,4 @@ public class GetUsersByApplicationGroupCodeQueryHandler : BaseQueryBundle, IBase
         }
     }
 }
+

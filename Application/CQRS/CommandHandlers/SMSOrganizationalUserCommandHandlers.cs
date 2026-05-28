@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSOrganizationalUserCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -14,7 +14,7 @@ using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 using SMS_Infrastructure.Services;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // SMS ORGANIZATIONAL USER COMMAND HANDLERS - Clean Architecture Pattern
@@ -41,13 +41,13 @@ public class CreateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBas
                 return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateSMSOrganizationalUserCommand for UserName: {UserName}", request.SMSOrganizationalUser.UserName);
+            _logger.LogApplicationInformation(" Processing CreateSMSOrganizationalUserCommand for UserName: {UserName}", request.SMSOrganizationalUser.UserName);
 
             var result = await _organizationalUserService.CreateSMSOrganizationalUserAsync(request.SMSOrganizationalUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created SMS Organizational User with ID: {Id}, UserName: {UserName}",
+                _logger.LogApplicationInformation(" Successfully created SMS Organizational User with ID: {Id}, UserName: {UserName}",
                     result.Value?.UserId, result.Value?.UserName);
             }
             else
@@ -60,7 +60,7 @@ public class CreateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBas
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateSMSOrganizationalUserCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateSMSOrganizationalUserCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -92,13 +92,13 @@ public class UpdateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBas
                 return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateSMSOrganizationalUserCommand for UserID: {UserId}", request.SMSOrganizationalUser.UserId);
+            _logger.LogApplicationInformation(" Processing UpdateSMSOrganizationalUserCommand for UserID: {UserId}", request.SMSOrganizationalUser.UserId);
 
             var result = await _organizationalUserService.UpdateSMSOrganizationalUserAsync(request.SMSOrganizationalUser, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated SMS Organizational User with ID: {UserId}", request.SMSOrganizationalUser.UserId);
+                _logger.LogApplicationInformation(" Successfully updated SMS Organizational User with ID: {UserId}", request.SMSOrganizationalUser.UserId);
             }
             else
             {
@@ -110,7 +110,7 @@ public class UpdateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBas
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSMSOrganizationalUserCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSMSOrganizationalUserCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -122,7 +122,7 @@ public class UpdateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBas
 }
 
 /// <summary>
-/// ✅ NEW: Command handler for deactivating SMS Organizational Users using CQRS/Mediator pattern
+/// ? NEW: Command handler for deactivating SMS Organizational Users using CQRS/Mediator pattern
 /// Implements proper CQRS pattern with audit pipeline support for soft delete operations
 /// </summary>
 public class DeactivateSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeactivateSMSOrganizationalUserCommand, Result<SMSOrganizationalUser>>
@@ -146,7 +146,7 @@ public class DeactivateSMSOrganizationalUserCommandHandler : BaseCommandBundle, 
                 return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("🚀 CQRS: Handling DeactivateSMSOrganizationalUserCommand for user: {UserCode} - Reason: {Reason}", 
+            _logger.LogApplicationInformation("CQRS: Handling DeactivateSMSOrganizationalUserCommand for user: {UserCode} - Reason: {Reason}", 
                 request.SMSOrganizationalUser.Code, request.DeactivationReason);
 
             // Business logic: Deactivate the user
@@ -158,23 +158,23 @@ public class DeactivateSMSOrganizationalUserCommandHandler : BaseCommandBundle, 
             
             if (result.IsSuccess)
             {
-                _logger.LogInformation("✅ CQRS: Successfully deactivated SMS Organizational User: {UserCode}", result.Value.Code);
+                _logger.LogApplicationInformation("CQRS: Successfully deactivated SMS Organizational User: {UserCode}", result.Value.Code);
             }
             else
             {
-                _logger.LogError("❌ CQRS: Failed to deactivate SMS Organizational User. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("CQRS: Failed to deactivate SMS Organizational User. Error: {Error}", result.Error?.Message);
             }
             
             return result;
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeactivateSMSOrganizationalUserCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeactivateSMSOrganizationalUserCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "💥 CQRS: Exception in DeactivateSMSOrganizationalUserCommandHandler for user: {UserCode}", 
+            _logger.LogApplicationError(ex, "CQRS: Exception in DeactivateSMSOrganizationalUserCommandHandler for user: {UserCode}", 
                 request.SMSOrganizationalUser?.Code);
             return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.DeleteFailed);
         }
@@ -202,7 +202,7 @@ public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBund
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateSMSOrganizationalUserPasswordCommand for UserID: {UserId}", request.UserId);
+            _logger.LogApplicationInformation(" Processing UpdateSMSOrganizationalUserPasswordCommand for UserID: {UserId}", request.UserId);
 
             // Create new password with proper hashing
             var passwordResult = Password.Create(request.NewPassword);
@@ -225,7 +225,7 @@ public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBund
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated password for SMS Organizational User with ID: {UserId}", request.UserId);
+                _logger.LogApplicationInformation(" Successfully updated password for SMS Organizational User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else
@@ -237,7 +237,7 @@ public class UpdateSMSOrganizationalUserPasswordCommandHandler : BaseCommandBund
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSMSOrganizationalUserPasswordCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSMSOrganizationalUserPasswordCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -269,24 +269,24 @@ public class AuthenticateSMSOrganizationalUserCommandHandler : BaseCommandBundle
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing authentication request for UserName: {UserName}", request.UserName);
+            _logger.LogApplicationInformation(" Processing authentication request for UserName: {UserName}", request.UserName);
 
             var result = await _organizationalUserService.AuthenticateSMSOrganizationalUserAsync(request.UserName, request.Password, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully authenticated SMS Organizational User: {UserName}", request.UserName);
+                _logger.LogApplicationInformation(" Successfully authenticated SMS Organizational User: {UserName}", request.UserName);
             }
             else
             {
-                _logger.LogWarning("Authentication failed for user: {UserName}", request.UserName);
+                _logger.LogApplicationWarning("Authentication failed for user: {UserName}", request.UserName);
             }
 
             return result;
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("AuthenticateSMSOrganizationalUserCommand operation was cancelled");
+            _logger.LogApplicationWarning("AuthenticateSMSOrganizationalUserCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -318,7 +318,7 @@ public class RecordSMSOrganizationalUserLoginCommandHandler : BaseCommandBundle,
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing RecordSMSOrganizationalUserLoginCommand for UserID: {UserId}", request.UserId);
+            _logger.LogApplicationInformation(" Processing RecordSMSOrganizationalUserLoginCommand for UserID: {UserId}", request.UserId);
 
             // Get the existing user and record login
             var userResult = await _organizationalUserService.GetSMSOrganizationalUserByCodeAsync(request.UserId, cancellationToken);
@@ -334,7 +334,7 @@ public class RecordSMSOrganizationalUserLoginCommandHandler : BaseCommandBundle,
 
             if (updateResult.IsSuccess)
             {
-                _logger.LogInformation(" Successfully recorded login for SMS Organizational User with ID: {UserId}", request.UserId);
+                _logger.LogApplicationInformation(" Successfully recorded login for SMS Organizational User with ID: {UserId}", request.UserId);
                 return Result<bool>.Success(true);
             }
             else
@@ -346,7 +346,7 @@ public class RecordSMSOrganizationalUserLoginCommandHandler : BaseCommandBundle,
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("RecordSMSOrganizationalUserLoginCommand operation was cancelled");
+            _logger.LogApplicationWarning("RecordSMSOrganizationalUserLoginCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -383,14 +383,14 @@ public class DeleteSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBas
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("🚀 CQRS: Handling DeleteSMSOrganizationalUserCommand (legacy) for user ID: {UserId} - Redirecting to deactivation", 
+            _logger.LogApplicationInformation("CQRS: Handling DeleteSMSOrganizationalUserCommand (legacy) for user ID: {UserId} - Redirecting to deactivation", 
                 request.SMSOrganizationalUserId.Value);
 
             // Get the user first
             var userResult = await _organizationalUserService.GetSMSOrganizationalUserByCodeAsync(request.SMSOrganizationalUserId.Value, cancellationToken);
             if (userResult.IsFailure)
             {
-                _logger.LogWarning("❌ CQRS: Cannot delete non-existent SMS Organizational User with ID: {UserId}", request.SMSOrganizationalUserId.Value);
+                _logger.LogApplicationWarning("CQRS: Cannot delete non-existent SMS Organizational User with ID: {UserId}", request.SMSOrganizationalUserId.Value);
                 return Result<bool>.Failure<bool>(userResult.Error);
             }
 
@@ -400,18 +400,18 @@ public class DeleteSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBas
 
             if (deactivateResult.IsSuccess)
             {
-                _logger.LogInformation("✅ CQRS: Successfully processed delete as deactivation for user: {UserCode}", deactivateResult.Value.Code);
+                _logger.LogApplicationInformation("CQRS: Successfully processed delete as deactivation for user: {UserCode}", deactivateResult.Value.Code);
                 return Result<bool>.Success(true);
             }
             else
             {
-                _logger.LogError("❌ CQRS: Failed to process delete as deactivation. Error: {Error}", deactivateResult.Error?.Message);
+                _logger.LogApplicationError("CQRS: Failed to process delete as deactivation. Error: {Error}", deactivateResult.Error?.Message);
                 return Result<bool>.Failure<bool>(deactivateResult.Error);
             }
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteSMSOrganizationalUserCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteSMSOrganizationalUserCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -421,3 +421,5 @@ public class DeleteSMSOrganizationalUserCommandHandler : BaseCommandBundle, IBas
         }
     }
 }
+
+

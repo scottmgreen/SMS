@@ -12,7 +12,7 @@ using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 using System.ComponentModel.DataAnnotations;
 
-namespace SMS_Application.Messaging.Pipelines;
+namespace SMS_Application.Pipelines;
 
 /// <summary>
 /// Validation pipeline for comprehensive input validation and business rule enforcement
@@ -34,13 +34,13 @@ public class ValidationPipeline<TRequest, TResult> : IBasePipeline<TRequest, TRe
         cancellation.ThrowIfCancellationRequested();
 
         var commandType = request.GetType().Name;
-        _logger.LogInformation("? Clean Architecture: Validation pipeline processing {CommandType}", commandType);
+        _logger.LogApplicationInformation("Clean Architecture: Validation pipeline processing {CommandType}", commandType);
 
         // Perform validation before command execution
         var validationResult = ValidateRequest(request);
         if (!validationResult.IsValid)
         {
-            _logger.LogWarning("?? Validation failed for {CommandType}: {ValidationErrors}", 
+            _logger.LogApplicationWarning("Validation failed for {CommandType}: {ValidationErrors}", 
                 commandType, string.Join(", ", validationResult.Errors));
 
             // Return validation failure result
@@ -48,7 +48,7 @@ public class ValidationPipeline<TRequest, TResult> : IBasePipeline<TRequest, TRe
             return failureResult;
         }
 
-        _logger.LogInformation("? Clean Architecture: Validation passed for {CommandType}", commandType);
+        _logger.LogApplicationInformation("Clean Architecture: Validation passed for {CommandType}", commandType);
 
         // Execute the command handler if validation passes
         var result = await next().ConfigureAwait(false);
@@ -85,7 +85,7 @@ public class ValidationPipeline<TRequest, TResult> : IBasePipeline<TRequest, TRe
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error during validation of {CommandType}", request.GetType().Name);
+            _logger.LogApplicationError(ex, "Error during validation of {CommandType}", request.GetType().Name);
             errors.Add($"Validation error: {ex.Message}");
             
             return new ValidationResult
@@ -248,3 +248,4 @@ public class ValidationPipeline<TRequest, TResult> : IBasePipeline<TRequest, TRe
         public List<string> Errors { get; set; } = new();
     }
 }
+

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ScoringPanelQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -11,9 +11,9 @@
 using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // SCORING PANEL QUERY HANDLERS
@@ -34,7 +34,7 @@ public class GetScoringPanelByIdQueryHandler : BaseQueryBundle, IBaseRequestHand
     {
         try
         {
-            _logger.LogInformation("Processing GetScoringPanelByIdQuery for ID: {Id}", request.ScoringPanelId);
+            _logger.LogApplicationInformation("Processing GetScoringPanelByIdQuery for ID: {Id}", request.ScoringPanelId);
             var result = await _scoringPanelService.GetScoringPanelByIdAsync(request.ScoringPanelId, ct).ConfigureAwait(false);
             return result;
         }
@@ -61,7 +61,7 @@ public class GetAllScoringPanelsQueryHandler : BaseQueryBundle, IBaseRequestHand
     {
         try
         {
-            _logger.LogInformation("Processing GetAllScoringPanelsQuery");
+            _logger.LogApplicationInformation("Processing GetAllScoringPanelsQuery");
             var result = await _scoringPanelService.GetAllScoringPanelsAsync(ct).ConfigureAwait(false);
             return result;
         }
@@ -88,7 +88,7 @@ public class GetScoringPanelsByHazardCodeQueryHandler : BaseQueryBundle, IBaseRe
     {
         try
         {
-            _logger.LogInformation("Processing GetScoringPanelsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationInformation("Processing GetScoringPanelsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
             var result = await _scoringPanelService.GetScoringPanelsByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
@@ -99,3 +99,4 @@ public class GetScoringPanelsByHazardCodeQueryHandler : BaseQueryBundle, IBaseRe
         }
     }
 }
+

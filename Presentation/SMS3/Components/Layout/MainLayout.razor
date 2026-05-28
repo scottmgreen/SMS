@@ -1,4 +1,7 @@
 ﻿@inherits LayoutComponentBase
+@implements IEventReceiver
+@implements IDisposable
+@using Radzen
 @using SMS3.Components.Layout
 @using SMS3.Components.Shared
 @using SMS3.Configuration.Extensions
@@ -47,10 +50,12 @@
     [Inject] private IWebHostEnvironment _environment { get; set; } = default!;
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<MainLayout> _logger { get; set; } = default!;
+    [Inject] private NotificationService _notificationService { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
-        // MainLayout initialized
+        EventBusDispatcher.Register(this);
+        await Task.CompletedTask;
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -60,6 +65,26 @@
             // MainLayout first render complete
         }
     }
+
+    public async Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration)
+    {
+        await InvokeAsync(() =>
+        {
+            _notificationService.Notify(new NotificationMessage
+            {
+                Severity = severity,
+                Summary = title,
+                Detail = message,
+                Duration = duration
+            });
+        });
+    }
+
+    public void Dispose()
+    {
+        EventBusDispatcher.Unregister(this);
+    }
+    
 
     /// <summary>
     /// Handle logout request from NavMenu - SESSION-BASED AUTHENTICATION APPROACH

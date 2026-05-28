@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAssessmentCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // RISK ASSESSMENT COMMAND HANDLERS - Clean Architecture Pattern
@@ -39,13 +39,13 @@ public class CreateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateRiskAssessmentCommand for Code: {Code}", request.RiskAssessment.Code);
+            _logger.LogApplicationInformation(" Processing CreateRiskAssessmentCommand for Code: {Code}", request.RiskAssessment.Code);
 
             var result = await _riskAssessmentService.CreateRiskAssessmentAsync(request.RiskAssessment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created RiskAssessment with ID: {Id}, Code: {Code}",
+                _logger.LogApplicationInformation(" Successfully created RiskAssessment with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -58,7 +58,7 @@ public class CreateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateRiskAssessmentCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateRiskAssessmentCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -90,14 +90,14 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateRiskAssessmentCommand for ID: {Id}, Code: {Code}",
+            _logger.LogApplicationInformation(" Processing UpdateRiskAssessmentCommand for ID: {Id}, Code: {Code}",
                 request.RiskAssessment.Id, request.RiskAssessment.Code);
 
             var result = await _riskAssessmentService.UpdateRiskAssessmentAsync(request.RiskAssessment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated RiskAssessment with ID: {Id}", request.RiskAssessment.Id);
+                _logger.LogApplicationInformation(" Successfully updated RiskAssessment with ID: {Id}", request.RiskAssessment.Id);
             }
             else
             {
@@ -109,7 +109,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateRiskAssessmentCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateRiskAssessmentCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -141,13 +141,13 @@ public class DeleteRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                 return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteRiskAssessmentCommand for ID: {Id}", request.RiskAssessmentId);
+            _logger.LogApplicationInformation(" Processing DeleteRiskAssessmentCommand for ID: {Id}", request.RiskAssessmentId);
 
             var result = await _riskAssessmentService.DeleteRiskAssessmentAsync(request.RiskAssessmentId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted RiskAssessment with ID: {Id}", request.RiskAssessmentId);
+                _logger.LogApplicationInformation(" Successfully deleted RiskAssessment with ID: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -159,7 +159,7 @@ public class DeleteRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteRiskAssessmentCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteRiskAssessmentCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -195,7 +195,7 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing SaveStep1Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
+            _logger.LogApplicationInformation(" Processing SaveStep1Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
 
             // Get the existing assessment first
             var assessmentResult = await _riskAssessmentService.GetRiskAssessmentByIdAsync(request.RiskAssessmentId, ct);
@@ -224,7 +224,7 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully saved Step 1 for RiskAssessment: {Id}", request.RiskAssessmentId);
+                _logger.LogApplicationInformation(" Successfully saved Step 1 for RiskAssessment: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -236,7 +236,7 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("SaveStep1Command operation was cancelled");
+            _logger.LogApplicationWarning("SaveStep1Command operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -268,7 +268,7 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing SaveStep4Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
+            _logger.LogApplicationInformation(" Processing SaveStep4Command for RiskAssessment: {Id}", request.RiskAssessmentId.Value);
 
             // Get the existing assessment first
             var assessmentResult = await _riskAssessmentService.GetRiskAssessmentByIdAsync(request.RiskAssessmentId, ct);
@@ -290,7 +290,7 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully saved Step 4 for RiskAssessment: {Id}", request.RiskAssessmentId);
+                _logger.LogApplicationInformation(" Successfully saved Step 4 for RiskAssessment: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -302,7 +302,7 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("SaveStep4Command operation was cancelled");
+            _logger.LogApplicationWarning("SaveStep4Command operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -334,7 +334,7 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing SaveStep5Command for RiskAssessment: {Id}", request.RiskAssessmentId);
+            _logger.LogApplicationInformation(" Processing SaveStep5Command for RiskAssessment: {Id}", request.RiskAssessmentId);
 
             // Get the existing assessment first
             var assessmentResult = await _riskAssessmentService.GetRiskAssessmentByIdAsync(request.RiskAssessmentId, ct);
@@ -353,7 +353,7 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully saved Step 5 for RiskAssessment: {Id}", request.RiskAssessmentId);
+                _logger.LogApplicationInformation(" Successfully saved Step 5 for RiskAssessment: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -365,7 +365,7 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("SaveStep5Command operation was cancelled");
+            _logger.LogApplicationWarning("SaveStep5Command operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -397,7 +397,7 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IBaseRequestHandl
                 return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateProgressCommand for RiskAssessment: {Id}, Step: {Step}",
+            _logger.LogApplicationInformation(" Processing UpdateProgressCommand for RiskAssessment: {Id}, Step: {Step}",
                 request.RiskAssessmentId, request.CurrentStep);
 
             // Get the existing assessment first
@@ -438,7 +438,7 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IBaseRequestHandl
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated progress for RiskAssessment: {Id}", request.RiskAssessmentId);
+                _logger.LogApplicationInformation(" Successfully updated progress for RiskAssessment: {Id}", request.RiskAssessmentId);
             }
             else
             {
@@ -450,7 +450,7 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IBaseRequestHandl
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateProgressCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateProgressCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -460,3 +460,4 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IBaseRequestHandl
         }
     }
 }
+

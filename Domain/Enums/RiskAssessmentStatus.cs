@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAssessmentStatus.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -24,7 +24,7 @@ public abstract class RiskAssessmentStatus : BaseEnum<RiskAssessmentStatus>
     }
 
     
-    #region ✅ APPROVED FINAL RISK ASSESSMENT STATUS VALUES FROM StatusList.txt
+    #region APPROVED FINAL RISK ASSESSMENT STATUS VALUES FROM StatusList.txt
 
     /// <summary>Risk assessor has been assigned to the assessment</summary>
     public static readonly RiskAssessmentStatus AssignedToAssessor = new AssignedToAssessorStatus();
@@ -90,4 +90,5 @@ public abstract class RiskAssessmentStatus : BaseEnum<RiskAssessmentStatus>
     }
 
 }
+
 

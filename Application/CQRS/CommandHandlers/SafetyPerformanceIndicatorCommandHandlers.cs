@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SafetyPerformanceIndicatorCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // SAFETY PERFORMANCE INDICATOR COMMAND HANDLERS - Clean Architecture Pattern
@@ -44,7 +44,7 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
                     DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateSafetyPerformanceIndicatorCommand for Name: {Name}", request.Name);
+            _logger.LogApplicationInformation(" Processing CreateSafetyPerformanceIndicatorCommand for Name: {Name}", request.Name);
 
             // Create the SPI entity
             var spi = new SafetyPerformanceIndicator(
@@ -75,7 +75,7 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created Safety Performance Indicator with ID: {Id}, Name: {Name}",
+                _logger.LogApplicationInformation(" Successfully created Safety Performance Indicator with ID: {Id}, Name: {Name}",
                     result.Value?.Id, result.Value?.Name);
             }
             else
@@ -88,7 +88,7 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateSafetyPerformanceIndicatorCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateSafetyPerformanceIndicatorCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -125,7 +125,7 @@ public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
                     DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateSafetyPerformanceIndicatorCommand for ID: {Id}", request.Id?.Value);
+            _logger.LogApplicationInformation(" Processing UpdateSafetyPerformanceIndicatorCommand for ID: {Id}", request.Id?.Value);
 
             // First, get the existing SPI to update
             var existingSpiResult = await _spiService.GetSafetyPerformanceIndicatorByIdAsync(request.Id, cancellationToken);
@@ -166,7 +166,7 @@ public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated Safety Performance Indicator with ID: {Id}", 
+                _logger.LogApplicationInformation(" Successfully updated Safety Performance Indicator with ID: {Id}", 
                     request.Id?.Value);
             }
             else
@@ -179,7 +179,7 @@ public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSafetyPerformanceIndicatorCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSafetyPerformanceIndicatorCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -215,7 +215,7 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IBaseRequestH
                 return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation("✅ Processing UpdateSPIDataPointCommand for SPI: {SPIId}, DataPoint: {DataPointId}",
+            _logger.LogApplicationInformation("Processing UpdateSPIDataPointCommand for SPI: {SPIId}, DataPoint: {DataPointId}",
                 request.DataPoint.SPIId, request.DataPoint.Id?.Value);
 
             // Update the data point through the SPI service
@@ -256,7 +256,7 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IBaseRequestH
 
             if (updateResult.IsSuccess)
             {
-                _logger.LogInformation("✅ Successfully updated SPI data point for SPI: {SPIId}, DataPoint: {DataPointId}",
+                _logger.LogApplicationInformation("Successfully updated SPI data point for SPI: {SPIId}, DataPoint: {DataPointId}",
                     request.DataPoint.SPIId, request.DataPoint.Id?.Value);
             }
             else
@@ -269,7 +269,7 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSPIDataPointCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSPIDataPointCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -305,14 +305,14 @@ public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
                 return Result<bool>.Failure<bool>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteSafetyPerformanceIndicatorCommand for ID: {Id}",
+            _logger.LogApplicationInformation(" Processing DeleteSafetyPerformanceIndicatorCommand for ID: {Id}",
                 request.SafetyPerformanceIndicatorId?.Value);
 
             var result = await _spiService.DeleteSafetyPerformanceIndicatorAsync(request.SafetyPerformanceIndicatorId, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted Safety Performance Indicator with ID: {Id}",
+                _logger.LogApplicationInformation(" Successfully deleted Safety Performance Indicator with ID: {Id}",
                     request.SafetyPerformanceIndicatorId?.Value);
             }
             else
@@ -325,7 +325,7 @@ public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteSafetyPerformanceIndicatorCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteSafetyPerformanceIndicatorCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -335,3 +335,5 @@ public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
         }
     }
 }
+
+

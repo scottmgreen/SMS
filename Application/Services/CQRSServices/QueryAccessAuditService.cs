@@ -7,7 +7,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Application.Interfaces.CommonInterfaces;
+
 
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
@@ -40,7 +40,8 @@ public class QueryAccessAuditService : IQueryAccessAuditService
     {
         try
         {
-            _logger.LogInformation("?? Query Access: User '{UserId}' accessed {ResourceIdentifier} via {QueryType} ({AccessType})", 
+            _logger.LogApplicationInformation("Query Access: User '{UserId}' accessed {ResourceIdentifier} via {QueryType} ({AccessType})",
+                ApplicationEventIds.Information,
                 userId, resourceIdentifier, queryType, accessType);
 
             // Extract entity name from query type for better module organization
@@ -67,12 +68,17 @@ public class QueryAccessAuditService : IQueryAccessAuditService
 
             if (!result.IsSuccess)
             {
-                _logger.LogWarning("?? Failed to log query access audit for user {UserId}", userId);
+                _logger.LogApplicationWarning("Failed to log query access audit for user {UserId}",
+                    ApplicationEventIds.Warning,
+                    userId);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error logging query access audit for user {UserId}", userId);
+            _logger.LogApplicationError("Error logging query access audit for user {UserId}",
+                ApplicationEventIds.Error,
+                ex,
+                userId);
             // Don't throw - audit logging failure shouldn't break query operations
         }
     }

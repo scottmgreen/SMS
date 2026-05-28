@@ -4,7 +4,7 @@ using SMS_Domain.Entities;
 
 using Radzen;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
@@ -449,8 +449,8 @@ public partial class HazardListing : ComponentBase
                                     $"• Name: {hazard.Name ?? "Unnamed Hazard"}\n" +
                                     $"• Category: {hazard.HazardCategory ?? "Unknown"}\n" +
                                     $"• Risk Level: {hazard.HazardRiskLevel.Value ?? "Unknown"}\n\n" +
-                                    "?? WARNING: This hazard has associated details that may also be affected.\n\n" +
-                                    "? This action cannot be undone!";
+                                    "WARNING: This hazard has associated details that may also be affected.\n\n" +
+                                    "This action cannot be undone!";
 
             var confirmed = await _dialogService.Confirm(
                 confirmationMessage, 
@@ -528,3 +528,4 @@ public partial class HazardListing : ComponentBase
         StateHasChanged();
     }
 }
+

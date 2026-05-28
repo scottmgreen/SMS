@@ -1,7 +1,7 @@
 
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Commands;
+using SMS_Application.Queries;
 
 using SMS_Domain.Events;
 using SMS_Domain.ValueObjects;
@@ -22,7 +22,7 @@ public partial class StakeholderGroups : ComponentBase
     [Inject] private NavigationManager Navigation { get; set; } = default!;
     [Inject] private IBaseEventBus EventBus { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Parameters

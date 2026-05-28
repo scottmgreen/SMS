@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSApplicationUserDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -43,17 +43,17 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
         {
             if (user is null)
             {
-                _logger.LogError("CreateSMSApplicationUserAsync received null user");
+                _logger.LogInfrastructureError("CreateSMSApplicationUserAsync received null user");
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Creating SMS Application User with code: {Code}", user.Code);
+            _logger.LogInfrastructureInformation("Creating SMS Application User with code: {Code}", user.Code);
 
             // Check if username already exists
             var existsResult = await _repository.UserNameExistsAsync(user.UserName.Value);
             if (existsResult.IsSuccess && existsResult.Value)
             {
-                _logger.LogWarning("Username {UserName} already exists", user.UserName.Value);
+                _logger.LogInfrastructureWarning("Username {UserName} already exists", user.UserName.Value);
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.UserNameError.AlreadyExists);
             }
 
@@ -61,18 +61,18 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS Application User with ID: {Id}", result.Value?.UserId);
+                _logger.LogInfrastructureInformation("Successfully created SMS Application User with ID: {Id}", result.Value?.UserId);
             }
             else
             {
-                _logger.LogError("Failed to create SMS Application User. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to create SMS Application User. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating SMS Application User");
+            _logger.LogInfrastructureError(ex, "Unexpected error creating SMS Application User");
             return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.CreateFailed);
         }
     }
@@ -84,12 +84,12 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Application User with ID: {Id}", id.Value);
+            _logger.LogInfrastructureInformation("Retrieving SMS Application User with ID: {Id}", id.Value);
             return await _repository.GetByCodeAsync(id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Application User with ID: {Id}", id.Value);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Application User with ID: {Id}", id.Value);
             return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -110,12 +110,12 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Application User with UserName: {UserName}", userName);
+            _logger.LogInfrastructureInformation("Retrieving SMS Application User with UserName: {UserName}", userName);
             return await _repository.GetByUserNameAsync(userName);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Application User with UserName: {UserName}", userName);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Application User with UserName: {UserName}", userName);
             return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -127,12 +127,12 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving all SMS Application Users");
+            _logger.LogInfrastructureInformation("Retrieving all SMS Application Users");
             return await _repository.GetAllAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all SMS Application Users");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving all SMS Application Users");
             return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -144,12 +144,12 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving active SMS Application Users");
+            _logger.LogInfrastructureInformation("Retrieving active SMS Application Users");
             return await _repository.GetActiveUsersAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving active SMS Application Users");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving active SMS Application Users");
             return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -161,12 +161,12 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Application Users by role: {ApplicationRole}", applicationRole);
+            _logger.LogInfrastructureInformation("Retrieving SMS Application Users by role: {ApplicationRole}", applicationRole);
             return await _repository.GetBySMSApplicationUserRoleAsync(applicationRole);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Application Users by role: {ApplicationRole}", applicationRole);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Application Users by role: {ApplicationRole}", applicationRole);
             return Result<IEnumerable<SMSApplicationUser>>.Failure<IEnumerable<SMSApplicationUser>>(DomainErrors.SMSApplicationUserError.NotFound);
         }
     }
@@ -180,16 +180,16 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
         {
             if (user is null)
             {
-                _logger.LogError("UpdateSMSApplicationUserAsync received null user");
+                _logger.LogInfrastructureError("UpdateSMSApplicationUserAsync received null user");
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Updating SMS Application User with ID: {Id}", user.UserId);
+            _logger.LogInfrastructureInformation("Updating SMS Application User with ID: {Id}", user.UserId);
 
             var updateResult = await _repository.UpdateAsync(user);
             if (updateResult.IsFailure)
             {
-                _logger.LogError("Failed to update SMS Application User. Error: {Error}", updateResult.Error?.Message);
+                _logger.LogInfrastructureError("Failed to update SMS Application User. Error: {Error}", updateResult.Error?.Message);
                 return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(updateResult.Error);
             }
 
@@ -198,7 +198,7 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating SMS Application User with ID: {Id}", user?.UserId);
+            _logger.LogInfrastructureError(ex, "Unexpected error updating SMS Application User with ID: {Id}", user?.UserId);
             return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.UpdateFailed);
         }
     }
@@ -210,23 +210,23 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
     {
         try
         {
-            _logger.LogInformation("Deleting SMS Application User with ID: {Id}", userId.Value);
+            _logger.LogInfrastructureInformation("Deleting SMS Application User with ID: {Id}", userId.Value);
             var result = await _repository.DeleteAsync(userId);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted SMS Application User with ID: {Id}", userId.Value);
+                _logger.LogInfrastructureInformation("Successfully deleted SMS Application User with ID: {Id}", userId.Value);
             }
             else
             {
-                _logger.LogError("Failed to delete SMS Application User. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to delete SMS Application User. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting SMS Application User with ID: {Id}", userId.Value);
+            _logger.LogInfrastructureError(ex, "Unexpected error deleting SMS Application User with ID: {Id}", userId.Value);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.DeleteFailed);
         }
     }
@@ -238,23 +238,23 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
     {
         try
         {
-            _logger.LogInformation("Updating password for SMS Application User with ID: {Id}", userId.Value);
+            _logger.LogInfrastructureInformation("Updating password for SMS Application User with ID: {Id}", userId.Value);
             var result = await _repository.UpdatePasswordAsync(userId, hashedPassword);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated password for SMS Application User with ID: {Id}", userId.Value);
+                _logger.LogInfrastructureInformation("Successfully updated password for SMS Application User with ID: {Id}", userId.Value);
             }
             else
             {
-                _logger.LogError("Failed to update password for SMS Application User. Error: {Error}", result.Error?.Message);
+                _logger.LogInfrastructureError("Failed to update password for SMS Application User. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating password for SMS Application User with ID: {Id}", userId.Value);
+            _logger.LogInfrastructureError(ex, "Unexpected error updating password for SMS Application User with ID: {Id}", userId.Value);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.PasswordUpdateFailed);
         }
     }
@@ -266,12 +266,12 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
     {
         try
         {
-            _logger.LogInformation("Recording login for SMS Application User with ID: {Id}", userId.Value);
+            _logger.LogInfrastructureInformation("Recording login for SMS Application User with ID: {Id}", userId.Value);
             return await _repository.RecordLoginAsync(userId, loginDate);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error recording login for SMS Application User with ID: {Id}", userId.Value);
+            _logger.LogInfrastructureError(ex, "Unexpected error recording login for SMS Application User with ID: {Id}", userId.Value);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.UpdateFailed);
         }
     }
@@ -283,12 +283,12 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
     {
         try
         {
-            _logger.LogInformation("Authenticating SMS Application User: {UserName}", userName);
+            _logger.LogInfrastructureInformation("Authenticating SMS Application User: {UserName}", userName);
 
             var userResult = await _repository.GetByUserNameAsync(userName);
             if (userResult.IsFailure)
             {
-                _logger.LogWarning("Authentication failed - user not found: {UserName}", userName);
+                _logger.LogInfrastructureWarning("Authentication failed - user not found: {UserName}", userName);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.LoginFailed);
             }
 
@@ -296,7 +296,7 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
 
             if (!user.Authenticate(plainTextPassword))
             {
-                _logger.LogWarning("Authentication failed - invalid password for user: {UserName}", userName);
+                _logger.LogInfrastructureWarning("Authentication failed - invalid password for user: {UserName}", userName);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.LoginFailed);
             }
 
@@ -304,12 +304,12 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
             user.RecordLogin();
             await _repository.UpdateAsync(user);
 
-            _logger.LogInformation("Successfully authenticated SMS Application User: {UserName}", userName);
+            _logger.LogInfrastructureInformation("Successfully authenticated SMS Application User: {UserName}", userName);
             return Result<bool>.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error during authentication for user: {UserName}", userName);
+            _logger.LogInfrastructureError(ex, "Unexpected error during authentication for user: {UserName}", userName);
             return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationUserError.LoginFailed);
         }
     }
@@ -321,13 +321,14 @@ public class SMSApplicationUserDataService : BaseDataService<SMSApplicationUserD
     {
         try
         {
-            _logger.LogInformation("Retrieving SMS Application User statistics");
+            _logger.LogInfrastructureInformation("Retrieving SMS Application User statistics");
             return await _repository.GetUserStatisticsAsync();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving SMS Application User statistics");
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Application User statistics");
             return Result<UserStatistics>.Failure<UserStatistics>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 }
+

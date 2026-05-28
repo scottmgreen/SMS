@@ -24,7 +24,7 @@ public class HazardCreatedNotificationHandler : BaseUIEventHandler<UINotificatio
     {
         try
         {
-            _logger.LogInformation("[UI HANDLER] Processing notification: {EventType} - {Message}", uiEvent.EventType, uiEvent.Message);
+            _logger.LogApplicationInformation("[UI HANDLER] Processing notification: {EventType} - {Message}", uiEvent.EventType, uiEvent.Message);
 
             // This is where you'd use NotificationService in a real implementation
             // For demonstration, we'll show what would happen
@@ -34,28 +34,28 @@ public class HazardCreatedNotificationHandler : BaseUIEventHandler<UINotificatio
                 ? $"{uiEvent.Message} (Report: {uiEvent.ReportId})"
                 : uiEvent.Message;
 
-            _logger.LogInformation("[UI HANDLER] NOTIFICATION:");
-            _logger.LogInformation("Severity: {Severity}", severity);
-            _logger.LogInformation("Summary: {Summary}", summary);
-            _logger.LogInformation("Detail: {Detail}", detail);
-            _logger.LogInformation("Target: {TargetComponent}", uiEvent.TargetComponent);
-            _logger.LogInformation("ReportId: {ReportId}", uiEvent.ReportId);
+            _logger.LogApplicationInformation("[UI HANDLER] NOTIFICATION:");
+            _logger.LogApplicationInformation("Severity: {Severity}", severity);
+            _logger.LogApplicationInformation("Summary: {Summary}", summary);
+            _logger.LogApplicationInformation("Detail: {Detail}", detail);
+            _logger.LogApplicationInformation("Target: {TargetComponent}", uiEvent.TargetComponent);
+            _logger.LogApplicationInformation("ReportId: {ReportId}", uiEvent.ReportId);
 
             // Log the full notification data for demonstration
             if (uiEvent.Metadata != null)
             {
-                _logger.LogInformation("[UI HANDLER] Notification Data: {Data}", System.Text.Json.JsonSerializer.Serialize(uiEvent.Metadata, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
+                _logger.LogApplicationInformation("[UI HANDLER] Notification Data: {Data}", System.Text.Json.JsonSerializer.Serialize(uiEvent.Metadata, new System.Text.Json.JsonSerializerOptions { WriteIndented = true }));
             }
 
             // Simulate notification processing
             await Task.Delay(100, cancellationToken); // Simulate UI update time
 
-            _logger.LogInformation("[UI HANDLER] Successfully processed UI notification for {EventType}", uiEvent.EventType);
+            _logger.LogApplicationInformation("[UI HANDLER] Successfully processed UI notification for {EventType}", uiEvent.EventType);
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "[UI HANDLER] Failed to process UI event: {EventType}", uiEvent.EventType);
+            _logger.LogApplicationError(ex, "[UI HANDLER] Failed to process UI event: {EventType}", uiEvent.EventType);
             return Result.Failure(new Error("UI_EVENT_PROCESSING_FAILED", $"UI event processing failed: {ex.Message}"));
         }
     }
@@ -86,16 +86,17 @@ public class HazardCreatedNotificationHandler : BaseUIEventHandler<UINotificatio
         {
             "HazardCreatedNotification" => priority switch
             {
-                UIEventPriority.Critical => "?? Critical Hazard Alert",
-                UIEventPriority.High => "?? High Priority Hazard",
-                UIEventPriority.Normal => "?? New Hazard Reported",
-                _ => "?? Hazard Notification"
+                UIEventPriority.Critical => "Critical Hazard Alert",
+                UIEventPriority.High => "High Priority Hazard",
+                UIEventPriority.Normal => "New Hazard Reported",
+                _ => "Hazard Notification"
             },
-            "HazardEscalationAlert" => "?? Hazard Escalation Required",
-            "TestUIEvent" => "?? UI Test Event",
-            _ => $"?? {eventType}"
+            "HazardEscalationAlert" => "Hazard Escalation Required",
+            "TestUIEvent" => "UI Test Event",
+            _ => $"{eventType}"
         };
     }
 
     #endregion
 }
+

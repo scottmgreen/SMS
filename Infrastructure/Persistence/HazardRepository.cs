@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -87,8 +87,8 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
                 return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
             }
 
-            // 🔥 DEBUG: Log the actual values before sending to stored proc
-            _logger.LogInformation("🔍 REPO DEBUG - Hazard.CreatedBy: '{CreatedBy}', Code: '{Code}'",
+            // ?? DEBUG: Log the actual values before sending to stored proc
+            _logger.LogInfrastructureInformation("REPO DEBUG - Hazard.CreatedBy: '{CreatedBy}', Code: '{Code}'",
                 hazard.CreatedBy ?? "NULL", hazard.Code ?? "NULL");
 
             _logger.LogInfrastructurePostItem($"{_logheader} {StoredProcs.pr_Hazard_Insert} Code:{hazard.Code}", null);
@@ -112,7 +112,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardResidualRiskMatrixCode, hazard.ResidualRiskMatrixCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardResidualAverageScore, hazard.ResidualAverageScore));
 
-            // 🔥 DEBUG: Log what we're about to send to the stored proc
+            // ?? DEBUG: Log what we're about to send to the stored proc
             var createdByParam = DataAccess.Parameter(ParameterNames.pmCreatedBy, hazard.CreatedBy);
             var createdDateParam = DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow);
 
@@ -133,8 +133,8 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
             HazardID hazardId = new(newCodeValue);
 
-            // 🔥 DEBUG: Log what we got back
-            _logger.LogInformation("🔍 STORED PROC RESULT - NewID: {NewID}, NewCode: '{NewCode}'", newIdValue, newCodeValue);
+            // ?? DEBUG: Log what we got back
+            _logger.LogInfrastructureInformation("STORED PROC RESULT - NewID: {NewID}, NewCode: '{NewCode}'", newIdValue, newCodeValue);
 
             return await GetHazardByCodeAsync(hazardId, ct).ConfigureAwait(false);
         }
@@ -385,3 +385,5 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
 
     #endregion
 }
+
+

@@ -10,7 +10,7 @@
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 
-namespace SMS_Application.Messaging.Pipelines;
+namespace SMS_Application.Pipelines;
 
 /// <summary>
 /// Single-responsibility pipeline that sets audit fields on commands before execution
@@ -41,7 +41,7 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
         var requestType = request.GetType().Name;
         var currentUserId = _currentUserService.UserDisplayName;
 
-        _logger.LogDebug("?? Audit Fields Setter: Processing {RequestType}", requestType);
+        _logger.LogApplicationDebug("Audit Fields Setter: Processing {RequestType}", requestType);
 
         // Step 1: Set audit fields BEFORE executing (ONLY responsibility of this pipeline)
         SetAuditFields(request, currentUserId);
@@ -66,7 +66,7 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
             // Handle Create Commands
             if (request is ICreateCommand createCommand)
             {
-                _logger.LogDebug("?? Setting CreatedBy='{UserId}' for CREATE command: {RequestType}",
+                _logger.LogApplicationDebug("Setting CreatedBy='{UserId}' for CREATE command: {RequestType}",
                     currentUserId, requestType);
                 createCommand.SetCreatedBy(currentUserId, timestamp);
                 return;
@@ -75,7 +75,7 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
             // Handle Update Commands
             if (request is IUpdateCommand updateCommand)
             {
-                _logger.LogDebug("?? Setting UpdatedBy='{UserId}' for UPDATE command: {RequestType}",
+                _logger.LogApplicationDebug("Setting UpdatedBy='{UserId}' for UPDATE command: {RequestType}",
                     currentUserId, requestType);
                 updateCommand.SetUpdatedBy(currentUserId, timestamp);
                 return;
@@ -84,7 +84,7 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
             // Handle Delete Commands
             if (request is IDeleteCommand deleteCommand)
             {
-                _logger.LogDebug("?? Setting DeletedBy='{UserId}' for DELETE command: {RequestType}",
+                _logger.LogApplicationDebug("Setting DeletedBy='{UserId}' for DELETE command: {RequestType}",
                     currentUserId, requestType);
                 deleteCommand.SetDeletedBy(currentUserId, timestamp);
                 return;
@@ -93,7 +93,7 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
             // Handle Read Queries (CQRS Query Pattern)
             if (request is IReadQuery readQuery)
             {
-                _logger.LogDebug("?? Setting AccessedBy='{UserId}' for READ query: {RequestType}",
+                _logger.LogApplicationDebug("Setting AccessedBy='{UserId}' for READ query: {RequestType}",
                     currentUserId, requestType);
                 readQuery.SetAccessedBy(currentUserId, timestamp);
                 return;
@@ -102,7 +102,7 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
             // Handle legacy IHasAuditFields (for backward compatibility)
             if (request is IHasAuditFields auditableCommand)
             {
-                _logger.LogDebug("?? Setting audit fields via IHasAuditFields for {RequestType}", requestType);
+                _logger.LogApplicationDebug("Setting audit fields via IHasAuditFields for {RequestType}", requestType);
                 if (IsCreateCommand(requestType))
                 {
                     auditableCommand.SetCreatedBy(currentUserId, timestamp);
@@ -118,11 +118,11 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
                 return;
             }
 
-            _logger.LogDebug("?? Request {RequestType} does not implement audit interfaces - no tracking", requestType);
+            _logger.LogApplicationDebug("Request {RequestType} does not implement audit interfaces - no tracking", requestType);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error setting audit fields for request {RequestType}", requestType);
+            _logger.LogApplicationError(ex, "Error setting audit fields for request {RequestType}", requestType);
         }
     }
 
@@ -154,3 +154,4 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
                commandName.Contains("Assign", StringComparison.OrdinalIgnoreCase);
     }
 }
+

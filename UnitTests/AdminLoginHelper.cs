@@ -50,9 +50,9 @@ public class AdminLoginHelper
         _output.WriteLine("");
         
         _output.WriteLine("After running this SQL:");
-        _output.WriteLine($"? Username: admin@flypdx.com");
-        _output.WriteLine($"? Password: {newPassword}");
-        _output.WriteLine($"? Login URL: https://localhost:61117/Account/Login");
+        _output.WriteLine($"Username: admin@flypdx.com");
+        _output.WriteLine($"Password: {newPassword}");
+        _output.WriteLine($"Login URL: https://localhost:61117/Account/Login");
         _output.WriteLine("");
         
         _output.WriteLine("=== VERIFY THE UPDATE ===");
@@ -106,7 +106,7 @@ public class AdminLoginHelper
                 
                 if (isValid)
                 {
-                    _output.WriteLine($"?? PASSWORD FOUND!");
+                    _output.WriteLine($"PASSWORD FOUND!");
                     _output.WriteLine($"   Username: admin@flypdx.com");
                     _output.WriteLine($"   Password: {password}");
                     _output.WriteLine($"   Login at: https://localhost:61117/Account/Login");
@@ -115,12 +115,12 @@ public class AdminLoginHelper
             }
             catch (Exception ex)
             {
-                _output.WriteLine($"? Error testing '{password}': {ex.Message}");
+                _output.WriteLine($"Error testing '{password}': {ex.Message}");
             }
         }
         
-        _output.WriteLine("? None of the PDX-specific passwords worked.");
-        _output.WriteLine("?? Recommendation: Use the GenerateNewAdminPassword test to reset the password.");
+        _output.WriteLine("None of the PDX-specific passwords worked.");
+        _output.WriteLine("Recommendation: Use the GenerateNewAdminPassword test to reset the password.");
         
         Assert.True(true);
     }
@@ -168,7 +168,7 @@ public class AdminLoginHelper
         _output.WriteLine("ORDER BY [fldv_PermissionLevel] DESC, [fldv_UserName];");
         
         _output.WriteLine("");
-        _output.WriteLine("?? KNOWN ADMIN USERS FROM YOUR DATA:");
+        _output.WriteLine("KNOWN ADMIN USERS FROM YOUR DATA:");
         _output.WriteLine("1. admin@flypdx.com (SMS Administrator - SuperAdmin)");
         _output.WriteLine("2. sarah.johnson@flypdx.com (Safety Manager - Admin)");
         
@@ -230,7 +230,7 @@ public class AdminLoginHelper
                 
                 if (isValid)
                 {
-                    _output.WriteLine($"? SUCCESS! CREDENTIALS FOUND!");
+                    _output.WriteLine($"SUCCESS! CREDENTIALS FOUND!");
                     _output.WriteLine($"   Username: {username}");
                     _output.WriteLine($"   Password: {password}");
                     _output.WriteLine($"   Try logging in at: https://localhost:61117/Account/Login");
@@ -239,11 +239,11 @@ public class AdminLoginHelper
             }
             catch (Exception ex)
             {
-                _output.WriteLine($"? Error testing password '{password}': {ex.Message}");
+                _output.WriteLine($"Error testing password '{password}': {ex.Message}");
             }
         }
         
-        _output.WriteLine($"? No matching password found for {username} from common list");
+        _output.WriteLine($"No matching password found for {username} from common list");
     }
 }
 

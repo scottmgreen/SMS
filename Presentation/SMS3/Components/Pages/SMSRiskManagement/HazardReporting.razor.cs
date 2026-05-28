@@ -1,4 +1,4 @@
-﻿
+
 using Microsoft.JSInterop;
 
 using SMS_Application.Interfaces;
@@ -22,7 +22,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 public partial class HazardReporting : ComponentBase, IDisposable
 {
     #region Dependencies
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<HazardReporting> _logger { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -232,7 +232,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         if (!IsEditMode)
         {
             InitializeFormDefaults();
-            Console.Write(CurrentUserService?.UserDisplayName);
+            Console.Write(_currentUserService?.UserDisplayName);
         }
 
         // Create DotNet reference for JavaScript callbacks
@@ -579,7 +579,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
                 // Use report data if available, otherwise use defaults
                 IncidentDateTime = EditingReport?.IncidentDateTime ?? DateTime.Now,
-                SubmittedBy = EditingReport?.SubmittedBy ?? CurrentUserService?.UserDisplayName ?? "Unknown User",
+                SubmittedBy = EditingReport?.SubmittedBy ?? _currentUserService?.UserDisplayName ?? "Unknown User",
                 SubmittedDate = EditingReport?.SubmittedDate ?? DateTime.Now,
                 SubmittingDepartment = EditingReport?.SubmittingDepartment ?? "",
                 SubmittingDepartmentJobFunction = EditingReport?.SubmittingDepartmentJobFunction ?? "",
@@ -734,7 +734,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     public async Task OnInputFileChange(UploadChangeEventArgs args)
     {
         var newFiles = args.Files; // Allow up to 10 files at once
-        _logger.LogInformation("?? OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
+        _logger.LogInformation("OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
 
         if (newFiles?.Any() == true)
         {
@@ -753,7 +753,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
                     if (isDuplicate)
                     {
-                        _logger.LogInformation("?? Skipped duplicate file: {FileName}", newFile.Name);
+                        _logger.LogInformation("Skipped duplicate file: {FileName}", newFile.Name);
                         continue;
                     }
 
@@ -777,11 +777,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     };
 
                     successfullyProcessedFiles.Add(attachedFile);
-                    _logger.LogInformation("? Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
+                    _logger.LogInformation("Successfully processed file: {FileName} ({Size} bytes)", newFile.Name, newFile.Size);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "? Error processing file: {FileName}", newFile.Name);
+                    _logger.LogError(ex, "Error processing file: {FileName}", newFile.Name);
                     failedFiles.Add(newFile.Name);
                 }
             }
@@ -813,11 +813,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to process {failedFiles.Count} file(s). This may be due to file size limits or browser restrictions."));
             }
 
-            _logger.LogInformation("?? File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
+            _logger.LogInformation("File processing completed: {Success} successful, {Failed} failed. Total queued: {Total}",successfullyProcessedFiles.Count, failedFiles.Count, AttachedFiles.Count);
         }
         else
         {
-            _logger.LogInformation("?? No files provided to OnInputFileChange");
+            _logger.LogInformation("No files provided to OnInputFileChange");
         }
 
         StateHasChanged();
@@ -980,12 +980,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
             return;
         }
 
-        _logger.LogInformation("?? Preparing for submission with {Count} cached files ready", AttachedFiles?.Count ?? 0);
+        _logger.LogInformation("Preparing for submission with {Count} cached files ready", AttachedFiles?.Count ?? 0);
         if (AttachedFiles?.Any() == true)
         {
             foreach (var file in AttachedFiles)
             {
-                _logger.LogInformation("?? Cached file ready for submission: {FileName} ({Size} bytes, {DataSize} bytes cached)", file.FileName, file.Size, file.Data?.Length ?? 0);
+                _logger.LogInformation("Cached file ready for submission: {FileName} ({Size} bytes, {DataSize} bytes cached)", file.FileName, file.Size, file.Data?.Length ?? 0);
             }
         }
 
@@ -1166,7 +1166,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error during hazard report submission in {Mode} mode",
+            _logger.LogError(ex, "Error during hazard report submission in {Mode} mode",
                 IsEditMode ? "EDIT" : "CREATE");
 
             ShowSubmissionConfirmation = false;
@@ -1202,7 +1202,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingReport.ReportContactEmail = HazardReport.ReportContactEmail;
         EditingReport.Status = ReportStatus.ReadyForProcessing;
         EditingReport.UpdatedDate = DateTime.UtcNow;
-        EditingReport.UpdatedBy = CurrentUserService.UserCode;
+        EditingReport.UpdatedBy = _currentUserService.UserCode;
 
         var updateReportCommand = new UpdateReportCommand(EditingReport);
         var reportUpdateResult = await _mediator.SendAsync(updateReportCommand, CancellationToken.None);
@@ -1212,7 +1212,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             throw new Exception($"Failed to update report: {reportUpdateResult.Error?.Message}");
         }
 
-        _logger.LogInformation("? Report {ReportCode} updated successfully", EditReportCode);
+        _logger.LogInformation("Report {ReportCode} updated successfully", EditReportCode);
 
         // ===============================
         // STEP 2: Update the existing Hazard
@@ -1223,7 +1223,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingHazard.HazardType = HazardReport.HazardType; // This is the actual selected hazard type, not "Initial"
         
         EditingHazard.UpdatedDate = DateTime.UtcNow;
-        EditingHazard.UpdatedBy = CurrentUserService.UserDisplayName;
+        EditingHazard.UpdatedBy = _currentUserService.UserDisplayName;
 
         // Handle location updates
         await UpdateHazardLocation(EditingHazard);
@@ -1237,7 +1237,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         var updatedHazard = hazardUpdateResult.Value;
-        _logger.LogInformation("? Hazard {HazardCode} updated successfully", EditHazardCode);
+        _logger.LogInformation("Hazard {HazardCode} updated successfully", EditHazardCode);
 
         // ===============================
         // STEP 3: Handle file updates (if any new files)
@@ -1253,7 +1253,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         ShowSubmissionConfirmation = false;
         ShowFinalSuccessConfirmation = true;
 
-        _logger.LogInformation("? EDIT mode completed - Report: {ReportCode}, Hazard: {HazardCode}",
+        _logger.LogInformation("EDIT mode completed - Report: {ReportCode}, Hazard: {HazardCode}",
             updatedHazard.ReportCode, updatedHazard.Code);
 
         await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Report {updatedHazard.ReportCode} and hazard {updatedHazard.Code} have been updated."));
@@ -1287,7 +1287,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             Description = HazardReport.Description,
             Stage = "INITIAL",
             Status = ReportStatus.ReadyForProcessing, //needs validation
-            CreatedBy = CurrentUserService.UserDisplayName,
+            CreatedBy = _currentUserService.UserDisplayName,
             CreatedDate = DateTime.UtcNow
         };
 
@@ -1299,7 +1299,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         var actualReportCode = reportResult.Value.Code;
-        _logger.LogInformation("? Report created with Code: {ReportCode}", actualReportCode);
+        _logger.LogInformation("Report created with Code: {ReportCode}", actualReportCode);
 
         // ===============================
         // STEP 2: Create new Hazard
@@ -1314,7 +1314,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             
             ReportCode = actualReportCode,
             IsInitialHazard = true ,
-            CreatedBy = CurrentUserService.UserDisplayName,
+            CreatedBy = _currentUserService.UserDisplayName,
             CreatedDate = DateTime.UtcNow
         };
 
@@ -1334,7 +1334,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         GeneratedHazardId = createdHazard.Code;
         GeneratedReportId = createdHazard.ReportCode;
 
-        _logger.LogInformation("✅ Hazard created with Code: {HazardCode}, linked to Report: {ReportCode} - Event publishing now handled by Command Handler", 
+        _logger.LogInformation("Hazard created with Code: {HazardCode}, linked to Report: {ReportCode} - Event publishing now handled by Command Handler", 
             createdHazard.Code, actualReportCode);
 
         // NOTE: Event publishing moved to CreateHazardCommandHandler for Clean Architecture compliance
@@ -1361,7 +1361,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         ShowSubmissionConfirmation = false;
         ShowFinalSuccessConfirmation = true;
 
-        _logger.LogInformation("? CREATE mode completed - Report: {ReportCode}, Hazard: {HazardCode} Tracking: { TrackingCode} ", createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
+        _logger.LogInformation("CREATE mode completed - Report: {ReportCode}, Hazard: {HazardCode} Tracking: { TrackingCode} ", createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
         await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}."));
 
@@ -1378,7 +1378,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 HazardCode = createdHazard.Code,
                 ReportCode = createdHazard.ReportCode,
                 TrackingCode = "HT-0000", // This will be replaced by database
-                CreatedBy = CurrentUserService?.UserDisplayName,
+                CreatedBy = _currentUserService?.UserDisplayName,
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -1387,12 +1387,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
             if (createdTrackingResult.IsSuccess)
             {
-                _logger.LogInformation("? Tracking code generated: {TrackingCode} for Hazard: {HazardCode}", 
+                _logger.LogInformation("Tracking code generated: {TrackingCode} for Hazard: {HazardCode}", 
                     createdTrackingResult.Value.TrackingCode, createdHazard.Code);
             }
             else
             {
-                _logger.LogError("? Failed to generate tracking code for Hazard: {HazardCode}. Error: {Error}", 
+                _logger.LogError("Failed to generate tracking code for Hazard: {HazardCode}. Error: {Error}", 
                     createdHazard.Code, createdTrackingResult.Error?.Message);
             }
 
@@ -1400,7 +1400,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Exception generating tracking code for Hazard: {HazardCode}", createdHazard.Code);
+            _logger.LogError(ex, "Exception generating tracking code for Hazard: {HazardCode}", createdHazard.Code);
             return Result<HazardReportTracking>.Failure<HazardReportTracking>(DomainErrors.HazardReportTrackingError.CreateFailed);
         }
     }
@@ -1431,7 +1431,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     Latitude = SelectedGeoLocation.Latitude,
                     Longitude = SelectedGeoLocation.Longitude,
                     Description = SelectedGeoLocation.Description ?? "Map selected location",
-                    CreatedBy = CurrentUserService?.UserDisplayName,
+                    CreatedBy = _currentUserService?.UserDisplayName,
                     CreatedDate = DateTime.UtcNow,
                     IsValid = true
                 };
@@ -1445,12 +1445,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     var createdLocation = locationCreateResult.Value;
                     hazard.HazardLocation = createdLocation;
 
-                    _logger.LogInformation("? HazardLocation created with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
+                    _logger.LogInformation("HazardLocation created with Code: {LocationCode}, Coordinates: ({Lat}, {Lng})",
                         createdLocation.Code, SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
                 }
                 else
                 {
-                    _logger.LogError("? Failed to create HazardLocation: {Error}", locationCreateResult.Error?.Message);
+                    _logger.LogError("Failed to create HazardLocation: {Error}", locationCreateResult.Error?.Message);
                 }
 
                 // Set coordinate information in hazard fields for backward compatibility
@@ -1483,7 +1483,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             if (AttachedFiles?.Any() == true)
             {
-                _logger.LogInformation("?? Processing {Count} cached files for Hazard: {HazardCode}",
+                _logger.LogInformation("Processing {Count} cached files for Hazard: {HazardCode}",
                     AttachedFiles.Count, hazard.Code);
 
                 foreach (var attachedFile in AttachedFiles.Where(f => f?.Data?.Length > 0))
@@ -1504,7 +1504,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             FileSizeBytes = attachedFile.Size,
                             StorageType = "Database",
                             FileData = fileData,
-                            UploadedBy = HazardReport.SubmittedBy ?? CurrentUserService?.UserDisplayName ?? "SYSTEM",
+                            UploadedBy = HazardReport.SubmittedBy ?? _currentUserService?.UserDisplayName ?? "SYSTEM",
                             UploadedDate = DateTime.UtcNow,
                             IsActive = true,
                             IsConfidential = HazardReport.IsAnonymous
@@ -1518,30 +1518,30 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             var createdFileId = hazardFileResult.Value.Code;
                             hazard.AddHazardFile(new HazardFileID(createdFileId));
 
-                            _logger.LogInformation("? Created HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}",
+                            _logger.LogInformation("Created HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}",
                                 attachedFile.FileName, createdFileId, hazard.Code);
                         }
                         else
                         {
-                            _logger.LogError("? Failed to create HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}",
+                            _logger.LogError("Failed to create HazardFile: {FileName} for Hazard: {HazardCode}. Error: {Error}",
                                 attachedFile.FileName, hazard.Code, hazardFileResult.Error?.Message);
                         }
                     }
                     catch (Exception fileEx)
                     {
-                        _logger.LogError(fileEx, "? Exception creating HazardFile: {FileName} for Hazard: {HazardCode}",
+                        _logger.LogError(fileEx, "Exception creating HazardFile: {FileName} for Hazard: {HazardCode}",
                             attachedFile.FileName, hazard.Code);
                     }
                 }
             }
             else
             {
-                _logger.LogInformation("?? No files to process for Hazard: {HazardCode}", hazard.Code);
+                _logger.LogInformation("No files to process for Hazard: {HazardCode}", hazard.Code);
             }
         }
         catch (Exception fileEx)
         {
-            _logger.LogError(fileEx, "?? Error processing files, but continuing with hazard operation");
+            _logger.LogError(fileEx, "Error processing files, but continuing with hazard operation");
         }
     }
 
@@ -1656,12 +1656,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     private void InitializeFormDefaults()
     {
-        //var currentUser = CurrentUserService.UserCode;
+        //var currentUser = _currentUserService.UserCode;
         var theDate = DateTime.Now; //.AddMinutes(-10);
         
         HazardReport = new HazardReportForm
         {
-            SubmittedBy = CurrentUserService.UserDisplayName ?? "Unknown",
+            SubmittedBy = _currentUserService.UserDisplayName ?? "Unknown",
             SubmittedDate = new DateTime(theDate.Year, theDate.Month, theDate.Day, theDate.Hour, theDate.Minute, 0),
             IncidentDateTime = new DateTime(theDate.Year, theDate.Month, theDate.Day, theDate.Hour, theDate.Minute, 0),
         };

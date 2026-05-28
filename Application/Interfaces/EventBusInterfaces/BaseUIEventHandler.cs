@@ -31,19 +31,19 @@ public abstract class BaseUIEventHandler<T> : IUIEventHandler<T> where T : IBase
     {
         try
         {
-            Logger.LogDebug("Processing UI event {EventType} for {TargetComponent} (Priority: {Priority})", 
+            Logger.LogApplicationDebug("Processing UI event {EventType} for {TargetComponent} (Priority: {Priority})", 
                 uiEvent.EventType, uiEvent.TargetComponent, uiEvent.Priority);
 
             var result = await ProcessUIEventAsync(uiEvent, cancellationToken);
 
             if (result.IsSuccess)
             {
-                Logger.LogDebug("Successfully processed UI event {EventType} for {TargetComponent}", 
+                Logger.LogApplicationDebug("Successfully processed UI event {EventType} for {TargetComponent}", 
                     uiEvent.EventType, uiEvent.TargetComponent);
             }
             else
             {
-                Logger.LogWarning("Failed to process UI event {EventType} for {TargetComponent}: {Error}", 
+                Logger.LogApplicationWarning("Failed to process UI event {EventType} for {TargetComponent}: {Error}", 
                     uiEvent.EventType, uiEvent.TargetComponent, result.Error.Message);
             }
 
@@ -51,7 +51,7 @@ public abstract class BaseUIEventHandler<T> : IUIEventHandler<T> where T : IBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error processing UI event {EventType} for {TargetComponent}", 
+            Logger.LogApplicationError(ex, "Error processing UI event {EventType} for {TargetComponent}", 
                 uiEvent.EventType, uiEvent.TargetComponent);
             return Result.Failure(new Error("UI_EVENT_HANDLER_ERROR", $"UI event processing failed: {ex.Message}"));
         }
@@ -62,3 +62,4 @@ public abstract class BaseUIEventHandler<T> : IUIEventHandler<T> where T : IBase
     /// </summary>
     protected abstract Task<Result> ProcessUIEventAsync(T uiEvent, CancellationToken cancellationToken);
 }
+

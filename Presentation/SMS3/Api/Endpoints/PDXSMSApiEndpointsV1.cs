@@ -13,7 +13,7 @@ using Microsoft.FeatureManagement;
 using SMS3.Api.Models;
 using SMS3.Api.Services;
 using SMS_Infrastructure.Security;
-using SMS_Application.Messaging.Commands;
+using SMS_Application.Commands;
 using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;

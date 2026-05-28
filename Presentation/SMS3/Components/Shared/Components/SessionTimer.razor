@@ -3,11 +3,11 @@
 @using SMS_Application.Interfaces
 @implements IDisposable
 @inject SessionTimerService SessionTimerSvc
-@inject ICurrentUserService CurrentUserService  
+@inject ICurrentUserService _currentUserService  
 @inject NavigationManager Navigation
 @inject ILogger<SessionTimer> Logger
 
-@if (CurrentUserService.IsAuthenticated && ShowTimer)
+@if (_currentUserService.IsAuthenticated && ShowTimer)
 {
     <div class="session-timer-container d-flex align-items-center me-3">
         <i class="fas fa-clock me-1 @GetIconClass()"></i>
@@ -79,7 +79,7 @@
     
     protected override async Task OnInitializedAsync()
     {
-        if (CurrentUserService.IsAuthenticated)
+        if (_currentUserService.IsAuthenticated)
         {
             // Subscribe to session timer events
             SessionTimerSvc.OnTimeRemaining += HandleTimeRemaining;

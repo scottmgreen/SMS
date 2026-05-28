@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAssessmentDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -43,22 +43,22 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     {
         try
         {
-            _logger.LogInformation("Retrieving RiskAssessment by ID: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureInformation("Retrieving RiskAssessment by ID: {Id}", riskAssessmentId);
 
             var result = await _repo.GetRiskAssessmentByCodeAsync(riskAssessmentId, cancellationToken).ConfigureAwait(false);
 
             if (result.IsFailure)
             {
-                _logger.LogWarning("RiskAssessment not found with ID: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureWarning("RiskAssessment not found with ID: {Id}", riskAssessmentId);
                 return result;
             }
 
-            _logger.LogInformation("Successfully retrieved RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureInformation("Successfully retrieved RiskAssessment: {Id}", riskAssessmentId);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve RiskAssessment by ID: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Failed to retrieve RiskAssessment by ID: {Id}", riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
@@ -67,22 +67,22 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     {
         try
         {
-            _logger.LogInformation("Retrieving RiskAssessment by Hazard Code: {Code}", hazardCode.Value);
+            _logger.LogInfrastructureInformation("Retrieving RiskAssessment by Hazard Code: {Code}", hazardCode.Value);
 
             var result = await _repo.GetRiskAssessmentsByHazardCodeAsync(hazardCode, cancellationToken).ConfigureAwait(false);
 
             if (result.IsFailure)
             {
-                _logger.LogWarning("RiskAssessment not found with Hazard Code: {Code}", hazardCode);
+                _logger.LogInfrastructureWarning("RiskAssessment not found with Hazard Code: {Code}", hazardCode);
                 return result;
             }
 
-            _logger.LogInformation("Successfully retrieved with Hazard Code: {Code}", hazardCode);
+            _logger.LogInfrastructureInformation("Successfully retrieved with Hazard Code: {Code}", hazardCode);
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Failed to retrieve RiskAssessment by Hazard Code: {Code}", hazardCode);
+            _logger.LogInfrastructureError(ex, "Failed to retrieve RiskAssessment by Hazard Code: {Code}", hazardCode);
             return Result<List<RiskAssessment>>.Failure<List<RiskAssessment>>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
@@ -103,24 +103,24 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     {
         try
         {
-            _logger.LogInformation("Deleting RiskAssessment with ID: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureInformation("Deleting RiskAssessment with ID: {Id}", riskAssessmentId);
 
             var result = await _repo.DeleteRiskAssessmentAsync(riskAssessmentId, cancellationToken).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted RiskAssessment with ID: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureInformation("Successfully deleted RiskAssessment with ID: {Id}", riskAssessmentId);
             }
             else
             {
-                _logger.LogWarning("Failed to delete RiskAssessment with ID: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureWarning("Failed to delete RiskAssessment with ID: {Id}", riskAssessmentId);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting RiskAssessment with ID: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Error deleting RiskAssessment with ID: {Id}", riskAssessmentId);
             return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.DeletionFailed);
         }
     }
@@ -149,7 +149,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     {
         try
         {
-            _logger.LogInformation("Saving Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureInformation("Saving Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
 
             var result = await _repo.UpdateStep1Async(
                 riskAssessmentId,
@@ -170,18 +170,18 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully saved Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureInformation("Successfully saved Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
             }
             else
             {
-                _logger.LogWarning("Failed to save Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureWarning("Failed to save Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Error saving Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -198,7 +198,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     {
         try
         {
-            _logger.LogInformation("Saving Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureInformation("Saving Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
 
             var result = await _repo.UpdateStep3Async(
                 riskAssessmentId,
@@ -209,18 +209,18 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully saved Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureInformation("Successfully saved Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
             }
             else
             {
-                _logger.LogWarning("Failed to save Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureWarning("Failed to save Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Error saving Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -238,7 +238,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     {
         try
         {
-            _logger.LogInformation("Saving Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureInformation("Saving Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
 
             var result = await _repo.UpdateStep4Async(
                 riskAssessmentId,
@@ -250,18 +250,18 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully saved Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureInformation("Successfully saved Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
             }
             else
             {
-                _logger.LogWarning("Failed to save Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureWarning("Failed to save Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Error saving Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -276,7 +276,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     {
         try
         {
-            _logger.LogInformation("Saving Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureInformation("Saving Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
 
             var result = await _repo.UpdateStep5Async(
                 riskAssessmentId,
@@ -285,18 +285,18 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully saved Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureInformation("Successfully saved Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
             }
             else
             {
-                _logger.LogWarning("Failed to save Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureWarning("Failed to save Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Error saving Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -316,7 +316,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     {
         try
         {
-            _logger.LogInformation("Updating progress for RiskAssessment: {Id}, Step: {Step}, Completion: {Percentage}%",
+            _logger.LogInfrastructureInformation("Updating progress for RiskAssessment: {Id}, Step: {Step}, Completion: {Percentage}%",
                 riskAssessmentId, currentStep, completionPercentage);
 
             var result = await _repo.UpdateProgressAsync(
@@ -331,18 +331,18 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated progress for RiskAssessment: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureInformation("Successfully updated progress for RiskAssessment: {Id}", riskAssessmentId);
             }
             else
             {
-                _logger.LogWarning("Failed to update progress for RiskAssessment: {Id}", riskAssessmentId);
+                _logger.LogInfrastructureWarning("Failed to update progress for RiskAssessment: {Id}", riskAssessmentId);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating progress for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Error updating progress for RiskAssessment: {Id}", riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -398,7 +398,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     {
         try
         {
-            _logger.LogInformation("Saving Step {Step} data for RiskAssessment: {Id}", stepNumber, riskAssessmentId);
+            _logger.LogInfrastructureInformation("Saving Step {Step} data for RiskAssessment: {Id}", stepNumber, riskAssessmentId);
 
             return stepNumber switch
             {
@@ -438,7 +438,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error saving Step {Step} data for RiskAssessment: {Id}", stepNumber, riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Error saving Step {Step} data for RiskAssessment: {Id}", stepNumber, riskAssessmentId);
             return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -482,7 +482,7 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating step save for RiskAssessment: {Id}, Step: {Step}", riskAssessmentId, stepNumber);
+            _logger.LogInfrastructureError(ex, "Error validating step save for RiskAssessment: {Id}, Step: {Step}", riskAssessmentId, stepNumber);
             return Result<bool>.Failure<bool>(DomainErrors.RiskAssessmentError.UpdateFailed);
         }
     }
@@ -517,11 +517,12 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting step completion status for RiskAssessment: {Id}", riskAssessmentId);
+            _logger.LogInfrastructureError(ex, "Error getting step completion status for RiskAssessment: {Id}", riskAssessmentId);
             return Result<Dictionary<int, bool>>.Failure<Dictionary<int, bool>>(DomainErrors.RiskAssessmentError.NotFound);
         }
     }
 
     #endregion
 }
+
 

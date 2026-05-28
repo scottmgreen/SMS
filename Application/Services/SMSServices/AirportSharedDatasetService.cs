@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="AirportSharedDatasetService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -35,26 +35,26 @@ public sealed class AirportSharedDatasetService
     {
         try
         {
-            _logger.LogInformation("Creating Airport Shared Dataset with code: {Code}", airportSharedDataset?.Code);
+            _logger.LogApplicationInformation("Creating Airport Shared Dataset with code: {Code}", airportSharedDataset?.Code);
 
             // Business validation - ensure dataset is not null
             if (airportSharedDataset is null)
             {
-                _logger.LogError("CreateAirportSharedDatasetAsync received null dataset");
+                _logger.LogApplicationError("CreateAirportSharedDatasetAsync received null dataset");
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.NullOrEmpty);
             }
 
             // Business validation - ensure ReportID is provided (critical SMS requirement)
             if (string.IsNullOrWhiteSpace(airportSharedDataset.ReportCode))
             {
-                _logger.LogError("CreateAirportSharedDatasetAsync received dataset without ReportID");
+                _logger.LogApplicationError("CreateAirportSharedDatasetAsync received dataset without ReportID");
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
             }
 
             // Business validation - ensure HazardCode is provided (critical SMS requirement)
             if (string.IsNullOrWhiteSpace(airportSharedDataset.HazardCode))
             {
-                _logger.LogError("CreateAirportSharedDatasetAsync received dataset without HazardCode");
+                _logger.LogApplicationError("CreateAirportSharedDatasetAsync received dataset without HazardCode");
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.HazardCodeRequired);
             }
 
@@ -62,18 +62,18 @@ public sealed class AirportSharedDatasetService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created Airport Shared Dataset with ID: {Id}", result.Value?.Id);
+                _logger.LogApplicationInformation("Successfully created Airport Shared Dataset with ID: {Id}", result.Value?.Id);
             }
             else
             {
-                _logger.LogError("Failed to create Airport Shared Dataset. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create Airport Shared Dataset. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating Airport Shared Dataset");
+            _logger.LogApplicationError(ex, "Unexpected error creating Airport Shared Dataset");
             return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.CreateFailed);
         }
     }
@@ -85,12 +85,12 @@ public sealed class AirportSharedDatasetService
     {
         try
         {
-            _logger.LogInformation("Retrieving Airport Shared Dataset with ID: {Id}", code);
+            _logger.LogApplicationInformation("Retrieving Airport Shared Dataset with ID: {Id}", code);
             return await _dataService.GetAirportSharedDatasetByCodeAsync(code, ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving Airport Shared Dataset with ID: {Id}", code);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving Airport Shared Dataset with ID: {Id}", code);
             return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.NotFound);
         }
     }
@@ -102,12 +102,12 @@ public sealed class AirportSharedDatasetService
     {
         try
         {
-            _logger.LogInformation("Retrieving all Airport Shared Datasets");
+            _logger.LogApplicationInformation("Retrieving all Airport Shared Datasets");
             return await _dataService.GetAllAirportSharedDatasetsAsync(ct).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all Airport Shared Datasets");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all Airport Shared Datasets");
             return Result<List<AirportSharedDataset>>.Failure<List<AirportSharedDataset>>(DomainErrors.AirportSharedDatasetError.NullOrEmpty);
         }
     }
@@ -119,11 +119,11 @@ public sealed class AirportSharedDatasetService
     {
         try
         {
-            _logger.LogInformation("Updating Airport Shared Dataset with Code: {Code}", airportSharedDataset?.Code);
+            _logger.LogApplicationInformation("Updating Airport Shared Dataset with Code: {Code}", airportSharedDataset?.Code);
 
             if (airportSharedDataset is null)
             {
-                _logger.LogError("UpdateAirportSharedDatasetAsync received null dataset");
+                _logger.LogApplicationError("UpdateAirportSharedDatasetAsync received null dataset");
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.NullOrEmpty);
             }
 
@@ -132,20 +132,20 @@ public sealed class AirportSharedDatasetService
             var existingDatasetResult = await _dataService.GetAirportSharedDatasetByCodeAsync(datasetCode, ct).ConfigureAwait(false);
             if (existingDatasetResult.IsFailure)
             {
-                _logger.LogWarning("Cannot update non-existent Airport Shared Dataset with Code: {Code}", airportSharedDataset.Code);
+                _logger.LogApplicationWarning("Cannot update non-existent Airport Shared Dataset with Code: {Code}", airportSharedDataset.Code);
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.NotFound);
             }
 
             // Business validation - ensure critical fields are not being cleared
             if (string.IsNullOrWhiteSpace(airportSharedDataset.ReportCode))
             {
-                _logger.LogError("UpdateAirportSharedDatasetAsync attempt to clear ReportCode - not allowed");
+                _logger.LogApplicationError("UpdateAirportSharedDatasetAsync attempt to clear ReportCode - not allowed");
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
             }
 
             if (string.IsNullOrWhiteSpace(airportSharedDataset.HazardCode))
             {
-                _logger.LogError("UpdateAirportSharedDatasetAsync attempt to clear HazardCode - not allowed");
+                _logger.LogApplicationError("UpdateAirportSharedDatasetAsync attempt to clear HazardCode - not allowed");
                 return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.HazardCodeRequired);
             }
 
@@ -153,18 +153,18 @@ public sealed class AirportSharedDatasetService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated Airport Shared Dataset with Code: {Code}", airportSharedDataset.Code);
+                _logger.LogApplicationInformation("Successfully updated Airport Shared Dataset with Code: {Code}", airportSharedDataset.Code);
             }
             else
             {
-                _logger.LogError("Failed to update Airport Shared Dataset. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update Airport Shared Dataset. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating Airport Shared Dataset with Code: {Code}", airportSharedDataset?.Code);
+            _logger.LogApplicationError(ex, "Unexpected error updating Airport Shared Dataset with Code: {Code}", airportSharedDataset?.Code);
             return Result<AirportSharedDataset>.Failure<AirportSharedDataset>(DomainErrors.AirportSharedDatasetError.UpdateFailed);
         }
     }
@@ -176,13 +176,13 @@ public sealed class AirportSharedDatasetService
     {
         try
         {
-            _logger.LogInformation("Deleting Airport Shared Dataset with Code: {Code}", code);
+            _logger.LogApplicationInformation("Deleting Airport Shared Dataset with Code: {Code}", code);
 
             // Business validation - check if dataset exists
             var existingDatasetResult = await _dataService.GetAirportSharedDatasetByCodeAsync(code, ct).ConfigureAwait(false);
             if (existingDatasetResult.IsFailure)
             {
-                _logger.LogWarning("Cannot delete non-existent Airport Shared Dataset with Code: {Code}", code);
+                _logger.LogApplicationWarning("Cannot delete non-existent Airport Shared Dataset with Code: {Code}", code);
                 return Result<bool>.Failure<bool>(DomainErrors.AirportSharedDatasetError.NotFound);
             }
 
@@ -190,18 +190,18 @@ public sealed class AirportSharedDatasetService
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted Airport Shared Dataset with Code: {Code}", code);
+                _logger.LogApplicationInformation("Successfully deleted Airport Shared Dataset with Code: {Code}", code);
             }
             else
             {
-                _logger.LogError("Failed to delete Airport Shared Dataset. Error: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete Airport Shared Dataset. Error: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting Airport Shared Dataset with Code: {Code}", code);
+            _logger.LogApplicationError(ex, "Unexpected error deleting Airport Shared Dataset with Code: {Code}", code);
             return Result<bool>.Failure<bool>(DomainErrors.AirportSharedDatasetError.DeleteFailed);
         }
     }
@@ -213,11 +213,11 @@ public sealed class AirportSharedDatasetService
     {
         try
         {
-            _logger.LogInformation("Retrieving Airport Shared Datasets for Report ID: {ReportId}", reportId);
+            _logger.LogApplicationInformation("Retrieving Airport Shared Datasets for Report ID: {ReportId}", reportId);
 
             if (string.IsNullOrWhiteSpace(reportId))
             {
-                _logger.LogWarning("GetAirportSharedDatasetsByReportIdAsync called with empty ReportId");
+                _logger.LogApplicationWarning("GetAirportSharedDatasetsByReportIdAsync called with empty ReportId");
                 return Result<List<AirportSharedDataset>>.Failure<List<AirportSharedDataset>>(DomainErrors.AirportSharedDatasetError.ReportIDRequired);
             }
 
@@ -232,14 +232,14 @@ public sealed class AirportSharedDatasetService
                 .Where(d => d.ReportCode.Equals(reportId, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            _logger.LogInformation("Found {Count} Airport Shared Datasets for Report ID: {ReportId}",
+            _logger.LogApplicationInformation("Found {Count} Airport Shared Datasets for Report ID: {ReportId}",
                 filteredDatasets.Count, reportId);
 
             return Result<List<AirportSharedDataset>>.Success(filteredDatasets);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving Airport Shared Datasets for Report ID: {ReportId}", reportId);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving Airport Shared Datasets for Report ID: {ReportId}", reportId);
             return Result<List<AirportSharedDataset>>.Failure<List<AirportSharedDataset>>(DomainErrors.AirportSharedDatasetError.NotFound);
         }
     }
@@ -251,11 +251,11 @@ public sealed class AirportSharedDatasetService
     {
         try
         {
-            _logger.LogInformation("Retrieving Airport Shared Datasets for Hazard Code: {HazardCode}", hazardCode);
+            _logger.LogApplicationInformation("Retrieving Airport Shared Datasets for Hazard Code: {HazardCode}", hazardCode);
 
             if (string.IsNullOrWhiteSpace(hazardCode))
             {
-                _logger.LogWarning("GetAirportSharedDatasetsByHazardCodeAsync called with empty HazardCode");
+                _logger.LogApplicationWarning("GetAirportSharedDatasetsByHazardCodeAsync called with empty HazardCode");
                 return Result<List<AirportSharedDataset>>.Failure<List<AirportSharedDataset>>(DomainErrors.AirportSharedDatasetError.HazardCodeRequired);
             }
 
@@ -270,14 +270,14 @@ public sealed class AirportSharedDatasetService
                 .Where(d => d.HazardCode.Equals(hazardCode, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            _logger.LogInformation("Found {Count} Airport Shared Datasets for Hazard Code: {HazardCode}",
+            _logger.LogApplicationInformation("Found {Count} Airport Shared Datasets for Hazard Code: {HazardCode}",
                 filteredDatasets.Count, hazardCode);
 
             return Result<List<AirportSharedDataset>>.Success(filteredDatasets);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving Airport Shared Datasets for Hazard Code: {HazardCode}", hazardCode);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving Airport Shared Datasets for Hazard Code: {HazardCode}", hazardCode);
             return Result<List<AirportSharedDataset>>.Failure<List<AirportSharedDataset>>(DomainErrors.AirportSharedDatasetError.NotFound);
         }
     }
@@ -289,7 +289,7 @@ public sealed class AirportSharedDatasetService
     {
         try
         {
-            _logger.LogInformation("Validating Airport Shared Dataset for SMS compliance: {Code}", dataset?.Code);
+            _logger.LogApplicationInformation("Validating Airport Shared Dataset for SMS compliance: {Code}", dataset?.Code);
 
             if (dataset is null)
             {
@@ -319,19 +319,20 @@ public sealed class AirportSharedDatasetService
 
             if (validationErrors.Any())
             {
-                _logger.LogWarning("Dataset validation failed for Code: {Code}. Errors: {Errors}",
+                _logger.LogApplicationWarning("Dataset validation failed for Code: {Code}. Errors: {Errors}",
                     dataset.Code, string.Join(", ", validationErrors));
                 return Result<bool>.Failure<bool>(DomainErrors.AirportSharedDatasetError.InvalidNarrative);
             }
 
-            _logger.LogInformation("Dataset validation passed for Code: {Code}", dataset.Code);
+            _logger.LogApplicationInformation("Dataset validation passed for Code: {Code}", dataset.Code);
             return Result<bool>.Success(true);
 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error during dataset validation");
+            _logger.LogApplicationError(ex, "Unexpected error during dataset validation");
             return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 }
+

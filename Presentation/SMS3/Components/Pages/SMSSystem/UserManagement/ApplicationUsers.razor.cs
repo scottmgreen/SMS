@@ -1,6 +1,6 @@
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Commands;
+using SMS_Application.Queries;
 
 using SMS_Domain.Events;
 using SMS_Domain.ValueObjects;
@@ -20,7 +20,7 @@ namespace SMS3.Components.Pages.SMSSystem.UserManagement;
 /// </summary>
 public partial class ApplicationUsers : ComponentBase
 {
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ApplicationUsers> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
@@ -279,7 +279,7 @@ public partial class ApplicationUsers : ComponentBase
             
             // ? FIXED: Only set business fields - let pipeline handle audit fields
             user.UserRole = selectedRole;
-            // ? REMOVED: user.UpdatedBy = CurrentUserService?.UserDisplayName;
+            // ? REMOVED: user.UpdatedBy = _currentUserService?.UserDisplayName;
             // ? REMOVED: user.UpdatedDate = DateTime.UtcNow;
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
@@ -338,7 +338,7 @@ public partial class ApplicationUsers : ComponentBase
 
             // ? FIXED: Only set business fields - let pipeline handle audit fields
             user.UserRole = null!; // Explicitly assign null with null-forgiving operator
-            // ? REMOVED: user.UpdatedBy = CurrentUserService?.UserDisplayName;
+            // ? REMOVED: user.UpdatedBy = _currentUserService?.UserDisplayName;
             // ? REMOVED: user.UpdatedDate = DateTime.UtcNow;
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
@@ -419,7 +419,7 @@ public partial class ApplicationUsers : ComponentBase
                 IsActive = NewIsActive, // UPDATED: Use NewIsActive property
                 SMSUserType = SMSUserType.Application
                 // ? FIXED: Removed manual audit field assignments
-                // ? REMOVED: CreatedBy = CurrentUserService?.UserDisplayName,
+                // ? REMOVED: CreatedBy = _currentUserService?.UserDisplayName,
                 // ? REMOVED: CreatedDate = DateTime.UtcNow
             };
 
@@ -512,7 +512,7 @@ public partial class ApplicationUsers : ComponentBase
             }
             
             // ? REMOVED: Manual audit field assignments
-            // CurrentUser.UpdatedBy = CurrentUserService?.UserDisplayName;
+            // CurrentUser.UpdatedBy = _currentUserService?.UserDisplayName;
             // CurrentUser.UpdatedDate = DateTime.UtcNow;
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate

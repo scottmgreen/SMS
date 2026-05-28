@@ -16,7 +16,7 @@ using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
-namespace Application.Services.Strategies;
+namespace SMS_Application.Strategies;
 
 /// <summary>
 /// Session-based authentication strategy using HTTP Session cookies
@@ -57,17 +57,17 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             var context = _httpContextAccessor.HttpContext;
             if (context?.Session == null)
             {
-                _logger.LogWarning("? Session not available for SessionBasedAuthenticationStrategy");
+                _logger.LogApplicationWarning("Session not available for SessionBasedAuthenticationStrategy");
                 return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
             if (context.Response.HasStarted)
             {
-                _logger.LogWarning("? Response has already started - cannot write to session");
+                _logger.LogApplicationWarning("Response has already started - cannot write to session");
                 return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
             }
 
-            _logger.LogInformation("?? Storing user {UserCode} ({UserType}) in session", user.Code, userType.Value);
+            _logger.LogApplicationInformation("Storing user {UserCode} ({UserType}) in session", user.Code, userType.Value);
 
             await context.Session.LoadAsync(cancellationToken);
 
@@ -86,14 +86,14 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
 
             await context.Session.CommitAsync(cancellationToken);
 
-            _logger.LogInformation("? User {UserCode} ({UserType}) stored successfully in session with {FieldCount} fields", 
+            _logger.LogApplicationInformation("User {UserCode} ({UserType}) stored successfully in session with {FieldCount} fields", 
                 user.Code, userType.Value, userData.Count);
 
             return Result.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error storing user {UserCode} in session", user.Code);
+            _logger.LogApplicationError(ex, "Error storing user {UserCode} in session", user.Code);
             return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -108,14 +108,14 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             var context = _httpContextAccessor.HttpContext;
             if (context?.Session == null)
             {
-                _logger.LogDebug("?? Session not available for user retrieval");
+                _logger.LogApplicationDebug("Session not available for user retrieval");
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             var isAuthenticated = context.Session.GetString("IsAuthenticated");
             if (isAuthenticated != "true")
             {
-                _logger.LogDebug("?? No authenticated user in session");
+                _logger.LogApplicationDebug("No authenticated user in session");
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
@@ -124,12 +124,12 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
 
             if (string.IsNullOrEmpty(userCode) || string.IsNullOrEmpty(userTypeValue))
             {
-                _logger.LogWarning("?? Incomplete user data in session - UserCode: {UserCode}, UserType: {UserType}", 
+                _logger.LogApplicationWarning("Incomplete user data in session - UserCode: {UserCode}, UserType: {UserType}", 
                     userCode ?? "NULL", userTypeValue ?? "NULL");
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
-            _logger.LogInformation("?? Retrieving user {UserCode} ({UserType}) from session", userCode, userTypeValue);
+            _logger.LogApplicationInformation("Retrieving user {UserCode} ({UserType}) from session", userCode, userTypeValue);
 
             // Build user data dictionary from session
             var userData = new Dictionary<string, string>();
@@ -158,20 +158,20 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             
             if (result.IsSuccess)
             {
-                _logger.LogInformation("? User {UserCode} ({UserType}) retrieved successfully from session", 
+                _logger.LogApplicationInformation("User {UserCode} ({UserType}) retrieved successfully from session", 
                     userCode, userTypeValue);
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)result.Value);
             }
             else
             {
-                _logger.LogWarning("?? Failed to deserialize user {UserCode} from session: {Error}", 
+                _logger.LogApplicationWarning("Failed to deserialize user {UserCode} from session: {Error}", 
                     userCode, result.Error?.Message);
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error retrieving user from session");
+            _logger.LogApplicationError(ex, "Error retrieving user from session");
             return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
         }
     }
@@ -186,21 +186,21 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             var context = _httpContextAccessor.HttpContext;
             if (context?.Session == null)
             {
-                _logger.LogDebug("?? Session not available for clearing");
+                _logger.LogApplicationDebug("Session not available for clearing");
                 return Result.Success(true);
             }
 
             var userCode = context.Session.GetString("SMS_UserCode");
-            _logger.LogInformation("??? Clearing user {UserCode} from session", userCode ?? "Unknown");
+            _logger.LogApplicationInformation("??? Clearing user {UserCode} from session", userCode ?? "Unknown");
 
             context.Session.Clear();
             
-            _logger.LogInformation("? Session cleared successfully for user {UserCode}", userCode ?? "Unknown");
+            _logger.LogApplicationInformation("Session cleared successfully for user {UserCode}", userCode ?? "Unknown");
             return Result.Success(true);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error clearing session");
+            _logger.LogApplicationError(ex, "Error clearing session");
             return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
@@ -283,3 +283,4 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
         }
     }
 }
+

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="EventBusQueueManager.razor.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,8 +12,8 @@ using Microsoft.Extensions.Logging;
 using Radzen;
 using Radzen.Blazor;
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Commands;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Commands;
+using SMS_Application.Queries;
 
 using SMS_Domain.Enums;
 using SMS_Domain.Events;
@@ -286,7 +286,7 @@ public partial class EventBusQueueManager
                     ShowUIEventNotification(uiEventData);
                 }
 
-                Logger.LogInformation("✅ Successfully executed event {EventId}", eventId);
+                Logger.LogInformation("Successfully executed event {EventId}", eventId);
             }
             else
             {
@@ -687,7 +687,7 @@ public partial class EventBusQueueManager
             var summary = GetNotificationSummaryFromEventType(eventTypeValue, priorityValue);
             var duration = GetNotificationDurationFromPriority(priorityValue);
 
-            Logger.LogInformation("🔔 [UI NOTIFICATION] Showing notification: {Summary} - {Message}", summary, message);
+            Logger.LogInformation("[UI NOTIFICATION] Showing notification: {Summary} - {Message}", summary, message);
 
             NotificationService.Notify(new NotificationMessage
             {
@@ -727,13 +727,13 @@ public partial class EventBusQueueManager
         {
             "HazardCreatedNotification" => priority switch
             {
-                "Critical" => "🚨 Critical Hazard Alert",
-                "High" => "⚠️ High Priority Hazard",
-                "Normal" => "📋 New Hazard Reported",
-                _ => "ℹ️ Hazard Notification"
+                "Critical" => "?? Critical Hazard Alert",
+                "High" => "? High Priority Hazard",
+                "Normal" => "?? New Hazard Reported",
+                _ => "? Hazard Notification"
             },
-            "TestUIEvent" => "🧪 UI Test Event",
-            _ => $"📱 {eventType} Notification"
+            "TestUIEvent" => "?? UI Test Event",
+            _ => $"?? {eventType} Notification"
         };
     }
 
@@ -760,3 +760,4 @@ public partial class EventBusQueueManager
 
     #endregion
 }
+

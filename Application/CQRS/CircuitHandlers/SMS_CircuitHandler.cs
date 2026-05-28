@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMS_CircuitHandler.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -16,7 +16,7 @@ using Microsoft.Extensions.Logging;
 
 using SMS_Infrastructure.Interfaces;
 
-namespace SMS_Application.Messaging.CircuitHandlers;
+namespace SMS_Application.CircuitHandlers;
 
 /// <summary>
 /// SMS Circuit Handler - Simple Authentication State Management
@@ -44,11 +44,11 @@ public class SMS_CircuitHandler : BaseCircuitHandler
         {
             // Clean up circuit auth when connection drops
             _circuitAuth.TryRemove(circuit.Id, out _);
-            _logger.LogInformation("[SMS_CircuitHandler] Cleaned up auth for circuit: {CircuitId}", circuit.Id);
+            _logger.LogApplicationInformation("[SMS_CircuitHandler] Cleaned up auth for circuit: {CircuitId}", circuit.Id);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogError("[SMS_CircuitHandler] Connection cleanup cancelled: {CircuitId}", circuit.Id);
+            _logger.LogApplicationError("[SMS_CircuitHandler] Connection cleanup cancelled: {CircuitId}", circuit.Id);
             throw;
         }
     }
@@ -57,12 +57,12 @@ public class SMS_CircuitHandler : BaseCircuitHandler
     {
         try
         {
-            _logger.LogInformation("[SMS_CircuitHandler] Circuit connected: {CircuitId}", circuit.Id);
+            _logger.LogApplicationInformation("[SMS_CircuitHandler] Circuit connected: {CircuitId}", circuit.Id);
             // Connection up - auth will be set when user logs in
         }
         catch (OperationCanceledException)
         {
-            _logger.LogError("[SMS_CircuitHandler] Connection setup error: {CircuitId}", circuit.Id);
+            _logger.LogApplicationError("[SMS_CircuitHandler] Connection setup error: {CircuitId}", circuit.Id);
             throw;
         }
     }
@@ -128,4 +128,5 @@ public class CircuitAuthState
     public DateTime LoginTime { get; set; }
     public bool IsAuthenticated { get; set; }
 }
+
 

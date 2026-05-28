@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="LoggerMiddleware.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -42,10 +42,11 @@ namespace SMS_Infrastructure.Configuration.Middleware
             finally
             {
                 var diff = TimeProvider.System.GetElapsedTime(start);
-                _logger.LogInformation("Request took {Duration}ms", diff.TotalMilliseconds);
+                _logger.LogInfrastructureInformation("Request took {Duration}ms", diff.TotalMilliseconds);
             }
         }
 
     }
 }
+
 

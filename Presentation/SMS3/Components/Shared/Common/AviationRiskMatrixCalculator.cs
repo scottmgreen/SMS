@@ -1,4 +1,4 @@
-﻿
+
 
 using SMS_Domain.Enums;
 
@@ -6,7 +6,7 @@ namespace SMS3.Components.Shared
 {
     /// <summary>
     /// Centralized aviation risk matrix calculations - ONE SOURCE OF TRUTH
-    /// ✅ CLEANED UP: Removed all duplicate methods and inconsistencies
+    /// CLEANED UP: Removed all duplicate methods and inconsistencies
     /// </summary>
     public static class AviationRiskMatrixCalculator
     {
@@ -74,7 +74,7 @@ namespace SMS3.Components.Shared
 
         /// <summary>
         /// Get aviation risk level from severity and likelihood
-        /// ✅ FIXED: Now properly maps to all 4 risk levels including Critical
+        /// FIXED: Now properly maps to all 4 risk levels including Critical
         /// </summary>
         public static RiskLevel GetAviationRiskLevel(int severity, int likelihood)
         {
@@ -189,7 +189,7 @@ namespace SMS3.Components.Shared
         #region Panel-Based Calculations (The ONE TRUE METHOD)
 
         /// <summary>
-        /// 🎯 THE ONE TRUE METHOD - Calculate all hazard risk data from scoring panels
+        /// ?? THE ONE TRUE METHOD - Calculate all hazard risk data from scoring panels
         /// This replaces all the scattered calculation methods throughout the codebase
         /// </summary>
         /// <param name="scoringPanels">Collection of scoring panels</param>
@@ -231,7 +231,7 @@ namespace SMS3.Components.Shared
             {
                 AverageSeverity = averageSeverity,
                 AverageLikelihood = averageLikelihood,
-                AverageScore = (decimal)averageScore, // ✅ FIX: Cast double to decimal
+                AverageScore = (decimal)averageScore, // FIX: Cast double to decimal
                 RoundedSeverity = roundedSeverity,
                 RoundedLikelihood = roundedLikelihood,
                 MatrixCode = matrixCode,
@@ -285,7 +285,7 @@ namespace SMS3.Components.Shared
 
             logAction?.Invoke($"=== MATRIX DEBUG: {hazardCode} ===");
             logAction?.Invoke($"Panel Count: {calculation.CompletedPanelCount}");
-            logAction?.Invoke($"Averages: Sev={calculation.AverageSeverity:F2}→{calculation.RoundedSeverity}, Like={calculation.AverageLikelihood:F2}→{calculation.RoundedLikelihood}");
+            logAction?.Invoke($"Averages: Sev={calculation.AverageSeverity:F2}?{calculation.RoundedSeverity}, Like={calculation.AverageLikelihood:F2}?{calculation.RoundedLikelihood}");
             logAction?.Invoke($"FINAL CODE: {calculation.MatrixCode}");
             logAction?.Invoke("=== END DEBUG ===");
 
@@ -302,7 +302,7 @@ namespace SMS3.Components.Shared
     {
         public double AverageSeverity { get; set; }
         public double AverageLikelihood { get; set; }
-        public decimal AverageScore { get; set; } // ✅ FIX: Changed to decimal to match expected type
+        public decimal AverageScore { get; set; } // FIX: Changed to decimal to match expected type
         public int RoundedSeverity { get; set; }
         public int RoundedLikelihood { get; set; }
         public string MatrixCode { get; set; } = string.Empty;
@@ -316,7 +316,7 @@ namespace SMS3.Components.Shared
         {
             MatrixCode = "-",
             RiskLevel = RiskLevel.Unkonwn,
-            AverageScore = 0m, // ✅ FIX: Use decimal literal
+            AverageScore = 0m, // FIX: Use decimal literal
             IsValid = false
         };
 

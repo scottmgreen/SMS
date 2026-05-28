@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="InvestigationQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -11,9 +11,9 @@
 using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // INVESTIGATION QUERY HANDLERS - Clean Architecture Pattern
@@ -34,7 +34,7 @@ public class GetInvestigationByCodeQueryHandler : BaseQueryBundle, IBaseRequestH
     {
         try
         {
-            _logger.LogInformation(" Processing GetInvestigationByCodeQuery for Code: {Code}", request.InvestigationId.Value);
+            _logger.LogApplicationInformation(" Processing GetInvestigationByCodeQuery for Code: {Code}", request.InvestigationId.Value);
             var result = await _investigationService.GetInvestigationByCodeAsync(new InvestigationID(request.InvestigationId.Value), ct).ConfigureAwait(false);
             return result;
         }
@@ -61,7 +61,7 @@ public class GetAllInvestigationsQueryHandler : BaseQueryBundle, IBaseRequestHan
     {
         try
         {
-            _logger.LogInformation(" Processing GetAllInvestigationsQuery");
+            _logger.LogApplicationInformation(" Processing GetAllInvestigationsQuery");
             var result = await _investigationService.GetAllInvestigationsAsync(ct).ConfigureAwait(false);
             return result;
         }
@@ -72,3 +72,4 @@ public class GetAllInvestigationsQueryHandler : BaseQueryBundle, IBaseRequestHan
         }
     }
 }
+

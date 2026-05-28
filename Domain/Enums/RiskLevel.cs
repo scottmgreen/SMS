@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskLevel.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -16,7 +16,7 @@ namespace SMS_Domain.Enums;
 /// <summary>
 /// Risk levels for approval workflow and decision authority
 /// Integrates with SMSRole authority levels for proper approval routing
-/// ✅ ENHANCED: Now includes aviation matrix color support while keeping domain layer clean
+/// ENHANCED: Now includes aviation matrix color support while keeping domain layer clean
 /// </summary>
 public abstract class RiskLevel : BaseEnum<RiskLevel>
 {
@@ -138,7 +138,7 @@ public abstract class RiskLevel : BaseEnum<RiskLevel>
     #region Aviation Matrix Color Support (Domain-appropriate)
 
     /// <summary>
-    /// ✅ NEW: Get aviation matrix color for specific severity/likelihood combination
+    /// NEW: Get aviation matrix color for specific severity/likelihood combination
     /// This supports the granular color mapping needed for aviation matrices
     /// Domain-appropriate as it provides data, not UI framework specifics
     /// </summary>
@@ -176,7 +176,7 @@ public abstract class RiskLevel : BaseEnum<RiskLevel>
     }
 
     /// <summary>
-    /// ✅ NEW: Get aviation matrix text color for specific severity/likelihood combination
+    /// NEW: Get aviation matrix text color for specific severity/likelihood combination
     /// Domain-appropriate helper for text color determination
     /// </summary>
     public static string GetAviationMatrixTextColor(int severity, int likelihood)
@@ -186,7 +186,7 @@ public abstract class RiskLevel : BaseEnum<RiskLevel>
     }
 
     /// <summary>
-    /// ✅ NEW: Get CSS style for aviation matrix cells
+    /// NEW: Get CSS style for aviation matrix cells
     /// Domain-appropriate as it provides CSS data without UI framework dependencies
     /// </summary>
     public static string GetAviationMatrixCellStyle(int severity, int likelihood)
@@ -282,3 +282,4 @@ public abstract class RiskLevel : BaseEnum<RiskLevel>
 
     #endregion
 }
+

@@ -165,7 +165,7 @@ public class SessionCurrentUserService : ICurrentUserService
                 // If IsAuthenticated is true, we should NOT be in pending 2FA state
                 if (IsAuthenticated)
                 {
-                    _logger.LogDebug("?? User is authenticated - checking if truly pending or fully authenticated");
+                    _logger.LogApplicationDebug("User is authenticated - checking if truly pending or fully authenticated");
                     
                     // Check for specific pending 2FA markers (not full auth data)
                     var context = _httpContextAccessor.HttpContext;
@@ -173,7 +173,7 @@ public class SessionCurrentUserService : ICurrentUserService
                         context?.Items.ContainsKey("Pending2FA_UserType") == true ||
                         context?.Items.ContainsKey("Pending2FA_StoredAt") == true)
                     {
-                        _logger.LogDebug("?? Found pending 2FA markers in HttpContext - user is pending 2FA verification");
+                        _logger.LogApplicationDebug("Found pending 2FA markers in HttpContext - user is pending 2FA verification");
                         return true;
                     }
 
@@ -184,7 +184,7 @@ public class SessionCurrentUserService : ICurrentUserService
                          circuitData.ContainsKey("Pending2FA_UserType") ||
                          circuitData.ContainsKey("Pending2FA_StoredAt")))
                     {
-                        _logger.LogDebug("?? Found pending 2FA markers in circuit storage - user is pending 2FA verification");
+                        _logger.LogApplicationDebug("Found pending 2FA markers in circuit storage - user is pending 2FA verification");
                         return true;
                     }
 
@@ -193,22 +193,22 @@ public class SessionCurrentUserService : ICurrentUserService
                     var pending2FAStoredAt = SafeGetSessionString("Pending2FA_StoredAt");
                     if (!string.IsNullOrEmpty(pending2FAData) || !string.IsNullOrEmpty(pending2FAStoredAt))
                     {
-                        _logger.LogDebug("?? Found pending 2FA markers in session - user is pending 2FA verification");
+                        _logger.LogApplicationDebug("Found pending 2FA markers in session - user is pending 2FA verification");
                         return true;
                     }
 
                     // If user is authenticated but no pending 2FA markers found, they are fully authenticated
-                    _logger.LogDebug("?? User is authenticated with no pending 2FA markers - fully authenticated");
+                    _logger.LogApplicationDebug("User is authenticated with no pending 2FA markers - fully authenticated");
                     return false;
                 }
 
                 // User is not authenticated at all, so definitely not pending 2FA
-                _logger.LogDebug("?? User is not authenticated - not pending 2FA verification");
+                _logger.LogApplicationDebug("User is not authenticated - not pending 2FA verification");
                 return false;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking pending 2FA status");
+                _logger.LogApplicationError(ex, "Error checking pending 2FA status");
                 return false;
             }
         } 
@@ -244,7 +244,7 @@ public class SessionCurrentUserService : ICurrentUserService
         
         try
         {
-            _logger.LogInformation("Clearing session authentication for user: {UserId}", userId);
+            _logger.LogApplicationInformation("Clearing session authentication for user: {UserId}", userId);
 
             // Clear session data if available
             if (context?.Session != null)
@@ -252,17 +252,17 @@ public class SessionCurrentUserService : ICurrentUserService
                 try
                 {
                     context.Session.Clear();
-                    _logger.LogInformation("? Session data cleared for user: {UserId}", userId);
+                    _logger.LogApplicationInformation("Session data cleared for user: {UserId}", userId);
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogWarning(ex, "?? Could not clear session data for user: {UserId}", userId);
+                    _logger.LogApplicationWarning(ex, "Could not clear session data for user: {UserId}", userId);
                 }
             }
 
             // Clear circuit storage by user ID
             _circuitAuthStorage.ClearAuthDataByUserId(userId);
-            _logger.LogInformation("? Circuit authentication data cleared for user: {UserId}", userId);
+            _logger.LogApplicationInformation("Circuit authentication data cleared for user: {UserId}", userId);
 
             // Clear HttpContext.Items
             if (context != null)
@@ -276,14 +276,14 @@ public class SessionCurrentUserService : ICurrentUserService
                 {
                     context.Items.Remove(key);
                 }
-                _logger.LogInformation("? Context items cleared for user: {UserId}", userId);
+                _logger.LogApplicationInformation("Context items cleared for user: {UserId}", userId);
             }
 
             await Task.CompletedTask;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error clearing authentication for user: {UserId}", userId);
+            _logger.LogApplicationError(ex, "Error clearing authentication for user: {UserId}", userId);
             throw;
         }
     }
@@ -364,7 +364,7 @@ public class SessionCurrentUserService : ICurrentUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error reading session/circuit/items key: {Key}", key);
+            _logger.LogApplicationError(ex, "Error reading session/circuit/items key: {Key}", key);
             return null;
         }
     }
@@ -405,20 +405,20 @@ public class SessionCurrentUserService : ICurrentUserService
                 var userData = _circuitAuthStorage.GetAuthDataByUserId("AU-0001"); // Common admin user
                 if (userData != null)
                 {
-                    _logger.LogDebug("?? Found authentication data using user ID fallback");
+                    _logger.LogApplicationDebug("Found authentication data using user ID fallback");
                     return userData;
                 }
             }
             catch (Exception fallbackEx)
             {
-                _logger.LogWarning(fallbackEx, "?? Error in authentication data fallback lookup");
+                _logger.LogApplicationWarning(fallbackEx, "Error in authentication data fallback lookup");
             }
 
             return null;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error getting circuit auth data");
+            _logger.LogApplicationError(ex, "Error getting circuit auth data");
             return null;
         }
     }
@@ -448,7 +448,7 @@ public class SessionCurrentUserService : ICurrentUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "? Error getting circuit ID");
+            _logger.LogApplicationError(ex, "Error getting circuit ID");
             return null;
         }
     }
@@ -487,7 +487,7 @@ public class SessionCurrentUserService : ICurrentUserService
                 return new List<SMSUserRolePermission>();
             }
 
-            _logger.LogDebug("Reconstructing permissions from session for user role: {UserRoleCode}", userRoleCode);
+            _logger.LogApplicationDebug("Reconstructing permissions from session for user role: {UserRoleCode}", userRoleCode);
 
             // Parse the permission strings using IDENTICAL logic from SMSSessionService
             var permissions = new List<SMSUserRolePermission>();
@@ -518,12 +518,12 @@ public class SessionCurrentUserService : ICurrentUserService
                 }
             }
             
-            _logger.LogDebug("Reconstructed {PermissionCount} permissions from session", permissions.Count);
+            _logger.LogApplicationDebug("Reconstructed {PermissionCount} permissions from session", permissions.Count);
             return permissions;
         }
         catch (Exception ex)
         {
-            _logger.LogDebug(ex, "Error reconstructing permissions from session - returning empty list");
+            _logger.LogApplicationDebug(ex, "Error reconstructing permissions from session - returning empty list");
             return new List<SMSUserRolePermission>();
         }
     }
@@ -554,3 +554,4 @@ public class SessionCurrentUserService : ICurrentUserService
 
     #endregion
 }
+

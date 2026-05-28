@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="MitigationAssignmentCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // MITIGATION ASSIGNMENT COMMAND HANDLERS - Clean Architecture Pattern
@@ -39,13 +39,13 @@ public class CreateMitigationAssignmentCommandHandler : BaseCommandBundle, IBase
                 return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateMitigationAssignmentCommand for Code: {Code}", request.MitigationAssignment.Code);
+            _logger.LogApplicationInformation(" Processing CreateMitigationAssignmentCommand for Code: {Code}", request.MitigationAssignment.Code);
 
             var result = await _mitigationAssignmentService.CreateMitigationAssignmentAsync(request.MitigationAssignment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created MitigationAssignment with ID: {Id}, Code: {Code}",
+                _logger.LogApplicationInformation(" Successfully created MitigationAssignment with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -58,7 +58,7 @@ public class CreateMitigationAssignmentCommandHandler : BaseCommandBundle, IBase
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateMitigationAssignmentCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateMitigationAssignmentCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -90,14 +90,14 @@ public class UpdateMitigationAssignmentCommandHandler : BaseCommandBundle, IBase
                 return Result<MitigationAssignment>.Failure<MitigationAssignment>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateMitigationAssignmentCommand for ID: {Id}, Code: {Code}",
+            _logger.LogApplicationInformation(" Processing UpdateMitigationAssignmentCommand for ID: {Id}, Code: {Code}",
                 request.MitigationAssignment.Id, request.MitigationAssignment.Code);
 
             var result = await _mitigationAssignmentService.UpdateMitigationAssignmentAsync(request.MitigationAssignment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated MitigationAssignment with ID: {Id}", request.MitigationAssignment.Id);
+                _logger.LogApplicationInformation(" Successfully updated MitigationAssignment with ID: {Id}", request.MitigationAssignment.Id);
             }
             else
             {
@@ -109,7 +109,7 @@ public class UpdateMitigationAssignmentCommandHandler : BaseCommandBundle, IBase
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateMitigationAssignmentCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateMitigationAssignmentCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -141,13 +141,13 @@ public class DeleteMitigationAssignmentCommandHandler : BaseCommandBundle, IBase
                 return Result<bool>.Failure<bool>(DomainErrors.MitigationAssignmentError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing DeleteMitigationAssignmentCommand for ID: {Id}", request.MitigationAssignmentId);
+            _logger.LogApplicationInformation(" Processing DeleteMitigationAssignmentCommand for ID: {Id}", request.MitigationAssignmentId);
 
             var result = await _mitigationAssignmentService.DeleteMitigationAssignmentAsync(request.MitigationAssignmentId, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully deleted MitigationAssignment with ID: {Id}", request.MitigationAssignmentId);
+                _logger.LogApplicationInformation(" Successfully deleted MitigationAssignment with ID: {Id}", request.MitigationAssignmentId);
             }
             else
             {
@@ -159,7 +159,7 @@ public class DeleteMitigationAssignmentCommandHandler : BaseCommandBundle, IBase
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteMitigationAssignmentCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteMitigationAssignmentCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -169,3 +169,4 @@ public class DeleteMitigationAssignmentCommandHandler : BaseCommandBundle, IBase
         }
     }
 }
+

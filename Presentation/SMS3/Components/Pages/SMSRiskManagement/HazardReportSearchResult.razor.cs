@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Web;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 using SMS_Application.Interfaces;
 using Microsoft.Extensions.Logging;
 using Radzen;
@@ -29,7 +29,7 @@ public partial class HazardReportSearchResult : ComponentBase
     [Inject] private ILogger<HazardReportSearchResult> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region State Properties

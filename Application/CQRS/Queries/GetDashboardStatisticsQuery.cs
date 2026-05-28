@@ -8,7 +8,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace SMS_Application.Messaging.Queries;
+namespace SMS_Application.Queries;
 
 /// <summary>
 /// Get comprehensive dashboard statistics query

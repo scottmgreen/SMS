@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardFileCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 // =============================================
 // HAZARD FILE COMMAND HANDLERS - Clean Architecture Pattern
@@ -39,13 +39,13 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing CreateHazardFileCommand for Code: {Code}", request.HazardFile.Code);
+            _logger.LogApplicationInformation(" Processing CreateHazardFileCommand for Code: {Code}", request.HazardFile.Code);
 
             var result = await _hazardFileService.CreateHazardFileAsync(request.HazardFile, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully created HazardFile with ID: {Id}, Code: {Code}",
+                _logger.LogApplicationInformation(" Successfully created HazardFile with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
             }
             else
@@ -58,7 +58,7 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHan
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateHazardFileCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateHazardFileCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -90,13 +90,13 @@ public class UpdateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHan
                 return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NullOrEmpty);
             }
 
-            _logger.LogInformation(" Processing UpdateHazardFileCommand for ID: {Id}", request.HazardFile.Id);
+            _logger.LogApplicationInformation(" Processing UpdateHazardFileCommand for ID: {Id}", request.HazardFile.Id);
 
             var result = await _hazardFileService.UpdateHazardFileAsync(request.HazardFile, cancellationToken);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully updated HazardFile with ID: {Id}", request.HazardFile.Id);
+                _logger.LogApplicationInformation(" Successfully updated HazardFile with ID: {Id}", request.HazardFile.Id);
             }
             else
             {
@@ -108,7 +108,7 @@ public class UpdateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHan
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateHazardFileCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateHazardFileCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -118,3 +118,4 @@ public class UpdateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHan
         }
     }
 }
+

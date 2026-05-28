@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="MitigationQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,9 +12,9 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // MITIGATION QUERY HANDLERS - Clean Architecture Pattern
@@ -41,13 +41,13 @@ public class GetMitigationByCodeQueryHandler : BaseQueryBundle, IBaseRequestHand
                 return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.NotFound);
             }
 
-            _logger.LogInformation(" Processing GetMitigationByIdQuery for ID: {Id}", request.MitigationId.Value);
+            _logger.LogApplicationInformation(" Processing GetMitigationByIdQuery for ID: {Id}", request.MitigationId.Value);
 
             var result = await _mitigationService.GetMitigationByCodeAsync(new MitigationID(request.MitigationId.Value), ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully retrieved Mitigation with ID: {Id}", request.MitigationId.Value);
+                _logger.LogApplicationInformation(" Successfully retrieved Mitigation with ID: {Id}", request.MitigationId.Value);
             }
             else
             {
@@ -59,7 +59,7 @@ public class GetMitigationByCodeQueryHandler : BaseQueryBundle, IBaseRequestHand
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetMitigationByIdQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetMitigationByIdQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -85,13 +85,13 @@ public class GetAllMitigationsQueryHandler : BaseQueryBundle, IBaseRequestHandle
     {
         try
         {
-            _logger.LogInformation(" Processing GetAllMitigationsQuery");
+            _logger.LogApplicationInformation(" Processing GetAllMitigationsQuery");
 
             var result = await _mitigationService.GetAllMitigationsAsync(ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation(" Successfully retrieved {Count} Mitigations", result.Value?.Count ?? 0);
+                _logger.LogApplicationInformation(" Successfully retrieved {Count} Mitigations", result.Value?.Count ?? 0);
             }
             else
             {
@@ -102,7 +102,7 @@ public class GetAllMitigationsQueryHandler : BaseQueryBundle, IBaseRequestHandle
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetAllMitigationsQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetAllMitigationsQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -131,7 +131,7 @@ public class GetMitigationsByHazardCodeQueryHandler : BaseQueryBundle, IBaseRequ
     {
         try
         {
-            _logger.LogInformation(" Processing GetMitigationsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
+            _logger.LogApplicationInformation(" Processing GetMitigationsByHazardCodeQuery for HazardCode: {HazardCode}", request.HazardCode);
             var result = await _mitigationService.GetMitigationsByHazardCodeAsync(request.HazardCode, ct).ConfigureAwait(false);
             return result;
         }
@@ -142,3 +142,4 @@ public class GetMitigationsByHazardCodeQueryHandler : BaseQueryBundle, IBaseRequ
         }
     }
 }
+

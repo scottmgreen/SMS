@@ -18,7 +18,7 @@ public partial class StakeholderUsers : ComponentBase
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
-    [Inject] private ICurrentUserService CurrentUserService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     // Data Properties
     private List<SMSStakeholderUser> StakeholderUsersList { get; set; } = new();

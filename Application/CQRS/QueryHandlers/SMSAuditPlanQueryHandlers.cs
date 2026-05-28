@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditPlanQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -11,9 +11,9 @@
 using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
 
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // SMS AUDIT PLAN QUERY HANDLERS
@@ -39,7 +39,7 @@ public class GetAllSMSAuditPlansQueryHandler : BaseQueryBundle, IBaseRequestHand
     {
         try
         {
-            _logger.LogInformation("Processing GetAllSMSAuditPlansQuery");
+            _logger.LogApplicationInformation("Processing GetAllSMSAuditPlansQuery");
 
             var result = await _dataService.GetAllAuditPlansAsync(ct);
 
@@ -106,7 +106,7 @@ public class GetSMSAuditPlanByCodeQueryHandler : BaseQueryBundle, IBaseRequestHa
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditPlanByCodeQuery for Code: {AuditPlanCode}", request.AuditPlanCode);
+            _logger.LogApplicationInformation("Processing GetSMSAuditPlanByCodeQuery for Code: {AuditPlanCode}", request.AuditPlanCode);
 
             var result = await _dataService.GetAuditPlanByCodeAsync(request.AuditPlanCode, ct);
 
@@ -140,7 +140,7 @@ public class GetSMSAuditPlansByTypeQueryHandler : BaseQueryBundle, IBaseRequestH
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditPlansByTypeQuery for Type: {AuditType}", request.AuditType);
+            _logger.LogApplicationInformation("Processing GetSMSAuditPlansByTypeQuery for Type: {AuditType}", request.AuditType);
 
             var result = await _dataService.GetAuditPlansByTypeAsync(request.AuditType, request.StatusFilter, ct);
 
@@ -174,7 +174,7 @@ public class GetSMSAuditPlansByDepartmentQueryHandler : BaseQueryBundle, IBaseRe
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditPlansByDepartmentQuery for Department: {Department}", request.Department);
+            _logger.LogApplicationInformation("Processing GetSMSAuditPlansByDepartmentQuery for Department: {Department}", request.Department);
 
             var result = await _dataService.GetAuditPlansByDepartmentAsync(request.Department, request.StatusFilter, ct);
 
@@ -208,7 +208,7 @@ public class GetSMSAuditPlansRequiringApprovalQueryHandler : BaseQueryBundle, IB
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditPlansRequiringApprovalQuery");
+            _logger.LogApplicationInformation("Processing GetSMSAuditPlansRequiringApprovalQuery");
 
             var result = await _dataService.GetAuditPlansRequiringApprovalAsync(ct);
 
@@ -242,7 +242,7 @@ public class GetSMSAuditCalendarQueryHandler : BaseQueryBundle, IBaseRequestHand
     {
         try
         {
-            _logger.LogInformation("Processing GetSMSAuditCalendarQuery for date range: {StartDate} to {EndDate}",
+            _logger.LogApplicationInformation("Processing GetSMSAuditCalendarQuery for date range: {StartDate} to {EndDate}",
                 request.StartDate, request.EndDate);
 
             var result = await _dataService.GetAuditCalendarDataAsync(
@@ -269,3 +269,4 @@ public class GetSMSAuditCalendarQueryHandler : BaseQueryBundle, IBaseRequestHand
         }
     }
 }
+

@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 
 using SMS_Infrastructure.Interfaces;
-namespace SMS_Application.Messaging.CircuitHandlers;
+namespace SMS_Application.CircuitHandlers;
 
 public abstract class BaseCircuitHandler : CircuitHandler
 {

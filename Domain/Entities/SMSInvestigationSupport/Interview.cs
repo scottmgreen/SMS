@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="Interview.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -19,7 +19,7 @@ public class Interview : BaseAuditableEntity
     // Public constructor for domain usage
     public Interview(InterviewID id) : base(id, "SYSTEM", DateTime.UtcNow)
     {
-        Status = InterviewStatus.IntervieweeIdentified; // ✅ UPDATED: Default to IntervieweeIdentified (first step in new workflow)
+        Status = InterviewStatus.IntervieweeIdentified; // UPDATED: Default to IntervieweeIdentified (first step in new workflow)
         Type = InterviewType.Witness;
         CreatedDate = DateTime.UtcNow;
         UpdatedDate = DateTime.UtcNow;
@@ -33,7 +33,7 @@ public class Interview : BaseAuditableEntity
         InvestigationCode = investigationCode;
         PersonInterviewed = personInterviewed;
         SMSInvestigatorCode = investigatorCode;
-        Status = InterviewStatus.IntervieweeIdentified; // ✅ UPDATED: Default to IntervieweeIdentified (first step in new workflow)
+        Status = InterviewStatus.IntervieweeIdentified; // UPDATED: Default to IntervieweeIdentified (first step in new workflow)
         Type = InterviewType.Witness;
         CreatedDate = DateTime.UtcNow;
         UpdatedDate = DateTime.UtcNow;
@@ -59,7 +59,7 @@ public class Interview : BaseAuditableEntity
 
     #region Interview Management
 
-    public InterviewStatus Status { get; set; } = InterviewStatus.IntervieweeIdentified; // ✅ UPDATED: Default to IntervieweeIdentified
+    public InterviewStatus Status { get; set; } = InterviewStatus.IntervieweeIdentified; // UPDATED: Default to IntervieweeIdentified
 
     /// <summary>
     /// Interview date and time. This is required for all interviews.
@@ -166,7 +166,7 @@ public class Interview : BaseAuditableEntity
         InterviewDate = interviewDate;
         InterviewLocation = location;
         DurationMinutes = estimatedDurationMinutes ?? Type.GetRecommendedMinimumDurationMinutes();
-        Status = InterviewStatus.InterviewScheduled; // ✅ UPDATED: Set to InterviewScheduled
+        Status = InterviewStatus.InterviewScheduled; // UPDATED: Set to InterviewScheduled
         UpdatedDate = DateTime.UtcNow;
 
         return Result.Success(true);
@@ -177,13 +177,13 @@ public class Interview : BaseAuditableEntity
     /// </summary>
     public Result<bool> UpdateDateTime(DateTime newInterviewDate, int? newDurationMinutes = null)
     {
-        //if (!Status.AllowsModifications() && !Status.Equals(InterviewStatus.InterviewScheduled)) // ✅ UPDATED: Use InterviewScheduled
+        //if (!Status.AllowsModifications() && !Status.Equals(InterviewStatus.InterviewScheduled)) // UPDATED: Use InterviewScheduled
         //{
         //    return Result<bool>.Failure<bool>(DomainErrors.InterviewError.CannotModifyCompleted);
         //}
 
         // Allow past dates for rescheduling if already scheduled
-        if (newInterviewDate <= DateTime.UtcNow && !Status.Equals(InterviewStatus.InterviewScheduled)) // ✅ UPDATED: Use InterviewScheduled
+        if (newInterviewDate <= DateTime.UtcNow && !Status.Equals(InterviewStatus.InterviewScheduled)) // UPDATED: Use InterviewScheduled
         {
             return Result.Failure<bool>(DomainErrors.InterviewError.InterviewDateMustBeFuture);
         }
@@ -206,12 +206,12 @@ public class Interview : BaseAuditableEntity
     /// </summary>
     public Result<bool> StartInterview()
     {
-        //if (!Status.CanConduct()) // ✅ UPDATED: Use CanConduct() method from new enum
+        //if (!Status.CanConduct()) // UPDATED: Use CanConduct() method from new enum
         //{
         //    return Result<bool>.Failure<bool>(DomainErrors.InterviewError.MustBeScheduled);
         //}
 
-        // ✅ NOTE: In the new workflow, there's no "InProgress" status - interview goes directly from Scheduled to Complete
+        // NOTE: In the new workflow, there's no "InProgress" status - interview goes directly from Scheduled to Complete
         // So we'll keep the interview as InterviewScheduled until completion
         UpdatedDate = DateTime.UtcNow;
 
@@ -224,7 +224,7 @@ public class Interview : BaseAuditableEntity
     public Result<bool> CompleteInterview(string? personInterviewedNotes, string? investigatorNotes,
         string? keyFindings = null, string? followUpRequired = null, string? additionalWitnesses = null)
     {
-        //if (!Status.IsActiveStatus) // ✅ FIXED: Use IsActiveStatus as property, not method
+        //if (!Status.IsActiveStatus) // FIXED: Use IsActiveStatus as property, not method
         //{
         //    return Result<bool>.Failure<bool>(DomainErrors.InterviewError.CannotComplete);
         //}
@@ -235,7 +235,7 @@ public class Interview : BaseAuditableEntity
         FollowUpRequired = followUpRequired;
         AdditionalWitnesses = additionalWitnesses;
 
-        Status = InterviewStatus.InterviewComplete; // ✅ UPDATED: Use InterviewComplete
+        Status = InterviewStatus.InterviewComplete; // UPDATED: Use InterviewComplete
         CompletedDate = DateTime.UtcNow;
         UpdatedDate = DateTime.UtcNow;
 
@@ -247,7 +247,7 @@ public class Interview : BaseAuditableEntity
     /// </summary>
     public Result<bool> CancelInterview(string reason)
     {
-        //if (!Status.CanMarkUnableToConduct()) // ✅ UPDATED: Use CanMarkUnableToConduct() from new enum
+        //if (!Status.CanMarkUnableToConduct()) // UPDATED: Use CanMarkUnableToConduct() from new enum
         //{
         //    return Result<bool>.Failure<bool>(DomainErrors.InterviewError.CannotModifyCompleted);
         //}
@@ -257,8 +257,8 @@ public class Interview : BaseAuditableEntity
             return Result.Failure<bool>(DomainErrors.InterviewError.CancellationReasonRequired);
         }
 
-        Status = InterviewStatus.UnableToConduct; // ✅ UPDATED: Use UnableToConduct instead of Cancelled
-        InvestigatorNotes = $"{InvestigatorNotes}\n\n[UNABLE TO CONDUCT]: {reason}"; // ✅ UPDATED: Change message text
+        Status = InterviewStatus.UnableToConduct; // UPDATED: Use UnableToConduct instead of Cancelled
+        InvestigatorNotes = $"{InvestigatorNotes}\n\n[UNABLE TO CONDUCT]: {reason}"; // UPDATED: Change message text
         UpdatedDate = DateTime.UtcNow;
 
         return Result.Success(true);
@@ -280,17 +280,17 @@ public class Interview : BaseAuditableEntity
     /// <summary>
     /// Check if interview is scheduled
     /// </summary>
-    public bool IsScheduled => Status == InterviewStatus.InterviewScheduled; // ✅ UPDATED: Use IsScheduled() method from new enum
+    public bool IsScheduled => Status == InterviewStatus.InterviewScheduled; // UPDATED: Use IsScheduled() method from new enum
 
     /// <summary>
     /// Check if interview is in progress
     /// </summary>
-    public bool IsInProgress => Status == InterviewStatus.InterviewScheduled; // ✅ UPDATED: Map to InterviewScheduled (closest equivalent)
+    public bool IsInProgress => Status == InterviewStatus.InterviewScheduled; // UPDATED: Map to InterviewScheduled (closest equivalent)
 
     /// <summary>
     /// Check if interview is cancelled
     /// </summary>
-    public bool IsCancelled => Status == InterviewStatus.UnableToConduct; // ✅ UPDATED: Use IsUnableToConduct() method from new enum
+    public bool IsCancelled => Status == InterviewStatus.UnableToConduct; // UPDATED: Use IsUnableToConduct() method from new enum
 
 
    
@@ -312,4 +312,5 @@ public class Interview : BaseAuditableEntity
 
     #endregion
 }
+
 

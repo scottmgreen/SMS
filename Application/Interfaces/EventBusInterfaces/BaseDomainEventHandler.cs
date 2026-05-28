@@ -38,24 +38,24 @@ public abstract class BaseDomainEventHandler<T> : IDomainEventHandler<T> where T
     {
         try
         {
-            Logger.LogInformation("Processing domain event {EventType} with ID {EventId}", domainEvent.EventType, domainEvent.EventId);
+            Logger.LogApplicationInformation("Processing domain event {EventType} with ID {EventId}", domainEvent.EventType, domainEvent.EventId);
 
             var result = await ProcessEventAsync(domainEvent, cancellationToken);
 
             if (result.IsSuccess)
             {
-                Logger.LogInformation("Successfully processed domain event {EventType} with ID {EventId}", domainEvent.EventType, domainEvent.EventId);
+                Logger.LogApplicationInformation("Successfully processed domain event {EventType} with ID {EventId}", domainEvent.EventType, domainEvent.EventId);
             }
             else
             {
-                Logger.LogWarning("Failed to process domain event {EventType} with ID {EventId}: {Error}", domainEvent.EventType, domainEvent.EventId, result.Error.Message);
+                Logger.LogApplicationWarning("Failed to process domain event {EventType} with ID {EventId}: {Error}", domainEvent.EventType, domainEvent.EventId, result.Error.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error processing domain event {EventType} with ID {EventId}", domainEvent.EventType, domainEvent.EventId);
+            Logger.LogApplicationError(ex, "Error processing domain event {EventType} with ID {EventId}", domainEvent.EventType, domainEvent.EventId);
             return Result.Failure(new Error("DOMAIN_EVENT_HANDLER_ERROR", $"Domain event processing failed: {ex.Message}"));
         }
     }
@@ -65,3 +65,4 @@ public abstract class BaseDomainEventHandler<T> : IDomainEventHandler<T> where T
     /// </summary>
     protected abstract Task<Result> ProcessEventAsync(T domainEvent, CancellationToken cancellationToken);
 }
+

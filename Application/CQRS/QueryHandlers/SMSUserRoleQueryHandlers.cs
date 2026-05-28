@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSUserRoleQueryHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -10,9 +10,9 @@
 
 using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
-using SMS_Application.Messaging.Queries;
+using SMS_Application.Queries;
 
-namespace SMS_Application.Messaging.QueryHandlers;
+namespace SMS_Application.QueryHandlers;
 
 // =============================================
 // SMS USER ROLE QUERY HANDLERS
@@ -33,13 +33,13 @@ public class GetAllSMSUserRolesQueryHandler : BaseQueryBundle, IBaseRequestHandl
     {
         try
         {
-            _logger.LogInformation("Processing GetAllSMSUserRolesQuery");
+            _logger.LogApplicationInformation("Processing GetAllSMSUserRolesQuery");
 
             var result = await _userRoleDataService.GetAllUserRolesAsync();
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS User Roles", result.Value?.Count() ?? 0);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS User Roles", result.Value?.Count() ?? 0);
             }
             else
             {
@@ -50,7 +50,7 @@ public class GetAllSMSUserRolesQueryHandler : BaseQueryBundle, IBaseRequestHandl
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetAllSMSUserRolesQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetAllSMSUserRolesQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -76,13 +76,13 @@ public class GetAllActiveSMSUserRolesQueryHandler : BaseQueryBundle, IBaseReques
     {
         try
         {
-            _logger.LogInformation("Processing GetAllActiveSMSUserRolesQuery");
+            _logger.LogApplicationInformation("Processing GetAllActiveSMSUserRolesQuery");
 
             var result = await _userRoleDataService.GetAllActiveSMSUserRolesAsync();
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} active SMS User Roles", result.Value?.Count() ?? 0);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} active SMS User Roles", result.Value?.Count() ?? 0);
             }
             else
             {
@@ -93,7 +93,7 @@ public class GetAllActiveSMSUserRolesQueryHandler : BaseQueryBundle, IBaseReques
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetAllActiveSMSUserRolesQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetAllActiveSMSUserRolesQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -125,24 +125,24 @@ public class GetSMSUserRoleByIdQueryHandler : BaseQueryBundle, IBaseRequestHandl
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing GetSMSUserRoleByIdQuery for ID: {Id}", request.UserRoleId.Value);
+            _logger.LogApplicationInformation("Processing GetSMSUserRoleByIdQuery for ID: {Id}", request.UserRoleId.Value);
 
             var result = await _userRoleDataService.GetSMSUserRoleByIdAsync(request.UserRoleId.Value);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved SMS User Role with ID: {Id}", request.UserRoleId.Value);
+                _logger.LogApplicationInformation("Successfully retrieved SMS User Role with ID: {Id}", request.UserRoleId.Value);
             }
             else
             {
-                _logger.LogWarning("SMS User Role not found with ID: {Id}", request.UserRoleId.Value);
+                _logger.LogApplicationWarning("SMS User Role not found with ID: {Id}", request.UserRoleId.Value);
             }
 
             return result;
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetSMSUserRoleByIdQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetSMSUserRoleByIdQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -174,13 +174,13 @@ public class GetSMSUserRolesByRoleValueQueryHandler : BaseQueryBundle, IBaseRequ
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing GetSMSUserRolesByRoleValueQuery for Role: {RoleValue}", request.RoleValue);
+            _logger.LogApplicationInformation("Processing GetSMSUserRolesByRoleValueQuery for Role: {RoleValue}", request.RoleValue);
 
             var result = await _userRoleDataService.GetSMSUserRolesByRoleValueAsync(request.RoleValue);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS User Roles for Role: {RoleValue}",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS User Roles for Role: {RoleValue}",
                     result.Value?.Count() ?? 0, request.RoleValue);
             }
 
@@ -188,7 +188,7 @@ public class GetSMSUserRolesByRoleValueQueryHandler : BaseQueryBundle, IBaseRequ
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetSMSUserRolesByRoleValueQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetSMSUserRolesByRoleValueQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -220,13 +220,13 @@ public class GetSMSUserRolesByDepartmentQueryHandler : BaseQueryBundle, IBaseReq
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing GetSMSUserRolesByDepartmentQuery for Department: {Department}", request.Department);
+            _logger.LogApplicationInformation("Processing GetSMSUserRolesByDepartmentQuery for Department: {Department}", request.Department);
 
             var result = await _userRoleDataService.GetSMSUserRolesByDepartmentAsync(request.Department);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS User Roles for Department: {Department}",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS User Roles for Department: {Department}",
                     result.Value?.Count() ?? 0, request.Department);
             }
 
@@ -234,7 +234,7 @@ public class GetSMSUserRolesByDepartmentQueryHandler : BaseQueryBundle, IBaseReq
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetSMSUserRolesByDepartmentQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetSMSUserRolesByDepartmentQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -266,13 +266,13 @@ public class GetSMSUserRolesByUserTypeQueryHandler : BaseQueryBundle, IBaseReque
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Processing GetSMSUserRolesByUserTypeQuery for UserType: {UserType}", request.UserType);
+            _logger.LogApplicationInformation("Processing GetSMSUserRolesByUserTypeQuery for UserType: {UserType}", request.UserType);
 
             var result = await _userRoleDataService.GetSMSUserRolesByUserTypeAsync(request.UserType);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} SMS User Roles for UserType: {UserType}",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} SMS User Roles for UserType: {UserType}",
                     result.Value?.Count() ?? 0, request.UserType);
             }
 
@@ -280,7 +280,7 @@ public class GetSMSUserRolesByUserTypeQueryHandler : BaseQueryBundle, IBaseReque
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("GetSMSUserRolesByUserTypeQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetSMSUserRolesByUserTypeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -290,4 +290,5 @@ public class GetSMSUserRolesByUserTypeQueryHandler : BaseQueryBundle, IBaseReque
         }
     }
 }
+
 

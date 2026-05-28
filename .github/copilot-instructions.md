@@ -13,5 +13,15 @@
 ## Database Naming Conventions
 - Field names should use typed prefixes like `fldi_`, `fldv_`, `fldd_` (and similar) consistently in SQL/stored procedures.
 
+## Logging and Error Handling
+- Use `Application/Common/ApplicationLogMessages.cs` consistently for logging.
+- For all new or modified Application-layer code, use `LogApplication*` methods with `ApplicationEventIds`.
+- Avoid direct `ILogger.LogInformation/LogWarning/LogError/LogDebug/LogTrace/LogCritical` calls in Application code.
+- When migrating or touching existing files, convert any nearby direct `ILogger` calls to the `ApplicationLogMessages` pattern.
+- Use `Infrastructure/Common/InfrastructureLogMessages.cs` consistently for Infrastructure logging.
+- For all new or modified Infrastructure-layer code, use `LogInfrastructure*` methods with `InfrastructureEventIds`.
+- Avoid direct `ILogger.LogInformation/LogWarning/LogError/LogDebug/LogTrace/LogCritical` calls in Infrastructure code; when migrating or touching Infrastructure files, convert nearby direct `ILogger` calls to the `InfrastructureLogMessages` pattern.
+- Use `DomainErrors` definitions consistently across Application and Domain projects, adding new `DomainErrors` as needed.
+
 ## Risk Assessment
-- In this codebase, RiskAssessment should be fetched by hazard code (GetRiskAssessmentByHazardCode query), not via a Hazard.RiskAssessmentCode property.
+- In this codebase, RiskAssessment should be fetched by hazard code (GetRiskAssessmentByHazardCode query), not via a Hazard.RiskAssessmentCode property.- In this codebase, RiskAssessment should be fetched by hazard code (GetRiskAssessmentByHazardCode query), not via a Hazard.RiskAssessmentCode property.

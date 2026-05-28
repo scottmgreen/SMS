@@ -174,7 +174,9 @@ public class UserCompletenessValidator : IUserCompletenessValidator
                 return false;
 
             default:
-                _logger.LogWarning("Unknown user type for validation: {UserType}", userType.Value);
+                _logger.LogApplicationWarning("Unknown user type for validation: {UserType}",
+                    ApplicationEventIds.Warning,
+                    userType.Value);
                 return false;
         }
     }
@@ -277,7 +279,7 @@ public class UserCompletenessValidator : IUserCompletenessValidator
             var modulePermission = permissions.FirstOrDefault(p => p.SMSModule == requiredModule);
             if (modulePermission == null || !modulePermission.Read)
             {
-                _logger.LogWarning("User {UserCode} missing required {Module} permission", user.Code, requiredModule);
+                _logger.LogApplicationWarning("User {UserCode} missing required {Module} permission", user.Code, requiredModule);
                 return false;
             }
         }

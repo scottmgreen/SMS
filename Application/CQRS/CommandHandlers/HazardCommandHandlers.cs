@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Events;
 
 using SMS_Infrastructure.Interfaces;
 
-namespace SMS_Application.Messaging.CommandHandlers
+namespace SMS_Application.CommandHandlers
 {
 
     // =============================================
@@ -81,7 +81,7 @@ namespace SMS_Application.Messaging.CommandHandlers
                 catch (Exception eventEx)
                 {
                     // Don't fail the entire command if EventBus fails
-                    _logger.LogWarning(eventEx, "[COMMAND HANDLER] EventBus integration failed for {HazardCode} - continuing with command execution", hazard.Code);
+                    _logger.LogApplicationWarning(eventEx, "[COMMAND HANDLER] EventBus integration failed for {HazardCode} - continuing with command execution", hazard.Code);
                 }
 
                 _logger.LogApplicationInformation(ApplicationEventIds.Information, "CQRS : Hazard saved with complete audit trail - {Code}", hazard.Code);
@@ -109,43 +109,43 @@ namespace SMS_Application.Messaging.CommandHandlers
         //        var type = hazardType?.ToUpper() ?? "";
         //        var category = hazardCategory?.ToUpper() ?? "";
 
-        //        _logger.LogDebug("[PRIORITY] Determining priority for Type: '{Type}', Category: '{Category}'", type, category);
+        //        _logger.LogApplicationDebug("[PRIORITY] Determining priority for Type: '{Type}', Category: '{Category}'", type, category);
 
         //        // Handle DEFAULT classifications - assign High priority for testing
         //        if (type == HazardType.Default.Value || category == HazardCategory.Default.Value)
         //        {
-        //            _logger.LogInformation("[PRIORITY] DEFAULT classification detected - assigning High priority for testing");
+        //            _logger.LogApplicationInformation("[PRIORITY] DEFAULT classification detected - assigning High priority for testing");
         //            return SMS_Domain.Enums.HazardPriority.High;
         //        }
 
         //        // Critical priority conditions
         //        if (type.Contains("STRUCTURAL") || type.Contains("FIRE") || type.Contains("EXPLOSIVE") || category.Contains("SAFETY_CRITICAL") || category.Contains("REGULATORY"))
         //        {
-        //            _logger.LogInformation("[PRIORITY] Critical priority assigned");
+        //            _logger.LogApplicationInformation("[PRIORITY] Critical priority assigned");
         //            return SMS_Domain.Enums.HazardPriority.Critical;
         //        }
 
         //        // High priority conditions  
         //        if (type.Contains("EQUIPMENT") || type.Contains("MAINTENANCE") || type.Contains("OPERATIONAL") || category.Contains("OPERATIONAL") || category.Contains("MAINTENANCE"))
         //        {
-        //            _logger.LogInformation("[PRIORITY] High priority assigned");
+        //            _logger.LogApplicationInformation("[PRIORITY] High priority assigned");
         //            return SMS_Domain.Enums.HazardPriority.High;
         //        }
 
         //        // Medium priority conditions
         //        if (type.Contains("ENVIRONMENTAL") || type.Contains("DOCUMENTATION") || category.Contains("ENVIRONMENTAL") || category.Contains("PROCESS"))
         //        {
-        //            _logger.LogInformation("[PRIORITY] Medium priority assigned");
+        //            _logger.LogApplicationInformation("[PRIORITY] Medium priority assigned");
         //            return SMS_Domain.Enums.HazardPriority.Medium;
         //        }
 
         //        // Default to High for testing purposes
-        //        _logger.LogInformation("[PRIORITY] No specific match - defaulting to High priority for testing");
+        //        _logger.LogApplicationInformation("[PRIORITY] No specific match - defaulting to High priority for testing");
         //        return SMS_Domain.Enums.HazardPriority.High;
         //    }
         //    catch (Exception ex)
         //    {
-        //        _logger.LogWarning(ex, "[PRIORITY] Error determining hazard priority for Type: {Type}, Category: {Category} - defaulting to High",  hazardType, hazardCategory);
+        //        _logger.LogApplicationWarning(ex, "[PRIORITY] Error determining hazard priority for Type: {Type}, Category: {Category} - defaulting to High",  hazardType, hazardCategory);
         //        return SMS_Domain.Enums.HazardPriority.High;
         //    }
         //}
@@ -210,7 +210,7 @@ namespace SMS_Application.Messaging.CommandHandlers
                 catch (Exception eventEx)
                 {
                     // Don't fail the entire command if EventBus fails
-                    _logger.LogWarning(eventEx, "[COMMAND HANDLER] EventBus integration failed for {HazardCode} - continuing with command execution", hazard.Code);
+                    _logger.LogApplicationWarning(eventEx, "[COMMAND HANDLER] EventBus integration failed for {HazardCode} - continuing with command execution", hazard.Code);
                 }
 
                 _logger.LogApplicationInformation(ApplicationEventIds.Information, "CQRS : Hazard saved with complete audit trail - {Code}", hazard.Code);
@@ -245,13 +245,13 @@ namespace SMS_Application.Messaging.CommandHandlers
                     return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.NullOrEmpty);
                 }
 
-                _logger.LogInformation("Processing ResetHazardScoresCommand for ID: {Id}, Code: {Code}", request.Hazard.Id, request.Hazard.Code);
+                _logger.LogApplicationInformation("Processing ResetHazardScoresCommand for ID: {Id}, Code: {Code}", request.Hazard.Id, request.Hazard.Code);
                 request.Hazard.UpdatedDate = DateTime.UtcNow;
                 var result = await _hazardService.UpdateHazardAsync(request.Hazard, ct).ConfigureAwait(false);
 
                 if (result.IsSuccess)
                 {
-                    _logger.LogInformation("Successfully reset scores for Hazard with ID: {Id}", request.Hazard.Id);
+                    _logger.LogApplicationInformation("Successfully reset scores for Hazard with ID: {Id}", request.Hazard.Id);
                 }
                 else
                 {
@@ -263,7 +263,7 @@ namespace SMS_Application.Messaging.CommandHandlers
             }
             catch (OperationCanceledException)
             {
-                _logger.LogWarning("ResetHazardScoresCommand operation was cancelled");
+                _logger.LogApplicationWarning("ResetHazardScoresCommand operation was cancelled");
                 throw;
             }
             catch (Exception ex)
@@ -295,13 +295,13 @@ namespace SMS_Application.Messaging.CommandHandlers
                     return Result<bool>.Failure<bool>(DomainErrors.HazardError.NullOrEmpty);
                 }
 
-                _logger.LogInformation("Processing DeleteHazardCommand for ID: {Id}", request.HazardId);
+                _logger.LogApplicationInformation("Processing DeleteHazardCommand for ID: {Id}", request.HazardId);
 
                 var result = await _hazardService.DeleteHazardAsync(request.HazardId, ct).ConfigureAwait(false);
 
                 if (result.IsSuccess)
                 {
-                    _logger.LogInformation("Successfully deleted Hazard with ID: {Id}", request.HazardId);
+                    _logger.LogApplicationInformation("Successfully deleted Hazard with ID: {Id}", request.HazardId);
                 }
                 else
                 {
@@ -313,7 +313,7 @@ namespace SMS_Application.Messaging.CommandHandlers
             }
             catch (OperationCanceledException)
             {
-                _logger.LogWarning("DeleteHazardCommand operation was cancelled");
+                _logger.LogApplicationWarning("DeleteHazardCommand operation was cancelled");
                 throw;
             }
             catch (Exception ex)
@@ -386,7 +386,7 @@ namespace SMS_Application.Messaging.CommandHandlers
 
             if (!eventResult.IsSuccess)
             {
-                logger.LogWarning("[COMMAND HANDLER] Failed to publish Event for {HazardCode}: {Error} - continuing with command execution", hazard.Code, eventResult.Error.Message);
+                logger.LogApplicationWarning("[COMMAND HANDLER] Failed to publish Event for {HazardCode}: {Error} - continuing with command execution", hazard.Code, eventResult.Error.Message);
             }
         }
     }
@@ -405,3 +405,4 @@ namespace SMS_Application.Messaging.CommandHandlers
 
 
     
+

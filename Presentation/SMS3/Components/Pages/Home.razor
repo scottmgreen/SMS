@@ -1,6 +1,6 @@
 ﻿@page "/"
 @layout SMS3.Components.Layout.MainLayout
-@inject SMS_Application.Interfaces.ICurrentUserService CurrentUserService
+@inject SMS_Application.Interfaces.ICurrentUserService _currentUserService
 @inject NavigationManager Navigation
 
 <PageTitle>PDX SMS </PageTitle>
@@ -14,7 +14,7 @@
 </div>
 
 @code {
-    private bool IsAuthenticated => CurrentUserService.IsAuthenticated;
-    private string? CurrentUserName => CurrentUserService.UserDisplayName;
-    private string? CurrentUserType => CurrentUserService.UserType;
+    private bool IsAuthenticated => _currentUserService.IsAuthenticated;
+    private string? CurrentUserName => _currentUserService.UserDisplayName;
+    private string? CurrentUserType => _currentUserService.UserType;
 }

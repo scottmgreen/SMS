@@ -8,6 +8,9 @@ using SMS_Shared.Configuration;
 using SMS3.Api.Extensions;
 using SMS3.Components;
 using SMS3.Configuration;
+using SMS3.EventHandlers;
+using SMS_Domain.Events;
+using SMS_Application.Interfaces;
 
 namespace SMS3;
 public class Program
@@ -136,7 +139,14 @@ public class Program
 
         // 🚀 EVENTBUS SUBSCRIPTIONS 
         app.InitializeEventBus(); // Application layer handlers (Domain + Integration events)
-        //app.InitializeUIEventHandlers(); // Presentation layer handlers (UI events)
+
+        // Ensure Blazor Presentation UI notification handler is explicitly wired
+        // so UINotificationEvent events can dispatch to Radzen popup notifications.
+        using (var scope = app.Services.CreateScope())
+        {
+            var eventBus = scope.ServiceProvider.GetRequiredService<IBaseEventBus>();
+            eventBus.SubscribeUI<UINotificationEvent, UIEventHandler>();
+        }
 
         app.Run();
     }

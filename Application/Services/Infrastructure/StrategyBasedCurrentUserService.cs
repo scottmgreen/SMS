@@ -46,36 +46,36 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
         {
             try
             {
-                _logger.LogDebug("?? StrategyBasedCurrentUserService.IsAuthenticated - Starting check");
+                _logger.LogApplicationDebug("StrategyBasedCurrentUserService.IsAuthenticated - Starting check");
                 var result = _strategyManager.IsUserAuthenticatedAsync().GetAwaiter().GetResult();
-                _logger.LogDebug("?? StrategyBasedCurrentUserService.IsAuthenticated - Result: {Result}", result);
+                _logger.LogApplicationDebug("StrategyBasedCurrentUserService.IsAuthenticated - Result: {Result}", result);
                 
                 // Enhanced logging for debugging - only log detailed info when authentication succeeds
-                if (result && _logger.IsEnabled(LogLevel.Information))
+                if (result && _logger.IsEnabled(LogLevel.Debug))
                 {
                     var userResult = _strategyManager.RetrieveUserAsync().GetAwaiter().GetResult();
                     if (userResult.IsSuccess && userResult.Value.HasValue)
                     {
                         var user = userResult.Value.Value.User;
                         var userType = userResult.Value.Value.UserType;
-                        _logger.LogInformation("? IsAuthenticated: TRUE - User: {UserCode}, Type: {UserType}, Role: {RoleCode}, Permissions: {PermissionCount}", 
+                        _logger.LogApplicationDebug("IsAuthenticated: TRUE - User: {UserCode}, Type: {UserType}, Role: {RoleCode}, Permissions: {PermissionCount}", 
                             user.Code, userType.Value, user.UserRole?.Code ?? "None", user.UserRole?.Permissions?.Count ?? 0);
                     }
                     else
                     {
-                        _logger.LogWarning("?? IsAuthenticated: TRUE but RetrieveUser FAILED - {Error}", userResult.Error?.Message ?? "Unknown error");
+                        _logger.LogApplicationWarning("IsAuthenticated: TRUE but RetrieveUser FAILED - {Error}", userResult.Error?.Message ?? "Unknown error");
                     }
                 }
                 else if (!result)
                 {
-                    _logger.LogDebug("?? IsAuthenticated: FALSE - No authenticated user found");
+                    _logger.LogApplicationDebug("IsAuthenticated: FALSE - No authenticated user found");
                 }
                 
                 return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "? Error checking authentication status");
+                _logger.LogApplicationError(ex, "Error checking authentication status");
                 return false;
             }
         }
@@ -89,13 +89,13 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
             {
                 // Keep this simple - no caching for UserCode to avoid complexity
                 var userCode = _strategyManager.GetCurrentUserIdAsync().GetAwaiter().GetResult() ?? "SYSTEM";
-                _logger.LogDebug("?? UserCode check: Result={UserCode}", userCode);
+                _logger.LogApplicationDebug("UserCode check: Result={UserCode}", userCode);
                 
                 return userCode;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting current user code");
+                _logger.LogApplicationError(ex, "Error getting current user code");
                 return "SYSTEM";
             }
         }
@@ -112,7 +112,7 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting current user type");
+                _logger.LogApplicationError(ex, "Error getting current user type");
                 return null;
             }
         }
@@ -128,7 +128,7 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting current user display name");
+                _logger.LogApplicationError(ex, "Error getting current user display name");
                 return "System User";
             }
         }
@@ -151,7 +151,7 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting login time");
+                _logger.LogApplicationError(ex, "Error getting login time");
                 return null;
             }
         }
@@ -180,7 +180,7 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error getting user permissions");
+                _logger.LogApplicationError(ex, "Error getting user permissions");
                 return new List<SMSUserRolePermission>();
             }
         }
@@ -238,7 +238,7 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error clearing authentication");
+            _logger.LogApplicationError(ex, "Error clearing authentication");
         }
     }
 
@@ -259,18 +259,18 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
                     var user = result.Value.Value.User;
                     var requires2FA = user.TwoFactorEnabled;
                     
-                    _logger.LogDebug("?? RequiresTwoFactorAuth: User {UserCode} - TwoFactorEnabled: {Enabled}", 
+                    _logger.LogApplicationDebug("RequiresTwoFactorAuth: User {UserCode} - TwoFactorEnabled: {Enabled}", 
                         user.Code, requires2FA);
                     
                     return requires2FA;
                 }
                 
-                _logger.LogDebug("?? RequiresTwoFactorAuth: No user data available, assuming 2FA not required");
+                _logger.LogApplicationDebug("RequiresTwoFactorAuth: No user data available, assuming 2FA not required");
                 return false;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking 2FA requirement");
+                _logger.LogApplicationError(ex, "Error checking 2FA requirement");
                 return false;
             }
         }
@@ -285,7 +285,7 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
                 // FIRST: Check if user is authenticated at all
                 if (!IsAuthenticated)
                 {
-                    _logger.LogDebug("?? IsPending2FAVerification: User not authenticated, cannot be pending 2FA");
+                    _logger.LogApplicationDebug("IsPending2FAVerification: User not authenticated, cannot be pending 2FA");
                     return false;
                 }
 
@@ -293,7 +293,7 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
                 // If 2FA is not required for this user, they should never be in pending state
                 if (!RequiresTwoFactorAuth)
                 {
-                    _logger.LogDebug("?? IsPending2FAVerification: User does not require 2FA, not pending");
+                    _logger.LogApplicationDebug("IsPending2FAVerification: User does not require 2FA, not pending");
                     return false;
                 }
 
@@ -301,13 +301,13 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
                 // This means they passed password auth but haven't completed 2FA yet
                 var hasPendingData = _sessionService.HasPending2FAUser();
                 
-                _logger.LogDebug("?? IsPending2FAVerification: User requires 2FA, checking pending state: {HasPending}", hasPendingData);
+                _logger.LogApplicationDebug("IsPending2FAVerification: User requires 2FA, checking pending state: {HasPending}", hasPendingData);
                 
                 return hasPendingData;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking pending 2FA status");
+                _logger.LogApplicationError(ex, "Error checking pending 2FA status");
                 return false;
             }
         }
@@ -343,14 +343,14 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
                     result = !isPending;
                 }
                 
-                _logger.LogInformation("?? IsFullyAuthenticated check: Authenticated={IsAuth}, Requires2FA={Requires2FA}, Pending2FA={IsPending}, Result={Result}", 
+                _logger.LogApplicationDebug("IsFullyAuthenticated check: Authenticated={IsAuth}, Requires2FA={Requires2FA}, Pending2FA={IsPending}, Result={Result}", 
                     isAuth, requires2FA, isPending, result);
                 
                 return result;
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error checking full authentication status");
+                _logger.LogApplicationError(ex, "Error checking full authentication status");
                 return false;
             }
         }
@@ -379,7 +379,7 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error getting user property {PropertyName}", propertyName);
+            _logger.LogApplicationError(ex, "Error getting user property {PropertyName}", propertyName);
             return null;
         }
     }
@@ -394,8 +394,9 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
     /// </summary>
     public void ClearCache()
     {
-        _logger.LogDebug("?? Authentication cache clear requested (no-op; caching disabled)");
+        _logger.LogApplicationDebug("Authentication cache clear requested (no-op; caching disabled)");
     }
 
     #endregion
 }
+

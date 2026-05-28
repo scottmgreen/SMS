@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSUserRoleService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -63,28 +63,28 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
         {
             if (userRole is null)
             {
-                _logger.LogError("CreateUserRoleAsync received null userRole");
+                _logger.LogApplicationError("CreateUserRoleAsync received null userRole");
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Creating user role assignment: Code={Code}", userRole.Code);
+            _logger.LogApplicationInformation("Creating user role assignment: Code={Code}", userRole.Code);
 
             var result = await _dataService.CreateSMSUserRoleAsync(userRole);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created user role assignment with ID: {Id}", result.Value?.Id);
+                _logger.LogApplicationInformation("Successfully created user role assignment with ID: {Id}", result.Value?.Id);
             }
             else
             {
-                _logger.LogError("Failed to create user role assignment: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to create user role assignment: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error creating user role assignment");
+            _logger.LogApplicationError(ex, "Unexpected error creating user role assignment");
             return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.CreateFailed);
         }
     }
@@ -96,19 +96,19 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
     {
         try
         {
-            _logger.LogInformation("Retrieving all user role assignments");
+            _logger.LogApplicationInformation("Retrieving all user role assignments");
             var result = await _dataService.GetAllSMSUserRolesAsync();
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} user role assignments", result.Value?.Count() ?? 0);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} user role assignments", result.Value?.Count() ?? 0);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving all user role assignments");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving all user role assignments");
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -120,19 +120,19 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
     {
         try
         {
-            _logger.LogInformation("Retrieving all active user role assignments");
+            _logger.LogApplicationInformation("Retrieving all active user role assignments");
             var result = await _dataService.GetAllActiveSMSUserRolesAsync();
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} active user role assignments", result.Value?.Count() ?? 0);
+                _logger.LogApplicationInformation("Successfully retrieved {Count} active user role assignments", result.Value?.Count() ?? 0);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving active user role assignments");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving active user role assignments");
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -146,16 +146,16 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                _logger.LogError("GetUserRoleByIdAsync received null or empty id");
+                _logger.LogApplicationError("GetUserRoleByIdAsync received null or empty id");
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving user role assignment with ID: {Id}", id);
+            _logger.LogApplicationInformation("Retrieving user role assignment with ID: {Id}", id);
             return await _dataService.GetSMSUserRoleByIdAsync(id);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving user role assignment with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving user role assignment with ID: {Id}", id);
             return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -169,16 +169,16 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                _logger.LogError("GetUserRolesByUserIdAsync received null or empty userId");
+                _logger.LogApplicationError("GetUserRolesByUserIdAsync received null or empty userId");
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving user role assignments for user: {UserId}", userId);
+            _logger.LogApplicationInformation("Retrieving user role assignments for user: {UserId}", userId);
             var result = await _dataService.GetSMSUserRolesByApplicationUserIdAsync(userId);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} user role assignments for user {UserId}",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} user role assignments for user {UserId}",
                     result.Value?.Count() ?? 0, userId);
             }
 
@@ -186,7 +186,7 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving user role assignments for user: {UserId}", userId);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving user role assignments for user: {UserId}", userId);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -196,16 +196,16 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
         {
             if (string.IsNullOrWhiteSpace(userId))
             {
-                _logger.LogError("GetUserRolesByUserIdAsync received null or empty userId");
+                _logger.LogApplicationError("GetUserRolesByUserIdAsync received null or empty userId");
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving user role assignments for user: {UserId}", userId);
+            _logger.LogApplicationInformation("Retrieving user role assignments for user: {UserId}", userId);
             var result = await _dataService.GetSMSUserRolesByStakeholderUserIdAsync(userId);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} user role assignments for user {UserId}",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} user role assignments for user {UserId}",
                     result.Value?.Count() ?? 0, userId);
             }
 
@@ -213,7 +213,7 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving user role assignments for user: {UserId}", userId);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving user role assignments for user: {UserId}", userId);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -227,16 +227,16 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
     //    {
     //        if (string.IsNullOrWhiteSpace(userId))
     //        {
-    //            _logger.LogError("GetActiveUserRolesByUserIdAsync received null or empty userId");
+    //            _logger.LogApplicationError("GetActiveUserRolesByUserIdAsync received null or empty userId");
     //            return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
     //        }
 
-    //        _logger.LogInformation("Retrieving active user role assignments for user: {UserCode}", userId);
+    //        _logger.LogApplicationInformation("Retrieving active user role assignments for user: {UserCode}", userId);
     //        var result = await _dataService.GetActiveSMSUserRolesByUserIdAsync(userId);
 
     //        if (result.IsSuccess)
     //        {
-    //            _logger.LogInformation("Successfully retrieved {Count} active user role assignments for user {UserCode}", 
+    //            _logger.LogApplicationInformation("Successfully retrieved {Count} active user role assignments for user {UserCode}", 
     //                result.Value?.Count() ?? 0, userId);
     //        }
 
@@ -244,7 +244,7 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
     //    }
     //    catch (Exception ex)
     //    {
-    //        _logger.LogError(ex, "Unexpected error retrieving active user role assignments for user: {UserCode}", userId);
+    //        _logger.LogApplicationError(ex, "Unexpected error retrieving active user role assignments for user: {UserCode}", userId);
     //        return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
     //    }
     //}
@@ -258,16 +258,16 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
         {
             if (string.IsNullOrWhiteSpace(roleValue))
             {
-                _logger.LogError("GetUserRolesByRoleValueAsync received null or empty roleValue");
+                _logger.LogApplicationError("GetUserRolesByRoleValueAsync received null or empty roleValue");
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving user role assignments for role: {RoleValue}", roleValue);
+            _logger.LogApplicationInformation("Retrieving user role assignments for role: {RoleValue}", roleValue);
             return await _dataService.GetSMSUserRolesByRoleValueAsync(roleValue);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving user role assignments for role: {RoleValue}", roleValue);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving user role assignments for role: {RoleValue}", roleValue);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -281,16 +281,16 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
         {
             if (string.IsNullOrWhiteSpace(department))
             {
-                _logger.LogError("GetUserRolesByDepartmentAsync received null or empty department");
+                _logger.LogApplicationError("GetUserRolesByDepartmentAsync received null or empty department");
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving user role assignments for department: {Department}", department);
+            _logger.LogApplicationInformation("Retrieving user role assignments for department: {Department}", department);
             return await _dataService.GetSMSUserRolesByDepartmentAsync(department);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving user role assignments for department: {Department}", department);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving user role assignments for department: {Department}", department);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -304,16 +304,16 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
         {
             if (string.IsNullOrWhiteSpace(userType))
             {
-                _logger.LogError("GetUserRolesByUserTypeAsync received null or empty userType");
+                _logger.LogApplicationError("GetUserRolesByUserTypeAsync received null or empty userType");
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Retrieving user role assignments for user type: {UserType}", userType);
+            _logger.LogApplicationInformation("Retrieving user role assignments for user type: {UserType}", userType);
             return await _dataService.GetSMSUserRolesByUserTypeAsync(userType);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving user role assignments for user type: {UserType}", userType);
+            _logger.LogApplicationError(ex, "Unexpected error retrieving user role assignments for user type: {UserType}", userType);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -325,12 +325,12 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
     {
         try
         {
-            _logger.LogInformation("Retrieving expiring user role assignments before: {CutoffDate}", cutoffDate);
+            _logger.LogApplicationInformation("Retrieving expiring user role assignments before: {CutoffDate}", cutoffDate);
             var result = await _dataService.GetExpiringSMSUserRolesAsync(cutoffDate);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully retrieved {Count} expiring user role assignments",
+                _logger.LogApplicationInformation("Successfully retrieved {Count} expiring user role assignments",
                     result.Value?.Count() ?? 0);
             }
 
@@ -338,7 +338,7 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error retrieving expiring user role assignments");
+            _logger.LogApplicationError(ex, "Unexpected error retrieving expiring user role assignments");
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }
@@ -352,28 +352,28 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
         {
             if (userRole is null)
             {
-                _logger.LogError("UpdateUserRoleAsync received null userRole");
+                _logger.LogApplicationError("UpdateUserRoleAsync received null userRole");
                 return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Updating user role assignment with ID: {Id}", userRole.Id);
+            _logger.LogApplicationInformation("Updating user role assignment with ID: {Id}", userRole.Id);
 
             var result = await _dataService.UpdateSMSUserRoleAsync(userRole);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated user role assignment with ID: {Id}", userRole.Id);
+                _logger.LogApplicationInformation("Successfully updated user role assignment with ID: {Id}", userRole.Id);
             }
             else
             {
-                _logger.LogError("Failed to update user role assignment: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to update user role assignment: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error updating user role assignment with ID: {Id}", userRole?.Id);
+            _logger.LogApplicationError(ex, "Unexpected error updating user role assignment with ID: {Id}", userRole?.Id);
             return Result<SMSUserRole>.Failure<SMSUserRole>(DomainErrors.SMSUserRoleError.UpdateFailed);
         }
     }
@@ -387,28 +387,28 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
         {
             if (string.IsNullOrWhiteSpace(id))
             {
-                _logger.LogError("DeleteUserRoleAsync received null or empty id");
+                _logger.LogApplicationError("DeleteUserRoleAsync received null or empty id");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInformation("Deleting user role assignment with ID: {Id}", id);
+            _logger.LogApplicationInformation("Deleting user role assignment with ID: {Id}", id);
 
             var result = await _dataService.DeleteSMSUserRoleAsync(id);
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted user role assignment with ID: {Id}", id);
+                _logger.LogApplicationInformation("Successfully deleted user role assignment with ID: {Id}", id);
             }
             else
             {
-                _logger.LogError("Failed to delete user role assignment: {Error}", result.Error?.Message);
+                _logger.LogApplicationError("Failed to delete user role assignment: {Error}", result.Error?.Message);
             }
 
             return result;
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error deleting user role assignment with ID: {Id}", id);
+            _logger.LogApplicationError(ex, "Unexpected error deleting user role assignment with ID: {Id}", id);
             return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.DeleteFailed);
         }
     }
@@ -420,19 +420,19 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
     //{
     //    try
     //    {
-    //        _logger.LogInformation("Retrieving user role statistics");
+    //        _logger.LogApplicationInformation("Retrieving user role statistics");
     //        var result = await _dataService.GetSMSUserRoleStatisticsAsync();
 
     //        if (result.IsSuccess)
     //        {
-    //            _logger.LogInformation("Successfully retrieved user role statistics");
+    //            _logger.LogApplicationInformation("Successfully retrieved user role statistics");
     //        }
 
     //        return result;
     //    }
     //    catch (Exception ex)
     //    {
-    //        _logger.LogError(ex, "Unexpected error retrieving user role statistics");
+    //        _logger.LogApplicationError(ex, "Unexpected error retrieving user role statistics");
     //        return Result<UserRoleStatistics>.Failure<UserRoleStatistics>(DomainErrors.GeneralError.UnProcessableRequest);
     //    }
     //}
@@ -446,25 +446,26 @@ public sealed class SMSUserRoleService : ISMSUserRoleService
     //    {
     //        if (string.IsNullOrWhiteSpace(userId) || string.IsNullOrWhiteSpace(roleValue))
     //        {
-    //            _logger.LogError("ValidateUserHasRoleAsync received null or empty parameters");
+    //            _logger.LogApplicationError("ValidateUserHasRoleAsync received null or empty parameters");
     //            return Result<bool>.Failure<bool>(DomainErrors.SMSUserRoleError.NullOrEmpty);
     //        }
 
-    //        _logger.LogInformation("Validating if user {UserCode} has role {RoleValue}", userId, roleValue);
+    //        _logger.LogApplicationInformation("Validating if user {UserCode} has role {RoleValue}", userId, roleValue);
 
     //        var result = await _dataService.ValidateUserRoleAsync(userId, roleValue);
 
     //        if (result.IsSuccess)
     //        {
-    //            _logger.LogInformation("User {UserCode} role validation result: {HasRole}", userId, result.Value);
+    //            _logger.LogApplicationInformation("User {UserCode} role validation result: {HasRole}", userId, result.Value);
     //        }
 
     //        return result;
     //    }
     //    catch (Exception ex)
     //    {
-    //        _logger.LogError(ex, "Unexpected error validating user role");
+    //        _logger.LogApplicationError(ex, "Unexpected error validating user role");
     //        return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
     //    }
     //}
 }
+

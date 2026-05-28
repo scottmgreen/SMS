@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SmtpEmailService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -48,7 +48,7 @@ public class SmtpEmailService : IEmailService
 
         try
         {
-            _logger.LogInformation("📧 SMTP: Sending email '{Subject}' to {RecipientCount} recipients", 
+            _logger.LogApplicationInformation("SMTP: Sending email '{Subject}' to {RecipientCount} recipients", 
                 emailEvent.Subject, emailEvent.ToRecipients.Count);
 
             // Validate configuration
@@ -71,7 +71,7 @@ public class SmtpEmailService : IEmailService
             deliveryResult.SuccessfulRecipients.AddRange(emailEvent.CcRecipients);
             deliveryResult.SuccessfulRecipients.AddRange(emailEvent.BccRecipients);
 
-            _logger.LogInformation("✅ SMTP: Email sent successfully - MessageId: {MessageId}", deliveryResult.MessageId);
+            _logger.LogApplicationInformation("SMTP: Email sent successfully - MessageId: {MessageId}", deliveryResult.MessageId);
             return Result<EmailDeliveryResult>.Success(deliveryResult);
         }
         catch (Exception ex)
@@ -81,7 +81,7 @@ public class SmtpEmailService : IEmailService
             deliveryResult.ErrorMessage = ex.Message;
             deliveryResult.FailedRecipients.AddRange(emailEvent.ToRecipients);
 
-            _logger.LogError(ex, "❌ SMTP: Email delivery failed for MessageId: {MessageId}", deliveryResult.MessageId);
+            _logger.LogApplicationError(ex, "SMTP: Email delivery failed for MessageId: {MessageId}", deliveryResult.MessageId);
             return Result<EmailDeliveryResult>.Failure<EmailDeliveryResult>(
                 new Error("EMAIL_DELIVERY_FAILED", $"Email delivery failed: {ex.Message}"));
         }
@@ -107,7 +107,7 @@ public class SmtpEmailService : IEmailService
             // Test SMTP connection with a simple validation
             using var smtpClient = CreateSmtpClient();
 
-            _logger.LogDebug("🔍 SMTP: Testing connection to {Host}:{Port}", _config.SmtpHost, _config.SmtpPort);
+            _logger.LogApplicationDebug("SMTP: Testing connection to {Host}:{Port}", _config.SmtpHost, _config.SmtpPort);
 
             // Simple connectivity test - just create client (timeout after 10 seconds)
             using var cts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -117,12 +117,12 @@ public class SmtpEmailService : IEmailService
             // Real connection test would happen on first send
             await Task.Delay(100, cts.Token); // Small delay to simulate check
 
-            _logger.LogDebug("✅ SMTP: Connection test successful");
+            _logger.LogApplicationDebug("SMTP: Connection test successful");
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "❌ SMTP: Service validation failed");
+            _logger.LogApplicationError(ex, "SMTP: Service validation failed");
             return Result.Failure(new Error("SMTP_VALIDATION_FAILED", $"SMTP validation failed: {ex.Message}"));
         }
     }
@@ -135,7 +135,7 @@ public class SmtpEmailService : IEmailService
     {
         // SMTP doesn't provide delivery status tracking
         // For real delivery tracking, consider using services like SendGrid, AWS SES, etc.
-        _logger.LogDebug("📊 SMTP: Delivery status requested for MessageId: {MessageId} (SMTP doesn't support tracking)", messageId);
+        _logger.LogApplicationDebug("SMTP: Delivery status requested for MessageId: {MessageId} (SMTP doesn't support tracking)", messageId);
 
         var status = EmailDeliveryStatus.Sent; // Best we can do with basic SMTP
         return Task.FromResult(Result<EmailDeliveryStatus>.Success(status));
@@ -229,16 +229,16 @@ public class SmtpEmailService : IEmailService
             {
                 cancellationToken.ThrowIfCancellationRequested();
 
-                _logger.LogDebug("📤 SMTP: Sending email (attempt {Attempt}/{MaxAttempts})", attempt, maxAttempts);
+                _logger.LogApplicationDebug("SMTP: Sending email (attempt {Attempt}/{MaxAttempts})", attempt, maxAttempts);
 
                 await smtpClient.SendMailAsync(mailMessage);
 
-                _logger.LogDebug("✅ SMTP: Email sent successfully on attempt {Attempt}", attempt);
+                _logger.LogApplicationDebug("SMTP: Email sent successfully on attempt {Attempt}", attempt);
                 return; // Success
             }
             catch (Exception ex) when (attempt < maxAttempts)
             {
-                _logger.LogWarning(ex, "⚠️ SMTP: Send attempt {Attempt} failed, retrying in {Delay}s", attempt, delay.TotalSeconds);
+                _logger.LogApplicationWarning(ex, "SMTP: Send attempt {Attempt} failed, retrying in {Delay}s", attempt, delay.TotalSeconds);
 
                 await Task.Delay(delay, cancellationToken);
                 delay = TimeSpan.FromSeconds(delay.TotalSeconds * 1.5); // Exponential backoff
@@ -283,3 +283,4 @@ public class SmtpEmailConfiguration
     public int RetryDelaySeconds { get; set; } = 2;
     public bool UseSimulation { get; set; } = false;
 }
+

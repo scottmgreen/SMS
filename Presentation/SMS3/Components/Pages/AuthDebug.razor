@@ -1,6 +1,6 @@
 @page "/auth-debug"
 @using SMS_Application.Interfaces
-@inject ICurrentUserService CurrentUserService
+@inject ICurrentUserService _currentUserService
 @inject ILogger<AuthDebug> Logger
 
 <PageTitle>Authentication Debug</PageTitle>
@@ -19,45 +19,45 @@
                             <table class="table table-sm">
                                 <tr>
                                     <td><strong>Service Available:</strong></td>
-                                    <td><span class="badge @(CurrentUserService != null ? "bg-success" : "bg-danger")">@(CurrentUserService != null ? "Yes" : "No")</span></td>
+                                    <td><span class="badge @(_currentUserService != null ? "bg-success" : "bg-danger")">@(_currentUserService != null ? "Yes" : "No")</span></td>
                                 </tr>
-                                @if (CurrentUserService != null)
+                                @if (_currentUserService != null)
                                 {
                                     <tr>
                                         <td><strong>IsAuthenticated:</strong></td>
-                                        <td><span class="badge @(CurrentUserService.IsAuthenticated ? "bg-success" : "bg-secondary")">@CurrentUserService.IsAuthenticated</span></td>
+                                        <td><span class="badge @(_currentUserService.IsAuthenticated ? "bg-success" : "bg-secondary")">@_currentUserService.IsAuthenticated</span></td>
                                     </tr>
                                     <tr>
                                         <td><strong>IsFullyAuthenticated:</strong></td>
-                                        <td><span class="badge @(CurrentUserService.IsFullyAuthenticated ? "bg-success" : "bg-warning")">@CurrentUserService.IsFullyAuthenticated</span></td>
+                                        <td><span class="badge @(_currentUserService.IsFullyAuthenticated ? "bg-success" : "bg-warning")">@_currentUserService.IsFullyAuthenticated</span></td>
                                     </tr>
                                     <tr>
                                         <td><strong>IsPending2FA:</strong></td>
-                                        <td><span class="badge @(CurrentUserService.IsPending2FAVerification ? "bg-warning" : "bg-success")">@CurrentUserService.IsPending2FAVerification</span></td>
+                                        <td><span class="badge @(_currentUserService.IsPending2FAVerification ? "bg-warning" : "bg-success")">@_currentUserService.IsPending2FAVerification</span></td>
                                     </tr>
                                     <tr>
                                         <td><strong>User Code:</strong></td>
-                                        <td><code>@CurrentUserService.UserCode</code></td>
+                                        <td><code>@_currentUserService.UserCode</code></td>
                                     </tr>
                                     <tr>
                                         <td><strong>User Type:</strong></td>
-                                        <td><code>@CurrentUserService.UserType</code></td>
+                                        <td><code>@_currentUserService.UserType</code></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Display Name:</strong></td>
-                                        <td><code>@CurrentUserService.UserDisplayName</code></td>
+                                        <td><code>@_currentUserService.UserDisplayName</code></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Email:</strong></td>
-                                        <td><code>@CurrentUserService.Email</code></td>
+                                        <td><code>@_currentUserService.Email</code></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Role Code:</strong></td>
-                                        <td><code>@CurrentUserService.UserRoleCode</code></td>
+                                        <td><code>@_currentUserService.UserRoleCode</code></td>
                                     </tr>
                                     <tr>
                                         <td><strong>Permission Count:</strong></td>
-                                        <td><span class="badge bg-info">@CurrentUserService.Permissions.Count</span></td>
+                                        <td><span class="badge bg-info">@_currentUserService.Permissions.Count</span></td>
                                     </tr>
                                 }
                             </table>
@@ -67,19 +67,19 @@
                             <table class="table table-sm">
                                 <tr>
                                     <td><strong>Should Show Main Menu:</strong></td>
-                                    <td><span class="badge @(CurrentUserService?.IsFullyAuthenticated == true ? "bg-success" : "bg-secondary")">@(CurrentUserService?.IsFullyAuthenticated == true)</span></td>
+                                    <td><span class="badge @(_currentUserService?.IsFullyAuthenticated == true ? "bg-success" : "bg-secondary")">@(_currentUserService?.IsFullyAuthenticated == true)</span></td>
                                 </tr>
                                 <tr>
                                     <td><strong>Should Show 2FA Status:</strong></td>
-                                    <td><span class="badge @(CurrentUserService?.IsPending2FAVerification == true ? "bg-warning" : "bg-secondary")">@(CurrentUserService?.IsPending2FAVerification == true)</span></td>
+                                    <td><span class="badge @(_currentUserService?.IsPending2FAVerification == true ? "bg-warning" : "bg-secondary")">@(_currentUserService?.IsPending2FAVerification == true)</span></td>
                                 </tr>
                             </table>
                             
                             <h5>Available Modules</h5>
                             <div class="list-group">
-                                @if (CurrentUserService?.IsFullyAuthenticated == true)
+                                @if (_currentUserService?.IsFullyAuthenticated == true)
                                 {
-                                    var modules = CurrentUserService.GetAccessibleModules();
+                                    var modules = _currentUserService.GetAccessibleModules();
                                     @foreach (var module in modules)
                                     {
                                         <div class="list-group-item">@module</div>

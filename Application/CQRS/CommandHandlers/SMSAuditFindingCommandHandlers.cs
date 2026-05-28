@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditFindingCommandHandlers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -12,7 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
-namespace SMS_Application.Messaging.CommandHandlers;
+namespace SMS_Application.CommandHandlers;
 
 /// <summary>
 /// SMS Audit Finding Command Handlers following established patterns
@@ -44,7 +44,7 @@ public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing CreateSMSAuditFindingCommand for audit: {AuditCode}", request.AuditCode);
+            _logger.LogApplicationInformation("Processing CreateSMSAuditFindingCommand for audit: {AuditCode}", request.AuditCode);
 
             // Verify audit exists
             var auditResult = await _auditService.GetAuditByCodeAsync(request.AuditCode, cancellationToken);
@@ -82,7 +82,7 @@ public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully created SMS audit finding: {FindingCode}", findingCode);
+                _logger.LogApplicationInformation("Successfully created SMS audit finding: {FindingCode}", findingCode);
             }
             else
             {
@@ -93,7 +93,7 @@ public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CreateSMSAuditFindingCommand operation was cancelled");
+            _logger.LogApplicationWarning("CreateSMSAuditFindingCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -142,7 +142,7 @@ public class UpdateSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing UpdateSMSAuditFindingCommand for finding: {FindingCode}", request.FindingCode);
+            _logger.LogApplicationInformation("Processing UpdateSMSAuditFindingCommand for finding: {FindingCode}", request.FindingCode);
 
             // Get existing finding
             var existingResult = await _auditFindingDataService.GetAuditFindingByCodeAsync(request.FindingCode, cancellationToken);
@@ -170,7 +170,7 @@ public class UpdateSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully updated SMS audit finding: {FindingCode}", request.FindingCode);
+                _logger.LogApplicationInformation("Successfully updated SMS audit finding: {FindingCode}", request.FindingCode);
             }
             else
             {
@@ -181,7 +181,7 @@ public class UpdateSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("UpdateSMSAuditFindingCommand operation was cancelled");
+            _logger.LogApplicationWarning("UpdateSMSAuditFindingCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -215,7 +215,7 @@ public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, I
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing AssignSMSAuditCorrectiveActionCommand for finding: {FindingCode}", request.FindingCode);
+            _logger.LogApplicationInformation("Processing AssignSMSAuditCorrectiveActionCommand for finding: {FindingCode}", request.FindingCode);
 
             // Get existing finding
             var existingResult = await _auditFindingDataService.GetAuditFindingByCodeAsync(request.FindingCode, cancellationToken);
@@ -246,7 +246,7 @@ public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, I
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully assigned corrective action for finding: {FindingCode} to {ResponsiblePerson}",
+                _logger.LogApplicationInformation("Successfully assigned corrective action for finding: {FindingCode} to {ResponsiblePerson}",
                     request.FindingCode, request.ResponsiblePerson);
             }
             else
@@ -258,7 +258,7 @@ public class AssignSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle, I
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("AssignSMSAuditCorrectiveActionCommand operation was cancelled");
+            _logger.LogApplicationWarning("AssignSMSAuditCorrectiveActionCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -292,7 +292,7 @@ public class CompleteSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle,
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing CompleteSMSAuditCorrectiveActionCommand for finding: {FindingCode}", request.FindingCode);
+            _logger.LogApplicationInformation("Processing CompleteSMSAuditCorrectiveActionCommand for finding: {FindingCode}", request.FindingCode);
 
             // Get existing finding
             var existingResult = await _auditFindingDataService.GetAuditFindingByCodeAsync(request.FindingCode, cancellationToken);
@@ -321,7 +321,7 @@ public class CompleteSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle,
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully completed corrective action for finding: {FindingCode}", request.FindingCode);
+                _logger.LogApplicationInformation("Successfully completed corrective action for finding: {FindingCode}", request.FindingCode);
             }
             else
             {
@@ -332,7 +332,7 @@ public class CompleteSMSAuditCorrectiveActionCommandHandler : BaseCommandBundle,
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("CompleteSMSAuditCorrectiveActionCommand operation was cancelled");
+            _logger.LogApplicationWarning("CompleteSMSAuditCorrectiveActionCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -366,7 +366,7 @@ public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
                 return Result<SMSAuditFinding>.Failure<SMSAuditFinding>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing VerifySMSAuditFindingCommand for finding: {FindingCode}", request.FindingCode);
+            _logger.LogApplicationInformation("Processing VerifySMSAuditFindingCommand for finding: {FindingCode}", request.FindingCode);
 
             // Get existing finding
             var existingResult = await _auditFindingDataService.GetAuditFindingByCodeAsync(request.FindingCode, cancellationToken);
@@ -395,7 +395,7 @@ public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully verified finding: {FindingCode} by {VerifiedBy}",
+                _logger.LogApplicationInformation("Successfully verified finding: {FindingCode} by {VerifiedBy}",
                     request.FindingCode, request.VerifiedBy);
             }
             else
@@ -407,7 +407,7 @@ public class VerifySMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("VerifySMSAuditFindingCommand operation was cancelled");
+            _logger.LogApplicationWarning("VerifySMSAuditFindingCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -441,7 +441,7 @@ public class DeleteSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
                 return Result<bool>.Failure<bool>(new Error("NULL_REQUEST", "Request cannot be null"));
             }
 
-            _logger.LogInformation("Processing DeleteSMSAuditFindingCommand for finding: {FindingCode}", request.FindingCode);
+            _logger.LogApplicationInformation("Processing DeleteSMSAuditFindingCommand for finding: {FindingCode}", request.FindingCode);
 
             // Delete finding
             var result = await _auditFindingDataService.DeleteAuditFindingAsync(
@@ -452,7 +452,7 @@ public class DeleteSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
 
             if (result.IsSuccess)
             {
-                _logger.LogInformation("Successfully deleted finding: {FindingCode} by {DeletedBy}",
+                _logger.LogApplicationInformation("Successfully deleted finding: {FindingCode} by {DeletedBy}",
                     request.FindingCode, request.DeletedBy);
             }
             else
@@ -464,7 +464,7 @@ public class DeleteSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
         }
         catch (OperationCanceledException)
         {
-            _logger.LogWarning("DeleteSMSAuditFindingCommand operation was cancelled");
+            _logger.LogApplicationWarning("DeleteSMSAuditFindingCommand operation was cancelled");
             throw;
         }
         catch (Exception ex)
@@ -474,3 +474,4 @@ public class DeleteSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
         }
     }
 }
+

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ApiKeyAuthenticationFilter.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -40,19 +40,19 @@ public class ApiKeyAuthenticationFilter : IEndpointFilter
 
         if (string.IsNullOrEmpty(apiKey))
         {
-            _logger.LogWarning("API request rejected: No API key provided. Path: {Path}", httpContext.Request.Path);
+            _logger.LogInfrastructureWarning("API request rejected: No API key provided. Path: {Path}", httpContext.Request.Path);
             return Results.Unauthorized();
         }
 
         // Validate API key
         if (!await ValidateApiKeyAsync(apiKey, httpContext))
         {
-            _logger.LogWarning("API request rejected: Invalid API key. Path: {Path}, Key: {Key}",
+            _logger.LogInfrastructureWarning("API request rejected: Invalid API key. Path: {Path}, Key: {Key}",
                 httpContext.Request.Path, MaskApiKey(apiKey));
             return Results.Unauthorized();
         }
 
-        _logger.LogInformation("API request authenticated successfully. Path: {Path}, System: {System}",
+        _logger.LogInfrastructureInformation("API request authenticated successfully. Path: {Path}, System: {System}",
             httpContext.Request.Path, GetSourceSystemFromContext(httpContext));
 
         // Continue to the actual endpoint
@@ -139,7 +139,7 @@ public class ApiKeyAuthenticationFilter : IEndpointFilter
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error validating API key");
+            _logger.LogInfrastructureError(ex, "Error validating API key");
             return Task.FromResult(false);
         }
     }
@@ -213,3 +213,4 @@ public class ApiKeyAuthenticationFilter : IEndpointFilter
         return context.Items["SourceSystem"]?.ToString() ?? "Unknown";
     }
 }
+
