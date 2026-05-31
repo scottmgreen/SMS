@@ -11,6 +11,7 @@ using SMS3.Configuration;
 using SMS3.EventHandlers;
 using SMS_Domain.Events;
 using SMS_Application.Interfaces;
+using Microsoft.AspNetCore.HttpOverrides;
 
 namespace SMS3;
 public class Program
@@ -78,6 +79,56 @@ public class Program
             options.AllowSynchronousIO = true;
         });
         var app = builder.Build();
+
+        // Ensure original scheme/protocol is honored when running behind IIS/reverse proxies
+        // to avoid HTTPS redirection loops (ERR_TOO_MANY_REDIRECTS).
+        var forwardedHeadersOptions = new ForwardedHeadersOptions
+        {
+            ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+            ForwardLimit = null,
+            RequireHeaderSymmetry = false
+        };
+        forwardedHeadersOptions.KnownNetworks.Clear();
+        forwardedHeadersOptions.KnownProxies.Clear();
+        app.UseForwardedHeaders(forwardedHeadersOptions);
+
+        // Emergency scheme normalization for IIS/ARR reverse-proxy environments.
+        // Some deployments send X-ARR-SSL (without X-Forwarded-Proto), which can cause
+        // the app to see HTTP internally and trigger redirect/cookie loops.
+        app.Use((context, next) =>
+        {
+            if (!context.Request.IsHttps)
+            {
+                var forwardedProto = context.Request.Headers["X-Forwarded-Proto"].ToString();
+                var arrSsl = context.Request.Headers["X-ARR-SSL"].ToString();
+
+                if (forwardedProto.Equals("https", StringComparison.OrdinalIgnoreCase) ||
+                    !string.IsNullOrWhiteSpace(arrSsl))
+                {
+                    context.Request.Scheme = "https";
+                }
+            }
+
+            return next();
+        });
+
+        // Temporary diagnostics to troubleshoot IIS/proxy HTTPS redirect loops.
+        app.Use(async (context, next) =>
+        {
+            if (context.Request.Path == "/" || context.Request.Path == string.Empty)
+            {
+                var logger = context.RequestServices.GetRequiredService<ILoggerFactory>().CreateLogger("SMS3.ProtocolDiagnostics");
+                logger.LogInformation(
+                    "Protocol diagnostics: Scheme={Scheme}, IsHttps={IsHttps}, Host={Host}, X-Forwarded-Proto={XForwardedProto}, X-Forwarded-For={XForwardedFor}",
+                    context.Request.Scheme,
+                    context.Request.IsHttps,
+                    context.Request.Host.Value,
+                    context.Request.Headers["X-Forwarded-Proto"].ToString(),
+                    context.Request.Headers["X-Forwarded-For"].ToString());
+            }
+
+            await next();
+        });
         
         // 🔐 SET UP SERVICE LOCATOR FOR SECURE NAVIGATION - Using existing ServiceLocator**
         SMS3.Components.Shared.UIHelpers.ServiceLocator.Current = app.Services;
@@ -115,8 +166,11 @@ public class Program
             app.UseDeveloperExceptionPage();
         }
 
-        // 🎯 EXPLICIT HTTPS redirection based on protocol configuration
-        if (isHttps && forceEverywhere)
+        // Use app-level HTTPS redirection only when explicitly enabled.
+        // In IIS/reverse-proxy deployments this is commonly handled upstream,
+        // and forcing it here can create redirect loops.
+        var enforceHttpsRedirection = app.Configuration.GetValue<bool>("FeatureManagement:EnforceHttpsRedirection", false);
+        if (enforceHttpsRedirection)
         {
             app.UseHttpsRedirection();
         }

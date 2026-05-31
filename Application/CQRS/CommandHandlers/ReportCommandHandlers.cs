@@ -35,7 +35,7 @@ public class CreateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
         {
             if (request?.Report is null)
             {
-                _logger.LogApplicationError("CreateReportCommand received with null request or report", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("CreateReportCommand received with null request or report", ApplicationEventIds.Error);
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
@@ -51,7 +51,7 @@ public class CreateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
             else
             {
                 _logger.LogApplicationError("Failed to create Report with Code: {Code}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
+                    ApplicationEventIds.Error, request.Report.Code, result.Error?.Message ?? "Unknown");
             }
 
             return result;
@@ -63,7 +63,7 @@ public class CreateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while creating Report", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError(ex, "Unexpected error occurred while creating Report", ApplicationEventIds.Error);
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.CreateFailed);
         }
     }
@@ -86,7 +86,7 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
         {
             if (request?.Report is null)
             {
-                _logger.LogApplicationError("UpdateReportCommand received with null request or report", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("UpdateReportCommand received with null request or report", ApplicationEventIds.Error);
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
@@ -101,7 +101,7 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
             else
             {
                 _logger.LogApplicationError("Failed to update Report with ID: {Id}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
+                    ApplicationEventIds.Error, request.Report.Id, result.Error?.Message ?? "Unknown");
             }
 
             return result;
@@ -113,7 +113,7 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while updating Report with ID: {Id}", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError(ex, "Unexpected error occurred while updating Report with ID: {Id}", ApplicationEventIds.Error, request?.Report?.Id);
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.UpdateFailed);
         }
     }
@@ -136,7 +136,7 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
         {
             if (request is null)
             {
-                _logger.LogApplicationError("DeleteReportCommand received with null request", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("DeleteReportCommand received with null request", ApplicationEventIds.Error);
                 return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
@@ -151,7 +151,7 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
             else
             {
                 _logger.LogApplicationError("Failed to delete Report with ID: {Id}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
+                    ApplicationEventIds.Error, request.ReportId, result.Error?.Message ?? "Unknown");
             }
 
             return result;
@@ -163,7 +163,7 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while deleting Report with ID: {Id}", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError(ex, "Unexpected error occurred while deleting Report with ID: {Id}", ApplicationEventIds.Error, request?.ReportId);
             return Result<bool>. Failure<bool>(DomainErrors.ReportError.DeleteFailed);
         }
     }
@@ -186,7 +186,7 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestH
         {
             if (request is null)
             {
-                _logger.LogApplicationError("UpdateReportStatusCommand received with null request", ApplicationEventIds.Error, null);
+                _logger.LogApplicationError("UpdateReportStatusCommand received with null request", ApplicationEventIds.Error);
                 return Result<bool>.Failure<bool>(DomainErrors.ReportError.NullOrEmpty);
             }
 
@@ -203,7 +203,7 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestH
             else
             {
                 _logger.LogApplicationError("Failed to update Report status for Code: {ReportCode}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
+                    ApplicationEventIds.Error, request.ReportCode, result.Error?.Message ?? "Unknown");
             }
 
             return result;
@@ -215,7 +215,7 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestH
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error occurred while updating Report status for Code: {ReportCode}", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError(ex, "Unexpected error occurred while updating Report status for Code: {ReportCode}", ApplicationEventIds.Error, request?.ReportCode);
             return Result<bool>.Failure<bool>(DomainErrors.ReportError.UpdateFailed);
         }
     }

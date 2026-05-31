@@ -1,8 +1,9 @@
 # Copilot Instructions
 
 ## Project Guidelines
+- The app must run strictly on HTTPS only; HTTP is not allowed in any environment.
 - The app must support strict protocol switching between HTTP and HTTPS via configuration, with HTTP used until server certificates are deployed and HTTPS validated beforehand.
-- The solution must remain on .NET 10; do not propose or apply any downgrade to .NET 8 while fixing Swagger or related issues.
+- The solution must remain on .NET 10; do not propose or apply any downgrade to .NET 8 while fixing Swagger or related issues. The .NET 10 migration is complete and should be treated as the baseline target framework.
 - Swagger configuration must present both API endpoint definitions (v1 and v2) in .NET 10.
 - Do not recommend running `dotnet run`; validate manually from the IDE.
 - Implement configuration tasks as a single page based on appsettings; do not change any other pages.
@@ -24,4 +25,4 @@
 - Use `DomainErrors` definitions consistently across Application and Domain projects, adding new `DomainErrors` as needed.
 
 ## Risk Assessment
-- In this codebase, RiskAssessment should be fetched by hazard code (GetRiskAssessmentByHazardCode query), not via a Hazard.RiskAssessmentCode property.- In this codebase, RiskAssessment should be fetched by hazard code (GetRiskAssessmentByHazardCode query), not via a Hazard.RiskAssessmentCode property.
+- In this codebase, RiskAssessment should be fetched by hazard code (GetRiskAssessmentByHazardCode query), not via a Hazard.RiskAssessmentCode property.

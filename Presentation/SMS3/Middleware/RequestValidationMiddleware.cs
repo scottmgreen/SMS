@@ -254,7 +254,7 @@ public class RequestValidationMiddleware
 
         if (!logSuspiciousOnly || isSuspicious)
         {
-            var logLevel = isSuspicious ? LogLevel.Warning : LogLevel.Information;
+            var logLevel = isSuspicious ? LogLevel.Warning : LogLevel.Debug;
             
             _logger.Log(logLevel, "Request: {Method} {Path} from {RemoteIP} - UserAgent: {UserAgent}", 
                 context.Request.Method,
