@@ -27,10 +27,17 @@
                 <RadzenRow AlignItems="AlignItems.Center">
                     <RadzenColumn Size="12" SizeMD="4">
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.25rem">
-                            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
-                                <RadzenIcon Icon="@GetStepIcon(CurrentStep)" Style="margin-right: 0.5rem;" />
-                                 Step @CurrentStep: @GetStepName(CurrentStep)
-                            </RadzenText>
+                            @if (IsRiskRegistryOnly)
+                            {
+                                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Risk Registry Only</RadzenText>
+                            }
+                            else
+                            {
+                                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
+                                    <RadzenIcon Icon="@GetStepIcon(CurrentStep)" Style="margin-right: 0.5rem;" />
+                                     Step @CurrentStep: @GetStepName(CurrentStep)
+                                </RadzenText>
+                            }
                         </RadzenStack>
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="4">
@@ -58,34 +65,37 @@
             </RadzenCard>
         </RadzenCard>
 
-        <!-- Progress Bar -->
-        <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
-            <RadzenCard Style="padding: 1rem;">
-                <RadzenRow>
-                    <RadzenColumn Size="12">
-                        <RadzenProgressBar Value="@((double)CurrentStep / 5 * 100)" ShowValue="false" Style="height: 8px;" />
-                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Style="margin-top: 0.5rem;">
-                            @for (int step = 1; step <= 5; step++)
-                            {
-                                var stepNumber = step; // Capture for lambda
-                                var isCurrentStep = step == CurrentStep;
-                                var isCompleted = step < CurrentStep;
-                                var buttonStyle = isCurrentStep ? ButtonStyle.Primary : (isCompleted ? ButtonStyle.Success : ButtonStyle.Light);
-                                var icon = isCompleted ? "check_circle" : (isCurrentStep ? "edit" : "radio_button_unchecked");
+        @if (!IsRiskRegistryOnly)
+        {
+            <!-- Progress Bar -->
+            <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
+                <RadzenCard Style="padding: 1rem;">
+                    <RadzenRow>
+                        <RadzenColumn Size="12">
+                            <RadzenProgressBar Value="@((double)CurrentStep / MaxAssessmentStep * 100)" ShowValue="false" Style="height: 8px;" />
+                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Style="margin-top: 0.5rem;">
+                                @for (int step = 1; step <= MaxAssessmentStep; step++)
+                                {
+                                    var stepNumber = step; // Capture for lambda
+                                    var isCurrentStep = step == CurrentStep;
+                                    var isCompleted = step < CurrentStep;
+                                    var buttonStyle = isCurrentStep ? ButtonStyle.Primary : (isCompleted ? ButtonStyle.Success : ButtonStyle.Light);
+                                    var icon = isCompleted ? "check_circle" : (isCurrentStep ? "edit" : "radio_button_unchecked");
 
-                                <RadzenButton Text="@($"Step {step} {GetStepName(step)}")"
-                                              Icon="@icon"
-                                            ButtonStyle="@buttonStyle" 
-                                            Size="ButtonSize.Medium"
-                                            Click="@(() => NavigateToStep(stepNumber))"
-                                            Disabled="@IsSaving"
-                                            title="@($"Step {step}: {GetStepName(step)}")" />
-                            }
-                        </RadzenStack>
-                    </RadzenColumn>
-                </RadzenRow>
+                                    <RadzenButton Text="@($"Step {step} {GetStepName(step)}")"
+                                                  Icon="@icon"
+                                                  ButtonStyle="@buttonStyle"
+                                                  Size="ButtonSize.Medium"
+                                                  Click="@(() => NavigateToStep(stepNumber))"
+                                                  Disabled="@IsSaving"
+                                                  title="@($"Step {step}: {GetStepName(step)}")" />
+                                }
+                            </RadzenStack>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </RadzenCard>
             </RadzenCard>
-        </RadzenCard>
+        }
 
         <!-- Step Content -->
         <RadzenCard>
@@ -172,13 +182,13 @@
                         <RadzenButton Text="Previous Step" 
                                      Icon="arrow_back" 
                                      ButtonStyle="ButtonStyle.Light"
-                                     Disabled="@(CurrentStep <= 1 || IsSaving)"
+                                     Disabled="@(IsRiskRegistryOnly || CurrentStep <= 1 || IsSaving)"
                                      Click="@PreviousStep" />
 
                                                 
 
                         <!-- Next/Complete Button -->
-                        @if (CurrentStep < 5)
+                         @if (CurrentStep < MaxAssessmentStep)
                         {
                             <RadzenButton Text="Next Step" 
                                          Icon="arrow_forward" 

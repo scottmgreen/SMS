@@ -805,17 +805,7 @@ public partial class StakeholderUsers : ComponentBase
         await ShowInfoAsyncNotification("Export functionality will be implemented soon.");
     }
 
-    private BadgeStyle GetStakeholderTypeBadgeStyle(string stakeholderType)
-    {
-        var stakeholderTypeEnum = SMSStakeholderType.FromValue(stakeholderType);
-        return stakeholderTypeEnum?.Value switch
-        {
-            "SUT-0001" => BadgeStyle.Primary,   // Airline
-            "SUT-0002" => BadgeStyle.Success,   // Inspector  
-            "SUT-0003" => BadgeStyle.Warning,   // Contractor
-            _ => BadgeStyle.Secondary
-        };
-    }
+    
 
     private string GetStakeholderTypeDisplay(string stakeholderType)
     {

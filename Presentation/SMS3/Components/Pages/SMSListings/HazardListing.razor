@@ -86,6 +86,14 @@
                             Style="@(hazard.IsInitialHazard ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />
             </Template>
         </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Hazard" Title="RR Only" Width="90px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+            <Template Context="hazard">
+                @if (IsRiskRegistryOnlyHazard(hazard))
+                {
+                    <RadzenIcon Icon="check_circle" Style="color: #28a745;" title="Risk Registry Only" />
+                }
+            </Template>
+        </RadzenDataGridColumn>
                 
 
         <!-- Enhanced Actions Column -->

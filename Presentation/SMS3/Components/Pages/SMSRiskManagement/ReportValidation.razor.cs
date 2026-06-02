@@ -275,12 +275,7 @@ public partial class ReportValidation : ComponentBase
             // Create validation record first
             await CreateValidationRecord();
 
-            //if (this.RiskRegistryOnly)
-            //{
-            //    await NavigateToRiskRegistry();
-            //    return;
-            //}
-                                   
+                                               
             var navigationTask = SelectedValidationDecision switch
             {
                 _ when SelectedValidationDecision == ValidationDecision.SmsRisk && this.RiskRegistryOnly => NavigateToRiskRegistry(),
@@ -304,7 +299,34 @@ public partial class ReportValidation : ComponentBase
             StateHasChanged();
         }
     }
-    
+
+    private RiskAssessment CreateRiskAssessmentEntity()
+    {
+        var assessmentId = new RiskAssessmentID("RS-0000"); // Database will generate actual ID
+
+        return new RiskAssessment(assessmentId)
+        {
+            Name = $"Technical Risk Assessment for Report {ReportId}",
+            LeadAssessorId = LeadAssessor,
+            AssessmentType = RiskAssessmentType.Initial,
+            RiskAssessmentCategory = RiskAssessmentCategory.Technical,
+            HazardCode = ReportHazard!.Code,
+            PrimaryHazardId = ReportHazard.Code,
+            Description = $"Created from Report {ReportId}",
+            Stage = RiskAssessmentStage.DescribingSystem,
+            Code = assessmentId.Value,
+            Status = RiskAssessmentStatus.AssessmentCreate,
+            CurrentStep = 1,
+            UpdatedDate = DateTime.UtcNow,
+            UpdatedBy = _currentUserService?.UserDisplayName
+        };
+    }
+
+
+
+
+
+
     private async Task<bool> UpdateReportStatus(string reportId, ReportStatus status)
     {
         var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
@@ -478,7 +500,26 @@ public partial class ReportValidation : ComponentBase
 
             // Step 2: Navigate directly to Risk Registry
             _logger.LogInformation("User skipped Airport Shared Dataset creation, navigating to Risk Registry for Report: {ReportId}", ReportId);
-            
+
+
+            var riskAssessment = CreateRiskAssessmentEntity();
+
+            var command = new CreateRiskAssessmentCommand(riskAssessment);
+            var createResult = await _mediator.SendAsync(command, CancellationToken.None);
+
+            if (!createResult.IsSuccess)
+            {
+                throw new Exception($"Failed to create risk assessment: {createResult.Error?.Message ?? "Unknown error"}");
+            }
+
+            // Update report status
+            await UpdateReportStatusWithValidation(ReportStatus.RiskRegistryOnly, "Risk registry only");
+
+            var newRiskAssessment = createResult.Value;
+            await _notificationHelper.ShowSuccessAsync($"Risk Assessment {newRiskAssessment.Code} created successfully");
+
+
+
             string navigationUrl = "/SMSAssurance/RiskRegistry";
             await DelayAndNavigate(navigationUrl);
         }
@@ -789,8 +830,7 @@ public partial class ReportValidation : ComponentBase
         }
 
         // Update report status
-        await UpdateReportStatusWithValidation(ReportStatus.RiskAssessmentInProgress,
-            "Failed to update report status for new risk assessment");
+        await UpdateReportStatusWithValidation(ReportStatus.RiskAssessmentInProgress, "Failed to update report status for new risk assessment");
 
         var newRiskAssessment = createResult.Value;
         await _notificationHelper.ShowSuccessAsync($"Risk Assessment {newRiskAssessment.Code} created successfully");
@@ -802,30 +842,7 @@ public partial class ReportValidation : ComponentBase
         await DelayAndNavigate(navigationUrl);
     }
 
-    /// <summary>
-    /// Create risk assessment entity with proper initialization
-    /// </summary>
-    private RiskAssessment CreateRiskAssessmentEntity()
-    {
-        var assessmentId = new RiskAssessmentID("RS-0000"); // Database will generate actual ID
-
-        return new RiskAssessment(assessmentId)
-        {
-            Name = $"Technical Risk Assessment for Report {ReportId}",
-            LeadAssessorId = LeadAssessor,
-            AssessmentType = RiskAssessmentType.Initial,
-            RiskAssessmentCategory = RiskAssessmentCategory.Technical,
-            HazardCode = ReportHazard!.Code,
-            PrimaryHazardId = ReportHazard.Code,
-            Description = $"Created from Report {ReportId}",
-            Stage = RiskAssessmentStage.DescribingSystem,
-            Code = assessmentId.Value,
-            Status = RiskAssessmentStatus.AssessmentCreate,
-            CurrentStep = 1,
-            UpdatedDate = DateTime.UtcNow,
-            UpdatedBy = _currentUserService?.UserDisplayName
-        };
-    }
+    
 
     /// <summary>
     /// Update report status with proper error handling

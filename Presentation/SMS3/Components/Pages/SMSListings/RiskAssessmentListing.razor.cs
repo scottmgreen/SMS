@@ -40,6 +40,7 @@ public partial class RiskAssessmentListing : ComponentBase
     private RadzenDataGrid<RiskAssessment>? assessmentsGrid;
     private IEnumerable<RiskAssessment> assessments = new List<RiskAssessment>();
     private List<RiskAssessment> allAssessments = new List<RiskAssessment>(); // Store all assessments for client-side filtering
+    private HashSet<string> riskRegistryOnlyReportCodes = new(StringComparer.OrdinalIgnoreCase);
     private int totalCount;
     private bool isLoading = false;
     private bool ShowViewDialog = false;
@@ -66,6 +67,21 @@ public partial class RiskAssessmentListing : ComponentBase
             var query = new GetAllRiskAssessmentsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
+            var reportsQuery = new GetAllReportsQuery();
+            var reportsResult = await _mediator.SendAsync(reportsQuery, CancellationToken.None);
+            if (reportsResult.IsSuccess && reportsResult.Value is not null)
+            {
+                riskRegistryOnlyReportCodes = reportsResult.Value
+                    .Where(r => IsRiskRegistryOnlyStatus(r.Status))
+                    .Select(r => (r.Code ?? string.Empty).Trim())
+                    .Where(code => !string.IsNullOrWhiteSpace(code))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            }
+            else
+            {
+                riskRegistryOnlyReportCodes.Clear();
+            }
+
             if (result.IsSuccess && result.Value is not null)
             {
                 allAssessments = result.Value.ToList(); // Ensure it's a concrete list
@@ -78,6 +94,7 @@ public partial class RiskAssessmentListing : ComponentBase
                 {
                     await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {totalCount} risk assessments"));
                 }
+
                 else
                 {
                     await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No risk assessments found"));
@@ -109,6 +126,24 @@ public partial class RiskAssessmentListing : ComponentBase
             isLoading = false;
             StateHasChanged();
         }
+    }
+
+    private bool IsRiskRegistryOnlyAssessment(RiskAssessment assessment)
+    {
+        var reportCode = assessment.ReportCode?.Trim();
+        return !string.IsNullOrWhiteSpace(reportCode) && riskRegistryOnlyReportCodes.Contains(reportCode);
+    }
+
+    private static bool IsRiskRegistryOnlyStatus(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return false;
+        }
+
+        var normalizedStatus = status.Trim();
+        return string.Equals(normalizedStatus, ReportStatus.RiskRegistryOnly, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(normalizedStatus, "RISK_REGISTRY_ONLY", StringComparison.OrdinalIgnoreCase);
     }
 
     private async Task LoadData(LoadDataArgs args)

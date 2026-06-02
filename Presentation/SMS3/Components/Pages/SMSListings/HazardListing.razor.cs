@@ -41,6 +41,7 @@ public partial class HazardListing : ComponentBase
     private RadzenDataGrid<Hazard>? hazardsGrid;
     private IEnumerable<Hazard> hazards = new List<Hazard>();
     private List<Hazard> allHazards = new List<Hazard>(); // Store all hazards for client-side filtering
+    private HashSet<string> riskRegistryOnlyReportCodes = new(StringComparer.OrdinalIgnoreCase);
     private int totalCount;
     private bool isLoading = false;
 
@@ -68,6 +69,21 @@ public partial class HazardListing : ComponentBase
 
             var query = new GetAllHazardsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
+
+            var reportsQuery = new GetAllReportsQuery();
+            var reportsResult = await _mediator.SendAsync(reportsQuery, CancellationToken.None);
+            if (reportsResult.IsSuccess && reportsResult.Value is not null)
+            {
+                riskRegistryOnlyReportCodes = reportsResult.Value
+                    .Where(r => IsRiskRegistryOnlyStatus(r.Status))
+                    .Select(r => (r.Code ?? string.Empty).Trim())
+                    .Where(code => !string.IsNullOrWhiteSpace(code))
+                    .ToHashSet(StringComparer.OrdinalIgnoreCase);
+            }
+            else
+            {
+                riskRegistryOnlyReportCodes.Clear();
+            }
 
             if (result.IsSuccess && result.Value is not null)
             {
@@ -346,6 +362,24 @@ public partial class HazardListing : ComponentBase
         var property = Expression.Property(parameter, propertyName);
         var conversion = Expression.Convert(property, typeof(object));
         return Expression.Lambda<Func<Hazard, object>>(conversion, parameter);
+    }
+
+    private bool IsRiskRegistryOnlyHazard(Hazard hazard)
+    {
+        var reportCode = hazard.ReportCode?.Trim();
+        return !string.IsNullOrWhiteSpace(reportCode) && riskRegistryOnlyReportCodes.Contains(reportCode);
+    }
+
+    private static bool IsRiskRegistryOnlyStatus(string? status)
+    {
+        if (string.IsNullOrWhiteSpace(status))
+        {
+            return false;
+        }
+
+        var normalizedStatus = status.Trim();
+        return string.Equals(normalizedStatus, ReportStatus.RiskRegistryOnly, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(normalizedStatus, "RISK_REGISTRY_ONLY", StringComparison.OrdinalIgnoreCase);
     }
 
     private void ShowActions(Hazard hazard)

@@ -200,9 +200,14 @@ else
                                               Click="@(() => _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing"))" />
 
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                    @if (SelectedValidationDecision == ValidationDecision.SmsRisk)
+                                    @if (SelectedValidationDecision == ValidationDecision.SmsRisk && !this.RiskRegistryOnly)
                                     {
                                         <RadzenButton Text="Proceed to Risk Assessment" Icon="arrow_forward" ButtonStyle="ButtonStyle.Success"
+                                                      Click="@HandleSubmit" Disabled="@IsProcessing" />
+                                    }
+                                    else if (SelectedValidationDecision == ValidationDecision.SmsRisk && this.RiskRegistryOnly)
+                                    {
+                                        <RadzenButton Text="Proceed to Risk Registry" Icon="arrow_forward" ButtonStyle="ButtonStyle.Success"
                                                       Click="@HandleSubmit" Disabled="@IsProcessing" />
                                     }
                                     else if (SelectedValidationDecision != null)

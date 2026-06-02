@@ -141,7 +141,8 @@ public class RequestValidationMiddleware
     {
         foreach (var param in context.Request.Query)
         {
-            if (!ValidateInputValue(param.Key) || !ValidateInputValue(param.Value))
+            if (!ValidateInputValue(context, param.Key, "query-key", param.Key) ||
+                !ValidateInputValue(context, param.Value.ToString(), "query-value", param.Key))
             {
                 _logger.LogWarning("Suspicious query parameter detected from IP {RemoteIP}: {ParameterName}", 
                     GetClientIpAddress(context), param.Key);
@@ -160,7 +161,8 @@ public class RequestValidationMiddleware
             
             foreach (var field in form)
             {
-                if (!ValidateInputValue(field.Key) || !ValidateInputValue(field.Value))
+                if (!ValidateInputValue(context, field.Key, "form-key", field.Key) ||
+                    !ValidateInputValue(context, field.Value.ToString(), "form-value", field.Key))
                 {
                     _logger.LogWarning("Suspicious form data detected from IP {RemoteIP}: {FieldName}", 
                         GetClientIpAddress(context), field.Key);
@@ -196,18 +198,35 @@ public class RequestValidationMiddleware
         }
     }
 
-    private bool ValidateInputValue(string? value)
+    private bool ValidateInputValue(HttpContext context, string? value, string source, string fieldName)
     {
         if (string.IsNullOrEmpty(value))
             return true;
 
+        if (_config.EnableRequestLogging && _logger.IsEnabled(LogLevel.Debug))
+        {
+            _logger.LogDebug("Validating input ({Source}) for field '{FieldName}' - Length: {Length}, SqlDetectionEnabled: {SqlEnabled}, XssDetectionEnabled: {XssEnabled}",
+                source,
+                fieldName,
+                value.Length,
+                _config.EnableSqlInjectionDetection,
+                _config.EnableInputSanitization);
+        }
+
         // Check for SQL injection patterns
         if (_config.EnableSqlInjectionDetection)
         {
-            foreach (var pattern in SqlInjectionPatterns)
+            for (var i = 0; i < SqlInjectionPatterns.Length; i++)
             {
+                var pattern = SqlInjectionPatterns[i];
                 if (pattern.IsMatch(value))
                 {
+                    _logger.LogWarning("Request blocked by SQL injection detector. Source: {Source}, Field: {FieldName}, PatternIndex: {PatternIndex}, RemoteIP: {RemoteIP}, ValuePreview: {ValuePreview}",
+                        source,
+                        fieldName,
+                        i,
+                        GetClientIpAddress(context),
+                        CreateSafeInputPreview(value));
                     return false;
                 }
             }
@@ -216,16 +235,34 @@ public class RequestValidationMiddleware
         // Check for XSS patterns
         if (_config.EnableInputSanitization)
         {
-            foreach (var pattern in XssPatterns)
+            for (var i = 0; i < XssPatterns.Length; i++)
             {
+                var pattern = XssPatterns[i];
                 if (pattern.IsMatch(value))
                 {
+                    _logger.LogWarning("Request blocked by XSS detector. Source: {Source}, Field: {FieldName}, PatternIndex: {PatternIndex}, RemoteIP: {RemoteIP}, ValuePreview: {ValuePreview}",
+                        source,
+                        fieldName,
+                        i,
+                        GetClientIpAddress(context),
+                        CreateSafeInputPreview(value));
                     return false;
                 }
             }
         }
 
         return true;
+    }
+
+    private static string CreateSafeInputPreview(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        var normalized = Regex.Replace(value, "\\s+", " ").Trim();
+        return normalized.Length <= 80 ? normalized : $"{normalized[..80]}...";
     }
 
     private bool ValidateUploadedFile(IFormFile file)

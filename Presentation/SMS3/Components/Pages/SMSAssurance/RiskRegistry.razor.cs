@@ -11,6 +11,7 @@ using SMS_Domain.Enums;
 using SMS3.Components.Pages.SMSAssurance.Components;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSAssurance;
 
@@ -25,6 +26,7 @@ public partial class RiskRegistry : ComponentBase
     [Inject] private ILogger<AuditPlanDialog> _logger { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private NavigationManager _navigation { get; set; } = default!;
     #endregion
 
     #region State Properties
@@ -109,7 +111,7 @@ public partial class RiskRegistry : ComponentBase
             var assessmentsTask = LoadAllRiskAssessmentsAsync();
             var mitigationsTask = LoadAllMitigationsAsync();
 
-            await Task.WhenAll(hazardsTask, assessmentsTask, mitigationsTask);
+            await Task.WhenAll(reportsTask,hazardsTask, assessmentsTask, mitigationsTask);
 
             var reports = await reportsTask;
             var hazards = await hazardsTask;
@@ -641,6 +643,39 @@ public partial class RiskRegistry : ComponentBase
     private string GetRiskLevelStyle(RiskLevel? riskLevel)
     {
         return riskLevel?.GetCssStyle() ?? "background: #6c757d; color: #ffffff;";
+    }
+
+    private string GetHazardReportingUrl(RiskRegistryEntry entry)
+    {
+        if (string.IsNullOrWhiteSpace(entry.HazardCode))
+        {
+            return "#";
+        }
+
+        return _navigation.GenerateSecureUrl($"/SMSRiskManagement/HazardReporting/{entry.HazardCode}");
+    }
+
+    private bool CanNavigateToTechnicalAssessmentStep4(RiskRegistryEntry entry)
+    {
+        if (string.IsNullOrWhiteSpace(entry.ReportCode) || string.IsNullOrWhiteSpace(entry.HazardCode))
+        {
+            return false;
+        }
+
+        return string.Equals(entry.ReportStatus, ReportStatus.RiskRegistryOnly, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(entry.ReportStatus, "RISK_REGISTRY_ONLY", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string GetTechnicalAssessmentStep4Url(RiskRegistryEntry entry)
+    {
+        if (!CanNavigateToTechnicalAssessmentStep4(entry))
+        {
+            return "#";
+        }
+
+        var encodedReportCode = Uri.EscapeDataString(entry.ReportCode.Trim());
+        var encodedHazardCode = Uri.EscapeDataString(entry.HazardCode.Trim());
+        return _navigation.GenerateSecureUrl($"/SMSRiskManagement/TechnicalAssessment/{encodedReportCode}/{encodedHazardCode}/4");
     }
     #endregion
 

@@ -35,13 +35,16 @@ public abstract class SMSStakeholderType : BaseEnum<SMSStakeholderType>
     /// <summary>Contractor</summary>
     public static readonly SMSStakeholderType Contractor = new ContractorType();
 
+    /// <summary>Port of Portland</summary>
+    public static readonly SMSStakeholderType PortOfPortland = new PortOfPortlandType();
+
     #endregion
 
     #region Implementations
 
     private sealed class AirlineType : SMSStakeholderType
     {
-        public AirlineType() : base("SUT-0001", "Airline", "Application administrator with role-based access to SMS functions")
+        public AirlineType() : base("SUT-0001", "Airline", "Airline Stakeholder with role-based access to SMS functions")
         {
         }
     }
@@ -61,7 +64,13 @@ public abstract class SMSStakeholderType : BaseEnum<SMSStakeholderType>
         {
         }
     }
-
+    private sealed class PortOfPortlandType : SMSStakeholderType
+    {
+        public PortOfPortlandType() : base("SUT-0004", "Port of Portland",
+            "Internal stakeholder with role-based access to SMS functions")
+        {
+        }
+    }
     #endregion
 
 

@@ -87,6 +87,14 @@
                 
             </Template>
         </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="RiskAssessment" Title="RR Only" Width="90px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+            <Template Context="assessment">
+                @if (IsRiskRegistryOnlyAssessment(assessment))
+                {
+                    <RadzenIcon Icon="check_circle" Style="color: #28a745;" title="Risk Registry Only" />
+                }
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="RiskAssessment" Property="Stage" Title="Stage" Width="150px">
             <Template Context="assessment">
                 <div title="@assessment.Stage" style="@BasicTextStyle">

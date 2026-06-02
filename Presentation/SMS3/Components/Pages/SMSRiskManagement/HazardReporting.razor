@@ -235,34 +235,35 @@ else
                                     </RadzenFormField>
                                     <RadzenRequiredValidator Component="SubmittedBy" Text="Reported by is required" />
                                 </RadzenColumn>
+                                @if (!HazardReport.IsAnonymous)
+                                {
+                                    <RadzenColumn Size="3">
+                                        <RadzenFormField Text="Submitting Department *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
 
-                                <RadzenColumn Size="3">
-                                    <RadzenFormField Text="Submitting Department *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
-
-                                        <RadzenDropDown @bind-Value="@HazardReport.SubmittingDepartment"
-                                                        Data="@DepartmentOptions"
-                                                        TextProperty="Text"
-                                                        ValueProperty="Value"
-                                                        Placeholder="Select submitting department..."
-                                                        Name="SubmittingDepartment"
-                                                        Change="@(async (object value) => await OnDepartmentChanged(value?.ToString()))"
-                                                        Style="width: 100%; min-width: 100%;" />
-                                    </RadzenFormField>
-                                    <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
-                                </RadzenColumn>
-                                <RadzenColumn Size="5">
-                                    <RadzenFormField Text="Job Function" AllowFloatingLabel="false"  Variant="Variant.Outlined" Style="width: 100%;">
-                                        <RadzenTextArea @bind-Value="@HazardReport.SubmittingDepartmentJobFunction"
-                                                        Placeholder="Enter reporting department or organization..."
-                                                        Name="SubmittingDepartmentJobFunction"
-                                                        MaxLength="200"
-                                                        Style="width: 100%; min-width: 100%;"
-                                                        Rows="2" Cols="100" />
-                                    </RadzenFormField>
-                                    <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
-                                </RadzenColumn>
-
-                        </RadzenCard>
+                                            <RadzenDropDown @bind-Value="@HazardReport.SubmittingDepartment"
+                                            Data="@DepartmentOptions"
+                                            TextProperty="Text"
+                                            ValueProperty="Value"
+                                            Placeholder="Select submitting department..."
+                                            Name="SubmittingDepartment"
+                                            Change="@(async (object value) => await OnDepartmentChanged(value?.ToString()))"
+                                            Style="width: 50%; min-width: 50%;" />
+                                        </RadzenFormField>
+                                        <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
+                                    </RadzenColumn>
+                                    <RadzenColumn Size="5">
+                                        <RadzenFormField Text="Job Function" AllowFloatingLabel="false"  Variant="Variant.Outlined" Style="width: 100%;">
+                                            <RadzenTextArea @bind-Value="@HazardReport.SubmittingDepartmentJobFunction"
+                                            Placeholder="Enter reporting department or organization..."
+                                            Name="SubmittingDepartmentJobFunction"
+                                            MaxLength="200"
+                                            Style="width: 100%; min-width: 100%;"
+                                            Rows="2" Cols="100" />
+                                        </RadzenFormField>
+                                        <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
+                                    </RadzenColumn>
+                                }
+                            </RadzenCard>
                         
                         </RadzenRow>
                   
@@ -306,7 +307,6 @@ else
                                                   TextProperty="Text" 
                                                   ValueProperty="Value"
                                                   Placeholder="Select hazard type..."
-                                                  Name="HazardType"
                                                   Change="@(async (object value) => await OnHazardTypeChanged(value?.ToString()))"
                                                   Disabled="@(HazardTypeOptions.Count == 0)"
                                                   AllowClear="true"
@@ -324,21 +324,25 @@ else
                                 {
                                     <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-info rz-mt-1">
                                         <RadzenIcon Icon="info" Style="font-size: 0.9rem;" />
-                                        Select a Hazard Category first to see Hazard Types
+                                        Select a Hazard Category
                                     </RadzenText>
                                 }
                             </RadzenColumn>
                             <RadzenRow>
                                 <RadzenColumn Size="12">
                                     @* Guidance Panel for Selected Hazard Type *@
-                                    @if (HazardReport.HazardType != HazardType.Default.Value)
+                                    @if (HazardReport.HazardType != HazardType.Default.Value )
                                     {
                                         <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
                                             <RadzenStack Gap="0.5rem" Class="rz-p-2">
-                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                @if(!string.IsNullOrEmpty(SelectedHazardCategory))
+                                                {
+                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                                     <RadzenIcon Icon="info" Style="color: var(--rz-primary); font-size: 1rem;" />
                                                     <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Hazard Type Guidance</RadzenText>
-                                                </RadzenStack>
+                                                    </RadzenStack>
+                                                }
+                                               
 
                                                 @if (RequiresRegulatoryReporting(HazardReport.HazardType))
                                                 {

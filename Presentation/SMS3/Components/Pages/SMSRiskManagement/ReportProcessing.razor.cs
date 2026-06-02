@@ -788,6 +788,12 @@ public partial class ReportProcessing : ComponentBase
             return ProcessingStatusCategory.Validation;
         }
 
+        // Reports marked as Risk Registry Only should not be surfaced as pending risk assessment work.
+        if (IsRiskRegistryOnlyReport(report))
+        {
+            return ProcessingStatusCategory.Mitigation;
+        }
+
         // Has validation with decision but no risk assessment = validated, needs risk assessment
         if (riskAssessment is null)
         {
@@ -844,6 +850,19 @@ public partial class ReportProcessing : ComponentBase
             "Closed" or "Referred" or "Completed" or "Closed - Not SMS Risk" or "CLOSED" or "CANCELLED" => ProcessingStatusCategory.Closed,
             _ => ProcessingStatusCategory.RiskAssessment
         };
+    }
+
+    private static bool IsRiskRegistryOnlyReport(Report report)
+    {
+        if (string.IsNullOrWhiteSpace(report.Status))
+        {
+            return false;
+        }
+
+        var normalizedStatus = report.Status.Trim();
+
+        return string.Equals(normalizedStatus, ReportStatus.RiskRegistryOnly, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(normalizedStatus, "RISK_REGISTRY_ONLY", StringComparison.OrdinalIgnoreCase);
     }
 
     

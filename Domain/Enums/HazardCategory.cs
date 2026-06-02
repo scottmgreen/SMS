@@ -27,6 +27,9 @@ public abstract class HazardCategory : BaseEnum<HazardCategory>
 
     #region Hazard Categories
     public static readonly HazardCategory Default = new DefaultCategory();
+
+    public static readonly HazardCategory Other = new OtherCategory();
+
     /// <summary>Aircraft and operational incidents requiring investigation and reporting</summary>
     public static readonly HazardCategory Incident = new IncidentCategory();
 
@@ -66,6 +69,12 @@ public abstract class HazardCategory : BaseEnum<HazardCategory>
     private sealed class DefaultCategory : HazardCategory
     {
         public DefaultCategory() : base("DEFAULT_CATEGORY", "Default Category", "To Be Determined by SMS Staff", 0)
+        {
+        }
+    }
+    private sealed class OtherCategory : HazardCategory
+    {
+        public OtherCategory() : base("OTHER_CATEGORY", "Other", "Other hazards not classified elsewhere", 12)
         {
         }
     }

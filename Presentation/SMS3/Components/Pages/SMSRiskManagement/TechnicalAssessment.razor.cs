@@ -15,6 +15,8 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 /// </summary>
 public partial class TechnicalAssessment : ComponentBase
 {
+    private const string RiskRegistryOnlyStatusValue = "RISK_REGISTRY_ONLY";
+
     #region Parameters and Injection
 
     [Parameter] public string? ReportId { get; set; }
@@ -38,7 +40,11 @@ public partial class TechnicalAssessment : ComponentBase
 
     private bool IsLoading { get; set; } = true;
     private bool IsSaving { get; set; } = false;
+    private string? LastLoadedReportId { get; set; }
+    private string? LastLoadedHazardId { get; set; }
     public int CurrentStep => int.TryParse(StepNumber, out int step) && step >= 1 && step <= 5 ? step : 1;
+    private bool IsRiskRegistryOnly => string.Equals(SourceReport?.Status, RiskRegistryOnlyStatusValue, StringComparison.OrdinalIgnoreCase);
+    private int MaxAssessmentStep => IsRiskRegistryOnly ? 4 : 5;
 
     #endregion
 
@@ -154,6 +160,10 @@ public partial class TechnicalAssessment : ComponentBase
     {
         _logger.LogInformation("TechnicalAssessment OnParametersSetAsync - ReportId: {ReportId}, StepNumber: {StepNumber}, HazardId: {HazardId}", ReportId, StepNumber, HazardId);
 
+        ReportId = NormalizeRouteSegment(ReportId);
+        HazardId = NormalizeRouteSegment(HazardId);
+        StepNumber = NormalizeRouteSegment(StepNumber) ?? "1";
+
         // Handle route parameter changes
         var currentStep = CurrentStep;
         if (currentStep < 1 || currentStep > 5)
@@ -161,6 +171,19 @@ public partial class TechnicalAssessment : ComponentBase
             _logger.LogWarning("Invalid step {CurrentStep}, redirecting to step 1", currentStep);
             await NavigateToStep(1);
             return;
+        }
+
+        var routeContextChanged = !string.Equals(LastLoadedReportId, ReportId, StringComparison.OrdinalIgnoreCase)
+            || !string.Equals(LastLoadedHazardId, HazardId, StringComparison.OrdinalIgnoreCase);
+
+        if (TechRiskAssessment is null || routeContextChanged)
+        {
+            _logger.LogInformation("Route context changed or assessment missing. Reloading data. LastReportId: {LastReportId}, NewReportId: {NewReportId}, LastHazardId: {LastHazardId}, NewHazardId: {NewHazardId}",
+                LastLoadedReportId, ReportId, LastLoadedHazardId, HazardId);
+
+            await LoadAssessmentDataAsync();
+            LastLoadedReportId = ReportId;
+            LastLoadedHazardId = HazardId;
         }
         
         if (currentStep == 3)
@@ -194,17 +217,26 @@ public partial class TechnicalAssessment : ComponentBase
     #region Data Loading Methods
     private async Task LoadSourceReport()
     {
+        SourceReport = null;
+
         if (string.IsNullOrWhiteSpace(ReportId))
         {
             return;
         }
 
-        var query = new GetReportByCodeQuery(new ReportID(ReportId));
-        var result = await _mediator.SendAsync(query, CancellationToken.None);
-
-        if (result.IsSuccess && result.Value is not null)
+        try
         {
-            SourceReport = result.Value;
+            var query = new GetReportByCodeQuery(new ReportID(ReportId));
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value is not null)
+            {
+                SourceReport = result.Value;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading source report for ReportId: {ReportId}", ReportId);
         }
     }
     private async Task LoadAssessmentDataAsync()
@@ -215,7 +247,21 @@ public partial class TechnicalAssessment : ComponentBase
             StateHasChanged();
 
             _logger.LogInformation("Loading Technical Assessment - Step {StepNumber}, ReportId: {ReportId}, HazardId: {HazardId}",CurrentStep, ReportId, HazardId);
-            await LoadSourceReport();
+            if (SourceReport is null || !string.Equals(SourceReport.Code, ReportId, StringComparison.OrdinalIgnoreCase))
+            {
+                await LoadSourceReport();
+            }
+
+            if (IsRiskRegistryOnly && CurrentStep != 4)
+            {
+                var encodedReportId = Uri.EscapeDataString(ReportId ?? string.Empty);
+                var encodedHazardId = Uri.EscapeDataString(HazardId ?? string.Empty);
+                var riskRegistryOnlyUrl = $"/SMSRiskManagement/TechnicalAssessment/{encodedReportId}/{encodedHazardId}/4";
+                _logger.LogInformation("Risk Registry Only report detected. Redirecting to Step 4: {Url}", riskRegistryOnlyUrl);
+                _navigation.NavigateToSecure(riskRegistryOnlyUrl);
+                return;
+            }
+
             await LoadCoreAssessmentDataAsync();
             await LoadReportHazardsAsync(); // Load hazards BEFORE loading step data
             await LoadStepDataFromAssessment(); // Step models need ReportHazards to be populated
@@ -625,7 +671,12 @@ public partial class TechnicalAssessment : ComponentBase
 
     private async Task NavigateToStep(int targetStep)
     {
-        if (targetStep < 1 || targetStep > 5) return;
+        if (IsRiskRegistryOnly)
+        {
+            targetStep = 4;
+        }
+
+        if (targetStep < 1 || targetStep > MaxAssessmentStep) return;
 
         // Check if we're trying to jump ahead without saving current progress
         if (targetStep > CurrentStep && IsSaving)
@@ -669,10 +720,22 @@ public partial class TechnicalAssessment : ComponentBase
             }
         }
         // Include the step number in the URL
-        var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/{targetStep}";
+        var encodedReportId = Uri.EscapeDataString(ReportId ?? string.Empty);
+        var encodedHazardId = Uri.EscapeDataString(HazardId ?? string.Empty);
+        var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{encodedReportId}/{encodedHazardId}/{targetStep}";
 
         _logger.LogInformation("Navigating to: {Url}", navigationUrl);
         _navigation.NavigateToSecure(navigationUrl);
+    }
+
+    private static string? NormalizeRouteSegment(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return Uri.UnescapeDataString(value).Trim();
     }
 
     private async Task PreviousStep()
@@ -712,7 +775,7 @@ public partial class TechnicalAssessment : ComponentBase
             }
 
             // Navigate to next step
-            if (CurrentStep < 5)
+            if (CurrentStep < MaxAssessmentStep)
             {
                 await NavigateToStep(CurrentStep + 1);
                 await _notificationHelper.ShowSuccessAsync("Step saved successfully");

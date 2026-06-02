@@ -109,7 +109,14 @@
                     <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="HazardCode" Title="Hazard ID" Width="100px" >
                         <Template Context="registry">
                             <div style="@BasicTextStyle">
-                                @registry.HazardCode
+                                @if (!string.IsNullOrWhiteSpace(registry.HazardCode))
+                                {
+                                    <a href="@GetHazardReportingUrl(registry)">@registry.HazardCode</a>
+                                }
+                                else
+                                {
+                                    @registry.HazardCode
+                                }
                             </div>
                         </Template>
                     </RadzenDataGridColumn>
@@ -136,7 +143,14 @@
                                 @if (!string.IsNullOrEmpty(registry.ResidualRiskMatrixCode) && registry.ResidualRiskMatrixCode != "-")
                                 {
                                     <div style="@BasicTextStyle">
-                                        @($"{registry.ResidualRiskMatrixCode} - {registry.ResidualHazardRiskLevel?.Value}")
+                                        @if (CanNavigateToTechnicalAssessmentStep4(registry))
+                                        {
+                                            <a href="@GetTechnicalAssessmentStep4Url(registry)">@($"{registry.ResidualRiskMatrixCode} - {registry.ResidualHazardRiskLevel?.Value}")</a>
+                                        }
+                                        else
+                                        {
+                                            @($"{registry.ResidualRiskMatrixCode} - {registry.ResidualHazardRiskLevel?.Value}")
+                                        }
                                     </div>
                                 }
                                 else
