@@ -290,7 +290,9 @@ public static partial class Mappers
         hazard.ResidualRiskMatrixCode = reader.GetValue<string>(FieldNames.fHazardResidualRiskMatrixCode);
         var residualaverageScore = reader.IsDBNull(FieldNames.fHazardResidualAverageScore) ? (decimal?)null : reader.GetDecimal(FieldNames.fHazardResidualAverageScore);
         hazard.ResidualAverageScore = residualaverageScore ?? 0;
-                
+        
+        hazard.HazardRiskLevel = RiskLevel.FromValue(reader.GetValue<string>(FieldNames.fHazardRiskLevel).Trim()) ?? RiskLevel.Unkonwn;
+
         try
         {
             // Enhanced Classification Fields

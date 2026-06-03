@@ -33,6 +33,8 @@ public partial class HazardScoringPanel : ComponentBase
     private List<ScoringPanel> HazardScoringPanels = new();
     private bool IsSubmitting = false;
     private string _lastHazardCode = string.Empty;
+    private string _lastReportCodeForStatusCheck = string.Empty;
+    private bool _isCurrentReportRiskRegistryOnly = false;
 
     // Local properties to track calculated hazard scoring data (for future database update)
     private double? CalculatedAverageScore = null;
@@ -262,6 +264,12 @@ public partial class HazardScoringPanel : ComponentBase
             
             // Update the actual entity properties based on CurrentStep before saving
             UpdateEntityPropertiesFromMapped(panel);
+
+            // Risk Registry Only reports should keep Step 4 and Step 5 scoring values in sync.
+            if (await IsCurrentReportRiskRegistryOnlyAsync())
+            {
+                ApplyScoreToInitialAndResidual(panel);
+            }
             
             // Update via CQRS
             var updateCommand = new UpdateScoringPanelCommand(panel);
@@ -299,6 +307,69 @@ public partial class HazardScoringPanel : ComponentBase
             IsSubmitting = false;
             StateHasChanged(); // Only trigger UI update after the operation is complete
         }
+    }
+
+    private void ApplyScoreToInitialAndResidual(ScoringPanel panel)
+    {
+        panel.InitialLikelihood = panel.Likelihood;
+        panel.InitialSeverity = panel.Severity;
+        panel.InitialScore = panel.Score;
+        panel.InitialRationale = panel.Rationale;
+
+        panel.ResidualLikelihood = panel.Likelihood;
+        panel.ResidualSeverity = panel.Severity;
+        panel.ResidualScore = panel.Score;
+        panel.ResidualRationale = panel.Rationale;
+    }
+
+    private async Task<bool> IsCurrentReportRiskRegistryOnlyAsync()
+    {
+        var reportCode = GetCurrentReportCodeForStatusCheck();
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            Logger.LogWarning("RiskRegistryOnly check skipped for hazard {HazardCode} because no report code was available on CurrentRiskAssessment or Hazard", Hazard.Code);
+            return false;
+        }
+
+        if (string.Equals(_lastReportCodeForStatusCheck, reportCode, StringComparison.OrdinalIgnoreCase))
+        {
+            return _isCurrentReportRiskRegistryOnly;
+        }
+
+        _lastReportCodeForStatusCheck = reportCode;
+        _isCurrentReportRiskRegistryOnly = false;
+
+        try
+        {
+            var reportResult = await Mediator.SendAsync(new GetReportByCodeQuery(new ReportID(reportCode)), CancellationToken.None);
+            if (reportResult.IsSuccess && reportResult.Value is not null)
+            {
+                var normalizedStatus = reportResult.Value.Status?.Trim();
+                _isCurrentReportRiskRegistryOnly = string.Equals(normalizedStatus, ReportStatus.RiskRegistryOnly, StringComparison.OrdinalIgnoreCase)
+                    || string.Equals(normalizedStatus, "RISK_REGISTRY_ONLY", StringComparison.OrdinalIgnoreCase);
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed to resolve report status for report {ReportCode} while submitting scoring", reportCode);
+        }
+
+        return _isCurrentReportRiskRegistryOnly;
+    }
+
+    private string GetCurrentReportCodeForStatusCheck()
+    {
+        if (!string.IsNullOrWhiteSpace(CurrentRiskAssessment?.ReportCode))
+        {
+            return CurrentRiskAssessment.ReportCode.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(Hazard?.ReportCode))
+        {
+            return Hazard.ReportCode.Trim();
+        }
+
+        return string.Empty;
     }
 
     private void EditScore(ScoringPanel panel)
@@ -722,6 +793,7 @@ public partial class HazardScoringPanel : ComponentBase
             // ? USE THE NEW CENTRALIZED CALCULATION METHOD
             var useResidual = CurrentStep == 5;
             var calculation = AviationRiskMatrixCalculator.CalculateHazardRisk(HazardScoringPanels, useResidual);
+            var isRiskRegistryOnly = await IsCurrentReportRiskRegistryOnlyAsync();
 
             if (CurrentStep == 4)
             {
@@ -758,6 +830,21 @@ public partial class HazardScoringPanel : ComponentBase
 
                 Logger.LogInformation("Step 4: Updated base HazardRiskLevel to {RiskLevel} for hazard {HazardCode}",
                     Hazard.HazardRiskLevel?.Value ?? "Unknown", Hazard.Code);
+
+                // Risk Registry Only reports do not require a separate Step 5 scoring workflow.
+                // Mirror Step 4 result into residual fields so hazard-level data stays consistent.
+                if (isRiskRegistryOnly)
+                {
+                    Hazard.ResidualAverageScore = calculation.IsValid ? calculation.AverageScore : null;
+                    Hazard.ResidualRiskMatrixCode = calculation.IsValid ? calculation.MatrixCode : null;
+
+                    if (calculation.IsValid)
+                    {
+                        Hazard.HazardRiskLevel = calculation.RiskLevel;
+                    }
+
+                    Logger.LogInformation("RiskRegistryOnly sync: mirrored Step 4 scoring to residual fields for hazard {HazardCode}", Hazard.Code);
+                }
             }
             else if (CurrentStep == 5)
             {

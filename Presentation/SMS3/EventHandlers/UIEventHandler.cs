@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Configuration;
 using Radzen;
 using SMS_Application.Interfaces;
 using SMS_Domain.Common;
@@ -14,17 +15,25 @@ namespace SMS3.EventHandlers;
 public class UIEventHandler : BaseUIEventHandler<UINotificationEvent>
 {
     private readonly ILogger<UIEventHandler> _logger;
+    private readonly IConfiguration _configuration;
 
-    public UIEventHandler(ILogger<UIEventHandler> logger)
+    public UIEventHandler(ILogger<UIEventHandler> logger, IConfiguration configuration)
         : base(logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
     }
 
     protected override async Task<Result> ProcessUIEventAsync(UINotificationEvent uiEvent, CancellationToken cancellationToken)
     {
         try
         {
+            if (!IsNotificationEnabled(uiEvent.Severity))
+            {
+                _logger.LogInformation("UINotificationHandler: Skipped {Severity} notification because FeatureManagement toggle is disabled", uiEvent.Severity);
+                return Result.Success();
+            }
+
             _logger.LogInformation("UINotificationHandler: Processing {Severity} notification - {Title}: {Message}", 
                 uiEvent.Severity, uiEvent.Title, uiEvent.Message);
 
@@ -55,5 +64,17 @@ public class UIEventHandler : BaseUIEventHandler<UINotificationEvent>
             _logger.LogError(ex, "UINotificationHandler: Failed to dispatch notification");
             return Result.Failure(new Error("UI_NOTIFICATION_FAILED", $"Failed to dispatch notification: {ex.Message}"));
         }
+    }
+
+    private bool IsNotificationEnabled(UINotificationSeverity severity)
+    {
+        return severity switch
+        {
+            UINotificationSeverity.Error => _configuration.GetValue<bool>("FeatureManagement:ErrorNotifications", true),
+            UINotificationSeverity.Success => _configuration.GetValue<bool>("FeatureManagement:SuccessNotifications", true),
+            UINotificationSeverity.Warning => _configuration.GetValue<bool>("FeatureManagement:WarningNotifications", true),
+            UINotificationSeverity.Info => _configuration.GetValue<bool>("FeatureManagement:InfoNotifications", true),
+            _ => true
+        };
     }
 }

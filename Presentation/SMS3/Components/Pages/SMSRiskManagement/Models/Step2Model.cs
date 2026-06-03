@@ -10,6 +10,18 @@ public class Step2Model
     public List<string> HazardDescriptions { get; set; } = new();
     public List<string> HazardCategories { get; set; } = new();
 
+    public (bool isValid, string message) Validate(List<Hazard>? availableHazards = null)
+    {
+        var hazardCount = availableHazards?.Count ?? HazardIds.Count(id => !string.IsNullOrWhiteSpace(id));
+
+        if (hazardCount < 1)
+        {
+            return (false, "At least 1 hazard must be identified before proceeding to Step 3");
+        }
+
+        return (true, $"Step 2 validation passed with {hazardCount} hazard(s)");
+    }
+
     
     public void LoadFromAssessment(RiskAssessment assessment)
     {

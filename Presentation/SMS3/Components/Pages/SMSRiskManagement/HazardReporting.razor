@@ -57,19 +57,7 @@ else if (ShowFinalSuccessConfirmation)
                             </RadzenRow>
                             <br />
                             <br />
-                            <RadzenRow Gap="0.5rem">
-                                @* <RadzenColumn Size="12" SizeLG="12">
-                                    <div class="text-center">
-                                        <RadzenFieldset Text="Track Report URL">
-                                            <RadzenQRCode Value="@GetTrackingUrl()" Size="100"/>
-                                            <div class="small text-muted mt-2">
-                                                Scan to track your report
-                                            </div>
-                                        </RadzenFieldset>
-                                    </div>
-                                </RadzenColumn> *@
-                                
-                            </RadzenRow> 
+                            
                         </div>
                     
                     <div class="row">
@@ -249,7 +237,7 @@ else
                                             Change="@(async (object value) => await OnDepartmentChanged(value?.ToString()))"
                                             Style="width: 50%; min-width: 50%;" />
                                         </RadzenFormField>
-                                        <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
+                                        @* <RadzenRequiredValidator Component="SubmittingDepartment" Text="Reporting Department by is required" /> *@
                                     </RadzenColumn>
                                     <RadzenColumn Size="5">
                                         <RadzenFormField Text="Job Function" AllowFloatingLabel="false"  Variant="Variant.Outlined" Style="width: 100%;">
@@ -260,7 +248,7 @@ else
                                             Style="width: 100%; min-width: 100%;"
                                             Rows="2" Cols="100" />
                                         </RadzenFormField>
-                                        <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
+                                        @* <RadzenRequiredValidator Component="SubmittingDepartmentJobFunction" Text="Reporting Department by is required" /> *@
                                     </RadzenColumn>
                                 }
                             </RadzenCard>
@@ -397,7 +385,7 @@ else
                                                   Name="Description"
                                                   Placeholder="Provide a detailed description of the hazard including what happened, when, who was involved, conditions, immediate actions taken, and potential consequences..."
                                                   Style="width: 100%;min-width:100%" /> *@
-                                    <RadzenHtmlEditor @bind-Value="@HazardReport.Description" Style="width: 100%;min-width:100%" >
+                                    <RadzenHtmlEditor @bind-Value="@HazardReport.Description" Class="hazard-description-editor" Style="width: 900px; height: 260px;" >
                                         <RadzenHtmlEditorUndo />
                                         <RadzenHtmlEditorRedo />
                                         <RadzenHtmlEditorSeparator />
@@ -950,6 +938,19 @@ else
     color: #6c757d !important;
 }
 
+/* Hazard description editor sizing/scroll behavior */
+.hazard-description-editor {
+    width: 100% !important;
+    height: 260px !important;
+    max-width: 100% !important;
+}
+
+.hazard-description-editor .rz-html-editor-content {
+    height: 200px !important;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+}
+
 /* Map styling */
 #hazardLocationMap {
     cursor: crosshair !important;
@@ -1002,9 +1003,11 @@ else
     width: 100% !important;
 }
 
-/* Specific dropdown styling for full width */
+/* Specific dropdown panel sizing to prevent viewport-width expansion */
 .rz-dropdown-panel {
-    min-width: 100% !important;
+    min-width: unset !important;
+    width: auto !important;
+    max-width: calc(100vw - 2rem) !important;
 }
 
 .rz-dropdown .rz-dropdown-label {

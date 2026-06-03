@@ -68,7 +68,7 @@ public class Program
             }
             
         }
-        // PRESENTATION LAYER SERVICES - Centralized registration**
+        // PRESENTATION LAYER SERVICES 
         // This must be after AddApiVersioning
         builder.Services.AddPresentationServices(builder.Configuration);
         
@@ -130,23 +130,23 @@ public class Program
             await next();
         });
         
-        // 🔐 SET UP SERVICE LOCATOR FOR SECURE NAVIGATION - Using existing ServiceLocator**
+        // SET UP SERVICE LOCATOR FOR SECURE NAVIGATION - Using existing ServiceLocator**
         SMS3.Components.Shared.UIHelpers.ServiceLocator.Current = app.Services;
 
-        // 🎯 EXPLICIT PROTOCOL CONFIGURATION - For middleware decisions**
+        // EXPLICIT PROTOCOL CONFIGURATION - For middleware decisions**
         var masterProtocolConfig = app.Configuration.GetSection("MasterProtocol");
         var explicitProtocol = masterProtocolConfig.GetValue<string>("Protocol", "HTTP");
         var forceEverywhere = masterProtocolConfig.GetValue<bool>("ForceProtocolEverywhere", true);
         var isHttps = !string.IsNullOrEmpty(explicitProtocol) && explicitProtocol.Equals("HTTPS", StringComparison.OrdinalIgnoreCase);
 
-        // ⚡ SECURITY MIDDLEWARE - Must be first to add headers to all responses
-        // 🎯 CONDITIONAL: Only apply security headers if enabled in configuration
+        // SECURITY MIDDLEWARE - Must be first to add headers to all responses
+        // CONDITIONAL: Only apply security headers if enabled in configuration
         if (isHttps || app.Configuration.GetValue<bool>("FeatureManagement:EnableSecurityHeaders", false))
         {
             app.UseSecurityHeaders();
         }
 
-        // 🔐 REQUEST VALIDATION MIDDLEWARE - Validate and sanitize all requests**
+        // REQUEST VALIDATION MIDDLEWARE - Validate and sanitize all requests**
         app.UseMiddleware<SMS3.Middleware.RequestValidationMiddleware>();
 
         // Configure the HTTP request pipeline.
@@ -177,12 +177,12 @@ public class Program
 
         app.UseStaticFiles();
         
-        // 🔐 SESSION MUST BE BEFORE ROUTING AND AUTHENTICATION**
+        // SESSION MUST BE BEFORE ROUTING AND AUTHENTICATION**
         app.UseSession();
         
         app.UseRouting();
 
-        // 🔐 AUTHENTICATION & AUTHORIZATION MIDDLEWARE**
+        // AUTHENTICATION & AUTHORIZATION MIDDLEWARE**
         app.UseAuthentication();
         app.UseAuthorization();
 
@@ -191,7 +191,7 @@ public class Program
         // BLAZOR UI
         app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
 
-        // 🚀 EVENTBUS SUBSCRIPTIONS 
+        // EVENTBUS SUBSCRIPTIONS 
         app.InitializeEventBus(); // Application layer handlers (Domain + Integration events)
 
         // Ensure Blazor Presentation UI notification handler is explicitly wired

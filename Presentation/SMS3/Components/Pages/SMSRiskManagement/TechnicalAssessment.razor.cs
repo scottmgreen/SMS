@@ -15,8 +15,7 @@ namespace SMS3.Components.Pages.SMSRiskManagement;
 /// </summary>
 public partial class TechnicalAssessment : ComponentBase
 {
-    private const string RiskRegistryOnlyStatusValue = "RISK_REGISTRY_ONLY";
-
+    
     #region Parameters and Injection
 
     [Parameter] public string? ReportId { get; set; }
@@ -31,6 +30,7 @@ public partial class TechnicalAssessment : ComponentBase
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
+    [Inject] private IConfiguration _configuration { get; set; } = default!;
     
 
 
@@ -40,10 +40,11 @@ public partial class TechnicalAssessment : ComponentBase
 
     private bool IsLoading { get; set; } = true;
     private bool IsSaving { get; set; } = false;
+    private bool ForceTechnicalAssessmentWorkflow => _configuration.GetValue<bool?>("FeatureManagement:ForceTechnicalAssessmentWorkflow") ?? true;
     private string? LastLoadedReportId { get; set; }
     private string? LastLoadedHazardId { get; set; }
     public int CurrentStep => int.TryParse(StepNumber, out int step) && step >= 1 && step <= 5 ? step : 1;
-    private bool IsRiskRegistryOnly => string.Equals(SourceReport?.Status, RiskRegistryOnlyStatusValue, StringComparison.OrdinalIgnoreCase);
+    private bool IsRiskRegistryOnly => string.Equals(SourceReport?.Status, ReportStatus.RiskRegistryOnly.Value, StringComparison.OrdinalIgnoreCase);
     private int MaxAssessmentStep => IsRiskRegistryOnly ? 4 : 5;
 
     #endregion
@@ -57,7 +58,8 @@ public partial class TechnicalAssessment : ComponentBase
     public Hazard? PrimaryHazard { get; set; }
     public Report? SourceReport { get; set; }
     public List<Hazard> ReportHazards { get; set; } = new();
-
+    // Snapshot list used for child component parameter change detection.
+    public List<Hazard> HazardUiSnapshot { get; private set; } = new();
     #endregion
 
     #region Step Models
@@ -76,8 +78,7 @@ public partial class TechnicalAssessment : ComponentBase
     public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.UserName.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
     public string LeadInvestigatorName => AvailableInvestigators.FirstOrDefault()?.DisplayName ?? "Not Assigned";
 
-    // CRITICAL: Make this a property that can trigger change detection
-    public List<Hazard> ReportedHazards { get; private set; } = new();
+    
 
     
     #endregion
@@ -550,9 +551,9 @@ public partial class TechnicalAssessment : ComponentBase
                 }
             }
 
-            // CRITICAL: Update both collections
+            // Update source and UI snapshot collections
             ReportHazards = allHazards;
-            ReportedHazards = allHazards.ToList(); // Create a new list to trigger change detection
+            RefreshHazardUiSnapshot();
 
             _logger.LogInformation("Loaded {Count} hazards for assessment", allHazards.Count);
         }
@@ -560,8 +561,13 @@ public partial class TechnicalAssessment : ComponentBase
         {
             _logger.LogError(ex, "Error loading report hazards");
             ReportHazards = new List<Hazard>();
-            ReportedHazards = new List<Hazard>();
+            RefreshHazardUiSnapshot();
         }
+    }
+
+    private void RefreshHazardUiSnapshot()
+    {
+        HazardUiSnapshot = ReportHazards.ToList();
     }
 
     private async Task LoadStepDataFromAssessment()
@@ -669,7 +675,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     #region Navigation Methods
 
-    private async Task NavigateToStep(int targetStep)
+    private async Task NavigateToStep(int targetStep, bool skipWorkflowNavigationValidation = false)
     {
         if (IsRiskRegistryOnly)
         {
@@ -685,8 +691,8 @@ public partial class TechnicalAssessment : ComponentBase
             return;
         }
 
-        // If jumping forward by more than one step, validate current step first
-        if (targetStep > CurrentStep + 1)
+        // In strict workflow mode, any forward navigation requires current step validation and save.
+        if (!skipWorkflowNavigationValidation && ForceTechnicalAssessmentWorkflow && targetStep > CurrentStep)
         {
             var validationResult = ValidateCurrentStep();
             if (!validationResult.isValid)
@@ -777,7 +783,7 @@ public partial class TechnicalAssessment : ComponentBase
             // Navigate to next step
             if (CurrentStep < MaxAssessmentStep)
             {
-                await NavigateToStep(CurrentStep + 1);
+                await NavigateToStep(CurrentStep + 1, skipWorkflowNavigationValidation: true);
                 await _notificationHelper.ShowSuccessAsync("Step saved successfully");
             }
         }
@@ -1258,24 +1264,12 @@ public partial class TechnicalAssessment : ComponentBase
         return CurrentStep switch
         {
             1 => Step1.Validate(),
-            2 => ValidateStep2(),
-            3 => Step3.Validate(ReportedHazards, CurrentStep),
+            2 => Step2.Validate(ReportHazards),
+            3 => Step3.Validate(HazardUiSnapshot, CurrentStep),
             4 => Step4.Validate(),
             5 => Step5.Validate(),
             _ => (false, "Invalid step number")
         };
-    }
-
-    private (bool isValid, string message) ValidateStep2()
-    {
-        var hazardCount = ReportHazards?.Count ?? 0;
-
-        if (hazardCount < 1)
-        {
-            return (false, "At least 1 hazard must be identified before proceeding to Step 3");
-        }
-
-        return (true, $"Step 2 validation passed with {hazardCount} hazard(s)");
     }
 
     private (bool isValid, string message) ValidateAllSteps()
@@ -1285,11 +1279,11 @@ public partial class TechnicalAssessment : ComponentBase
         if (!step1Result.isValid)
             return (false, $"Step 1: {step1Result.message}");
 
-        var step2Result = ValidateStep2();
+        var step2Result = Step2.Validate(ReportHazards);
         if (!step2Result.isValid)
             return (false, $"Step 2: {step2Result.message}");
 
-        var step3Result = Step3.Validate(ReportedHazards, 3); // Use step 3 for Initial validation
+        var step3Result = Step3.Validate(HazardUiSnapshot, 3); // Use step 3 for Initial validation
         if (!step3Result.isValid)
             return (false, $"Step 3: {step3Result.message}");
 
@@ -1353,13 +1347,13 @@ public partial class TechnicalAssessment : ComponentBase
                 Step2.ApplyToAssessment(TechRiskAssessment!);
                 break;
             case 3:
-                await Step3.ApplyToAssessmentAsync(TechRiskAssessment!, ReportedHazards, CurrentStep);
+                await Step3.ApplyToAssessmentAsync(TechRiskAssessment!, HazardUiSnapshot, CurrentStep);
                 break;
             case 4:
-                await Step4.ApplyToAssessmentAsync(TechRiskAssessment!, ReportedHazards);
+                await Step4.ApplyToAssessmentAsync(TechRiskAssessment!, HazardUiSnapshot);
                 break;
             case 5:
-                await Step5.ApplyToAssessmentAsync(TechRiskAssessment!, ReportedHazards);
+                await Step5.ApplyToAssessmentAsync(TechRiskAssessment!, HazardUiSnapshot);
                 break;
         }
     }
@@ -1423,8 +1417,8 @@ public partial class TechnicalAssessment : ComponentBase
             // Add to collections (no database call needed here - already done in modal)
             ReportHazards.Add(newHazard);
 
-            // Create a completely new list to force parameter change detection
-            ReportedHazards = ReportHazards.ToList();
+            // Create a new list reference to trigger parameter change detection in child components
+            RefreshHazardUiSnapshot();
 
             // Update Step2 model
             if (!Step2.HazardIds.Contains(newHazard.Code))
@@ -1452,7 +1446,7 @@ public partial class TechnicalAssessment : ComponentBase
             });
 
             await _notificationHelper.ShowSuccessAsync($"Hazard {newHazard.Code} added successfully");
-            _logger.LogInformation("Successfully added hazard to collections: {HazardCode} - Total hazards: {Count}",newHazard.Code, ReportedHazards.Count);
+            _logger.LogInformation("Successfully added hazard to collections: {HazardCode} - Total hazards: {Count}",newHazard.Code, HazardUiSnapshot.Count);
         }
         catch (Exception ex)
         {
@@ -1478,6 +1472,7 @@ public partial class TechnicalAssessment : ComponentBase
                 if (existingIndex >= 0)
                 {
                     ReportHazards[existingIndex] = result.Value;
+                    RefreshHazardUiSnapshot();
                 }
 
                 await _notificationHelper.ShowSuccessAsync($"Hazard {updatedHazard.Code} updated successfully");
@@ -1517,7 +1512,7 @@ public partial class TechnicalAssessment : ComponentBase
             {
                 // Remove from local collections
                 ReportHazards.RemoveAll(h => h.Code == hazardToDelete.Code);
-                ReportedHazards = ReportHazards.ToList();
+                RefreshHazardUiSnapshot();
 
                 // Update Step2 model
                 var indexToRemove = Step2.HazardIds.IndexOf(hazardToDelete.Code);
@@ -1550,7 +1545,7 @@ public partial class TechnicalAssessment : ComponentBase
                 await InvokeAsync(StateHasChanged);
 
                 await _notificationHelper.ShowSuccessAsync($"Hazard {hazardToDelete.Code} deleted successfully");
-                _logger.LogInformation("Successfully deleted hazard: {HazardCode} - Remaining hazards: {Count}",hazardToDelete.Code, ReportedHazards.Count);
+                _logger.LogInformation("Successfully deleted hazard: {HazardCode} - Remaining hazards: {Count}",hazardToDelete.Code, HazardUiSnapshot.Count);
             }
             else
             {

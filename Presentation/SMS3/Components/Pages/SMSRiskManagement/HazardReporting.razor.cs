@@ -188,13 +188,13 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 return IsFormValidForPreview && 
                 !string.IsNullOrEmpty(HazardReport.ReportContactName) && 
                 !string.IsNullOrEmpty(HazardReport.ReportContactEmail) && 
-                        (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) && DescriptionCharacterCount <= 2000;
+                        (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) && DescriptionCharacterCount <= 3000;
             }
 
         else
             {
             return IsFormValidForPreview &&
-                (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) && DescriptionCharacterCount <= 2000;
+                (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) && DescriptionCharacterCount <= 3000;
             }
                     
     }

@@ -125,8 +125,16 @@
                             <div style="@GetAviationMatrixCellStyle(registry.InitialRiskMatrixCode.Trim())" class="text-center fw-bold">
                                 @if (!string.IsNullOrEmpty(registry.InitialRiskMatrixCode) && registry.InitialRiskMatrixCode != "-")
                                 {
-                                    <div style="@BasicTextStyle">
-                                        @($"{registry.InitialRiskMatrixCode} - {registry.InitialHazardRiskLevel?.Value}")
+                                    <div style="@BasicTextStyle">                   
+                                        @if (CanNavigateToTechnicalAssessmentStep4(registry))
+                                        {
+                                            <a href="@GetTechnicalAssessmentStep4Url(registry)">@($"{registry.ResidualRiskMatrixCode} - {registry.ResidualHazardRiskLevel?.Value}")</a>
+                                        }
+                                        else
+                                        {
+                                            @($"{registry.InitialRiskMatrixCode} - {registry.InitialHazardRiskLevel?.Value}")
+                                        }
+                                    
                                     </div>
                                 }
                                 else
@@ -307,7 +315,7 @@
     }
 
     .sms-header-primary {
-        background-color: #212e61; /* SMS Blue Dark Bold */
+        background-color: #212e61; 
         color: white;
     }
 
