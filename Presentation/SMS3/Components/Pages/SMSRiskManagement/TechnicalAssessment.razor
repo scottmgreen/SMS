@@ -78,9 +78,9 @@
                                 {
                                     var stepNumber = step; // Capture for lambda
                                     var isCurrentStep = step == CurrentStep;
-                                    var isCompleted = step < CurrentStep;
-                                    var buttonStyle = isCurrentStep ? ButtonStyle.Primary : (isCompleted ? ButtonStyle.Success : ButtonStyle.Light);
-                                    var icon = isCompleted ? "check_circle" : (isCurrentStep ? "edit" : "radio_button_unchecked");
+                                    var validation = GetStepValidationStatus(stepNumber);
+                                    var buttonStyle = GetStepButtonStyle(stepNumber, isCurrentStep, validation.isValid);
+                                    var icon = GetStepButtonIcon(isCurrentStep, validation.isValid);
 
                                     <RadzenButton Text="@($"Step {step} {GetStepName(step)}")"
                                                   Icon="@icon"
@@ -88,7 +88,7 @@
                                                   Size="ButtonSize.Medium"
                                                   Click="@(() => NavigateToStep(stepNumber))"
                                                   Disabled="@IsSaving"
-                                                  title="@($"Step {step}: {GetStepName(step)}")" />
+                                                  title="@($"Step {step}: {GetStepName(step)} - {(validation.isValid ? "Validated" : $"Validation failed ({validation.message})")}")" />
                                 }
                             </RadzenStack>
                         </RadzenColumn>
@@ -231,9 +231,9 @@
                 <div class="sms-modal-body">
                     <RadzenCard Variant="Variant.Outlined">
                         <div class="p-3">
-                            <RadzenText TextStyle="TextStyle.Body1" Style="line-height: 1.6; white-space: pre-wrap;">
-                                @SelectedDescription
-                            </RadzenText>
+                            <div style="line-height: 1.6; white-space: normal;">
+                                @((MarkupString)(SelectedDescription ?? "No description available"))
+                            </div>
                         </div>
                     </RadzenCard>
                 </div>

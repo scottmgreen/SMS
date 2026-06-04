@@ -501,24 +501,29 @@ public partial class ReportValidation : ComponentBase
             // Step 2: Navigate directly to Risk Registry
             _logger.LogInformation("User skipped Airport Shared Dataset creation, navigating to Risk Registry for Report: {ReportId}", ReportId);
 
-
-            var riskAssessment = CreateRiskAssessmentEntity();
-
-            var command = new CreateRiskAssessmentCommand(riskAssessment);
-            var createResult = await _mediator.SendAsync(command, CancellationToken.None);
-
-            if (!createResult.IsSuccess)
+            // IMPORTANT: Validation creation already triggers SMS Risk assessment creation in ReportValidationService.
+            // Only create a new assessment here if one does not already exist for this hazard.
+            var existingRiskAssessment = await FindExistingRiskAssessment();
+            if (existingRiskAssessment is null)
             {
-                throw new Exception($"Failed to create risk assessment: {createResult.Error?.Message ?? "Unknown error"}");
+                var riskAssessment = CreateRiskAssessmentEntity();
+                var command = new CreateRiskAssessmentCommand(riskAssessment);
+                var createResult = await _mediator.SendAsync(command, CancellationToken.None);
+
+                if (!createResult.IsSuccess)
+                {
+                    throw new Exception($"Failed to create risk assessment: {createResult.Error?.Message ?? "Unknown error"}");
+                }
+
+                await _notificationHelper.ShowSuccessAsync($"Risk Assessment {createResult.Value.Code} created successfully");
+            }
+            else
+            {
+                await _notificationHelper.ShowInfoAsync($"Using existing Risk Assessment {existingRiskAssessment.Code}");
             }
 
             // Update report status
             await UpdateReportStatusWithValidation(ReportStatus.RiskRegistryOnly, "Risk registry only");
-
-            var newRiskAssessment = createResult.Value;
-            await _notificationHelper.ShowSuccessAsync($"Risk Assessment {newRiskAssessment.Code} created successfully");
-
-
 
             string navigationUrl = "/SMSAssurance/RiskRegistry";
             await DelayAndNavigate(navigationUrl);

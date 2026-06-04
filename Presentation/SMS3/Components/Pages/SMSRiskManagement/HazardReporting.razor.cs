@@ -178,7 +178,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     
     public bool IsFormValidForPreview =>
         !string.IsNullOrEmpty(HazardReport.HazardType) && !string.IsNullOrEmpty(HazardReport.HazardCategory) &&
-        !string.IsNullOrEmpty(HazardReport.SubmittedBy) && !string.IsNullOrEmpty(HazardReport.SubmittingDepartment) &&
+        !string.IsNullOrEmpty(HazardReport.SubmittedBy) &&
         !string.IsNullOrEmpty(HazardReport.Description) && !string.IsNullOrEmpty(HazardReport.IncidentDateTime.ToString());
 
     public bool IsFormValidForSubmission ()
@@ -1569,9 +1569,19 @@ public partial class HazardReporting : ComponentBase, IDisposable
     
     public async Task OnHazardCategoryChanged(string? categoryValue)
     {
-        SelectedHazardCategory = categoryValue ?? string.Empty;
-        HazardReport.HazardType = string.Empty;
-        HazardTypeOptions = DropdownHelper.HandleCategoryChange(categoryValue);
+        var normalizedCategory = categoryValue ?? string.Empty;
+        var previousCategory = SelectedHazardCategory ?? string.Empty;
+
+        SelectedHazardCategory = normalizedCategory;
+        HazardTypeOptions = DropdownHelper.HandleCategoryChange(normalizedCategory);
+
+        // Clear hazard type only when category actually changed and selected type is not valid for new category.
+        if (!string.Equals(previousCategory, normalizedCategory, StringComparison.OrdinalIgnoreCase) &&
+            !string.IsNullOrEmpty(HazardReport.HazardType) &&
+            !HazardTypeOptions.Any(x => string.Equals(x.Value, HazardReport.HazardType, StringComparison.OrdinalIgnoreCase)))
+        {
+            HazardReport.HazardType = string.Empty;
+        }
 
         await InvokeAsync(StateHasChanged);
     }

@@ -265,24 +265,12 @@
                                                         @(hazard.Description.Length > 100 ? hazard.Description[..97] + "..." : hazard.Description)
                                                     </div>
                                                 }
-                                                <div class="mt-2">
-                                                    @*<small>
-                                                         <strong>Reported:</strong> @hazard.SubmittedDate.ToString("MM/dd/yyyy") by @(hazard.SubmittedBy ?? "Unknown")
-                                                        @if (!string.IsNullOrEmpty(hazard.HazardCategory))
-                                                        {
-                                                            <RadzenBadge Text="@hazard.HazardCategory" BadgeStyle="BadgeStyle.Light" Class="ms-2" />
-                                                        }
-                                                    </small> *@
-                                                </div>
                                             </RadzenColumn>
                                             <RadzenColumn Size="4">
                                                 @if (hazard.HazardLocation is not null && hazard.HazardLocation.Latitude.HasValue && hazard.HazardLocation.Longitude.HasValue)
                                                 {
                                                     <div class="text-center">
-                                                        @* ?? DEBUG: Add debug info to see if map should render *@
-                                                        @* <div class="text-muted small mb-1">
-                                                            Debug: Lat=@hazard.HazardLocation.Latitude.Value.ToString("F6"), Lng=@hazard.HazardLocation.Longitude.Value.ToString("F6")
-                                                        </div> *@
+                                                       
                                                         <ReadOnlyLocationMap Latitude="@(hazard.HazardLocation.Latitude.Value)"
                                                                            Longitude="@(hazard.HazardLocation.Longitude.Value)"
                                                                            LocationDescription="@(hazard.HazardLocation.Description ?? hazard.Code)"
@@ -294,7 +282,7 @@
                                                             <i class="fas fa-map-marker-alt"></i> 
                                                             @hazard.HazardLocation.Latitude.Value.ToString("F6"), @hazard.HazardLocation.Longitude.Value.ToString("F6")
                                                         </small>
-                                                        @* Add View Map button for larger map view *@
+                                                        
                                                         <RadzenButton ButtonStyle="ButtonStyle.Base" 
                                                                     Size="ButtonSize.ExtraSmall"
                                                                     Text="View Map"
@@ -313,12 +301,7 @@
                                                         {
                                                             <small>@hazard.LocationArea</small>
                                                         }
-                                                        @* ?? DEBUG: Show what location data is available *@
-                                                        @* <div class="text-muted small mt-1">
-                                                            Debug: Location=@((hazard.HazardLocation == null ? "null" : "exists")),
-                                                            Lat=@(hazard.HazardLocation?.Latitude?.ToString() ?? "null"),
-                                                            Lng=@(hazard.HazardLocation?.Longitude?.ToString() ?? "null")
-                                                        </div> *@
+                                                        
                                                     </div>
                                                 }
                                             </RadzenColumn>
@@ -422,9 +405,9 @@
                 <div class="sms-modal-body">
                     <RadzenCard Variant="Variant.Outlined">
                         <div class="p-3">
-                            <RadzenText TextStyle="TextStyle.Body1" Style="line-height: 1.6; white-space: pre-wrap;">
-                                @SelectedDescription
-                            </RadzenText>
+                            <div style="line-height: 1.6; white-space: normal;">
+                                @((MarkupString)(SelectedDescription ?? "No description available"))
+                            </div>
                         </div>
                     </RadzenCard>
                 </div>

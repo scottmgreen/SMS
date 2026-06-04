@@ -806,29 +806,40 @@ public partial class TechnicalAssessment : ComponentBase
             IsSaving = true;
             StateHasChanged();
 
-            // Validate all steps
-            var allStepsValid = ValidateAllSteps();
-            if (!allStepsValid.isValid)
+            // In strict workflow mode, require full assessment validation before submit.
+            if (ForceTechnicalAssessmentWorkflow)
             {
-                await _notificationHelper.ShowErrorAsync($"Assessment cannot be completed: {allStepsValid.message}");
-                return;
-            }
+                var allStepsValid = ValidateAllSteps();
+                if (!allStepsValid.isValid)
+                {
+                    await _notificationHelper.ShowErrorAsync($"Assessment cannot be completed: {allStepsValid.message}");
+                    return;
+                }
+                var saveResult = await SaveCurrentStepAsync();
+                if (!saveResult.success)
+                {
+                    await _notificationHelper.ShowErrorAsync($"Failed to save final step: {saveResult.message}");
+                    return;
+                }
 
-            // Save final step
-            var saveResult = await SaveCurrentStepAsync();
-            if (!saveResult.success)
+                // Mark assessment as complete and save
+                await CompleteAssessmentProcess();
+                await _notificationHelper.ShowSuccessAsync("Technical Assessment completed successfully!");
+                _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+            }
+            else
             {
-                await _notificationHelper.ShowErrorAsync($"Failed to save final step: {saveResult.message}");
-                return;
+                // Save final step
+                var saveResult = await SaveCurrentStepAsync();
+                if (!saveResult.success)
+                {
+                    await _notificationHelper.ShowErrorAsync($"Failed to save final step: {saveResult.message}");
+                    return;
+                }
+                await _notificationHelper.ShowSuccessAsync("Technical Assessment completed successfully!");
+                _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
             }
-
-            // Mark assessment as complete and save
-            await CompleteAssessmentProcess();
-
-            await _notificationHelper.ShowSuccessAsync("Technical Assessment completed successfully!");
-
-            // Navigate back to report processing
-            _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+            
         }
         catch (Exception ex)
         {
@@ -919,18 +930,28 @@ public partial class TechnicalAssessment : ComponentBase
     }
     private RiskAssessmentStage DetermineRiskAssessmentStageFromStep(int step)
     {
+        if (IsRiskRegistryOnly && step >= 4)
+        {
+            return RiskAssessmentStage.Completed;
+        }
+
         return step switch
         {
             1 => RiskAssessmentStage.DescribingSystem,// System description
             2 => RiskAssessmentStage.IdentifyingHazards, // Hazard identification
             3 => RiskAssessmentStage.AnalyizingRisk, // Risk analysis
             4 => RiskAssessmentStage.AssessingRisk, // Risk assessment
-            5 => RiskAssessmentStage.MitigatingRisk, // Risk mitigation
+            5 => RiskAssessmentStage.Completed, // Assessment completed
             _ => RiskAssessmentStage.DescribingSystem
         };
     }
     private RiskAssessmentStatus DetermineRiskAssessmentStatusFromStep(int step)
     {
+        if (IsRiskRegistryOnly && step >= 4)
+        {
+            return RiskAssessmentStatus.AssessmentComplete;
+        }
+
         return step switch
         {
             1 => RiskAssessmentStatus.AssignedToAssessor,// System description
@@ -1259,21 +1280,63 @@ public partial class TechnicalAssessment : ComponentBase
 
     #region Validation Methods
 
-    private (bool isValid, string message) ValidateCurrentStep()
+    private (bool isValid, string message) GetStepValidationStatus(int stepNumber)
     {
-        return CurrentStep switch
+        return stepNumber switch
         {
             1 => Step1.Validate(),
             2 => Step2.Validate(ReportHazards),
-            3 => Step3.Validate(HazardUiSnapshot, CurrentStep),
+            3 => Step3.Validate(HazardUiSnapshot, 3),
             4 => Step4.Validate(),
             5 => Step5.Validate(),
             _ => (false, "Invalid step number")
         };
     }
 
+    private static ButtonStyle GetStepButtonStyle(int stepNumber, bool isCurrentStep, bool isValid)
+    {
+        if (isCurrentStep)
+        {
+            return isValid ? ButtonStyle.Primary : ButtonStyle.Warning;
+        }
+
+        return isValid ? ButtonStyle.Success : ButtonStyle.Danger;
+    }
+
+    private static string GetStepButtonIcon(bool isCurrentStep, bool isValid)
+    {
+        if (isValid)
+        {
+            return isCurrentStep ? "task_alt" : "check_circle";
+        }
+
+        return isCurrentStep ? "edit" : "error";
+    }
+
+    private (bool isValid, string message) ValidateCurrentStep()
+    {
+        if (CurrentStep == 3)
+        {
+            return Step3.Validate(HazardUiSnapshot, CurrentStep);
+        }
+
+        return GetStepValidationStatus(CurrentStep);
+    }
+
     private (bool isValid, string message) ValidateAllSteps()
     {
+        // Risk Registry Only flow uses Step 4 scoring without requiring Steps 1-3 or Step 5.
+        if (IsRiskRegistryOnly)
+        {
+            var step4OnlyResult = Step4.Validate();
+            if (!step4OnlyResult.isValid)
+            {
+                return (false, $"Step 4: {step4OnlyResult.message}");
+            }
+
+            return (true, "Risk Registry Only validation passed (Step 4)");
+        }
+
         // Validate each step in sequence
         var step1Result = Step1.Validate();
         if (!step1Result.isValid)
@@ -1283,7 +1346,7 @@ public partial class TechnicalAssessment : ComponentBase
         if (!step2Result.isValid)
             return (false, $"Step 2: {step2Result.message}");
 
-        var step3Result = Step3.Validate(HazardUiSnapshot, 3); // Use step 3 for Initial validation
+        var step3Result = Step3.Validate(HazardUiSnapshot, 3); 
         if (!step3Result.isValid)
             return (false, $"Step 3: {step3Result.message}");
 

@@ -69,6 +69,24 @@ public class Step4Model
 
     public (bool isValid, string message) Validate()
     {
+        if (!HazardAverageScores.Any())
+        {
+            return (false, "No hazards have completed scoring");
+        }
+
+        var incompleteHazards = HazardPanelMembers
+            .Where(kvp => kvp.Value.Any())
+            .Where(kvp => !PanelScores.TryGetValue(kvp.Key, out var scores)
+                          || !kvp.Value.All(memberId =>
+                              scores.Any(s => s.MemberId == memberId && s.IsComplete)))
+            .Select(kvp => kvp.Key)
+            .ToList();
+
+        if (incompleteHazards.Any())
+        {
+            return (false, $"Scoring incomplete for {incompleteHazards.Count} hazard(s)");
+        }
+
         return (true, "Step 4 validation passed");
     }
 

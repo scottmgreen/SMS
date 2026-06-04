@@ -43,6 +43,8 @@ public class ReportProcessingSummary
     public string HazardType { get; set; } = string.Empty;
     public string HazardCategory { get; set; } = string.Empty;
     public string HazardDescription { get; set; } = string.Empty;
+    public decimal? HazardInitialAverageScore { get; set; }
+    public decimal? HazardResidualAverageScore { get; set; }
     public string Location { get; set; } = string.Empty;
     public string Priority { get; set; } = string.Empty;
     public string SubmittedBy { get; set; } = string.Empty;
@@ -91,6 +93,14 @@ public class ReportProcessingSummary
     public bool HasDefaultHazardCategory => HazardCategory == SMS_Domain.Enums.HazardCategory.Default.Value;
     public bool HasDefaultHazardType => HazardType == SMS_Domain.Enums.HazardType.Default.Value; 
     public bool RequiresHazardClassificationUpdate => HasDefaultHazardCategory || HasDefaultHazardType;
+    public bool IsRiskRegistryOnly =>
+        string.Equals(ReportStatus?.Trim(), SMS_Domain.Enums.ReportStatus.RiskRegistryOnly, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(ReportStatus?.Trim(), "RISK_REGISTRY_ONLY", StringComparison.OrdinalIgnoreCase);
+    public bool IsRiskRegistryOnlyScored =>
+        HazardInitialAverageScore.HasValue
+        && HazardResidualAverageScore.HasValue
+        && HazardInitialAverageScore.Value > 0
+        && HazardResidualAverageScore.Value > 0;
 
     // ENHANCED: Smart validation URL based on validation type and assessment progress
     public string SmartUrl
@@ -113,6 +123,13 @@ public class ReportProcessingSummary
             // RISK ASSESSMENT TAB: Reports with ReportValidation - route based on ValidationType
             if (StatusCategory == ProcessingStatusCategory.RiskAssessment)
             {
+                if (IsRiskRegistryOnly)
+                {
+                    var encodedReportId = Uri.EscapeDataString((ReportId ?? string.Empty).Trim());
+                    var encodedHazardId = Uri.EscapeDataString((HazardId ?? string.Empty).Trim());
+                    return $"/SMSRiskManagement/TechnicalAssessment/{encodedReportId}/{encodedHazardId}/4";
+                }
+
                 if (ValidationType?.ToLower() == "technical")
                 {
                     // Technical Assessment - multi-step, smart navigation
@@ -191,6 +208,11 @@ public class ReportProcessingSummary
 
     private string GetRiskAssessmentButtonText()
     {
+        if (IsRiskRegistryOnly)
+        {
+            return IsRiskRegistryOnlyScored ? "View Risk Registry" : "Score Risk Only";
+        }
+
         // Determine button text based on ValidationType
         if (ValidationType?.ToLower() == "preliminary")
         {
@@ -577,6 +599,8 @@ public partial class ReportProcessing : ComponentBase
                             HazardType = primaryHazard.HazardType ?? "Unknown",
                             HazardCategory = primaryHazard.HazardCategory ?? "Unknown", // NEW: Added for default detection
                             HazardDescription = primaryHazard.Description ?? "No description",
+                            HazardInitialAverageScore = primaryHazard.InitialAverageScore,
+                            HazardResidualAverageScore = primaryHazard.ResidualAverageScore,
                             Location = primaryHazard.HazardLocation?.Description ?? primaryHazard.LocationArea ?? "Not specified",
                             SubmittedBy = report.SubmittedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
                             //ReportedDate = primaryHazard.SubmittedDate,
@@ -647,6 +671,8 @@ public partial class ReportProcessing : ComponentBase
                         HazardType = primaryHazard.HazardType ?? "Unknown",
                         HazardCategory = primaryHazard.HazardCategory ?? "Unknown",
                         HazardDescription = primaryHazard.Description ?? "No description",
+                        HazardInitialAverageScore = primaryHazard.InitialAverageScore,
+                        HazardResidualAverageScore = primaryHazard.ResidualAverageScore,
                         Location = primaryHazard.HazardLocation?.Description ?? primaryHazard.LocationArea ?? "Not specified",
                         SubmittedBy = report.SubmittedBy ?? report.CreatedBy ?? report.UpdatedBy ?? "Unknown",
                         //ReportedDate = primaryHazard.SubmittedDate,
@@ -788,10 +814,18 @@ public partial class ReportProcessing : ComponentBase
             return ProcessingStatusCategory.Validation;
         }
 
-        // Reports marked as Risk Registry Only should not be surfaced as pending risk assessment work.
+        // Reports marked as Risk Registry Only remain in Risk Assessment until hazard scoring is complete.
         if (IsRiskRegistryOnlyReport(report))
         {
-            return ProcessingStatusCategory.Mitigation;
+            var isScored = hazard is not null
+                && hazard.InitialAverageScore.HasValue
+                && hazard.ResidualAverageScore.HasValue
+                && hazard.InitialAverageScore.Value > 0
+                && hazard.ResidualAverageScore.Value > 0;
+
+            return isScored
+                ? ProcessingStatusCategory.Mitigation
+                : ProcessingStatusCategory.RiskAssessment;
         }
 
         // Has validation with decision but no risk assessment = validated, needs risk assessment
@@ -1106,11 +1140,12 @@ public partial class ReportProcessing : ComponentBase
                             infoBuilder.AddAttribute(3, "Text", $"Report {report.ReportId} - Hazard {report.HazardId}");
                             infoBuilder.CloseComponent(); // ? Close RadzenText
 
-                            infoBuilder.OpenComponent<RadzenText>(5);
-                            infoBuilder.AddAttribute(6, "TextStyle", TextStyle.Body2);
-                            infoBuilder.AddAttribute(7, "Style", "color: var(--rz-text-secondary-color);");
-                            infoBuilder.AddAttribute(8, "Text", report.HazardDescription);
-                            infoBuilder.CloseComponent(); // ? Close RadzenText
+                            infoBuilder.OpenElement(5, "div");
+                            infoBuilder.AddAttribute(6, "style", "color: var(--rz-text-secondary-color);");
+                            infoBuilder.AddMarkupContent(7, string.IsNullOrWhiteSpace(report.HazardDescription)
+                                ? "No description available"
+                                : report.HazardDescription);
+                            infoBuilder.CloseElement();
 
                             infoBuilder.OpenComponent<RadzenStack>(10);
                             infoBuilder.AddAttribute(11, "Orientation", Orientation.Horizontal);

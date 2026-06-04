@@ -93,7 +93,10 @@
                                 </div>
                             </div>
                             <div class="bg-light p-2 rounded mb-3">
-                                <strong>Description:</strong> @SelectedReportForApproval.HazardDescription
+                                <strong>Description:</strong>
+                                <div>
+                                    @((MarkupString)(SelectedReportForApproval.HazardDescription ?? "No description available"))
+                                </div>
                             </div>
                         </div>
                     </RadzenCard>
@@ -235,9 +238,9 @@
                 <div class="sms-modal-body">
                     <RadzenCard Variant="Variant.Outlined">
                         <div class="p-3">
-                            <RadzenText TextStyle="TextStyle.Body1" Style="line-height: 1.6; white-space: pre-wrap;">
-                                @SelectedDescription
-                            </RadzenText>
+                            <div style="line-height: 1.6; white-space: normal;">
+                                @((MarkupString)(SelectedDescription ?? "No description available"))
+                            </div>
                         </div>
                     </RadzenCard>
                 </div>

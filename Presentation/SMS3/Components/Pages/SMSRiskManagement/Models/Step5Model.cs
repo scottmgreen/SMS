@@ -157,6 +157,40 @@ public class Step5Model
     
     public (bool isValid, string message) Validate()
     {
+        if (HazardResidualRiskAnalyses is null || !HazardResidualRiskAnalyses.Any())
+        {
+            return (false, "No residual risk analyses available");
+        }
+
+        var incompleteHazards = new List<string>();
+
+        foreach (var kvp in HazardResidualRiskAnalyses)
+        {
+            var hazardCode = kvp.Key;
+            var analysis = kvp.Value;
+
+            var worstOutcomeValid = !string.IsNullOrWhiteSpace(analysis.ResidualWorstCredibleOutcome)
+                && analysis.ResidualWorstCredibleOutcome.Trim().Length >= 10;
+            var rootCauseValid = !string.IsNullOrWhiteSpace(analysis.ResidualRootCause)
+                && analysis.ResidualRootCause.Trim().Length >= 10;
+            var commentsValid = !string.IsNullOrWhiteSpace(analysis.ResidualAdditionalComments)
+                && analysis.ResidualAdditionalComments.Trim().Length >= 10;
+
+            var hasMitigation = HazardMitigations.TryGetValue(hazardCode, out var mitigations)
+                && mitigations is not null
+                && mitigations.Any();
+
+            if ((!worstOutcomeValid || !rootCauseValid || !commentsValid) && !hasMitigation)
+            {
+                incompleteHazards.Add(hazardCode);
+            }
+        }
+
+        if (incompleteHazards.Any())
+        {
+            return (false, $"Residual analysis/mitigation incomplete for {incompleteHazards.Count} hazard(s)");
+        }
+
         return (true, "Step 5 validation passed");
     }
 

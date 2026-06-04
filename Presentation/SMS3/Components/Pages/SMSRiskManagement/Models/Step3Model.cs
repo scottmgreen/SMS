@@ -54,7 +54,7 @@ public class Step3Model
                     additionalCommentsValid = !string.IsNullOrWhiteSpace(analysis.InitialAdditionalComments) && analysis.InitialAdditionalComments.Length >= 10;
                 }
 
-                if (!worstOutcomeValid && !rootCauseValid && !additionalCommentsValid)
+                if (!worstOutcomeValid || !rootCauseValid || !additionalCommentsValid)
                 {
                     incompleteHazards.Add($"{hazard.Code} (missing analysis data)");
                 }

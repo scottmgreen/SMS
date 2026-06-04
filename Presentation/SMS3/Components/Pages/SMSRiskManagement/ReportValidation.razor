@@ -48,9 +48,9 @@ else
                                         <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Report Code:</strong>@(ReportId ?? "N/A")</RadzenText>
                                         <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Hazard Category:</strong>@(ReportHazard?.HazardCategory ?? "N/A")</RadzenText>
                                         <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Hazard Category:</strong>@(ReportHazard?.HazardType ?? "N/A")</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; padding: 0.5rem; background: white; border-radius: 4px; border: 1px solid var(--rz-border-color); min-height: 100px;">
-                                            @(ReportDetails?.Description ?? "Report description not available")
-                                        </RadzenText>
+                                        <div style="margin: 0; padding: 0.5rem; background: white; border-radius: 4px; border: 1px solid var(--rz-border-color); min-height: 100px; line-height: 1.6;">
+                                            @((MarkupString)(ReportDetails?.Description ?? "Report description not available"))
+                                        </div>
                                     </RadzenColumn>
 
                                     <!-- Column 2: Field Labels -->

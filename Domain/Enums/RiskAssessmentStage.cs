@@ -38,6 +38,9 @@ public abstract class RiskAssessmentStage : BaseEnum<RiskAssessmentStage>
     /// <summary>Assessment has been completed with final results</summary>
     public static readonly RiskAssessmentStage MitigatingRisk = new MitigatingRiskStage();
 
+    /// <summary>Assessment workflow is completed</summary>
+    public static readonly RiskAssessmentStage Completed = new CompletedStage();
+
     #endregion
 
     #region Implementations
@@ -69,6 +72,13 @@ public abstract class RiskAssessmentStage : BaseEnum<RiskAssessmentStage>
     private sealed class MitigatingRiskStage : RiskAssessmentStage
     {
         public MitigatingRiskStage() : base("MITIGATING_RISK", "Mitigating Risk")
+        {
+        }
+    }
+
+    private sealed class CompletedStage : RiskAssessmentStage
+    {
+        public CompletedStage() : base("COMPLETED", "Completed")
         {
         }
     }

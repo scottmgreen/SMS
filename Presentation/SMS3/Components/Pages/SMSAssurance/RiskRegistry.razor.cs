@@ -663,7 +663,7 @@ public partial class RiskRegistry : ComponentBase
         }
 
         return string.Equals(entry.ReportStatus, ReportStatus.RiskRegistryOnly, StringComparison.OrdinalIgnoreCase)
-               || string.Equals(entry.ReportStatus, "RISK_REGISTRY_ONLY", StringComparison.OrdinalIgnoreCase);
+               || string.Equals(entry.ReportStatus, ReportStatus.RiskRegistryOnly.Value, StringComparison.OrdinalIgnoreCase);
     }
 
     private string GetTechnicalAssessmentStep4Url(RiskRegistryEntry entry)

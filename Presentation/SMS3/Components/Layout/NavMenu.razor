@@ -22,7 +22,7 @@
         <!-- Brand Logo with Environment Detection -->
         <a class="navbar-brand sms-brand @BrandCssClass" href="/">
             <i class="fas fa-plane-departure me-2"></i>
-            PDX SMS  @(AssemblyVersion) &nbsp;  <small>@(EnvironmentSuffix)</small>
+            PDX SMS &nbsp;  <small>@(EnvironmentSuffix)</small>
         </a>
 
         <!-- Navigation Links -->
@@ -262,10 +262,32 @@
 
     // Environment Detection - Always production appearance
     private string BrandCssClass => "";
-    private string EnvironmentSuffix => _environment.IsDevelopment() ? "[Development]" : "";
+    
     private string AssemblyVersion => System.Reflection.Assembly.GetExecutingAssembly()
         .GetCustomAttributes<System.Reflection.AssemblyInformationalVersionAttribute>()
         .FirstOrDefault()?.InformationalVersion?.Split('+')[0] ?? "Unknown";
+
+    private string DevelopmentDisplayVersion => BuildDevelopmentDisplayVersion();
+
+    private string EnvironmentSuffix => _environment.IsDevelopment() ? $"Development {DevelopmentDisplayVersion}" : string.Empty;
+
+    private string BuildDevelopmentDisplayVersion()
+    {
+        var versionPart = AssemblyVersion.Split('-', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault() ?? AssemblyVersion;
+        var versionSegments = versionPart.Split('.', StringSplitOptions.RemoveEmptyEntries);
+
+        if (versionSegments.Length >= 3)
+        {
+            return $"{versionSegments[0]}.{versionSegments[1]}.{versionSegments[2]}";
+        }
+
+        if (versionSegments.Length >= 2)
+        {
+            return $"{versionSegments[0]}.{versionSegments[1]}";
+        }
+
+        return versionPart;
+    }
 
     // URL-based login visibility - show login only on specific paths or encrypted login
     private bool ShouldShowLoginToAnonymous => _navigation.Uri.Contains("/pdx") || 

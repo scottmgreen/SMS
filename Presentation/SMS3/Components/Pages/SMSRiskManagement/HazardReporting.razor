@@ -201,7 +201,7 @@ else
                                 HazardReport.ReportContactCell =string.Empty;
                                 HazardReport.ReportContactEmail = string.Empty;
                                 HazardReport.ReportContactCompany = string.Empty;
-                            }
+                            } 
 
                         <RadzenCard>
                                 <RadzenColumn Size="2">
@@ -226,7 +226,7 @@ else
                                 @if (!HazardReport.IsAnonymous)
                                 {
                                     <RadzenColumn Size="3">
-                                        <RadzenFormField Text="Submitting Department *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                        <RadzenFormField Text="Submitting Department" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
 
                                             <RadzenDropDown @bind-Value="@HazardReport.SubmittingDepartment"
                                             Data="@DepartmentOptions"
@@ -255,83 +255,90 @@ else
                         
                         </RadzenRow>
                   
-                        <!-- Row 2: Hazard Category and Hazard Type -->
-                        <RadzenRow Gap="1rem" Class="rz-mb-3">
-                            <RadzenColumn Size="2">
-                                <RadzenFormField Text="Incident Date/Time" Variant="Variant.Outlined">
-                                    <RadzenDatePicker @bind-Value="@HazardReport.IncidentDateTime"
-                                                          ShowTime="true"
-                                                          DateFormat="MM/dd/yyyy HH:mm"
-                                                          Style="width: 100%;" />
+                        <RadzenCard>
+                            <!-- Row 2: Hazard Category and Hazard Type -->
+                            <RadzenRow Gap="1rem" Class="rz-mb-3">
+                                <RadzenColumn Size="2">
+                                    <RadzenFormField Text="Incident Date/Time" Variant="Variant.Outlined">
+                                        <RadzenDatePicker @bind-Value="@HazardReport.IncidentDateTime"
+                                                              ShowTime="true"
+                                                              DateFormat="MM/dd/yyyy HH:mm"
+                                                              Style="width: 100%;" />
 
-                                </RadzenFormField>
-                            </RadzenColumn>
-                            <RadzenColumn Size="3">
-                                <RadzenFormField Text="Hazard Category *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false" 
-                                                 class="@(IsHazardCategoryDefault ? "validation-error-field" : "")">
-                                    <RadzenDropDown @bind-Value="@HazardReport.HazardCategory"
-                                                  Data="@HazardCategoryOptions" 
-                                                  TextProperty="Text" 
-                                                  ValueProperty="Value"
-                                                  Placeholder="Select hazard category..."
-                                                  Name="HazardCategory"
-                                                  Change="@(async (object value) => await OnHazardCategoryChanged(value?.ToString()))"
-                                                  AllowClear="true"
-                                                  class="@(IsHazardCategoryDefault ? "default-validation-dropdown" : "")"
-                                                  Style="width: 100%; min-width: 100%;" />
-                                </RadzenFormField>
-                                <RadzenRequiredValidator Component="HazardCategory" Text="Hazard category is required" />
-                                @* @if (IsHazardCategoryDefault)
-                                {
-                                    <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.ExtraSmall" Variant="Variant.Outlined" class="rz-mt-1 default-validation-alert">
-                                        <small>Default Hazard Category detected</small> 
-                                    </RadzenAlert>
-                                } *@
-                            </RadzenColumn>
-                            <RadzenColumn Size="3">
-                                <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false" class="@(IsHazardTypeDefault ? "validation-error-field" : "")">
-                                    <RadzenDropDown @bind-Value="@HazardReport.HazardType" 
-                                                  Data="@HazardTypeOptions" 
-                                                  TextProperty="Text" 
-                                                  ValueProperty="Value"
-                                                  Placeholder="Select hazard type..."
-                                                  Change="@(async (object value) => await OnHazardTypeChanged(value?.ToString()))"
-                                                  Disabled="@(HazardTypeOptions.Count == 0)"
-                                                  AllowClear="true"
-                                                  class="@(IsHazardTypeDefault ? "default-validation-dropdown" : "")"
-                                                  Style="width: 100%; min-width: 100%;" />
-                                </RadzenFormField>
-                                <RadzenRequiredValidator Component="HazardType" Text="Hazard type is required" />
-                               @*  @if (IsHazardTypeDefault)
-                                {
-                                    <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.ExtraSmall" Variant="Variant.Outlined" class="rz-mt-1 default-validation-alert">
-                                        <small> Default Hazard Type detected</small>
-                                    </RadzenAlert>
-                                } *@
-                                @if (HazardTypeOptions.Count == 0 && string.IsNullOrEmpty(SelectedHazardCategory))
-                                {
-                                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-info rz-mt-1">
-                                        <RadzenIcon Icon="info" Style="font-size: 0.9rem;" />
-                                        Select a Hazard Category
-                                    </RadzenText>
-                                }
-                            </RadzenColumn>
-                            <RadzenRow>
-                                <RadzenColumn Size="12">
-                                    @* Guidance Panel for Selected Hazard Type *@
-                                    @if (HazardReport.HazardType != HazardType.Default.Value )
+                                    </RadzenFormField>
+                                </RadzenColumn>
+                                <RadzenColumn Size="4">
+                                    <RadzenFormField Text="Hazard Category *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false" 
+                                                     class="@(IsHazardCategoryDefault ? "validation-error-field" : "")">
+                                        <RadzenDropDown @bind-Value="@HazardReport.HazardCategory"
+                                                      Data="@HazardCategoryOptions" 
+                                                      TextProperty="Text" 
+                                                      ValueProperty="Value"
+                                                      Placeholder="Select hazard category..."
+                                                      Name="HazardCategory"
+                                                      Change="@(async (object value) => await OnHazardCategoryChanged(value?.ToString()))"
+                                                      AllowClear="true"
+                                                      class="@(IsHazardCategoryDefault ? "default-validation-dropdown" : "")"
+                                                      Style="width: 100%; min-width: 100%;" />
+                                    </RadzenFormField>
+                                    <RadzenRequiredValidator Component="HazardCategory" Text="Hazard category is required" />
+                                    @* @if (IsHazardCategoryDefault)
                                     {
-                                        <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
-                                            <RadzenStack Gap="0.5rem" Class="rz-p-2">
-                                                @if(!string.IsNullOrEmpty(SelectedHazardCategory))
-                                                {
-                                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                    <RadzenIcon Icon="info" Style="color: var(--rz-primary); font-size: 1rem;" />
-                                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Hazard Type Guidance</RadzenText>
-                                                    </RadzenStack>
-                                                }
-                                               
+                                        <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.ExtraSmall" Variant="Variant.Outlined" class="rz-mt-1 default-validation-alert">
+                                            <small>Default Hazard Category detected</small> 
+                                        </RadzenAlert>
+                                    } *@
+                                </RadzenColumn>
+                                <RadzenColumn Size="4">
+                                    <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false" class="@(IsHazardTypeDefault ? "validation-error-field" : "")">
+                                        <RadzenDropDown @bind-Value="@HazardReport.HazardType" 
+                                                      Data="@HazardTypeOptions" 
+                                                      TextProperty="Text" 
+                                                      ValueProperty="Value"
+                                                      Placeholder="Select hazard type..."
+                                                      Change="@(async (object value) => await OnHazardTypeChanged(value?.ToString()))"
+                                                      Disabled="@(HazardTypeOptions.Count == 0)"
+                                                      AllowClear="true"
+                                                      class="@(IsHazardTypeDefault ? "default-validation-dropdown" : "")"
+                                                      Style="width: 100%; min-width: 100%;" />
+                                    </RadzenFormField>
+                                    <RadzenRequiredValidator Component="HazardType" Text="Hazard type is required" />
+                                </RadzenColumn>
+                            </RadzenRow>
 
+                            <RadzenRow Gap="1rem" Class="rz-mb-3">
+                                <RadzenColumn Size="2"></RadzenColumn>
+                                <RadzenColumn Size="4">
+                                    <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
+                                        <RadzenStack Gap="0.5rem" Class="rz-p-2">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                <RadzenIcon Icon="category" Style="color: var(--rz-primary); font-size: 1rem;" />
+                                                <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Hazard Category Guidance</RadzenText>
+                                            </RadzenStack>
+                                            @if (!string.IsNullOrEmpty(SelectedHazardCategory) && HazardReport.HazardCategory != HazardCategory.Default.Value)
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
+                                                    @GetHazardCategoryDescription(SelectedHazardCategory)
+                                                </RadzenText>
+                                            }
+                                            else
+                                            {
+                                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-info);">
+                                                    Select a Hazard Category to view guidance.
+                                                </RadzenText>
+                                            }
+                                        </RadzenStack>
+                                    </RadzenCard>
+                                </RadzenColumn>
+                                <RadzenColumn Size="4">
+                                    <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
+                                        <RadzenStack Gap="0.5rem" Class="rz-p-2">
+                                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                                <RadzenIcon Icon="info" Style="color: var(--rz-primary); font-size: 1rem;" />
+                                                <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Hazard Type Guidance</RadzenText>
+                                            </RadzenStack>
+                                            @if (HazardReport.HazardType != HazardType.Default.Value)
+                                            {
                                                 @if (RequiresRegulatoryReporting(HazardReport.HazardType))
                                                 {
                                                     <RadzenAlert AlertStyle="AlertStyle.Warning" Size="AlertSize.Small" Variant="Variant.Flat">
@@ -342,70 +349,47 @@ else
                                                 <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
                                                     @GetHazardTypeGuidance(HazardReport.HazardType)
                                                 </RadzenText>
-
-                                                @if (!string.IsNullOrEmpty(SelectedHazardCategory))
-                                                {
-                                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-style: italic; color: var(--rz-text-secondary-color);">
-                                                        Category: @GetHazardCategoryDescription(SelectedHazardCategory)
-                                                    </RadzenText>
-                                                }
-                                            </RadzenStack>
-                                        </RadzenCard>
-                                    }
-                                    else if (HazardReport.HazardCategory != HazardCategory.Default.Value)
-                                    {
-                                        <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
-                                            <RadzenStack Gap="0.5rem" Class="rz-p-2">
-                                                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                                    <RadzenIcon Icon="category" Style="color: var(--rz-primary); font-size: 1rem;" />
-                                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Category Information</RadzenText>
-                                                </RadzenStack>
-                                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
-                                                    @GetHazardCategoryDescription(SelectedHazardCategory)
-                                                </RadzenText>
+                                            }
+                                            else
+                                            {
                                                 <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-info);">
-                                                    <RadzenIcon Icon="arrow_forward" Style="font-size: 0.8rem;" />
-                                                    Select a hazard type for specific guidance
+                                                    Select a Hazard Type to view guidance.
                                                 </RadzenText>
-                                            </RadzenStack>
-                                        </RadzenCard>
-                                    }
-                                    
+                                            }
+                                        </RadzenStack>
+                                    </RadzenCard>
                                 </RadzenColumn>
                             </RadzenRow>
-                            
-                        </RadzenRow>
+                        </RadzenCard>
 
                         <!-- Row 3: Hazard Description  -->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             <RadzenColumn Size="12" class="rz-col-2">
-                                <RadzenFormField Text="Hazard Description *" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                    @* <RadzenTextArea @bind-Value="@HazardReport.Description" 
-                                                  Rows="4" Cols="200"
-                                                  Name="Description"
-                                                  Placeholder="Provide a detailed description of the hazard including what happened, when, who was involved, conditions, immediate actions taken, and potential consequences..."
-                                                  Style="width: 100%;min-width:100%" /> *@
-                                    <RadzenHtmlEditor @bind-Value="@HazardReport.Description" Class="hazard-description-editor" Style="width: 900px; height: 260px;" >
-                                        <RadzenHtmlEditorUndo />
-                                        <RadzenHtmlEditorRedo />
-                                        <RadzenHtmlEditorSeparator />
-                                        <RadzenHtmlEditorBold />
-                                        <RadzenHtmlEditorItalic />
-                                        <RadzenHtmlEditorUnderline />
-                                        <RadzenHtmlEditorStrikeThrough />
-                                        <RadzenHtmlEditorSeparator />
-                                        <RadzenHtmlEditorColor />
-                                        <RadzenHtmlEditorBackground />
-                                        <RadzenHtmlEditorRemoveFormat />
-                                    </RadzenHtmlEditor>
-                                </RadzenFormField>
-                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Class="rz-mt-1">
-                                    <RadzenRequiredValidator Component="Description" Text="Description is required" />
-                                    <RadzenText TextStyle="TextStyle.Caption" 
-                                              Class="@(DescriptionCharacterCount > 1950 ? "rz-color-danger" : DescriptionCharacterCount > 1800 ? "rz-color-warning" : "rz-color-base-500")">
-                                        @DescriptionCharacterCount/2000 characters
-                                    </RadzenText>
-                                </RadzenStack>
+                                
+                                <RadzenCard>
+                                    <RadzenFormField Text="Hazard Description *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                        <RadzenHtmlEditor @bind-Value="@HazardReport.Description" Class="hazard-description-editor" Style="width: 900px; height: 260px;" >
+                                            <RadzenHtmlEditorUndo />
+                                            <RadzenHtmlEditorRedo />
+                                            <RadzenHtmlEditorSeparator />
+                                            <RadzenHtmlEditorBold />
+                                            <RadzenHtmlEditorItalic />
+                                            <RadzenHtmlEditorUnderline />
+                                            <RadzenHtmlEditorStrikeThrough />
+                                            <RadzenHtmlEditorSeparator />
+                                            <RadzenHtmlEditorColor />
+                                            <RadzenHtmlEditorBackground />
+                                            <RadzenHtmlEditorRemoveFormat />
+                                        </RadzenHtmlEditor>
+                                    </RadzenFormField>
+                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Class="rz-mt-1">
+                                        <RadzenRequiredValidator Component="Description" Text="Description is required" />
+                                        <RadzenText TextStyle="TextStyle.Caption" 
+                                                  Class="@(DescriptionCharacterCount > 1950 ? "rz-color-danger" : DescriptionCharacterCount > 1800 ? "rz-color-warning" : "rz-color-base-500")">
+                                            @DescriptionCharacterCount/2000 characters
+                                        </RadzenText>
+                                    </RadzenStack>
+                                </RadzenCard>
                             </RadzenColumn>
                         </RadzenRow>
                 
@@ -940,9 +924,17 @@ else
 
 /* Hazard description editor sizing/scroll behavior */
 .hazard-description-editor {
-    width: 100% !important;
+    width: 900px !important;
+    min-width: 900px !important;
+    max-width: 900px !important;
     height: 260px !important;
-    max-width: 100% !important;
+}
+
+.hazard-description-editor .rz-html-editor,
+.hazard-description-editor .rz-html-editor-content {
+    width: 100% !important;
+    min-width: 100% !important;
+    box-sizing: border-box !important;
 }
 
 .hazard-description-editor .rz-html-editor-content {

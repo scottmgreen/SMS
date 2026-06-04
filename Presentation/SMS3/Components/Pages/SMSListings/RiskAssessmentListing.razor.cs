@@ -25,6 +25,15 @@ namespace SMS3.Components.Pages.SMSListings;
 /// </summary>
 public partial class RiskAssessmentListing : ComponentBase
 {
+    private sealed class AssessmentValidationSnapshot
+    {
+        public int RequiredSteps { get; init; }
+        public int ValidatedSteps { get; init; }
+        public int ProgressPercent { get; init; }
+        public bool IsFullyValidated => ValidatedSteps >= RequiredSteps;
+        public string Summary { get; init; } = string.Empty;
+    }
+
     private string BasicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Dependencies
@@ -41,6 +50,7 @@ public partial class RiskAssessmentListing : ComponentBase
     private IEnumerable<RiskAssessment> assessments = new List<RiskAssessment>();
     private List<RiskAssessment> allAssessments = new List<RiskAssessment>(); // Store all assessments for client-side filtering
     private HashSet<string> riskRegistryOnlyReportCodes = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, AssessmentValidationSnapshot> assessmentValidationStatus = new(StringComparer.OrdinalIgnoreCase);
     private int totalCount;
     private bool isLoading = false;
     private bool ShowViewDialog = false;
@@ -85,6 +95,7 @@ public partial class RiskAssessmentListing : ComponentBase
             if (result.IsSuccess && result.Value is not null)
             {
                 allAssessments = result.Value.ToList(); // Ensure it's a concrete list
+                await LoadAssessmentValidationStatusAsync(allAssessments);
                 assessments = allAssessments; // Initially show all assessments
                 totalCount = allAssessments.Count();
                 _logger.LogInformation("Loaded {Count} risk assessments for listing", totalCount);
@@ -105,6 +116,7 @@ public partial class RiskAssessmentListing : ComponentBase
                 // Initialize with empty lists to prevent null reference issues
                 allAssessments = new List<RiskAssessment>();
                 assessments = allAssessments;
+                assessmentValidationStatus.Clear();
                 totalCount = 0;
                 
                 await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load risk assessments"));
@@ -116,6 +128,7 @@ public partial class RiskAssessmentListing : ComponentBase
             // Ensure we always have valid collections even if an error occurs
             allAssessments = new List<RiskAssessment>();
             assessments = allAssessments;
+            assessmentValidationStatus.Clear();
             totalCount = 0;
             
             _logger.LogError(ex, "Error loading risk assessments");
@@ -132,6 +145,219 @@ public partial class RiskAssessmentListing : ComponentBase
     {
         var reportCode = assessment.ReportCode?.Trim();
         return !string.IsNullOrWhiteSpace(reportCode) && riskRegistryOnlyReportCodes.Contains(reportCode);
+    }
+
+    private async Task LoadAssessmentValidationStatusAsync(List<RiskAssessment> riskAssessments)
+    {
+        try
+        {
+            var hazardsResult = await _mediator.SendAsync(new GetAllHazardsQuery(), CancellationToken.None);
+            var analysisResult = await _mediator.SendAsync(new GetAllRiskAnalysisQuery(), CancellationToken.None);
+            var panelsResult = await _mediator.SendAsync(new GetAllScoringPanelsQuery(), CancellationToken.None);
+            var mitigationsResult = await _mediator.SendAsync(new GetAllMitigationsQuery(), CancellationToken.None);
+
+            var allHazards = hazardsResult.IsSuccess && hazardsResult.Value is not null
+                ? hazardsResult.Value
+                : new List<Hazard>();
+
+            var allAnalyses = analysisResult.IsSuccess && analysisResult.Value is not null
+                ? analysisResult.Value
+                : new List<RiskAnalysis>();
+
+            var allPanels = panelsResult.IsSuccess && panelsResult.Value is not null
+                ? panelsResult.Value
+                : new List<ScoringPanel>();
+
+            var allMitigations = mitigationsResult.IsSuccess && mitigationsResult.Value is not null
+                ? mitigationsResult.Value
+                : new List<Mitigation>();
+
+            var map = new Dictionary<string, AssessmentValidationSnapshot>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var assessment in riskAssessments)
+            {
+                var code = assessment.Code?.Trim() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(code))
+                {
+                    continue;
+                }
+
+                if (IsRiskRegistryOnlyAssessment(assessment))
+                {
+                    var rrOnlyScored = IsRiskRegistryOnlyScored(assessment, allHazards);
+                    map[code] = new AssessmentValidationSnapshot
+                    {
+                        RequiredSteps = 1,
+                        ValidatedSteps = rrOnlyScored ? 1 : 0,
+                        ProgressPercent = rrOnlyScored ? 100 : 0,
+                        Summary = rrOnlyScored
+                            ? "Risk Registry Only: hazard scored (initial + residual)"
+                            : "Risk Registry Only: hazard scoring incomplete"
+                    };
+
+                    continue;
+                }
+
+                var requiredSteps = 5;
+
+                var step1Valid = IsStep1Valid(assessment);
+                var step2Valid = IsStep2Valid(assessment);
+                var step3Valid = IsStep3Valid(assessment, allAnalyses);
+                var step4Valid = IsStep4Valid(assessment, allPanels);
+                var step5Valid = requiredSteps == 5 && IsStep5Valid(assessment, allAnalyses, allMitigations);
+
+                var validatedSteps = 0;
+                if (step1Valid) validatedSteps++;
+                if (step2Valid) validatedSteps++;
+                if (step3Valid) validatedSteps++;
+                if (step4Valid) validatedSteps++;
+                if (requiredSteps == 5 && step5Valid) validatedSteps++;
+
+                var progressPercent = requiredSteps > 0
+                    ? (int)Math.Round((double)validatedSteps / requiredSteps * 100)
+                    : 0;
+
+                map[code] = new AssessmentValidationSnapshot
+                {
+                    RequiredSteps = requiredSteps,
+                    ValidatedSteps = validatedSteps,
+                    ProgressPercent = progressPercent,
+                    Summary = $"Validated {validatedSteps}/{requiredSteps} steps"
+                };
+            }
+
+            assessmentValidationStatus = map;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to compute detailed validation status; using fallback progress indicators");
+            assessmentValidationStatus.Clear();
+        }
+    }
+
+    private static bool IsRiskRegistryOnlyScored(RiskAssessment assessment, IEnumerable<Hazard> allHazards)
+    {
+        var hazardCode = assessment.HazardCode?.Trim();
+
+        if (string.IsNullOrWhiteSpace(hazardCode))
+        {
+            hazardCode = assessment.PrimaryHazardId?.Trim();
+        }
+
+        if (string.IsNullOrWhiteSpace(hazardCode))
+        {
+            return false;
+        }
+
+        var primaryHazard = allHazards.FirstOrDefault(h =>
+            string.Equals(h.Code?.Trim(), hazardCode, StringComparison.OrdinalIgnoreCase));
+
+        if (primaryHazard is null)
+        {
+            return false;
+        }
+
+        return primaryHazard.InitialAverageScore.HasValue
+            && primaryHazard.ResidualAverageScore.HasValue
+            && primaryHazard.InitialAverageScore.Value > 0
+            && primaryHazard.ResidualAverageScore.Value > 0;
+    }
+
+    private AssessmentValidationSnapshot GetValidationSnapshot(RiskAssessment assessment)
+    {
+        var code = assessment.Code?.Trim() ?? string.Empty;
+        if (!string.IsNullOrWhiteSpace(code) && assessmentValidationStatus.TryGetValue(code, out var snapshot))
+        {
+            return snapshot;
+        }
+
+        var isRiskRegistryOnly = IsRiskRegistryOnlyAssessment(assessment);
+        var required = isRiskRegistryOnly ? 1 : 5;
+        var fallbackValidated = isRiskRegistryOnly
+            ? ((assessment.Status == RiskAssessmentStatus.AssessmentComplete || assessment.Stage == RiskAssessmentStage.Completed) ? 1 : 0)
+            : Math.Clamp(assessment.CurrentStep, 0, required);
+        var fallbackPercent = required > 0 ? (int)Math.Round((double)fallbackValidated / required * 100) : 0;
+
+        return new AssessmentValidationSnapshot
+        {
+            RequiredSteps = required,
+            ValidatedSteps = fallbackValidated,
+            ProgressPercent = fallbackPercent,
+            Summary = $"Estimated {fallbackValidated}/{required} (fallback)"
+        };
+    }
+
+    private static bool IsStep1Valid(RiskAssessment assessment)
+    {
+        var step1Fields = new[]
+        {
+            assessment.LeadAssessorId,
+            assessment.SystemDescription,
+            assessment.SystemBoundaries,
+            assessment.SystemPurpose,
+            assessment.FiveMPersonnel,
+            assessment.FiveMEquipment,
+            assessment.FiveMProcedures,
+            assessment.FiveMResources,
+            assessment.FiveMPhysicalEnvironment,
+            assessment.FiveMOperationalEnvironment
+        };
+
+        var completeCount = step1Fields.Count(v => !string.IsNullOrWhiteSpace(v) && v.Trim().Length >= 10);
+        return completeCount >= 4;
+    }
+
+    private static bool IsStep2Valid(RiskAssessment assessment)
+    {
+        return assessment.IdentifiedHazardIds.Any(id => !string.IsNullOrWhiteSpace(id))
+            || !string.IsNullOrWhiteSpace(assessment.HazardCode);
+    }
+
+    private static bool IsStep3Valid(RiskAssessment assessment, IEnumerable<RiskAnalysis> allAnalyses)
+    {
+        var code = assessment.Code?.Trim();
+        if (string.IsNullOrWhiteSpace(code)) return false;
+
+        return allAnalyses.Any(a =>
+            string.Equals(a.RiskAssessmentCode?.Trim(), code, StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(a.InitialWorstCredibleOutcome)
+            && a.InitialWorstCredibleOutcome.Trim().Length >= 10
+            && !string.IsNullOrWhiteSpace(a.InitialRootCause)
+            && a.InitialRootCause.Trim().Length >= 10
+            && !string.IsNullOrWhiteSpace(a.InitialAdditionalComments)
+            && a.InitialAdditionalComments.Trim().Length >= 10);
+    }
+
+    private static bool IsStep4Valid(RiskAssessment assessment, IEnumerable<ScoringPanel> allPanels)
+    {
+        var code = assessment.Code?.Trim();
+        if (string.IsNullOrWhiteSpace(code)) return false;
+
+        return allPanels.Any(p =>
+            string.Equals(p.RiskAssessmentCode?.Trim(), code, StringComparison.OrdinalIgnoreCase)
+            && p.InitialLikelihood.HasValue && p.InitialLikelihood.Value > 0
+            && p.InitialSeverity.HasValue && p.InitialSeverity.Value > 0
+            && p.InitialScore.HasValue && p.InitialScore.Value > 0);
+    }
+
+    private static bool IsStep5Valid(RiskAssessment assessment, IEnumerable<RiskAnalysis> allAnalyses, IEnumerable<Mitigation> allMitigations)
+    {
+        var code = assessment.Code?.Trim();
+        if (string.IsNullOrWhiteSpace(code)) return false;
+
+        var hasResidualAnalysis = allAnalyses.Any(a =>
+            string.Equals(a.RiskAssessmentCode?.Trim(), code, StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(a.ResidualWorstCredibleOutcome)
+            && a.ResidualWorstCredibleOutcome.Trim().Length >= 10
+            && !string.IsNullOrWhiteSpace(a.ResidualRootCause)
+            && a.ResidualRootCause.Trim().Length >= 10
+            && !string.IsNullOrWhiteSpace(a.ResidualAdditionalComments)
+            && a.ResidualAdditionalComments.Trim().Length >= 10);
+
+        var hasMitigations = allMitigations.Any(m =>
+            string.Equals(m.RiskAssessmentCode?.Trim(), code, StringComparison.OrdinalIgnoreCase));
+
+        return hasResidualAnalysis || hasMitigations;
     }
 
     private static bool IsRiskRegistryOnlyStatus(string? status)

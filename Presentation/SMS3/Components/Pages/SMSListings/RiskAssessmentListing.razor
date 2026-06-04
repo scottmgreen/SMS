@@ -71,20 +71,30 @@
                 </div>
             </Template>
             </RadzenDataGridColumn>
-        <!-- Progress Column -->
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="CurrentStep" Title="Progress" Width="100px" Sortable="true">
+        <!-- Validation Status Column -->
+        <RadzenDataGridColumn TItem="RiskAssessment" Title="Validation" Width="110px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
             <Template Context="assessment">
-                @if (assessment.CurrentStep == 1 )
+                @{
+                    var validation = GetValidationSnapshot(assessment);
+                }
+                @if (validation.IsFullyValidated)
                 {
-                    <RadzenProgressBar Value="@(0)" Max="100" Style="width:100%;" />
+                    <RadzenIcon Icon="check_circle" Style="color: #28a745;" title="@validation.Summary" />
                 }
                 else
                 {
-                    <RadzenProgressBar Value="@(assessment.CurrentStep * 20)" Max="100" Style="width:100%;" />
+                    <RadzenIcon Icon="cancel" Style="color: #dc3545;" title="@validation.Summary" />
                 }
-                
-               
-                
+            </Template>
+        </RadzenDataGridColumn>
+
+        <!-- Progress Column -->
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="CurrentStep" Title="Validation %" Width="150px" Sortable="true">
+            <Template Context="assessment">
+                @{
+                    var validation = GetValidationSnapshot(assessment);
+                }
+                <RadzenProgressBar Value="@validation.ProgressPercent" Max="100" Style="width:100%;" ShowValue="true" title="@validation.Summary" />
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="RiskAssessment" Title="RR Only" Width="90px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
