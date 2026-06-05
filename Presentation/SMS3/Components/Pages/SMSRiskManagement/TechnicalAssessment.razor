@@ -185,24 +185,35 @@
                                      Disabled="@(IsRiskRegistryOnly || CurrentStep <= 1 || IsSaving)"
                                      Click="@PreviousStep" />
 
-                                                
+                        <RadzenButton Text="Save Step"
+                                     Icon="save"
+                                     ButtonStyle="ButtonStyle.Success"
+                                     Disabled="IsSaving"
+                                     Click="@SaveStep" />
 
                         <!-- Next/Complete Button -->
-                         @if (CurrentStep < MaxAssessmentStep)
+                         @if (ShowSubmitAssessmentButton())
                         {
-                            <RadzenButton Text="Next Step" 
-                                         Icon="arrow_forward" 
-                                         ButtonStyle="ButtonStyle.Success"
-                                         Disabled="IsSaving"
-                                         Click="@NextStep" />
+                            @if (CurrentStep < MaxAssessmentStep)
+                            {
+                                <RadzenButton Text="@GetFinalActionButtonText()" 
+                                             Icon="@GetFinalActionButtonIcon()" 
+                                             ButtonStyle="ButtonStyle.Success"
+                                             Disabled="IsSaving"
+                                             Click="@NextStep" />
+                            }
+                            else
+                            {
+                                <RadzenButton Text="@GetFinalActionButtonText()" 
+                                             Icon="@GetFinalActionButtonIcon()" 
+                                             ButtonStyle="ButtonStyle.Primary"
+                                             Disabled="IsSaving"
+                                             Click="@SubmitAssessment" />
+                            }
                         }
                         else
                         {
-                            <RadzenButton Text="Submit Assessment" 
-                                         Icon="check_circle" 
-                                         ButtonStyle="ButtonStyle.Primary"
-                                         Disabled="IsSaving"
-                                         Click="@SubmitAssessment" />
+                            <div style="min-width: 150px;"></div>
                         }
                     </RadzenStack>
                 </RadzenCard>

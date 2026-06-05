@@ -278,7 +278,6 @@ public partial class ReportValidation : ComponentBase
                                                
             var navigationTask = SelectedValidationDecision switch
             {
-                _ when SelectedValidationDecision == ValidationDecision.SmsRisk && this.RiskRegistryOnly => NavigateToRiskRegistry(),
                 _ when SelectedValidationDecision == ValidationDecision.SmsRisk => NavigateToRiskAssessment(),
                 _ when SelectedValidationDecision == ValidationDecision.NeedsInvestigation => NavigateToInvestigation(),
                 _ when SelectedValidationDecision == ValidationDecision.NotSmsRisk => HandleNotSmsRisk(),
@@ -303,6 +302,9 @@ public partial class ReportValidation : ComponentBase
     private RiskAssessment CreateRiskAssessmentEntity()
     {
         var assessmentId = new RiskAssessmentID("RS-0000"); // Database will generate actual ID
+        var initialStep = RiskRegistryOnly ? 4 : 1;
+        var initialStage = RiskRegistryOnly ? RiskAssessmentStage.AssessingRisk : RiskAssessmentStage.DescribingSystem;
+        var initialStatus = RiskRegistryOnly ? RiskAssessmentStatus.AssessmentUnderway : RiskAssessmentStatus.AssessmentCreate;
 
         return new RiskAssessment(assessmentId)
         {
@@ -313,10 +315,10 @@ public partial class ReportValidation : ComponentBase
             HazardCode = ReportHazard!.Code,
             PrimaryHazardId = ReportHazard.Code,
             Description = $"Created from Report {ReportId}",
-            Stage = RiskAssessmentStage.DescribingSystem,
+            Stage = initialStage,
             Code = assessmentId.Value,
-            Status = RiskAssessmentStatus.AssessmentCreate,
-            CurrentStep = 1,
+            Status = initialStatus,
+            CurrentStep = initialStep,
             UpdatedDate = DateTime.UtcNow,
             UpdatedBy = _currentUserService?.UserDisplayName
         };
@@ -475,6 +477,30 @@ public partial class ReportValidation : ComponentBase
                 return;
             }
 
+            if (RiskRegistryOnly)
+            {
+                _logger.LogInformation("RiskRegistryOnly selected. Routing to Technical Assessment Step 4 for Report: {ReportId}", ReportId);
+
+                var (riskAssessment, created) = await EnsureRiskAssessmentForCurrentHazardAsync();
+                if (created)
+                {
+                    await _notificationHelper.ShowSuccessAsync($"Risk Assessment {riskAssessment.Code} created successfully");
+                }
+                else
+                {
+                    await _notificationHelper.ShowInfoAsync($"Using existing Risk Assessment {riskAssessment.Code}");
+                }
+
+                await UpdateReportStatusWithValidation(ReportStatus.RiskRegistryOnly, "Risk registry only");
+
+                var encodedReportCode = Uri.EscapeDataString((ReportId ?? string.Empty).Trim());
+                var hazardCode = ReportHazard?.Code ?? riskAssessment.HazardCode ?? riskAssessment.PrimaryHazardId ?? string.Empty;
+                var encodedHazardCode = Uri.EscapeDataString(hazardCode.Trim());
+                var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{encodedReportCode}/{encodedHazardCode}/4";
+                await DelayAndNavigate(navigationUrl);
+                return;
+            }
+
             // Step 2: Handle existing or create new risk assessment
             await HandleRiskAssessmentNavigation();
         }
@@ -482,56 +508,6 @@ public partial class ReportValidation : ComponentBase
         {
             _logger.LogError(ex, "Error in NavigateToRiskAssessment for Report: {ReportId}", ReportId);
             await _notificationHelper.ShowErrorAsync("Error navigating to risk assessment. Please try again.");
-        }
-    }
-
-    private async Task NavigateToRiskRegistry()
-    {
-        try
-        {
-            // Step 1: Check if user wants to create Airport Shared Dataset
-            bool createDataset = await ShowAirportDatasetDialog();
-            
-            if (createDataset)
-            {
-                await NavigateToDatasetCreation();
-                return;
-            }
-
-            // Step 2: Navigate directly to Risk Registry
-            _logger.LogInformation("User skipped Airport Shared Dataset creation, navigating to Risk Registry for Report: {ReportId}", ReportId);
-
-            // IMPORTANT: Validation creation already triggers SMS Risk assessment creation in ReportValidationService.
-            // Only create a new assessment here if one does not already exist for this hazard.
-            var existingRiskAssessment = await FindExistingRiskAssessment();
-            if (existingRiskAssessment is null)
-            {
-                var riskAssessment = CreateRiskAssessmentEntity();
-                var command = new CreateRiskAssessmentCommand(riskAssessment);
-                var createResult = await _mediator.SendAsync(command, CancellationToken.None);
-
-                if (!createResult.IsSuccess)
-                {
-                    throw new Exception($"Failed to create risk assessment: {createResult.Error?.Message ?? "Unknown error"}");
-                }
-
-                await _notificationHelper.ShowSuccessAsync($"Risk Assessment {createResult.Value.Code} created successfully");
-            }
-            else
-            {
-                await _notificationHelper.ShowInfoAsync($"Using existing Risk Assessment {existingRiskAssessment.Code}");
-            }
-
-            // Update report status
-            await UpdateReportStatusWithValidation(ReportStatus.RiskRegistryOnly, "Risk registry only");
-
-            string navigationUrl = "/SMSAssurance/RiskRegistry";
-            await DelayAndNavigate(navigationUrl);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error in NavigateToRiskRegistry for Report: {ReportId}", ReportId);
-            await _notificationHelper.ShowErrorAsync("Error navigating to risk registry. Please try again.");
         }
     }
 
@@ -786,6 +762,35 @@ public partial class ReportValidation : ComponentBase
     }
 
     /// <summary>
+    /// Ensure a risk assessment exists for the current hazard.
+    /// Returns the assessment and whether it was created by this call.
+    /// </summary>
+    private async Task<(RiskAssessment assessment, bool created)> EnsureRiskAssessmentForCurrentHazardAsync()
+    {
+        var existingRiskAssessment = await FindExistingRiskAssessment();
+        if (existingRiskAssessment is not null)
+        {
+            return (existingRiskAssessment, false);
+        }
+
+        if (ReportHazard is null)
+        {
+            throw new InvalidOperationException("Cannot create risk assessment - hazard information not found");
+        }
+
+        var riskAssessment = CreateRiskAssessmentEntity();
+        var command = new CreateRiskAssessmentCommand(riskAssessment);
+        var createResult = await _mediator.SendAsync(command, CancellationToken.None);
+
+        if (!createResult.IsSuccess)
+        {
+            throw new Exception($"Failed to create risk assessment: {createResult.Error?.Message ?? "Unknown error"}");
+        }
+
+        return (createResult.Value, true);
+    }
+
+    /// <summary>
     /// Update existing risk assessment with lead assessor and navigate
     /// </summary>
     private async Task NavigateToExistingRiskAssessment(RiskAssessment existingRiskAssessment)
@@ -818,30 +823,16 @@ public partial class ReportValidation : ComponentBase
     /// </summary>
     private async Task CreateAndNavigateToNewRiskAssessment()
     {
-        if (ReportHazard is null)
-        {
-            throw new InvalidOperationException("Cannot create risk assessment - hazard information not found");
-        }
-
-        // Create new risk assessment
-        var riskAssessment = CreateRiskAssessmentEntity();
-        
-        var command = new CreateRiskAssessmentCommand(riskAssessment);
-        var createResult = await _mediator.SendAsync(command, CancellationToken.None);
-
-        if (!createResult.IsSuccess)
-        {
-            throw new Exception($"Failed to create risk assessment: {createResult.Error?.Message ?? "Unknown error"}");
-        }
+        var (newRiskAssessment, _) = await EnsureRiskAssessmentForCurrentHazardAsync();
 
         // Update report status
         await UpdateReportStatusWithValidation(ReportStatus.RiskAssessmentInProgress, "Failed to update report status for new risk assessment");
 
-        var newRiskAssessment = createResult.Value;
         await _notificationHelper.ShowSuccessAsync($"Risk Assessment {newRiskAssessment.Code} created successfully");
 
-        // Fix: Ensure hazard code is properly passed - use the ReportHazard.Code which we validated exists above
-        var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{ReportHazard.Code}/1";
+        // Fix: Ensure hazard code is properly passed - use ReportHazard if available, else assessment hazard
+        var hazardCode = ReportHazard?.Code ?? newRiskAssessment.HazardCode ?? newRiskAssessment.PrimaryHazardId;
+        var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{hazardCode}/1";
         _logger.LogInformation("Navigating to new risk assessment: {Url}", navigationUrl);
 
         await DelayAndNavigate(navigationUrl);

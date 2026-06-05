@@ -222,7 +222,7 @@ public class ReportProcessingSummary
         {
             if (HasRiskAssessment && CurrentAssessmentStep > 0)
             {
-                return CurrentAssessmentStep < 5 ? $"Continue Step {CurrentAssessmentStep}" : "Review Assessment";
+                return $"Continue Step {CurrentAssessmentStep}";
             }
             else
             {
@@ -836,7 +836,10 @@ public partial class ReportProcessing : ComponentBase
         }
 
         // Has risk assessment - determine stage based on progress
-        if (riskAssessment.Status == RiskAssessmentStatus.AssessmentCreate || riskAssessment.Status == RiskAssessmentStatus.AssessmentUnderway)
+        if (riskAssessment.Status == RiskAssessmentStatus.AssignedToAssessor
+            || riskAssessment.Status == RiskAssessmentStatus.AssessmentScheduled
+            || riskAssessment.Status == RiskAssessmentStatus.AssessmentCreate
+            || riskAssessment.Status == RiskAssessmentStatus.AssessmentUnderway)
         {
             // Risk assessment in progress
             var category = riskAssessment.CurrentStep switch
@@ -845,7 +848,7 @@ public partial class ReportProcessing : ComponentBase
                 2 => ProcessingStatusCategory.RiskAssessment, // Hazard Identification  
                 3 => ProcessingStatusCategory.RiskAssessment, // Risk Analysis
                 4 => ProcessingStatusCategory.RiskAssessment, // Risk Assessment
-                5 => ProcessingStatusCategory.Mitigation,     // Risk Mitigation
+                5 => ProcessingStatusCategory.RiskAssessment, // Still in-progress until assessment status is complete
                 _ => ProcessingStatusCategory.RiskAssessment
             };
 

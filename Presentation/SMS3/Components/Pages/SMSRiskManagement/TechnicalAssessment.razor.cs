@@ -780,6 +780,16 @@ public partial class TechnicalAssessment : ComponentBase
                 return;
             }
 
+            // Smart progression: if earlier steps are still invalid, point workflow back to earliest invalid step.
+            var lowestEarlierInvalidStep = GetLowestInvalidStepUpTo(CurrentStep, includeCurrentStep: false);
+            if (lowestEarlierInvalidStep.HasValue && lowestEarlierInvalidStep.Value < CurrentStep)
+            {
+                await RepointAssessmentProgressToStepAsync(lowestEarlierInvalidStep.Value);
+                await _notificationHelper.ShowWarningAsync($"Step {CurrentStep} saved. Continue with Step {lowestEarlierInvalidStep.Value} first.");
+                await NavigateToStep(lowestEarlierInvalidStep.Value, skipWorkflowNavigationValidation: true);
+                return;
+            }
+
             // Navigate to next step
             if (CurrentStep < MaxAssessmentStep)
             {
@@ -797,6 +807,34 @@ public partial class TechnicalAssessment : ComponentBase
             IsSaving = false;
             StateHasChanged();
         }
+    }
+
+    private async Task RepointAssessmentProgressToStepAsync(int targetStep)
+    {
+        if (TechRiskAssessment is null)
+        {
+            return;
+        }
+
+        targetStep = Math.Clamp(targetStep, 1, MaxAssessmentStep);
+
+        TechRiskAssessment.CurrentStep = targetStep;
+        TechRiskAssessment.Status = DetermineRiskAssessmentStatusFromStep(targetStep);
+        TechRiskAssessment.Stage = DetermineRiskAssessmentStageFromStep(targetStep);
+        TechRiskAssessment.CompletedBy = null;
+        TechRiskAssessment.CompletedDate = null;
+        TechRiskAssessment.UpdatedBy = _currentUserService?.UserDisplayName;
+        TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
+
+        var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
+        var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
+        if (updateResult.IsSuccess)
+        {
+            TechRiskAssessment = updateResult.Value;
+        }
+
+        var reportStatusCommand = new UpdateReportStatusCommand(ReportId ?? string.Empty, ReportStatus.RiskAssessmentInProgress, _currentUserService?.UserDisplayName ?? "System");
+        await _mediator.SendAsync(reportStatusCommand, CancellationToken.None);
     }
 
     private async Task SubmitAssessment()
@@ -836,7 +874,15 @@ public partial class TechnicalAssessment : ComponentBase
                     await _notificationHelper.ShowErrorAsync($"Failed to save final step: {saveResult.message}");
                     return;
                 }
-                await _notificationHelper.ShowSuccessAsync("Technical Assessment completed successfully!");
+                var lowestInvalidStep = GetLowestInvalidStep();
+                if (lowestInvalidStep.HasValue)
+                {
+                    await _notificationHelper.ShowSuccessAsync($"Assessment saved. Continue with Step {lowestInvalidStep.Value}.");
+                }
+                else
+                {
+                    await _notificationHelper.ShowSuccessAsync("Technical Assessment completed successfully!");
+                }
                 _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
             }
             
@@ -857,9 +903,35 @@ public partial class TechnicalAssessment : ComponentBase
 
     #region Save Methods
 
-    
+    private async Task SaveStep()
+    {
+        try
+        {
+            IsSaving = true;
+            StateHasChanged();
 
-    private async Task<(bool success, string message)> SaveCurrentStepAsync()
+            var saveResult = await SaveCurrentStepAsync(forceStayOnCurrentStep: true);
+            if (!saveResult.success)
+            {
+                await _notificationHelper.ShowErrorAsync($"Failed to save Step {CurrentStep}: {saveResult.message}");
+                return;
+            }
+
+            await _notificationHelper.ShowSuccessAsync($"Step {CurrentStep} saved. You can leave and resume from this step.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error saving current step {CurrentStep}", CurrentStep);
+            await _notificationHelper.ShowErrorAsync("Error saving current step");
+        }
+        finally
+        {
+            IsSaving = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task<(bool success, string message)> SaveCurrentStepAsync(bool forceStayOnCurrentStep = false)
     {
         if (TechRiskAssessment is null)
         {
@@ -873,18 +945,33 @@ public partial class TechnicalAssessment : ComponentBase
 
             // ENHANCEMENT: Update the current step in the assessment
             TechRiskAssessment.CurrentStep = CurrentStep;
-            
-            // Update assessment status (enum) based on current step
-            TechRiskAssessment.Status = DetermineRiskAssessmentStatusFromStep(CurrentStep); 
-            TechRiskAssessment.Stage = DetermineRiskAssessmentStageFromStep(CurrentStep +1);
+
+            var isExplicitSaveOnFinalStep = forceStayOnCurrentStep && CurrentStep >= MaxAssessmentStep;
+
+            // Update assessment status/stage
+            if (isExplicitSaveOnFinalStep)
+            {
+                TechRiskAssessment.Status = RiskAssessmentStatus.AssessmentUnderway;
+                TechRiskAssessment.Stage = RiskAssessmentStage.MitigatingRisk;
+            }
+            else
+            {
+                TechRiskAssessment.Status = DetermineRiskAssessmentStatusFromStep(CurrentStep);
+                TechRiskAssessment.Stage = DetermineRiskAssessmentStageFromStep(CurrentStep);
+            }
 
             // Update last modified info
             TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
             TechRiskAssessment.UpdatedBy = _currentUserService?.UserDisplayName;
-            if (CurrentStep == 5)
+            if (CurrentStep == 5 && !isExplicitSaveOnFinalStep)
             {
                 TechRiskAssessment.CompletedBy = _currentUserService?.UserDisplayName;
                 TechRiskAssessment.CompletedDate = DateTime.UtcNow;
+            }
+            else
+            {
+                TechRiskAssessment.CompletedBy = null;
+                TechRiskAssessment.CompletedDate = null;
             }
             
             // Save to database
@@ -901,6 +988,11 @@ public partial class TechnicalAssessment : ComponentBase
                 5 => ReportStatus.RiskAssessmentSubmitted,
                 _ => ReportStatus.RiskAssessmentInProgress
             };
+
+            if (isExplicitSaveOnFinalStep)
+            {
+                status = ReportStatus.RiskAssessmentInProgress;
+            }
 
             var cmd = new UpdateReportStatusCommand(ReportId ?? "", status, _currentUserService?.UserDisplayName ?? "System");
             var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
@@ -941,7 +1033,7 @@ public partial class TechnicalAssessment : ComponentBase
             2 => RiskAssessmentStage.IdentifyingHazards, // Hazard identification
             3 => RiskAssessmentStage.AnalyizingRisk, // Risk analysis
             4 => RiskAssessmentStage.AssessingRisk, // Risk assessment
-            5 => RiskAssessmentStage.Completed, // Assessment completed
+            5 => RiskAssessmentStage.MitigatingRisk, // Risk mitigation
             _ => RiskAssessmentStage.DescribingSystem
         };
     }
@@ -1311,6 +1403,69 @@ public partial class TechnicalAssessment : ComponentBase
         }
 
         return isCurrentStep ? "edit" : "error";
+    }
+
+    private int? GetLowestInvalidStep()
+    {
+        if (IsRiskRegistryOnly)
+        {
+            return Step4.Validate().isValid ? null : 4;
+        }
+
+        for (var step = 1; step <= MaxAssessmentStep; step++)
+        {
+            var validation = GetStepValidationStatus(step);
+            if (!validation.isValid)
+            {
+                return step;
+            }
+        }
+
+        return null;
+    }
+
+    private int? GetLowestInvalidStepUpTo(int maxStepToCheck, bool includeCurrentStep = true)
+    {
+        var upperBound = Math.Clamp(maxStepToCheck, 1, MaxAssessmentStep);
+        for (var step = 1; step <= upperBound; step++)
+        {
+            if (!includeCurrentStep && step == CurrentStep)
+            {
+                continue;
+            }
+
+            var validation = GetStepValidationStatus(step);
+            if (!validation.isValid)
+            {
+                return step;
+            }
+        }
+
+        return null;
+    }
+
+    private bool IsAssessmentReadyForCompletion() => !GetLowestInvalidStep().HasValue;
+
+    private bool ShowSubmitAssessmentButton() => CurrentStep < MaxAssessmentStep || IsAssessmentReadyForCompletion();
+
+    private string GetFinalActionButtonText()
+    {
+        if (CurrentStep < MaxAssessmentStep)
+        {
+            return "Next Step";
+        }
+
+        return IsAssessmentReadyForCompletion() ? "Submit Assessment" : "Save Assessment";
+    }
+
+    private string GetFinalActionButtonIcon()
+    {
+        if (CurrentStep < MaxAssessmentStep)
+        {
+            return "arrow_forward";
+        }
+
+        return IsAssessmentReadyForCompletion() ? "check_circle" : "save";
     }
 
     private (bool isValid, string message) ValidateCurrentStep()
