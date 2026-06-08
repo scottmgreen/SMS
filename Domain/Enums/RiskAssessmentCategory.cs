@@ -12,7 +12,7 @@ namespace SMS_Domain.Enums;
 
 /// <summary>
 /// Risk Assessment HazardCategory Enumeration - BUSINESS RULE ENFORCED
-/// ONLY these values are allowed: Technical, Preliminary
+/// ONLY these values are allowed: Technical, Risk Registry Only
 /// </summary>
 public abstract class RiskAssessmentCategory : BaseEnum<RiskAssessmentCategory>
 {
@@ -33,7 +33,7 @@ public abstract class RiskAssessmentCategory : BaseEnum<RiskAssessmentCategory>
     public static readonly RiskAssessmentCategory Technical = new TechnicalCategory();
 
     /// <summary>Streamlined 1-step Preliminary Risk Assessment - CurrentStep is always 1</summary>
-    public static readonly RiskAssessmentCategory Preliminary = new PreliminaryCategory();
+    public static readonly RiskAssessmentCategory RiskRegistryOnly = new RiskRegistryOnlyCategory();
 
     #endregion
 
@@ -41,16 +41,16 @@ public abstract class RiskAssessmentCategory : BaseEnum<RiskAssessmentCategory>
 
     private sealed class TechnicalCategory : RiskAssessmentCategory
     {
-        public TechnicalCategory() : base("Technical", "Technical",
+        public TechnicalCategory() : base("TECHNICAL", "Technical",
             "Full 5-step SMS Technical Risk Assessment (TRA) process", 5, true)
         {
         }
     }
 
-    private sealed class PreliminaryCategory : RiskAssessmentCategory
+    private sealed class RiskRegistryOnlyCategory : RiskAssessmentCategory
     {
-        public PreliminaryCategory() : base("Preliminary", "Preliminary",
-            "Streamlined 1-step Preliminary Risk Assessment process", 1, false)
+        public RiskRegistryOnlyCategory() : base("RISK_REGISTRY_ONLY", "RiskRegistryOnly",
+            "Streamlined 1-step Risk Registry Only Assessment process", 1, false)
         {
         }
     }
@@ -75,9 +75,9 @@ public abstract class RiskAssessmentCategory : BaseEnum<RiskAssessmentCategory>
     public bool IsTechnical => this == Technical;
 
     /// <summary>
-    /// Checks if this is a preliminary assessment
+    /// Checks if this is a risk registry only assessment
     /// </summary>
-    public bool IsPreliminary => this == Preliminary;
+    public bool IsRiskRegistryOnly => this == RiskRegistryOnly;
 
     /// <summary>
     /// Gets the maximum allowed step for this category

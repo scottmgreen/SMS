@@ -457,7 +457,7 @@ public partial class HazardListing : ComponentBase
             if (confirmed == true)
             {
                 // Navigate to HazardReporting page with the hazard code as route parameter
-                _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting/{hazard.Code}");
+                _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting/{hazard.Code}?returnTo=hazard-listing");
                 _logger.LogInformation("Navigating to edit hazard: {HazardCode}", hazard.Code);
             }
         }

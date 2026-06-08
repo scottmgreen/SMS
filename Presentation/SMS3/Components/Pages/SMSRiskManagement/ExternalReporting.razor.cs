@@ -8,7 +8,6 @@ using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 
 using SMS_Shared.Configuration;
-using SMS_Application.Services; // NEW: For SPIEventCoordinator
 
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
@@ -33,8 +32,6 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
 
-    // NEW: SPI Automation Integration
-    [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
     #endregion
 
     #region Properties and Fields
@@ -704,7 +701,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
                 ReportContactName = HazardReport.ReportContactName, 
                 ReportContactCell = HazardReport.ReportContactCell, 
                 ReportContactEmail  = HazardReport.ReportContactEmail,
-                Stage = "Initial",
+                Stage = "Technical",
                 Status = ReportStatus.NeedsValidation
                 
             };
@@ -756,25 +753,8 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             _logger.LogInformation("Confidential hazard created with Code: {HazardCode}, linked to Report: {ReportCode}",
                 createdHazard.Code, actualReportCode);
 
-            // NEW: SPI AUTOMATION - Notify hazard creation for external reports ??
-            try
-            {
-                await _spiCoordinator.OnHazardCreated(
-                    hazardId: createdHazard.Code,
-                    hazardCode: createdHazard.Code,
-                    createdDate: createdHazard.CreatedDate ?? DateTime.UtcNow,
-                    createdBy: "EXTERNAL_USER",
-                    reportId: actualReportCode,
-                    hazardType: createdHazard.HazardType ?? string.Empty,
-                    hazardCategory: createdHazard.HazardCategory ?? string.Empty);
-
-                _logger.LogInformation("SPI Automation: External hazard creation event processed for {HazardCode}", createdHazard.Code);
-            }
-            catch (Exception spiEx)
-            {
-                // Don't fail the entire submission if SPI automation fails
-                _logger.LogWarning(spiEx, "SPI Automation: Failed to process hazard creation event for {HazardCode} - continuing with submission", createdHazard.Code);
-            }
+            // NOTE: Event publishing moved to CreateHazardCommandHandler for Clean Architecture compliance
+            // This ensures events are published regardless of how the hazard is created (UI, API, External, etc.)
 
             // ===============================
             // STEP 3: Create Tracking Code

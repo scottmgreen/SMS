@@ -142,7 +142,7 @@ public partial class HazardScoringPanel : ComponentBase
 
     /// <summary>
     /// Map the compatibility properties based on CurrentStep
-    /// Step 4 = Initial properties, Step 5 = Residual properties
+    /// Step 4 = Technical properties, Step 5 = Residual properties
     /// </summary>
     private void MapPropertiesBasedOnStep(ScoringPanel panel)
     {
@@ -156,7 +156,7 @@ public partial class HazardScoringPanel : ComponentBase
         }
         else
         {
-            // Step 4 (default): Map from Initial properties
+            // Step 4 (default): Map from Technical properties
             panel.Likelihood = panel.InitialLikelihood;
             panel.Severity = panel.InitialSeverity;
             panel.Score = panel.InitialScore;
@@ -179,7 +179,7 @@ public partial class HazardScoringPanel : ComponentBase
         }
         else
         {
-            // Step 4: Update Initial properties from compatibility properties
+            // Step 4: Update Technical properties from compatibility properties
             panel.InitialLikelihood = panel.Likelihood;
             panel.InitialSeverity = panel.Severity;
             panel.InitialScore = panel.Score;
@@ -404,10 +404,8 @@ public partial class HazardScoringPanel : ComponentBase
 
     private double? GetAverageScore()
     {
-        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
-        if (!completedPanels.Any()) return null;
-
-        return completedPanels.Average(p => (double)p.Score!.Value);
+        var calculation = GetCurrentHazardCalculation();
+        return calculation.IsValid ? (double)calculation.AverageScore : null;
     }
 
     private int GetCompletedScoreCount()
@@ -567,16 +565,8 @@ public partial class HazardScoringPanel : ComponentBase
     /// </summary>
     private string GetHazardMatrixCodeFromPanels()
     {
-        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
-        if (!completedPanels.Any()) return "-";
-
-        // Aviation standard: Average severity and likelihood separately
-        var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
-        var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
-
-
-        // Use the authoritative calculator method
-        return AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
+        var calculation = GetCurrentHazardCalculation();
+        return calculation.IsValid ? calculation.MatrixCode : "-";
     }
     //private string GetHazardRiskLevelFromPanels()
     //{
@@ -594,19 +584,8 @@ public partial class HazardScoringPanel : ComponentBase
     //}
     private string GetHazardRiskLevelFromPanels()
     {
-        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
-        if (!completedPanels.Any()) return "-";
-
-        // Aviation standard: Average severity and likelihood separately
-        var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
-        var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
-
-        // ? FIX: Use Math.Round() instead of Convert.ToInt32() which truncates
-        var roundedSeverity = (int)Math.Round(averageSeverity);
-        var roundedLikelihood = (int)Math.Round(averageLikelihood);
-
-        // Use the authoritative calculator method and return the Name property
-        return AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood).Name;
+        var calculation = GetCurrentHazardCalculation();
+        return calculation.IsValid ? calculation.RiskLevel.Name : "-";
     }
     private string GetPanelMatrixCode(ScoringPanel panel)
     {
@@ -636,21 +615,20 @@ public partial class HazardScoringPanel : ComponentBase
 
     private string GetAverageScoreStyle(double averageScore)
     {
-        // Get the correct aviation matrix code from panels, not from score average
-        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
-        if (!completedPanels.Any())
+        var calculation = GetCurrentHazardCalculation();
+        if (!calculation.IsValid)
             return "background: #6c757d; color: white; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 1rem; display: inline-block; text-align: center; min-width: 35px; border: 1px solid rgba(0,0,0,0.2);";
 
-        // Use correct aviation calculation
-        var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
-        var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
-        var roundedSeverity = (int)Math.Round(averageSeverity);
-        var roundedLikelihood = (int)Math.Round(averageLikelihood);
-
-        var backgroundColor = AviationRiskMatrixCalculator.GetAviationMatrixColor(roundedSeverity, roundedLikelihood);
+        var backgroundColor = AviationRiskMatrixCalculator.GetAviationMatrixColor(calculation.RoundedSeverity, calculation.RoundedLikelihood);
         var textColor = AviationRiskMatrixCalculator.IsLightColor(backgroundColor) ? "#000" : "#fff";
 
         return $"background: {backgroundColor}; color: {textColor}; padding: 6px 10px; border-radius: 4px; font-weight: bold; font-size: 1rem; display: inline-block; text-align: center; min-width: 35px; border: 1px solid rgba(0,0,0,0.2);";
+    }
+
+    private HazardRiskCalculation GetCurrentHazardCalculation()
+    {
+        var useResidual = CurrentStep == 5;
+        return AviationRiskMatrixCalculator.CalculateHazardRisk(HazardScoringPanels, useResidual);
     }
 
     private string GetAviationMatrixColor(int severity, int likelihood)
@@ -797,7 +775,7 @@ public partial class HazardScoringPanel : ComponentBase
 
             if (CurrentStep == 4)
             {
-                // Step 4: Update Initial assessment data AND base HazardRiskLevel
+                // Step 4: Update Technical assessment data AND base HazardRiskLevel
                 Hazard.Status = HazardStatus.InitialHazardScoring;
                 Hazard.InitialAverageScore = calculation.IsValid ? calculation.AverageScore : null;
                 Hazard.InitialRiskMatrixCode = calculation.IsValid ? calculation.MatrixCode : null;
@@ -1005,10 +983,10 @@ public partial class HazardScoringPanel : ComponentBase
                 return;
             }
 
-            // ? KEY CONDITION: Find panels that have Initial scores but EMPTY Residual scores
+            // ? KEY CONDITION: Find panels that have Technical scores but EMPTY Residual scores
             var panelsNeedingCopy = existingPanels
                 .Where(p =>
-                    // Has Initial scores from Step 4
+                    // Has Technical scores from Step 4
                     p.InitialSeverity.HasValue && p.InitialLikelihood.HasValue && p.InitialScore.HasValue &&
                     // AND Residual scores are empty (haven't been set in Step 5 yet)
                     !p.ResidualSeverity.HasValue && !p.ResidualLikelihood.HasValue && !p.ResidualScore.HasValue)
@@ -1016,25 +994,25 @@ public partial class HazardScoringPanel : ComponentBase
 
             if (!panelsNeedingCopy.Any())
             {
-                Logger.LogInformation("No panels need score copying for hazard {HazardCode} - either no Initial scores or Residual scores already exist",
+                Logger.LogInformation("No panels need score copying for hazard {HazardCode} - either no Technical scores or Residual scores already exist",
                     Hazard.Code);
                 return;
             }
 
-            Logger.LogInformation("Copying Initial scores to empty Residual scores for {Count} panels on hazard {HazardCode}",
+            Logger.LogInformation("Copying Technical scores to empty Residual scores for {Count} panels on hazard {HazardCode}",
                 panelsNeedingCopy.Count, Hazard.Code);
 
             bool anyUpdated = false;
 
             foreach (var panel in panelsNeedingCopy)
             {
-                // Copy Initial scores to Residual as starting point (only if Residual is empty)
+                // Copy Technical scores to Residual as starting point (only if Residual is empty)
                 panel.ResidualSeverity = panel.InitialSeverity;
                 panel.ResidualLikelihood = panel.InitialLikelihood;
                 panel.ResidualScore = panel.InitialScore;
-                panel.ResidualRationale = $"Initial assessment: {panel.InitialRationale ?? "No rationale provided"}"; // Prefix to indicate copied
+                panel.ResidualRationale = $"Technical assessment: {panel.InitialRationale ?? "No rationale provided"}"; // Prefix to indicate copied
 
-                Logger.LogInformation("Copying Initial scores to empty Residual for panel {PanelCode}: {Sev}x{Like}={Score}",
+                Logger.LogInformation("Copying Technical scores to empty Residual for panel {PanelCode}: {Sev}x{Like}={Score}",
                     panel.Code, panel.InitialSeverity, panel.InitialLikelihood, panel.InitialScore);
 
                 // Save the updated panel
@@ -1043,7 +1021,7 @@ public partial class HazardScoringPanel : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    Logger.LogInformation("Successfully copied Initial scores to empty Residual for panel {PanelCode}", panel.Code);
+                    Logger.LogInformation("Successfully copied Technical scores to empty Residual for panel {PanelCode}", panel.Code);
                     anyUpdated = true;
                 }
                 else
@@ -1055,7 +1033,7 @@ public partial class HazardScoringPanel : ComponentBase
 
             if (anyUpdated)
             {
-                Logger.LogInformation("Completed copying Initial scores to empty Residual scores for hazard {HazardCode}", Hazard.Code);
+                Logger.LogInformation("Completed copying Technical scores to empty Residual scores for hazard {HazardCode}", Hazard.Code);
             }
         }
         catch (Exception ex)

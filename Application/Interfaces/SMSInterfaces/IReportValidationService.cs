@@ -63,5 +63,5 @@ public interface IReportValidationService
     /// Creates risk assessments and analysis for SMS Risk validation decisions
     /// This encapsulates the complex business logic for risk management creation
     /// </summary>
-    Task<Result<bool>> CreateSmsRiskAssessmentsAsync(string reportCode, CancellationToken ct = default);
+    Task<Result<bool>> CreateSmsRiskAssessmentsAsync(string reportCode, bool isRiskRegistryOnly = false, CancellationToken ct = default);
 }

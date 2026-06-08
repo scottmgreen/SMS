@@ -15,8 +15,8 @@ namespace SMS_Domain.Entities;
 /// 
 /// CRITICAL BUSINESS RULES (DO NOT VIOLATE):
 /// 
-/// 1. AssessmentType: ONLY "Initial" and "Residual" are allowed
-///    - Initial: Original risk assessment before any mitigations
+/// 1. AssessmentType: ONLY "Technical" and "Residual" are allowed
+///    - Technical: Original risk assessment before any mitigations
 ///    - Residual: Risk assessment after mitigations have been implemented
 /// 
 /// 2. RiskAssessmentStatus: ONLY "Created", "InProgress", "Completed" 
@@ -24,7 +24,7 @@ namespace SMS_Domain.Entities;
 ///    - InProgress: Work in progress, not finished
 ///    - Completed: All required work finished
 /// 
-/// 3. PrimaryHazardId: If AssessmentType = "Initial", PrimaryHazardId MUST be set to currentHazardId
+/// 3. PrimaryHazardId: If AssessmentType = "Technical", PrimaryHazardId MUST be set to currentHazardId
 /// 
 /// 4. RiskAssessmentCategory: ONLY "Technical" 
 ///    - Technical: Full 5-step SMS process (IS the 5-step, no redundancy needed)
@@ -35,7 +35,7 @@ namespace SMS_Domain.Entities;
 ///    
 /// 
 /// WORKFLOW CONSTRAINTS:
-/// - Initial assessments are created first with a hazard
+/// - Technical assessments are created first with a hazard
 /// - Residual assessments are created AFTER mitigations are implemented
 /// - Technical assessments have 5 steps, Preliminary assessments have 1 step
 /// - Each assessment must have a primary hazard associated
@@ -67,9 +67,9 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public RiskAssessmentStatus Status { get; set; } = RiskAssessmentStatus.AssessmentCreate;
     public RiskAssessmentStage Stage { get; set; } = RiskAssessmentStage.DescribingSystem;
     /// <summary>
-    /// Assessment Type - BUSINESS RULE: Only "Initial" or "Residual"
+    /// Assessment Type - BUSINESS RULE: Only "Technical" or "Residual"
     /// </summary>
-    public RiskAssessmentType AssessmentType { get; set; } = RiskAssessmentType.Initial;
+    public RiskAssessmentType AssessmentType { get; set; } = RiskAssessmentType.Technical;
 
     /// <summary>
     /// Risk Assessment HazardCategory - BUSINESS RULE: Only "Technical" 

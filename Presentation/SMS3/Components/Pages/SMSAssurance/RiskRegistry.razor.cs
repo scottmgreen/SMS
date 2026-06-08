@@ -357,61 +357,26 @@ public partial class RiskRegistry : ComponentBase
     /// </summary>
     private RiskRegistryEntry CreateRiskRegistryEntry(Report report, Hazard hazard, RiskAssessment? assessment, Mitigation? mitigation)
     {
+        var initialResolution = AviationRiskMatrixCalculator.ResolveRiskFromMatrixCode(hazard.InitialRiskMatrixCode);
+        var residualResolution = AviationRiskMatrixCalculator.ResolveRiskFromMatrixCode(hazard.ResidualRiskMatrixCode);
+        var preferredResolution = AviationRiskMatrixCalculator.GetPreferredRiskFromMatrixCodes(hazard.InitialRiskMatrixCode, hazard.ResidualRiskMatrixCode);
 
-        RiskLevel? initialRiskLevel = null; // Default fallback
-        string initialMatrixCode = string.Empty; // Default fallback
-        RiskLevel? residualRiskLevel = null;  // Default fallback
-        string residualMatrixCode = string.Empty; // Default fallback
-
-        // Parse matrix codes with null checks
-        if (string.IsNullOrEmpty(hazard.InitialRiskMatrixCode) || hazard.HazardRiskLevel == RiskLevel.Unkonwn)
-        {
-            initialRiskLevel = RiskLevel.Unkonwn;
-            initialMatrixCode = "TBD";
-        }
-        else
-        {
-            var (initialSeverity, initialLikelihood) = AviationRiskMatrixCalculator.ParseMatrixCode(hazard.InitialRiskMatrixCode.Trim());
-            
-            if (initialSeverity.HasValue && initialLikelihood.HasValue)
-            {
-                initialRiskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(initialSeverity.Value, initialLikelihood.Value);
-                initialMatrixCode = AviationRiskMatrixCalculator.GetMatrixCode(initialSeverity.Value, initialLikelihood.Value);
-            }
-            else if (!string.IsNullOrEmpty(hazard.InitialRiskMatrixCode))
-            {
-                initialMatrixCode = hazard.InitialRiskMatrixCode;
-            }
-        }
-        if (string.IsNullOrEmpty(hazard.ResidualRiskMatrixCode))
-        {
-            residualRiskLevel = RiskLevel.Unkonwn;
-            residualMatrixCode = "TBD";
-        }
-        else 
-        {
-            var (residualSeverity, residualLikelihood) = AviationRiskMatrixCalculator.ParseMatrixCode(hazard.ResidualRiskMatrixCode.Trim());
-            if (residualSeverity.HasValue && residualLikelihood.HasValue)
-            {
-                residualRiskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(residualSeverity.Value, residualLikelihood.Value);
-                residualMatrixCode = AviationRiskMatrixCalculator.GetMatrixCode(residualSeverity.Value, residualLikelihood.Value);
-            }
-            else if (!string.IsNullOrEmpty(hazard.ResidualRiskMatrixCode))
-            {
-                residualMatrixCode = hazard.ResidualRiskMatrixCode;
-            }
-
-        }
+        var initialRiskLevel = initialResolution.RiskLevel;
+        var initialMatrixCode = initialResolution.MatrixCode;
+        var residualRiskLevel = residualResolution.RiskLevel;
+        var residualMatrixCode = residualResolution.MatrixCode;
         var entry = new RiskRegistryEntry
         {
             ReportStatus = report.Status ?? ReportStatus.Unknown,
             ReportCode = hazard.ReportCode ?? "N/A",
             HazardCode = hazard.Code,
             HazardDescription = hazard.Description ?? "No description available",
-            InitialHazardRiskLevel = initialRiskLevel ?? RiskLevel.Unkonwn,
+            InitialHazardRiskLevel = initialRiskLevel,
             InitialRiskMatrixCode  = initialMatrixCode,
-            ResidualHazardRiskLevel = residualRiskLevel ?? RiskLevel.Unkonwn,
+            ResidualHazardRiskLevel = residualRiskLevel,
             ResidualRiskMatrixCode = residualMatrixCode,
+            EffectiveHazardRiskLevel = preferredResolution.RiskLevel,
+            EffectiveRiskMatrixCode = preferredResolution.MatrixCode,
             MitigationDescription = mitigation?.Name ?? mitigation?.Description ?? "No mitigation assigned",
             MitigationStatus = mitigation?.Status, // ? Can be null now
             TargetDate = mitigation?.TargetDate,
@@ -511,7 +476,7 @@ public partial class RiskRegistry : ComponentBase
         // Apply risk level filter - ? FIXED: Add null checking
         if (!string.IsNullOrEmpty(SelectedRiskLevelFilter))
         {
-            filtered = filtered.Where(e => e.ResidualHazardRiskLevel?.Value == SelectedRiskLevelFilter);
+            filtered = filtered.Where(e => e.EffectiveHazardRiskLevel.Value == SelectedRiskLevelFilter);
             _logger.LogInformation("After risk level filter: {Count} entries", filtered.Count());
         }
 
@@ -559,6 +524,19 @@ public partial class RiskRegistry : ComponentBase
         return "background: #f8f9fa; color: #6c757d;";
     }
 
+    private static bool IsAssessmentInProgressStatus(string? reportStatus)
+    {
+        if (string.IsNullOrWhiteSpace(reportStatus))
+        {
+            return false;
+        }
+
+        var normalized = reportStatus.Trim();
+        return string.Equals(normalized, ReportStatus.RiskAssessmentInProgress, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(normalized, ReportStatus.RiskAssessmentInProgress.Value, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(normalized, "REPORT_RISKASSESSMENT_IN_PROGRESS", StringComparison.OrdinalIgnoreCase);
+    }
+
     #endregion
 
     #region Statistics Methods
@@ -587,6 +565,9 @@ public partial class RiskRegistry : ComponentBase
 
         public RiskLevel? ResidualHazardRiskLevel { get; set; }
         public string? MitigationDescription { get; set; }
+
+        public RiskLevel EffectiveHazardRiskLevel { get; set; } = RiskLevel.Unkonwn;
+        public string EffectiveRiskMatrixCode { get; set; } = "TBD";
 
         public string ReportStatus { get; set; } = string.Empty;
         public MitigationStatus? MitigationStatus { get; set; } 
@@ -652,7 +633,7 @@ public partial class RiskRegistry : ComponentBase
             return "#";
         }
 
-        return _navigation.GenerateSecureUrl($"/SMSRiskManagement/HazardReporting/{entry.HazardCode}");
+        return _navigation.GenerateSecureUrl($"/SMSRiskManagement/HazardReporting/{entry.HazardCode}?returnTo=risk-registry");
     }
 
     private bool CanNavigateToTechnicalAssessmentStep4(RiskRegistryEntry entry)

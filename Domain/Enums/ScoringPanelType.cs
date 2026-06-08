@@ -12,7 +12,7 @@ namespace SMS_Domain.Enums;
 
 /// <summary>
 /// Risk Assessment Type Enumeration - BUSINESS RULE ENFORCED
-/// ONLY these values are allowed: Initial, Residual
+/// ONLY these values are allowed: Technical, Residual
 /// </summary>
 public abstract class ScoringPanelType : BaseEnum<ScoringPanelType>
 {
@@ -37,7 +37,7 @@ public abstract class ScoringPanelType : BaseEnum<ScoringPanelType>
 
     private sealed class InitialType : ScoringPanelType
     {
-        public InitialType() : base("Initial", "Initial")
+        public InitialType() : base("Technical", "Technical")
         {
         }
     }

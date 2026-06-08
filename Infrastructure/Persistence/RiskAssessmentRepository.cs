@@ -54,7 +54,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentName, riskAssessment.Name ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentDescription, riskAssessment.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentHazardCode, riskAssessment.HazardCode ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentType, riskAssessment.AssessmentType.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentType, riskAssessment.AssessmentType.Value ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStatus, riskAssessment.Status.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStage, riskAssessment.Stage.Value ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSystemDescription, riskAssessment.SystemDescription ?? (object)DBNull.Value));
@@ -70,7 +70,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             // Core fields with proper null handling
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLeadAssessorId, riskAssessment.LeadAssessorId ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCurrentStep, riskAssessment.CurrentStep));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCategory, riskAssessment.RiskAssessmentCategory.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCategory, riskAssessment.RiskAssessmentCategory.Value ?? (object)DBNull.Value));
 
             // Audit fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, riskAssessment.CreatedBy));
@@ -239,14 +239,14 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentName, riskAssessment.Name ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentDescription, riskAssessment.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentHazardCode, riskAssessment.HazardCode ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentType, riskAssessment.AssessmentType.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentType, riskAssessment.AssessmentType.Value ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStatus, riskAssessment.Status.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStage, riskAssessment.Stage.Value ?? (object)DBNull.Value));
 
             // Enhanced core fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLeadAssessorId, riskAssessment.LeadAssessorId ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPrimaryHazardId, riskAssessment.PrimaryHazardId ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCategory, riskAssessment.RiskAssessmentCategory.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCategory, riskAssessment.RiskAssessmentCategory.Value ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCurrentStep, riskAssessment.CurrentStep));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedDate, riskAssessment.CompletedDate ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedBy, riskAssessment.CompletedBy ?? (object)DBNull.Value));

@@ -30,6 +30,56 @@ public class CreateReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+public class ResetReportValidationCommandHandler : BaseCommandBundle, IBaseRequestHandler<ResetReportValidationCommand, Result<bool>>
+{
+    private readonly ReportValidationService _reportValidationService;
+    private readonly ILogger<ResetReportValidationCommandHandler> _logger;
+
+    public ResetReportValidationCommandHandler(ReportValidationService reportValidationService, ILogger<ResetReportValidationCommandHandler> logger)
+    {
+        _reportValidationService = reportValidationService ?? throw new ArgumentNullException(nameof(reportValidationService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(ResetReportValidationCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogApplicationError("ResetReportValidationCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(DomainErrors.ReportValidationError.NullOrEmpty);
+            }
+
+            _logger.LogApplicationInformation("Processing ResetReportValidationCommand for ID: {Id}", request.ReportValidationId);
+
+            var result = await _reportValidationService.ResetReportValidationAsync(request.ReportValidationId, cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogApplicationInformation("Successfully reset Report Validation with ID: {Id}", request.ReportValidationId);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to reset Report Validation with ID: {Id}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogApplicationWarning("ResetReportValidationCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while resetting Report Validation with ID: {Id}", ApplicationEventIds.Error, ex);
+            return Result<bool>.Failure<bool>(DomainErrors.ReportValidationError.UpdateFailed);
+        }
+    }
+}
+
     public async Task<Result<ReportValidation>> HandleAsync(CreateReportValidationCommand request, CancellationToken cancellationToken)
     {
         try

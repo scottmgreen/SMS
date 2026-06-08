@@ -12,7 +12,7 @@ namespace SMS_Domain.Enums;
 
 /// <summary>
 /// Risk Assessment Type Enumeration - BUSINESS RULE ENFORCED
-/// ONLY these values are allowed: Initial, Residual
+/// ONLY these values are allowed: Technical, Residual
 /// </summary>
 public abstract class RiskAssessmentType : BaseEnum<RiskAssessmentType>
 {
@@ -26,31 +26,31 @@ public abstract class RiskAssessmentType : BaseEnum<RiskAssessmentType>
     #region Risk Assessment Types
 
     /// <summary>Original risk assessment before mitigations - PrimaryHazardId MUST be set</summary>
-    public static readonly RiskAssessmentType Initial = new InitialType();
+    public static readonly RiskAssessmentType Technical = new TechnicalType();
 
     /// <summary>Risk assessment after mitigations have been implemented</summary>
-    //public static readonly RiskAssessmentType Residual = new ResidualType();
+    public static readonly RiskAssessmentType RiskRegistryOnly = new RiskRegistryOnlyType();
 
     #endregion
 
     #region Implementations
 
-    private sealed class InitialType : RiskAssessmentType
+    private sealed class TechnicalType : RiskAssessmentType
     {
-        public InitialType() : base("Initial", "Initial")
+        public TechnicalType() : base("TECHNICAL", "Technical")
         {
         }
     }
 
-    //private sealed class ResidualType : RiskAssessmentType
-    //{
-    //    public ResidualType() : base("Residual", "Residual")
-    //    {
-    //    }
-    //}
+    private sealed class RiskRegistryOnlyType : RiskAssessmentType
+    {
+        public RiskRegistryOnlyType() : base("RISK_REGISTRY_ONLY", "Risk Registry Only")
+        {
+        }
+    }
 
     #endregion
 
-    
+
 }
 

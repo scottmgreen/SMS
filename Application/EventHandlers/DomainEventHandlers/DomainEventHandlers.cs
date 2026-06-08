@@ -357,7 +357,29 @@ public sealed class HazardStatusChangedEventHandler : BaseDomainEventHandler<Haz
 
 public sealed class HighRiskIdentifiedEventHandler : BaseDomainEventHandler<HighRiskIdentifiedEvent>
 {
-    public HighRiskIdentifiedEventHandler(ILogger<HighRiskIdentifiedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
+    private readonly ISPIAutomationService _spiAutomationService;
+    private readonly ILogger<HighRiskIdentifiedEventHandler> _logger;
+
+    public HighRiskIdentifiedEventHandler(
+        ILogger<HighRiskIdentifiedEventHandler> logger,
+        IBaseEventBus eventBus,
+        ISPIAutomationService spiAutomationService) : base(logger, eventBus)
+    {
+        _logger = logger;
+        _spiAutomationService = spiAutomationService ?? throw new ArgumentNullException(nameof(spiAutomationService));
+    }
+
+    protected override async Task<Result> HandleDomainEventAsync(HighRiskIdentifiedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var result = await _spiAutomationService.UpdateHighRiskExposureAsync(domainEvent.RiskLevel.Value, domainEvent.IdentifiedDate, cancellationToken);
+        if (result.IsFailure)
+        {
+            _logger.LogApplicationWarning("SPI automation failed for high risk event {AssessmentId}: {Error}", domainEvent.AssessmentId, result.Error?.Message);
+            return Result.Failure(result.Error ?? new Error("HIGH_RISK_SPI_FAILED", "Failed to update high risk exposure SPI"));
+        }
+
+        return Result.Success();
+    }
 }
 
 public sealed class MitigationApprovalApprovedEventHandler : BaseDomainEventHandler<MitigationApprovalApprovedEvent>
@@ -372,7 +394,34 @@ public sealed class MitigationApprovalRequestedEventHandler : BaseDomainEventHan
 
 public sealed class MitigationCompletedEventHandler : BaseDomainEventHandler<MitigationCompletedEvent>
 {
-    public MitigationCompletedEventHandler(ILogger<MitigationCompletedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
+    private readonly ISPIAutomationService _spiAutomationService;
+    private readonly ILogger<MitigationCompletedEventHandler> _logger;
+
+    public MitigationCompletedEventHandler(
+        ILogger<MitigationCompletedEventHandler> logger,
+        IBaseEventBus eventBus,
+        ISPIAutomationService spiAutomationService) : base(logger, eventBus)
+    {
+        _logger = logger;
+        _spiAutomationService = spiAutomationService ?? throw new ArgumentNullException(nameof(spiAutomationService));
+    }
+
+    protected override async Task<Result> HandleDomainEventAsync(MitigationCompletedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var result = await _spiAutomationService.UpdateMitigationImplementationRateAsync(
+            domainEvent.MitigationId,
+            domainEvent.TargetCompletionDate,
+            domainEvent.CompletedDate,
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            _logger.LogApplicationWarning("SPI automation failed for mitigation completed event {MitigationId}: {Error}", domainEvent.MitigationId, result.Error?.Message);
+            return Result.Failure(result.Error ?? new Error("MITIGATION_SPI_FAILED", "Failed to update mitigation implementation SPI"));
+        }
+
+        return Result.Success();
+    }
 }
 
 public sealed class MitigationCreatedEventHandler : BaseDomainEventHandler<MitigationCreatedEvent>
@@ -407,7 +456,69 @@ public sealed class ReportUpdatedEventHandler : BaseDomainEventHandler<ReportUpd
 
 public sealed class RiskAssessmentCompletedEventHandler : BaseDomainEventHandler<RiskAssessmentCompletedEvent>
 {
-    public RiskAssessmentCompletedEventHandler(ILogger<RiskAssessmentCompletedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
+    private readonly ISPIAutomationService _spiAutomationService;
+    private readonly ILogger<RiskAssessmentCompletedEventHandler> _logger;
+
+    public RiskAssessmentCompletedEventHandler(
+        ILogger<RiskAssessmentCompletedEventHandler> logger,
+        IBaseEventBus eventBus,
+        ISPIAutomationService spiAutomationService) : base(logger, eventBus)
+    {
+        _logger = logger;
+        _spiAutomationService = spiAutomationService ?? throw new ArgumentNullException(nameof(spiAutomationService));
+    }
+
+    protected override async Task<Result> HandleDomainEventAsync(RiskAssessmentCompletedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var isOnTime = domainEvent.CompletedDate <= domainEvent.TargetCompletionDate;
+
+        var result = await _spiAutomationService.UpdateRiskAssessmentCompletionAsync(
+            domainEvent.AssessmentId,
+            domainEvent.StartDate,
+            domainEvent.CompletedDate,
+            isOnTime,
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            _logger.LogApplicationWarning("SPI automation failed for risk assessment completion event {AssessmentId}: {Error}", domainEvent.AssessmentId, result.Error?.Message);
+            return Result.Failure(result.Error ?? new Error("RISK_ASSESSMENT_SPI_FAILED", "Failed to update risk assessment completion SPI"));
+        }
+
+        return Result.Success();
+    }
+}
+
+public sealed class ValidationDecisionMadeEventHandler : BaseDomainEventHandler<ValidationDecisionMadeEvent>
+{
+    private readonly ISPIAutomationService _spiAutomationService;
+    private readonly ILogger<ValidationDecisionMadeEventHandler> _logger;
+
+    public ValidationDecisionMadeEventHandler(
+        ILogger<ValidationDecisionMadeEventHandler> logger,
+        IBaseEventBus eventBus,
+        ISPIAutomationService spiAutomationService) : base(logger, eventBus)
+    {
+        _logger = logger;
+        _spiAutomationService = spiAutomationService ?? throw new ArgumentNullException(nameof(spiAutomationService));
+    }
+
+    protected override async Task<Result> HandleDomainEventAsync(ValidationDecisionMadeEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var result = await _spiAutomationService.UpdateRiskIdentificationEffectivenessAsync(
+            domainEvent.ReportCode,
+            domainEvent.ValidatedDate,
+            domainEvent.ValidationDecision,
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            _logger.LogApplicationWarning("SPI automation failed for validation decision event {ReportCode}: {Error}", domainEvent.ReportCode, result.Error?.Message);
+            return Result.Failure(result.Error ?? new Error("VALIDATION_SPI_FAILED", "Failed to update validation SPI metrics"));
+        }
+
+        return Result.Success();
+    }
 }
 
 public sealed class RiskAssessmentCreatedEventHandler : BaseDomainEventHandler<RiskAssessmentCreatedEvent>

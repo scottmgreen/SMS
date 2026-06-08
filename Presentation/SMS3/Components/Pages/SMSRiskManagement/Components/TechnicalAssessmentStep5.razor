@@ -417,7 +417,8 @@
                 Step5.SavedMitigationStrategies = new Dictionary<string, List<string>>();
 
             // Load mitigations for each hazard
-            foreach (var hazard in Step5Hazards)
+            var hazardsSnapshot = Step5Hazards.ToList();
+            foreach (var hazard in hazardsSnapshot)
             {
                 try
                 {

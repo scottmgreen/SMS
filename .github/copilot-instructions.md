@@ -26,6 +26,7 @@
 
 ## Risk Assessment
 - In this codebase, RiskAssessment should be fetched by hazard code (GetRiskAssessmentByHazardCode query), not via a Hazard.RiskAssessmentCode property.
+- Resetting/revalidating reports must preserve existing investigations, interviews, assessments, mitigations, and hazard scoring sessions across validation decisions (including NOT_SMS_RISK and NEEDS_INVESTIGATION).
 
 ## UI Rendering
 - When rendering HazardDescription in modals or static display areas, treat it as HTML markup (e.g., via MarkupString) so RadzenHtmlEditor formatting is preserved.

@@ -80,10 +80,17 @@ else
                 foreach (var param in queryParams)
                 {
                     var value = param.Value.FirstOrDefault();
-                    if (!string.IsNullOrEmpty(value))
+                    if (string.IsNullOrEmpty(value))
                     {
-                        ComponentParameters[param.Key] = value;
+                        continue;
                     }
+
+                    var parameterName = ComponentToRender?
+                        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+                        .FirstOrDefault(p => p.Name.Equals(param.Key, StringComparison.OrdinalIgnoreCase))
+                        ?.Name ?? param.Key;
+
+                    ComponentParameters[parameterName] = value;
                 }
             }
         }

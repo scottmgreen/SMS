@@ -57,7 +57,7 @@ public class Step5Model
         {
             HazardCode = hazardCode,
             RiskAssessmentCode = riskAssessmentCode,
-            AssessmentType = RiskAnalysisType.Initial, // ? FIXED: Start as Initial, not Residual
+            AssessmentType = RiskAnalysisType.Initial, // ? FIXED: Start as Technical, not Residual
             InitialWorstCredibleOutcome = string.Empty,
             InitialRootCause = string.Empty,
             InitialAdditionalComments = string.Empty,
@@ -103,11 +103,11 @@ public class Step5Model
             foreach (var analysis in existingAnalyses)
             {
                 // ? CRITICAL: Use the SAME RiskAnalysis entity from Step 3
-                // This preserves both Initial properties (from Step 3) and allows Residual properties (for Step 5)
+                // This preserves both Technical properties (from Step 3) and allows Residual properties (for Step 5)
                 HazardResidualRiskAnalyses[analysis.HazardCode ?? ""] = analysis;
 
                 Console.WriteLine($"Step5: Loaded RiskAnalysis for {analysis.HazardCode} - Code: {analysis.Code}");
-                Console.WriteLine($"  - Initial properties: WorstOutcome='{analysis.InitialWorstCredibleOutcome?.Substring(0, Math.Min(50, analysis.InitialWorstCredibleOutcome?.Length ?? 0))}...'");
+                Console.WriteLine($"  - Technical properties: WorstOutcome='{analysis.InitialWorstCredibleOutcome?.Substring(0, Math.Min(50, analysis.InitialWorstCredibleOutcome?.Length ?? 0))}...'");
                 Console.WriteLine($"  - Residual properties: WorstOutcome='{analysis.ResidualWorstCredibleOutcome?.Substring(0, Math.Min(50, analysis.ResidualWorstCredibleOutcome?.Length ?? 0))}...'");
             }
 
@@ -250,7 +250,7 @@ public class Step5Model
                     if (updateResult.IsSuccess)
                     {
                         HazardResidualRiskAnalyses[hazardCode] = updateResult.Value;
-                        Console.WriteLine($"Updated RiskAnalysis {existingAnalysis.Code} for {hazardCode} - PRESERVED Initial properties");
+                        Console.WriteLine($"Updated RiskAnalysis {existingAnalysis.Code} for {hazardCode} - PRESERVED Technical properties");
                     }
                     else
                     {
@@ -259,7 +259,7 @@ public class Step5Model
                 }
                 else
                 {
-                    Console.WriteLine($"Could not load existing RiskAnalysis for {hazardCode} to preserve Initial properties");
+                    Console.WriteLine($"Could not load existing RiskAnalysis for {hazardCode} to preserve Technical properties");
                 }
             }
             catch (Exception ex)

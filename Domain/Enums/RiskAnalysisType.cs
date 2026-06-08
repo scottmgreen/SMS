@@ -33,7 +33,7 @@ public abstract class RiskAnalysisType : BaseEnum<RiskAnalysisType>
 
     private sealed class InitialType : RiskAnalysisType
     {
-        public InitialType() : base("Initial", "Initial")
+        public InitialType() : base("Technical", "Technical")
         {
         }
     }

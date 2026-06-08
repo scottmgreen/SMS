@@ -48,7 +48,7 @@ public class Step3Model
                 }
                 else
                 {
-                    // Steps 1-4: Validate Initial properties
+                    // Steps 1-4: Validate Technical properties
                     worstOutcomeValid = !string.IsNullOrWhiteSpace(analysis.InitialWorstCredibleOutcome) && analysis.InitialWorstCredibleOutcome.Length >= 10;
                     rootCauseValid = !string.IsNullOrWhiteSpace(analysis.InitialRootCause) && analysis.InitialRootCause.Length >= 10;
                     additionalCommentsValid = !string.IsNullOrWhiteSpace(analysis.InitialAdditionalComments) && analysis.InitialAdditionalComments.Length >= 10;
@@ -74,7 +74,7 @@ public class Step3Model
             return (false, $"Risk analysis incomplete for {incompleteHazards.Count}/{availableHazards.Count} hazards: {string.Join("; ", incompleteHazards)}");
         }
 
-        var stageName = currentStep == 5 ? "Residual" : "Initial";
+        var stageName = currentStep == 5 ? "Residual" : "Technical";
         return (true, $"Step 3 validation passed - {analysisCount}/{availableHazards.Count} hazards have complete {stageName} risk analysis");
     }
 

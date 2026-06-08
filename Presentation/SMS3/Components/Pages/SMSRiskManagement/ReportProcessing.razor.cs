@@ -94,8 +94,10 @@ public class ReportProcessingSummary
     public bool HasDefaultHazardType => HazardType == SMS_Domain.Enums.HazardType.Default.Value; 
     public bool RequiresHazardClassificationUpdate => HasDefaultHazardCategory || HasDefaultHazardType;
     public bool IsRiskRegistryOnly =>
-        string.Equals(ReportStatus?.Trim(), SMS_Domain.Enums.ReportStatus.RiskRegistryOnly, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(ReportStatus?.Trim(), "RISK_REGISTRY_ONLY", StringComparison.OrdinalIgnoreCase);
+        string.Equals(AssessmentType?.Trim(), SMS_Domain.Enums.RiskAssessmentType.RiskRegistryOnly.Value, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(AssessmentType?.Trim(), SMS_Domain.Enums.RiskAssessmentType.RiskRegistryOnly.Name, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(ReportStatus?.Trim(), SMS_Domain.Enums.ReportStatus.RiskRegistryOnly, StringComparison.OrdinalIgnoreCase)
+        || string.Equals(ReportStatus?.Trim(), SMS_Domain.Enums.ReportStatus.RiskRegistryOnly.Value, StringComparison.OrdinalIgnoreCase);
     public bool IsRiskRegistryOnlyScored =>
         HazardInitialAverageScore.HasValue
         && HazardResidualAverageScore.HasValue
@@ -111,7 +113,7 @@ public class ReportProcessingSummary
             if (RequiresHazardClassificationUpdate)
             {
                 // Redirect to HazardReporting for hazard editing
-                return $"/SMSRiskManagement/HazardReporting/{HazardId}";
+                return $"/SMSRiskManagement/HazardReporting/{HazardId}?returnTo=report-processing";
             }
 
             // VALIDATION TAB: Reports without ReportValidation record
@@ -127,7 +129,7 @@ public class ReportProcessingSummary
                 {
                     var encodedReportId = Uri.EscapeDataString((ReportId ?? string.Empty).Trim());
                     var encodedHazardId = Uri.EscapeDataString((HazardId ?? string.Empty).Trim());
-                    return $"/SMSRiskManagement/TechnicalAssessment/{encodedReportId}/{encodedHazardId}/4";
+                    return $"/SMSRiskManagement/TechnicalAssessment/{encodedReportId}/{encodedHazardId}/4?returnTo=report-processing";
                 }
 
                 if (ValidationType?.ToLower() == "technical")
@@ -137,12 +139,12 @@ public class ReportProcessingSummary
                     {
                         // Continue to next step of existing assessment
                         var nextStep = CurrentAssessmentStep < 5 ? CurrentAssessmentStep : CurrentAssessmentStep;
-                        return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/{nextStep}";
+                        return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/{nextStep}?returnTo=report-processing";
                     }
                     else if (!string.IsNullOrEmpty(HazardId))
                     {
                         // Start new technical assessment
-                        return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/1";
+                        return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/1?returnTo=report-processing";
                     }
                 }
             }
@@ -210,7 +212,7 @@ public class ReportProcessingSummary
     {
         if (IsRiskRegistryOnly)
         {
-            return IsRiskRegistryOnlyScored ? "View Risk Registry" : "Score Risk Only";
+            return "Score Risk Only";
         }
 
         // Determine button text based on ValidationType
@@ -265,11 +267,14 @@ public class MitigationSummary
 /// </summary>
 public partial class ReportProcessing : ComponentBase
 {
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "tab")]
+    public string? Tab { get; set; }
+
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportProcessing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
-    [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
 
 
 
@@ -298,9 +303,27 @@ public partial class ReportProcessing : ComponentBase
 
 
     private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+
+    protected override void OnParametersSet()
+    {
+        selectedTabIndex = ResolveTabIndex(Tab);
+    }
+
     protected override async Task OnInitializedAsync()
     {
         await LoadDataAsync();
+    }
+
+    private static int ResolveTabIndex(string? tab)
+    {
+        return tab?.Trim().ToLowerInvariant() switch
+        {
+            "validation" => 0,
+            "riskassessment" => 1,
+            "investigation" => 2,
+            "mitigation" => 3,
+            _ => 0
+        };
     }
 
     #region Data Loading
@@ -611,7 +634,9 @@ public partial class ReportProcessing : ComponentBase
                             CurrentAssessmentStep = riskAssessment.CurrentStep,
                             RiskAssessmentStatus = riskAssessment.Status?.ToString() ?? "",
                             AssessmentStage = riskAssessment.Stage ?? "",
-                            AssessmentType = riskAssessment.RiskAssessmentCategory?.ToString() ?? "",
+                            AssessmentType = riskAssessment.AssessmentType?.Value
+                                ?? riskAssessment.AssessmentType?.ToString()
+                                ?? "",
 
                             // Report Validation Information
                             ReportValidationId = reportValidation?.Code,
@@ -959,7 +984,7 @@ public partial class ReportProcessing : ComponentBase
         // This would be for the risk assessment tab
         if (!string.IsNullOrEmpty(hazard?.Code))
         {
-            return $"/SMSRiskManagement/TechnicalAssessment/{report.Code}/{hazard.Code}/1";
+            return $"/SMSRiskManagement/TechnicalAssessment/{report.Code}/{hazard.Code}/1?returnTo=report-processing";
         }
 
         // Fallback
@@ -2415,17 +2440,26 @@ public partial class ReportProcessing : ComponentBase
             var completedDate = DateTime.UtcNow; // Approval date = completion date
             var completedBy = approverCode ?? _currentUserService?.UserDisplayName ?? "Unknown";
 
-            // Trigger Mitigation Implementation Rate SPI
-            await _spiCoordinator.OnMitigationCompleted(
-                mitigationId: mitigation.Code,
-                mitigationCode: mitigation.Code,
-                hazardId: mitigation.HazardCode ?? "",
-                targetCompletionDate: targetDate,
-                completedDate: completedDate,
-                completedBy: completedBy,
-                reportId: "", // Could be enhanced to include report ID
-                completionNotes: $"Bulk approved by {completedBy}",
-                effectivenessRating: "Approved");
+            var mitigationCompletedEvent = new MitigationCompletedEvent(
+                new SMSEventID($"EVT-{Guid.NewGuid():N}"),
+                mitigation.Code,
+                mitigation.Code,
+                mitigation.HazardCode ?? string.Empty,
+                targetDate,
+                completedDate,
+                string.Empty)
+            {
+                ReportId = string.Empty,
+                CompletionNotes = $"Bulk approved by {completedBy}",
+                EffectivenessRating = "Approved"
+            };
+
+            var publishResult = await _eventBus.PublishDomainEventAsync(mitigationCompletedEvent, CancellationToken.None);
+            if (publishResult.IsFailure)
+            {
+                _logger.LogWarning("SPI Automation: Mitigation completed event publish failed for {MitigationCode}: {Error}",
+                    mitigation.Code, publishResult.Error?.Message);
+            }
 
             _logger.LogInformation("SPI Automation: Successfully processed mitigation approval events for {MitigationCode}", mitigation.Code);
         }

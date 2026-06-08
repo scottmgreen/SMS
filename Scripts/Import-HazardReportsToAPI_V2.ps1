@@ -109,16 +109,17 @@ function Create-ApiRequest {
         $submittedDate = (Get-Date -Format "yyyy-MM-ddTHH:mm:ssZ")
     }
 
-    $fullName = if ($CsvRow."First Name" -or $CsvRow."Last Name") { "$($CsvRow.'First Name') $($CsvRow.'Last Name')".Trim() } else { "External" }
+    $fullName = if ($CsvRow."First Name" -or $CsvRow."Last Name") { "$($CsvRow.'First Name') $($CsvRow.'Last Name')".Trim() } else { "" }
 
+    $reportIsAnonymous = [string]::IsNullOrWhiteSpace($fullName)
     
     $apiRequest = @{
         hazardDescription =  $CsvRow."Detailed Description"
         reportSubmittedBy = $fullName
         reportSubmittedDate = $submittedDate
         reportSubmittingDepartment = $CsvRow.Company
-        reportSubmittingDepartmentJobFunction = "External"
-        reportIsAnonymous = $true
+        reportSubmittingDepartmentJobFunction = ""
+        reportIsAnonymous = $reportIsAnonymous
         reportContactName = $fullName
         reportContactEmail = $CsvRow."Email Address"
         reportContactCompany = $CsvRow.Company

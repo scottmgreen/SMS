@@ -36,18 +36,18 @@ public abstract class HazardStatus : BaseEnum<HazardStatus>
 
     #region APPROVED FINAL HAZARD STATUS REVISED VALUES FROM StatusList.txt
 
-    /// <summary>Step 1 & Step 2 - Initial Risk Assessment phase (System Description & Hazard Identification)</summary>
+    /// <summary>Step 1 & Step 2 - Technical Risk Assessment phase (System Description & Hazard Identification)</summary>
     public static readonly HazardStatus StatusUnknown = new InitialRiskAssessmentStatus();
 
 
 
-    /// <summary>Step 1 & Step 2 - Initial Risk Assessment phase (System Description & Hazard Identification)</summary>
+    /// <summary>Step 1 & Step 2 - Technical Risk Assessment phase (System Description & Hazard Identification)</summary>
     public static readonly HazardStatus InitialRiskAssessment = new InitialRiskAssessmentStatus();
 
-    /// <summary>Step 3 - Initial Risk Analysis phase (Risk Analysis)</summary>
+    /// <summary>Step 3 - Technical Risk Analysis phase (Risk Analysis)</summary>
     public static readonly HazardStatus InitialRiskAnalysis = new InitialRiskAnalysisStatus();
 
-    /// <summary>Step 4 - Initial Hazard Scoring phase (Risk Assessment & Scoring)</summary>
+    /// <summary>Step 4 - Technical Hazard Scoring phase (Risk Assessment & Scoring)</summary>
     public static readonly HazardStatus InitialHazardScoring = new InitialHazardScoringStatus();
 
     /// <summary>Step 5 - Residual Risk Assessment phase (Post-Mitigation Assessment)</summary>
@@ -67,30 +67,30 @@ public abstract class HazardStatus : BaseEnum<HazardStatus>
 
     private sealed class InitialRiskAssessmentStatus : HazardStatus
     {
-        public InitialRiskAssessmentStatus() : base("INITIAL_RISK_ASSESSMENT", "Initial Risk Assessment",
-            "Hazard is in initial risk assessment phase covering system description and hazard identification (Steps 1-2)", 2, "Initial", 1)
+        public InitialRiskAssessmentStatus() : base("INITIAL_RISK_ASSESSMENT", "Technical Risk Assessment",
+            "Hazard is in initial risk assessment phase covering system description and hazard identification (Steps 1-2)", 2, "Technical", 1)
         {
         }
     }
     private sealed class UnknownStatus : HazardStatus
     {
         public UnknownStatus() : base("UNKNOWN_STATUS", "Unknown Status",
-            "Hazard is Unknown", 2, "Initial", 1)
+            "Hazard is Unknown", 2, "Technical", 1)
         {
         }
     }
     private sealed class InitialRiskAnalysisStatus : HazardStatus
     {
-        public InitialRiskAnalysisStatus() : base("INITIAL_RISK_ANALYSIS", "Initial Risk Analysis",
-            "Hazard is undergoing initial risk analysis to identify contributing factors and consequences (Step 3)", 3, "Initial", 2)
+        public InitialRiskAnalysisStatus() : base("INITIAL_RISK_ANALYSIS", "Technical Risk Analysis",
+            "Hazard is undergoing initial risk analysis to identify contributing factors and consequences (Step 3)", 3, "Technical", 2)
         {
         }
     }
 
     private sealed class InitialHazardScoringStatus : HazardStatus
     {
-        public InitialHazardScoringStatus() : base("INITIAL_HAZARD_SCORING", "Initial Hazard Scoring",
-            "Hazard is being scored for initial risk assessment with stakeholder input (Step 4)", 4, "Initial", 3)
+        public InitialHazardScoringStatus() : base("INITIAL_HAZARD_SCORING", "Technical Hazard Scoring",
+            "Hazard is being scored for initial risk assessment with stakeholder input (Step 4)", 4, "Technical", 3)
         {
         }
     }
@@ -141,11 +141,11 @@ public abstract class HazardStatus : BaseEnum<HazardStatus>
     }
 
     /// <summary>
-    /// Gets status values in the Initial risk assessment stage
+    /// Gets status values in the Technical risk assessment stage
     /// </summary>
     public static IEnumerable<HazardStatus> GetInitialStageStatuses()
     {
-        return GetAllValues().Where(hs => hs.Stage == "Initial");
+        return GetAllValues().Where(hs => hs.Stage == "Technical");
     }
 
     /// <summary>
@@ -214,9 +214,9 @@ public abstract class HazardStatus : BaseEnum<HazardStatus>
     }
 
     /// <summary>
-    /// Determines if this status is in the Initial assessment stage
+    /// Determines if this status is in the Technical assessment stage
     /// </summary>
-    public bool IsInitialStage => Stage == "Initial";
+    public bool IsInitialStage => Stage == "Technical";
 
     /// <summary>
     /// Determines if this status is in the Residual assessment stage  

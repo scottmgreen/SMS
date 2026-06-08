@@ -526,7 +526,7 @@ public partial class Investigations : ComponentBase
             var queryHazard = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
             var hazardResult = await _mediator.SendAsync(queryHazard, CancellationToken.None);
 
-            if (hazardResult is not null) 
+            if (hazardResult.IsSuccess && hazardResult.Value is not null) 
             {
                 var hazards = hazardResult.Value;
                 foreach (Hazard hazard in hazards) 
@@ -537,7 +537,12 @@ public partial class Investigations : ComponentBase
                     hazard.ResidualRiskMatrixCode = "TBD";
                     hazard.InitialRiskMatrixCode = "TBD";
                     var cmdHazardReset = new ResetHazardScoresCommand(hazard);
-                    var hazardResetResult = await _mediator.SendAsync(queryHazard, CancellationToken.None);
+                    var hazardResetResult = await _mediator.SendAsync(cmdHazardReset, CancellationToken.None);
+
+                    if (!hazardResetResult.IsSuccess)
+                    {
+                        throw new InvalidOperationException($"Failed to reset hazard scores for {hazard.Code}: {hazardResetResult.Error?.Message}");
+                    }
 
                    
                 }

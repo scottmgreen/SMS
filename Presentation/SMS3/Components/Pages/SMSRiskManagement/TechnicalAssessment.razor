@@ -27,7 +27,14 @@
                 <RadzenRow AlignItems="AlignItems.Center">
                     <RadzenColumn Size="12" SizeMD="4">
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.25rem">
-                            @if (IsRiskRegistryOnly)
+                            @if (!IsAssessmentModeResolved)
+                            {
+                                <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
+                                    <RadzenIcon Icon="hourglass_top" Style="margin-right: 0.5rem;" />
+                                    Resolving Assessment Mode...
+                                </RadzenText>
+                            }
+                            else if (IsRiskRegistryOnly)
                             {
                                 <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">Risk Registry Only</RadzenText>
                             }
@@ -65,7 +72,7 @@
             </RadzenCard>
         </RadzenCard>
 
-        @if (!IsRiskRegistryOnly)
+        @if (IsAssessmentModeResolved && !IsRiskRegistryOnly)
         {
             <!-- Progress Bar -->
             <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
@@ -185,11 +192,14 @@
                                      Disabled="@(IsRiskRegistryOnly || CurrentStep <= 1 || IsSaving)"
                                      Click="@PreviousStep" />
 
-                        <RadzenButton Text="Save Step"
-                                     Icon="save"
-                                     ButtonStyle="ButtonStyle.Success"
-                                     Disabled="IsSaving"
-                                     Click="@SaveStep" />
+                        @if (!IsRiskRegistryOnly)
+                        {
+                            <RadzenButton Text="Save Step"
+                                         Icon="save"
+                                         ButtonStyle="ButtonStyle.Success"
+                                         Disabled="IsSaving"
+                                         Click="@SaveStep" />
+                        }
 
                         <!-- Next/Complete Button -->
                          @if (ShowSubmitAssessmentButton())

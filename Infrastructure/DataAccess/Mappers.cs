@@ -561,7 +561,7 @@ public static partial class Mappers
         var assessmentTypeValue = reader.GetValue<string>(FieldNames.fRiskAssessmentType)?.Trim();
         if (!string.IsNullOrEmpty(assessmentTypeValue))
         {
-            riskAssessment.AssessmentType = RiskAssessmentType.FromValue(assessmentTypeValue) ?? RiskAssessmentType.Initial;
+            riskAssessment.AssessmentType = RiskAssessmentType.FromValue(assessmentTypeValue) ?? RiskAssessmentType.Technical;
         }
 
         // SmartEnum parsing for Status
@@ -583,7 +583,7 @@ public static partial class Mappers
         riskAssessment.ReportCode = reader.GetValue<string>(FieldNames.fRiskAssessmentReportCode);
 
 
-        // SmartEnum parsing for HazardCategory
+        
         var categoryValue = reader.GetValue<string>(FieldNames.fRiskAssessmentCategory)?.Trim();
         if (!string.IsNullOrEmpty(categoryValue))
         {

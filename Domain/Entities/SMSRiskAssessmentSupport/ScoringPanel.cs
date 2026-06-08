@@ -22,7 +22,7 @@ public class ScoringPanel : BaseAuditableEntity
     public string? RiskAssessmentCode { get; set; }
     public string? SMSUserCode { get; set; }
     
-    // Step 4 (Initial) properties
+    // Step 4 (Technical) properties
     public int? InitialLikelihood { get; set; } = 0;
     public int? InitialSeverity { get; set; } = 0;
     public decimal? InitialScore { get; set; }

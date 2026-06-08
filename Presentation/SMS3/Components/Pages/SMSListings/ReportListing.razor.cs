@@ -702,7 +702,7 @@ public partial class ReportListing : ComponentBase
         try
         {
             var confirmed = await _dialogService.Confirm(
-                $"Edit report '{report.Code} - {report.Name}'?\n\nThis will navigate to the Initial hazard reporting form in edit mode.",
+                $"Edit report '{report.Code} - {report.Name}'?\n\nThis will navigate to the Technical hazard reporting form in edit mode.",
                 "Edit Report",
                 new ConfirmOptions()
                 {
@@ -719,7 +719,7 @@ public partial class ReportListing : ComponentBase
 
                 if (initialHazard is not null && !string.IsNullOrEmpty(initialHazard.Code))
                 {
-                    _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting/{initialHazard.Code}");
+                    _navigation.NavigateToSecure($"/SMSRiskManagement/HazardReporting/{initialHazard.Code}?returnTo=report-listing");
                     _logger.LogInformation("Navigating to edit report: {ReportCode}", report.Code);
                     await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Navigation", $"Opening {report.Code} for editing..."));
                 }
@@ -962,7 +962,7 @@ public partial class ReportListing : ComponentBase
             var queryHazard = new GetHazardsByReportCodeQuery(new ReportID(reportCode));
             var hazardResult = await _mediator.SendAsync(queryHazard, CancellationToken.None);
 
-            if (hazardResult is not null)
+            if (hazardResult.IsSuccess && hazardResult.Value is not null)
             {
                 var hazards = hazardResult.Value;
                 foreach (Hazard hazard in hazards)
@@ -974,6 +974,11 @@ public partial class ReportListing : ComponentBase
                     hazard.InitialRiskMatrixCode = "TBD";
                     var cmdHazardReset = new ResetHazardScoresCommand(hazard);
                     var hazardResetResult = await _mediator.SendAsync(cmdHazardReset, CancellationToken.None);
+
+                    if (!hazardResetResult.IsSuccess)
+                    {
+                        throw new InvalidOperationException($"Failed to reset hazard scores for {hazard.Code}: {hazardResetResult.Error?.Message}");
+                    }
 
 
                 }

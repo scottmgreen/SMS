@@ -99,11 +99,17 @@
                             </div>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="ReportStatus" Title="Report Status" Width="120px">
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="ReportStatus" Title="Report Status" Width="290px">
                         <Template Context="registry">
-                            <div style="@BasicTextStyle">
-                                @registry.ReportStatus
-                            </div>
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.35rem" Style="@BasicTextStyle">
+                                <span>@registry.ReportStatus</span>
+                                @if (IsAssessmentInProgressStatus(registry.ReportStatus))
+                                {
+                                    <RadzenIcon Icon="warning_amber"
+                                                Style="color:#f59e0b;font-size:0.95rem;"
+                                                title="Risk assessment in progress: scoring may exist, but assessment is not validated/complete." />
+                                }
+                            </RadzenStack>
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="HazardCode" Title="Hazard ID" Width="100px" >
@@ -120,19 +126,19 @@
                             </div>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="InitialRiskMatrixCode" Title="Inital RS" Width="110px">
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="EffectiveRiskMatrixCode" Title="Risk Score" Width="110px">
                         <Template Context="registry">
-                            <div style="@GetAviationMatrixCellStyle(registry.InitialRiskMatrixCode.Trim())" class="text-center fw-bold">
-                                @if (!string.IsNullOrEmpty(registry.InitialRiskMatrixCode) && registry.InitialRiskMatrixCode != "-")
+                            <div style="@GetAviationMatrixCellStyle(registry.EffectiveRiskMatrixCode?.Trim() ?? string.Empty)" class="text-center fw-bold">
+                                @if (!string.IsNullOrEmpty(registry.EffectiveRiskMatrixCode) && registry.EffectiveRiskMatrixCode != "-" && registry.EffectiveRiskMatrixCode != "TBD")
                                 {
                                     <div style="@BasicTextStyle">                   
                                         @if (CanNavigateToTechnicalAssessmentStep4(registry))
                                         {
-                                            <a href="@GetTechnicalAssessmentStep4Url(registry)">@($"{registry.ResidualRiskMatrixCode} - {registry.ResidualHazardRiskLevel?.Value}")</a>
+                                            <a href="@GetTechnicalAssessmentStep4Url(registry)">@($"{registry.EffectiveRiskMatrixCode} - {registry.EffectiveHazardRiskLevel.Value}")</a>
                                         }
                                         else
                                         {
-                                            @($"{registry.InitialRiskMatrixCode} - {registry.InitialHazardRiskLevel?.Value}")
+                                            @($"{registry.EffectiveRiskMatrixCode} - {registry.EffectiveHazardRiskLevel.Value}")
                                         }
                                     
                                     </div>
@@ -145,10 +151,34 @@
                         </Template>
                     
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="InitialRiskMatrixCode" Title="Residual RS" Width="110px">
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="InitialRiskMatrixCode" Title="Initial RS" Width="110px">
+                        <Template Context="registry">
+                            <div style="@GetAviationMatrixCellStyle(registry.InitialRiskMatrixCode?.Trim() ?? string.Empty)" class="text-center fw-bold">
+                                @if (!string.IsNullOrEmpty(registry.InitialRiskMatrixCode) && registry.InitialRiskMatrixCode != "-" && registry.InitialRiskMatrixCode != "TBD")
+                                {
+                                    <div style="@BasicTextStyle">
+                                        @if (CanNavigateToTechnicalAssessmentStep4(registry))
+                                        {
+                                            <a href="@GetTechnicalAssessmentStep4Url(registry)">@($"{registry.InitialRiskMatrixCode} - {registry.InitialHazardRiskLevel?.Value}")</a>
+                                        }
+                                        else
+                                        {
+                                            @($"{registry.InitialRiskMatrixCode} - {registry.InitialHazardRiskLevel?.Value}")
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    <span class="text-muted">TBD</span>
+                                }
+                            </div>
+                        </Template>
+
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="ResidualRiskMatrixCode" Title="Residual RS" Width="110px">
                         <Template Context="registry">
                             <div style="@GetAviationMatrixCellStyle(registry.ResidualRiskMatrixCode?.Trim() ?? string.Empty)" class="text-center fw-bold">
-                                @if (!string.IsNullOrEmpty(registry.ResidualRiskMatrixCode) && registry.ResidualRiskMatrixCode != "-")
+                                @if (!string.IsNullOrEmpty(registry.ResidualRiskMatrixCode) && registry.ResidualRiskMatrixCode != "-" && registry.ResidualRiskMatrixCode != "TBD")
                                 {
                                     <div style="@BasicTextStyle">
                                         @if (CanNavigateToTechnicalAssessmentStep4(registry))

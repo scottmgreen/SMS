@@ -97,6 +97,42 @@ namespace SMS3.Components.Shared
             };
         }
 
+        public static (RiskLevel RiskLevel, string MatrixCode, bool IsValid) ResolveRiskFromMatrixCode(string? matrixCode)
+        {
+            if (string.IsNullOrWhiteSpace(matrixCode) || matrixCode == "-" || matrixCode.Equals("TBD", StringComparison.OrdinalIgnoreCase))
+            {
+                return (RiskLevel.Unkonwn, "TBD", false);
+            }
+
+            var normalized = matrixCode.Trim();
+            var (severity, likelihood) = ParseMatrixCode(normalized);
+            if (!severity.HasValue || !likelihood.HasValue)
+            {
+                return (RiskLevel.Unkonwn, normalized, false);
+            }
+
+            var riskLevel = GetAviationRiskLevel(severity.Value, likelihood.Value);
+            var normalizedCode = GetMatrixCode(severity.Value, likelihood.Value);
+            return (riskLevel, normalizedCode, true);
+        }
+
+        public static (RiskLevel RiskLevel, string MatrixCode) GetPreferredRiskFromMatrixCodes(string? initialMatrixCode, string? residualMatrixCode)
+        {
+            var residual = ResolveRiskFromMatrixCode(residualMatrixCode);
+            if (residual.IsValid)
+            {
+                return (residual.RiskLevel, residual.MatrixCode);
+            }
+
+            var initial = ResolveRiskFromMatrixCode(initialMatrixCode);
+            if (initial.IsValid)
+            {
+                return (initial.RiskLevel, initial.MatrixCode);
+            }
+
+            return (RiskLevel.Unkonwn, "TBD");
+        }
+
         /// <summary>
         /// Get the exact hex color for a matrix cell using original aviation matrix colors
         /// </summary>

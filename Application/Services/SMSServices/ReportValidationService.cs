@@ -64,7 +64,9 @@ public sealed class ReportValidationService : IReportValidationService
                 {
                     _logger.LogApplicationInformation("Business Logic: Processing SMS Risk decision for Report: {ReportCode}", reportValidation.ReportCode);
                     
-                    var riskCreationResult = await CreateSmsRiskAssessmentsAsync(reportValidation.ReportCode, ct);
+                    var isRiskRegistryOnly = IsRiskRegistryOnlyValidation(reportValidation.ValidationType);
+
+                    var riskCreationResult = await CreateSmsRiskAssessmentsAsync(reportValidation.ReportCode, isRiskRegistryOnly, ct);
                     if (riskCreationResult.IsFailure)
                     {
                         _logger.LogApplicationWarning("Business Logic: Failed to create SMS Risk assessments for Report: {ReportCode}", reportValidation.ReportCode);
@@ -267,7 +269,9 @@ public sealed class ReportValidationService : IReportValidationService
             // Handle SMS Risk decision
             if (decision == ValidationDecision.SmsRisk)
             {
-                await CreateSmsRiskAssessmentsAsync(validation.ReportCode, ct);
+                var isRiskRegistryOnly = IsRiskRegistryOnlyValidation(validation.ValidationType);
+
+                await CreateSmsRiskAssessmentsAsync(validation.ReportCode, isRiskRegistryOnly, ct);
             }
 
             return result;
@@ -284,10 +288,10 @@ public sealed class ReportValidationService : IReportValidationService
     #region Complex Business Logic - SMS Risk Assessment Creation
 
     /// <summary>
-    /// ?? COMPLEX BUSINESS LOGIC: Creates risk assessments and analysis for SMS Risk validation decisions
+    /// BUSINESS LOGIC: Creates risk assessments and analysis for SMS Risk validation decisions
     /// This encapsulates the complex logic previously scattered in CommandHandlers
     /// </summary>
-    public async Task<Result<bool>> CreateSmsRiskAssessmentsAsync(string reportCode, CancellationToken ct = default)
+    public async Task<Result<bool>> CreateSmsRiskAssessmentsAsync(string reportCode, bool isRiskRegistryOnly = false, CancellationToken ct = default)
     {
         try
         {
@@ -310,7 +314,7 @@ public sealed class ReportValidationService : IReportValidationService
             _logger.LogApplicationInformation("Found hazard {HazardCode} for report {ReportCode}", hazard.Code, reportCode);
 
             // Step 2: Check for existing RiskAssessments for this report (avoid duplicates)
-            var existingAssessments = await FindExistingRiskAssessmentsForReportAsync(reportCode, ct);
+            var existingAssessments = await FindExistingRiskAssessmentsForReportAsync(reportCode, isRiskRegistryOnly, ct);
 
             string initialRiskAssessmentCode;
 
@@ -323,7 +327,7 @@ public sealed class ReportValidationService : IReportValidationService
             else
             {
                 // Create NEW shared RiskAssessments only if none exist (first hazard in the report)
-                initialRiskAssessmentCode = await CreateRiskAssessmentsForReportAsync(hazard, ct);
+                initialRiskAssessmentCode = await CreateRiskAssessmentsForReportAsync(hazard, isRiskRegistryOnly, ct);
                 _logger.LogApplicationInformation("Created new Risk Assessment: {Code}", initialRiskAssessmentCode);
             }
 
@@ -344,11 +348,12 @@ public sealed class ReportValidationService : IReportValidationService
     /// Find existing RiskAssessments for this report using proper code-based matching
     /// This prevents creating duplicate RiskAssessments when adding hazards to existing reports
     /// </summary>
-    private async Task<(RiskAssessment? InitialAssessment, RiskAssessment? ResidualAssessment)> FindExistingRiskAssessmentsForReportAsync(string reportCode, CancellationToken ct)
+    private async Task<(RiskAssessment? InitialAssessment, RiskAssessment? ResidualAssessment)> FindExistingRiskAssessmentsForReportAsync(string reportCode, bool isRiskRegistryOnly, CancellationToken ct)
     {
         try
         {
             _logger.LogApplicationInformation("Searching for existing RiskAssessments for Report: {ReportCode}", reportCode);
+            var expectedAssessmentType = isRiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly : RiskAssessmentType.Technical;
 
             // Get hazards for this specific report using HazardDataService
             var reportHazardsResult = await _hazardDataService.GetHazardsByReportCodeAsync(new ReportID(reportCode), ct);
@@ -374,10 +379,10 @@ public sealed class ReportValidationService : IReportValidationService
 
                 if (allAssessments.Any())
                 {
-                    var initialAssessment = allAssessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Initial);
-                    // Note: Only using Initial for now since Residual may not be available
+                    var initialAssessment = allAssessments.FirstOrDefault(x => x.AssessmentType == expectedAssessmentType)
+                                           ?? allAssessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Technical);
                     
-                    _logger.LogApplicationInformation("Found existing assessments: Initial={Initial}", 
+                    _logger.LogApplicationInformation("Found existing assessments: Technical={Technical}", 
                         initialAssessment?.Code ?? "None");
                     
                     return (initialAssessment, null);
@@ -397,27 +402,34 @@ public sealed class ReportValidationService : IReportValidationService
     /// <summary>
     /// Create shared RiskAssessments for this report (first hazard creates them, subsequent hazards reuse them)
     /// </summary>
-    private async Task<string> CreateRiskAssessmentsForReportAsync(Hazard hazard, CancellationToken ct)
+    private async Task<string> CreateRiskAssessmentsForReportAsync(Hazard hazard, bool isRiskRegistryOnly, CancellationToken ct)
     {
-        _logger.LogApplicationInformation("??? Creating new Risk Assessment for hazard {HazardCode}", hazard.Code);
+        _logger.LogApplicationInformation("Creating new Risk Assessment for hazard {HazardCode}", hazard.Code);
+
+        var assessmentType = isRiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly : RiskAssessmentType.Technical;
+        var initialStep = isRiskRegistryOnly ? 4 : 1;
+        var initialStage = isRiskRegistryOnly ? RiskAssessmentStage.AssessingRisk : RiskAssessmentStage.DescribingSystem;
+        var initialStatus = isRiskRegistryOnly ? RiskAssessmentStatus.AssessmentUnderway : RiskAssessmentStatus.AssessmentCreate;
+        var assessmentLabel = isRiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly.Name : RiskAssessmentType.Technical.Name;
 
         var initialRiskAssessment = new RiskAssessment(new RiskAssessmentID("RS-0000"))
         {
             HazardCode = hazard.Code,
-            AssessmentType = RiskAssessmentType.Initial,
-            CurrentStep = 1,
-            Stage = RiskAssessmentStage.DescribingSystem,
+            AssessmentType = assessmentType,
+            CurrentStep = initialStep,
+            Stage = initialStage,
+            Status = initialStatus,
             PrimaryHazardId = hazard.Code,
             RiskAssessmentCategory = RiskAssessmentCategory.Technical,
-            Description = $"Initial Risk Assessment for Report {hazard.ReportCode}",
-            Name = $"Initial Risk Assessment - {hazard.ReportCode}"
+            Description = $"{assessmentLabel} Risk Assessment for Report {hazard.ReportCode}",
+            Name = $"{assessmentLabel} Risk Assessment - {hazard.ReportCode}"
         };
 
         var initialResult = await _riskAssessmentService.CreateRiskAssessmentAsync(initialRiskAssessment, ct);
         
         if (initialResult.IsSuccess)
         {
-            _logger.LogApplicationInformation("??? Successfully created Risk Assessment: {Code}", initialResult.Value.Code);
+            _logger.LogApplicationInformation("Successfully created Risk Assessment: {Code}", initialResult.Value.Code);
             return initialResult.Value.Code;
         }
         else
@@ -452,6 +464,17 @@ public sealed class ReportValidationService : IReportValidationService
         {
             _logger.LogApplicationError("Failed to create Risk Analysis: {Error}", result.Error?.Message);
         }
+    }
+
+    private static bool IsRiskRegistryOnlyValidation(string? validationType)
+    {
+        if (string.IsNullOrWhiteSpace(validationType))
+        {
+            return false;
+        }
+
+        return validationType.Equals(RiskAssessmentType.RiskRegistryOnly.Value, StringComparison.OrdinalIgnoreCase)
+               || validationType.Equals(RiskAssessmentType.RiskRegistryOnly.Name, StringComparison.OrdinalIgnoreCase);
     }
 
     #endregion

@@ -1,4 +1,5 @@
 using SMS_Domain.Enums;
+using SMS_Domain.Events;
 using SMS_Application.Services;
 using SMS_Domain.Errors;
 
@@ -17,7 +18,7 @@ public partial class ReportValidation : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportValidation> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
-    [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
 
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
@@ -26,6 +27,7 @@ public partial class ReportValidation : ComponentBase
     private ValidationDecision? SelectedValidationDecision { get; set; }
     private string ValidationComments { get; set; } = "";
     private RiskAssessmentCategory ValidationType { get; set; } = RiskAssessmentCategory.Technical;
+    private string CurrentValidationType => RiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly.Value : ValidationType.Value;
     private string ValidatedBy { get; set; } = "";
 
     private string LeadAssessor { get; set; } = "";
@@ -305,22 +307,24 @@ public partial class ReportValidation : ComponentBase
         var initialStep = RiskRegistryOnly ? 4 : 1;
         var initialStage = RiskRegistryOnly ? RiskAssessmentStage.AssessingRisk : RiskAssessmentStage.DescribingSystem;
         var initialStatus = RiskRegistryOnly ? RiskAssessmentStatus.AssessmentUnderway : RiskAssessmentStatus.AssessmentCreate;
+        var assessmentType = RiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly : RiskAssessmentType.Technical;
+        var assessmentLabel = RiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly.Name : RiskAssessmentType.Technical.Name;
 
         return new RiskAssessment(assessmentId)
         {
-            Name = $"Technical Risk Assessment for Report {ReportId}",
+            Name = $"{assessmentLabel} Risk Assessment for Report {ReportId}",
             LeadAssessorId = LeadAssessor,
-            AssessmentType = RiskAssessmentType.Initial,
+            AssessmentType = assessmentType,
             RiskAssessmentCategory = RiskAssessmentCategory.Technical,
             HazardCode = ReportHazard!.Code,
             PrimaryHazardId = ReportHazard.Code,
-            Description = $"Created from Report {ReportId}",
+            Description = $"{assessmentLabel} assessment created from Report {ReportId}",
             Stage = initialStage,
             Code = assessmentId.Value,
             Status = initialStatus,
             CurrentStep = initialStep,
-            UpdatedDate = DateTime.UtcNow,
-            UpdatedBy = _currentUserService?.UserDisplayName
+            CreatedDate = DateTime.UtcNow,
+            CreatedBy = _currentUserService?.UserDisplayName,
         };
     }
 
@@ -358,7 +362,7 @@ public partial class ReportValidation : ComponentBase
                 // Update the existing validation with new values
                 ExistingValidation.ValidationDecision = ValidationDecisionValue;
                 ExistingValidation.ValidationComments = ValidationComments;
-                ExistingValidation.ValidationType = RiskAssessmentCategory.Technical;
+                ExistingValidation.ValidationType = CurrentValidationType;
                 ExistingValidation.ValidatedBy = ValidatedBy;
                 ExistingValidation.Status = ReportValidationStatus.Revised;
                 ExistingValidation.Stage = "COMPLETE";
@@ -399,7 +403,7 @@ public partial class ReportValidation : ComponentBase
                     ValidatedBy = ValidatedBy,
                     ValidationDecision = ValidationDecisionValue,
                     ValidationComments = ValidationComments,
-                    ValidationType = ValidationType ?? "STANDARD",
+                    ValidationType = CurrentValidationType,
                     Status = ReportValidationStatus.ValidationComplete,
                     Stage = "NEW",
                     ValidatedDate = DateTime.UtcNow,
@@ -447,13 +451,21 @@ public partial class ReportValidation : ComponentBase
             _logger.LogInformation("SPI Automation: Triggering validation decision event for {ValidationCode} - Decision: {Decision}", 
                 validationCode, validationDecision);
 
-            await _spiCoordinator.OnValidationDecisionMade(
-                reportId: ReportId,
-                reportCode: ReportId,
-                validationDecision: validationDecision,
-                validatedDate: validatedDate,
-                validatedBy: ValidatedBy,
-                validationComments: ValidationComments);
+            var validationEvent = new ValidationDecisionMadeEvent(
+                new SMSEventID($"EVT-{Guid.NewGuid():N}"),
+                ReportId,
+                validationDecision,
+                validatedDate)
+            {
+                ValidatedBy = ValidatedBy,
+                ValidationComments = ValidationComments
+            };
+
+            var publishResult = await _eventBus.PublishDomainEventAsync(validationEvent, CancellationToken.None);
+            if (publishResult.IsFailure)
+            {
+                _logger.LogWarning("SPI Automation: Validation event publish failed for {ValidationCode}: {Error}", validationCode, publishResult.Error?.Message);
+            }
 
             _logger.LogInformation("SPI Automation: Successfully processed validation decision event for {ValidationCode}", validationCode);
         }
@@ -750,6 +762,8 @@ public partial class ReportValidation : ComponentBase
         if (string.IsNullOrEmpty(ReportHazard?.Code))
             return null;
 
+        var expectedAssessmentType = RiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly : RiskAssessmentType.Technical;
+
         var query = new GetAllRiskAssessmentsQuery();
         var result = await _mediator.SendAsync(query, CancellationToken.None);
 
@@ -758,7 +772,8 @@ public partial class ReportValidation : ComponentBase
 
         return result.Value.FirstOrDefault(ra => 
             !string.IsNullOrWhiteSpace(ra.HazardCode) && 
-            ra.HazardCode.Equals(ReportHazard.Code, StringComparison.OrdinalIgnoreCase));
+            ra.HazardCode.Equals(ReportHazard.Code, StringComparison.OrdinalIgnoreCase) &&
+            ra.AssessmentType == expectedAssessmentType);
     }
 
     /// <summary>

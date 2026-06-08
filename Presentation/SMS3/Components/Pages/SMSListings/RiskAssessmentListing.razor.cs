@@ -143,6 +143,14 @@ public partial class RiskAssessmentListing : ComponentBase
 
     private bool IsRiskRegistryOnlyAssessment(RiskAssessment assessment)
     {
+        // Primary source of truth: persisted assessment typing
+        if (assessment.AssessmentType == RiskAssessmentType.RiskRegistryOnly)
+        {
+            // Keep category check explicit so the listing logic stays aligned with model intent.
+            return assessment.RiskAssessmentCategory == RiskAssessmentCategory.Technical;
+        }
+
+        // Backward-compatibility fallback: older records may only be inferred from report status.
         var reportCode = assessment.ReportCode?.Trim();
         return !string.IsNullOrWhiteSpace(reportCode) && riskRegistryOnlyReportCodes.Contains(reportCode);
     }
@@ -184,7 +192,7 @@ public partial class RiskAssessmentListing : ComponentBase
 
                 if (IsRiskRegistryOnlyAssessment(assessment))
                 {
-                    var rrOnlyScored = IsRiskRegistryOnlyScored(assessment, allHazards);
+                    var rrOnlyScored = IsRiskRegistryOnlyScored(assessment, allHazards, allPanels);
                     map[code] = new AssessmentValidationSnapshot
                     {
                         RequiredSteps = 1,
@@ -235,8 +243,9 @@ public partial class RiskAssessmentListing : ComponentBase
         }
     }
 
-    private static bool IsRiskRegistryOnlyScored(RiskAssessment assessment, IEnumerable<Hazard> allHazards)
+    private static bool IsRiskRegistryOnlyScored(RiskAssessment assessment, IEnumerable<Hazard> allHazards, IEnumerable<ScoringPanel> allPanels)
     {
+        var assessmentCode = assessment.Code?.Trim();
         var hazardCode = assessment.HazardCode?.Trim();
 
         if (string.IsNullOrWhiteSpace(hazardCode))
@@ -257,10 +266,24 @@ public partial class RiskAssessmentListing : ComponentBase
             return false;
         }
 
-        return primaryHazard.InitialAverageScore.HasValue
-            && primaryHazard.ResidualAverageScore.HasValue
-            && primaryHazard.InitialAverageScore.Value > 0
-            && primaryHazard.ResidualAverageScore.Value > 0;
+        var hazardScored = primaryHazard.InitialAverageScore.HasValue
+            && primaryHazard.InitialAverageScore.Value > 0;
+
+        if (hazardScored)
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(assessmentCode))
+        {
+            return false;
+        }
+
+        return allPanels.Any(p =>
+            string.Equals(p.RiskAssessmentCode?.Trim(), assessmentCode, StringComparison.OrdinalIgnoreCase)
+            && p.InitialLikelihood.HasValue && p.InitialLikelihood.Value > 0
+            && p.InitialSeverity.HasValue && p.InitialSeverity.Value > 0
+            && p.InitialScore.HasValue && p.InitialScore.Value > 0);
     }
 
     private AssessmentValidationSnapshot GetValidationSnapshot(RiskAssessment assessment)
@@ -777,7 +800,10 @@ public partial class RiskAssessmentListing : ComponentBase
                 return;
             }
 
-            var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{reportCode}/{assessment.HazardCode}/{assessment.CurrentStep}";
+            var isRiskRegistryOnly = IsRiskRegistryOnlyAssessment(assessment);
+            var targetStep = ResolveAssessmentEditStep(assessment, isRiskRegistryOnly);
+
+            var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{reportCode}/{assessment.HazardCode}/{targetStep}?returnTo=risk-assessment-listing";
 
             _logger.LogInformation("Navigating to Technical Assessment: {Url}", navigationUrl);
             _navigation.NavigateToSecure(navigationUrl);
@@ -789,12 +815,26 @@ public partial class RiskAssessmentListing : ComponentBase
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to navigate to Technical Assessment"));
         }
     }
-    
+
+    private static int ResolveAssessmentEditStep(RiskAssessment assessment, bool isRiskRegistryOnly)
+    {
+        if (isRiskRegistryOnly)
+        {
+            return 4;
+        }
+
+        if (assessment.Status == RiskAssessmentStatus.AssessmentComplete)
+        {
+            return 1;
+        }
+
+        return Math.Clamp(assessment.CurrentStep, 1, 5);
+    }
+
     private async Task<string?> GetReportCodeFromAssessmentAsync(RiskAssessment assessment)
     {
         try
         {
-            // Use the HazardCode from the assessment to get the proper ReportCode
             if (string.IsNullOrEmpty(assessment.HazardCode))
             {
                 _logger.LogWarning("Assessment {AssessmentCode} has no HazardCode", assessment.Code);
@@ -814,12 +854,10 @@ public partial class RiskAssessmentListing : ComponentBase
                     reportCode, assessment.HazardCode);
                 return reportCode;
             }
-            else
-            {
-                _logger.LogWarning("Failed to load Hazard {HazardCode}: {Error}",
-                    assessment.HazardCode, hazardResult.Error?.Message ?? "Unknown error");
-                return null;
-            }
+
+            _logger.LogWarning("Failed to load Hazard {HazardCode}: {Error}",
+                assessment.HazardCode, hazardResult.Error?.Message ?? "Unknown error");
+            return null;
         }
         catch (Exception ex)
         {

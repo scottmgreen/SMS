@@ -2,6 +2,7 @@ using System.Runtime.Intrinsics.X86;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Services;
+using SMS_Domain.Events;
 
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared;
@@ -21,6 +22,9 @@ public partial class TechnicalAssessment : ComponentBase
     [Parameter] public string? ReportId { get; set; }
     [Parameter] public string? HazardId { get; set; }  // Now a route parameter
     [Parameter] public string? StepNumber { get; set; } = "1";
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "returnTo")]
+    public string? ReturnTo { get; set; }
 
     // Keep query parameters for backward compatibility
     // [SupplyParameterFromQuery(Name = "reportId")] public string? ReportId { get; set; }
@@ -29,7 +33,7 @@ public partial class TechnicalAssessment : ComponentBase
     [Inject] private ILogger<TechnicalAssessment> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
-    [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private IConfiguration _configuration { get; set; } = default!;
     
 
@@ -44,8 +48,22 @@ public partial class TechnicalAssessment : ComponentBase
     private string? LastLoadedReportId { get; set; }
     private string? LastLoadedHazardId { get; set; }
     public int CurrentStep => int.TryParse(StepNumber, out int step) && step >= 1 && step <= 5 ? step : 1;
-    private bool IsRiskRegistryOnly => string.Equals(SourceReport?.Status, ReportStatus.RiskRegistryOnly.Value, StringComparison.OrdinalIgnoreCase);
-    private int MaxAssessmentStep => IsRiskRegistryOnly ? 4 : 5;
+    private bool IsRiskRegistryOnly =>
+        TechRiskAssessment?.AssessmentType == RiskAssessmentType.RiskRegistryOnly ||
+        string.Equals(SourceReport?.Status, ReportStatus.RiskRegistryOnly.Value, StringComparison.OrdinalIgnoreCase);
+    private int MaxAssessmentStep
+    {
+        get
+        {
+            if (TechRiskAssessment?.AssessmentType == RiskAssessmentType.RiskRegistryOnly)
+            {
+                return 4;
+            }
+
+            return TechRiskAssessment?.RiskAssessmentCategory?.GetMaxStep() ?? 5;
+        }
+    }
+    private bool IsAssessmentModeResolved => TechRiskAssessment is not null || SourceReport is not null;
 
     #endregion
 
@@ -94,8 +112,8 @@ public partial class TechnicalAssessment : ComponentBase
             return $"Hazard Report: {ReportId} Risk Assessment: {TechRiskAssessment?.Code} - Residual Stage";
         }
 
-        // For Steps 1-4, show Initial stage
-        return $"Hazard Report: {ReportId} Risk Assessment: {TechRiskAssessment?.Code} - Initial Stage";
+        // For Steps 1-4, show Technical stage
+        return $"Hazard Report: {ReportId} Risk Assessment: {TechRiskAssessment?.Code} - Technical Stage";
     }
     public string GetStepName(int stepNumber)
     {
@@ -104,7 +122,7 @@ public partial class TechnicalAssessment : ComponentBase
             1 => "System Description",
             2 => "Hazard Identification",
             3 => "Risk Analysis",
-            4 => "Initial Risk Assessment",
+            4 => "Technical Risk Assessment",
             5 => "Risk Mitigation and Residual Risk Assesment",
             _ => "Unknown Step"
         };
@@ -257,7 +275,10 @@ public partial class TechnicalAssessment : ComponentBase
             {
                 var encodedReportId = Uri.EscapeDataString(ReportId ?? string.Empty);
                 var encodedHazardId = Uri.EscapeDataString(HazardId ?? string.Empty);
-                var riskRegistryOnlyUrl = $"/SMSRiskManagement/TechnicalAssessment/{encodedReportId}/{encodedHazardId}/4";
+                var returnToQuery = !string.IsNullOrWhiteSpace(ReturnTo)
+                    ? $"?returnTo={Uri.EscapeDataString(ReturnTo)}"
+                    : string.Empty;
+                var riskRegistryOnlyUrl = $"/SMSRiskManagement/TechnicalAssessment/{encodedReportId}/{encodedHazardId}/4{returnToQuery}";
                 _logger.LogInformation("Risk Registry Only report detected. Redirecting to Step 4: {Url}", riskRegistryOnlyUrl);
                 _navigation.NavigateToSecure(riskRegistryOnlyUrl);
                 return;
@@ -335,7 +356,7 @@ public partial class TechnicalAssessment : ComponentBase
         {
             var assessments = allAssessmentsResult.Value.ToList();
 
-            TechRiskAssessment = assessments.FirstOrDefault(x => x.RiskAssessmentCategory == RiskAssessmentCategory.Technical);
+            TechRiskAssessment = ResolveAssessmentForCurrentWorkflow(assessments);
 
             _logger.LogInformation("Found {Count} assessments for hazard {HazardId}", assessments.Count, HazardId);
         }
@@ -403,22 +424,30 @@ public partial class TechnicalAssessment : ComponentBase
             // Generate Placeholder ID - WILL BEGENERATED IN THE DATABASE 
             var assessmentId = $"RS-0000";
 
-            // Create Technical assessment using the public constructor
+            var isRiskRegistryAssessment = IsRiskRegistryOnly;
+            var assessmentType = isRiskRegistryAssessment ? RiskAssessmentType.RiskRegistryOnly : RiskAssessmentType.Technical;
+            var assessmentCategory = RiskAssessmentCategory.Technical;
+            var assessmentLabel = assessmentType.Name;
+            var initialStep = isRiskRegistryAssessment ? 4 : 1;
+            var initialStatus = isRiskRegistryAssessment ? RiskAssessmentStatus.AssessmentUnderway : RiskAssessmentStatus.AssessmentCreate;
+            var initialStage = isRiskRegistryAssessment ? RiskAssessmentStage.AssessingRisk : RiskAssessmentStage.DescribingSystem;
+
+            // Create assessment using the public constructor
             var technicalAssessment = new RiskAssessment(new RiskAssessmentID(assessmentId))
             {
-                Name = $"Technical Risk Assessment for Report {ReportId}",
+                Name = $"{assessmentLabel} Risk Assessment for Report {ReportId}",
                 LeadAssessorId = LeadAssessorName,
-                AssessmentType = RiskAssessmentType.Initial, // Start with Initial, Step 5 will use Residual stage
-                RiskAssessmentCategory = RiskAssessmentCategory.Technical,
+                AssessmentType = assessmentType,
+                RiskAssessmentCategory = assessmentCategory,
                 HazardCode = HazardId,
                 PrimaryHazardId = HazardId,
-                Description = $"Created from Report {ReportId}",
-                Stage = DetermineRiskAssessmentStageFromStep(1),
+                Description = $"{assessmentLabel} assessment created from Report {ReportId}",
+                Stage = initialStage,
                 Code = assessmentId,
-                Status = RiskAssessmentStatus.AssessmentCreate,
-                CurrentStep = 1,
-                UpdatedDate = DateTime.UtcNow,
-                UpdatedBy = _currentUserService?.UserDisplayName
+                Status = initialStatus,
+                CurrentStep = initialStep,
+                CreatedDate = DateTime.UtcNow,
+                CreatedBy  = _currentUserService?.UserDisplayName
             };
 
             // Save Technical assessment
@@ -432,7 +461,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             TechRiskAssessment = result.Value;
 
-            _logger.LogInformation("Created Technical assessment: {AssessmentId}", assessmentId);
+            _logger.LogInformation("Created {AssessmentType} assessment: {AssessmentId}", assessmentType.Value, assessmentId);
         }
         catch (Exception ex)
         {
@@ -470,10 +499,10 @@ public partial class TechnicalAssessment : ComponentBase
                 {
                     var assessments = assessmentsResult.Value.ToList();
 
-                    // Take the first Technical assessment we find
+                    // Take the first matching assessment we find for this workflow
                     if (TechRiskAssessment is null)
                     {
-                        TechRiskAssessment = assessments.FirstOrDefault(x => x.RiskAssessmentCategory == RiskAssessmentCategory.Technical);
+                        TechRiskAssessment = ResolveAssessmentForCurrentWorkflow(assessments);
                         HazardId = hazard.Code; // Update HazardId for consistency
                     }
 
@@ -490,6 +519,25 @@ public partial class TechnicalAssessment : ComponentBase
         }
     }
 
+    private RiskAssessment? ResolveAssessmentForCurrentWorkflow(IEnumerable<RiskAssessment> assessments)
+    {
+        var assessmentList = assessments?.ToList() ?? new List<RiskAssessment>();
+        if (!assessmentList.Any())
+        {
+            return null;
+        }
+
+        if (IsRiskRegistryOnly)
+        {
+            return assessmentList.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.RiskRegistryOnly)
+                   ?? assessmentList.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Technical)
+                   ?? assessmentList.FirstOrDefault();
+        }
+
+        return assessmentList.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Technical)
+               ?? assessmentList.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.RiskRegistryOnly)
+               ?? assessmentList.FirstOrDefault();
+    }
     private async Task LoadReportHazardsAsync()
     {
         try
@@ -584,7 +632,7 @@ public partial class TechnicalAssessment : ComponentBase
             Step4.LoadFromAssessment(TechRiskAssessment);
             await Step4.LoadExistingScoringPanelsAsync(_mediator, ReportHazards);
 
-            // Step 5 uses the same assessment - the step models will determine Initial vs Residual properties
+            // Step 5 uses the same assessment - the step models will determine Technical vs Residual properties
             await Step5.LoadFromAssessmentAsync(TechRiskAssessment, ReportHazards);
 
             _logger.LogInformation("Step models loaded from assessment, including RiskAnalysis entities");
@@ -728,7 +776,10 @@ public partial class TechnicalAssessment : ComponentBase
         // Include the step number in the URL
         var encodedReportId = Uri.EscapeDataString(ReportId ?? string.Empty);
         var encodedHazardId = Uri.EscapeDataString(HazardId ?? string.Empty);
-        var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{encodedReportId}/{encodedHazardId}/{targetStep}";
+        var returnToQuery = !string.IsNullOrWhiteSpace(ReturnTo)
+            ? $"?returnTo={Uri.EscapeDataString(ReturnTo)}"
+            : string.Empty;
+        var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{encodedReportId}/{encodedHazardId}/{targetStep}{returnToQuery}";
 
         _logger.LogInformation("Navigating to: {Url}", navigationUrl);
         _navigation.NavigateToSecure(navigationUrl);
@@ -760,6 +811,16 @@ public partial class TechnicalAssessment : ComponentBase
     {
         try
         {
+            if (!ForceTechnicalAssessmentWorkflow)
+            {
+                if (CurrentStep < MaxAssessmentStep)
+                {
+                    await NavigateToStep(CurrentStep + 1, skipWorkflowNavigationValidation: true);
+                }
+
+                return;
+            }
+
             IsSaving = true;
             StateHasChanged();
 
@@ -844,8 +905,28 @@ public partial class TechnicalAssessment : ComponentBase
             IsSaving = true;
             StateHasChanged();
 
-            // In strict workflow mode, require full assessment validation before submit.
-            if (ForceTechnicalAssessmentWorkflow)
+            if (IsRiskRegistryOnly)
+            {
+                var rrOnlyValidation = ValidateRiskRegistryOnlyStep4();
+                if (!rrOnlyValidation.isValid)
+                {
+                    var saveResult = await SaveCurrentStepAsync(forceStayOnCurrentStep: true);
+                    if (!saveResult.success)
+                    {
+                        await _notificationHelper.ShowErrorAsync($"Failed to save assessment: {saveResult.message}");
+                        return;
+                    }
+
+                    await _notificationHelper.ShowSuccessAsync("Assessment saved at Step 4. Complete scoring to submit.");
+                    NavigateAfterAssessmentAction(isCompleted: false);
+                    return;
+                }
+            }
+
+            // RR-only must always complete/close on submit (do not route through save-only branch).
+            var shouldCompleteAssessment = ForceTechnicalAssessmentWorkflow || IsRiskRegistryOnly;
+
+            if (shouldCompleteAssessment)
             {
                 var allStepsValid = ValidateAllSteps();
                 if (!allStepsValid.isValid)
@@ -853,17 +934,24 @@ public partial class TechnicalAssessment : ComponentBase
                     await _notificationHelper.ShowErrorAsync($"Assessment cannot be completed: {allStepsValid.message}");
                     return;
                 }
-                var saveResult = await SaveCurrentStepAsync();
-                if (!saveResult.success)
+
+                if (!IsRiskRegistryOnly)
                 {
-                    await _notificationHelper.ShowErrorAsync($"Failed to save final step: {saveResult.message}");
-                    return;
+                    var saveResult = await SaveCurrentStepAsync();
+                    if (!saveResult.success)
+                    {
+                        await _notificationHelper.ShowErrorAsync($"Failed to save final step: {saveResult.message}");
+                        return;
+                    }
                 }
 
                 // Mark assessment as complete and save
                 await CompleteAssessmentProcess();
-                await _notificationHelper.ShowSuccessAsync("Technical Assessment completed successfully!");
-                _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+                var successMessage = IsRiskRegistryOnly
+                    ? "Risk Registry Only assessment completed successfully!"
+                    : "Technical Assessment completed successfully!";
+                await _notificationHelper.ShowSuccessAsync(successMessage);
+                NavigateAfterAssessmentAction(isCompleted: true);
             }
             else
             {
@@ -883,9 +971,8 @@ public partial class TechnicalAssessment : ComponentBase
                 {
                     await _notificationHelper.ShowSuccessAsync("Technical Assessment completed successfully!");
                 }
-                _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+                NavigateAfterAssessmentAction(isCompleted: false);
             }
-            
         }
         catch (Exception ex)
         {
@@ -897,6 +984,30 @@ public partial class TechnicalAssessment : ComponentBase
             IsSaving = false;
             StateHasChanged();
         }
+    }
+
+    private void NavigateAfterAssessmentAction(bool isCompleted)
+    {
+        if (isCompleted)
+        {
+            _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing?tab=validation");
+            return;
+        }
+
+        var returnTarget = ReturnTo;
+        if (string.Equals(returnTarget, "risk-assessment-listing", StringComparison.OrdinalIgnoreCase))
+        {
+            _navigation.NavigateToSecure("/SMSListings/RiskAssessments");
+            return;
+        }
+
+        if (string.Equals(returnTarget, "report-processing", StringComparison.OrdinalIgnoreCase))
+        {
+            _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+            return;
+        }
+
+        _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
     }
 
     #endregion
@@ -952,7 +1063,7 @@ public partial class TechnicalAssessment : ComponentBase
             if (isExplicitSaveOnFinalStep)
             {
                 TechRiskAssessment.Status = RiskAssessmentStatus.AssessmentUnderway;
-                TechRiskAssessment.Stage = RiskAssessmentStage.MitigatingRisk;
+                TechRiskAssessment.Stage = IsRiskRegistryOnly ? RiskAssessmentStage.AssessingRisk : RiskAssessmentStage.MitigatingRisk;
             }
             else
             {
@@ -1190,7 +1301,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     /// <summary>
     /// Map scoring panel properties based on assessment step
-    /// Step 4 = Initial properties, Step 5 = Residual properties
+    /// Step 4 = Technical properties, Step 5 = Residual properties
     /// </summary>
     /// <param name="panel">The scoring panel to map properties for</param>
     /// <param name="currentStep">Current assessment step (4 or 5)</param>
@@ -1206,7 +1317,7 @@ public partial class TechnicalAssessment : ComponentBase
         }
         else
         {
-            // Step 4 (default): Map from Initial properties
+            // Step 4 (default): Map from Technical properties
             panel.Likelihood = panel.InitialLikelihood;
             panel.Severity = panel.InitialSeverity;
             panel.Score = panel.InitialScore;
@@ -1216,7 +1327,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     /// <summary>
     /// Update actual entity properties from mapped properties before saving
-    /// Step 4 updates Initial properties, Step 5 updates Residual properties
+    /// Step 4 updates Technical properties, Step 5 updates Residual properties
     /// </summary>
     /// <param name="panel">The scoring panel to update</param>
     /// <param name="currentStep">Current assessment step (4 or 5)</param>
@@ -1232,7 +1343,7 @@ public partial class TechnicalAssessment : ComponentBase
         }
         else
         {
-            // Step 4: Update Initial properties from mapped properties
+            // Step 4: Update Technical properties from mapped properties
             panel.InitialLikelihood = panel.Likelihood;
             panel.InitialSeverity = panel.Severity;
             panel.InitialScore = panel.Score;
@@ -1260,10 +1371,10 @@ public partial class TechnicalAssessment : ComponentBase
                 return;
             }
 
-            // Find panels that have Initial scores but EMPTY Residual scores
+            // Find panels that have Technical scores but EMPTY Residual scores
             var panelsNeedingCopy = existingPanels
                 .Where(p =>
-                    // Has Initial scores from Step 4
+                    // Has Technical scores from Step 4
                     p.InitialSeverity.HasValue && p.InitialLikelihood.HasValue && p.InitialScore.HasValue &&
                     // AND Residual scores are empty (haven't been set in Step 5 yet)
                     !p.ResidualSeverity.HasValue && !p.ResidualLikelihood.HasValue && !p.ResidualScore.HasValue)
@@ -1271,23 +1382,23 @@ public partial class TechnicalAssessment : ComponentBase
 
             if (!panelsNeedingCopy.Any())
             {
-                _logger.LogInformation("No panels need score copying for assessment {AssessmentCode} - either no Initial scores or Residual scores already exist", targetAssessmentCode);
+                _logger.LogInformation("No panels need score copying for assessment {AssessmentCode} - either no Technical scores or Residual scores already exist", targetAssessmentCode);
                 return;
             }
 
-            _logger.LogInformation("Copying Initial scores to empty Residual scores for {Count} panels in assessment {AssessmentCode}", panelsNeedingCopy.Count, targetAssessmentCode);
+            _logger.LogInformation("Copying Technical scores to empty Residual scores for {Count} panels in assessment {AssessmentCode}", panelsNeedingCopy.Count, targetAssessmentCode);
 
             bool anyUpdated = false;
 
             foreach (var panel in panelsNeedingCopy)
             {
-                // Copy Initial scores to Residual as starting point
+                // Copy Technical scores to Residual as starting point
                 panel.ResidualSeverity = panel.InitialSeverity;
                 panel.ResidualLikelihood = panel.InitialLikelihood;
                 panel.ResidualScore = panel.InitialScore;
-                panel.ResidualRationale = $"Initial assessment: {panel.InitialRationale ?? "No rationale provided"}";
+                panel.ResidualRationale = $"Technical assessment: {panel.InitialRationale ?? "No rationale provided"}";
 
-                _logger.LogInformation("Copying Initial scores to empty Residual for panel {PanelCode}: {Sev}x{Like}={Score}", 
+                _logger.LogInformation("Copying Technical scores to empty Residual for panel {PanelCode}: {Sev}x{Like}={Score}", 
                     panel.Code, panel.InitialSeverity, panel.InitialLikelihood, panel.InitialScore);
 
                 // Save the updated panel
@@ -1296,7 +1407,7 @@ public partial class TechnicalAssessment : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    _logger.LogInformation("Successfully copied Initial scores to empty Residual for panel {PanelCode}", panel.Code);
+                    _logger.LogInformation("Successfully copied Technical scores to empty Residual for panel {PanelCode}", panel.Code);
                     anyUpdated = true;
                 }
                 else
@@ -1307,7 +1418,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             if (anyUpdated)
             {
-                _logger.LogInformation("Completed copying Initial scores to empty Residual scores for assessment {AssessmentCode}", targetAssessmentCode);
+                _logger.LogInformation("Completed copying Technical scores to empty Residual scores for assessment {AssessmentCode}", targetAssessmentCode);
             }
         }
         catch (Exception ex)
@@ -1389,7 +1500,8 @@ public partial class TechnicalAssessment : ComponentBase
     {
         if (isCurrentStep)
         {
-            return isValid ? ButtonStyle.Primary : ButtonStyle.Warning;
+            //return isValid ? ButtonStyle.Primary : ButtonStyle.Warning;
+            return ButtonStyle.Primary;
         }
 
         return isValid ? ButtonStyle.Success : ButtonStyle.Danger;
@@ -1446,13 +1558,28 @@ public partial class TechnicalAssessment : ComponentBase
 
     private bool IsAssessmentReadyForCompletion() => !GetLowestInvalidStep().HasValue;
 
-    private bool ShowSubmitAssessmentButton() => CurrentStep < MaxAssessmentStep || IsAssessmentReadyForCompletion();
+    private bool ShowSubmitAssessmentButton()
+    {
+        if (IsRiskRegistryOnly)
+        {
+            // RR-only is a single actionable step (Step 4); always keep final action visible.
+            return true;
+        }
+
+        return CurrentStep < MaxAssessmentStep || IsAssessmentReadyForCompletion();
+    }
 
     private string GetFinalActionButtonText()
     {
         if (CurrentStep < MaxAssessmentStep)
         {
             return "Next Step";
+        }
+
+        if (IsRiskRegistryOnly)
+        {
+            var rrOnlyStep4Valid = ValidateRiskRegistryOnlyStep4().isValid;
+            return rrOnlyStep4Valid ? "Submit Assessment" : "Save Assessment";
         }
 
         return IsAssessmentReadyForCompletion() ? "Submit Assessment" : "Save Assessment";
@@ -1483,7 +1610,7 @@ public partial class TechnicalAssessment : ComponentBase
         // Risk Registry Only flow uses Step 4 scoring without requiring Steps 1-3 or Step 5.
         if (IsRiskRegistryOnly)
         {
-            var step4OnlyResult = Step4.Validate();
+            var step4OnlyResult = ValidateRiskRegistryOnlyStep4();
             if (!step4OnlyResult.isValid)
             {
                 return (false, $"Step 4: {step4OnlyResult.message}");
@@ -1516,6 +1643,31 @@ public partial class TechnicalAssessment : ComponentBase
         return (true, "All steps are valid");
     }
 
+    private (bool isValid, string message) ValidateRiskRegistryOnlyStep4()
+    {
+        if (ReportHazards is null || !ReportHazards.Any())
+        {
+            return (false, "No hazards available for scoring");
+        }
+
+        var unscoredHazards = ReportHazards
+            .Where(h =>
+            {
+                var hasPersistedScore = h.InitialAverageScore.HasValue && h.InitialAverageScore.Value > 0;
+                var hasStep4Score = Step4.HazardAverageScores.TryGetValue(h.Code, out var avgScore) && avgScore > 0;
+                return !hasPersistedScore && !hasStep4Score;
+            })
+            .Select(h => h.Code)
+            .ToList();
+
+        if (unscoredHazards.Any())
+        {
+            return (false, $"Scoring incomplete for {unscoredHazards.Count} hazard(s)");
+        }
+
+        return (true, "Risk Registry Only validation passed (Step 4)");
+    }
+
     #endregion
 
     private async Task CompleteAssessmentProcess()
@@ -1532,11 +1684,21 @@ public partial class TechnicalAssessment : ComponentBase
         var completedBy = _currentUserService?.UserDisplayName ?? "Unknown User";
         var finalRiskLevel = GetAssessmentFinalRiskLevel(); // Get the determined risk level
 
+        // Explicitly mark assessment completed on submit.
+        TechRiskAssessment.CurrentStep = MaxAssessmentStep;
+        TechRiskAssessment.Status = RiskAssessmentStatus.AssessmentComplete;
+        TechRiskAssessment.Stage = RiskAssessmentStage.Completed;
+        TechRiskAssessment.CompletedBy = completedBy;
+        TechRiskAssessment.CompletedDate = completedDate;
+        TechRiskAssessment.UpdatedBy = completedBy;
+        TechRiskAssessment.UpdatedDate = completedDate;
+
         // Update risk assessment - pipeline will automatically set UpdatedBy/UpdatedDate
         var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
         await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
-        var cmd = new UpdateReportStatusCommand(ReportId ?? "", ReportStatus.ValidationCompleted, _currentUserService?.UserDisplayName ?? "System");
+        var reportCompletionStatus = IsRiskRegistryOnly ? ReportStatus.Closed : ReportStatus.ValidationCompleted;
+        var cmd = new UpdateReportStatusCommand(ReportId ?? "", reportCompletionStatus, _currentUserService?.UserDisplayName ?? "System");
         var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
 
         // NEW: SPI AUTOMATION - Trigger risk assessment completion event ??
@@ -1793,19 +1955,33 @@ public partial class TechnicalAssessment : ComponentBase
         {
             _logger.LogInformation("SPI Automation: Triggering risk assessment completion events for {AssessmentCode}", assessmentCode);
 
-            // Trigger Risk Assessment Completion Rate SPI
-            await _spiCoordinator.OnRiskAssessmentCompleted(
-                assessmentId: TechRiskAssessment?.Id?.Value ?? assessmentCode,
-                assessmentCode: assessmentCode,
-                startDate: startDate,
-                completedDate: completedDate,
-                targetCompletionDate: targetDate,
-                completedBy: completedBy,
-                hazardId: HazardId ?? "",
-                reportId: ReportId ?? "",
-                riskLevel: riskLevel,
-                riskScore: GetAssessmentRiskScore(),
-                assessmentType: "Technical");
+            var resolvedRiskLevel = RiskLevel.GetAllValues().FirstOrDefault(level =>
+                    level.Value.Equals(riskLevel, StringComparison.OrdinalIgnoreCase) ||
+                    level.Name.Equals(riskLevel, StringComparison.OrdinalIgnoreCase))
+                ?? RiskLevel.Low;
+
+            var completionEvent = new RiskAssessmentCompletedEvent(
+                new SMSEventID($"EVT-{Guid.NewGuid():N}"),
+                TechRiskAssessment?.Id?.Value ?? assessmentCode,
+                assessmentCode,
+                startDate,
+                targetDate,
+                completedDate,
+                ReportId ?? string.Empty)
+            {
+                HazardId = HazardId ?? string.Empty,
+                ReportId = ReportId ?? string.Empty,
+                RiskLevel = resolvedRiskLevel,
+                RiskScore = GetAssessmentRiskScore(),
+                AssessmentType = "Technical"
+            };
+
+            var completionPublishResult = await _eventBus.PublishDomainEventAsync(completionEvent, CancellationToken.None);
+            if (completionPublishResult.IsFailure)
+            {
+                _logger.LogWarning("SPI Automation: Failed to publish RiskAssessmentCompleted event for {AssessmentCode}: {Error}",
+                    assessmentCode, completionPublishResult.Error?.Message);
+            }
 
             // If this is a high risk assessment, also trigger High Risk Exposure SPI
             _logger.LogInformation("Checking if {RiskLevel} is high risk for SPI automation", riskLevel);
@@ -1813,16 +1989,22 @@ public partial class TechnicalAssessment : ComponentBase
             {
                 _logger.LogInformation("HIGH RISK DETECTED! Triggering High Risk Exposure SPI for {RiskLevel}", riskLevel);
 
-                await _spiCoordinator.OnHighRiskIdentified(
-                    assessmentId: assessmentCode,
-                    hazardId: HazardId ?? "",
-                    riskLevel: riskLevel,
-                    riskScore: GetAssessmentRiskScore(),
-                    identifiedDate: completedDate,
-                    identifiedBy: completedBy,
-                    reportId: ReportId ?? "",
-                    riskDescription: $"Technical assessment identified {riskLevel} risk level",
-                    impactArea: TechRiskAssessment?.SystemDescription ?? "");
+                var highRiskEvent = new HighRiskIdentifiedEvent(new SMSEventID($"EVT-{Guid.NewGuid():N}"))
+                {
+                    AssessmentId = assessmentCode,
+                    ReportId = ReportId ?? string.Empty,
+                    RiskLevel = resolvedRiskLevel,
+                    RiskScore = GetAssessmentRiskScore(),
+                    IdentifiedDate = completedDate,
+                    RiskDescription = $"Technical assessment identified {riskLevel} risk level"
+                };
+
+                var highRiskPublishResult = await _eventBus.PublishDomainEventAsync(highRiskEvent, CancellationToken.None);
+                if (highRiskPublishResult.IsFailure)
+                {
+                    _logger.LogWarning("SPI Automation: Failed to publish HighRiskIdentified event for {AssessmentCode}: {Error}",
+                        assessmentCode, highRiskPublishResult.Error?.Message);
+                }
 
                 _logger.LogInformation("SPI Automation: High risk SPI automation completed for {AssessmentCode} - Level: {RiskLevel}", 
                     assessmentCode, riskLevel);
@@ -1860,14 +2042,14 @@ public partial class TechnicalAssessment : ComponentBase
 
             foreach (var hazard in ReportHazards)
             {
-                _logger.LogInformation("Analyzing hazard {HazardCode}: Initial={InitialMatrix}, Residual={ResidualMatrix}", 
+                _logger.LogInformation("Analyzing hazard {HazardCode}: Technical={InitialMatrix}, Residual={ResidualMatrix}", 
                     hazard.Code, hazard.InitialRiskMatrixCode, hazard.ResidualRiskMatrixCode);
 
                 // Check both initial and residual matrix codes to determine risk levels
                 var initialRisk = GetRiskLevelFromMatrixCode(hazard.InitialRiskMatrixCode);
                 var residualRisk = GetRiskLevelFromMatrixCode(hazard.ResidualRiskMatrixCode);
 
-                _logger.LogInformation("Risk levels for {HazardCode}: Initial={InitialRisk}, Residual={ResidualRisk}", 
+                _logger.LogInformation("Risk levels for {HazardCode}: Technical={InitialRisk}, Residual={ResidualRisk}", 
                     hazard.Code, initialRisk.Value, residualRisk.Value);
 
                 // Use the higher of initial or residual risk

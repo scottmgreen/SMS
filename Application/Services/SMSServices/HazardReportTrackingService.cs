@@ -380,7 +380,7 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
 
         return daysSinceSubmission switch
         {
-            0 => "Initial Review",
+            0 => "Technical Review",
             <= 7 => "Safety Analysis",
             <= 14 => "Risk Assessment",
             <= 21 => "Mitigation Planning",

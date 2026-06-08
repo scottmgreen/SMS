@@ -101,7 +101,7 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
             ReportCode = reportCode,
             ValidatedBy = validatedBy,
             Status = ReportValidationStatus.ValidationNeeded,
-            Stage = "Initial",
+            Stage = "Technical",
             ValidationType = "Standard",
             CreatedBy = validatedBy
         };

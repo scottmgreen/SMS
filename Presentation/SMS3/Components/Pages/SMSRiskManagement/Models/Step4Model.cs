@@ -219,15 +219,19 @@ public class Step4Model
                             HazardPanelMembers[hazard.Code].Add(panel.SMSUserCode);
                         }
 
-                        if (panel.Severity.HasValue && panel.Likelihood.HasValue && panel.Score.HasValue)
+                        var severity = panel.InitialSeverity ?? panel.Severity;
+                        var likelihood = panel.InitialLikelihood ?? panel.Likelihood;
+                        var score = panel.InitialScore ?? panel.Score;
+
+                        if (severity.HasValue && likelihood.HasValue && score.HasValue)
                         {
                             var existingScore = PanelScores[hazard.Code]
                                 .FirstOrDefault(s => s.MemberId == panel.SMSUserCode);
 
                             if (existingScore is not null)
                             {
-                                existingScore.SeverityScore = panel.Severity.Value;
-                                existingScore.LikelihoodScore = panel.Likelihood.Value;
+                                existingScore.SeverityScore = severity.Value;
+                                existingScore.LikelihoodScore = likelihood.Value;
                                 existingScore.SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.UtcNow;
                             }
                             else
@@ -237,8 +241,8 @@ public class Step4Model
                                     HazardId = hazard.Code,
                                     MemberId = panel.SMSUserCode ?? string.Empty,
                                     MemberName = panel.SMSUserCode ?? string.Empty,
-                                    SeverityScore = panel.Severity.Value,
-                                    LikelihoodScore = panel.Likelihood.Value,
+                                    SeverityScore = severity.Value,
+                                    LikelihoodScore = likelihood.Value,
                                     SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.UtcNow
                                 });
                             }
@@ -266,24 +270,23 @@ public class Step4Model
         if (completedScores.Any())
         {
             var average = completedScores.Average(s => s.CalculatedScore);
+            var averageSeverity = completedScores.Average(s => (double)s.SeverityScore);
+            var averageLikelihood = completedScores.Average(s => (double)s.LikelihoodScore);
+            var matrixCode = AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
+            var (severity, likelihood) = AviationRiskMatrixCalculator.ParseMatrixCode(matrixCode);
+
             HazardAverageScores[hazardId] = average;
-            HazardRiskLevels[hazardId] = DetermineRiskLevel(average);
+            HazardMatrixCodes[hazardId] = matrixCode;
+            HazardRiskLevels[hazardId] = severity.HasValue && likelihood.HasValue
+                ? AviationRiskMatrixCalculator.GetAviationRiskLevel(severity.Value, likelihood.Value)
+                : RiskLevel.Unkonwn;
         }
         else
         {
             HazardAverageScores.Remove(hazardId);
+            HazardMatrixCodes.Remove(hazardId);
             HazardRiskLevels.Remove(hazardId);
         }
-    }
-
-    private RiskLevel DetermineRiskLevel(double score)
-    {
-        return score switch
-        {
-            >= 15 => RiskLevel.High,
-            >= 8 => RiskLevel.Medium,
-            _ => RiskLevel.Low
-        };
     }
 
     public class PanelMemberScoreData

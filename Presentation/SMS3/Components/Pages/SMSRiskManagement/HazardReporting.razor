@@ -219,6 +219,7 @@ else
                                                        Placeholder="Name and position (e.g., 'John Smith - Ground Operations Supervisor')"
                                                        Name="SubmittedBy"
                                                        MaxLength="60"
+                                                        ReadOnly="@IsExternalSystemSubmittedReport"
                                                        Style="width: 100%;min-width: 100%;" />
                                     </RadzenFormField>
                                     <RadzenRequiredValidator Component="SubmittedBy" Text="Reported by is required" />
@@ -502,12 +503,23 @@ else
                                 @if (!ShowSubmissionConfirmation && !ShowFinalSuccessConfirmation)
                                 {
                                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+                                        @if (IsEditMode)
+                                        {
+                                            <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                                        Icon="close"
+                                                        Text="Cancel"
+                                                        Size="ButtonSize.Medium"
+                                                        Click="CancelEdit" />
+                                        }
                                         
-                                        <RadzenButton ButtonStyle="ButtonStyle.Warning" 
-                                                    Icon="clear"
-                                                    Text="Clear Form"
-                                                    Size="ButtonSize.Medium"
-                                                    Click="ClearForm" />
+                                        @if (!IsExternalSystemSubmittedReport)
+                                        {
+                                            <RadzenButton ButtonStyle="ButtonStyle.Warning" 
+                                                        Icon="clear"
+                                                        Text="Clear Form"
+                                                        Size="ButtonSize.Medium"
+                                                        Click="ClearForm" />
+                                        }
                                         <RadzenButton ButtonStyle="ButtonStyle.Success" 
                                                     Icon="send"
                                                     Text="@(IsEditMode ? "Update Report" : "Submit Report")"

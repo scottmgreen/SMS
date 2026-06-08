@@ -2,7 +2,6 @@
 using Microsoft.JSInterop;
 
 using SMS_Application.Interfaces;
-using SMS_Application.Services;
 using SMS_Domain.Entities;
 using SMS_Domain.Events;
 using SMS_Domain.Errors;
@@ -12,6 +11,7 @@ using SMS_Shared.Configuration;
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using Microsoft.AspNetCore.WebUtilities;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -26,7 +26,6 @@ public partial class HazardReporting : ComponentBase, IDisposable
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<HazardReporting> _logger { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
-    [Inject] private SPIEventCoordinator _spiCoordinator { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
 
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
@@ -39,6 +38,9 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// Optional hazard code parameter for editing existing hazards
     /// </summary>
     [Parameter] public string? HazardCode { get; set; }
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "returnTo")]
+    public string? ReturnTo { get; set; }
 
     #endregion
 
@@ -184,19 +186,55 @@ public partial class HazardReporting : ComponentBase, IDisposable
     public bool IsFormValidForSubmission ()
     {
         if (!HazardReport.IsAnonymous)
-            {
-                return IsFormValidForPreview && 
-                !string.IsNullOrEmpty(HazardReport.ReportContactName) && 
-                !string.IsNullOrEmpty(HazardReport.ReportContactEmail) && 
-                        (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) && DescriptionCharacterCount <= 3000;
-            }
-
-        else
-            {
+        {
             return IsFormValidForPreview &&
+                !string.IsNullOrEmpty(HazardReport.ReportContactName) &&
+                !string.IsNullOrEmpty(HazardReport.ReportContactEmail) &&
                 (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) && DescriptionCharacterCount <= 3000;
+        }
+
+        return IsFormValidForPreview &&
+            (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) && DescriptionCharacterCount <= 3000;
+    }
+
+    public void CancelEdit()
+    {
+        var returnTarget = ReturnTo;
+        if (string.IsNullOrWhiteSpace(returnTarget))
+        {
+            var uri = _navigation.ToAbsoluteUri(_navigation.Uri);
+            var query = QueryHelpers.ParseQuery(uri.Query);
+            if (query.TryGetValue("returnTo", out var returnValues))
+            {
+                returnTarget = returnValues.FirstOrDefault();
             }
-                    
+        }
+
+        if (string.Equals(returnTarget, "hazard-listing", StringComparison.OrdinalIgnoreCase))
+        {
+            _navigation.NavigateToSecure("/SMSListings/Hazards");
+            return;
+        }
+
+        if (string.Equals(returnTarget, "report-listing", StringComparison.OrdinalIgnoreCase))
+        {
+            _navigation.NavigateToSecure("/SMSListings/Reports");
+            return;
+        }
+
+        if (string.Equals(returnTarget, "report-processing", StringComparison.OrdinalIgnoreCase))
+        {
+            _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+            return;
+        }
+
+        if (string.Equals(returnTarget, "risk-registry", StringComparison.OrdinalIgnoreCase))
+        {
+            _navigation.NavigateToSecure("/SMSAssurance/RiskRegistry");
+            return;
+        }
+
+        _navigation.NavigateToSecure("/SMSListings/Reports");
     }
         
 
@@ -209,6 +247,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
     public bool IsHazardCategoryDefault => HazardReport?.HazardCategory == HazardCategory.Default.Value;
     public bool IsHazardTypeDefault => HazardReport?.HazardType == HazardType.Default.Value;
     public bool HasDefaultHazardClassification => IsHazardCategoryDefault || IsHazardTypeDefault;
+    public bool IsExternalSystemSubmittedReport =>
+        IsEditMode && string.Equals(HazardReport?.SubmittedBy?.Trim(), "EXTERNAL_SYSTEM", StringComparison.OrdinalIgnoreCase);
 
     // Airport coordinates //GOLDKEY
     private double AirportCenterLatitude => 45.58808;
@@ -1220,7 +1260,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingHazard!.Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}";
         EditingHazard.Description = HazardReport.Description ?? string.Empty;
         EditingHazard.HazardCategory = HazardReport.HazardCategory ?? string.Empty;
-        EditingHazard.HazardType = HazardReport.HazardType; // This is the actual selected hazard type, not "Initial"
+        EditingHazard.HazardType = HazardReport.HazardType; // This is the actual selected hazard type, not "Technical"
         
         EditingHazard.UpdatedDate = DateTime.UtcNow;
         EditingHazard.UpdatedBy = _currentUserService.UserDisplayName;
