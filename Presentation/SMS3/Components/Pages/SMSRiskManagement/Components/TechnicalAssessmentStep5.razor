@@ -762,7 +762,8 @@
         {
             Logger.LogInformation("Updating Step5 model from hazard entities for {Count} hazards", Step5Hazards.Count);
 
-            foreach (var hazard in Step5Hazards)
+            var hazardsSnapshot = Step5Hazards.ToList();
+            foreach (var hazard in hazardsSnapshot)
             {
                 try
                 {

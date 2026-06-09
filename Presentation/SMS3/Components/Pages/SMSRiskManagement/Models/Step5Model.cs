@@ -259,7 +259,36 @@ public class Step5Model
                 }
                 else
                 {
-                    Console.WriteLine($"Could not load existing RiskAnalysis for {hazardCode} to preserve Technical properties");
+                    Console.WriteLine($"No existing RiskAnalysis found for {hazardCode}. Creating a new one for this assessment.");
+
+                    // Create new RiskAnalysis when one doesn't exist yet
+                    analysis.HazardCode = hazardCode;
+                    analysis.RiskAssessmentCode = assessment.Code;
+                    analysis.UpdatedDate = DateTime.UtcNow;
+                    analysis.UpdatedBy = _currentUserService?.UserDisplayName ?? "SYSTEM";
+
+                    if (analysis.CreatedDate == default)
+                    {
+                        analysis.CreatedDate = DateTime.UtcNow;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(analysis.CreatedBy))
+                    {
+                        analysis.CreatedBy = _currentUserService?.UserDisplayName ?? "SYSTEM";
+                    }
+
+                    var createCommand = new CreateRiskAnalysisCommand(analysis);
+                    var createResult = await Mediator.SendAsync(createCommand, CancellationToken.None);
+
+                    if (createResult.IsSuccess && createResult.Value is not null)
+                    {
+                        HazardResidualRiskAnalyses[hazardCode] = createResult.Value;
+                        Console.WriteLine($"Created new RiskAnalysis {createResult.Value.Code} for {hazardCode}");
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Failed to create RiskAnalysis for {hazardCode}: {createResult.Error?.Message}");
+                    }
                 }
             }
             catch (Exception ex)

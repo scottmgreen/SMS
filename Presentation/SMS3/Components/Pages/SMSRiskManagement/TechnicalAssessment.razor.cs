@@ -8,6 +8,7 @@ using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using Microsoft.JSInterop;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -32,6 +33,7 @@ public partial class TechnicalAssessment : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<TechnicalAssessment> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private IConfiguration _configuration { get; set; } = default!;
@@ -44,6 +46,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     private bool IsLoading { get; set; } = true;
     private bool IsSaving { get; set; } = false;
+    private readonly HashSet<int> DirtySteps = new();
     private bool ForceTechnicalAssessmentWorkflow => _configuration.GetValue<bool?>("FeatureManagement:ForceTechnicalAssessmentWorkflow") ?? true;
     private string? LastLoadedReportId { get; set; }
     private string? LastLoadedHazardId { get; set; }
@@ -630,7 +633,7 @@ public partial class TechnicalAssessment : ComponentBase
             await Step3.LoadFromAssessmentAsync(TechRiskAssessment,ReportHazards);
             
             Step4.LoadFromAssessment(TechRiskAssessment);
-            await Step4.LoadExistingScoringPanelsAsync(_mediator, ReportHazards);
+            await Step4.LoadExistingScoringPanelsAsync(_mediator, ReportHazards, TechRiskAssessment.Code);
 
             // Step 5 uses the same assessment - the step models will determine Technical vs Residual properties
             await Step5.LoadFromAssessmentAsync(TechRiskAssessment, ReportHazards);
@@ -731,6 +734,7 @@ public partial class TechnicalAssessment : ComponentBase
         }
 
         if (targetStep < 1 || targetStep > MaxAssessmentStep) return;
+        if (targetStep == CurrentStep) return;
 
         // Check if we're trying to jump ahead without saving current progress
         if (targetStep > CurrentStep && IsSaving)
@@ -738,6 +742,15 @@ public partial class TechnicalAssessment : ComponentBase
             _logger.LogInformation("Navigation blocked - currently saving step {CurrentStep}", CurrentStep);
             return;
         }
+
+        var didSaveFromDirtyPrompt = false;
+        var (canNavigate, savedChanges) = await PromptToSaveIfCurrentStepDirtyAsync();
+        if (!canNavigate)
+        {
+            return;
+        }
+
+        didSaveFromDirtyPrompt = savedChanges;
 
         // In strict workflow mode, any forward navigation requires current step validation and save.
         if (!skipWorkflowNavigationValidation && ForceTechnicalAssessmentWorkflow && targetStep > CurrentStep)
@@ -750,11 +763,14 @@ public partial class TechnicalAssessment : ComponentBase
             }
 
             // Save current step before jumping
-            var saveResult = await SaveCurrentStepAsync();
-            if (!saveResult.success)
+            if (!didSaveFromDirtyPrompt)
             {
-                await _notificationHelper.ShowErrorAsync($"Please save Step {CurrentStep} before proceeding to Step {targetStep}");
-                return;
+                var saveResult = await SaveCurrentStepAsync();
+                if (!saveResult.success)
+                {
+                    await _notificationHelper.ShowErrorAsync($"Please save Step {CurrentStep} before proceeding to Step {targetStep}");
+                    return;
+                }
             }
         }
         
@@ -1051,6 +1067,8 @@ public partial class TechnicalAssessment : ComponentBase
 
         try
         {
+            var stepBeingSaved = CurrentStep;
+
             // Apply current step to assessment - ENHANCED: Use async method
             await ApplyCurrentStepToAssessmentAsync();
 
@@ -1116,6 +1134,8 @@ public partial class TechnicalAssessment : ComponentBase
                 await UpdateHazardStatusForProgress();
 
                 _logger.LogInformation("Step {CurrentStep} saved successfully for assessment {AssessmentCode}", CurrentStep, TechRiskAssessment.Code);
+
+                DirtySteps.Remove(stepBeingSaved);
 
                 return (true, $"Step {CurrentStep} saved successfully");
             }
@@ -1743,30 +1763,35 @@ public partial class TechnicalAssessment : ComponentBase
     private async Task UpdateStep1(Step1Model updatedStep1)
     {
         Step1 = updatedStep1;
+        MarkCurrentStepDirty();
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task UpdateStep2(Step2Model updatedStep2)
     {
         Step2 = updatedStep2;
+        MarkCurrentStepDirty();
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task UpdateStep3(Step3Model updatedStep3)
     {
         Step3 = updatedStep3;
+        MarkCurrentStepDirty();
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task UpdateStep4(Step4Model updatedStep4)
     {
         Step4 = updatedStep4;
+        MarkCurrentStepDirty();
         await InvokeAsync(StateHasChanged);
     }
 
     private async Task UpdateStep5(Step5Model updatedStep5)
     {
         Step5 = updatedStep5;
+        MarkCurrentStepDirty();
         await InvokeAsync(StateHasChanged);
     }
 
@@ -1827,6 +1852,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             await _notificationHelper.ShowSuccessAsync($"Hazard {newHazard.Code} added successfully");
             _logger.LogInformation("Successfully added hazard to collections: {HazardCode} - Total hazards: {Count}",newHazard.Code, HazardUiSnapshot.Count);
+            MarkCurrentStepDirty();
         }
         catch (Exception ex)
         {
@@ -1857,6 +1883,7 @@ public partial class TechnicalAssessment : ComponentBase
 
                 await _notificationHelper.ShowSuccessAsync($"Hazard {updatedHazard.Code} updated successfully");
                 _logger.LogInformation("Successfully updated hazard via CQRS: {HazardCode}", updatedHazard.Code);
+                MarkCurrentStepDirty();
             }
             else
             {
@@ -1926,6 +1953,7 @@ public partial class TechnicalAssessment : ComponentBase
 
                 await _notificationHelper.ShowSuccessAsync($"Hazard {hazardToDelete.Code} deleted successfully");
                 _logger.LogInformation("Successfully deleted hazard: {HazardCode} - Remaining hazards: {Count}",hazardToDelete.Code, HazardUiSnapshot.Count);
+                MarkCurrentStepDirty();
             }
             else
             {
@@ -1938,6 +1966,41 @@ public partial class TechnicalAssessment : ComponentBase
             _logger.LogError(ex, "Error deleting hazard");
             await _notificationHelper.ShowErrorAsync("Error deleting hazard");
         }
+    }
+
+    private void MarkCurrentStepDirty()
+    {
+        if (CurrentStep >= 1 && CurrentStep <= MaxAssessmentStep)
+        {
+            DirtySteps.Add(CurrentStep);
+        }
+    }
+
+    private async Task<(bool canNavigate, bool savedChanges)> PromptToSaveIfCurrentStepDirtyAsync()
+    {
+        if (!DirtySteps.Contains(CurrentStep))
+        {
+            return (true, false);
+        }
+
+        var shouldSave = await _jsRuntime.InvokeAsync<bool>(
+            "confirm",
+            $"Step {CurrentStep} has unsaved changes. Click OK to save before leaving this step, or Cancel to continue without saving.");
+
+        if (!shouldSave)
+        {
+            return (true, false);
+        }
+
+        var saveResult = await SaveCurrentStepAsync(forceStayOnCurrentStep: true);
+        if (!saveResult.success)
+        {
+            await _notificationHelper.ShowErrorAsync($"Failed to save Step {CurrentStep}: {saveResult.message}");
+            return (false, false);
+        }
+
+        await _notificationHelper.ShowSuccessAsync($"Step {CurrentStep} saved successfully.");
+        return (true, true);
     }
 
     #endregion

@@ -189,9 +189,15 @@ public class Step4Model
         if (assessment is null) return;
     }
 
-    public async Task LoadExistingScoringPanelsAsync(IBaseMediator mediator, List<Hazard> availableHazards)
+    public async Task LoadExistingScoringPanelsAsync(IBaseMediator mediator, List<Hazard> availableHazards, string? riskAssessmentCode = null)
     {
         if (mediator is null || availableHazards is null) return;
+
+        PanelScores.Clear();
+        HazardPanelMembers.Clear();
+        HazardAverageScores.Clear();
+        HazardRiskLevels.Clear();
+        HazardMatrixCodes.Clear();
 
         foreach (var hazard in availableHazards)
         {
@@ -202,6 +208,15 @@ public class Step4Model
 
                 if (result.IsSuccess && result.Value?.Any() == true)
                 {
+                    var panels = string.IsNullOrWhiteSpace(riskAssessmentCode)
+                        ? result.Value
+                        : result.Value.Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), riskAssessmentCode.Trim(), StringComparison.OrdinalIgnoreCase)).ToList();
+
+                    if (!panels.Any())
+                    {
+                        continue;
+                    }
+
                     if (!PanelScores.ContainsKey(hazard.Code))
                     {
                         PanelScores[hazard.Code] = new List<PanelMemberScoreData>();
@@ -212,7 +227,7 @@ public class Step4Model
                         HazardPanelMembers[hazard.Code] = new List<string>();
                     }
 
-                    foreach (var panel in result.Value)
+                    foreach (var panel in panels)
                     {
                         if (!string.IsNullOrEmpty(panel.SMSUserCode) && !HazardPanelMembers[hazard.Code].Contains(panel.SMSUserCode))
                         {
