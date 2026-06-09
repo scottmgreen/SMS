@@ -8,7 +8,6 @@ using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
-using Microsoft.JSInterop;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -33,7 +32,7 @@ public partial class TechnicalAssessment : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<TechnicalAssessment> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
-    [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
+    [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private IConfiguration _configuration { get; set; } = default!;
@@ -47,6 +46,7 @@ public partial class TechnicalAssessment : ComponentBase
     private bool IsLoading { get; set; } = true;
     private bool IsSaving { get; set; } = false;
     private readonly HashSet<int> DirtySteps = new();
+    private bool IsCurrentStepDirty => DirtySteps.Contains(CurrentStep);
     private bool ForceTechnicalAssessmentWorkflow => _configuration.GetValue<bool?>("FeatureManagement:ForceTechnicalAssessmentWorkflow") ?? true;
     private string? LastLoadedReportId { get; set; }
     private string? LastLoadedHazardId { get; set; }
@@ -1034,13 +1034,17 @@ public partial class TechnicalAssessment : ComponentBase
     {
         try
         {
+            if (!IsCurrentStepDirty)
+            {
+                return;
+            }
+
             IsSaving = true;
             StateHasChanged();
 
-            var saveResult = await SaveCurrentStepAsync(forceStayOnCurrentStep: true);
-            if (!saveResult.success)
+            var (_, savedChanges) = await PromptToSaveIfCurrentStepDirtyAsync();
+            if (!savedChanges)
             {
-                await _notificationHelper.ShowErrorAsync($"Failed to save Step {CurrentStep}: {saveResult.message}");
                 return;
             }
 
@@ -1456,47 +1460,27 @@ public partial class TechnicalAssessment : ComponentBase
     /// <returns>Tuple of calculated scoring data</returns>
     public (double? AverageScore, string MatrixCode, RiskLevel RiskLevel) CalculateHazardScoringData(List<ScoringPanel> scoringPanels, string hazardCode)
     {
-        var completedPanels = scoringPanels.Where(p => HasScoringPanelScore(p)).ToList();
-
-        if (!completedPanels.Any())
-        {
-            _logger.LogInformation("No completed scoring panels for hazard {HazardCode}", hazardCode);
-            return (null, string.Empty, RiskLevel.Unkonwn);
-        }
-
         try
         {
-            // Calculate averages separately for severity and likelihood (aviation standard)
-            var averageSeverity = completedPanels.Average(p => (double)p.Severity!.Value);
-            var averageLikelihood = completedPanels.Average(p => (double)p.Likelihood!.Value);
-            var averageScore = completedPanels.Average(p => (double)p.Score!.Value);
+            var useResidual = CurrentStep == 5;
+            var calculation = AviationRiskMatrixCalculator.CalculateHazardRisk(scoringPanels, useResidual);
 
-            // Use aviation standard calculation for matrix code
-            var matrixCode = AviationRiskMatrixCalculator.GetAverageMatrixCode(averageSeverity, averageLikelihood);
-            var roundedSeverity = (int)Math.Round(averageSeverity);
-            var roundedLikelihood = (int)Math.Round(averageLikelihood);
-            var riskLevel = AviationRiskMatrixCalculator.GetAviationRiskLevel(roundedSeverity, roundedLikelihood);
+            if (!calculation.IsValid)
+            {
+                _logger.LogInformation("No completed scoring panels for hazard {HazardCode}", hazardCode);
+                return (null, string.Empty, RiskLevel.Unkonwn);
+            }
 
-            _logger.LogInformation("Calculated hazard {HazardCode} scoring: AvgSev={Severity:F2}?{RoundedSev}, AvgLike={Likelihood:F2}?{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}", 
-                hazardCode, averageSeverity, roundedSeverity, averageLikelihood, roundedLikelihood, matrixCode, riskLevel?.Value ?? "Unknown");
+            _logger.LogInformation("Calculated hazard {HazardCode} scoring via centralized calculator: AvgSev={Severity:F2}->{RoundedSev}, AvgLike={Likelihood:F2}->{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}",
+                hazardCode, calculation.AverageSeverity, calculation.RoundedSeverity, calculation.AverageLikelihood, calculation.RoundedLikelihood, calculation.MatrixCode, calculation.RiskLevel?.Value ?? "Unknown");
 
-            return (averageScore, matrixCode, riskLevel);
+            return ((double)calculation.AverageScore, calculation.MatrixCode, calculation.RiskLevel);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error calculating scoring data for hazard {HazardCode}", hazardCode);
             return (null, string.Empty, RiskLevel.Unkonwn);
         }
-    }
-
-    /// <summary>
-    /// Check if a scoring panel has complete score data
-    /// </summary>
-    /// <param name="panel">The scoring panel to check</param>
-    /// <returns>True if panel has severity, likelihood, and calculated score</returns>
-    private bool HasScoringPanelScore(ScoringPanel panel)
-    {
-        return panel.Severity.HasValue && panel.Likelihood.HasValue && panel.Score.HasValue;
     }
 
     #endregion
@@ -1983,11 +1967,12 @@ public partial class TechnicalAssessment : ComponentBase
             return (true, false);
         }
 
-        var shouldSave = await _jsRuntime.InvokeAsync<bool>(
-            "confirm",
-            $"Step {CurrentStep} has unsaved changes. Click OK to save before leaving this step, or Cancel to continue without saving.");
+        var shouldSave = await _dialogService.Confirm(
+            $"Step {CurrentStep} has unsaved changes. Do you want to save before leaving this step?",
+            "Unsaved Changes",
+            new ConfirmOptions { OkButtonText = "Save", CancelButtonText = "Don't Save" });
 
-        if (!shouldSave)
+        if (shouldSave != true)
         {
             return (true, false);
         }
@@ -2024,7 +2009,7 @@ public partial class TechnicalAssessment : ComponentBase
                 ?? RiskLevel.Low;
 
             var completionEvent = new RiskAssessmentCompletedEvent(
-                new SMSEventID($"EVT-{Guid.NewGuid():N}"),
+                new SMSEventID($"EVT-0000"),
                 TechRiskAssessment?.Id?.Value ?? assessmentCode,
                 assessmentCode,
                 startDate,
@@ -2100,28 +2085,10 @@ public partial class TechnicalAssessment : ComponentBase
                 return RiskLevel.Low.Value; // Default to low risk if no hazards
             }
 
-            // Get the highest risk level from all assessed hazards using matrix codes
-            var highestRisk = RiskLevel.Low; // Start with lowest
-
-            foreach (var hazard in ReportHazards)
-            {
-                _logger.LogInformation("Analyzing hazard {HazardCode}: Technical={InitialMatrix}, Residual={ResidualMatrix}", 
-                    hazard.Code, hazard.InitialRiskMatrixCode, hazard.ResidualRiskMatrixCode);
-
-                // Check both initial and residual matrix codes to determine risk levels
-                var initialRisk = GetRiskLevelFromMatrixCode(hazard.InitialRiskMatrixCode);
-                var residualRisk = GetRiskLevelFromMatrixCode(hazard.ResidualRiskMatrixCode);
-
-                _logger.LogInformation("Risk levels for {HazardCode}: Technical={InitialRisk}, Residual={ResidualRisk}", 
-                    hazard.Code, initialRisk.Value, residualRisk.Value);
-
-                // Use the higher of initial or residual risk
-                var hazardMaxRisk = GetHigherRiskLevel(initialRisk, residualRisk);
-                highestRisk = GetHigherRiskLevel(highestRisk, hazardMaxRisk);
-
-                _logger.LogInformation("Hazard {HazardCode} max risk: {MaxRisk}, Overall highest: {HighestRisk}", 
-                    hazard.Code, hazardMaxRisk.Value, highestRisk.Value);
-            }
+            var highestRisk = ReportHazards
+                .Select(h => AviationRiskMatrixCalculator.GetPreferredRiskFromMatrixCodes(h.InitialRiskMatrixCode, h.ResidualRiskMatrixCode).RiskLevel)
+                .OrderByDescending(r => r.RequiredAuthorityLevel)
+                .FirstOrDefault() ?? RiskLevel.Low;
 
             _logger.LogInformation("Assessment {AssessmentCode} final risk level determined: {RiskLevel}", 
                 TechRiskAssessment?.Code, highestRisk.Value);
@@ -2179,100 +2146,6 @@ public partial class TechnicalAssessment : ComponentBase
     {
         return string.Equals(riskLevel, RiskLevel.Critical.Value, StringComparison.OrdinalIgnoreCase) ||
                string.Equals(riskLevel, RiskLevel.High.Value, StringComparison.OrdinalIgnoreCase);
-    }
-
-    /// <summary>
-    /// Gets risk level from a matrix code string
-    /// Properly handles aviation matrix codes like "4E", "3C", etc.
-    /// </summary>
-    private RiskLevel GetRiskLevelFromMatrixCode(string? matrixCode)
-    {
-        if (string.IsNullOrEmpty(matrixCode))
-        {
-            _logger.LogDebug("Empty matrix code, returning Low risk");
-            return RiskLevel.Low;
-        }
-
-        var code = matrixCode.ToUpperInvariant().Trim();
-        _logger.LogDebug("Parsing matrix code: '{MatrixCode}' -> '{CleanCode}'", matrixCode, code);
-
-        // Handle aviation matrix codes (e.g., "4E", "3C", "5D")
-        if (TryParseAviationMatrixCode(code, out int severity, out int likelihood))
-        {
-            var riskLevel = GetRiskLevelFromSeverityLikelihood(severity, likelihood);
-            _logger.LogDebug("Aviation matrix: {Code} -> Severity:{Severity}, Likelihood:{Likelihood} -> {RiskLevel}", 
-                code, severity, likelihood, riskLevel.Value);
-            return riskLevel;
-        }
-
-        // Handle text-based risk levels
-        var textRisk = code switch
-        {
-            var c when c.Contains("CRITICAL") || c.Contains("RED") => RiskLevel.Critical,
-            var c when c.Contains("HIGH") || c.Contains("ORANGE") => RiskLevel.High,
-            var c when c.Contains("MEDIUM") || c.Contains("YELLOW") => RiskLevel.Medium,
-            var c when c.Contains("LOW") || c.Contains("GREEN") => RiskLevel.Low,
-            _ => RiskLevel.Low
-        };
-
-        _logger.LogDebug("Text-based matrix: {Code} -> {RiskLevel}", code, textRisk.Value);
-        return textRisk;
-    }
-
-    /// <summary>
-    /// Tries to parse aviation matrix code like "4E" into severity and likelihood
-    /// </summary>
-    private static bool TryParseAviationMatrixCode(string code, out int severity, out int likelihood)
-    {
-        severity = 0;
-        likelihood = 0;
-
-        if (code.Length < 2) return false;
-
-        // Extract severity (first part - number)
-        if (!int.TryParse(code[0].ToString(), out severity) || severity < 1 || severity > 5)
-            return false;
-
-        // Extract likelihood (second part - letter or number)
-        var likelihoodChar = code[1];
-        likelihood = likelihoodChar switch
-        {
-            'A' or '1' => 1,
-            'B' or '2' => 2,
-            'C' or '3' => 3,
-            'D' or '4' => 4,
-            'E' or '5' => 5,
-            _ => 0
-        };
-
-        return likelihood > 0;
-    }
-
-    /// <summary>
-    /// Gets risk level based on aviation matrix severity and likelihood values
-    /// Based on the aviation matrix color mapping in RiskLevel enum
-    /// </summary>
-    private static RiskLevel GetRiskLevelFromSeverityLikelihood(int severity, int likelihood)
-    {
-        // Get the color from the aviation matrix
-        var color = RiskLevel.GetAviationMatrixColor(severity, likelihood);
-
-        return color switch
-        {
-            "#dc3545" => RiskLevel.Critical,  // Red = Critical
-            "#fd7e14" => RiskLevel.High,      // Orange = High  
-            "#ffc107" => RiskLevel.Medium,    // Yellow = Medium
-            "#28a745" => RiskLevel.Low,       // Green = Low
-            _ => RiskLevel.Low                // Default
-        };
-    }
-
-    /// <summary>
-    /// Returns the higher of two risk levels based on authority level
-    /// </summary>
-    private static RiskLevel GetHigherRiskLevel(RiskLevel level1, RiskLevel level2)
-    {
-        return level1.RequiredAuthorityLevel >= level2.RequiredAuthorityLevel ? level1 : level2;
     }
 
     #endregion

@@ -270,13 +270,13 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalSeverityScore, riskAssessment.FinalSeverityScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalLikelihoodScore, riskAssessment.FinalLikelihoodScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, riskAssessment.FinalRiskLevel ?? (object)DBNull.Value));
-            
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAdditionalComments, riskAssessment.AdditionalComments ?? (object)DBNull.Value));
 
             // Step 5 - Implementation Fields
-            
+
 
             // Progress Tracking Fields
-            
+
             var completionPercentage = riskAssessment.CurrentStep * 20; // 5 steps = 100%
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedSteps, riskAssessment.CurrentStep));
@@ -397,120 +397,120 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
     /// <summary>
     /// Updates Step 4 - Risk Assessment data specifically
     /// </summary>
-    public async Task<Result<RiskAssessment>> UpdateStep4Async(
-        RiskAssessmentID riskAssessmentId,
-        int? finalSeverityScore,
-        int? finalLikelihoodScore,
-        string finalRiskLevel,
-        string updatedBy ,
-        CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_RiskAssessment_UpdateStep4} ID:{riskAssessmentId}", null);
+    //public async Task<Result<RiskAssessment>> UpdateStep4Async(
+    //    RiskAssessmentID riskAssessmentId,
+    //    int? finalSeverityScore,
+    //    int? finalLikelihoodScore,
+    //    string finalRiskLevel,
+    //    string updatedBy ,
+    //    CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_RiskAssessment_UpdateStep4} ID:{riskAssessmentId}", null);
 
-            using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_UpdateStep4, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
+    //        using SqlConnection sql = new(_connectionString);
+    //        using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_UpdateStep4, sql)
+    //        {
+    //            CommandType = CommandType.StoredProcedure
+    //        };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessmentId.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalSeverityScore, finalSeverityScore ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalLikelihoodScore, finalLikelihoodScore ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, finalRiskLevel));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessmentId.Value));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalSeverityScore, finalSeverityScore ?? (object)DBNull.Value));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalLikelihoodScore, finalLikelihoodScore ?? (object)DBNull.Value));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFinalRiskLevel, finalRiskLevel));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
 
-            await sql.OpenAsync(ct).ConfigureAwait(false);
-            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-            await sql.CloseAsync().ConfigureAwait(false);
+    //        await sql.OpenAsync(ct).ConfigureAwait(false);
+    //        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    //        await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByCodeAsync(riskAssessmentId, ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureError(ex, "Failed to update Step 4 for RiskAssessment: {Id}", riskAssessmentId);
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
-        }
-    }
+    //        return await GetRiskAssessmentByCodeAsync(riskAssessmentId, ct).ConfigureAwait(false);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureError(ex, "Failed to update Step 4 for RiskAssessment: {Id}", riskAssessmentId);
+    //        return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+    //    }
+    //}
 
     /// <summary>
     /// Updates Step 5 - Implementation data specifically
     /// </summary>
-    public async Task<Result<RiskAssessment>> UpdateStep5Async(
-        RiskAssessmentID riskAssessmentId,
-        string updatedBy ,
-        CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_RiskAssessment_UpdateStep5} ID:{riskAssessmentId}", null);
+    //public async Task<Result<RiskAssessment>> UpdateStep5Async(
+    //    RiskAssessmentID riskAssessmentId,
+    //    string updatedBy ,
+    //    CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_RiskAssessment_UpdateStep5} ID:{riskAssessmentId}", null);
 
-            using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_UpdateStep5, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
+    //        using SqlConnection sql = new(_connectionString);
+    //        using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_UpdateStep5, sql)
+    //        {
+    //            CommandType = CommandType.StoredProcedure
+    //        };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessmentId.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessmentId.Value));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
 
-            await sql.OpenAsync(ct).ConfigureAwait(false);
-            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-            await sql.CloseAsync().ConfigureAwait(false);
+    //        await sql.OpenAsync(ct).ConfigureAwait(false);
+    //        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    //        await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByCodeAsync(riskAssessmentId, ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureError(ex, "Failed to update Step 5 for RiskAssessment: {Id}", riskAssessmentId);
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
-        }
-    }
+    //        return await GetRiskAssessmentByCodeAsync(riskAssessmentId, ct).ConfigureAwait(false);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureError(ex, "Failed to update Step 5 for RiskAssessment: {Id}", riskAssessmentId);
+    //        return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+    //    }
+    //}
 
     /// <summary>
     /// Updates progress tracking data specifically
     /// </summary>
-    public async Task<Result<RiskAssessment>> UpdateProgressAsync(
-        RiskAssessmentID riskAssessmentId,
-        int currentStep,
-        string completedSteps,
-        int completionPercentage,
-        string status = null,
-        string stage = null,
-        string updatedBy = "SYSTEM",
-        CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_RiskAssessment_UpdateProgress} ID:{riskAssessmentId}", null);
+    //public async Task<Result<RiskAssessment>> UpdateProgressAsync(
+    //    RiskAssessmentID riskAssessmentId,
+    //    int currentStep,
+    //    string completedSteps,
+    //    int completionPercentage,
+    //    string status = null,
+    //    string stage = null,
+    //    string updatedBy = "SYSTEM",
+    //    CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInfrastructurePutItem($"{_logheader} {StoredProcs.pr_RiskAssessment_UpdateProgress} ID:{riskAssessmentId}", null);
 
-            using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_UpdateProgress, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
+    //        using SqlConnection sql = new(_connectionString);
+    //        using SqlCommand cmd = new(StoredProcs.pr_RiskAssessment_UpdateProgress, sql)
+    //        {
+    //            CommandType = CommandType.StoredProcedure
+    //        };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessmentId.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCurrentStep, currentStep));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedSteps, completedSteps));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletionPercentage, completionPercentage));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStatus, status ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStage, stage ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, riskAssessmentId.Value));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCurrentStep, currentStep));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletedSteps, completedSteps));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletionPercentage, completionPercentage));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStatus, status ?? (object)DBNull.Value));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentStage, stage ?? (object)DBNull.Value));
+    //        cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));
 
-            await sql.OpenAsync(ct).ConfigureAwait(false);
-            await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
-            await sql.CloseAsync().ConfigureAwait(false);
+    //        await sql.OpenAsync(ct).ConfigureAwait(false);
+    //        await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+    //        await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetRiskAssessmentByCodeAsync(riskAssessmentId, ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureError(ex, "Failed to update progress for RiskAssessment: {Id}", riskAssessmentId);
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
-        }
-    }
+    //        return await GetRiskAssessmentByCodeAsync(riskAssessmentId, ct).ConfigureAwait(false);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureError(ex, "Failed to update progress for RiskAssessment: {Id}", riskAssessmentId);
+    ////        return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+    //    }
+    //}
 
     public async Task<Result<bool>> DeleteRiskAssessmentAsync(RiskAssessmentID code, CancellationToken ct = default)
     {

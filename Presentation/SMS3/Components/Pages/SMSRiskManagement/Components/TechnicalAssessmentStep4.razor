@@ -21,7 +21,13 @@
                     <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
                     Hazard Risk Scoring (@Step4Hazards.Count Hazards)
                 </RadzenText>
-
+                <RadzenFormField Text="Additional Comments" Variant="Variant.Outlined" AllowFloatingLabel ="false">
+                    <RadzenTextArea @bind-Value="@Step4.AdditionalComments"
+                                    @oninput="OnAdditionalCommentsChanged"
+                                    Rows="4" Placeholder="Provide additional comments..." Style="width: 100%;"
+                                    title="Additional Comments" />
+                </RadzenFormField>
+                <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step4.AdditionalComments, 10)" />
                 @foreach (var hazard in Step4Hazards)
                 {
                     AvailableStakeholders = AvailableStakeholders.Where(predicate => predicate.IsPOPEmployee == true).ToList();
@@ -260,6 +266,16 @@
         }
     }
 
+    private async Task OnAdditionalCommentsChanged(ChangeEventArgs args)
+    {
+        Step4.AdditionalComments = args.Value?.ToString() ?? string.Empty;
+
+        if (Step4Changed.HasDelegate)
+        {
+            await Step4Changed.InvokeAsync(Step4);
+        }
+    }
+
     /// <summary>
     /// ✅ NEW: Update Step4 model from hazard entity that was already updated by HazardScoringPanel
     /// This eliminates the need to duplicate the complex scoring calculation logic
@@ -379,7 +395,8 @@
                 new RiskAssessmentID(riskAssessmentId),
                 finalSeverity,
                 finalLikelihood,
-                finalRiskLevel);
+                finalRiskLevel,
+                Step4.AdditionalComments);
 
             var result = await Mediator.SendAsync(saveStep4Command, CancellationToken.None);
 
@@ -417,36 +434,13 @@
         // Get the matrix code for the highest risk hazard
         var highestRiskMatrixCode = Step4.HazardMatrixCodes.GetValueOrDefault(highestRiskHazardCode, "Unknown");
 
-        // Parse matrix code back to severity/likelihood
-        var (severity, likelihood) = ParseMatrixCode(highestRiskMatrixCode);
+        // Parse matrix code back to severity/likelihood via centralized calculator
+        var (severity, likelihood) = AviationRiskMatrixCalculator.ParseMatrixCode(highestRiskMatrixCode);
         
         // Get risk level from Step4 model
         var finalRiskLevel = Step4.HazardRiskLevels.GetValueOrDefault(highestRiskHazardCode, RiskLevel.Unkonwn);
 
         return (severity, likelihood, finalRiskLevel);
-    }
-
-    /// <summary>
-    /// Parse matrix code back to severity and likelihood values
-    /// </summary>
-    private (int? severity, int? likelihood) ParseMatrixCode(string matrixCode)
-    {
-        if (string.IsNullOrEmpty(matrixCode) || matrixCode.Length < 2) 
-            return (null, null);
-
-        // Extract severity (first part) and likelihood letter (last part)
-        var severityPart = matrixCode.Substring(0, matrixCode.Length - 1);
-        var likelihoodLetter = matrixCode.Substring(matrixCode.Length - 1);
-
-        if (!int.TryParse(severityPart, out int severity))
-            return (null, null);
-
-        var likelihood = likelihoodLetter.ToUpper() switch
-        {
-            "A" => 1, "B" => 2, "C" => 3, "D" => 4, "E" => 5, _ => (int?)null
-        };
-
-        return (severity, likelihood);
     }
 
     /// <summary>
@@ -466,10 +460,7 @@
 
     private string GetSeverityLabel(int severity)
     {
-        return severity switch
-        {
-            5 => "Catastrophic", 4 => "Major", 3 => "Serious", 2 => "Moderate", 1 => "Minor", _ => ""
-        };
+        return HazardSeverity.GetDisplayName(severity);
     }
 
     private List<string> GetHazardsAtMatrixCode(int severity, int likelihood)
@@ -483,7 +474,17 @@
     }
 
         
-    
+    private string GetFieldValidation(string? text, int minLength)
+    {
+        var length = text?.Trim().Length ?? 0;
+
+        if (length == 0)
+            return $"0/{minLength} characters";
+        else if (length < minLength)
+            return $"{length}/{minLength} characters (minimum {minLength} required)";
+        else
+            return $"{length} characters ✓";
+    }
     
    
 }

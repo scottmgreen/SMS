@@ -319,7 +319,83 @@
 
     <!-- Guidance Panel -->
     <RadzenColumn Size="4" SizeLG="4">
-        <TechnicalAssessmentGuidancePanel StepNumber="5" />
+        <RadzenStack Gap="1rem">
+            @if (HasAnyExpandedSection("mitigation"))
+            {
+                <TechnicalAssessmentGuidancePanel StepNumber="5" />
+            }
+
+            @if (HasAnyExpandedSection("scoring"))
+            {
+                @if (Step5Hazards?.Any() == true && Step4.HazardAverageScores.Any())
+                {
+                    <RadzenCard Variant="Variant.Outlined" Style="position: sticky; top: 20px;">
+                        <RadzenStack Gap="1rem">
+                            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
+                                <RadzenIcon Icon="grid_on" Style="margin-right: 0.5rem;" />
+                                Risk Assessment Matrix
+                            </RadzenText>
+
+                            <div style="display: grid; grid-template-columns: auto repeat(5, 1fr); gap: 1px; font-size: 0.8rem; border: 2px solid #000;">
+                                <div style="background: #f8f9fa; padding: 8px; border: 1px solid #000; font-weight: bold; text-align: center;">
+                                    Severity ↓<br/>Likelihood →
+                                </div>
+                                <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;"><strong>A</strong><br/>RARE</div>
+                                <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;"><strong>B</strong><br/>UNLIKELY</div>
+                                <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;"><strong>C</strong><br/>POSSIBLE</div>
+                                <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;"><strong>D</strong><br/>LIKELY</div>
+                                <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;"><strong>E</strong><br/>FREQUENT</div>
+
+                                @for (int severity = 5; severity >= 1; severity--)
+                                {
+                                    <div style="font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000; text-align: center;">
+                                        <strong>@severity</strong><br/>@GetSeverityLabel(severity).ToUpper()
+                                    </div>
+
+                                    @for (int likelihood = 1; likelihood <= 5; likelihood++)
+                                    {
+                                        var matrixCode = AviationRiskMatrixCalculator.GetMatrixCode(severity, likelihood);
+                                        var cellStyle = AviationRiskMatrixCalculator.GetMatrixCellStyle(severity, likelihood);
+                                        var hazardsAtThisCode = GetHazardsAtMatrixCode(severity, likelihood);
+
+                                        <div style="@cellStyle min-height: 60px; position: relative; border: 1px solid #000;"
+                                             title="@($"{matrixCode} - {AviationRiskMatrixCalculator.GetAviationRiskLevel(severity, likelihood)} Risk - {hazardsAtThisCode.Count} hazard(s)")">
+                                            <div style="position: absolute; top: 4px; left: 4px; font-size: 0.9rem; font-weight: bold; color: #000;">
+                                                @matrixCode
+                                            </div>
+                                            @if (hazardsAtThisCode.Any())
+                                            {
+                                                <div style="position: absolute; bottom: 4px; right: 4px; display: flex; flex-wrap: wrap; gap: 2px; max-width: 80%;">
+                                                    @foreach (var hazardCode in hazardsAtThisCode.Take(3))
+                                                    {
+                                                        <span style="background: rgba(0,0,0,0.8); color: white; padding: 2px 4px; border-radius: 3px; font-size: 0.7rem; line-height: 1; font-weight: bold;">
+                                                            @hazardCode
+                                                        </span>
+                                                    }
+                                                    @if (hazardsAtThisCode.Count > 3)
+                                                    {
+                                                        <span style="background: rgba(0,0,0,0.9); color: white; padding: 2px 4px; border-radius: 3px; font-size: 0.7rem; line-height: 1; font-weight: bold;">
+                                                            +@(hazardsAtThisCode.Count - 3)
+                                                        </span>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    }
+                                }
+                            </div>
+                        </RadzenStack>
+                    </RadzenCard>
+                }
+
+                <TechnicalAssessmentGuidancePanel StepNumber="4" />
+            }
+
+            @if (HasAnyExpandedSection("analysis"))
+            {
+                <TechnicalAssessmentGuidancePanel StepNumber="3" />
+            }
+        </RadzenStack>
     </RadzenColumn>
 </RadzenRow>
 
@@ -372,6 +448,38 @@
 
         var category = HazardCategory.FromValue(categoryValue);
         return category?.Name ?? categoryValue.Replace("_", " ");
+    }
+
+    private bool HasAnyExpandedSection(string sectionType)
+    {
+        if (Step5Hazards?.Any() != true)
+        {
+            return false;
+        }
+
+        return sectionType switch
+        {
+            "mitigation" => Step5Hazards.Any(h => DetermineIfNeedsMitigation(h) && !IsSectionCollapsed(h.Code, "mitigation")),
+            "scoring" => Step5Hazards.Any(h => HasMitigations(h) && !IsSectionCollapsed(h.Code, "scoring")),
+            "analysis" => CurrentRiskAssessment is not null && Step5Hazards.Any(h => HasMitigations(h) && !IsSectionCollapsed(h.Code, "analysis")),
+            _ => false
+        };
+    }
+
+    private string GetSeverityLabel(int severity)
+    {
+        return HazardSeverity.GetDisplayName(severity);
+    }
+
+    private List<string> GetHazardsAtMatrixCode(int severity, int likelihood)
+    {
+        var targetMatrixCode = AviationRiskMatrixCalculator.GetMatrixCode(severity, likelihood);
+        return Step5Hazards
+            .Where(h => string.Equals(h.ResidualRiskMatrixCode?.Trim(), targetMatrixCode, StringComparison.OrdinalIgnoreCase)
+                        || string.Equals(h.InitialRiskMatrixCode?.Trim(), targetMatrixCode, StringComparison.OrdinalIgnoreCase))
+            .Select(h => h.Code)
+            .OrderBy(c => c)
+            .ToList();
     }
 
     private string GetHazardTypeDisplay(string? typeValue)

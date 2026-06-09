@@ -192,7 +192,7 @@
                                      Disabled="@(IsRiskRegistryOnly || CurrentStep <= 1 || IsSaving)"
                                      Click="@PreviousStep" />
 
-                        @if (!IsRiskRegistryOnly)
+                        @if (!IsRiskRegistryOnly && IsCurrentStepDirty)
                         {
                             <RadzenButton Text="Save Step"
                                          Icon="save"

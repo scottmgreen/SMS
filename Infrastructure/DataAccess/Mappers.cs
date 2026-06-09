@@ -620,7 +620,7 @@ public static partial class Mappers
         riskAssessment.FinalSeverityScore = reader.IsDBNull(FieldNames.fRiskAssessmentFinalSeverityScore) ? null : reader.GetValue<int?>(FieldNames.fRiskAssessmentFinalSeverityScore);
         riskAssessment.FinalLikelihoodScore = reader.IsDBNull(FieldNames.fRiskAssessmentFinalLikelihoodScore) ? null : reader.GetValue<int?>(FieldNames.fRiskAssessmentFinalLikelihoodScore);
         riskAssessment.FinalRiskLevel = reader.GetValue<string>(FieldNames.fRiskAssessmentFinalRiskLevel);
-        
+        riskAssessment.AdditionalComments = reader.GetValue<string>(FieldNames.fRiskAssessmentAdditionalComments);  
         // Step 5 - Implementation Fields
 
         riskAssessment.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy);

@@ -20,12 +20,12 @@
                         <RadzenColumn Size="8">
                             <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-secondary); margin: 0;">
                                 <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
-                            Hazard Risk Analysis (@GetAnalyzedCount()/@(Step3Hazards?.Count ?? 0) completed)
+                                    Hazard Risk Analysis (@GetAnalyzedCount()/@(Step3Hazards?.Count ?? 0) completed)
                             </RadzenText>
                         </RadzenColumn>
-                        <RadzenColumn Size="4">
-                            <RadzenText TextStyle="TextStyle.Caption" Text="Complete analysis for each hazard" />
-                        </RadzenColumn>
+                        @* <RadzenColumn Size="4">
+                            
+                        </RadzenColumn> *@
                     </RadzenRow>
 
                 @if (Step3Hazards?.Any() == true)

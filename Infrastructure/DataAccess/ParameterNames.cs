@@ -719,12 +719,13 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmFinalRiskLevel = new Lazy<string>(() => "@pFinalRiskLevel");
     public static string pmFinalRiskLevel => _pmFinalRiskLevel.Value;
 
-    
+    private static readonly Lazy<string> _pmAdditionalComments = new Lazy<string>(() => "@pAdditionalComments");
+    public static string pmAdditionalComments => _pmAdditionalComments.Value;
 
     /// <summary>
     /// Risk Assessment - Step 5 Parameters
     /// </summary>
-    
+
 
     /// <summary>
     /// Risk Assessment - Progress Tracking Parameters

@@ -132,220 +132,220 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     /// <summary>
     /// Saves Step 1 - System Description data
     /// </summary>
-    public async Task<Result<RiskAssessment>> SaveStep1Async(
-        RiskAssessmentID riskAssessmentId,
-        string leadAssessorId,
-        string systemDescription,
-        string systemBoundaries,
-        string systemPurpose,
-        string fiveMPersonnel,
-        string fiveMEquipment,
-        string fiveMProcedures,
-        string fiveMResources,
-        string fiveMPhysicalEnvironment,
-        string fiveMOperationalEnvironment,
-        string updatedBy = "SYSTEM",
-        CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInfrastructureInformation("Saving Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
+    //public async Task<Result<RiskAssessment>> SaveStep1Async(
+    //    RiskAssessmentID riskAssessmentId,
+    //    string leadAssessorId,
+    //    string systemDescription,
+    //    string systemBoundaries,
+    //    string systemPurpose,
+    //    string fiveMPersonnel,
+    //    string fiveMEquipment,
+    //    string fiveMProcedures,
+    //    string fiveMResources,
+    //    string fiveMPhysicalEnvironment,
+    //    string fiveMOperationalEnvironment,
+    //    string updatedBy = "SYSTEM",
+    //    CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInfrastructureInformation("Saving Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
 
-            var result = await _repo.UpdateStep1Async(
-                riskAssessmentId,
-                leadAssessorId,
-                systemDescription,
-                systemBoundaries,
-                systemPurpose,
-                fiveMPersonnel,
-                fiveMEquipment,
-                fiveMProcedures,
-                fiveMResources,
-                fiveMPhysicalEnvironment,
-                fiveMOperationalEnvironment,
-                string.Empty, // selectedStakeholderGroups - placeholder
-                string.Empty, // selectedIndividualStakeholders - placeholder  
-                updatedBy,
-                ct).ConfigureAwait(false);
+    //        var result = await _repo.UpdateStep1Async(
+    //            riskAssessmentId,
+    //            leadAssessorId,
+    //            systemDescription,
+    //            systemBoundaries,
+    //            systemPurpose,
+    //            fiveMPersonnel,
+    //            fiveMEquipment,
+    //            fiveMProcedures,
+    //            fiveMResources,
+    //            fiveMPhysicalEnvironment,
+    //            fiveMOperationalEnvironment,
+    //            string.Empty, // selectedStakeholderGroups - placeholder
+    //            string.Empty, // selectedIndividualStakeholders - placeholder  
+    //            updatedBy,
+    //            ct).ConfigureAwait(false);
 
-            if (result.IsSuccess)
-            {
-                _logger.LogInfrastructureInformation("Successfully saved Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
-            }
-            else
-            {
-                _logger.LogInfrastructureWarning("Failed to save Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
-            }
+    //        if (result.IsSuccess)
+    //        {
+    //            _logger.LogInfrastructureInformation("Successfully saved Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
+    //        }
+    //        else
+    //        {
+    //            _logger.LogInfrastructureWarning("Failed to save Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
+    //        }
 
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureError(ex, "Error saving Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
-        }
-    }
+    //        return result;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureError(ex, "Error saving Step 1 data for RiskAssessment: {Id}", riskAssessmentId);
+    //        return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+    //    }
+    //}
 
     /// <summary>
     /// Saves Step 3 - Risk Analysis data
     /// </summary>
-    public async Task<Result<RiskAssessment>> SaveStep3Async(
-        RiskAssessmentID riskAssessmentId,
-        string riskAnalysisMethod,
-        string riskCriteria,
-        string updatedBy = "SYSTEM",
-        CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInfrastructureInformation("Saving Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
+    //public async Task<Result<RiskAssessment>> SaveStep3Async(
+    //    RiskAssessmentID riskAssessmentId,
+    //    string riskAnalysisMethod,
+    //    string riskCriteria,
+    //    string updatedBy = "SYSTEM",
+    //    CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInfrastructureInformation("Saving Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
 
-            var result = await _repo.UpdateStep3Async(
-                riskAssessmentId,
-                riskAnalysisMethod,
-                riskCriteria,
-                updatedBy,
-                ct).ConfigureAwait(false);
+    //        var result = await _repo.UpdateStep3Async(
+    //            riskAssessmentId,
+    //            riskAnalysisMethod,
+    //            riskCriteria,
+    //            updatedBy,
+    //            ct).ConfigureAwait(false);
 
-            if (result.IsSuccess)
-            {
-                _logger.LogInfrastructureInformation("Successfully saved Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
-            }
-            else
-            {
-                _logger.LogInfrastructureWarning("Failed to save Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
-            }
+    //        if (result.IsSuccess)
+    //        {
+    //            _logger.LogInfrastructureInformation("Successfully saved Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
+    //        }
+    //        else
+    //        {
+    //            _logger.LogInfrastructureWarning("Failed to save Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
+    //        }
 
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureError(ex, "Error saving Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
-        }
-    }
+    //        return result;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureError(ex, "Error saving Step 3 data for RiskAssessment: {Id}", riskAssessmentId);
+    //        return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+    //    }
+    //}
 
     /// <summary>
     /// Saves Step 4 - Risk Assessment data
     /// </summary>
-    public async Task<Result<RiskAssessment>> SaveStep4Async(
-        RiskAssessmentID riskAssessmentId,
-        int? finalSeverityScore,
-        int? finalLikelihoodScore,
-        string finalRiskLevel,
-        string updatedBy = "SYSTEM",
-        CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInfrastructureInformation("Saving Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
+    //public async Task<Result<RiskAssessment>> SaveStep4Async(
+    //    RiskAssessmentID riskAssessmentId,
+    //    int? finalSeverityScore,
+    //    int? finalLikelihoodScore,
+    //    string finalRiskLevel,
+    //    string updatedBy = "SYSTEM",
+    //    CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInfrastructureInformation("Saving Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
 
-            var result = await _repo.UpdateStep4Async(
-                riskAssessmentId,
-                finalSeverityScore,
-                finalLikelihoodScore,
-                finalRiskLevel,
-                updatedBy,
-                ct).ConfigureAwait(false);
+    //        var result = await _repo.UpdateStep4Async(
+    //            riskAssessmentId,
+    //            finalSeverityScore,
+    //            finalLikelihoodScore,
+    //            finalRiskLevel,
+    //            updatedBy,
+    //            ct).ConfigureAwait(false);
 
-            if (result.IsSuccess)
-            {
-                _logger.LogInfrastructureInformation("Successfully saved Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
-            }
-            else
-            {
-                _logger.LogInfrastructureWarning("Failed to save Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
-            }
+    //        if (result.IsSuccess)
+    //        {
+    //            _logger.LogInfrastructureInformation("Successfully saved Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
+    //        }
+    //        else
+    //        {
+    //            _logger.LogInfrastructureWarning("Failed to save Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
+    //        }
 
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureError(ex, "Error saving Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
-        }
-    }
+    //        return result;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureError(ex, "Error saving Step 4 data for RiskAssessment: {Id}", riskAssessmentId);
+    //        return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+    //    }
+    //}
 
     /// <summary>
     /// Saves Step 5 - Implementation data
     /// </summary>
-    public async Task<Result<RiskAssessment>> SaveStep5Async(
-        RiskAssessmentID riskAssessmentId,
-        string updatedBy = "SYSTEM",
-        CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInfrastructureInformation("Saving Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
+    //public async Task<Result<RiskAssessment>> SaveStep5Async(
+    //    RiskAssessmentID riskAssessmentId,
+    //    string updatedBy = "SYSTEM",
+    //    CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInfrastructureInformation("Saving Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
 
-            var result = await _repo.UpdateStep5Async(
-                riskAssessmentId,
-                updatedBy,
-                ct).ConfigureAwait(false);
+    //        var result = await _repo.UpdateStep5Async(
+    //            riskAssessmentId,
+    //            updatedBy,
+    //            ct).ConfigureAwait(false);
 
-            if (result.IsSuccess)
-            {
-                _logger.LogInfrastructureInformation("Successfully saved Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
-            }
-            else
-            {
-                _logger.LogInfrastructureWarning("Failed to save Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
-            }
+    //        if (result.IsSuccess)
+    //        {
+    //            _logger.LogInfrastructureInformation("Successfully saved Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
+    //        }
+    //        else
+    //        {
+    //            _logger.LogInfrastructureWarning("Failed to save Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
+    //        }
 
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureError(ex, "Error saving Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
-        }
-    }
+    //        return result;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureError(ex, "Error saving Step 5 data for RiskAssessment: {Id}", riskAssessmentId);
+    //        return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+    //    }
+    //}
 
     /// <summary>
     /// Updates progress tracking data
     /// </summary>
-    public async Task<Result<RiskAssessment>> UpdateProgressAsync(
-        RiskAssessmentID riskAssessmentId,
-        int currentStep,
-        string completedSteps,
-        int completionPercentage,
-        string status = null,
-        string stage = null,
-        string updatedBy = "SYSTEM",
-        CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInfrastructureInformation("Updating progress for RiskAssessment: {Id}, Step: {Step}, Completion: {Percentage}%",
-                riskAssessmentId, currentStep, completionPercentage);
+    //public async Task<Result<RiskAssessment>> UpdateProgressAsync(
+    //    RiskAssessmentID riskAssessmentId,
+    //    int currentStep,
+    //    string completedSteps,
+    //    int completionPercentage,
+    //    string status = null,
+    //    string stage = null,
+    //    string updatedBy = "SYSTEM",
+    //    CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInfrastructureInformation("Updating progress for RiskAssessment: {Id}, Step: {Step}, Completion: {Percentage}%",
+    //            riskAssessmentId, currentStep, completionPercentage);
 
-            var result = await _repo.UpdateProgressAsync(
-                riskAssessmentId,
-                currentStep,
-                completedSteps,
-                completionPercentage,
-                status,
-                stage,
-                updatedBy,
-                ct).ConfigureAwait(false);
+    //        var result = await _repo.UpdateProgressAsync(
+    //            riskAssessmentId,
+    //            currentStep,
+    //            completedSteps,
+    //            completionPercentage,
+    //            status,
+    //            stage,
+    //            updatedBy,
+    //            ct).ConfigureAwait(false);
 
-            if (result.IsSuccess)
-            {
-                _logger.LogInfrastructureInformation("Successfully updated progress for RiskAssessment: {Id}", riskAssessmentId);
-            }
-            else
-            {
-                _logger.LogInfrastructureWarning("Failed to update progress for RiskAssessment: {Id}", riskAssessmentId);
-            }
+    //        if (result.IsSuccess)
+    //        {
+    //            _logger.LogInfrastructureInformation("Successfully updated progress for RiskAssessment: {Id}", riskAssessmentId);
+    //        }
+    //        else
+    //        {
+    //            _logger.LogInfrastructureWarning("Failed to update progress for RiskAssessment: {Id}", riskAssessmentId);
+    //        }
 
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureError(ex, "Error updating progress for RiskAssessment: {Id}", riskAssessmentId);
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
-        }
-    }
+    //        return result;
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureError(ex, "Error updating progress for RiskAssessment: {Id}", riskAssessmentId);
+    //        return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+    //    }
+    //}
 
     #endregion
 
@@ -354,94 +354,94 @@ public class RiskAssessmentDataService : BaseDataService<RiskAssessmentDataServi
     /// <summary>
     /// Saves data from Step1 model properties to the database
     /// </summary>
-    public async Task<Result<RiskAssessment>> SaveFromStep1DataAsync(
-        RiskAssessmentID riskAssessmentId,
-        string leadAssessor,
-        string systemDescription,
-        string systemBoundaries,
-        string systemPurpose,
-        string fiveMPersonnel,
-        string fiveMEquipment,
-        string fiveMProcedures,
-        string fiveMResources,
-        string fiveMPhysicalEnvironment,
-        string fiveMOperationalEnvironment,
-        string updatedBy = "SYSTEM",
-        CancellationToken ct = default)
-    {
-        return await SaveStep1Async(
-            riskAssessmentId,
-            leadAssessor,
-            systemDescription,
-            systemBoundaries,
-            systemPurpose,
-            fiveMPersonnel,
-            fiveMEquipment,
-            fiveMProcedures,
-            fiveMResources,
-            fiveMPhysicalEnvironment,
-            fiveMOperationalEnvironment,
-            updatedBy,
-            ct);
-    }
+    //public async Task<Result<RiskAssessment>> SaveFromStep1DataAsync(
+    //    RiskAssessmentID riskAssessmentId,
+    //    string leadAssessor,
+    //    string systemDescription,
+    //    string systemBoundaries,
+    //    string systemPurpose,
+    //    string fiveMPersonnel,
+    //    string fiveMEquipment,
+    //    string fiveMProcedures,
+    //    string fiveMResources,
+    //    string fiveMPhysicalEnvironment,
+    //    string fiveMOperationalEnvironment,
+    //    string updatedBy = "SYSTEM",
+    //    CancellationToken ct = default)
+    //{
+    //    return await SaveStep1Async(
+    //        riskAssessmentId,
+    //        leadAssessor,
+    //        systemDescription,
+    //        systemBoundaries,
+    //        systemPurpose,
+    //        fiveMPersonnel,
+    //        fiveMEquipment,
+    //        fiveMProcedures,
+    //        fiveMResources,
+    //        fiveMPhysicalEnvironment,
+    //        fiveMOperationalEnvironment,
+    //        updatedBy,
+    //        ct);
+    //}
 
     /// <summary>
     /// Generic save method that routes to the appropriate step save method
     /// Note: Step models should be converted to primitive parameters before calling this
     /// </summary>
-    public async Task<Result<RiskAssessment>> SaveStepDataAsync(
-        RiskAssessmentID riskAssessmentId,
-        int stepNumber,
-        Dictionary<string, object> stepData,
-        string updatedBy = "SYSTEM",
-        CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInfrastructureInformation("Saving Step {Step} data for RiskAssessment: {Id}", stepNumber, riskAssessmentId);
+    //public async Task<Result<RiskAssessment>> SaveStepDataAsync(
+    //    RiskAssessmentID riskAssessmentId,
+    //    int stepNumber,
+    //    Dictionary<string, object> stepData,
+    //    string updatedBy = "SYSTEM",
+    //    CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInfrastructureInformation("Saving Step {Step} data for RiskAssessment: {Id}", stepNumber, riskAssessmentId);
 
-            return stepNumber switch
-            {
-                1 => await SaveStep1Async(
-                    riskAssessmentId,
-                    stepData.GetValueOrDefault("LeadAssessor", "")?.ToString() ?? "",
-                    stepData.GetValueOrDefault("SystemDescription", "")?.ToString() ?? "",
-                    stepData.GetValueOrDefault("SystemBoundaries", "")?.ToString() ?? "",
-                    stepData.GetValueOrDefault("SystemPurpose", "")?.ToString() ?? "",
-                    stepData.GetValueOrDefault("FiveMPersonnel", "")?.ToString() ?? "",
-                    stepData.GetValueOrDefault("FiveMEquipment", "")?.ToString() ?? "",
-                    stepData.GetValueOrDefault("FiveMProcedures", "")?.ToString() ?? "",
-                    stepData.GetValueOrDefault("FiveMResources", "")?.ToString() ?? "",
-                    stepData.GetValueOrDefault("FiveMPhysicalEnvironment", "")?.ToString() ?? "",
-                    stepData.GetValueOrDefault("FiveMOperationalEnvironment", "")?.ToString() ?? "",
-                    updatedBy, ct),
+    //        return stepNumber switch
+    //        {
+    //            1 => await SaveStep1Async(
+    //                riskAssessmentId,
+    //                stepData.GetValueOrDefault("LeadAssessor", "")?.ToString() ?? "",
+    //                stepData.GetValueOrDefault("SystemDescription", "")?.ToString() ?? "",
+    //                stepData.GetValueOrDefault("SystemBoundaries", "")?.ToString() ?? "",
+    //                stepData.GetValueOrDefault("SystemPurpose", "")?.ToString() ?? "",
+    //                stepData.GetValueOrDefault("FiveMPersonnel", "")?.ToString() ?? "",
+    //                stepData.GetValueOrDefault("FiveMEquipment", "")?.ToString() ?? "",
+    //                stepData.GetValueOrDefault("FiveMProcedures", "")?.ToString() ?? "",
+    //                stepData.GetValueOrDefault("FiveMResources", "")?.ToString() ?? "",
+    //                stepData.GetValueOrDefault("FiveMPhysicalEnvironment", "")?.ToString() ?? "",
+    //                stepData.GetValueOrDefault("FiveMOperationalEnvironment", "")?.ToString() ?? "",
+    //                updatedBy, ct),
 
-                3 => await SaveStep3Async(
-                    riskAssessmentId,
-                    stepData.GetValueOrDefault("RiskAnalysisMethod", "SMS Risk Matrix")?.ToString() ?? "SMS Risk Matrix",
-                    stepData.GetValueOrDefault("RiskCriteria", "")?.ToString() ?? "",
-                    updatedBy, ct),
+    //            3 => await SaveStep3Async(
+    //                riskAssessmentId,
+    //                stepData.GetValueOrDefault("RiskAnalysisMethod", "SMS Risk Matrix")?.ToString() ?? "SMS Risk Matrix",
+    //                stepData.GetValueOrDefault("RiskCriteria", "")?.ToString() ?? "",
+    //                updatedBy, ct),
 
-                4 => await SaveStep4Async(
-                    riskAssessmentId,
-                    stepData.GetValueOrDefault("FinalSeverityScore", null) as int?,
-                    stepData.GetValueOrDefault("FinalLikelihoodScore", null) as int?,
-                    stepData.GetValueOrDefault("FinalRiskLevel", "")?.ToString() ?? "",
-                    updatedBy, ct),
+    //            4 => await SaveStep4Async(
+    //                riskAssessmentId,
+    //                stepData.GetValueOrDefault("FinalSeverityScore", null) as int?,
+    //                stepData.GetValueOrDefault("FinalLikelihoodScore", null) as int?,
+    //                stepData.GetValueOrDefault("FinalRiskLevel", "")?.ToString() ?? "",
+    //                updatedBy, ct),
 
-                5 => await SaveStep5Async(
-                    riskAssessmentId,
-                    updatedBy, ct),
+    //            5 => await SaveStep5Async(
+    //                riskAssessmentId,
+    //                updatedBy, ct),
 
-                _ => Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.InvalidStep)
-            };
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureError(ex, "Error saving Step {Step} data for RiskAssessment: {Id}", stepNumber, riskAssessmentId);
-            return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
-        }
-    }
+    //            _ => Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.InvalidStep)
+    //        };
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureError(ex, "Error saving Step {Step} data for RiskAssessment: {Id}", stepNumber, riskAssessmentId);
+    //        return Result<RiskAssessment>.Failure<RiskAssessment>(DomainErrors.RiskAssessmentError.UpdateFailed);
+    //    }
+    //}
 
     #endregion
 

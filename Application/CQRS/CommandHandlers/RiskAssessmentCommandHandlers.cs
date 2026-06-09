@@ -283,6 +283,7 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
             assessment.FinalSeverityScore = request.FinalSeverityScore;
             assessment.FinalLikelihoodScore = request.FinalLikelihoodScore;
             assessment.FinalRiskLevel = request.FinalRiskLevel;
+            assessment.AdditionalComments = request.AdditionalComments;
             assessment.UpdatedBy = request.UpdatedBy;
             assessment.UpdatedDate = DateTime.UtcNow;
 

@@ -10,7 +10,8 @@
             <RadzenColumn Size="8">
                 <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-warning); margin: 0;">
                     <RadzenIcon Icon="help_outline" Style="margin-right: 0.5rem;" />
-                    Step @StepNumber Guidance
+                    @GetGuidanceTitle()
+                    
                 </RadzenText>
             </RadzenColumn>
             <RadzenColumn Size="4">
@@ -161,4 +162,19 @@
     [Parameter] public int StepNumber { get; set; } = 1;
 
     private bool isExpanded = true;
+
+    private string GetGuidanceTitle()
+    {
+        var stage = StepNumber switch
+        {
+            1 => RiskAssessmentStage.DescribingSystem,
+            2 => RiskAssessmentStage.IdentifyingHazards,
+            3 => RiskAssessmentStage.AnalyizingRisk,
+            4 => RiskAssessmentStage.AssessingRisk,
+            5 => RiskAssessmentStage.MitigatingRisk,
+            _ => RiskAssessmentStage.DescribingSystem
+        };
+
+        return $"{stage.Name} Guidance";
+    }
 }

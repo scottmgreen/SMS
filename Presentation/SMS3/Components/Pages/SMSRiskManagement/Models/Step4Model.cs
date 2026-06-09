@@ -1,6 +1,8 @@
 
 using SMS3.Components.Shared;
 
+using System.ComponentModel.DataAnnotations;
+
 namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 /// <summary>
@@ -16,6 +18,11 @@ public class Step4Model
         Mediator = mediator;
         _currentUserService = _currentUserService;
     }
+
+    [StringLength(2000, MinimumLength = 10, ErrorMessage = "Additional Comments must be between 10 and 2000 characters.")]
+    [Display(Name = "Additional Comments")]
+    public string AdditionalComments { get; set; } = string.Empty;
+
     public List<string> SelectedPanelMembers { get; set; } = new();
     public Dictionary<string, List<string>> HazardPanelMembers { get; set; } = new();
     public Dictionary<string, List<PanelMemberScoreData>> PanelScores { get; set; } = new();
@@ -92,6 +99,7 @@ public class Step4Model
 
     public async Task ApplyToAssessmentAsync(RiskAssessment assessment, List<Hazard> availableHazards)
     {
+        assessment.AdditionalComments = AdditionalComments ?? string.Empty;
         await SaveStep4RiskAssessmentAsync(assessment,availableHazards);
         assessment.CompleteStep(4);
     }
@@ -111,7 +119,8 @@ public class Step4Model
                 riskAssessmentId,
                 finalSeverity,
                 finalLikelihood,
-                finalRiskLevel);
+                finalRiskLevel,
+                AdditionalComments);
 
             var result = await Mediator.SendAsync(saveStep4Command, CancellationToken.None);
 
@@ -187,6 +196,8 @@ public class Step4Model
     public void LoadFromAssessment(RiskAssessment assessment)
     {
         if (assessment is null) return;
+
+        AdditionalComments = assessment.AdditionalComments ?? string.Empty;
     }
 
     public async Task LoadExistingScoringPanelsAsync(IBaseMediator mediator, List<Hazard> availableHazards, string? riskAssessmentCode = null)

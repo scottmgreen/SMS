@@ -107,9 +107,11 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public string FiveMOperationalEnvironment { get; set; } = string.Empty;
 
     // Step 4 - Risk Assessment Properties
-   
+
+    public string AdditionalComments { get; set; } = string.Empty;
+
     // Step 5 - Implementation Properties
-   
+
     // Stakeholder Persistence Properties - Comma-delimited codes
     /// <summary>
     /// Selected Stakeholder Groups (comma-delimited codes: SG-0001,SG-0002,SG-0003)

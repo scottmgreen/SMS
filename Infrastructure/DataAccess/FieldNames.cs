@@ -1064,10 +1064,11 @@ public static class FieldNames
     private static readonly Lazy<string> _fRiskAssessmentFinalRiskLevel = new Lazy<string>(() => "fldv_FinalRiskLevel");
     public static string fRiskAssessmentFinalRiskLevel => _fRiskAssessmentFinalRiskLevel.Value;
 
-    
+    private static readonly Lazy<string> _fRiskAssessmentAdditionalComments = new Lazy<string>(() => "fldv_AdditionalComments");
+    public static string fRiskAssessmentAdditionalComments => _fRiskAssessmentAdditionalComments.Value;
 
     // Step 5 fields
-    
+
 
     #endregion
 
