@@ -27,7 +27,7 @@ namespace SMS3.Components.Pages.SMSListings;
 /// </summary>
 public partial class HazardLocationListing : ComponentBase
 {
-    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+    private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Dependencies
     [Inject] private IBaseMediator _mediator { get; set; } = default!;

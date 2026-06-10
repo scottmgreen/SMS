@@ -37,14 +37,14 @@
                                 <RadzenIcon Icon="category" Style="margin-right: 0.5rem;" />
                                 SMS Role Categories Summary
                             </RadzenText>
-                            <RadzenButton Icon="@(showCategorySummary ? "expand_less" : "expand_more")" 
+                            <RadzenButton Icon="@(_showCategorySummary ? "expand_less" : "expand_more")" 
                                          ButtonStyle="ButtonStyle.Light" 
                                          Size="ButtonSize.Small"
-                                         Click="@(() => showCategorySummary = !showCategorySummary)" 
-                                         title="@(showCategorySummary ? "Collapse" : "Expand")" />
+                                         Click="@(() => _showCategorySummary = !_showCategorySummary)" 
+                                         title="@(_showCategorySummary ? "Collapse" : "Expand")" />
                         </RadzenStack>
                     </RadzenCard>
-                    @if (showCategorySummary)
+                    @if (_showCategorySummary)
                     {
                         <!-- Statistics Cards -->
                         <RadzenRow Gap="1rem">
@@ -82,7 +82,7 @@
                             </RadzenColumn>
                         </RadzenRow>
                         <RadzenCard>
-                            @if (!IsLoading)
+                            @if (!_isLoading)
                             {
                                 <RadzenRow Gap="1rem">
                                     @foreach (var category in GetCategorySummary())
@@ -148,18 +148,18 @@
                                     <div style="width: 12px; height: 12px; background: var(--rz-warning); border-radius: 2px;"></div>
                                     <RadzenText TextStyle="TextStyle.Caption">Vacant</RadzenText>
                                 </RadzenStack>
-                                <RadzenButton Icon="@(showOrganizationalHierarchy ? "expand_less" : "expand_more")" 
+                            <RadzenButton Icon="@(_showOrganizationalHierarchy ? "expand_less" : "expand_more")" 
                                              ButtonStyle="ButtonStyle.Light" 
                                              Size="ButtonSize.Small"
-                                             Click="@(() => showOrganizationalHierarchy = !showOrganizationalHierarchy)" 
-                                             title="@(showOrganizationalHierarchy ? "Collapse" : "Expand")" />
+                                         Click="@(() => _showOrganizationalHierarchy = !_showOrganizationalHierarchy)" 
+                                         title="@(_showOrganizationalHierarchy ? "Collapse" : "Expand")" />
                             </RadzenStack>
                         </RadzenStack>
                     </RadzenCard>
-                    @if (showOrganizationalHierarchy)
+                    @if (_showOrganizationalHierarchy)
                     {
                         <RadzenCard>
-                            @if (IsLoading)
+                        @if (_isLoading)
                             {
                                 <RadzenStack AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 2rem;">
                                     <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
@@ -195,17 +195,17 @@
                                                Variant="Variant.Filled" />
                                 }
                             </RadzenStack>
-                            <RadzenButton Icon="@(showAssignmentMatrix ? "expand_less" : "expand_more")" 
+                            <RadzenButton Icon="@(_showAssignmentMatrix ? "expand_less" : "expand_more")" 
                                          ButtonStyle="ButtonStyle.Light" 
                                          Size="ButtonSize.Small"
-                                         Click="@(() => showAssignmentMatrix = !showAssignmentMatrix)" 
-                                         title="@(showAssignmentMatrix ? "Collapse" : "Expand")" />
+                                         Click="@(() => _showAssignmentMatrix = !_showAssignmentMatrix)" 
+                                         title="@(_showAssignmentMatrix ? "Collapse" : "Expand")" />
                         </RadzenStack>
                     </RadzenCard>
-                    @if (showAssignmentMatrix)
+                    @if (_showAssignmentMatrix)
                     {
                         <RadzenCard>
-                            @if (!IsLoading)
+                        @if (!_isLoading)
                             {
                                 <RadzenDataGrid Data="@GetSMSRoles()" TItem="SMSOrganizationalLevelInfo" AllowPaging="false" AllowSorting="false">
                                     <Columns>
@@ -240,7 +240,7 @@
                                                                 <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
                                                                             Click="@((args) => UnassignUserFromLevel(user))" 
                                                                             title="Remove from role" 
-                                                                            Disabled="@IsSaving" />
+                                                Disabled="@_isSaving" />
                                                             </RadzenStack>
                                                         }
                                                         @if (roleInfo.AssignedUsers.Count > 2)
@@ -285,7 +285,7 @@
                                                     {
                                                         <RadzenButton Text="Assign" Icon="person_add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                                                     Click="@((args) => OpenAssignmentModal(roleInfo.Level))" 
-                                                                    Disabled="@IsSaving" />
+                                                Disabled="@_isSaving" />
                                                     }
                                                 </RadzenStack>
                                             </Template>
@@ -327,7 +327,7 @@
     </RadzenRow>
 
     <!-- User Assignment Modal -->
-    @if (ShowAssignmentModal && SelectedLevelForAssignment != null)
+@if (_showAssignmentModal && _selectedLevelForAssignment != null)
     {
         <div class="modal-backdrop">
             <div class="modal-dialog modal-lg">
@@ -336,20 +336,20 @@
                     <div class="modal-header" style="background-color: #28a745; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
                         <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
                             <RadzenIcon Icon="person_add" Style="margin-right: 0.5rem;" />
-                            Assign User to @SelectedLevelForAssignment.Name
+                            Assign User to @_selectedLevelForAssignment.Name
                         </RadzenText>
                     </div>
                     
                     <!-- Modal Body -->
                     <RadzenStack Gap="1rem">
                         <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
-                            <strong>@SelectedLevelForAssignment.Category Level:</strong> @SelectedLevelForAssignment.Description
-                            <br><small><strong>Authority Level:</strong> @SelectedLevelForAssignment.AuthorityLevel</small>
+                                <strong>@_selectedLevelForAssignment.Category Level:</strong> @_selectedLevelForAssignment.Description
+                                <br><small><strong>Authority Level:</strong> @_selectedLevelForAssignment.AuthorityLevel</small>
                         </RadzenAlert>
 
                         <RadzenFormField Text="Select User to Assign" Variant="Variant.Outlined">
-                            <RadzenDropDown @bind-Value="@SelectedUserForAssignment" 
-                                          Data="@GetEligibleUsersForLevel(SelectedLevelForAssignment)" 
+                                <RadzenDropDown @bind-Value="@_selectedUserForAssignment"
+                                                Data="@GetEligibleUsersForLevel(_selectedLevelForAssignment)"
                                           TextProperty="DisplayName" 
                                           ValueProperty="Code"
                                           Style="width: 100%;" 
@@ -368,7 +368,7 @@
                             </RadzenDropDown>
                         </RadzenFormField>
 
-                        @if (!GetEligibleUsersForLevel(SelectedLevelForAssignment).Any())
+                            @if (!GetEligibleUsersForLevel(_selectedLevelForAssignment).Any())
                         {
                             <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
                                 No eligible users available for assignment. All active users may already be assigned to roles.
@@ -379,10 +379,10 @@
                     <!-- Modal Footer -->
                     <div class="d-flex justify-content-end gap-2 mt-3">
                         <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseAssignmentModal" 
-                                    Disabled="@IsSaving" />
+                                Disabled="@_isSaving" />
                         <RadzenButton Text="Assign User" Icon="save" ButtonStyle="ButtonStyle.Success" 
                                     Click="@AssignUserToLevel" 
-                                    Disabled="@(string.IsNullOrEmpty(SelectedUserForAssignment) || IsSaving)"
+                                Disabled="@(string.IsNullOrEmpty(_selectedUserForAssignment) || _isSaving)"
                                     Style="background-color: #28a745; border-color: #28a745;" />
                     </div>
                 </RadzenCard>

@@ -41,7 +41,7 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="Code" Title="Location ID" Width="150px">
             <Template Context="location">
-                <div title="@location.Code" style="@BasicTextStyle">
+                                                <div title="@location.Code" style="@_basicTextStyle">
                     @(location.Code)
                 </div>
             </Template>
@@ -49,42 +49,42 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="HazardCode" Title="Hazard ID" Width="120px">
             <Template Context="location">
-                <div title="@location.HazardCode" style="@BasicTextStyle">
+                                                <div title="@location.HazardCode" style="@_basicTextStyle">
                     @(location.HazardCode)
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="Latitude" Title="Latitude" Width="120px">
             <Template Context="location">
-                <div title="@(location.Latitude?.ToString("F6"))" style="@BasicTextStyle">
+                                                <div title="@(location.Latitude?.ToString("F6"))" style="@_basicTextStyle">
                     @(location.Latitude?.ToString("F6") ?? "N/A")
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="Longitude" Title="Longitude" Width="120px">
             <Template Context="location">
-                <div title="@(location.Longitude?.ToString("F6"))" style="@BasicTextStyle">
+                                                <div title="@(location.Longitude?.ToString("F6"))" style="@_basicTextStyle">
                     @(location.Longitude?.ToString("F6") ?? "N/A")
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="Description" Title="Description" Width="300px">
             <Template Context="location">
-                <div title="@location.Description" style="@BasicTextStyle">
+                                                <div title="@location.Description" style="@_basicTextStyle">
                     @(location.Description)
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedBy" Title="Created By" Width="150px">
             <Template Context="location">
-                <div title="@location.CreatedBy" style="@BasicTextStyle">
+                                                <div title="@location.CreatedBy" style="@_basicTextStyle">
                     @(location.CreatedBy)
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}">
             <Template Context="location">
-                <div title="@location.CreatedDate" style="@BasicTextStyle">
+                                                <div title="@location.CreatedDate" style="@_basicTextStyle">
                     @if (location.CreatedDate.HasValue)
                     {
                         @(location.CreatedDate.Value.ToString("MM/dd/yyyy"))

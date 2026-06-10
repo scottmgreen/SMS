@@ -33,26 +33,26 @@ public partial class ApplicationUsers : ComponentBase
     // Data Properties - renamed to avoid conflict
     private List<SMSApplicationUser> ApplicationUsersList { get; set; } = new();
     private List<SMSUserRole> UserRoles { get; set; } = new();
-    private SMSApplicationUser? CurrentUser { get; set; }
-    private bool IsEditMode { get; set; }
-    private string? SuccessMessage { get; set; }
-    private string? ErrorMessage { get; set; }
+    private SMSApplicationUser? _currentUser { get; set; }
+    private bool _isEditMode { get; set; }
+    private string? _successMessage { get; set; }
+    private string? _errorMessage { get; set; }
 
     // Password Modal Properties for Shared Component
-    private bool ShowPasswordModal { get; set; }
-    private string PasswordUserCode { get; set; } = string.Empty;
-    private string PasswordUserDisplayName { get; set; } = string.Empty;
+    private bool _showPasswordModal { get; set; }
+    private string _passwordUserCode { get; set; } = string.Empty;
+    private string _passwordUserDisplayName { get; set; } = string.Empty;
 
     // ?? NEW: Role Assignment Properties
-    private bool ShowRoleAssignmentModal { get; set; }
-    private string RoleAssignmentUserCode { get; set; } = string.Empty;
-    private string RoleAssignmentUserDisplayName { get; set; } = string.Empty;
-    private string? CurrentUserRoleCode { get; set; }
-    private string? SelectedRoleCode { get; set; }
+    private bool _showRoleAssignmentModal { get; set; }
+    private string _roleAssignmentUserCode { get; set; } = string.Empty;
+    private string _roleAssignmentUserDisplayName { get; set; } = string.Empty;
+    private string? _currentUserRoleCode { get; set; }
+    private string? _selectedRoleCode { get; set; }
     private List<SMSUserRole> AvailableRoles { get; set; } = new();
 
     // Dynamically get all unique modules from available roles' permissions
-    private IEnumerable<string> SMSModules =>
+    private IEnumerable<string> _smsModules =>
         AvailableRoles
             .Where(role => role.Permissions is not null)
             .SelectMany(role => role.Permissions)
@@ -62,9 +62,9 @@ public partial class ApplicationUsers : ComponentBase
             .OrderBy(module => module);
 
     // Group Management Properties
-    private bool ShowGroupsModal { get; set; } = false;
-    private string GroupManagementUserCode { get; set; } = string.Empty;
-    private string GroupManagementUserDisplayName { get; set; } = string.Empty;
+    private bool _showGroupsModal { get; set; } = false;
+    private string _groupManagementUserCode { get; set; } = string.Empty;
+    private string _groupManagementUserDisplayName { get; set; } = string.Empty;
     private List<SMSApplicationGroup> AllApplicationGroups { get; set; } = new();
     private List<SMSApplicationGroup> UserCurrentGroups { get; set; } = new();
     private List<SMSApplicationGroup> AvailableGroups { get; set; } = new();
@@ -73,11 +73,11 @@ public partial class ApplicationUsers : ComponentBase
     // Form Models
     private EditUserModel _editUser = new();
     private CreateUserModel _newUser = new();
-    private string? EditUserRoleCode { get; set; }
+    private string? _editUserRoleCode { get; set; }
 
     // Create Modal Properties
-    private bool ShowCreateModal { get; set; }
-    private bool IsSaving { get; set; }
+    private bool _showCreateModal { get; set; }
+    private bool _isSaving { get; set; }
 
     // Component References
     private RadzenDataGrid<SMSApplicationUser>? _usersGrid;
@@ -103,14 +103,14 @@ public partial class ApplicationUsers : ComponentBase
     protected override async Task OnParametersSetAsync()
     {
         _logger.LogInformation("OnParametersSetAsync called with Id: {Id}, IsEditMode: {IsEditMode}", 
-            Id ?? "NULL", IsEditMode);
+            Id ?? "NULL", _isEditMode);
             
-        if (!string.IsNullOrWhiteSpace(Id) && !IsEditMode)
+        if (!string.IsNullOrWhiteSpace(Id) && !_isEditMode)
         {
             _logger.LogInformation("Calling LoadUserForEdit from OnParametersSetAsync with Id: {Id}", Id);
             await LoadUserForEdit(Id);
         }
-        else if (string.IsNullOrWhiteSpace(Id) && IsEditMode)
+        else if (string.IsNullOrWhiteSpace(Id) && _isEditMode)
         {
             _logger.LogInformation("Cancelling edit mode from OnParametersSetAsync");
             CancelEdit();
@@ -175,24 +175,24 @@ public partial class ApplicationUsers : ComponentBase
                 return;
             }
 
-            CurrentUser = userResult.Value;
-            IsEditMode = true;
+            _currentUser = userResult.Value;
+            _isEditMode = true;
 
             _logger.LogInformation("Edit mode set - CurrentUser: {UserCode}, IsEditMode: {IsEditMode}", 
-                CurrentUser?.Code, IsEditMode);
+                _currentUser?.Code, _isEditMode);
 
             // Populate edit form
             _editUser = new EditUserModel
             {
-                FirstName = CurrentUser?.FirstName?.Value ?? "",
-                LastName = CurrentUser?.LastName?.Value ?? ""
+                FirstName = _currentUser?.FirstName?.Value ?? "",
+                LastName = _currentUser?.LastName?.Value ?? ""
             };
 
             // Set the role code for dropdown binding
-            EditUserRoleCode = CurrentUser?.UserRole?.Code;
+            _editUserRoleCode = _currentUser?.UserRole?.Code;
 
             _logger.LogInformation("Edit form populated - FirstName: {FirstName}, LastName: {LastName}, RoleCode: {RoleCode}", 
-                _editUser.FirstName, _editUser.LastName, EditUserRoleCode);
+                _editUser.FirstName, _editUser.LastName, _editUserRoleCode);
 
             StateHasChanged();
         }
@@ -225,27 +225,27 @@ public partial class ApplicationUsers : ComponentBase
     }
     private void OpenRoleAssignmentModal(string userCode, string userDisplayName, string? currentRoleCode = null)
     {
-        RoleAssignmentUserCode = userCode;
-        RoleAssignmentUserDisplayName = userDisplayName;
-        CurrentUserRoleCode = currentRoleCode;
-        SelectedRoleCode = currentRoleCode;
-        ShowRoleAssignmentModal = true;
+        _roleAssignmentUserCode = userCode;
+        _roleAssignmentUserDisplayName = userDisplayName;
+        _currentUserRoleCode = currentRoleCode;
+        _selectedRoleCode = currentRoleCode;
+        _showRoleAssignmentModal = true;
         StateHasChanged();
     }
 
     private void CloseRoleAssignmentModal()
     {
-        ShowRoleAssignmentModal = false;
-        RoleAssignmentUserCode = string.Empty;
-        RoleAssignmentUserDisplayName = string.Empty;
-        CurrentUserRoleCode = null;
-        SelectedRoleCode = null;
+        _showRoleAssignmentModal = false;
+        _roleAssignmentUserCode = string.Empty;
+        _roleAssignmentUserDisplayName = string.Empty;
+        _currentUserRoleCode = null;
+        _selectedRoleCode = null;
         StateHasChanged();
     }
 
     private async Task AssignUserRole()
     {
-        if (string.IsNullOrEmpty(RoleAssignmentUserCode) || string.IsNullOrEmpty(SelectedRoleCode))
+        if (string.IsNullOrEmpty(_roleAssignmentUserCode) || string.IsNullOrEmpty(_selectedRoleCode))
         {
             await ShowErrorAsyncNotification("Invalid user or role selection.");
             return;
@@ -253,11 +253,11 @@ public partial class ApplicationUsers : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Get the user
-            var userQuery = new GetSMSApplicationUserByCodeQuery(RoleAssignmentUserCode);
+            var userQuery = new GetSMSApplicationUserByCodeQuery(_roleAssignmentUserCode);
             var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
             if (userResult.IsFailure || userResult.Value is null)
@@ -269,7 +269,7 @@ public partial class ApplicationUsers : ComponentBase
             var user = userResult.Value;
 
             // Get the selected role
-            var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == SelectedRoleCode);
+            var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == _selectedRoleCode);
             if (selectedRole is null)
             {
                 await ShowErrorAsyncNotification("Selected role not found.");
@@ -288,7 +288,7 @@ public partial class ApplicationUsers : ComponentBase
 
             if (updateResult.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Role '{selectedRole.Name}' successfully assigned to {RoleAssignmentUserDisplayName}.");
+                await ShowSuccessAsyncNotification($"Role '{selectedRole.Name}' successfully assigned to {_roleAssignmentUserDisplayName}.");
 
                 // Refresh data and close modal
                 await LoadDataAsync();
@@ -301,19 +301,19 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning role to user {UserCode}", RoleAssignmentUserCode);
+            _logger.LogError(ex, "Error assigning role to user {UserCode}", _roleAssignmentUserCode);
             await ShowErrorAsyncNotification("An error occurred while assigning the role. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
 
     private async Task RemoveUserRole()
     {
-        if (string.IsNullOrEmpty(RoleAssignmentUserCode))
+        if (string.IsNullOrEmpty(_roleAssignmentUserCode))
         {
             await ShowErrorAsyncNotification("Invalid user selection.");
             return;
@@ -321,11 +321,11 @@ public partial class ApplicationUsers : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Get the user
-            var userQuery = new GetSMSApplicationUserByCodeQuery(RoleAssignmentUserCode);
+            var userQuery = new GetSMSApplicationUserByCodeQuery(_roleAssignmentUserCode);
             var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
             if (userResult.IsFailure || userResult.Value is null)
@@ -347,7 +347,7 @@ public partial class ApplicationUsers : ComponentBase
 
             if (updateResult.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Role successfully removed from {RoleAssignmentUserDisplayName}.");
+                await ShowSuccessAsyncNotification($"Role successfully removed from {_roleAssignmentUserDisplayName}.");
 
                 // Refresh data and close modal
                 await LoadDataAsync();
@@ -360,12 +360,12 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing role from user {UserCode}", RoleAssignmentUserCode);
+            _logger.LogError(ex, "Error removing role from user {UserCode}", _roleAssignmentUserCode);
             await ShowErrorAsyncNotification("An error occurred while removing the role. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
@@ -380,14 +380,14 @@ public partial class ApplicationUsers : ComponentBase
         {
             TwoFactorEnabled = false
         };
-        NewIsActive = true; // ADDED: Initialize the property
-        ShowCreateModal = true;
+        _newIsActive = true; // ADDED: Initialize the property
+        _showCreateModal = true;
         StateHasChanged();
     }
 
     private async Task CreateUser()
     {
-        if (!IsCreateFormValid)
+        if (!_isCreateFormValid)
         {
             await ShowErrorAsyncNotification("Please fill in all required fields.");
             return;
@@ -395,7 +395,7 @@ public partial class ApplicationUsers : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // ?? NEW: Get selected role if provided
@@ -416,7 +416,7 @@ public partial class ApplicationUsers : ComponentBase
                 Password = Password.Create(_newUser.Password).Value,
                 UserRole = selectedRole ?? new SMSUserRole(new SMSUserRoleID("ROLE-UNASSIGNED")) { Name = "Unassigned" }, // ?? NEW: Assign role during creation
                 TwoFactorEnabled = _newUser.TwoFactorEnabled, // ?? NEW: Set 2FA requirement
-                IsActive = NewIsActive, // UPDATED: Use NewIsActive property
+                IsActive = _newIsActive, // UPDATED: Use NewIsActive property
                 SMSUserType = SMSUserType.Application
                 // ? FIXED: Removed manual audit field assignments
                 // ? REMOVED: CreatedBy = _currentUserService?.UserDisplayName,
@@ -446,23 +446,23 @@ public partial class ApplicationUsers : ComponentBase
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
 
     private void CloseCreateModal()
     {
-        ShowCreateModal = false;
+        _showCreateModal = false;
             _newUser = new CreateUserModel
         {
             TwoFactorEnabled = false
         };
-        NewIsActive = true; // ADDED: Reset the property
+        _newIsActive = true; // ADDED: Reset the property
         StateHasChanged();
     }
 
-    private bool IsCreateFormValid =>
+    private bool _isCreateFormValid =>
         !string.IsNullOrWhiteSpace(_newUser.FirstName) &&
         !string.IsNullOrWhiteSpace(_newUser.LastName) &&
         !string.IsNullOrWhiteSpace(_newUser.UserName) &&
@@ -489,26 +489,26 @@ public partial class ApplicationUsers : ComponentBase
     {
         try
         {
-            if (CurrentUser is null)
+            if (_currentUser is null)
             {
                 await ShowErrorAsyncNotification("No user selected for update.");
                 return;
             }
 
             // ? FIXED: Only update business fields - let pipeline handle audit fields
-            CurrentUser.FirstName = FirstName.Create(model.FirstName).Value;
-            CurrentUser.LastName = LastName.Create(model.LastName).Value;
-            CurrentUser.SMSUserType = SMSUserType.Application;
+            _currentUser.FirstName = FirstName.Create(model.FirstName).Value;
+            _currentUser.LastName = LastName.Create(model.LastName).Value;
+            _currentUser.SMSUserType = SMSUserType.Application;
             
             // Update role if changed
-            if (!string.IsNullOrEmpty(EditUserRoleCode))
+            if (!string.IsNullOrEmpty(_editUserRoleCode))
             {
-                var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == EditUserRoleCode);
-                CurrentUser.UserRole = selectedRole ?? new SMSUserRole(new SMSUserRoleID("ROLE-UNASSIGNED")) { Name = "Unassigned" };
+                var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == _editUserRoleCode);
+                _currentUser.UserRole = selectedRole ?? new SMSUserRole(new SMSUserRoleID("ROLE-UNASSIGNED")) { Name = "Unassigned" };
             }
             else
             {
-                CurrentUser.UserRole = new SMSUserRole(new SMSUserRoleID("ROLE-UNASSIGNED")) { Name = "Unassigned" };
+                _currentUser.UserRole = new SMSUserRole(new SMSUserRoleID("ROLE-UNASSIGNED")) { Name = "Unassigned" };
             }
             
             // ? REMOVED: Manual audit field assignments
@@ -516,16 +516,16 @@ public partial class ApplicationUsers : ComponentBase
             // CurrentUser.UpdatedDate = DateTime.UtcNow;
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
-            var updateCommand = new UpdateSMSApplicationUserCommand(CurrentUser);
+            var updateCommand = new UpdateSMSApplicationUserCommand(_currentUser);
             var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"User '{CurrentUser.UserName.Value}' has been updated successfully!");
+                await ShowSuccessAsyncNotification($"User '{_currentUser.UserName.Value}' has been updated successfully!");
                 
                 // Reset form state
-                IsEditMode = false;
-                CurrentUser = null;
+                _isEditMode = false;
+                _currentUser = null;
                 
                 // Navigate back to main list with success
                 _navigation.NavigateToSecure("/SMSSystem/UserManagement/ApplicationUsers");
@@ -537,7 +537,7 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating application user: {UserId}", CurrentUser?.Code);
+            _logger.LogError(ex, "Error updating application user: {UserId}", _currentUser?.Code);
             await ShowErrorAsyncNotification("Error updating application user. Please try again.");
         }
     }
@@ -590,24 +590,24 @@ public partial class ApplicationUsers : ComponentBase
 
     private void OpenPasswordChangeModal(string userCode, string displayName)
     {
-        PasswordUserCode = userCode;
-        PasswordUserDisplayName = displayName;
-        ShowPasswordModal = true;
+        _passwordUserCode = userCode;
+        _passwordUserDisplayName = displayName;
+        _showPasswordModal = true;
         StateHasChanged();
     }
 
     private void ClosePasswordChangeModal()
     {
-        ShowPasswordModal = false;
-        PasswordUserCode = string.Empty;
-        PasswordUserDisplayName = string.Empty;
+        _showPasswordModal = false;
+        _passwordUserCode = string.Empty;
+        _passwordUserDisplayName = string.Empty;
         StateHasChanged();
     }
 
     private async Task OnPasswordChangedSuccess()
     {
         // Password was changed successfully by the modal
-        await ShowSuccessAsyncNotification($"Password updated successfully for {PasswordUserDisplayName}.");
+        await ShowSuccessAsyncNotification($"Password updated successfully for {_passwordUserDisplayName}.");
     }
 
     private async Task ShowPasswordDialog(string userId, string displayName)
@@ -622,9 +622,9 @@ public partial class ApplicationUsers : ComponentBase
 
     private void CancelEdit()
     {
-        IsEditMode = false;
-        CurrentUser = null;
-        EditUserRoleCode = null;
+        _isEditMode = false;
+        _currentUser = null;
+        _editUserRoleCode = null;
         _editUser = new EditUserModel();
         _navigation.NavigateToSecure("/SMSSystem/UserManagement/ApplicationUsers");
     }
@@ -681,7 +681,7 @@ public partial class ApplicationUsers : ComponentBase
     }
 
     // ADDED: Missing property for NewIsActive binding
-    private bool NewIsActive { get; set; } = true;
+    private bool _newIsActive { get; set; } = true;
 
     #endregion
 
@@ -691,11 +691,11 @@ public partial class ApplicationUsers : ComponentBase
     {
         try
         {
-            GroupManagementUserCode = userId;
-            GroupManagementUserDisplayName = displayName;
+            _groupManagementUserCode = userId;
+            _groupManagementUserDisplayName = displayName;
 
             await LoadUserGroups(userId);
-            ShowGroupsModal = true;
+            _showGroupsModal = true;
         }
         catch (Exception ex)
         {
@@ -749,9 +749,9 @@ public partial class ApplicationUsers : ComponentBase
 
     private void CloseGroupsModal()
     {
-        ShowGroupsModal = false;
-        GroupManagementUserCode = string.Empty;
-        GroupManagementUserDisplayName = string.Empty;
+        _showGroupsModal = false;
+        _groupManagementUserCode = string.Empty;
+        _groupManagementUserDisplayName = string.Empty;
         UserCurrentGroups.Clear();
         AvailableGroups.Clear();
         SelectedGroups.Clear();
@@ -759,7 +759,7 @@ public partial class ApplicationUsers : ComponentBase
 
     private async Task RemoveUserFromGroup(string groupCode)
     {
-        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(GroupManagementUserCode))
+        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(_groupManagementUserCode))
         {
             await ShowErrorAsyncNotification("Group code and user code are required.");
             return;
@@ -767,13 +767,13 @@ public partial class ApplicationUsers : ComponentBase
 
         try
         {
-            var command = new RemoveUserFromApplicationGroupCommand(GroupManagementUserCode, groupCode);
+            var command = new RemoveUserFromApplicationGroupCommand(_groupManagementUserCode, groupCode);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 await ShowSuccessAsyncNotification("User removed from group successfully.");
-                await LoadUserGroups(GroupManagementUserCode);
+            await LoadUserGroups(_groupManagementUserCode);
                 StateHasChanged();
             }
             else
@@ -783,14 +783,14 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", GroupManagementUserCode, groupCode);
+            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", _groupManagementUserCode, groupCode);
             await ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
 
     private async Task AssignUserToGroup(string groupCode)
     {
-        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(GroupManagementUserCode))
+        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(_groupManagementUserCode))
         {
             await ShowErrorAsyncNotification("Group code and user code are required.");
             return;
@@ -798,13 +798,13 @@ public partial class ApplicationUsers : ComponentBase
 
         try
         {
-            var command = new AssignUserToApplicationGroupCommand(GroupManagementUserCode, groupCode);
+            var command = new AssignUserToApplicationGroupCommand(_groupManagementUserCode, groupCode);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 await ShowSuccessAsyncNotification("User assigned to group successfully.");
-                await LoadUserGroups(GroupManagementUserCode);
+            await LoadUserGroups(_groupManagementUserCode);
                 StateHasChanged();
             }
             else
@@ -814,14 +814,14 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", _groupManagementUserCode, groupCode);
             await ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }
 
     private async Task AssignMultipleGroups()
     {
-        if (string.IsNullOrWhiteSpace(GroupManagementUserCode) || !SelectedGroups.Any(s => s.Value))
+        if (string.IsNullOrWhiteSpace(_groupManagementUserCode) || !SelectedGroups.Any(s => s.Value))
         {
             await ShowErrorAsyncNotification("User code and at least one group must be selected.");
             return;
@@ -837,7 +837,7 @@ public partial class ApplicationUsers : ComponentBase
             {
                 try
                 {
-                    var command = new AssignUserToApplicationGroupCommand(GroupManagementUserCode, groupCode);
+                var command = new AssignUserToApplicationGroupCommand(_groupManagementUserCode, groupCode);
                     var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                     if (result.IsSuccess)
@@ -847,7 +847,7 @@ public partial class ApplicationUsers : ComponentBase
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
+                _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", _groupManagementUserCode, groupCode);
                     failureCount++;
                 }
             }
@@ -859,7 +859,7 @@ public partial class ApplicationUsers : ComponentBase
                     message += $" {failureCount} assignment(s) failed.";
                 await ShowSuccessAsyncNotification(message);
 
-                await LoadUserGroups(GroupManagementUserCode);
+            await LoadUserGroups(_groupManagementUserCode);
                 StateHasChanged();
             }
             else
@@ -869,7 +869,7 @@ public partial class ApplicationUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", GroupManagementUserCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", _groupManagementUserCode);
             await ShowErrorAsyncNotification("Error assigning user to groups. Please try again.");
         }
     }

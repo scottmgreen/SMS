@@ -14,18 +14,18 @@ public partial class OrganizationalStructure : ComponentBase
     // Data Properties
     private List<SMSOrganizationalUser> OrganizationalUsers { get; set; } = new();
     private List<SMSOrganizationalUser> UnassignedUsers { get; set; } = new();
-    private bool IsLoading { get; set; } = true;
-    private bool IsSaving { get; set; } = false;
+    private bool _isLoading { get; set; } = true;
+    private bool _isSaving { get; set; } = false;
 
     // UI State Properties
-    private bool showCategorySummary { get; set; } = true; // HazardCategory Summary collapsible state
-    private bool showOrganizationalHierarchy { get; set; } = true; // Organizational Hierarchy collapsible state
-    private bool showAssignmentMatrix { get; set; } = true; // Assignment Matrix collapsible state
+    private bool _showCategorySummary { get; set; } = true; // HazardCategory Summary collapsible state
+    private bool _showOrganizationalHierarchy { get; set; } = true; // Organizational Hierarchy collapsible state
+    private bool _showAssignmentMatrix { get; set; } = true; // Assignment Matrix collapsible state
 
     // Assignment modal properties
-    private bool ShowAssignmentModal { get; set; } = false;
-    private SMSOrganizationalLevel? SelectedLevelForAssignment { get; set; }
-    private string SelectedUserForAssignment { get; set; } = string.Empty;
+    private bool _showAssignmentModal { get; set; } = false;
+    private SMSOrganizationalLevel? _selectedLevelForAssignment { get; set; }
+    private string _selectedUserForAssignment { get; set; } = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -38,7 +38,7 @@ public partial class OrganizationalStructure : ComponentBase
     {
         try
         {
-            IsLoading = true;
+            _isLoading = true;
 
             // Load organizational users using existing CQRS - only active users
             var organizationalUsersQuery = new GetAllSMSOrganizationalUsersQuery();
@@ -66,7 +66,7 @@ public partial class OrganizationalStructure : ComponentBase
         }
         finally
         {
-            IsLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -126,21 +126,21 @@ public partial class OrganizationalStructure : ComponentBase
 
     private void OpenAssignmentModal(SMSOrganizationalLevel level)
     {
-        SelectedLevelForAssignment = level;
-        SelectedUserForAssignment = string.Empty;
-        ShowAssignmentModal = true;
+        _selectedLevelForAssignment = level;
+        _selectedUserForAssignment = string.Empty;
+        _showAssignmentModal = true;
     }
 
     private void CloseAssignmentModal()
     {
-        ShowAssignmentModal = false;
-        SelectedLevelForAssignment = null;
-        SelectedUserForAssignment = string.Empty;
+        _showAssignmentModal = false;
+        _selectedLevelForAssignment = null;
+        _selectedUserForAssignment = string.Empty;
     }
 
     private async Task AssignUserToLevel()
     {
-        if (SelectedLevelForAssignment is null || string.IsNullOrEmpty(SelectedUserForAssignment))
+        if (_selectedLevelForAssignment is null || string.IsNullOrEmpty(_selectedUserForAssignment))
         {
             await _notificationHelper.ShowErrorAsync("Please select a user to assign.");
             return;
@@ -148,11 +148,11 @@ public partial class OrganizationalStructure : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Find the user
-            var user = UnassignedUsers.FirstOrDefault(u => u.Code == SelectedUserForAssignment);
+            var user = UnassignedUsers.FirstOrDefault(u => u.Code == _selectedUserForAssignment);
             if (user is null)
             {
                 await _notificationHelper.ShowErrorAsync("Selected user not found.");
@@ -160,7 +160,7 @@ public partial class OrganizationalStructure : ComponentBase
             }
 
             // Update the user's organization level
-            user.OrganizationLevel = SelectedLevelForAssignment;
+            user.OrganizationLevel = _selectedLevelForAssignment;
 
             // Send update command
             var updateCommand = new UpdateSMSOrganizationalUserCommand(user);
@@ -168,7 +168,7 @@ public partial class OrganizationalStructure : ComponentBase
 
             if (result.IsSuccess)
             {
-                await _notificationHelper.ShowSuccessAsync($"Successfully assigned {user.DisplayName} to {SelectedLevelForAssignment.Name}.");
+                await _notificationHelper.ShowSuccessAsync($"Successfully assigned {user.DisplayName} to {_selectedLevelForAssignment.Name}.");
                 CloseAssignmentModal();
                 await LoadDataAsync(); // Refresh the data
             }
@@ -184,7 +184,7 @@ public partial class OrganizationalStructure : ComponentBase
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
@@ -201,7 +201,7 @@ public partial class OrganizationalStructure : ComponentBase
 
             if (result == true)
             {
-                IsSaving = true;
+                _isSaving = true;
                 StateHasChanged();
 
                 // Clear the user's organization level
@@ -229,7 +229,7 @@ public partial class OrganizationalStructure : ComponentBase
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
@@ -354,7 +354,7 @@ public partial class OrganizationalStructure : ComponentBase
                 builder.AddAttribute(33, "ButtonStyle", ButtonStyle.Success);
                 builder.AddAttribute(34, "Size", ButtonSize.Small);
                 builder.AddAttribute(35, "Click", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, (args) => OpenAssignmentModal(roleInfo.Level)));
-                builder.AddAttribute(36, "Disabled", IsSaving);
+            builder.AddAttribute(36, "Disabled", _isSaving);
                 builder.AddAttribute(37, "title", "Assign a user to this role");
                 builder.CloseComponent();
             }
@@ -406,7 +406,7 @@ public partial class OrganizationalStructure : ComponentBase
                     builder.AddAttribute(63, "Size", ButtonSize.ExtraSmall);
                     builder.AddAttribute(64, "Click", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, (args) => UnassignUserFromLevel(user)));
                     builder.AddAttribute(65, "title", "Remove user from this role");
-                    builder.AddAttribute(66, "Disabled", IsSaving);
+            builder.AddAttribute(66, "Disabled", _isSaving);
                     builder.CloseComponent();
 
                     builder.CloseElement(); // User row

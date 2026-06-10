@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Options;
+﻿using Microsoft.Extensions.Options;
 
 using SMS_Application.Commands;
 using SMS_Application.Queries;
@@ -28,76 +28,76 @@ public partial class OrganizationalUsers : ComponentBase
     #region Properties
 
     private List<SMSOrganizationalUser> OrganizationalUsersList { get; set; } = new();
-    private SMSOrganizationalUser? CurrentUser { get; set; }
-    private bool IsSaving { get; set; } = false;
+    private SMSOrganizationalUser? _currentUser { get; set; }
+    private bool _isSaving { get; set; } = false;
 
     // Grid reference
     private RadzenDataGrid<SMSOrganizationalUser>? _usersGrid;
 
-    private string SuccessMessage { get; set; } = string.Empty;
-    private string ErrorMessage { get; set; } = string.Empty;
+    private string _successMessage { get; set; } = string.Empty;
+    private string _errorMessage { get; set; } = string.Empty;
 
     #endregion
 
     #region Modal Properties
 
-    private bool ShowCreateModal { get; set; } = false;
-    private bool ShowEditModal { get; set; } = false;
-    private bool ShowPasswordModal { get; set; } = false;
-    private bool ShowDeleteModal { get; set; } = false;
-    private bool ShowGroupsModal { get; set; } = false;
+    private bool _showCreateModal { get; set; } = false;
+    private bool _showEditModal { get; set; } = false;
+    private bool _showPasswordModal { get; set; } = false;
+    private bool _showDeleteModal { get; set; } = false;
+    private bool _showGroupsModal { get; set; } = false;
 
     // Create form fields
-    private string NewFirstName { get; set; } = string.Empty;
-    private string NewLastName { get; set; } = string.Empty;
-    private string NewUserName { get; set; } = string.Empty;
-    private string NewPassword { get; set; } = string.Empty;
-    private string NewDepartmentId { get; set; } = string.Empty;
-    private string NewPosition { get; set; } = string.Empty;
-    private string NewOrganizationLevelId { get; set; } =  string.Empty;
-    private bool NewTwoFactorEnabled { get; set; } = false;
-    private bool NewIsActive { get; set; } = true; // ADDED: Missing property
-    private SMSUserRole? NewSMSUserRole { get; set; }
+    private string _newFirstName { get; set; } = string.Empty;
+    private string _newLastName { get; set; } = string.Empty;
+    private string _newUserName { get; set; } = string.Empty;
+    private string _newPassword { get; set; } = string.Empty;
+    private string _newDepartmentId { get; set; } = string.Empty;
+    private string _newPosition { get; set; } = string.Empty;
+    private string _newOrganizationLevelId { get; set; } =  string.Empty;
+    private bool _newTwoFactorEnabled { get; set; } = false;
+    private bool _newIsActive { get; set; } = true; // ADDED: Missing property
+    private SMSUserRole? _newSmsUserRole { get; set; }
 
     // Update form fields to use role ID instead of role name
     
-    private string NewSMSUserRoleId { get; set; } = string.Empty;
-    private string EditSMSUserRoleId { get; set; } = string.Empty;
+    private string _newSmsUserRoleId { get; set; } = string.Empty;
+    private string _editSmsUserRoleId { get; set; } = string.Empty;
 
 
     // Edit form fields
     
-    private string EditFirstName { get; set; } = string.Empty;
-    private string EditLastName { get; set; } = string.Empty;
-    private string EditDepartmentId { get; set; } = string.Empty;
-    private string EditPosition { get; set; } = string.Empty;
-    private string EditOrganizationLevelId { get; set; }  = string.Empty;
-    private bool EditIsActive { get; set; } = true;
-    private bool EditTwoFactorEnabled { get; set; } = false;
+    private string _editFirstName { get; set; } = string.Empty;
+    private string _editLastName { get; set; } = string.Empty;
+    private string _editDepartmentId { get; set; } = string.Empty;
+    private string _editPosition { get; set; } = string.Empty;
+    private string _editOrganizationLevelId { get; set; }  = string.Empty;
+    private bool _editIsActive { get; set; } = true;
+    private bool _editTwoFactorEnabled { get; set; } = false;
 
     // Password change fields
-    private string PasswordUserId { get; set; } = string.Empty;
-    private string PasswordUserDisplayName { get; set; } = string.Empty;
-    private string ConfirmPassword { get; set; } = string.Empty;
-    private string PasswordValidationMessage { get; set; } = string.Empty;
+    private string _passwordUserId { get; set; } = string.Empty;
+    private string _passwordUserDisplayName { get; set; } = string.Empty;
+    private string _confirmPassword { get; set; } = string.Empty;
+    private string _passwordValidationMessage { get; set; } = string.Empty;
 
     // Password Modal Properties for Shared Component
-    private string PasswordUserCode { get; set; } = string.Empty;
+    private string _passwordUserCode { get; set; } = string.Empty;
 
     // Delete confirmation fields
-    private string DeleteUserId { get; set; } = string.Empty;
-    private string DeleteUserDisplayName { get; set; } = string.Empty;
+    private string _deleteUserId { get; set; } = string.Empty;
+    private string _deleteUserDisplayName { get; set; } = string.Empty;
 
     // Role Assignment Properties
-    private bool ShowRoleAssignmentModal { get; set; }
-    private string RoleAssignmentUserCode { get; set; } = string.Empty;
-    private string RoleAssignmentUserDisplayName { get; set; } = string.Empty;
-    private string? CurrentUserRoleCode { get; set; }
-    private string? SelectedRoleCode { get; set; }
+    private bool _showRoleAssignmentModal { get; set; }
+    private string _roleAssignmentUserCode { get; set; } = string.Empty;
+    private string _roleAssignmentUserDisplayName { get; set; } = string.Empty;
+    private string? _currentUserRoleCode { get; set; }
+    private string? _selectedRoleCode { get; set; }
     private List<SMSUserRole> AvailableRoles { get; set; } = new();
 
     // Dynamically get all unique modules from available roles' permissions
-    private IEnumerable<string> SMSModules =>
+    private IEnumerable<string> _smsModules =>
         AvailableRoles
             .Where(role => role.Permissions is not null)
             .SelectMany(role => role.Permissions)
@@ -107,8 +107,8 @@ public partial class OrganizationalUsers : ComponentBase
             .OrderBy(module => module);
 
     // Group Management Properties
-    private string GroupManagementUserCode { get; set; } = string.Empty;
-    private string GroupManagementUserDisplayName { get; set; } = string.Empty;
+    private string _groupManagementUserCode { get; set; } = string.Empty;
+    private string _groupManagementUserDisplayName { get; set; } = string.Empty;
     private List<SMSOrganizationalGroup> AllOrganizationalGroups { get; set; } = new();
     private List<SMSOrganizationalGroup> UserCurrentGroups { get; set; } = new();
     private List<SMSOrganizationalGroup> AvailableGroups { get; set; } = new();
@@ -167,19 +167,19 @@ public partial class OrganizationalUsers : ComponentBase
 
     #region Form Validation Properties
 
-    private bool IsCreateFormValid =>
-        !string.IsNullOrWhiteSpace(NewFirstName) &&
-        !string.IsNullOrWhiteSpace(NewLastName) &&
-        !string.IsNullOrWhiteSpace(NewUserName) &&
-        !string.IsNullOrWhiteSpace(NewPassword) &&
-        IsValidDepartment(NewDepartmentId) &&
-        IsValidOrganizationLevel(NewOrganizationLevelId);
+    private bool _isCreateFormValid =>
+        !string.IsNullOrWhiteSpace(_newFirstName) &&
+        !string.IsNullOrWhiteSpace(_newLastName) &&
+        !string.IsNullOrWhiteSpace(_newUserName) &&
+        !string.IsNullOrWhiteSpace(_newPassword) &&
+        IsValidDepartment(_newDepartmentId) &&
+        IsValidOrganizationLevel(_newOrganizationLevelId);
 
-    private bool IsEditFormValid =>
-        !string.IsNullOrWhiteSpace(EditFirstName) &&
-        !string.IsNullOrWhiteSpace(EditLastName) &&
-        IsValidDepartment(EditDepartmentId) &&
-        IsValidOrganizationLevel(EditOrganizationLevelId);
+    private bool _isEditFormValid =>
+        !string.IsNullOrWhiteSpace(_editFirstName) &&
+        !string.IsNullOrWhiteSpace(_editLastName) &&
+        IsValidDepartment(_editDepartmentId) &&
+        IsValidOrganizationLevel(_editOrganizationLevelId);
 
     
     // Helper method to validate organization level
@@ -291,39 +291,39 @@ public partial class OrganizationalUsers : ComponentBase
 
     private void OpenCreateModal()
     {
-        NewFirstName = string.Empty;
-        NewLastName = string.Empty;
-        NewUserName = string.Empty;
-        NewPassword = string.Empty;
-        NewDepartmentId = string.Empty;
-        NewPosition = string.Empty;
-        NewOrganizationLevelId = string.Empty;
-        NewTwoFactorEnabled = false;
-        NewIsActive = true; // ADDED: Reset new property
-        NewSMSUserRole = null;
-        NewSMSUserRoleId = string.Empty; // ADDED: Reset role ID
-        ShowCreateModal = true;
+        _newFirstName = string.Empty;
+        _newLastName = string.Empty;
+        _newUserName = string.Empty;
+        _newPassword = string.Empty;
+        _newDepartmentId = string.Empty;
+        _newPosition = string.Empty;
+        _newOrganizationLevelId = string.Empty;
+        _newTwoFactorEnabled = false;
+        _newIsActive = true; // ADDED: Reset new property
+        _newSmsUserRole = null;
+        _newSmsUserRoleId = string.Empty; // ADDED: Reset role ID
+        _showCreateModal = true;
     }
 
     private void CloseCreateModal()
     {
-        ShowCreateModal = false;
-        NewFirstName = string.Empty;
-        NewLastName = string.Empty;
-        NewUserName = string.Empty;
-        NewPassword = string.Empty;
-        NewDepartmentId = string.Empty;
-        NewPosition = string.Empty;
-        NewOrganizationLevelId = string.Empty;
-        NewTwoFactorEnabled = false;
-        NewIsActive = true; // ADDED: Reset new property
-        NewSMSUserRole = null;
-        NewSMSUserRoleId = string.Empty; // ADDED: Reset role ID
+        _showCreateModal = false;
+        _newFirstName = string.Empty;
+        _newLastName = string.Empty;
+        _newUserName = string.Empty;
+        _newPassword = string.Empty;
+        _newDepartmentId = string.Empty;
+        _newPosition = string.Empty;
+        _newOrganizationLevelId = string.Empty;
+        _newTwoFactorEnabled = false;
+        _newIsActive = true; // ADDED: Reset new property
+        _newSmsUserRole = null;
+        _newSmsUserRoleId = string.Empty; // ADDED: Reset role ID
     }
 
     private async Task CreateUser()
     {
-        if (!IsCreateFormValid)
+        if (!_isCreateFormValid)
         {
             await ShowErrorAsyncNotification("Please fill in all required fields.");
             return;
@@ -331,15 +331,15 @@ public partial class OrganizationalUsers : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Find the actual SMS User Role if one was selected
             SMSUserRole? selectedRole = null;
-            if (!string.IsNullOrEmpty(NewSMSUserRoleId))
+            if (!string.IsNullOrEmpty(_newSmsUserRoleId))
             {
                 // You'll need to fetch the actual role from the database or loaded options
-                var roleOption = SMSRoleOptions.FirstOrDefault(r => r.Value == NewSMSUserRoleId);
+                var roleOption = SMSRoleOptions.FirstOrDefault(r => r.Value == _newSmsUserRoleId);
                 if (roleOption is not null)
                 {
                     // Either fetch from database or create a minimal role object
@@ -357,16 +357,16 @@ public partial class OrganizationalUsers : ComponentBase
             var user = new SMSOrganizationalUser(userId)
             {
                 Code = userCode,
-                FirstName = FirstName.Create(NewFirstName).Value,
-                LastName = LastName.Create(NewLastName).Value,
-                UserName = UserName.Create(NewUserName).Value,
-                Password = Password.Create(NewPassword).Value,
-                Department = SMSDepartment.FromValue(NewDepartmentId) ?? SMSDepartment.AirportOperations,
-                Position = NewPosition,
-                OrganizationLevel = SMSOrganizationalLevel.FromName(NewOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel,
-                SMSUserRole = selectedRole, // UPDATED: Use selectedRole instead of NewSMSUserRole
-                TwoFactorEnabled = NewTwoFactorEnabled,
-                IsActive = NewIsActive, // UPDATED: Use NewIsActive property
+                FirstName = FirstName.Create(_newFirstName).Value,
+                LastName = LastName.Create(_newLastName).Value,
+                UserName = UserName.Create(_newUserName).Value,
+                Password = Password.Create(_newPassword).Value,
+                Department = SMSDepartment.FromValue(_newDepartmentId) ?? SMSDepartment.AirportOperations,
+                Position = _newPosition,
+                OrganizationLevel = SMSOrganizationalLevel.FromName(_newOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel,
+                SMSUserRole = selectedRole, // UPDATED: Use selectedRole instead of _newSmsUserRole
+                TwoFactorEnabled = _newTwoFactorEnabled,
+                IsActive = _newIsActive, // UPDATED: Use _newIsActive property
                 SMSUserType = SMSUserType.Organizational // ADDED: Set correct user type
             };
 
@@ -375,7 +375,7 @@ public partial class OrganizationalUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Organizational user '{NewFirstName} {NewLastName}' created successfully.");
+                await ShowSuccessAsyncNotification($"Organizational user '{_newFirstName} {_newLastName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
             await (_usersGrid?.Reload() ?? Task.CompletedTask);
@@ -392,7 +392,7 @@ public partial class OrganizationalUsers : ComponentBase
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
@@ -420,19 +420,19 @@ public partial class OrganizationalUsers : ComponentBase
                 return;
             }
 
-            CurrentUser = userResult.Value;
+            _currentUser = userResult.Value;
 
             // Set edit form values
-            EditFirstName = CurrentUser.FirstName?.Value ?? string.Empty;
-            EditLastName = CurrentUser.LastName?.Value ?? string.Empty;
-            EditDepartmentId = CurrentUser.Department.Value ?? string.Empty;
-            EditPosition = CurrentUser.Position ?? string.Empty;
-            EditOrganizationLevelId = CurrentUser.OrganizationLevel.Name ?? SMSOrganizationalLevel.UnassignedLevel;
-            EditIsActive = CurrentUser.IsActive;
-            EditTwoFactorEnabled = CurrentUser.TwoFactorEnabled;
-            EditSMSUserRoleId = CurrentUser.UserRole?.Code ?? string.Empty;
+            _editFirstName = _currentUser.FirstName?.Value ?? string.Empty;
+            _editLastName = _currentUser.LastName?.Value ?? string.Empty;
+            _editDepartmentId = _currentUser.Department.Value ?? string.Empty;
+            _editPosition = _currentUser.Position ?? string.Empty;
+            _editOrganizationLevelId = _currentUser.OrganizationLevel.Name ?? SMSOrganizationalLevel.UnassignedLevel;
+            _editIsActive = _currentUser.IsActive;
+            _editTwoFactorEnabled = _currentUser.TwoFactorEnabled;
+            _editSmsUserRoleId = _currentUser.UserRole?.Code ?? string.Empty;
             // Open edit modal
-            ShowEditModal = true;
+            _showEditModal = true;
         }
         catch (Exception ex)
         {
@@ -443,22 +443,22 @@ public partial class OrganizationalUsers : ComponentBase
 
     private void CloseEditModal()
     {
-        ShowEditModal = false;
-        CurrentUser = null;
-        EditFirstName = string.Empty;
-        EditLastName = string.Empty;
-        EditDepartmentId = string.Empty;
-        EditPosition = string.Empty;
+        _showEditModal = false;
+        _currentUser = null;
+        _editFirstName = string.Empty;
+        _editLastName = string.Empty;
+        _editDepartmentId = string.Empty;
+        _editPosition = string.Empty;
         // FIXED: Reset to empty string instead of enum object
-        EditOrganizationLevelId = string.Empty;
-        EditSMSUserRoleId = string.Empty; // ADDED: Reset SMS User Role
-        EditIsActive = true;
-        EditTwoFactorEnabled = false;
+        _editOrganizationLevelId = string.Empty;
+        _editSmsUserRoleId = string.Empty; // ADDED: Reset SMS User Role
+        _editIsActive = true;
+        _editTwoFactorEnabled = false;
     }
 
     private async Task UpdateUser()
     {
-        if (CurrentUser is null || !IsEditFormValid)
+        if (_currentUser is null || !_isEditFormValid)
         {
             await ShowErrorAsyncNotification("Please fill in all required fields.");
             return;
@@ -466,24 +466,24 @@ public partial class OrganizationalUsers : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Update user properties
-            CurrentUser.FirstName = FirstName.Create(EditFirstName).Value;
-            CurrentUser.LastName = LastName.Create(EditLastName).Value;
-            CurrentUser.Department = SMSDepartment.FromValue(EditDepartmentId) ?? SMSDepartment.AirportOperations;
-            CurrentUser.Position = EditPosition;
-            CurrentUser.OrganizationLevel = SMSOrganizationalLevel.FromName(EditOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel;
-            CurrentUser.IsActive = EditIsActive;
-            CurrentUser.TwoFactorEnabled = EditTwoFactorEnabled;
+            _currentUser.FirstName = FirstName.Create(_editFirstName).Value;
+            _currentUser.LastName = LastName.Create(_editLastName).Value;
+            _currentUser.Department = SMSDepartment.FromValue(_editDepartmentId) ?? SMSDepartment.AirportOperations;
+            _currentUser.Position = _editPosition;
+            _currentUser.OrganizationLevel = SMSOrganizationalLevel.FromName(_editOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel;
+            _currentUser.IsActive = _editIsActive;
+            _currentUser.TwoFactorEnabled = _editTwoFactorEnabled;
             // ADDED: Handle SMS User Role update
-            if (!string.IsNullOrEmpty(EditSMSUserRoleId))
+            if (!string.IsNullOrEmpty(_editSmsUserRoleId))
             {
-                var roleOption = SMSRoleOptions.FirstOrDefault(r => r.Value == EditSMSUserRoleId);
+                var roleOption = SMSRoleOptions.FirstOrDefault(r => r.Value == _editSmsUserRoleId);
                 if (roleOption is not null)
                 {
-                    CurrentUser.UserRole = new SMSUserRole(new SMSUserRoleID(roleOption.Value))
+                    _currentUser.UserRole = new SMSUserRole(new SMSUserRoleID(roleOption.Value))
                     {
                         Code = roleOption.Value,
                         Name = roleOption.Text
@@ -492,17 +492,17 @@ public partial class OrganizationalUsers : ComponentBase
             }
             else
             {
-                CurrentUser.SMSUserRole = null;
+                _currentUser.SMSUserRole = null;
             }
 
-            CurrentUser.IsActive = EditIsActive;
-            CurrentUser.SMSUserType = SMSUserType.Organizational; // FIXED: Should be Organizational, not Stakeholder
-            var updateCommand = new UpdateSMSOrganizationalUserCommand(CurrentUser);
+            _currentUser.IsActive = _editIsActive;
+            _currentUser.SMSUserType = SMSUserType.Organizational; // FIXED: Should be Organizational, not Stakeholder
+            var updateCommand = new UpdateSMSOrganizationalUserCommand(_currentUser);
             var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Organizational user '{EditFirstName} {EditLastName}' updated successfully.");
+                await ShowSuccessAsyncNotification($"Organizational user '{_editFirstName} {_editLastName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
             await (_usersGrid?.Reload() ?? Task.CompletedTask);
@@ -514,12 +514,12 @@ public partial class OrganizationalUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating organizational user: {UserId}", CurrentUser.Code);
+            _logger.LogError(ex, "Error updating organizational user: {UserId}", _currentUser.Code);
             await ShowErrorAsyncNotification("Error updating organizational user. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
@@ -530,24 +530,24 @@ public partial class OrganizationalUsers : ComponentBase
 
     private void OpenPasswordModal(string userId, string displayName)
     {
-        PasswordUserCode = userId;
-        PasswordUserDisplayName = displayName;
-        ShowPasswordModal = true;
+        _passwordUserCode = userId;
+        _passwordUserDisplayName = displayName;
+        _showPasswordModal = true;
         StateHasChanged();
     }
 
     private void ClosePasswordChangeModal()
     {
-        ShowPasswordModal = false;
-        PasswordUserCode = string.Empty;
-        PasswordUserDisplayName = string.Empty;
+        _showPasswordModal = false;
+        _passwordUserCode = string.Empty;
+        _passwordUserDisplayName = string.Empty;
         StateHasChanged();
     }
 
     private async Task OnPasswordChangedSuccess()
     {
         // Password was changed successfully by the modal
-        await ShowSuccessAsyncNotification($"Password updated successfully for {PasswordUserDisplayName}.");
+        await ShowSuccessAsyncNotification($"Password updated successfully for {_passwordUserDisplayName}.");
     }
 
       
@@ -558,21 +558,21 @@ public partial class OrganizationalUsers : ComponentBase
 
     private void ConfirmDelete(String userId, string displayName)
     {
-        DeleteUserId = userId;
-        DeleteUserDisplayName = displayName;
-        ShowDeleteModal = true;
+        _deleteUserId = userId;
+        _deleteUserDisplayName = displayName;
+        _showDeleteModal = true;
     }
 
     private void CloseDeleteModal()
     {
-        ShowDeleteModal = false;
-        DeleteUserId = string.Empty;
-        DeleteUserDisplayName = string.Empty;
+        _showDeleteModal = false;
+        _deleteUserId = string.Empty;
+        _deleteUserDisplayName = string.Empty;
     }
 
     private async Task DeleteUser()
     {
-        if (string.IsNullOrWhiteSpace(DeleteUserId))
+        if (string.IsNullOrWhiteSpace(_deleteUserId))
         {
             await ShowErrorAsyncNotification("User ID is required for deletion.");
             return;
@@ -580,10 +580,10 @@ public partial class OrganizationalUsers : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
-            var organizationalUserId = new SMSOrganizationalUserID(DeleteUserId);
+            var organizationalUserId = new SMSOrganizationalUserID(_deleteUserId);
             var command = new DeleteSMSOrganizationalUserCommand(organizationalUserId);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
@@ -601,12 +601,12 @@ public partial class OrganizationalUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting organizational user: {UserId}", DeleteUserId);
+            _logger.LogError(ex, "Error deleting organizational user: {UserId}", _deleteUserId);
             await ShowErrorAsyncNotification("Error deleting organizational user. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
@@ -632,27 +632,27 @@ public partial class OrganizationalUsers : ComponentBase
 
     private void OpenRoleAssignmentModal(string userCode, string userDisplayName, string? currentRoleCode = null)
     {
-        RoleAssignmentUserCode = userCode;
-        RoleAssignmentUserDisplayName = userDisplayName;
-        CurrentUserRoleCode = currentRoleCode;
-        SelectedRoleCode = currentRoleCode;
-        ShowRoleAssignmentModal = true;
+        _roleAssignmentUserCode = userCode;
+        _roleAssignmentUserDisplayName = userDisplayName;
+        _currentUserRoleCode = currentRoleCode;
+        _selectedRoleCode = currentRoleCode;
+        _showRoleAssignmentModal = true;
         StateHasChanged();
     }
 
     private void CloseRoleAssignmentModal()
     {
-        ShowRoleAssignmentModal = false;
-        RoleAssignmentUserCode = string.Empty;
-        RoleAssignmentUserDisplayName = string.Empty;
-        CurrentUserRoleCode = null;
-        SelectedRoleCode = null;
+        _showRoleAssignmentModal = false;
+        _roleAssignmentUserCode = string.Empty;
+        _roleAssignmentUserDisplayName = string.Empty;
+        _currentUserRoleCode = null;
+        _selectedRoleCode = null;
         StateHasChanged();
     }
 
     private async Task AssignUserRole()
     {
-        if (string.IsNullOrEmpty(RoleAssignmentUserCode) || string.IsNullOrEmpty(SelectedRoleCode))
+        if (string.IsNullOrEmpty(_roleAssignmentUserCode) || string.IsNullOrEmpty(_selectedRoleCode))
         {
             await ShowErrorAsyncNotification("Invalid user or role selection.");
             return;
@@ -660,11 +660,11 @@ public partial class OrganizationalUsers : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Get the user
-            var userQuery = new GetSMSOrganizationalUserByCodeQuery(RoleAssignmentUserCode);
+            var userQuery = new GetSMSOrganizationalUserByCodeQuery(_roleAssignmentUserCode);
             var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
             if (userResult.IsFailure || userResult.Value is null)
@@ -676,7 +676,7 @@ public partial class OrganizationalUsers : ComponentBase
             var user = userResult.Value;
 
             // Get the selected role
-            var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == SelectedRoleCode);
+            var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == _selectedRoleCode);
             if (selectedRole is null)
             {
                 await ShowErrorAsyncNotification("Selected role not found.");
@@ -692,7 +692,7 @@ public partial class OrganizationalUsers : ComponentBase
 
             if (updateResult.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Role '{selectedRole.Name}' successfully assigned to {RoleAssignmentUserDisplayName}.");
+                await ShowSuccessAsyncNotification($"Role '{selectedRole.Name}' successfully assigned to {_roleAssignmentUserDisplayName}.");
 
                 // Refresh data and close modal
                 await LoadDataAsync();
@@ -705,19 +705,19 @@ public partial class OrganizationalUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning role to user {UserCode}", RoleAssignmentUserCode);
+            _logger.LogError(ex, "Error assigning role to user {UserCode}", _roleAssignmentUserCode);
             await ShowErrorAsyncNotification("An error occurred while assigning the role. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
 
     private async Task RemoveUserRole()
     {
-        if (string.IsNullOrEmpty(RoleAssignmentUserCode))
+        if (string.IsNullOrEmpty(_roleAssignmentUserCode))
         {
             await ShowErrorAsyncNotification("Invalid user selection.");
             return;
@@ -725,11 +725,11 @@ public partial class OrganizationalUsers : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Get the user
-            var userQuery = new GetSMSOrganizationalUserByCodeQuery(RoleAssignmentUserCode);
+            var userQuery = new GetSMSOrganizationalUserByCodeQuery(_roleAssignmentUserCode);
             var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
             if (userResult.IsFailure || userResult.Value is null)
@@ -747,7 +747,7 @@ public partial class OrganizationalUsers : ComponentBase
 
             if (updateResult.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Role successfully removed from {RoleAssignmentUserDisplayName}.");
+                await ShowSuccessAsyncNotification($"Role successfully removed from {_roleAssignmentUserDisplayName}.");
 
                 // Refresh data and close modal
                 await LoadDataAsync();
@@ -760,12 +760,12 @@ public partial class OrganizationalUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing role from user {UserCode}", RoleAssignmentUserCode);
+            _logger.LogError(ex, "Error removing role from user {UserCode}", _roleAssignmentUserCode);
             await ShowErrorAsyncNotification("An error occurred while removing the role. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
@@ -778,11 +778,11 @@ public partial class OrganizationalUsers : ComponentBase
     {
         try
         {
-            GroupManagementUserCode = userId;
-            GroupManagementUserDisplayName = displayName;
+            _groupManagementUserCode = userId;
+            _groupManagementUserDisplayName = displayName;
 
             await LoadUserGroups(userId);
-            ShowGroupsModal = true;
+            _showGroupsModal = true;
         }
         catch (Exception ex)
         {
@@ -836,9 +836,9 @@ public partial class OrganizationalUsers : ComponentBase
 
     private void CloseGroupsModal()
     {
-        ShowGroupsModal = false;
-        GroupManagementUserCode = string.Empty;
-        GroupManagementUserDisplayName = string.Empty;
+        _showGroupsModal = false;
+        _groupManagementUserCode = string.Empty;
+        _groupManagementUserDisplayName = string.Empty;
         UserCurrentGroups.Clear();
         AvailableGroups.Clear();
         SelectedGroups.Clear();
@@ -846,7 +846,7 @@ public partial class OrganizationalUsers : ComponentBase
 
     private async Task RemoveUserFromGroup(string groupCode)
     {
-        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(GroupManagementUserCode))
+        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(_groupManagementUserCode))
         {
             await ShowErrorAsyncNotification("Group code and user code are required.");
             return;
@@ -855,13 +855,13 @@ public partial class OrganizationalUsers : ComponentBase
         try
         {
             var groupId = new SMSOrganizationalGroupID(groupCode);
-            var command = new RemoveUserFromOrganizationalGroupCommand(GroupManagementUserCode, groupId);
+            var command = new RemoveUserFromOrganizationalGroupCommand(_groupManagementUserCode, groupId);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 await ShowSuccessAsyncNotification("User removed from group successfully.");
-                await LoadUserGroups(GroupManagementUserCode);
+                await LoadUserGroups(_groupManagementUserCode);
                 StateHasChanged();
             }
             else
@@ -871,14 +871,14 @@ public partial class OrganizationalUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", GroupManagementUserCode, groupCode);
+            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", _groupManagementUserCode, groupCode);
             await ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
 
     private async Task AssignUserToGroup(string groupCode)
     {
-        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(GroupManagementUserCode))
+        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(_groupManagementUserCode))
         {
             await ShowErrorAsyncNotification("Group code and user code are required.");
             return;
@@ -887,13 +887,13 @@ public partial class OrganizationalUsers : ComponentBase
         try
         {
             var groupId = new SMSOrganizationalGroupID(groupCode);
-            var command = new AssignUserToOrganizationalGroupCommand(GroupManagementUserCode, groupId);
+            var command = new AssignUserToOrganizationalGroupCommand(_groupManagementUserCode, groupId);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 await ShowSuccessAsyncNotification("User assigned to group successfully.");
-                await LoadUserGroups(GroupManagementUserCode);
+                await LoadUserGroups(_groupManagementUserCode);
                 StateHasChanged();
             }
             else
@@ -903,14 +903,14 @@ public partial class OrganizationalUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", _groupManagementUserCode, groupCode);
             await ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }
 
     private async Task AssignMultipleGroups()
     {
-        if (string.IsNullOrWhiteSpace(GroupManagementUserCode) || !SelectedGroups.Any(s => s.Value))
+        if (string.IsNullOrWhiteSpace(_groupManagementUserCode) || !SelectedGroups.Any(s => s.Value))
         {
             await ShowErrorAsyncNotification("User code and at least one group must be selected.");
             return;
@@ -927,7 +927,7 @@ public partial class OrganizationalUsers : ComponentBase
                 try
                 {
                     var groupId = new SMSOrganizationalGroupID(groupCode);
-                    var command = new AssignUserToOrganizationalGroupCommand(GroupManagementUserCode, groupId);
+                    var command = new AssignUserToOrganizationalGroupCommand(_groupManagementUserCode, groupId);
                     var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                     if (result.IsSuccess)
@@ -937,7 +937,7 @@ public partial class OrganizationalUsers : ComponentBase
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
+                    _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", _groupManagementUserCode, groupCode);
                     failureCount++;
                 }
             }
@@ -949,7 +949,7 @@ public partial class OrganizationalUsers : ComponentBase
                     message += $" {failureCount} assignment(s) failed.";
                 await ShowSuccessAsyncNotification(message);
 
-                await LoadUserGroups(GroupManagementUserCode);
+                await LoadUserGroups(_groupManagementUserCode);
                 StateHasChanged();
             }
             else
@@ -959,7 +959,7 @@ public partial class OrganizationalUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", GroupManagementUserCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", _groupManagementUserCode);
             await ShowErrorAsyncNotification("Error assigning user to groups. Please try again.");
         }
     }
@@ -1011,3 +1011,4 @@ public partial class OrganizationalUsers : ComponentBase
 
     #endregion
 }
+

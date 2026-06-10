@@ -1,0 +1,238 @@
+﻿C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Dashboard\Dashboard.razor.cs:19:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Dashboard\Dashboard.razor.cs:20:Statistics => private DashboardStatisticsResponse? Statistics { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Dashboard\Dashboard.razor.cs:21:SelectedStatusFilter => private string? SelectedStatusFilter { get; set; } = "All";
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Dashboard\Dashboard.razor.cs:22:SelectedEntityType => private string? SelectedEntityType { get; set; } = "All";
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Login.razor.cs:25:ErrorMessage => private string ErrorMessage { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Login.razor.cs:26:IsLoading => private bool IsLoading { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditCalendar.razor.cs:19:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditDetail.razor.cs:32:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditDetail.razor.cs:33:IsUpdating => private bool IsUpdating { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditDetail.razor.cs:34:Audit => private SMSAudit? Audit { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditDetail.razor.cs:38:ActiveTabIndex => private int ActiveTabIndex { get; set; } = 0;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditManagement.razor.cs:20:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditManagement.razor.cs:21:IsUpdating => private bool IsUpdating { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditManagement.razor.cs:24:showCategorySummary => private bool showCategorySummary { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditManagement.razor.cs:25:showFilterPanel => private bool showFilterPanel { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditManagement.razor.cs:28:SearchText => private string SearchText { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditManagement.razor.cs:29:SelectedStatus => private string SelectedStatus { get; set; } = "All";
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditManagement.razor.cs:30:SelectedType => private string SelectedType { get; set; } = "All";
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\AuditManagement.razor.cs:31:SelectedDepartment => private string SelectedDepartment { get; set; } = "All";
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:23:IsSubmitting => private bool IsSubmitting { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:24:IsValid => private bool IsValid { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:25:ValidationMessage => private string ValidationMessage { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:28:Code => private string? Code { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:29:Name => private string? Name { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:30:Description => private string? Description { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:31:AuditPlanCode => private string? AuditPlanCode { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:32:AuditType => private string? AuditType { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:33:Scope => private string? Scope { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:34:Objectives => private string? Objectives { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:35:ResponsibleDepartment => private string? ResponsibleDepartment { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:36:LeadAuditor => private string? LeadAuditor { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:37:AuditorTeam => private string? AuditorTeam { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:38:ContactPerson => private string? ContactPerson { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:39:AuditLocation => private string? AuditLocation { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:40:ScheduledStartDate => private DateTime? ScheduledStartDate { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:41:ScheduledEndDate => private DateTime? ScheduledEndDate { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:42:ActualStartDate => private DateTime? ActualStartDate { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:43:ActualEndDate => private DateTime? ActualEndDate { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:44:Priority => private string? Priority { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:45:Status => private string? Status { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:46:ExecutiveSummary => private string? ExecutiveSummary { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditDialog.razor.cs:47:Notes => private string? Notes { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditEvidenceDialog.razor.cs:31:IsSubmitting => private bool IsSubmitting { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditFindingDialog.razor.cs:24:IsSubmitting => private bool IsSubmitting { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:28:IsSubmitting => private bool IsSubmitting { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:29:IsValid => private bool IsValid { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:31:ValidationMessage => private string ValidationMessage { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:35:Code => private string? Code { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:36:Name => private string? Name { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:37:Description => private string? Description { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:38:AuditType => private string? AuditType { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:39:Scope => private string? Scope { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:40:Objectives => private string? Objectives { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:41:ResponsibleDepartment => private string? ResponsibleDepartment { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:42:LeadAuditor => private string? LeadAuditor { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:43:AuditorTeam => private string? AuditorTeam { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:44:PlannedStartDate => private DateTime? PlannedStartDate { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:45:PlannedEndDate => private DateTime? PlannedEndDate { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:46:EstimatedHours => private int? EstimatedHours { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:47:Priority => private string? Priority { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:48:Status => private string? Status { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:49:Notes => private string? Notes { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:52:RequiresApproval => private bool RequiresApproval { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:53:ApprovedBy => private string? ApprovedBy { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:54:ApprovedDate => private DateTime? ApprovedDate { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:55:ApprovalNotes => private string? ApprovalNotes { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:58:ContactPerson => private string? ContactPerson { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:59:RecurrencePattern => private string? RecurrencePattern { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:60:NextScheduledDate => private DateTime? NextScheduledDate { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:63:RegulatoryRequirements => private string? RegulatoryRequirements { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:64:Resources => private string? Resources { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:65:Deliverables => private string? Deliverables { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\AuditPlanDialog.razor.cs:66:SuccessCriteria => private string? SuccessCriteria { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\SPIDataPointDialog.razor.cs:31:IsSaving => private bool IsSaving { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\Components\SPIDataPointDialog.razor.cs:33:IsValid => private bool IsValid =>
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\RiskRegistry.razor.cs:34:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\RiskRegistry.razor.cs:48:SelectedStatusFilter => private string? SelectedStatusFilter { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\RiskRegistry.razor.cs:49:SelectedRiskLevelFilter => private string? SelectedRiskLevelFilter { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\RiskRegistry.razor.cs:50:SearchText => private string SearchText { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIConfiguration.razor.cs:45:HasActiveFilters => private bool HasActiveFilters =>
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDashboard.razor.cs:17:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDashboard.razor.cs:21:SelectedSPIType => private string? SelectedSPIType { get; set; } = "All";
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDashboard.razor.cs:22:SelectedDepartment => private string? SelectedDepartment { get; set; } = "All";
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDashboard.razor.cs:23:SelectedTimePeriod => private string? SelectedTimePeriod { get; set; } = "Last 12 Months";
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDashboard.razor.cs:24:SelectedTrendSPI => private string? SelectedTrendSPI { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDashboard.razor.cs:29:CategoryData => private List<CategoryDataPoint>? CategoryData { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDetail.razor.cs:27:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDetail.razor.cs:28:IsAuthenticated => private bool IsAuthenticated { get; set; } = true; // TODO: Implement actual authentication check
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDetail.razor.cs:29:ErrorMessage => private string? ErrorMessage { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDetail.razor.cs:31:SPI => private SafetyPerformanceIndicator? SPI { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDetail.razor.cs:32:DataPoints => private List<SPIDataPoint>? DataPoints { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDetail.razor.cs:33:CurrentDataPoint => private SPIDataPoint? CurrentDataPoint { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIDetail.razor.cs:34:IsEditingDataPoint => private bool IsEditingDataPoint { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIInitialization.razor.cs:25:IsInitializing => private bool IsInitializing { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIInitialization.razor.cs:26:InitializationComplete => private bool InitializationComplete { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSAssurance\SPIInitialization.razor.cs:27:StatusMessage => private string StatusMessage { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\AirportSharedDataset.razor.cs:31:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\AirportSharedDataset.razor.cs:32:IsSaving => private bool IsSaving { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\AddHazardDialog.razor.cs:27:NewHazardDescription => private string NewHazardDescription { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\AddHazardDialog.razor.cs:28:NewHazardCategory => private string NewHazardCategory { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\AddHazardDialog.razor.cs:29:NewHazardType => private string NewHazardType { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\AddHazardDialog.razor.cs:32:IsSubmitting => private bool IsSubmitting { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\AddHazardDialog.razor.cs:63:IsFormValid => private bool IsFormValid =>
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\AddHazardDialog.razor.cs:73:ActionButtonText => private string ActionButtonText => IsSubmitting
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\AddHazardDialog.razor.cs:76:ActionButtonIcon => private string ActionButtonIcon => IsSubmitting
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\CompleteInterviewDialog.razor.cs:19:IsSaving => private bool IsSaving { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\CreateInterviewDialog.razor.cs:22:IsSaving => private bool IsSaving { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\EditInterviewDialog.razor.cs:23:IsSaving => private bool IsSaving { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\EvidenceFilesManager.razor.cs:28:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\EvidenceFilesManager.razor.cs:29:selectedFileTypeIndex => private int selectedFileTypeIndex { get; set; } = 0;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\EvidenceFilesManager.razor.cs:30:ShowFileViewer => private bool ShowFileViewer { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\EvidenceFilesManager.razor.cs:31:ViewingFile => private HazardFile? ViewingFile { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\FileViewerDialog.razor.cs:28:FileDataUrl => private string? FileDataUrl { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\FileViewerDialog.razor.cs:29:TextContent => private string? TextContent { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\FileViewerDialog.razor.cs:30:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\InterviewsManager.razor.cs:24:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\UploadEvidenceDialog.razor.cs:21:IsUploading => private bool IsUploading { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\UploadEvidenceDialog.razor.cs:22:UploadProgress => private int UploadProgress { get; set; } = 0;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\UploadEvidenceDialog.razor.cs:23:FileProgress => private int FileProgress { get; set; } = 0;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\UploadEvidenceDialog.razor.cs:24:CurrentFileIndex => private int CurrentFileIndex { get; set; } = 0;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\UploadEvidenceDialog.razor.cs:25:CurrentFileName => private string CurrentFileName { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\UploadEvidenceDialog.razor.cs:26:CurrentUploadStatus => private string CurrentUploadStatus { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Components\UploadEvidenceDialog.razor.cs:27:ShowConfidentialInfo => private bool ShowConfidentialInfo { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\HazardMitigation.razor.cs:28:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\HazardMitigation.razor.cs:29:IsSaving => private bool IsSaving { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Hazards.razor.cs:26:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Hazards.razor.cs:27:ErrorMessage => private string ErrorMessage { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Hazards.razor.cs:34:PageSize => private int PageSize { get; set; } = 10;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\InterviewCalendar.razor.cs:22:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\InterviewCalendar.razor.cs:29:SelectedInterview => private Interview? SelectedInterview { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Investigations.razor.cs:36:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Investigations.razor.cs:37:IsSaving => private bool IsSaving { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Investigations.razor.cs:38:selectedTabIndex => private int selectedTabIndex { get; set; } = 0;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Investigations.razor.cs:39:showDecisionForm => private bool showDecisionForm { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\Investigations.razor.cs:45:InvestigationStatusId => private string InvestigationStatusId { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\MitigationCalendar.razor.cs:19:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\MitigationCalendar.razor.cs:25:SelectedMitigation => private Mitigation? SelectedMitigation { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportProcessing.razor.cs:291:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportProcessing.razor.cs:293:SelectedApprover => private string? SelectedApprover { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportProcessing.razor.cs:295:ShowBulkApprovalDialog => private bool ShowBulkApprovalDialog { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportProcessing.razor.cs:296:SelectedReportForApproval => private ReportProcessingSummary? SelectedReportForApproval { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportProcessing.razor.cs:297:IsProcessingApproval => private bool IsProcessingApproval { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportProcessing.razor.cs:300:ShowDescriptionModal => private bool ShowDescriptionModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportProcessing.razor.cs:301:SelectedDescription => private string SelectedDescription { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportProcessing.razor.cs:302:SelectedReportId => private string SelectedReportId { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportValidation.razor.cs:27:SelectedValidationDecision => private ValidationDecision? SelectedValidationDecision { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportValidation.razor.cs:28:ValidationComments => private string ValidationComments { get; set; } = "";
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportValidation.razor.cs:29:ValidationType => private RiskAssessmentCategory ValidationType { get; set; } = RiskAssessmentCategory.Technical;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportValidation.razor.cs:31:ValidatedBy => private string ValidatedBy { get; set; } = "";
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportValidation.razor.cs:33:LeadAssessor => private string LeadAssessor { get; set; } = "";
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportValidation.razor.cs:35:LeadInvestigator => private string LeadInvestigator { get; set; } = "";
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportValidation.razor.cs:47:ReportDetails => private Report? ReportDetails { get; set; } = default!;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportValidation.razor.cs:48:ReportHazard => private Hazard? ReportHazard { get; set; } = default!;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportValidation.razor.cs:50:RiskRegistryOnly => private bool RiskRegistryOnly { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\ReportValidation.razor.cs:60:IsProcessing => private bool IsProcessing { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\TechnicalAssessment.razor.cs:46:IsLoading => private bool IsLoading { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\TechnicalAssessment.razor.cs:47:IsSaving => private bool IsSaving { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\TechnicalAssessment.razor.cs:51:LastLoadedReportId => private string? LastLoadedReportId { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\TechnicalAssessment.razor.cs:52:LastLoadedHazardId => private string? LastLoadedHazardId { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSRiskManagement\TechnicalAssessment.razor.cs:54:IsRiskRegistryOnly => private bool IsRiskRegistryOnly =>
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:43:CurrentGroup => private SMSApplicationGroup? CurrentGroup { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:44:IsEditMode => private bool IsEditMode { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:45:IsManagingMembers => private bool IsManagingMembers { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:46:CurrentGroupCode => private string? CurrentGroupCode { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:54:SuccessMessage => private string SuccessMessage { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:55:ErrorMessage => private string ErrorMessage { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:56:IsSaving => private bool IsSaving { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:62:ShowCreateModal => private bool ShowCreateModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:63:ShowEditModal => private bool ShowEditModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:64:ShowMembersModal => private bool ShowMembersModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:65:ShowDeleteModal => private bool ShowDeleteModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:66:NewGroupName => private string NewGroupName { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:67:NewDescription => private string NewDescription { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:68:EditGroupName => private string EditGroupName { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:69:EditDescription => private string EditDescription { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:70:EditIsActive => private bool EditIsActive { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:71:DeleteGroupCode => private string DeleteGroupCode { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\ApplicationGroups.razor.cs:72:DeleteGroupName => private string DeleteGroupName { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:52:CurrentGroup => private SMSOrganizationalGroup? CurrentGroup { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:53:IsEditMode => private bool IsEditMode { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:54:IsManagingMembers => private bool IsManagingMembers { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:55:CurrentGroupCode => private string? CurrentGroupCode { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:63:SuccessMessage => private string SuccessMessage { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:64:ErrorMessage => private string ErrorMessage { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:65:IsSaving => private bool IsSaving { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:71:ShowCreateModal => private bool ShowCreateModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:72:ShowEditModal => private bool ShowEditModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:73:ShowMembersModal => private bool ShowMembersModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:74:ShowDeleteModal => private bool ShowDeleteModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:75:NewGroupName => private string NewGroupName { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:76:NewDescription => private string NewDescription { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:77:NewGroupType => private string NewGroupType { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:78:NewAuthorityLevel => private string NewAuthorityLevel { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:79:EditGroupName => private string EditGroupName { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:80:EditDescription => private string EditDescription { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:81:EditGroupType => private string EditGroupType { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:82:EditAuthorityLevel => private string EditAuthorityLevel { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:83:EditIsActive => private bool EditIsActive { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:84:DeleteGroupCode => private string DeleteGroupCode { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\OrganizationalGroups.razor.cs:85:DeleteGroupName => private string DeleteGroupName { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:40:CurrentGroup => private SMSStakeholderGroup? CurrentGroup { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:41:IsEditMode => private bool IsEditMode { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:42:IsManagingMembers => private bool IsManagingMembers { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:43:CurrentGroupCode => private string? CurrentGroupCode { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:51:SuccessMessage => private string SuccessMessage { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:52:ErrorMessage => private string ErrorMessage { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:53:IsSaving => private bool IsSaving { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:59:ShowCreateModal => private bool ShowCreateModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:60:ShowEditModal => private bool ShowEditModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:61:ShowMembersModal => private bool ShowMembersModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:62:ShowDeleteModal => private bool ShowDeleteModal { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:63:NewGroupName => private string NewGroupName { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:64:NewDescription => private string NewDescription { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:65:EditGroupName => private string EditGroupName { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:66:EditDescription => private string EditDescription { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:67:EditIsActive => private bool EditIsActive { get; set; } = true;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:68:DeleteGroupCode => private string DeleteGroupCode { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:69:DeleteGroupName => private string DeleteGroupName { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserGroups\StakeholderGroups.razor.cs:351:FilterPOPEmployeesOnly => private bool FilterPOPEmployeesOnly { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserRoles\UserRoles.razor.cs:18:SuccessMessage => private string? SuccessMessage { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserRoles\UserRoles.razor.cs:19:ErrorMessage => private string? ErrorMessage { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserRoles\UserRoles.razor.cs:50:ShowCreateModal => private bool ShowCreateModal { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserRoles\UserRoles.razor.cs:51:IsSaving => private bool IsSaving { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserRoles\UserRoles.razor.cs:54:ShowPermissionsModal => private bool ShowPermissionsModal { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserRoles\UserRoles.razor.cs:55:ViewRole => private SMSUserRole? ViewRole { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserRoles\UserRoles.razor.cs:58:ShowEditModal => private bool ShowEditModal { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\SMSSystem\UserRoles\UserRoles.razor.cs:59:CurrentEditRole => private SMSUserRole? CurrentEditRole { get; set; }
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Verify2FA.razor.cs:34:ErrorMessage => private string ErrorMessage { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Verify2FA.razor.cs:35:IsLoading => private bool IsLoading { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Verify2FA.razor.cs:36:BackupCode => private string BackupCode { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Verify2FA.razor.cs:39:ShowSetupPage => private bool ShowSetupPage { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Verify2FA.razor.cs:40:ShowBackupMethods => private bool ShowBackupMethods { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Verify2FA.razor.cs:41:ShowBackupCodeEntry => private bool ShowBackupCodeEntry { get; set; } = false;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Verify2FA.razor.cs:44:QRCodeUrl => private string QRCodeUrl { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Verify2FA.razor.cs:45:ManualEntryCode => private string ManualEntryCode { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Verify2FA.razor.cs:46:UserDisplayName => private string UserDisplayName { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Verify2FA.razor.cs:47:UserSecretKey => private string UserSecretKey { get; set; } = string.Empty;
+C:\Projects\PDXSMS_V2\Presentation\SMS3\Components\Pages\Verify2FA.razor.cs:51:TimeRemainingInWindow => private int TimeRemainingInWindow { get; set; } = 30;

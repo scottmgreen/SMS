@@ -1,4 +1,4 @@
-@page "/SMSSystem/UserManagement/StakeholderUsers"
+﻿@page "/SMSSystem/UserManagement/StakeholderUsers"
 
 @using Radzen
 @using Radzen.Blazor
@@ -23,25 +23,25 @@
 </PageHeader>
 
     <!-- Messages -->
-    @if (!string.IsNullOrEmpty(SuccessMessage))
+    @if (!string.IsNullOrEmpty(_successMessage))
     {
         <RadzenRow Gap="1rem" class="rz-mb-3">
             <RadzenColumn Size="12">
                 <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter">
                     <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
-                    @SuccessMessage
+                    @_successMessage
                 </RadzenAlert>
             </RadzenColumn>
         </RadzenRow>
     }
 
-    @if (!string.IsNullOrEmpty(ErrorMessage))
+    @if (!string.IsNullOrEmpty(_errorMessage))
     {
         <RadzenRow Gap="1rem" class="rz-mb-3">
             <RadzenColumn Size="12">
                 <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
                     <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
-                    @ErrorMessage
+                    @_errorMessage
                 </RadzenAlert>
             </RadzenColumn>
         </RadzenRow>
@@ -159,15 +159,15 @@
 
 
 <!-- Shared Password Change Modal -->
-<PasswordChangeDialog IsVisible="@ShowPasswordModal" 
-                    UserCode="@PasswordUserCode" 
-                    UserDisplayName="@PasswordUserDisplayName" 
+<PasswordChangeDialog IsVisible="@_showPasswordModal" 
+                    UserCode="@_passwordUserCode" 
+                    UserDisplayName="@_passwordUserDisplayName" 
                     UserType="Stakeholder"
                     OnPasswordChanged="@OnPasswordChangedSuccess" 
                     OnCancel="@ClosePasswordChangeModal" />
 
 <!-- Create User Modal -->
-@if (ShowCreateModal)
+@if (_showCreateModal)
 {
     <div class="modal-backdrop">
         <div class="modal-dialog modal-lg">
@@ -286,7 +286,7 @@
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
                     <RadzenButton Text="Create User" Icon="save" ButtonStyle="ButtonStyle.Primary" 
-                                  Click="@CreateUser" Disabled="@(!_isCreateFormValid || IsSaving)"
+                                  Click="@CreateUser" Disabled="@(!_isCreateFormValid || _isSaving)"
                                   Style="background-color: #212e61; border-color: #212e61;" />
                 </div>
             </RadzenCard>
@@ -295,7 +295,7 @@
 }
 
 <!-- Edit User Modal -->
-@if (ShowEditModal && CurrentEditUser is not null)
+@if (_showEditModal && _currentEditUser is not null)
 {
     <div class="modal-backdrop">
         <div class="modal-dialog modal-lg">
@@ -304,7 +304,7 @@
                 <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
                     <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
                         <RadzenIcon Icon="edit" Style="margin-right: 0.5rem;" />
-                        Edit Stakeholder User @CurrentEditUser.Code
+                        Edit Stakeholder User @_currentEditUser.Code
                     </RadzenText>
                 </div>
                 
@@ -313,7 +313,7 @@
                     <RadzenColumn Size="6" SizeMD="6">
                         <RadzenStack Gap=".5rem">
                             <RadzenFormField Text="Username" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenTextBox Value="@CurrentEditUser.UserName?.Value" ReadOnly="true"
+                                <RadzenTextBox Value="@_currentEditUser.UserName?.Value" ReadOnly="true"
                                                Style="width: 100%; background-color: #f8f9fa;" />
                             </RadzenFormField>
                         </RadzenStack>
@@ -397,7 +397,7 @@
                 <div class="d-flex justify-content-end gap-2 mt-3">
                     <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
                     <RadzenButton Text="Update User" Icon="save" ButtonStyle="ButtonStyle.Primary" 
-                                  Click="@UpdateUser" Disabled="@(!_isEditFormValid || IsSaving)"
+                                  Click="@UpdateUser" Disabled="@(!_isEditFormValid || _isSaving)"
                                   Style="background-color: #212e61; border-color: #212e61;" />
                 </div>
             </RadzenCard>
@@ -406,14 +406,14 @@
 }
 
 <!-- Role Assignment Modal -->
-@if (ShowRoleAssignmentModal)
+@if (_showRoleAssignmentModal)
 {
     <div class="modal-backdrop">
         <div class="modal-dialog modal-lg">
             <RadzenCard class="modal-content">
                 <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0; flex-shrink: 0;">
                     <h5 class="modal-title" style="margin: 0; color: white;">
-                        <i class="fas fa-user-shield"></i> Assign Role: @RoleAssignmentUserDisplayName
+                        <i class="fas fa-user-shield"></i> Assign Role: @_roleAssignmentUserDisplayName
                     </h5>
                 </div>
                 <div class="modal-body" style="flex: 1; overflow-y: auto; padding-bottom: 1rem;">
@@ -421,14 +421,14 @@
                     <RadzenRow Gap="1rem">
                         <RadzenColumn Size="6">
                             <RadzenFormField Text="Current Role" Variant="Variant.Outlined">
-                                <RadzenTextBox Value="@(CurrentUserRoleCode ?? "No role assigned")"
+                                <RadzenTextBox Value="@(_currentUserRoleCode ?? "No role assigned")"
                                                ReadOnly="true"
                                                Style="background-color: #f8f9fa;" />
                             </RadzenFormField>
                         </RadzenColumn>
                         <RadzenColumn Size="6">
                             <RadzenFormField Text="Select Role" Variant="Variant.Outlined">
-                                <RadzenDropDown @bind-Value="@SelectedRoleCode"
+                                <RadzenDropDown @bind-Value="@_selectedRoleCode"
                                                 Data="@UserRoles"
                                                 TextProperty="Name"
                                                 ValueProperty="Code"
@@ -440,13 +440,13 @@
                     </RadzenRow>
                     </RadzenStack>
                     <br>
-                    @if (!string.IsNullOrEmpty(SelectedRoleCode))
+                    @if (!string.IsNullOrEmpty(_selectedRoleCode))
                     {
-                        var selectedRole = UserRoles.FirstOrDefault(r => r.Code == SelectedRoleCode);
+                        var selectedRole = UserRoles.FirstOrDefault(r => r.Code == _selectedRoleCode);
                         @if (selectedRole?.Permissions?.Any() == true)
                         {
                         <div style="max-height: 300px; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 4px;">
-                            <RadzenDataGrid Data="@SMSModules" TItem="string" AllowPaging="false" class="permission-view-grid" 
+                            <RadzenDataGrid Data="@_smsModules" TItem="string" AllowPaging="false" class="permission-view-grid" 
                                             Style="height: auto; min-height: auto;">
                             <Columns>
                                 <RadzenDataGridColumn TItem="string" Title="Module" Width="30%">
@@ -542,7 +542,7 @@
                                       Icon="person_add"
                                       ButtonStyle="ButtonStyle.Primary"
                                       Click="@AssignUserRole"
-                                      Disabled="@(string.IsNullOrEmpty(SelectedRoleCode) || IsSaving)" />
+                                      Disabled="@(string.IsNullOrEmpty(_selectedRoleCode) || _isSaving)" />
                     </div>
                 </div>
             </RadzenCard>
@@ -551,7 +551,7 @@
 }
 
 <!-- Group Management Modal -->
-@if (ShowGroupsModal && !string.IsNullOrEmpty(GroupManagementUserCode))
+@if (_showGroupsModal && !string.IsNullOrEmpty(_groupManagementUserCode))
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-lg">
@@ -559,7 +559,7 @@
                 <!-- Modal Header -->
                 <div class="sms-modal-header sms-header-primary">
                     <h5 class="sms-modal-title">
-                        <i class="fas fa-users"></i> Manage Groups: @GroupManagementUserDisplayName
+                        <i class="fas fa-users"></i> Manage Groups: @_groupManagementUserDisplayName
                     </h5>
                 </div>
 
@@ -786,3 +786,4 @@
     border-radius: 6px 6px 0 0;
 }
 </style>
+

@@ -1,4 +1,4 @@
-using SMS_Application.Interfaces;
+﻿using SMS_Application.Interfaces;
 using SMS_Domain.Events;
 using SMS_Shared.Configuration;
 
@@ -23,8 +23,8 @@ public partial class StakeholderUsers : ComponentBase
     // Data Properties
     private List<SMSStakeholderUser> StakeholderUsersList { get; set; } = new();
     private List<SMSUserRole> UserRoles { get; set; } = new();
-    private string? SuccessMessage { get; set; }
-    private string? ErrorMessage { get; set; }
+    private string? _successMessage { get; set; }
+    private string? _errorMessage { get; set; }
 
     // Predefined stakeholder types
     //private static readonly string[] StakeholderTypes = { "SUT-0001", "SUT-0002", "SUT-0003" };
@@ -35,28 +35,28 @@ public partial class StakeholderUsers : ComponentBase
     private CreateStakeholderUserModel _newUser = new();
 
     // Create Modal Properties  
-    private bool ShowCreateModal { get; set; }
-    private bool IsSaving { get; set; }
+    private bool _showCreateModal { get; set; }
+    private bool _isSaving { get; set; }
 
     // Edit Modal Properties
-    private bool ShowEditModal { get; set; }
-    private SMSStakeholderUser? CurrentEditUser { get; set; }
+    private bool _showEditModal { get; set; }
+    private SMSStakeholderUser? _currentEditUser { get; set; }
 
     // Role Assignment Modal Properties
-    private bool ShowRoleAssignmentModal { get; set; }
-    private string RoleAssignmentUserCode { get; set; } = string.Empty;
-    private string RoleAssignmentUserDisplayName { get; set; } = string.Empty;
-    private string? CurrentUserRoleCode { get; set; }
-    private string? SelectedRoleCode { get; set; }
+    private bool _showRoleAssignmentModal { get; set; }
+    private string _roleAssignmentUserCode { get; set; } = string.Empty;
+    private string _roleAssignmentUserDisplayName { get; set; } = string.Empty;
+    private string? _currentUserRoleCode { get; set; }
+    private string? _selectedRoleCode { get; set; }
 
     // Legacy properties for compatibility
-    private bool ShowRoleModal { get; set; }
-    private string RoleUserCode { get; set; } = string.Empty;
-    private string RoleUserDisplayName { get; set; } = string.Empty;
-    private string CurrentRoleCode { get; set; } = string.Empty;
+    private bool _showRoleModal { get; set; }
+    private string _roleUserCode { get; set; } = string.Empty;
+    private string _roleUserDisplayName { get; set; } = string.Empty;
+    private string _currentRoleCode { get; set; } = string.Empty;
 
     // Dynamically get all unique modules from available roles' permissions
-    private IEnumerable<string> SMSModules =>
+    private IEnumerable<string> _smsModules =>
         UserRoles
             .Where(role => role.Permissions is not null)
             .SelectMany(role => role.Permissions)
@@ -127,7 +127,7 @@ public partial class StakeholderUsers : ComponentBase
             IsPOPEmployee = false,
             TwoFactorEnabled = false
         };
-        ShowCreateModal = true;
+        _showCreateModal = true;
         StateHasChanged();
     }
 
@@ -141,7 +141,7 @@ public partial class StakeholderUsers : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Create user entity
@@ -193,14 +193,14 @@ public partial class StakeholderUsers : ComponentBase
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
 
     private void CloseCreateModal()
     {
-        ShowCreateModal = false;
+        _showCreateModal = false;
         _newUser = new CreateStakeholderUserModel
         {
             IsActive = true,  // ADDED: Set default value
@@ -227,7 +227,7 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task ShowEditDialog(SMSStakeholderUser user)
     {
-        CurrentEditUser = user;
+        _currentEditUser = user;
         _editUser = new EditStakeholderUserModel
         {
             UserId = user.Code,
@@ -240,7 +240,7 @@ public partial class StakeholderUsers : ComponentBase
             IsPOPEmployee = user.IsPOPEmployee,
             TwoFactorEnabled = user.TwoFactorEnabled
         };
-        ShowEditModal = true;
+        _showEditModal = true;
         StateHasChanged();
     }
 
@@ -254,24 +254,24 @@ public partial class StakeholderUsers : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
-            if (CurrentEditUser is null)
+            if (_currentEditUser is null)
             {
                 await ShowErrorAsyncNotification("No user selected for update.");
                 return;
             }
 
             // ? FIXED: Only set business fields - let pipeline handle audit fields
-            CurrentEditUser.FirstName = FirstName.Create(_editUser.FirstName).Value;
-            CurrentEditUser.LastName = LastName.Create(_editUser.LastName).Value;
-            CurrentEditUser.StakeholderType = _editUser.StakeholderType;
-            CurrentEditUser.Organization = _editUser.Organization;
-            CurrentEditUser.IsActive = _editUser.IsActive;
-            CurrentEditUser.IsPOPEmployee = _editUser.IsPOPEmployee;
-            CurrentEditUser.TwoFactorEnabled = _editUser.TwoFactorEnabled;
-            CurrentEditUser.SMSUserType = SMSUserType.Stakeholder;
+            _currentEditUser.FirstName = FirstName.Create(_editUser.FirstName).Value;
+            _currentEditUser.LastName = LastName.Create(_editUser.LastName).Value;
+            _currentEditUser.StakeholderType = _editUser.StakeholderType;
+            _currentEditUser.Organization = _editUser.Organization;
+            _currentEditUser.IsActive = _editUser.IsActive;
+            _currentEditUser.IsPOPEmployee = _editUser.IsPOPEmployee;
+            _currentEditUser.TwoFactorEnabled = _editUser.TwoFactorEnabled;
+            _currentEditUser.SMSUserType = SMSUserType.Stakeholder;
             
                         
             // Update user role if specified
@@ -281,13 +281,13 @@ public partial class StakeholderUsers : ComponentBase
                 var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
                 if (roleResult.IsSuccess && roleResult.Value is not null)
                 {
-                    CurrentEditUser.UserRole = roleResult.Value;
+                    _currentEditUser.UserRole = roleResult.Value;
                 }
             }
             // Note: If no role is specified, we keep the existing UserRole unchanged
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
-            var updateCommand = new UpdateSMSStakeholderUserCommand(CurrentEditUser);
+            var updateCommand = new UpdateSMSStakeholderUserCommand(_currentEditUser);
             var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
@@ -308,15 +308,15 @@ public partial class StakeholderUsers : ComponentBase
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
 
     private void CloseEditModal()
     {
-        ShowEditModal = false;
-        CurrentEditUser = null;
+        _showEditModal = false;
+        _currentEditUser = null;
         _editUser = new EditStakeholderUserModel();
         StateHasChanged();
     }
@@ -375,14 +375,14 @@ public partial class StakeholderUsers : ComponentBase
     #region Password Management
 
     // Password Modal Properties for Shared Component
-    private bool ShowPasswordModal { get; set; }
-    private string PasswordUserCode { get; set; } = string.Empty;
-    private string PasswordUserDisplayName { get; set; } = string.Empty;
+    private bool _showPasswordModal { get; set; }
+    private string _passwordUserCode { get; set; } = string.Empty;
+    private string _passwordUserDisplayName { get; set; } = string.Empty;
 
     // Group Management Properties
-    private bool ShowGroupsModal { get; set; } = false;
-    private string GroupManagementUserCode { get; set; } = string.Empty;
-    private string GroupManagementUserDisplayName { get; set; } = string.Empty;
+    private bool _showGroupsModal { get; set; } = false;
+    private string _groupManagementUserCode { get; set; } = string.Empty;
+    private string _groupManagementUserDisplayName { get; set; } = string.Empty;
     private List<SMSStakeholderGroup> AllStakeholderGroups { get; set; } = new();
     private List<SMSStakeholderGroup> UserCurrentGroups { get; set; } = new();
     private List<SMSStakeholderGroup> AvailableGroups { get; set; } = new();
@@ -390,24 +390,24 @@ public partial class StakeholderUsers : ComponentBase
 
     private void OpenPasswordChangeModal(string userCode, string displayName)
     {
-        PasswordUserCode = userCode;
-        PasswordUserDisplayName = displayName;
-        ShowPasswordModal = true;
+        _passwordUserCode = userCode;
+        _passwordUserDisplayName = displayName;
+        _showPasswordModal = true;
         StateHasChanged();
     }
 
     private void ClosePasswordChangeModal()
     {
-        ShowPasswordModal = false;
-        PasswordUserCode = string.Empty;
-        PasswordUserDisplayName = string.Empty;
+        _showPasswordModal = false;
+        _passwordUserCode = string.Empty;
+        _passwordUserDisplayName = string.Empty;
         StateHasChanged();
     }
 
     private async Task OnPasswordChangedSuccess()
     {
         // Password was changed successfully by the modal
-        await ShowSuccessAsyncNotification($"Password updated successfully for {PasswordUserDisplayName}.");
+        await ShowSuccessAsyncNotification($"Password updated successfully for {_passwordUserDisplayName}.");
     }
 
     // Legacy password methods - kept for compatibility
@@ -443,27 +443,27 @@ public partial class StakeholderUsers : ComponentBase
 
     private void OpenRoleAssignmentModal(string userCode, string userDisplayName, string? currentRoleCode = null)
     {
-        RoleAssignmentUserCode = userCode;
-        RoleAssignmentUserDisplayName = userDisplayName;
-        CurrentUserRoleCode = currentRoleCode;
-        SelectedRoleCode = currentRoleCode;
-        ShowRoleAssignmentModal = true;
+        _roleAssignmentUserCode = userCode;
+        _roleAssignmentUserDisplayName = userDisplayName;
+        _currentUserRoleCode = currentRoleCode;
+        _selectedRoleCode = currentRoleCode;
+        _showRoleAssignmentModal = true;
         StateHasChanged();
     }
 
     private void CloseRoleAssignmentModal()
     {
-        ShowRoleAssignmentModal = false;
-        RoleAssignmentUserCode = string.Empty;
-        RoleAssignmentUserDisplayName = string.Empty;
-        CurrentUserRoleCode = null;
-        SelectedRoleCode = null;
+        _showRoleAssignmentModal = false;
+        _roleAssignmentUserCode = string.Empty;
+        _roleAssignmentUserDisplayName = string.Empty;
+        _currentUserRoleCode = null;
+        _selectedRoleCode = null;
         StateHasChanged();
     }
 
     private async Task AssignUserRole()
     {
-        if (string.IsNullOrEmpty(RoleAssignmentUserCode) || string.IsNullOrEmpty(SelectedRoleCode))
+        if (string.IsNullOrEmpty(_roleAssignmentUserCode) || string.IsNullOrEmpty(_selectedRoleCode))
         {
             await ShowErrorAsyncNotification("Invalid user or role selection.");
             return;
@@ -471,11 +471,11 @@ public partial class StakeholderUsers : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Get the user
-            var userQuery = new GetSMSStakeholderUserByCodeQuery(RoleAssignmentUserCode);
+            var userQuery = new GetSMSStakeholderUserByCodeQuery(_roleAssignmentUserCode);
             var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
             if (userResult.IsFailure || userResult.Value is null)
@@ -487,7 +487,7 @@ public partial class StakeholderUsers : ComponentBase
             var user = userResult.Value;
 
             // Get the selected role
-            var selectedRole = UserRoles.FirstOrDefault(r => r.Code == SelectedRoleCode);
+            var selectedRole = UserRoles.FirstOrDefault(r => r.Code == _selectedRoleCode);
             if (selectedRole is null)
             {
                 await ShowErrorAsyncNotification("Selected role not found.");
@@ -503,7 +503,7 @@ public partial class StakeholderUsers : ComponentBase
 
             if (updateResult.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Role '{selectedRole.Name}' successfully assigned to {RoleAssignmentUserDisplayName}.");
+                await ShowSuccessAsyncNotification($"Role '{selectedRole.Name}' successfully assigned to {_roleAssignmentUserDisplayName}.");
 
                 // Refresh data and close modal
                 await LoadDataAsync();
@@ -516,19 +516,19 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning role to user {UserCode}", RoleAssignmentUserCode);
+            _logger.LogError(ex, "Error assigning role to user {UserCode}", _roleAssignmentUserCode);
             await ShowErrorAsyncNotification("An error occurred while assigning the role. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
 
     private async Task RemoveUserRole()
     {
-        if (string.IsNullOrEmpty(RoleAssignmentUserCode))
+        if (string.IsNullOrEmpty(_roleAssignmentUserCode))
         {
             await ShowErrorAsyncNotification("Invalid user selection.");
             return;
@@ -536,11 +536,11 @@ public partial class StakeholderUsers : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Get the user
-            var userQuery = new GetSMSStakeholderUserByCodeQuery(RoleAssignmentUserCode);
+            var userQuery = new GetSMSStakeholderUserByCodeQuery(_roleAssignmentUserCode);
             var userResult = await _mediator.SendAsync(userQuery, CancellationToken.None);
 
             if (userResult.IsFailure || userResult.Value is null)
@@ -558,7 +558,7 @@ public partial class StakeholderUsers : ComponentBase
 
             if (updateResult.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Role successfully removed from {RoleAssignmentUserDisplayName}.");
+                await ShowSuccessAsyncNotification($"Role successfully removed from {_roleAssignmentUserDisplayName}.");
 
                 // Refresh data and close modal
                 await LoadDataAsync();
@@ -571,12 +571,12 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing role from user {UserCode}", RoleAssignmentUserCode);
+            _logger.LogError(ex, "Error removing role from user {UserCode}", _roleAssignmentUserCode);
             await ShowErrorAsyncNotification("An error occurred while removing the role. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
@@ -594,7 +594,7 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task AssignRoleFromModal(string? userRoleCode)
     {
-        SelectedRoleCode = userRoleCode;
+        _selectedRoleCode = userRoleCode;
         await AssignUserRole();
     }
 
@@ -610,11 +610,11 @@ public partial class StakeholderUsers : ComponentBase
     {
         try
         {
-            GroupManagementUserCode = userId;
-            GroupManagementUserDisplayName = displayName;
+            _groupManagementUserCode = userId;
+            _groupManagementUserDisplayName = displayName;
 
             await LoadUserGroups(userId);
-            ShowGroupsModal = true;
+            _showGroupsModal = true;
         }
         catch (Exception ex)
         {
@@ -668,9 +668,9 @@ public partial class StakeholderUsers : ComponentBase
 
     private void CloseGroupsModal()
     {
-        ShowGroupsModal = false;
-        GroupManagementUserCode = string.Empty;
-        GroupManagementUserDisplayName = string.Empty;
+        _showGroupsModal = false;
+        _groupManagementUserCode = string.Empty;
+        _groupManagementUserDisplayName = string.Empty;
         UserCurrentGroups.Clear();
         AvailableGroups.Clear();
         SelectedGroups.Clear();
@@ -678,7 +678,7 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task RemoveUserFromGroup(string groupCode)
     {
-        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(GroupManagementUserCode))
+        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(_groupManagementUserCode))
         {
             await ShowErrorAsyncNotification("Group code and user code are required.");
             return;
@@ -687,13 +687,13 @@ public partial class StakeholderUsers : ComponentBase
         try
         {
             var groupId = new SMSStakeholderGroupID(groupCode);
-            var command = new RemoveUserFromStakeholderGroupCommand(GroupManagementUserCode, groupId);
+            var command = new RemoveUserFromStakeholderGroupCommand(_groupManagementUserCode, groupId);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 await ShowSuccessAsyncNotification("User removed from group successfully.");
-                await LoadUserGroups(GroupManagementUserCode);
+                await LoadUserGroups(_groupManagementUserCode);
                 StateHasChanged();
             }
             else
@@ -703,14 +703,14 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", GroupManagementUserCode, groupCode);
+            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", _groupManagementUserCode, groupCode);
             await ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
 
     private async Task AssignUserToGroup(string groupCode)
     {
-        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(GroupManagementUserCode))
+        if (string.IsNullOrWhiteSpace(groupCode) || string.IsNullOrWhiteSpace(_groupManagementUserCode))
         {
             await ShowErrorAsyncNotification("Group code and user code are required.");
             return;
@@ -719,13 +719,13 @@ public partial class StakeholderUsers : ComponentBase
         try
         {
             var groupId = new SMSStakeholderGroupID(groupCode);
-            var command = new AssignUserToStakeholderGroupCommand(GroupManagementUserCode, groupId);
+            var command = new AssignUserToStakeholderGroupCommand(_groupManagementUserCode, groupId);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 await ShowSuccessAsyncNotification("User assigned to group successfully.");
-                await LoadUserGroups(GroupManagementUserCode);
+                await LoadUserGroups(_groupManagementUserCode);
                 StateHasChanged();
             }
             else
@@ -735,14 +735,14 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", _groupManagementUserCode, groupCode);
             await ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }
 
     private async Task AssignMultipleGroups()
     {
-        if (string.IsNullOrWhiteSpace(GroupManagementUserCode) || !SelectedGroups.Any(s => s.Value))
+        if (string.IsNullOrWhiteSpace(_groupManagementUserCode) || !SelectedGroups.Any(s => s.Value))
         {
             await ShowErrorAsyncNotification("User code and at least one group must be selected.");
             return;
@@ -759,7 +759,7 @@ public partial class StakeholderUsers : ComponentBase
                 try
                 {
                     var groupId = new SMSStakeholderGroupID(groupCode);
-                    var command = new AssignUserToStakeholderGroupCommand(GroupManagementUserCode, groupId);
+                    var command = new AssignUserToStakeholderGroupCommand(_groupManagementUserCode, groupId);
                     var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                     if (result.IsSuccess)
@@ -769,7 +769,7 @@ public partial class StakeholderUsers : ComponentBase
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", GroupManagementUserCode, groupCode);
+                    _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", _groupManagementUserCode, groupCode);
                     failureCount++;
                 }
             }
@@ -781,7 +781,7 @@ public partial class StakeholderUsers : ComponentBase
                     message += $" {failureCount} assignment(s) failed.";
                 await ShowSuccessAsyncNotification(message);
 
-                await LoadUserGroups(GroupManagementUserCode);
+                await LoadUserGroups(_groupManagementUserCode);
                 StateHasChanged();
             }
             else
@@ -791,7 +791,7 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", GroupManagementUserCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to multiple groups", _groupManagementUserCode);
             await ShowErrorAsyncNotification("Error assigning user to groups. Please try again.");
         }
     }
@@ -865,3 +865,4 @@ public partial class StakeholderUsers : ComponentBase
 
     #endregion
 }
+
