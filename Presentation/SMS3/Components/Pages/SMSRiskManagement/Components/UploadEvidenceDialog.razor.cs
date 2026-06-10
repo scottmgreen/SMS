@@ -33,9 +33,9 @@ public partial class UploadEvidenceDialog : ComponentBase
     #region Computed Properties
     public int DescriptionCharacterCount => Model.Description?.Length ?? 0;
 
-    private long TotalSize => AttachedFiles.Sum(f => f.Size);
+    private long _totalSize => AttachedFiles.Sum(f => f.Size);
 
-    private string GetTotalSizeDisplay() => FormatFileSize(TotalSize);
+    private string GetTotalSizeDisplay() => FormatFileSize(_totalSize);
 
     private string GetFileTypeSummary()
     {

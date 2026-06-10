@@ -33,7 +33,7 @@ else
             <RadzenCard>
                 <RadzenStack Gap="1rem" Class="rz-p-3">
                     
-                    @if (IsEditMode && CurrentMitigation is not null)
+@if (_isEditMode && CurrentMitigation is not null)
                     {
                         <!-- Edit Mode Header -->
                         <RadzenAlert Size="AlertSize.Small" Variant="Variant.Flat" AlertStyle="AlertStyle.Info">

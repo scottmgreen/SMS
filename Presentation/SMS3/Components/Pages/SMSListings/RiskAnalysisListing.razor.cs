@@ -11,9 +11,9 @@ public partial class RiskAnalysisListing : ComponentBase
     [Inject] private ILogger<RiskAnalysisListing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
 
-    private RadzenDataGrid<RiskAnalysis>? analysisGrid;
-    private IEnumerable<RiskAnalysis> analysisResults = new List<RiskAnalysis>();
-    private int totalCount;
+    private RadzenDataGrid<RiskAnalysis>? _analysisGrid;
+    private IEnumerable<RiskAnalysis> _analysisResults = new List<RiskAnalysis>();
+    private int _totalCount;
 
     protected override async Task OnInitializedAsync()
     {
@@ -29,9 +29,9 @@ public partial class RiskAnalysisListing : ComponentBase
 
             if (result.IsSuccess && result.Value is not null)
             {
-                analysisResults = result.Value;
-                totalCount = analysisResults.Count();
-                _logger.LogInformation("Loaded {Count} risk analysis results", totalCount);
+                _analysisResults = result.Value;
+                _totalCount = _analysisResults.Count();
+                _logger.LogInformation("Loaded {Count} risk analysis results", _totalCount);
             }
             else
             {
@@ -52,7 +52,7 @@ public partial class RiskAnalysisListing : ComponentBase
         {
             await LoadInitialData();
 
-            var query = analysisResults.AsQueryable();
+            var query = _analysisResults.AsQueryable();
 
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
@@ -71,8 +71,8 @@ public partial class RiskAnalysisListing : ComponentBase
                 query = query.Take(args.Top.Value);
             }
 
-            analysisResults = query.ToList();
-            totalCount = analysisResults.Count();
+            _analysisResults = query.ToList();
+            _totalCount = _analysisResults.Count();
         }
         catch (Exception ex)
         {

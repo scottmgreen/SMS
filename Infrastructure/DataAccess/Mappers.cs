@@ -398,6 +398,7 @@ public static partial class Mappers
         report.SubmittedDate = reader.GetValue<DateTime>(FieldNames.fSubmittedDate);
         report.SubmittingDepartment = reader.GetValue<string>(FieldNames.fSubmittingDepartment);
         report.SubmittingDepartmentJobFunction = reader.GetValue<string>(FieldNames.fSubmittingDepartmentJobFunction);
+        report.IsAnonymous = reader.GetValue<bool>(FieldNames.fReportIsAnonymous);  
         report.ReportContactName = reader.GetValue<string>(FieldNames.fReportContactName);
         report.ReportContactCell = reader.GetValue<string>(FieldNames.fReportContactCell);
         report.ReportContactEmail = reader.GetValue<string>(FieldNames.fReportContactEmail);

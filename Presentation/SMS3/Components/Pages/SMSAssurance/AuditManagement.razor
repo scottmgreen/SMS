@@ -311,7 +311,7 @@
                                                         Click="@CreateAuditPlan" />
                                         </div>
                                         
-                                        <RadzenDataGrid @ref="auditPlansGrid" 
+                    <RadzenDataGrid @ref="_auditPlansGrid"
                                                       Data="@AuditPlans" 
                                                       TItem="SMSAuditPlan"
                                                       AllowFiltering="true" 
@@ -382,7 +382,7 @@
                                                         Click="@NavigateToActiveAudits" />
                                         </div>
                                         
-                                        <RadzenDataGrid @ref="activeAuditsGrid" 
+                    <RadzenDataGrid @ref="_activeAuditsGrid"
                                                       Data="@ActiveAudits" 
                                                       TItem="SMSAudit"
                                                       AllowFiltering="true" 

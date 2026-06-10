@@ -27,9 +27,9 @@ public partial class AuditPlanDialog : ComponentBase
     #region Form State
     private bool IsSubmitting { get; set; } = false;
     private bool IsValid { get; set; } = true;
-    private bool IsReadOnly => !IsNew && AuditPlan?.Status == "Completed";
+    private bool _isReadOnly => !IsNew && AuditPlan?.Status == "Completed";
     private string ValidationMessage { get; set; } = string.Empty;
-    private int selectedTabIndex = 0;
+    private int _selectedTabIndex = 0;
 
     // Form Data
     private string? Code { get; set; }

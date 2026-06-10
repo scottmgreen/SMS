@@ -21,15 +21,15 @@ public partial class EditInterviewDialog : ComponentBase
 
     #region State
     private bool IsSaving { get; set; } = false;
-    private int selectedTabIndex = 0;
+    private int _selectedTabIndex = 0;
     public EditInterviewModel Model { get; set; } = new();
     #endregion
 
     #region Workflow Properties
-    private bool CanStartInterview => Model.Status.Equals(InterviewStatus.InterviewScheduled) && Model.InterviewDate.HasValue;
-    private bool CanCompleteInterview => Model.Status.Equals(InterviewStatus.InterviewInProgress) && !string.IsNullOrWhiteSpace(Model.KeyFindings);
-    private bool IsInterviewInProgress => Model.Status.Equals(InterviewStatus.InterviewInProgress);
-    private bool IsInterviewCompleted => Model.Status.Equals(InterviewStatus.InterviewComplete);
+    private bool _canStartInterview => Model.Status.Equals(InterviewStatus.InterviewScheduled) && Model.InterviewDate.HasValue;
+    private bool _canCompleteInterview => Model.Status.Equals(InterviewStatus.InterviewInProgress) && !string.IsNullOrWhiteSpace(Model.KeyFindings);
+    private bool _isInterviewInProgress => Model.Status.Equals(InterviewStatus.InterviewInProgress);
+    private bool _isInterviewCompleted => Model.Status.Equals(InterviewStatus.InterviewComplete);
     #endregion
 
     #region Dropdown Options
@@ -170,7 +170,7 @@ public partial class EditInterviewDialog : ComponentBase
             if (result.IsSuccess)
             {
                 Model.Status = InterviewStatus.InterviewInProgress;
-                selectedTabIndex = 2; // Switch to conducting tab
+                _selectedTabIndex = 2; // Switch to conducting tab
                 await UpdateInterview();
                 await ShowSuccessAsyncNotification("Interview started successfully. You can now begin recording notes and findings.");
                 StateHasChanged();

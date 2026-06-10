@@ -44,8 +44,8 @@ public partial class AuditManagement : ComponentBase
     private List<SMSAuditEvidence> RecentEvidence { get; set; } = new();
 
     // Grid References
-    private RadzenDataGrid<SMSAuditPlan>? auditPlansGrid;
-    private RadzenDataGrid<SMSAudit>? activeAuditsGrid;
+    private RadzenDataGrid<SMSAuditPlan>? _auditPlansGrid;
+    private RadzenDataGrid<SMSAudit>? _activeAuditsGrid;
 
     // Dashboard Statistics
     private AuditDashboardStats DashboardStats { get; set; } = new();
@@ -259,45 +259,45 @@ public partial class AuditManagement : ComponentBase
     private async Task OnSearchTextChanged(string value)
     {
         SearchText = value;
-        if (auditPlansGrid != null)
-            await auditPlansGrid.Reload();
-        if (activeAuditsGrid != null)
-            await activeAuditsGrid.Reload();
+            if (_auditPlansGrid != null)
+                await _auditPlansGrid.Reload();
+            if (_activeAuditsGrid != null)
+                await _activeAuditsGrid.Reload();
     }
 
     private async Task OnStatusFilterChanged(object value)
     {
         SelectedStatus = value?.ToString() ?? string.Empty;
-        if (auditPlansGrid != null)
-            await auditPlansGrid.Reload();
-        if (activeAuditsGrid != null)
-            await activeAuditsGrid.Reload();
+            if (_auditPlansGrid != null)
+                await _auditPlansGrid.Reload();
+            if (_activeAuditsGrid != null)
+                await _activeAuditsGrid.Reload();
     }
 
     private async Task OnTypeFilterChanged(object value)
     {
         SelectedType = value?.ToString() ?? string.Empty;
-        if (auditPlansGrid != null)
-            await auditPlansGrid.Reload();
-        if (activeAuditsGrid != null)
-            await activeAuditsGrid.Reload();
+            if (_auditPlansGrid != null)
+                await _auditPlansGrid.Reload();
+            if (_activeAuditsGrid != null)
+                await _activeAuditsGrid.Reload();
     }
 
     private async Task OnDepartmentFilterChanged(object value)
     {
         SelectedDepartment = value?.ToString() ?? string.Empty;
-        if (auditPlansGrid != null)
-            await auditPlansGrid.Reload();
-        if (activeAuditsGrid != null)
-            await activeAuditsGrid.Reload();
+            if (_auditPlansGrid != null)
+                await _auditPlansGrid.Reload();
+            if (_activeAuditsGrid != null)
+                await _activeAuditsGrid.Reload();
     }
 
     private async Task OnDateRangeChanged()
     {
-        if (auditPlansGrid != null)
-            await auditPlansGrid.Reload();
-        if (activeAuditsGrid != null)
-            await activeAuditsGrid.Reload();
+            if (_auditPlansGrid != null)
+                await _auditPlansGrid.Reload();
+            if (_activeAuditsGrid != null)
+                await _activeAuditsGrid.Reload();
     }
     #endregion
 

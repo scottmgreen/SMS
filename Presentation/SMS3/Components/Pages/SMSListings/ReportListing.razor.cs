@@ -33,7 +33,7 @@ namespace SMS3.Components.Pages.SMSListings;
 /// </summary>
 public partial class ReportListing : ComponentBase
 {
-    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+    private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Dependencies
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
@@ -50,17 +50,17 @@ public partial class ReportListing : ComponentBase
     #endregion
 
     #region Properties
-    private RadzenDataGrid<Report>? reportsGrid;
-    private IEnumerable<Report> reports = new List<Report>();
-    private IList<Report> selectedReports = new List<Report>();
-    private List<Report> allReports = new List<Report>(); // Store all reports for client-side filtering
-    private int totalCount;
-    private bool isLoading = false;
+    private RadzenDataGrid<Report>? _reportsGrid;
+    private IEnumerable<Report> _reports = new List<Report>();
+    private IList<Report> _selectedReports = new List<Report>();
+    private List<Report> _allReports = new List<Report>(); // Store all reports for client-side filtering
+    private int _totalCount;
+    private bool _isLoading = false;
 
     // Custom confirmation modal properties
-    private bool showResetConfirmModal = false;
-    private string resetConfirmationMessage = string.Empty;
-    private Report? reportToReset = null;
+    private bool _showResetConfirmModal = false;
+    private string _resetConfirmationMessage = string.Empty;
+    private Report? _reportToReset = null;
 
     /// <summary>
     /// Show details modal flag
@@ -91,14 +91,14 @@ public partial class ReportListing : ComponentBase
         .Sum(h => h.HazardFileIds?.Count ?? 0);
 
     // NEW: EventBus Testing Properties
-    private bool IsEventBusTestRunning { get; set; } = false;
-    private string EventBusTestMessage { get; set; } = string.Empty;
-    private string EventBusTestError { get; set; } = string.Empty;
+    private bool _isEventBusTestRunning { get; set; } = false;
+    private string _eventBusTestMessage { get; set; } = string.Empty;
+    private string _eventBusTestError { get; set; } = string.Empty;
 
     // Modal properties for hazard description
-    private bool ShowDescriptionModal = false;
-    private string SelectedDescription = string.Empty;
-    private string SelectedReportId = string.Empty;
+    private bool _showDescriptionModal = false;
+    private string _selectedDescription = string.Empty;
+    private string _selectedReportId = string.Empty;
 
     private static readonly PropertyInfo[] ReportExportProperties = typeof(Report)
         .GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -133,7 +133,7 @@ public partial class ReportListing : ComponentBase
     {
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("Loading reports for listing view");
@@ -143,12 +143,12 @@ public partial class ReportListing : ComponentBase
 
             if (result.IsSuccess && result.Value is not null)
             {
-                allReports = result.Value; // Store all reports for filtering/sorting
-                reports = allReports; // Initially show all reports
-                totalCount = allReports.Count();
-                _logger.LogInformation("Loaded {Count} reports for listing", totalCount);
+                _allReports = result.Value; // Store all reports for filtering/sorting
+                _reports = _allReports; // Initially show all reports
+                _totalCount = _allReports.Count();
+                _logger.LogInformation("Loaded {Count} reports for listing", _totalCount);
 
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {totalCount} reports"));
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {_totalCount} reports"));
                
             }
             else
@@ -164,7 +164,7 @@ public partial class ReportListing : ComponentBase
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -173,21 +173,21 @@ public partial class ReportListing : ComponentBase
     {
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all reports yet, load them first
-            if (allReports is null || !allReports.Any())
+            if (_allReports is null || !_allReports.Any())
             {
                 await LoadInitialData();
                 return;
             }
 
             // Start with all reports
-            var query = allReports.AsQueryable();
+            var query = _allReports.AsQueryable();
 
             // Apply filtering
             if (!string.IsNullOrEmpty(args.Filter))
@@ -196,7 +196,7 @@ public partial class ReportListing : ComponentBase
             }
 
             // Get total count after filtering but before paging
-            totalCount = query.Count();
+            _totalCount = query.Count();
 
             // Apply sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
@@ -220,18 +220,18 @@ public partial class ReportListing : ComponentBase
                 query = query.Take(args.Top.Value);
             }
 
-            reports = query.ToList();
+            _reports = query.ToList();
 
-            if (selectedReports.Count > 0)
+            if (_selectedReports.Count > 0)
             {
-                var selectedCodes = selectedReports.Select(r => r.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
-                selectedReports = allReports
+                var selectedCodes = _selectedReports.Select(r => r.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                _selectedReports = _allReports
                     .Where(r => selectedCodes.Contains(r.Code))
                     .ToList();
             }
 
             _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} reports", 
-                reports.Count(), totalCount);
+                _reports.Count(), _totalCount);
         }
         catch (Exception ex)
         {
@@ -240,7 +240,7 @@ public partial class ReportListing : ComponentBase
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -405,43 +405,43 @@ public partial class ReportListing : ComponentBase
 
     private bool IsReportSelected(Report report)
     {
-        return selectedReports.Any(r => r.Code == report.Code);
+        return _selectedReports.Any(r => r.Code == report.Code);
     }
 
     private void OnReportSelectionChanged(Report report, bool isSelected)
     {
         if (isSelected)
         {
-            if (!selectedReports.Any(r => r.Code == report.Code))
+            if (!_selectedReports.Any(r => r.Code == report.Code))
             {
-                selectedReports.Add(report);
+                _selectedReports.Add(report);
             }
         }
         else
         {
-            var existing = selectedReports.FirstOrDefault(r => r.Code == report.Code);
+            var existing = _selectedReports.FirstOrDefault(r => r.Code == report.Code);
             if (existing is not null)
             {
-                selectedReports.Remove(existing);
+                _selectedReports.Remove(existing);
             }
         }
     }
 
     private bool IsAllVisibleReportsSelected()
     {
-        var visibleReports = reports.ToList();
+        var visibleReports = _reports.ToList();
         if (!visibleReports.Any())
         {
             return false;
         }
 
-        var selectedCodes = selectedReports.Select(r => r.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var selectedCodes = _selectedReports.Select(r => r.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
         return visibleReports.All(r => selectedCodes.Contains(r.Code));
     }
 
     private void OnSelectAllVisibleReportsChanged(bool isSelected)
     {
-        var visibleReports = reports.ToList();
+        var visibleReports = _reports.ToList();
         if (!visibleReports.Any())
         {
             return;
@@ -449,19 +449,19 @@ public partial class ReportListing : ComponentBase
 
         if (isSelected)
         {
-            var selectedCodes = selectedReports.Select(r => r.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            var selectedCodes = _selectedReports.Select(r => r.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
             foreach (var report in visibleReports)
             {
                 if (!selectedCodes.Contains(report.Code))
                 {
-                    selectedReports.Add(report);
+                    _selectedReports.Add(report);
                 }
             }
         }
         else
         {
             var visibleCodes = visibleReports.Select(r => r.Code).ToHashSet(StringComparer.OrdinalIgnoreCase);
-            selectedReports = selectedReports
+            _selectedReports = _selectedReports
                 .Where(r => !visibleCodes.Contains(r.Code))
                 .ToList();
         }
@@ -469,7 +469,7 @@ public partial class ReportListing : ComponentBase
 
     private async Task OnExportSelectedReportsAsync()
     {
-        if (!selectedReports.Any())
+        if (!_selectedReports.Any())
         {
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please select at least one report to export"));
             return;
@@ -477,13 +477,13 @@ public partial class ReportListing : ComponentBase
 
         try
         {
-            var zipBytes = await BuildExportPackageAsync(selectedReports);
+            var zipBytes = await BuildExportPackageAsync(_selectedReports);
             var base64 = Convert.ToBase64String(zipBytes);
             var fileName = $"reports-export-package-{DateTime.UtcNow:yyyyMMdd-HHmmss}.zip";
 
             await _jsRuntime.InvokeVoidAsync("downloadFile", fileName, "application/zip", base64);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Exported {selectedReports.Count} report package(s)"));
-            _logger.LogInformation("Exported package for {Count} selected reports", selectedReports.Count);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Exported {_selectedReports.Count} report package(s)"));
+            _logger.LogInformation("Exported package for {Count} selected reports", _selectedReports.Count);
         }
         catch (Exception ex)
         {
@@ -651,7 +651,7 @@ public partial class ReportListing : ComponentBase
 
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             // Get detailed report information
@@ -686,7 +686,7 @@ public partial class ReportListing : ComponentBase
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -1112,7 +1112,7 @@ public async Task OnResetReportAsync(Report report)
 
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             // Load associated hazards to show impact
@@ -1120,9 +1120,9 @@ public async Task OnResetReportAsync(Report report)
             var hazardCount = AssociatedHazards?.Count ?? 0;
 
             // Build detailed confirmation message and show custom modal
-            resetConfirmationMessage = BuildResetConfirmationMessage(report, hazardCount);
-            reportToReset = report;
-            showResetConfirmModal = true;
+            _resetConfirmationMessage = BuildResetConfirmationMessage(report, hazardCount);
+            _reportToReset = report;
+            _showResetConfirmModal = true;
             StateHasChanged();
         }
         catch (Exception ex)
@@ -1132,7 +1132,7 @@ public async Task OnResetReportAsync(Report report)
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -1142,25 +1142,25 @@ public async Task OnResetReportAsync(Report report)
     /// </summary>
     private async Task HandleResetConfirmation()
     {
-        if (reportToReset is null) return;
+        if (_reportToReset is null) return;
 
         try
         {
-            showResetConfirmModal = false;
-            isLoading = true;
+            _showResetConfirmModal = false;
+            _isLoading = true;
             StateHasChanged();
 
-            _logger.LogInformation("User confirmed reset for report {ReportCode}", reportToReset.Code);
+            _logger.LogInformation("User confirmed reset for report {ReportCode}", _reportToReset.Code);
 
             // Perform the reset operation
-            var result = await ResetReportValidation(reportToReset.Code);
+            var result = await ResetReportValidation(_reportToReset.Code);
 
             if (result.IsSuccess && result.Value)
             {
-                _logger.LogInformation("Successfully reset report validation for {ReportCode}", reportToReset.Code);
+                _logger.LogInformation("Successfully reset report validation for {ReportCode}", _reportToReset.Code);
 
                 // Show success notification
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Report '{reportToReset.Code}' validation has been successfully reset"));
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Report '{_reportToReset.Code}' validation has been successfully reset"));
 
                 // Refresh the data grid to reflect changes
                 await LoadInitialData();
@@ -1171,22 +1171,22 @@ public async Task OnResetReportAsync(Report report)
             else
             {
                 var errorMessage = result.Error?.Message ?? "Unknown error occurred during reset";
-                _logger.LogError("Failed to reset report validation for {ReportCode}: {Error}", reportToReset.Code, errorMessage);
+                _logger.LogError("Failed to reset report validation for {ReportCode}: {Error}", _reportToReset.Code, errorMessage);
 
                 await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to reset report validation: {errorMessage}"));
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Unexpected error during reset operation for report {ReportCode}", reportToReset?.Code);
+            _logger.LogError(ex, "Unexpected error during reset operation for report {ReportCode}", _reportToReset?.Code);
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"An unexpected error occurred while resetting the report: {ex.Message}"));
         }
         finally
         {
             // Clean up
-            reportToReset = null;
-            resetConfirmationMessage = string.Empty;
-            isLoading = false;
+            _reportToReset = null;
+            _resetConfirmationMessage = string.Empty;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -1196,12 +1196,12 @@ public async Task OnResetReportAsync(Report report)
     /// </summary>
     private void CancelResetConfirmation()
     {
-        showResetConfirmModal = false;
-        reportToReset = null;
-        resetConfirmationMessage = string.Empty;
+        _showResetConfirmModal = false;
+        _reportToReset = null;
+        _resetConfirmationMessage = string.Empty;
         StateHasChanged();
         
-        _logger.LogInformation("User cancelled reset operation for report {ReportCode}", reportToReset?.Code);
+        _logger.LogInformation("User cancelled reset operation for report {ReportCode}", _reportToReset?.Code);
     }
 
     /// <summary>
@@ -1382,8 +1382,8 @@ public async Task OnResetReportAsync(Report report)
     /// </summary>
     private void ClearEventBusTestResults()
     {
-        EventBusTestMessage = string.Empty;
-        EventBusTestError = string.Empty;
+        _eventBusTestMessage = string.Empty;
+        _eventBusTestError = string.Empty;
         StateHasChanged();
     }
 
@@ -1428,9 +1428,9 @@ public async Task OnResetReportAsync(Report report)
     {
         try
         {
-            SelectedDescription = report.Description ?? "No description available";
-            SelectedReportId = report.Code ?? "Unknown";
-            ShowDescriptionModal = true;
+            _selectedDescription = report.Description ?? "No description available";
+            _selectedReportId = report.Code ?? "Unknown";
+            _showDescriptionModal = true;
             StateHasChanged();
 
             _logger.LogInformation("Showing description modal for report {ReportId}", report.Code);
@@ -1447,9 +1447,9 @@ public async Task OnResetReportAsync(Report report)
     /// </summary>
     private void CloseDescriptionModal()
     {
-        ShowDescriptionModal = false;
-        SelectedDescription = string.Empty;
-        SelectedReportId = string.Empty;
+        _showDescriptionModal = false;
+        _selectedDescription = string.Empty;
+        _selectedReportId = string.Empty;
         StateHasChanged();
     }
 

@@ -237,7 +237,7 @@ else
 
                 @if (DataPoints?.Any() == true)
                 {
-                    <RadzenDataGrid @ref="dataPointsGrid" 
+                    <RadzenDataGrid @ref="_dataPointsGrid"
                                     Data="@DataPoints" 
                                     TItem="SPIDataPoint"
                                     AllowFiltering="true" 

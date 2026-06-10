@@ -19,14 +19,14 @@ public partial class MitigationCalendar : ComponentBase
     private bool IsLoading { get; set; } = true;
     private bool _isLoadingData = false; // Prevent recursive loading
     private bool _handlingAppointmentClick = false; // Prevent multiple appointment clicks
-    private RadzenScheduler<MitigationSchedulerItem> scheduler = default!;
+    private RadzenScheduler<MitigationSchedulerItem> _scheduler = default!;
     private List<Mitigation> Mitigations { get; set; } = new();
     private List<MitigationSchedulerItem> SchedulerData { get; set; } = new();
     private Mitigation? SelectedMitigation { get; set; }
 
     // Enhanced UI state properties
     public bool ShowDetailsModal { get; set; } = false;
-    private bool showHeader = true;
+    private bool _showHeader = true;
     #endregion
 
     #region Lifecycle Methods
@@ -91,9 +91,9 @@ public partial class MitigationCalendar : ComponentBase
         await LoadMitigationsAsync();
 
         // Reload the scheduler
-        if (scheduler is not null)
+        if (_scheduler is not null)
         {
-            await scheduler.Reload();
+            await _scheduler.Reload();
         }
 
         await _notificationHelper.ShowSuccessAsync("Calendar data refreshed");
@@ -311,7 +311,7 @@ public partial class MitigationCalendar : ComponentBase
                 // Update the actual mitigation record
                 await UpdateMitigationTargetDate(draggedAppointment);
 
-                await scheduler.Reload();
+        await _scheduler.Reload();
                 await _notificationHelper.ShowSuccessAsync($"Mitigation {draggedAppointment.MitigationCode} rescheduled successfully");
             }
         }
@@ -361,10 +361,10 @@ public partial class MitigationCalendar : ComponentBase
     {
         try
         {
-            if (scheduler is not null)
+            if (_scheduler is not null)
             {
-                scheduler.CurrentDate = DateTime.Today;
-                await scheduler.Reload();
+                _scheduler.CurrentDate = DateTime.Today;
+                await _scheduler.Reload();
                 _logger.LogInformation("Navigated to today's date");
             }
         }

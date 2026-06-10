@@ -34,23 +34,23 @@ public partial class HazardFileListing : ComponentBase
     [Inject] private ILogger<HazardFileListing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
-    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
     #endregion
 
     #region Properties
-    private RadzenDataGrid<HazardFile>? filesGrid;
-    private IEnumerable<HazardFile> files = new List<HazardFile>();
-    private List<HazardFile> allFiles = new List<HazardFile>(); // Store all files for client-side filtering
-    private int totalCount;
-    private bool isLoading = false;
+    private RadzenDataGrid<HazardFile>? _filesGrid;
+    private IEnumerable<HazardFile> _files = new List<HazardFile>();
+    private List<HazardFile> _allFiles = new List<HazardFile>(); // Store all files for client-side filtering
+    private int _totalCount;
+    private bool _isLoading = false;
 
     // File viewing properties
-    private bool showFileModal = false;
-    private bool isLoadingFile = false;
-    private HazardFile? selectedFile = null;
-    private string fileDataUrl = string.Empty;
-    private string fileTextContent = string.Empty;
-    private string fileViewError = string.Empty;
+    private bool _showFileModal = false;
+    private bool _isLoadingFile = false;
+    private HazardFile? _selectedFile = null;
+    private string _fileDataUrl = string.Empty;
+    private string _fileTextContent = string.Empty;
+    private string _fileViewError = string.Empty;
     #endregion
     
     #region Lifecycle Methods
@@ -65,7 +65,7 @@ public partial class HazardFileListing : ComponentBase
     {
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("Loading hazard files for listing view");
@@ -75,15 +75,15 @@ public partial class HazardFileListing : ComponentBase
 
             if (result.IsSuccess && result.Value is not null)
             {
-                allFiles = result.Value.ToList(); // Store all files for filtering/sorting
-                files = allFiles; // Initially show all files
-                totalCount = allFiles.Count();
-                _logger.LogInformation("Loaded {Count} hazard files for listing", totalCount);
+                _allFiles = result.Value.ToList(); // Store all files for filtering/sorting
+                _files = _allFiles; // Initially show all files
+                _totalCount = _allFiles.Count();
+                _logger.LogInformation("Loaded {Count} hazard files for listing", _totalCount);
 
                 // Show success notification if we have data
-                if (totalCount > 0)
+                if (_totalCount > 0)
                 {
-                    await ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazard files");
+                    await ShowSuccessAsyncNotification($"Successfully loaded {_totalCount} hazard files");
                 }
                 else
                 {
@@ -93,9 +93,9 @@ public partial class HazardFileListing : ComponentBase
             else
             {
                 // Initialize with empty lists to prevent null reference issues
-                allFiles = new List<HazardFile>();
-                files = allFiles;
-                totalCount = 0;
+                _allFiles = new List<HazardFile>();
+                _files = _allFiles;
+                _totalCount = 0;
                 
                 await ShowErrorAsyncNotification("Failed to load hazard files");
                 _logger.LogError("Failed to load hazard files: {Error}", result.Error?.Message);
@@ -104,16 +104,16 @@ public partial class HazardFileListing : ComponentBase
         catch (Exception ex)
         {
             // Ensure we always have valid collections even if an error occurs
-            allFiles = new List<HazardFile>();
-            files = allFiles;
-            totalCount = 0;
+            _allFiles = new List<HazardFile>();
+            _files = _allFiles;
+            _totalCount = 0;
 
             _logger.LogError(ex, "Error loading hazard files");
             await ShowErrorAsyncNotification($"Error loading hazard files: {ex.Message}");
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -122,14 +122,14 @@ public partial class HazardFileListing : ComponentBase
     {
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all files yet, load them first
-            if (allFiles is null || !allFiles.Any())
+            if (_allFiles is null || !_allFiles.Any())
             {
                 _logger.LogInformation("No files cached, loading initial data");
                 await LoadInitialData();
@@ -137,7 +137,7 @@ public partial class HazardFileListing : ComponentBase
             }
 
             // Start with all files
-            var query = allFiles.AsQueryable();
+            var query = _allFiles.AsQueryable();
             _logger.LogInformation("Starting with {Count} total files", query.Count());
 
             // Apply filtering
@@ -149,7 +149,7 @@ public partial class HazardFileListing : ComponentBase
             }
 
             // Get total count after filtering but before paging
-            totalCount = query.Count();
+            _totalCount = query.Count();
 
             // Apply sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
@@ -178,10 +178,10 @@ public partial class HazardFileListing : ComponentBase
                 query = query.Take(args.Top.Value);
             }
 
-            files = query.ToList();
+            _files = query.ToList();
 
             _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} files", 
-                files.Count(), totalCount);
+                _files.Count(), _totalCount);
         }
         catch (Exception ex)
         {
@@ -192,19 +192,19 @@ public partial class HazardFileListing : ComponentBase
             // Fallback to show all data without filtering/sorting
             try
             {
-                files = allFiles ?? new List<HazardFile>();
-                totalCount = files.Count();
+                _files = _allFiles ?? new List<HazardFile>();
+                _totalCount = _files.Count();
             }
             catch (Exception fallbackEx)
             {
                 _logger.LogError(fallbackEx, "Error in LoadData fallback");
-                files = new List<HazardFile>();
-                totalCount = 0;
+                _files = new List<HazardFile>();
+                _totalCount = 0;
             }
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -528,12 +528,12 @@ public partial class HazardFileListing : ComponentBase
         {
             _logger.LogInformation("Reading file: {Code} - {FileName}", file.Code, file.FileName);
 
-            selectedFile = file;
-            showFileModal = true;
-            isLoadingFile = true;
-            fileViewError = string.Empty;
-            fileDataUrl = string.Empty;
-            fileTextContent = string.Empty;
+            _selectedFile = file;
+            _showFileModal = true;
+            _isLoadingFile = true;
+            _fileViewError = string.Empty;
+            _fileDataUrl = string.Empty;
+            _fileTextContent = string.Empty;
             StateHasChanged();
 
             // Get file data using correct CQRS query
@@ -542,7 +542,7 @@ public partial class HazardFileListing : ComponentBase
 
             if (result.IsFailure || result.Value?.FileData is null)
             {
-                fileViewError = "Could not load file data. File may be stored externally or corrupted.";
+                _fileViewError = "Could not load file data. File may be stored externally or corrupted.";
                 _logger.LogWarning("Failed to load file data for: {Code}", file.Code);
                 return;
             }
@@ -552,23 +552,23 @@ public partial class HazardFileListing : ComponentBase
             // Process based on file type
             if (IsImageFile(file.FileType))
             {
-                fileDataUrl = CreateDataUrl(fileWithData.FileData, GetMimeType(file.FileType));
+                _fileDataUrl = CreateDataUrl(fileWithData.FileData, GetMimeType(file.FileType));
             }
             else if (IsPdfFile(file.FileType))
             {
-                fileDataUrl = CreateDataUrl(fileWithData.FileData, "application/pdf");
+                _fileDataUrl = CreateDataUrl(fileWithData.FileData, "application/pdf");
             }
             else if (IsTextFile(file.FileType))
             {
-                fileTextContent = Encoding.UTF8.GetString(fileWithData.FileData);
+                _fileTextContent = Encoding.UTF8.GetString(fileWithData.FileData);
             }
             else if (IsVideoFile(file.FileType))
             {
-                fileDataUrl = CreateDataUrl(fileWithData.FileData, GetMimeType(file.FileType));
+                _fileDataUrl = CreateDataUrl(fileWithData.FileData, GetMimeType(file.FileType));
             }
             else
             {
-                fileViewError = $"Preview not supported for {file.FileType} files. You can download the file instead.";
+                _fileViewError = $"Preview not supported for {file.FileType} files. You can download the file instead.";
             }
 
             _logger.LogInformation("Successfully loaded file data for viewing: {Code}", file.Code);
@@ -577,12 +577,12 @@ public partial class HazardFileListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error reading file: {Code}", file.Code);
-            fileViewError = "An error occurred while loading the file.";
+            _fileViewError = "An error occurred while loading the file.";
             await ShowErrorAsyncNotification("Error reading file");
         }
         finally
         {
-            isLoadingFile = false;
+            _isLoadingFile = false;
             StateHasChanged();
         }
     }
@@ -644,26 +644,26 @@ public partial class HazardFileListing : ComponentBase
     // ===============================
     private void CloseFileModal()
     {
-        showFileModal = false;
-        selectedFile = null;
-        fileDataUrl = string.Empty;
-        fileTextContent = string.Empty;
-        fileViewError = string.Empty;
+        _showFileModal = false;
+        _selectedFile = null;
+        _fileDataUrl = string.Empty;
+        _fileTextContent = string.Empty;
+        _fileViewError = string.Empty;
         StateHasChanged();
     }
 
     private async Task DownloadFile()
     {
-        if (selectedFile is null) return;
+        if (_selectedFile is null) return;
 
         try
         {
-            _logger.LogInformation("Downloading file: {Code} - {FileName}", selectedFile.Code, selectedFile.FileName);
+            _logger.LogInformation("Downloading file: {Code} - {FileName}", _selectedFile.Code, _selectedFile.FileName);
 
             // Get file data if we don't have it
-            if (string.IsNullOrEmpty(fileDataUrl) && string.IsNullOrEmpty(fileTextContent))
+            if (string.IsNullOrEmpty(_fileDataUrl) && string.IsNullOrEmpty(_fileTextContent))
             {
-                var query = new GetHazardFileDataQuery(selectedFile.Code);
+                var query = new GetHazardFileDataQuery(_selectedFile.Code);
                 var result = await _mediator.SendAsync(query, CancellationToken.None);
 
                 if (result.IsFailure || result.Value?.FileData is null)
@@ -673,26 +673,26 @@ public partial class HazardFileListing : ComponentBase
                 }
 
                 var fileData = Convert.ToBase64String(result.Value.FileData);
-                await JSRuntime.InvokeVoidAsync("downloadFileFromBase64", selectedFile.FileName, fileData, GetMimeType(selectedFile.FileType));
+                await _jsRuntime.InvokeVoidAsync("downloadFileFromBase64", _selectedFile.FileName, fileData, GetMimeType(_selectedFile.FileType));
             }
-            else if (!string.IsNullOrEmpty(fileDataUrl))
+            else if (!string.IsNullOrEmpty(_fileDataUrl))
             {
                 // Extract base64 from data URL
-                var base64Data = fileDataUrl.Split(',')[1];
-                await JSRuntime.InvokeVoidAsync("downloadFileFromBase64", selectedFile.FileName, base64Data, GetMimeType(selectedFile.FileType));
+                var base64Data = _fileDataUrl.Split(',')[1];
+                await _jsRuntime.InvokeVoidAsync("downloadFileFromBase64", _selectedFile.FileName, base64Data, GetMimeType(_selectedFile.FileType));
             }
-            else if (!string.IsNullOrEmpty(fileTextContent))
+            else if (!string.IsNullOrEmpty(_fileTextContent))
             {
-                var textBytes = Encoding.UTF8.GetBytes(fileTextContent);
+                var textBytes = Encoding.UTF8.GetBytes(_fileTextContent);
                 var base64Data = Convert.ToBase64String(textBytes);
-                await JSRuntime.InvokeVoidAsync("downloadFileFromBase64", selectedFile.FileName, base64Data, "text/plain");
+                await _jsRuntime.InvokeVoidAsync("downloadFileFromBase64", _selectedFile.FileName, base64Data, "text/plain");
             }
 
-            await ShowSuccessAsyncNotification($"Downloaded '{selectedFile.FileName}' successfully.");
+            await ShowSuccessAsyncNotification($"Downloaded '{_selectedFile.FileName}' successfully.");
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error downloading file: {Code}", selectedFile.Code);
+            _logger.LogError(ex, "Error downloading file: {Code}", _selectedFile.Code);
             await ShowErrorAsyncNotification("An error occurred while downloading the file.");
         }
     }

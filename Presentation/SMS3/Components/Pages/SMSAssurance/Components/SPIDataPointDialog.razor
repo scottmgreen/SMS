@@ -30,7 +30,7 @@
         <RadzenRow Gap="1rem">
             <RadzenColumn Size="12" SizeMD="8">
                 <RadzenFormField Text="Measurement Value *" Variant="Variant.Outlined">
-                    <RadzenNumeric @bind-Value="@currentDataPoint.Value" 
+                <RadzenNumeric @bind-Value="@_currentDataPoint.Value"
                                    TValue="decimal"
                                    Min="0"
                                    Step="0.01"
@@ -50,7 +50,7 @@
         <RadzenRow Gap="1rem">
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenFormField Text="Measurement Date *" Variant="Variant.Outlined">
-                    <RadzenDatePicker @bind-Value="@currentDataPoint.MeasurementDate" 
+                    <RadzenDatePicker @bind-Value="@_currentDataPoint.MeasurementDate"
                                       TValue="DateTime"
                                       Max="@DateTime.Today"
                                       Style="width: 100%;"
@@ -60,7 +60,7 @@
             </RadzenColumn>
             <RadzenColumn Size="12" SizeMD="6">
                 <RadzenFormField Text="Reporting Period" Variant="Variant.Outlined">
-                    <RadzenTextBox @bind-Value="@currentDataPoint.Period" 
+                    <RadzenTextBox @bind-Value="@_currentDataPoint.Period"
                                    Style="width: 100%; background-color: #f8f9fa; color: #6c757d;" 
                                    ReadOnly="true"
                                    Placeholder="Auto-calculated..." />
@@ -69,7 +69,7 @@
         </RadzenRow>
 
         <RadzenFormField Text="Data Source *" Variant="Variant.Outlined">
-            <RadzenDropDown @bind-Value="@currentDataPoint.DataSource"
+                    <RadzenDropDown @bind-Value="@_currentDataPoint.DataSource"
                             Data="@GetDataSourceOptions()"
                             Style="width: 100%;"
                             AllowFiltering="true"
@@ -79,7 +79,7 @@
         </RadzenFormField>
 
         <RadzenFormField Text="Notes" Variant="Variant.Outlined">
-            <RadzenTextArea @bind-Value="@currentDataPoint.Notes" 
+                    <RadzenTextArea @bind-Value="@_currentDataPoint.Notes"
                             Rows="2" 
                             Style="width: 100%;" 
                             Placeholder="Optional notes about this measurement..."
@@ -92,15 +92,15 @@
             <RadzenRow Gap="1rem">
                 <RadzenColumn Size="12" SizeMD="6">
                     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                        <RadzenCheckBox @bind-Value="@currentDataPoint.IsVerified" TValue="bool" Name="IsVerified" />
+                                <RadzenCheckBox @bind-Value="@_currentDataPoint.IsVerified" TValue="bool" Name="IsVerified" />
                         <RadzenLabel Text="Mark as Verified" Component="IsVerified" Style="cursor: pointer;" />
                     </RadzenStack>
                 </RadzenColumn>
-                @if (currentDataPoint.IsVerified)
+                    @if (_currentDataPoint.IsVerified)
                 {
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="Verified By *" Variant="Variant.Outlined">
-                            <RadzenTextBox @bind-Value="@currentDataPoint.VerifiedBy" 
+                                    <RadzenTextBox @bind-Value="@_currentDataPoint.VerifiedBy"
                                            Style="width: 100%;" 
                                            Placeholder="Name of verifying person..." />
                         </RadzenFormField>

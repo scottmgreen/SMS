@@ -349,7 +349,7 @@ else
 
                             <!-- Findings Data Grid -->
                             <RadzenCard>
-                                <RadzenDataGrid @ref="findingsGrid"
+                                    <RadzenDataGrid @ref="_findingsGrid"
                                                Data="@Findings"
                                                TItem="SMSAuditFinding"
                                                AllowFiltering="true"
@@ -498,7 +498,7 @@ else
 
                             <!-- Evidence Data Grid -->
                             <RadzenCard>
-                                <RadzenDataGrid @ref="evidenceGrid"
+                                    <RadzenDataGrid @ref="_evidenceGrid"
                                                Data="@Evidence"
                                                TItem="SMSAuditEvidence"
                                                AllowFiltering="true"

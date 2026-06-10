@@ -185,7 +185,7 @@ public partial class AuditEvidenceDialog : ComponentBase
                 "CURRENT_USER"
             );
 
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
@@ -228,7 +228,7 @@ public partial class AuditEvidenceDialog : ComponentBase
                 "CURRENT_USER"
             );
 
-            var result = await Mediator.SendAsync(command, CancellationToken.None);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {

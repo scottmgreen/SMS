@@ -39,9 +39,9 @@ public partial class AirportSharedDatasetListing : ComponentBase
     #endregion
 
     #region State Properties
-    private RadzenDataGrid<AirportSharedDataset>? datasetsGrid;
-    private IEnumerable<AirportSharedDataset> datasets = new List<AirportSharedDataset>();
-    private int totalCount;
+    private RadzenDataGrid<AirportSharedDataset>? _datasetsGrid;
+    private IEnumerable<AirportSharedDataset> _datasets = new List<AirportSharedDataset>();
+    private int _totalCount;
     #endregion
 
     #region Lifecycle Methods
@@ -61,9 +61,9 @@ public partial class AirportSharedDatasetListing : ComponentBase
 
             if (result.IsSuccess && result.Value is not null)
             {
-                datasets = result.Value;
-                totalCount = datasets.Count();
-                Logger.LogInformation("Loaded {Count} airport shared datasets", totalCount);
+                _datasets = result.Value;
+                _totalCount = _datasets.Count();
+                Logger.LogInformation("Loaded {Count} airport shared datasets", _totalCount);
             }
             else
             {
@@ -86,7 +86,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
 
             await LoadInitialData();
 
-            var query = datasets.AsQueryable();
+            var query = _datasets.AsQueryable();
 
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
@@ -105,8 +105,8 @@ public partial class AirportSharedDatasetListing : ComponentBase
                 query = query.Take(args.Top.Value);
             }
 
-            datasets = query.ToList();
-            totalCount = datasets.Count();
+            _datasets = query.ToList();
+            _totalCount = _datasets.Count();
         }
         catch (Exception ex)
         {
@@ -298,8 +298,8 @@ public partial class AirportSharedDatasetListing : ComponentBase
             {
                 await ShowSuccessAsyncNotification($"Dataset '{dataset.Code}' deleted successfully");
                 await LoadInitialData(); // Refresh the grid
-                if (datasetsGrid != null)
-                    await datasetsGrid.Reload(); // Refresh the grid display
+            if (_datasetsGrid != null)
+                await _datasetsGrid.Reload(); // Refresh the grid display
             }
             else
             {

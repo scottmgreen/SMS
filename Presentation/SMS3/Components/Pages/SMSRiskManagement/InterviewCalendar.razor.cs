@@ -22,15 +22,15 @@ public partial class InterviewCalendar : ComponentBase
     private bool IsLoading { get; set; } = true;
     private bool _isLoadingData = false; // Prevent recursive loading
     private bool _handlingAppointmentClick = false; // Prevent multiple appointment clicks
-    private RadzenScheduler<InterviewSchedulerItem> scheduler = default!;
-    private EventConsole? console;
+    private RadzenScheduler<InterviewSchedulerItem> _scheduler = default!;
+    private EventConsole? _console;
     private List<Interview> Interviews { get; set; } = new();
     private List<InterviewSchedulerItem> SchedulerData { get; set; } = new();
     private Interview? SelectedInterview { get; set; }
 
     // Enhanced UI state properties
     public bool ShowDetailsModal { get; set; } = false;
-    private bool showHeader = true;
+    private bool _showHeader = true;
     #endregion
 
     #region Lifecycle Methods
@@ -95,9 +95,9 @@ public partial class InterviewCalendar : ComponentBase
         await LoadInterviewsAsync();
 
         // Reload the scheduler
-        if (scheduler is not null)
+        if (_scheduler is not null)
         {
-            await scheduler.Reload();
+            await _scheduler.Reload();
         }
 
         ShowSuccessAsyncNotification("Calendar data refreshed");
@@ -352,7 +352,7 @@ public partial class InterviewCalendar : ComponentBase
                 // Update the actual interview record
                 await UpdateInterviewDateTime(draggedAppointment);
 
-                await scheduler.Reload();
+        await _scheduler.Reload();
                 ShowSuccessAsyncNotification($"Interview {draggedAppointment.InterviewCode} rescheduled successfully");
             }
         }
@@ -412,10 +412,10 @@ public partial class InterviewCalendar : ComponentBase
     {
         try
         {
-            if (scheduler is not null)
+        if (_scheduler is not null)
             {
-                scheduler.CurrentDate = DateTime.Today;
-                await scheduler.Reload();
+            _scheduler.CurrentDate = DateTime.Today;
+            await _scheduler.Reload();
                 LogEvent("Navigated to today's date");
             }
         }
@@ -695,7 +695,7 @@ public partial class InterviewCalendar : ComponentBase
     private void LogEvent(string message)
     {
         // Use the EventConsole for consistent logging like AuditCalendar
-        console?.Log(message);
+        _console?.Log(message);
     }
     #endregion
 }

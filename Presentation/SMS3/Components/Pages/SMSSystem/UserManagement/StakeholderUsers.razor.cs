@@ -31,8 +31,8 @@ public partial class StakeholderUsers : ComponentBase
     private string[] StakeholderTypes { get; set; } = Array.Empty<string>();
 
     // Form Models
-    private EditStakeholderUserModel editUser = new();
-    private CreateStakeholderUserModel NewUser = new();
+    private EditStakeholderUserModel _editUser = new();
+    private CreateStakeholderUserModel _newUser = new();
 
     // Create Modal Properties  
     private bool ShowCreateModal { get; set; }
@@ -65,7 +65,7 @@ public partial class StakeholderUsers : ComponentBase
             .Distinct()
             .OrderBy(module => module);
     // Component References
-    private RadzenDataGrid<SMSStakeholderUser>? usersGrid;
+    private RadzenDataGrid<SMSStakeholderUser>? _usersGrid;
 
     protected override async Task OnInitializedAsync()
     {
@@ -121,7 +121,7 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task ShowCreateDialog()
     {
-        NewUser = new CreateStakeholderUserModel
+        _newUser = new CreateStakeholderUserModel
         {
             IsActive = true,  // ADDED: Set default value
             IsPOPEmployee = false,
@@ -133,7 +133,7 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task CreateUser()
     {
-        if (!IsCreateFormValid)
+        if (!_isCreateFormValid)
         {
             await ShowErrorAsyncNotification("Please fill in all required fields.");
             return;
@@ -149,22 +149,22 @@ public partial class StakeholderUsers : ComponentBase
             var user = new SMSStakeholderUser(userId)
             {
                 Code = userId.Value,
-                FirstName = FirstName.Create(NewUser.FirstName).Value,
-                LastName = LastName.Create(NewUser.LastName).Value,
-                UserName = UserName.Create(NewUser.UserName).Value,
-                Password = Password.Create(NewUser.Password).Value,
-                StakeholderType = NewUser.StakeholderType,
-                Organization = NewUser.Organization,
-                IsActive = NewUser.IsActive,
-                IsPOPEmployee = NewUser.IsPOPEmployee,
-                TwoFactorEnabled = NewUser.TwoFactorEnabled,
+                FirstName = FirstName.Create(_newUser.FirstName).Value,
+                LastName = LastName.Create(_newUser.LastName).Value,
+                UserName = UserName.Create(_newUser.UserName).Value,
+                Password = Password.Create(_newUser.Password).Value,
+                StakeholderType = _newUser.StakeholderType,
+                Organization = _newUser.Organization,
+                IsActive = _newUser.IsActive,
+                IsPOPEmployee = _newUser.IsPOPEmployee,
+                TwoFactorEnabled = _newUser.TwoFactorEnabled,
                 SMSUserType = SMSUserType.Stakeholder
             };
 
             // Assign user role if specified
-            if (!string.IsNullOrWhiteSpace(NewUser.UserRoleCode))
+            if (!string.IsNullOrWhiteSpace(_newUser.UserRoleCode))
             {
-                var roleQuery = new GetSMSUserRoleByIdQuery(NewUser.UserRoleCode);
+                var roleQuery = new GetSMSUserRoleByIdQuery(_newUser.UserRoleCode);
                 var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
                 if (roleResult.IsSuccess && roleResult.Value is not null)
                 {
@@ -177,7 +177,7 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Stakeholder user '{NewUser.FirstName} {NewUser.LastName}' created successfully.");
+                await ShowSuccessAsyncNotification($"Stakeholder user '{_newUser.FirstName} {_newUser.LastName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
             }
@@ -201,7 +201,7 @@ public partial class StakeholderUsers : ComponentBase
     private void CloseCreateModal()
     {
         ShowCreateModal = false;
-        NewUser = new CreateStakeholderUserModel
+        _newUser = new CreateStakeholderUserModel
         {
             IsActive = true,  // ADDED: Set default value
             IsPOPEmployee = false,
@@ -210,13 +210,13 @@ public partial class StakeholderUsers : ComponentBase
         StateHasChanged();
     }
 
-    private bool IsCreateFormValid =>
-        !string.IsNullOrWhiteSpace(NewUser.FirstName) &&
-        !string.IsNullOrWhiteSpace(NewUser.LastName) &&
-        !string.IsNullOrWhiteSpace(NewUser.UserName) &&
-        !string.IsNullOrWhiteSpace(NewUser.Password) &&
-        !string.IsNullOrWhiteSpace(NewUser.StakeholderType) &&
-        !string.IsNullOrWhiteSpace(NewUser.Organization);
+    private bool _isCreateFormValid =>
+        !string.IsNullOrWhiteSpace(_newUser.FirstName) &&
+        !string.IsNullOrWhiteSpace(_newUser.LastName) &&
+        !string.IsNullOrWhiteSpace(_newUser.UserName) &&
+        !string.IsNullOrWhiteSpace(_newUser.Password) &&
+        !string.IsNullOrWhiteSpace(_newUser.StakeholderType) &&
+        !string.IsNullOrWhiteSpace(_newUser.Organization);
 
     // Transform stakeholder types for dropdown
     private IEnumerable<object> StakeholderTypesForDropdown => StakeholderTypes.Select(type => new
@@ -228,7 +228,7 @@ public partial class StakeholderUsers : ComponentBase
     private async Task ShowEditDialog(SMSStakeholderUser user)
     {
         CurrentEditUser = user;
-        editUser = new EditStakeholderUserModel
+        _editUser = new EditStakeholderUserModel
         {
             UserId = user.Code,
             FirstName = user.FirstName?.Value ?? "",
@@ -246,7 +246,7 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task UpdateUser()
     {
-        if (!IsEditFormValid)
+        if (!_isEditFormValid)
         {
             await ShowErrorAsyncNotification("Please fill in all required fields.");
             return;
@@ -264,20 +264,20 @@ public partial class StakeholderUsers : ComponentBase
             }
 
             // ? FIXED: Only set business fields - let pipeline handle audit fields
-            CurrentEditUser.FirstName = FirstName.Create(editUser.FirstName).Value;
-            CurrentEditUser.LastName = LastName.Create(editUser.LastName).Value;
-            CurrentEditUser.StakeholderType = editUser.StakeholderType;
-            CurrentEditUser.Organization = editUser.Organization;
-            CurrentEditUser.IsActive = editUser.IsActive;
-            CurrentEditUser.IsPOPEmployee = editUser.IsPOPEmployee;
-            CurrentEditUser.TwoFactorEnabled = editUser.TwoFactorEnabled;
+            CurrentEditUser.FirstName = FirstName.Create(_editUser.FirstName).Value;
+            CurrentEditUser.LastName = LastName.Create(_editUser.LastName).Value;
+            CurrentEditUser.StakeholderType = _editUser.StakeholderType;
+            CurrentEditUser.Organization = _editUser.Organization;
+            CurrentEditUser.IsActive = _editUser.IsActive;
+            CurrentEditUser.IsPOPEmployee = _editUser.IsPOPEmployee;
+            CurrentEditUser.TwoFactorEnabled = _editUser.TwoFactorEnabled;
             CurrentEditUser.SMSUserType = SMSUserType.Stakeholder;
             
                         
             // Update user role if specified
-            if (!string.IsNullOrWhiteSpace(editUser.UserRoleCode))
+            if (!string.IsNullOrWhiteSpace(_editUser.UserRoleCode))
             {
-                var roleQuery = new GetSMSUserRoleByIdQuery(editUser.UserRoleCode);
+                var roleQuery = new GetSMSUserRoleByIdQuery(_editUser.UserRoleCode);
                 var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
                 if (roleResult.IsSuccess && roleResult.Value is not null)
                 {
@@ -292,7 +292,7 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Stakeholder user '{editUser.FirstName} {editUser.LastName}' updated successfully.");
+                await ShowSuccessAsyncNotification($"Stakeholder user '{_editUser.FirstName} {_editUser.LastName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
             }
@@ -303,7 +303,7 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating stakeholder user: {UserId}", editUser.UserId);
+            _logger.LogError(ex, "Error updating stakeholder user: {UserId}", _editUser.UserId);
             await ShowErrorAsyncNotification("Error updating stakeholder user. Please try again.");
         }
         finally
@@ -317,15 +317,15 @@ public partial class StakeholderUsers : ComponentBase
     {
         ShowEditModal = false;
         CurrentEditUser = null;
-        editUser = new EditStakeholderUserModel();
+        _editUser = new EditStakeholderUserModel();
         StateHasChanged();
     }
 
-    private bool IsEditFormValid =>
-        !string.IsNullOrWhiteSpace(editUser.FirstName) &&
-        !string.IsNullOrWhiteSpace(editUser.LastName) &&
-        !string.IsNullOrWhiteSpace(editUser.StakeholderType) &&
-        !string.IsNullOrWhiteSpace(editUser.Organization);
+    private bool _isEditFormValid =>
+        !string.IsNullOrWhiteSpace(_editUser.FirstName) &&
+        !string.IsNullOrWhiteSpace(_editUser.LastName) &&
+        !string.IsNullOrWhiteSpace(_editUser.StakeholderType) &&
+        !string.IsNullOrWhiteSpace(_editUser.Organization);
 
     private async Task ShowDeleteDialog(string userId, string displayName)
     {
@@ -598,9 +598,9 @@ public partial class StakeholderUsers : ComponentBase
         await AssignUserRole();
     }
 
-    private readonly List<StatusOption> IsActiveOptions = StatusOptions.ActiveInactiveOptions;
+    private readonly List<StatusOption> _isActiveOptions = StatusOptions.ActiveInactiveOptions;
 
-    private readonly List<StatusOption> IsPOPEmployeeOptions = StatusOptions.YesNoOptions;
+    private readonly List<StatusOption> _isPopEmployeeOptions = StatusOptions.YesNoOptions;
     
     #endregion
 

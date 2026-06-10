@@ -15,38 +15,38 @@ public partial class SPIConfiguration
     #endregion
 
     #region Component References
-    private RadzenDataGrid<SafetyPerformanceIndicator>? spGrid;
+    private RadzenDataGrid<SafetyPerformanceIndicator>? _spGrid;
     #endregion
 
     #region Data Properties
-    private IEnumerable<SafetyPerformanceIndicator> allSPIs = new List<SafetyPerformanceIndicator>();
-    private IEnumerable<SafetyPerformanceIndicator> filteredSPIs = new List<SafetyPerformanceIndicator>();
+    private IEnumerable<SafetyPerformanceIndicator> _allSpis = new List<SafetyPerformanceIndicator>();
+    private IEnumerable<SafetyPerformanceIndicator> _filteredSpis = new List<SafetyPerformanceIndicator>();
 
     // Filter properties
-    private string searchTerm = string.Empty;
-    private string? selectedType = null;
-    private string? selectedDepartment = null;
-    private string? selectedStatus = null;
+    private string _searchTerm = string.Empty;
+    private string? _selectedType = null;
+    private string? _selectedDepartment = null;
+    private string? _selectedStatus = null;
 
     // Pagination
-    private int itemsPerPage = 20;
+    private int _itemsPerPage = 20;
 
     // Loading state
-    private bool isLoading = true;
+    private bool _isLoading = true;
 
     // Dropdown data
-    private List<SPIType> availableTypes = new();
-    private List<SPIStatus> availableStatuses = new();
-    private List<SPIMeasurementFrequency> availableFrequencies = new();
-    private List<string> availableDepartments = new();
+    private List<SPIType> _availableTypes = new();
+    private List<SPIStatus> _availableStatuses = new();
+    private List<SPIMeasurementFrequency> _availableFrequencies = new();
+    private List<string> _availableDepartments = new();
     #endregion
 
     #region Computed Properties
     private bool HasActiveFilters =>
-        !string.IsNullOrWhiteSpace(searchTerm) ||
-        !string.IsNullOrWhiteSpace(selectedType) ||
-        !string.IsNullOrWhiteSpace(selectedDepartment) ||
-        !string.IsNullOrWhiteSpace(selectedStatus);
+        !string.IsNullOrWhiteSpace(_searchTerm) ||
+        !string.IsNullOrWhiteSpace(_selectedType) ||
+        !string.IsNullOrWhiteSpace(_selectedDepartment) ||
+        !string.IsNullOrWhiteSpace(_selectedStatus);
     #endregion
 
     #region Lifecycle Methods
@@ -63,7 +63,7 @@ public partial class SPIConfiguration
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
         }
     }
     #endregion
@@ -72,16 +72,16 @@ public partial class SPIConfiguration
     private async Task LoadDropdownData()
     {
         // Load SPI types
-        availableTypes = SPIType.GetAllValues().ToList();
+        _availableTypes = SPIType.GetAllValues().ToList();
 
         // Load statuses using centralized helper
-        availableStatuses = DropdownHelper.GetSPIStatusOptions();
+        _availableStatuses = DropdownHelper.GetSPIStatusOptions();
 
         // Load frequencies using centralized helper  
-        availableFrequencies = DropdownHelper.GetSPIMeasurementFrequencyOptions();
+        _availableFrequencies = DropdownHelper.GetSPIMeasurementFrequencyOptions();
 
         // Load departments from SMSDepartment enum
-        availableDepartments = DropdownHelper.GetDepartmentNames();
+        _availableDepartments = DropdownHelper.GetDepartmentNames();
     }
 
     private async Task LoadSPIs()
@@ -93,7 +93,7 @@ public partial class SPIConfiguration
 
             if (result.IsSuccess && result.Value is not null)
             {
-                allSPIs = result.Value.ToList();
+                _allSpis = result.Value.ToList();
                 ApplyFilters();
             }
             else
@@ -109,12 +109,12 @@ public partial class SPIConfiguration
 
     private void ApplyFilters()
     {
-        var query = allSPIs.AsQueryable();
+        var query = _allSpis.AsQueryable();
 
         // Apply search filter
-        if (!string.IsNullOrWhiteSpace(searchTerm))
+        if (!string.IsNullOrWhiteSpace(_searchTerm))
         {
-            var lowerSearch = searchTerm.ToLower();
+            var lowerSearch = _searchTerm.ToLower();
             query = query.Where(spi =>
                 spi.Code.ToLower().Contains(lowerSearch) ||
                 spi.Name.ToLower().Contains(lowerSearch) ||
@@ -122,24 +122,24 @@ public partial class SPIConfiguration
         }
 
         // Apply type filter
-        if (!string.IsNullOrWhiteSpace(selectedType))
+        if (!string.IsNullOrWhiteSpace(_selectedType))
         {
-            query = query.Where(spi => spi.IndicatorType.Value == selectedType);
+            query = query.Where(spi => spi.IndicatorType.Value == _selectedType);
         }
 
         // Apply department filter
-        if (!string.IsNullOrWhiteSpace(selectedDepartment))
+        if (!string.IsNullOrWhiteSpace(_selectedDepartment))
         {
-            query = query.Where(spi => spi.ResponsibleDepartment == selectedDepartment);
+            query = query.Where(spi => spi.ResponsibleDepartment == _selectedDepartment);
         }
 
         // Apply status filter
-        if (!string.IsNullOrWhiteSpace(selectedStatus))
+        if (!string.IsNullOrWhiteSpace(_selectedStatus))
         {
-            query = query.Where(spi => spi.Status.Value == selectedStatus);
+            query = query.Where(spi => spi.Status.Value == _selectedStatus);
         }
 
-        filteredSPIs = query.OrderBy(spi => spi.Code).ToList();
+        _filteredSpis = query.OrderBy(spi => spi.Code).ToList();
         StateHasChanged();
     }
     #endregion
@@ -147,7 +147,7 @@ public partial class SPIConfiguration
     #region Filter Event Handlers
     private async Task OnSearchChanged(ChangeEventArgs e)
     {
-        searchTerm = e.Value?.ToString() ?? string.Empty;
+        _searchTerm = e.Value?.ToString() ?? string.Empty;
         ApplyFilters();
         await Task.CompletedTask;
     }
@@ -289,10 +289,10 @@ public partial class SPIConfiguration
         {
             { "SPI", spi },
             { "IsEditMode", isEditMode },
-            { "AvailableTypes", availableTypes },
-            { "AvailableStatuses", availableStatuses },
-            { "AvailableFrequencies", availableFrequencies },
-            { "AvailableDepartments", availableDepartments }
+            { "AvailableTypes", _availableTypes },
+            { "AvailableStatuses", _availableStatuses },
+            { "AvailableFrequencies", _availableFrequencies },
+            { "AvailableDepartments", _availableDepartments }
         };
 
         var result = await _dialogService.OpenAsync<Components.SPIEditDialog>(
@@ -416,7 +416,7 @@ public partial class SPIConfiguration
     #region Filter Options Methods
     private List<FilterOption> GetTypeFilterOptions()
     {
-        return availableTypes.Select(t => new FilterOption
+        return _availableTypes.Select(t => new FilterOption
         {
             Text = $"{t.Name} ({t.Category})",
             Value = t.Value
@@ -425,12 +425,12 @@ public partial class SPIConfiguration
 
     private List<string> GetDepartmentFilterOptions()
     {
-        return availableDepartments;
+        return _availableDepartments;
     }
 
     private List<FilterOption> GetStatusFilterOptions()
     {
-        return availableStatuses.Select(s => new FilterOption
+        return _availableStatuses.Select(s => new FilterOption
         {
             Text = s.Name,
             Value = s.Value

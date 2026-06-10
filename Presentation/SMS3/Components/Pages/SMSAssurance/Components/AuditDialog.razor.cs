@@ -352,6 +352,6 @@ public partial class AuditDialog : ComponentBase
         }
     }
 
-    private bool ShowActualDates => Status == "In Progress" || Status == "Completed";
+    private bool _showActualDates => Status == "In Progress" || Status == "Completed";
     #endregion
 }

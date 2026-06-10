@@ -32,7 +32,7 @@ public partial class RiskRegistry : ComponentBase
     #region State Properties
 
     private bool IsLoading { get; set; } = true;
-    private RadzenDataGrid<RiskRegistryEntry>? RiskRegistryGrid;
+    private RadzenDataGrid<RiskRegistryEntry>? _riskRegistryGrid;
 
     #endregion
 
@@ -52,7 +52,7 @@ public partial class RiskRegistry : ComponentBase
     private List<FilterOption> StatusFilterOptions { get; set; } = new();
     private List<FilterOption> RiskLevelFilterOptions { get; set; } = new();
 
-    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+    private string _basicTextStyle = "font-size:smaller;font-weight: 600";
     private void GetStatusFilters()
     {
         StatusFilterOptions = MitigationStatus.GetAllValues()
@@ -660,17 +660,17 @@ public partial class RiskRegistry : ComponentBase
     }
     #endregion
 
-    private bool ShowDescriptionModal = false;
-    private string SelectedDescription = string.Empty;
-    private string SelectedHazardId = string.Empty;
+    private bool _showDescriptionModal = false;
+    private string _selectedDescription = string.Empty;
+    private string _selectedHazardId = string.Empty;
 
     private void ShowDescriptionDialog(RiskRegistryEntry registry)
     {
         try
         {
-            SelectedDescription = registry.HazardDescription ?? "No description available";
-            SelectedHazardId = registry.HazardCode ?? "Unknown";
-            ShowDescriptionModal = true;
+            _selectedDescription = registry.HazardDescription ?? "No description available";
+            _selectedHazardId = registry.HazardCode ?? "Unknown";
+            _showDescriptionModal = true;
             StateHasChanged();
             _logger.LogInformation("Showing description modal for hazard {HazardId}", registry.HazardCode);
         }
@@ -683,9 +683,9 @@ public partial class RiskRegistry : ComponentBase
    
     private void CloseDescriptionModal()
     {
-        ShowDescriptionModal = false;
-        SelectedDescription = string.Empty;
-        SelectedHazardId = string.Empty;
+        _showDescriptionModal = false;
+        _selectedDescription = string.Empty;
+        _selectedHazardId = string.Empty;
         StateHasChanged();
     }
 }

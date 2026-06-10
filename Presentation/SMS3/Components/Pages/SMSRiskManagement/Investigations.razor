@@ -90,7 +90,7 @@ else
                                                 <RadzenColumn Size="2" SizeMD="2">
                                                     <RadzenFormField Text="Investigation Decision" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                                         <RadzenDropDown @bind-Value="InvestigationEntity.DecisionType"
-                                                                        Data="DecisionTypeOptions"
+                                                                        Data="_decisionTypeOptions"
                                                                         TextProperty="Text"
                                                                         ValueProperty="Value"
                                                                         AllowClear="true"
@@ -161,7 +161,7 @@ else
                                             }
                                         }
                                         
-                                        <InterviewsManager @ref="interviewsManager" 
+                                        <InterviewsManager @ref="_interviewsManager" 
                                                          InvestigationCode="@InvestigationEntity.Code"
                                                          OnInterviewsChanged="@OnInterviewsChanged" />
                                     </div>
@@ -170,7 +170,7 @@ else
                                 <!-- Evidence Tab -->
                                 <RadzenTabsItem Text="@($"Evidence ({GetFileCountText()})")">
                                     <div style="padding: 1rem;">
-                                        <EvidenceFilesManager @ref="evidenceFilesManager" 
+                                        <EvidenceFilesManager @ref="_evidenceFilesManager" 
                                                             HazardCode="@InvestigationEntity.HazardCode"
                                                             InvestigationCode="@InvestigationEntity.Code" />
                                     </div>
@@ -213,7 +213,7 @@ else
 }
 
 <!-- Custom Return to Validation Confirmation Modal -->
-@if (showReturnToValidationModal)
+@if (_showReturnToValidationModal)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog" style="max-width: 700px; width: 90%;">
@@ -233,7 +233,7 @@ else
                 </div>
                 <div class="sms-modal-body" style="padding: 1.5rem;">
                     <div class="return-to-validation-confirmation-message">
-                        @returnToValidationMessage
+                        @_returnToValidationMessage
                     </div>
                     <div class="return-to-validation-warning-final">
                         @GetReturnToValidationFinalWarning()

@@ -55,7 +55,7 @@ public partial class OrganizationalGroups : ComponentBase
     private string? CurrentGroupCode { get; set; }
 
     // Grid reference
-    private RadzenDataGrid<SMSOrganizationalGroup>? groupsGrid;
+    private RadzenDataGrid<SMSOrganizationalGroup>? _groupsGrid;
 
     // Selection tracking for member management
     private Dictionary<string, bool> SelectedUsers { get; set; } = new();
@@ -255,8 +255,8 @@ public partial class OrganizationalGroups : ComponentBase
                 await ShowSuccessAsyncNotification($"Organizational group '{NewGroupName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
-                if (groupsGrid != null)
-                    await groupsGrid.Reload();
+                if (_groupsGrid != null)
+                    await _groupsGrid.Reload();
             }
             else
             {
@@ -303,8 +303,8 @@ public partial class OrganizationalGroups : ComponentBase
                 await ShowSuccessAsyncNotification($"Organizational group '{EditGroupName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
-                if (groupsGrid != null)
-                    await groupsGrid.Reload();
+                if (_groupsGrid != null)
+                    await _groupsGrid.Reload();
             }
             else
             {
@@ -354,8 +354,8 @@ public partial class OrganizationalGroups : ComponentBase
                 await ShowSuccessAsyncNotification("Organizational group deleted successfully.");
                 CloseDeleteModal();
                 await LoadDataAsync();
-                if (groupsGrid != null)
-                    await groupsGrid.Reload();
+                if (_groupsGrid != null)
+                    await _groupsGrid.Reload();
 
                 // If we're editing the deleted group, cancel edit mode
                 if (CurrentGroup?.Code == DeleteGroupCode)

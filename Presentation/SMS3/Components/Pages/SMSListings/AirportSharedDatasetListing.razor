@@ -16,9 +16,9 @@
            Subtitle="Manage and view ADAM (Airport Data Aggregation and Monitoring) datasets"
            Icon="fas fa-database" />
 
-<RadzenDataGrid @ref="datasetsGrid" 
-                Data="@datasets" 
-                Count="@totalCount" 
+<RadzenDataGrid @ref="_datasetsGrid" 
+                Data="@_datasets" 
+                Count="@_totalCount" 
                 LoadData="@LoadData"
                 AllowPaging="true" 
                 AllowSorting="true" 

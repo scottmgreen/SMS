@@ -15,9 +15,9 @@
             Subtitle="Complete listing and management interface for all SMS Report Validations"
            Icon="fas fa-list" />
 
-<RadzenDataGrid @ref="validationsGrid" 
-                Data="@validations" 
-                Count="@totalCount" 
+<RadzenDataGrid @ref="_validationsGrid" 
+                Data="@_validations" 
+                Count="@_totalCount" 
                 LoadData="@LoadData"
                 AllowPaging="true" 
                 AllowSorting="true" 

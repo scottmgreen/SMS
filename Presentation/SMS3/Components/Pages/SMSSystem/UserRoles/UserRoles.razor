@@ -57,7 +57,7 @@
                 <RadzenCard>
                     @if (UserRolesList.Any())
                     {
-                        <RadzenDataGrid @ref="rolesGrid" Data="@UserRolesList" TItem="SMSUserRole" 
+                        <RadzenDataGrid @ref="_rolesGrid" Data="@UserRolesList" TItem="SMSUserRole" 
                                       AllowFiltering="true" AllowSorting="true" AllowPaging="true" 
                                       PageSize="10" ShowPagingSummary="true" 
                                       FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
@@ -143,11 +143,11 @@
                     </h5>
                 </div>
                 <div class="sms-modal-body">
-                    <RadzenTemplateForm Data="@NewRole" Submit="@((CreateRoleModel model) => CreateRole())">
+                    <RadzenTemplateForm Data="@_newRole" Submit="@((CreateRoleModel model) => CreateRole())">
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12">
                                 <RadzenFormField Text="Role Name *" Variant="Variant.Outlined">
-                                    <RadzenTextBox @bind-Value="@NewRole.RoleName" Name="RoleName" 
+                                    <RadzenTextBox @bind-Value="@_newRole.RoleName" Name="RoleName" 
                                                    Placeholder="Enter role name (e.g., Safety Manager, Report Viewer)" 
                                                    Style="width: 100%;" />
                                 </RadzenFormField>
@@ -181,28 +181,28 @@
                                         <RadzenDataGridColumn TItem="string" Title="Create" Width="15%">
                                             <Template Context="module">
                                                 <div class="d-flex justify-content-center">
-                                                    <RadzenCheckBox @bind-Value="@NewRole.CreatePermissions[module]" Name="@($"create_{module}")" />
+                                                    <RadzenCheckBox @bind-Value="@_newRole.CreatePermissions[module]" Name="@($"create_{module}")" />
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
                                         <RadzenDataGridColumn TItem="string" Title="Read" Width="15%">
                                             <Template Context="module">
                                                 <div class="d-flex justify-content-center">
-                                                    <RadzenCheckBox @bind-Value="@NewRole.ReadPermissions[module]" Name="@($"read_{module}")" />
+                                                    <RadzenCheckBox @bind-Value="@_newRole.ReadPermissions[module]" Name="@($"read_{module}")" />
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
                                         <RadzenDataGridColumn TItem="string" Title="Update" Width="15%">
                                             <Template Context="module">
                                                 <div class="d-flex justify-content-center">
-                                                    <RadzenCheckBox @bind-Value="@NewRole.UpdatePermissions[module]" Name="@($"update_{module}")" />
+                                                    <RadzenCheckBox @bind-Value="@_newRole.UpdatePermissions[module]" Name="@($"update_{module}")" />
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
                                         <RadzenDataGridColumn TItem="string" Title="Delete" Width="15%">
                                             <Template Context="module">
                                                 <div class="d-flex justify-content-center">
-                                                    <RadzenCheckBox @bind-Value="@NewRole.DeletePermissions[module]" Name="@($"delete_{module}")" />
+                                                    <RadzenCheckBox @bind-Value="@_newRole.DeletePermissions[module]" Name="@($"delete_{module}")" />
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
@@ -227,7 +227,7 @@
                         <div class="d-flex gap-2">
                             <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
                             <RadzenButton Text="Create Role" Icon="save" ButtonStyle="ButtonStyle.Primary" 
-                                          Click="@CreateRole" Disabled="@(!IsCreateFormValid || IsSaving)"
+                                          Click="@CreateRole" Disabled="@(!_isCreateFormValid || IsSaving)"
                                           Style="background-color: #212e61; border-color: #212e61;" />
                         </div>
                     </div>
@@ -249,11 +249,11 @@
                     </h5>
                 </div>
                 <div class="sms-modal-body">
-                    <RadzenTemplateForm Data="@editRole" Submit="@((EditRoleModel model) => UpdateRole())">
+                    <RadzenTemplateForm Data="@_editRole" Submit="@((EditRoleModel model) => UpdateRole())">
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12">
                                 <RadzenFormField Text="Role Name *" Variant="Variant.Outlined">
-                                    <RadzenTextBox @bind-Value="@editRole.RoleName" Name="RoleName" 
+                                    <RadzenTextBox @bind-Value="@_editRole.RoleName" Name="RoleName" 
                                                    Placeholder="Enter role name" 
                                                    Style="width: 100%;" />
                                 </RadzenFormField>
@@ -287,28 +287,28 @@
                                         <RadzenDataGridColumn TItem="string" Title="Create" Width="15%">
                                             <Template Context="module">
                                                 <div class="d-flex justify-content-center">
-                                                    <RadzenCheckBox @bind-Value="@editRole.CreatePermissions[module]" Name="@($"create_{module}")" />
+                                                    <RadzenCheckBox @bind-Value="@_editRole.CreatePermissions[module]" Name="@($"create_{module}")" />
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
                                         <RadzenDataGridColumn TItem="string" Title="Read" Width="15%">
                                             <Template Context="module">
                                                 <div class="d-flex justify-content-center">
-                                                    <RadzenCheckBox @bind-Value="@editRole.ReadPermissions[module]" Name="@($"read_{module}")" />
+                                                    <RadzenCheckBox @bind-Value="@_editRole.ReadPermissions[module]" Name="@($"read_{module}")" />
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
                                         <RadzenDataGridColumn TItem="string" Title="Update" Width="15%">
                                             <Template Context="module">
                                                 <div class="d-flex justify-content-center">
-                                                    <RadzenCheckBox @bind-Value="@editRole.UpdatePermissions[module]" Name="@($"update_{module}")" />
+                                                    <RadzenCheckBox @bind-Value="@_editRole.UpdatePermissions[module]" Name="@($"update_{module}")" />
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
                                         <RadzenDataGridColumn TItem="string" Title="Delete" Width="15%">
                                             <Template Context="module">
                                                 <div class="d-flex justify-content-center">
-                                                    <RadzenCheckBox @bind-Value="@editRole.DeletePermissions[module]" Name="@($"delete_{module}")" />
+                                                    <RadzenCheckBox @bind-Value="@_editRole.DeletePermissions[module]" Name="@($"delete_{module}")" />
                                                 </div>
                                             </Template>
                                         </RadzenDataGridColumn>
@@ -333,7 +333,7 @@
                         <div class="d-flex gap-2">
                             <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
                             <RadzenButton Text="Update Role" Icon="save" ButtonStyle="ButtonStyle.Warning" 
-                                          Click="@UpdateRole" Disabled="@(!IsEditFormValid || IsSaving)"
+                                          Click="@UpdateRole" Disabled="@(!_isEditFormValid || IsSaving)"
                                           Style="background-color: #f39c12; border-color: #f39c12;" />
                         </div>
                     </div>

@@ -27,7 +27,7 @@ public partial class ReportValidation : ComponentBase
     private ValidationDecision? SelectedValidationDecision { get; set; }
     private string ValidationComments { get; set; } = "";
     private RiskAssessmentCategory ValidationType { get; set; } = RiskAssessmentCategory.Technical;
-    private string CurrentValidationType => RiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly.Value : ValidationType.Value;
+    private string _currentValidationType => RiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly.Value : ValidationType.Value;
     private string ValidatedBy { get; set; } = "";
 
     private string LeadAssessor { get; set; } = "";
@@ -42,8 +42,8 @@ public partial class ReportValidation : ComponentBase
     }
 
     // Display Properties
-    private bool IsLoading = true;
-    private bool IsRiskRegistryCheckboxDisabled => SelectedValidationDecision != ValidationDecision.SmsRisk;
+    private bool _isLoading = true;
+    private bool _isRiskRegistryCheckboxDisabled => SelectedValidationDecision != ValidationDecision.SmsRisk;
     private Report? ReportDetails { get; set; } = default!;
     private Hazard? ReportHazard { get; set; } = default!;
 
@@ -54,8 +54,8 @@ public partial class ReportValidation : ComponentBase
     private List<SMSApplicationUser> AvailableInvestigators { get; set; } = new();
 
     // State Properties
-    private bool IsUpdate => ExistingValidation is not null;
-    private string ValidationCode => ExistingValidation?.Code ?? "New";
+    private bool _isUpdate => ExistingValidation is not null;
+    private string _validationCode => ExistingValidation?.Code ?? "New";
     //private string CurrentStatus { get; set;}= string.Empty; // ExistingValidation?.Status ?? "New";
     private bool IsProcessing { get; set; } = false;
 
@@ -67,9 +67,9 @@ public partial class ReportValidation : ComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        IsLoading = true;
+        _isLoading = true;
         await LoadDataAsync();
-        IsLoading = false;
+        _isLoading = false;
     }
 
     #region Data Loading
@@ -362,7 +362,7 @@ public partial class ReportValidation : ComponentBase
                 // Update the existing validation with new values
                 ExistingValidation.ValidationDecision = ValidationDecisionValue;
                 ExistingValidation.ValidationComments = ValidationComments;
-                ExistingValidation.ValidationType = CurrentValidationType;
+                ExistingValidation.ValidationType = _currentValidationType;
                 ExistingValidation.ValidatedBy = ValidatedBy;
                 ExistingValidation.Status = ReportValidationStatus.Revised;
                 ExistingValidation.Stage = "COMPLETE";
@@ -403,7 +403,7 @@ public partial class ReportValidation : ComponentBase
                     ValidatedBy = ValidatedBy,
                     ValidationDecision = ValidationDecisionValue,
                     ValidationComments = ValidationComments,
-                    ValidationType = CurrentValidationType,
+                    ValidationType = _currentValidationType,
                     Status = ReportValidationStatus.ValidationComplete,
                     Stage = "NEW",
                     ValidatedDate = DateTime.UtcNow,

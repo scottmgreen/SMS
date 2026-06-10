@@ -33,10 +33,10 @@ public partial class InvestigationListing : ComponentBase
     #endregion
 
     #region Properties
-    private RadzenDataGrid<Investigation>? investigationsGrid;
-    private IEnumerable<Investigation> investigations = new List<Investigation>();
-    private List<Investigation> allInvestigations = new List<Investigation>(); // Store all investigations for client-side filtering
-    private int totalCount;
+    private RadzenDataGrid<Investigation>? _investigationsGrid;
+    private IEnumerable<Investigation> _investigations = new List<Investigation>();
+    private List<Investigation> _allInvestigations = new List<Investigation>(); // Store all investigations for client-side filtering
+    private int _totalCount;
     #endregion
     
     #region Lifecycle Methods
@@ -58,17 +58,17 @@ public partial class InvestigationListing : ComponentBase
 
             if (result.IsSuccess && result.Value is not null)
             {
-                allInvestigations = result.Value.ToList(); // Store all investigations for filtering/sorting
-                investigations = allInvestigations; // Initially show all investigations
-                totalCount = allInvestigations.Count();
-                _logger.LogInformation("Loaded {Count} investigations for listing", totalCount);
+                _allInvestigations = result.Value.ToList(); // Store all investigations for filtering/sorting
+                _investigations = _allInvestigations; // Initially show all investigations
+                _totalCount = _allInvestigations.Count();
+                _logger.LogInformation("Loaded {Count} investigations for listing", _totalCount);
 
                 // Only show success notification if we have data
-                if (totalCount > 0)
+                if (_totalCount > 0)
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {totalCount} investigations"));
+                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {_totalCount} investigations"));
 
-                    if (totalCount == 0)
+                    if (_totalCount == 0)
                     {
                         await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No investigations found"));
                     }
@@ -104,7 +104,7 @@ public partial class InvestigationListing : ComponentBase
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all investigations yet, load them first
-            if (allInvestigations is null || !allInvestigations.Any())
+            if (_allInvestigations is null || !_allInvestigations.Any())
             {
                 _logger.LogInformation("No investigations cached, loading initial data");
                 await LoadInitialData();
@@ -112,7 +112,7 @@ public partial class InvestigationListing : ComponentBase
             }
 
             // Start with all investigations
-            var query = allInvestigations.AsQueryable();
+            var query = _allInvestigations.AsQueryable();
             _logger.LogInformation("Starting with {Count} total investigations", query.Count());
 
             // Apply filtering
@@ -124,7 +124,7 @@ public partial class InvestigationListing : ComponentBase
             }
 
             // Get total count after filtering but before paging
-            totalCount = query.Count();
+            _totalCount = query.Count();
 
             // Apply sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
@@ -153,10 +153,10 @@ public partial class InvestigationListing : ComponentBase
                 query = query.Take(args.Top.Value);
             }
 
-            investigations = query.ToList();
+            _investigations = query.ToList();
 
             _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} investigations", 
-                investigations.Count(), totalCount);
+                _investigations.Count(), _totalCount);
         }
         catch (Exception ex)
         {
@@ -167,14 +167,14 @@ public partial class InvestigationListing : ComponentBase
             // Fallback to show all data without filtering/sorting
             try
             {
-                investigations = allInvestigations ?? new List<Investigation>();
-                totalCount = investigations.Count();
+                _investigations = _allInvestigations ?? new List<Investigation>();
+                _totalCount = _investigations.Count();
             }
             catch (Exception fallbackEx)
             {
                 _logger.LogError(fallbackEx, "Error in LoadData fallback");
-                investigations = new List<Investigation>();
-                totalCount = 0;
+                _investigations = new List<Investigation>();
+                _totalCount = 0;
             }
         }
         finally

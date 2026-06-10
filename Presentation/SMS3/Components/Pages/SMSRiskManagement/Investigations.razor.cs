@@ -39,8 +39,8 @@ public partial class Investigations : ComponentBase
     private bool showDecisionForm { get; set; } = false;
 
     // Custom confirmation modal properties for Return to Validation
-    private bool showReturnToValidationModal = false;
-    private string returnToValidationMessage = string.Empty;
+    private bool _showReturnToValidationModal = false;
+    private string _returnToValidationMessage = string.Empty;
 
     private string InvestigationStatusId { get; set; } = string.Empty;
 
@@ -51,8 +51,8 @@ public partial class Investigations : ComponentBase
     #endregion
 
     #region Child Component References
-    private SMS3.Components.Pages.SMSRiskManagement.Components.InterviewsManager? interviewsManager;
-    private SMS3.Components.Pages.SMSRiskManagement.Components.EvidenceFilesManager? evidenceFilesManager;
+    private SMS3.Components.Pages.SMSRiskManagement.Components.InterviewsManager? _interviewsManager;
+    private SMS3.Components.Pages.SMSRiskManagement.Components.EvidenceFilesManager? _evidenceFilesManager;
     #endregion
 
     #region Dropdown Options
@@ -73,7 +73,7 @@ public partial class Investigations : ComponentBase
     }
     
     
-    private readonly List<DropdownOption> DecisionTypeOptions = DropdownHelper.GetInvestigationDecisionOptions();
+    private readonly List<DropdownOption> _decisionTypeOptions = DropdownHelper.GetInvestigationDecisionOptions();
     #endregion
 
     #region Lifecycle Methods
@@ -408,8 +408,8 @@ public partial class Investigations : ComponentBase
             if (InvestigationEntity.DecisionType == "RETURN_TO_VALIDATION")
             {
                 // Show confirmation modal instead of directly calling HandleReturnToValidation
-                returnToValidationMessage = BuildReturnToValidationConfirmationMessage();
-                showReturnToValidationModal = true;
+                _returnToValidationMessage = BuildReturnToValidationConfirmationMessage();
+                _showReturnToValidationModal = true;
                 StateHasChanged();
                 return; // Exit here to wait for user confirmation
             }
@@ -697,7 +697,7 @@ public partial class Investigations : ComponentBase
     {
         try
         {
-            showReturnToValidationModal = false;
+            _showReturnToValidationModal = false;
             IsSaving = true;
             StateHasChanged();
 
@@ -723,8 +723,8 @@ public partial class Investigations : ComponentBase
     /// </summary>
     private void CancelReturnToValidationConfirmation()
     {
-        showReturnToValidationModal = false;
-        returnToValidationMessage = string.Empty;
+            _showReturnToValidationModal = false;
+            _returnToValidationMessage = string.Empty;
         StateHasChanged();
         
         _logger.LogInformation("User cancelled return to validation for investigation {Code}", InvestigationEntity?.Code);

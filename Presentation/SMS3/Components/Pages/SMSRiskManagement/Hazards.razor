@@ -8,7 +8,7 @@
            Subtitle="Comprehensive listing and management of all SMS hazards and safety risks"
            Icon="fas fa-exclamation-triangle" />
 
-@if (!IsAuthenticated)
+@if (!_isAuthenticated)
 {
     <!-- Unauthorized Access -->
     <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
@@ -67,7 +67,7 @@ else
                             <div class="d-flex align-items-center">
                                 <small class="text-muted me-2">Show:</small>
                                 <RadzenDropDown @bind-Value="PageSize" 
-                                               Data="@PageSizeOptions" 
+                                               Data="@_pageSizeOptions" 
                                                Change="OnPageSizeChanged"
                                                Style="width: 80px;" />
                             </div>
@@ -99,7 +99,7 @@ else
                 else
                 {
                     <!-- Paged Hazards List -->
-                    <RadzenDataList @ref="hazardsDataList"
+                    <RadzenDataList @ref="_hazardsDataList"
                                    WrapItems="false" 
                                    AllowPaging="true" 
                                    Data="@AllHazards" 

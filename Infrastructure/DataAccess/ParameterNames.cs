@@ -763,6 +763,9 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmSubmittingDepartmentJobFunction = new Lazy<string>(() => "@pSubmittingDepartmentJobFunction");
     public static string pmSubmittingDepartmentJobFunction => _pmSubmittingDepartmentJobFunction.Value;
 
+    private static readonly Lazy<string> _pmIsAnonymous = new Lazy<string>(() => "@pIsAnonymous");
+    public static string pmIsAnonymous => _pmIsAnonymous.Value;
+
 
     private static readonly Lazy<string> _pmReportContactName = new Lazy<string>(() => "@pReportContactName");
     public static string pmReportContactName => _pmReportContactName.Value;

@@ -31,7 +31,7 @@
     <!-- Main Tabs -->
     <RadzenRow Gap="1rem">
         <RadzenColumn Size="12">
-            <RadzenTabs @bind-SelectedIndex="selectedTabIndex">
+                    <RadzenTabs @bind-SelectedIndex="_selectedTabIndex">
                 <Tabs>
                     <RadzenTabsItem Text="@($"Validation ({PendingValidation.Count})")" Icon="check_circle">
                         @RenderValidationTab()

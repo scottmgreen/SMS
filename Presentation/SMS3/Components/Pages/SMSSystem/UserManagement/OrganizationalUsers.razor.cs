@@ -32,7 +32,7 @@ public partial class OrganizationalUsers : ComponentBase
     private bool IsSaving { get; set; } = false;
 
     // Grid reference
-    private RadzenDataGrid<SMSOrganizationalUser>? usersGrid;
+    private RadzenDataGrid<SMSOrganizationalUser>? _usersGrid;
 
     private string SuccessMessage { get; set; } = string.Empty;
     private string ErrorMessage { get; set; } = string.Empty;
@@ -118,7 +118,7 @@ public partial class OrganizationalUsers : ComponentBase
 
     #region Dropdown Options
 
-    private readonly List<StatusOption> ActiveInactiveStatusOptions = StatusOptions.ActiveInactiveOptions;
+    private readonly List<StatusOption> _activeInactiveStatusOptions = StatusOptions.ActiveInactiveOptions;
 
     private List<DropdownOption> DepartmentOptions
     {
@@ -136,7 +136,7 @@ public partial class OrganizationalUsers : ComponentBase
     }
 
     // Updated to use centralized helper for SMS Organization Level options
-    private List<DropdownOption> OrganizationLevelOptions => DropdownHelper.GetOrganizationLevelOptions();
+    private List<DropdownOption> _organizationLevelOptions => DropdownHelper.GetOrganizationLevelOptions();
 
     // Update validation to check if role exists
     private bool IsValidSMSRole(string roleId)
@@ -378,7 +378,7 @@ public partial class OrganizationalUsers : ComponentBase
                 await ShowSuccessAsyncNotification($"Organizational user '{NewFirstName} {NewLastName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
-                await (usersGrid?.Reload() ?? Task.CompletedTask);
+            await (_usersGrid?.Reload() ?? Task.CompletedTask);
             }
             else
             {
@@ -505,7 +505,7 @@ public partial class OrganizationalUsers : ComponentBase
                 await ShowSuccessAsyncNotification($"Organizational user '{EditFirstName} {EditLastName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
-                await (usersGrid?.Reload() ?? Task.CompletedTask);
+            await (_usersGrid?.Reload() ?? Task.CompletedTask);
             }
             else
             {
@@ -592,7 +592,7 @@ public partial class OrganizationalUsers : ComponentBase
                 await ShowSuccessAsyncNotification("Organizational user deleted successfully.");
                 CloseDeleteModal();
                 await LoadDataAsync();
-                await (usersGrid?.Reload() ?? Task.CompletedTask);
+            await (_usersGrid?.Reload() ?? Task.CompletedTask);
             }
             else
             {

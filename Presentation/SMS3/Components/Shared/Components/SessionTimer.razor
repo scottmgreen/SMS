@@ -1,13 +1,14 @@
-@using SMS_Application.Services
-@using SMS_Application.Configuration
+@using Microsoft.Extensions.Configuration
 @using SMS_Application.Interfaces
+@using SMS_Application.Services
 @implements IDisposable
 @inject SessionTimerService SessionTimerSvc
 @inject ICurrentUserService _currentUserService  
 @inject NavigationManager Navigation
 @inject ILogger<SessionTimer> Logger
+@inject IConfiguration Configuration
 
-@if (_currentUserService.IsAuthenticated && ShowTimer)
+@if (_currentUserService.IsAuthenticated && ShowTimer && IsSessionTimerEnabled())
 {
     <div class="session-timer-container d-flex align-items-center me-3">
         <i class="fas fa-clock me-1 @GetIconClass()"></i>
@@ -79,7 +80,7 @@
     
     protected override async Task OnInitializedAsync()
     {
-        if (_currentUserService.IsAuthenticated)
+        if (_currentUserService.IsAuthenticated && IsSessionTimerEnabled())
         {
             // Subscribe to session timer events
             SessionTimerSvc.OnTimeRemaining += HandleTimeRemaining;
@@ -101,6 +102,11 @@
                 
             Logger.LogDebug("Session timer component initialized");
         }
+    }
+
+    private bool IsSessionTimerEnabled()
+    {
+        return Configuration.GetValue<bool>("FeatureManagement:EnableSessionTimer", true);
     }
 
     private void CheckForWarnings()

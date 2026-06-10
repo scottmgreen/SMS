@@ -29,21 +29,21 @@ public partial class HazardScoringPanel : ComponentBase
 
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
-    private RadzenDataGrid<ScoringPanel>? ScoringGrid;
-    private List<ScoringPanel> HazardScoringPanels = new();
-    private bool IsSubmitting = false;
+    private RadzenDataGrid<ScoringPanel>? _scoringGrid;
+    private List<ScoringPanel> _hazardScoringPanels = new();
+    private bool _isSubmitting = false;
     private string _lastHazardCode = string.Empty;
     private string _lastReportCodeForStatusCheck = string.Empty;
     private bool _isCurrentReportRiskRegistryOnly = false;
 
     // Local properties to track calculated hazard scoring data (for future database update)
-    private double? CalculatedAverageScore = null;
-    private string CalculatedMatrixCode = string.Empty;
-    private RiskLevel? CalculatedRiskLevel = null;
+    private double? _calculatedAverageScore = null;
+    private string _calculatedMatrixCode = string.Empty;
+    private RiskLevel? _calculatedRiskLevel = null;
 
     // Dropdown options - Use centralized helpers
-    private List<SeverityOption> SeverityOptions => DropdownHelper.GetSeverityOptions();
-    private List<LikelihoodOption> LikelihoodOptions => DropdownHelper.GetLikelihoodOptions();
+    private List<SeverityOption> _severityOptions => DropdownHelper.GetSeverityOptions();
+    private List<LikelihoodOption> _likelihoodOptions => DropdownHelper.GetLikelihoodOptions();
 
     protected override async Task OnInitializedAsync()
     {
@@ -60,14 +60,14 @@ public partial class HazardScoringPanel : ComponentBase
         if (!string.IsNullOrEmpty(Hazard?.Code) &&
             Hazard.Code != "HZ-0000" &&
             Hazard.Code != _lastHazardCode &&
-            !IsSubmitting)
+            !_isSubmitting)
         {
             await LoadHazardScoringPanelsInternal();
             _lastHazardCode = Hazard.Code;
         }
         
         // Ensure property mapping is current for existing panels when CurrentStep changes
-        foreach (var panel in HazardScoringPanels)
+        foreach (var panel in _hazardScoringPanels)
         {
             MapPropertiesBasedOnStep(panel);
         }
@@ -77,7 +77,7 @@ public partial class HazardScoringPanel : ComponentBase
     {
         if (string.IsNullOrEmpty(Hazard?.Code) || Hazard.Code == "HZ-0000")
         {
-            HazardScoringPanels = new List<ScoringPanel>();
+            _hazardScoringPanels = new List<ScoringPanel>();
             return;
         }
 
@@ -108,7 +108,7 @@ public partial class HazardScoringPanel : ComponentBase
                     MapPropertiesBasedOnStep(panel);
                 }
 
-                HazardScoringPanels = filteredPanels;
+                _hazardScoringPanels = filteredPanels;
 
                 Logger.LogInformation("Filtered to {Count} scoring panels for hazard {HazardCode} and assessment {AssessmentCode}", filteredPanels.Count, Hazard.Code, targetRiskAssessmentCode);
 
@@ -117,7 +117,7 @@ public partial class HazardScoringPanel : ComponentBase
             }
             else
             {
-                HazardScoringPanels = new List<ScoringPanel>();
+                _hazardScoringPanels = new List<ScoringPanel>();
                 Logger.LogInformation("No scoring panels found for hazard {HazardCode}", Hazard.Code);
 
                 // Clear scoring data if no panels
@@ -127,7 +127,7 @@ public partial class HazardScoringPanel : ComponentBase
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading scoring panels for hazard {HazardCode}", Hazard.Code);
-            HazardScoringPanels = new List<ScoringPanel>();
+            _hazardScoringPanels = new List<ScoringPanel>();
 
             // Clear scoring data on error
             await RecalculateHazardScoringData();
@@ -200,7 +200,7 @@ public partial class HazardScoringPanel : ComponentBase
 
     private async Task SubmitScore(ScoringPanel panel)
     {
-        if (!CanSubmitScore(panel) || IsSubmitting) return;
+        if (!CanSubmitScore(panel) || _isSubmitting) return;
 
         try
         {
@@ -253,7 +253,7 @@ public partial class HazardScoringPanel : ComponentBase
                 return;
             }
 
-            IsSubmitting = true;
+            _isSubmitting = true;
             Logger.LogInformation("Submitting score for panel {PanelCode} on hazard {HazardCode}: {Severity} x {Likelihood} with rationale",
                 panel.Code, Hazard.Code, panel.Severity, panel.Likelihood);
 
@@ -304,7 +304,7 @@ public partial class HazardScoringPanel : ComponentBase
         }
         finally
         {
-            IsSubmitting = false;
+            _isSubmitting = false;
             StateHasChanged(); // Only trigger UI update after the operation is complete
         }
     }
@@ -410,13 +410,13 @@ public partial class HazardScoringPanel : ComponentBase
 
     private int GetCompletedScoreCount()
     {
-        return HazardScoringPanels.Count(HasScore);
+        return _hazardScoringPanels.Count(HasScore);
     }
 
     private async Task OpenPanelDialog()
     {
         // Get currently selected stakeholder codes from existing panels
-        var selectedCodes = HazardScoringPanels.Select(p => p.SMSUserCode!).ToList();
+        var selectedCodes = _hazardScoringPanels.Select(p => p.SMSUserCode!).ToList();
 
         // Debug logging to see what we're passing
         Logger.LogInformation("Opening panel dialog for hazard {HazardCode} with {Count} existing panel members: {Members}",
@@ -485,7 +485,7 @@ public partial class HazardScoringPanel : ComponentBase
             }
 
             // Add panels for newly selected stakeholders
-            var existingCodes = HazardScoringPanels.Select(p => p.SMSUserCode).ToList();
+            var existingCodes = _hazardScoringPanels.Select(p => p.SMSUserCode).ToList();
             var newStakeholderCodes = selectedStakeholderCodes.Except(existingCodes).ToList();
 
             foreach (var stakeholderCode in newStakeholderCodes)
@@ -628,7 +628,7 @@ public partial class HazardScoringPanel : ComponentBase
     private HazardRiskCalculation GetCurrentHazardCalculation()
     {
         var useResidual = CurrentStep == 5;
-        return AviationRiskMatrixCalculator.CalculateHazardRisk(HazardScoringPanels, useResidual);
+        return AviationRiskMatrixCalculator.CalculateHazardRisk(_hazardScoringPanels, useResidual);
     }
 
     private string GetAviationMatrixColor(int severity, int likelihood)
@@ -666,7 +666,7 @@ public partial class HazardScoringPanel : ComponentBase
 
     private bool AllScoresComplete()
     {
-        return HazardScoringPanels.Any() && HazardScoringPanels.All(HasScore);
+        return _hazardScoringPanels.Any() && _hazardScoringPanels.All(HasScore);
     }
 
     /// <summary>
@@ -674,7 +674,7 @@ public partial class HazardScoringPanel : ComponentBase
     /// </summary>
     public (double? AverageScore, string MatrixCode, string RiskLevel) GetCalculatedScoringData()
     {
-        return (CalculatedAverageScore, CalculatedMatrixCode, CalculatedRiskLevel?.Name ?? string.Empty);
+        return (_calculatedAverageScore, _calculatedMatrixCode, _calculatedRiskLevel?.Name ?? string.Empty);
     }
 
     /// <summary>
@@ -682,7 +682,7 @@ public partial class HazardScoringPanel : ComponentBase
     /// </summary>
     public string GetCalculationDebugInfo()
     {
-        var completedPanels = HazardScoringPanels.Where(p => HasScore(p)).ToList();
+        var completedPanels = _hazardScoringPanels.Where(p => HasScore(p)).ToList();
         if (!completedPanels.Any()) return "No completed panels";
 
         var info = $"=== HAZARD {Hazard.Code} CALCULATION DEBUG ===\n";
@@ -718,14 +718,14 @@ public partial class HazardScoringPanel : ComponentBase
         {
             // ? USE THE NEW CENTRALIZED CALCULATION METHOD
             var useResidual = CurrentStep == 5;
-            var calculation = AviationRiskMatrixCalculator.CalculateHazardRisk(HazardScoringPanels, useResidual);
+            var calculation = AviationRiskMatrixCalculator.CalculateHazardRisk(_hazardScoringPanels, useResidual);
 
             if (calculation.IsValid)
             {
                 // Store calculated values locally (for compatibility with existing code)
-                CalculatedAverageScore = (double)calculation.AverageScore;
-                CalculatedMatrixCode = calculation.MatrixCode;
-                CalculatedRiskLevel = calculation.RiskLevel;
+                _calculatedAverageScore = (double)calculation.AverageScore;
+                _calculatedMatrixCode = calculation.MatrixCode;
+                _calculatedRiskLevel = calculation.RiskLevel;
 
                 Logger.LogInformation("Recalculated hazard {HazardCode} scoring data: AvgSev={Severity:F2}?{RoundedSev}, AvgLike={Likelihood:F2}?{RoundedLike}, Matrix={MatrixCode}, Risk={RiskLevel}",
                     Hazard.Code, calculation.AverageSeverity, calculation.RoundedSeverity, 
@@ -735,9 +735,9 @@ public partial class HazardScoringPanel : ComponentBase
             else
             {
                 // Clear calculated values if no scores available
-                CalculatedAverageScore = null;
-                CalculatedMatrixCode = string.Empty;
-                CalculatedRiskLevel = RiskLevel.Unkonwn;
+                _calculatedAverageScore = null;
+                _calculatedMatrixCode = string.Empty;
+                _calculatedRiskLevel = RiskLevel.Unkonwn;
 
                 Logger.LogInformation("Cleared hazard {HazardCode} scoring data - no completed panel scores available", Hazard.Code);
             }
@@ -770,7 +770,7 @@ public partial class HazardScoringPanel : ComponentBase
 
             // ? USE THE NEW CENTRALIZED CALCULATION METHOD
             var useResidual = CurrentStep == 5;
-            var calculation = AviationRiskMatrixCalculator.CalculateHazardRisk(HazardScoringPanels, useResidual);
+            var calculation = AviationRiskMatrixCalculator.CalculateHazardRisk(_hazardScoringPanels, useResidual);
             var isRiskRegistryOnly = await IsCurrentReportRiskRegistryOnlyAsync();
 
             if (CurrentStep == 4)
@@ -914,7 +914,7 @@ public partial class HazardScoringPanel : ComponentBase
     //        // Only proceed if we have the required assessment reference
     //        if (string.IsNullOrEmpty(CurrentRiskAssessment?.Code))
     //        {
-    //            Logger.LogInformation("No CurrentRiskAssessment available for copying Step 4 scores");
+    //            _logger.LogInformation("No CurrentRiskAssessment available for copying Step 4 scores");
     //            return;
     //        }
 
@@ -927,7 +927,7 @@ public partial class HazardScoringPanel : ComponentBase
 
     //        if (!existingPanels.Any())
     //        {
-    //            Logger.LogInformation("No panels found for assessment {AssessmentCode}", targetCode);
+    //            _logger.LogInformation("No panels found for assessment {AssessmentCode}", targetCode);
     //            return;
     //        }
 
@@ -938,22 +938,22 @@ public partial class HazardScoringPanel : ComponentBase
 
     //        if (!panelsWithScores.Any())
     //        {
-    //            Logger.LogInformation("No panels with scores found to copy from for assessment {AssessmentCode}", targetCode);
+    //            _logger.LogInformation("No panels with scores found to copy from for assessment {AssessmentCode}", targetCode);
     //            return;
     //        }
 
-    //        Logger.LogInformation("Found {Count} panels with scores for hazard {HazardCode} in assessment {AssessmentCode}",
+    //        _logger.LogInformation("Found {Count} panels with scores for hazard {HazardCode} in assessment {AssessmentCode}",
     //            panelsWithScores.Count, Hazard.Code, targetCode);
 
     //        // If this is Step 5 and we have Step 4 data, we could copy it, but for now just log
     //        if (CurrentStep == 5)
     //        {
-    //            Logger.LogInformation("Step 5 context detected - panels will use existing assessment data");
+    //            _logger.LogInformation("Step 5 context detected - panels will use existing assessment data");
     //        }
     //    }
     //    catch (Exception ex)
     //    {
-    //        Logger.LogError(ex, "Error in CopyStep4ScoresToStep5IfNeeded for hazard {HazardCode}", Hazard.Code);
+    //        _logger.LogError(ex, "Error in CopyStep4ScoresToStep5IfNeeded for hazard {HazardCode}", Hazard.Code);
     //    }
     //}
 

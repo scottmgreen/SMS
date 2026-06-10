@@ -12,9 +12,9 @@ public partial class ScoringPanelListing : ComponentBase
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     
 
-    private RadzenDataGrid<ScoringPanel>? panelsGrid;
-    private IEnumerable<ScoringPanel> panels = new List<ScoringPanel>();
-    private int totalCount;
+    private RadzenDataGrid<ScoringPanel>? _panelsGrid;
+    private IEnumerable<ScoringPanel> _panels = new List<ScoringPanel>();
+    private int _totalCount;
 
     protected override async Task OnInitializedAsync()
     {
@@ -30,9 +30,9 @@ public partial class ScoringPanelListing : ComponentBase
 
             if (result.IsSuccess && result.Value is not null)
             {
-                panels = result.Value;
-                totalCount = panels.Count();
-                _logger.LogInformation("Loaded {Count} scoring panels", totalCount);
+                _panels = result.Value;
+                _totalCount = _panels.Count();
+                _logger.LogInformation("Loaded {Count} scoring panels", _totalCount);
             }
             else
             {
@@ -53,7 +53,7 @@ public partial class ScoringPanelListing : ComponentBase
         {
             await LoadInitialData();
 
-            var query = panels.AsQueryable();
+            var query = _panels.AsQueryable();
 
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
@@ -72,8 +72,8 @@ public partial class ScoringPanelListing : ComponentBase
                 query = query.Take(args.Top.Value);
             }
 
-            panels = query.ToList();
-            totalCount = panels.Count();
+            _panels = query.ToList();
+            _totalCount = _panels.Count();
         }
         catch (Exception ex)
         {

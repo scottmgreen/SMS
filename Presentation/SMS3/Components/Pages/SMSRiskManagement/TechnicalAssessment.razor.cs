@@ -45,9 +45,9 @@ public partial class TechnicalAssessment : ComponentBase
 
     private bool IsLoading { get; set; } = true;
     private bool IsSaving { get; set; } = false;
-    private readonly HashSet<int> DirtySteps = new();
-    private bool IsCurrentStepDirty => DirtySteps.Contains(CurrentStep);
-    private bool ForceTechnicalAssessmentWorkflow => _configuration.GetValue<bool?>("FeatureManagement:ForceTechnicalAssessmentWorkflow") ?? true;
+    private readonly HashSet<int> _dirtySteps = new();
+    private bool _isCurrentStepDirty => _dirtySteps.Contains(CurrentStep);
+    private bool _forceTechnicalAssessmentWorkflow => _configuration.GetValue<bool?>("FeatureManagement:ForceTechnicalAssessmentWorkflow") ?? true;
     private string? LastLoadedReportId { get; set; }
     private string? LastLoadedHazardId { get; set; }
     public int CurrentStep => int.TryParse(StepNumber, out int step) && step >= 1 && step <= 5 ? step : 1;
@@ -66,7 +66,7 @@ public partial class TechnicalAssessment : ComponentBase
             return TechRiskAssessment?.RiskAssessmentCategory?.GetMaxStep() ?? 5;
         }
     }
-    private bool IsAssessmentModeResolved => TechRiskAssessment is not null || SourceReport is not null;
+    private bool _isAssessmentModeResolved => TechRiskAssessment is not null || SourceReport is not null;
 
     #endregion
 
@@ -753,7 +753,7 @@ public partial class TechnicalAssessment : ComponentBase
         didSaveFromDirtyPrompt = savedChanges;
 
         // In strict workflow mode, any forward navigation requires current step validation and save.
-        if (!skipWorkflowNavigationValidation && ForceTechnicalAssessmentWorkflow && targetStep > CurrentStep)
+            if (!skipWorkflowNavigationValidation && _forceTechnicalAssessmentWorkflow && targetStep > CurrentStep)
         {
             var validationResult = ValidateCurrentStep();
             if (!validationResult.isValid)
@@ -827,7 +827,7 @@ public partial class TechnicalAssessment : ComponentBase
     {
         try
         {
-            if (!ForceTechnicalAssessmentWorkflow)
+            if (!_forceTechnicalAssessmentWorkflow)
             {
                 if (CurrentStep < MaxAssessmentStep)
                 {
@@ -940,7 +940,7 @@ public partial class TechnicalAssessment : ComponentBase
             }
 
             // RR-only must always complete/close on submit (do not route through save-only branch).
-            var shouldCompleteAssessment = ForceTechnicalAssessmentWorkflow || IsRiskRegistryOnly;
+            var shouldCompleteAssessment = _forceTechnicalAssessmentWorkflow || IsRiskRegistryOnly;
 
             if (shouldCompleteAssessment)
             {
@@ -1034,7 +1034,7 @@ public partial class TechnicalAssessment : ComponentBase
     {
         try
         {
-            if (!IsCurrentStepDirty)
+            if (!_isCurrentStepDirty)
             {
                 return;
             }
@@ -1139,7 +1139,7 @@ public partial class TechnicalAssessment : ComponentBase
 
                 _logger.LogInformation("Step {CurrentStep} saved successfully for assessment {AssessmentCode}", CurrentStep, TechRiskAssessment.Code);
 
-                DirtySteps.Remove(stepBeingSaved);
+                    _dirtySteps.Remove(stepBeingSaved);
 
                 return (true, $"Step {CurrentStep} saved successfully");
             }
@@ -1956,13 +1956,13 @@ public partial class TechnicalAssessment : ComponentBase
     {
         if (CurrentStep >= 1 && CurrentStep <= MaxAssessmentStep)
         {
-            DirtySteps.Add(CurrentStep);
+            _dirtySteps.Add(CurrentStep);
         }
     }
 
     private async Task<(bool canNavigate, bool savedChanges)> PromptToSaveIfCurrentStepDirtyAsync()
     {
-        if (!DirtySteps.Contains(CurrentStep))
+            if (!_dirtySteps.Contains(CurrentStep))
         {
             return (true, false);
         }
@@ -2152,17 +2152,17 @@ public partial class TechnicalAssessment : ComponentBase
 
     #region Report Description Modal
 
-    private bool ShowDescriptionModal = false;
-    private string SelectedDescription = string.Empty;
-    private string SelectedReportId = string.Empty;
+    private bool _showDescriptionModal = false;
+    private string _selectedDescription = string.Empty;
+    private string _selectedReportId = string.Empty;
 
     private void ShowDescriptionDialog()
     {
         try
         {
-            SelectedDescription = SourceReport?.Description ?? "No description available";
-            SelectedReportId = SourceReport?.Code ?? "Unknown";
-            ShowDescriptionModal = true;
+            _selectedDescription = SourceReport?.Description ?? "No description available";
+            _selectedReportId = SourceReport?.Code ?? "Unknown";
+            _showDescriptionModal = true;
             StateHasChanged();
             _logger.LogInformation("Showing description modal for report {ReportId}", SourceReport?.Code);
         }
@@ -2175,9 +2175,9 @@ public partial class TechnicalAssessment : ComponentBase
 
     private void CloseDescriptionModal()
     {
-        ShowDescriptionModal = false;
-        SelectedDescription = string.Empty;
-        SelectedReportId = string.Empty;
+        _showDescriptionModal = false;
+        _selectedDescription = string.Empty;
+        _selectedReportId = string.Empty;
         StateHasChanged();
     }
 

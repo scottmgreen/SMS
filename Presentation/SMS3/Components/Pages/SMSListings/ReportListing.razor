@@ -22,16 +22,16 @@
                       Icon="download"
                       ButtonStyle="ButtonStyle.Light"
                       Click="@OnExportSelectedReportsAsync"
-                      Disabled="@(!selectedReports.Any())" />
+                      Disabled="@(!_selectedReports.Any())" />
     </AdditionalContent>
 </PageHeader>
 
 
 
-<RadzenDataGrid @ref="reportsGrid" 
-                Data="@reports" 
-                @bind-Value="@selectedReports"
-                Count="@totalCount" 
+<RadzenDataGrid @ref="_reportsGrid" 
+                Data="@_reports" 
+                @bind-Value="@_selectedReports"
+                Count="@_totalCount" 
                 LoadData="@LoadData"
                 AllowPaging="true" 
                 AllowSorting="true" 
@@ -42,7 +42,7 @@
                 FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Multiple"
                 Style="height: calc(100vh - 250px)"
-                IsLoading="@isLoading"
+                IsLoading="@_isLoading"
                 >
     <Columns>
         <RadzenDataGridColumn TItem="Report" Width="60px" Sortable="false" Filterable="false">
@@ -62,14 +62,14 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Report" Property="Code" Title="Report ID" Width="150px" >
             <Template Context="report">
-                <div title="@report.Code" style="@BasicTextStyle">
+                <div title="@report.Code" style="@_basicTextStyle">
                     @(report.Code)
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Report" Property="Name" Title="Name" Width="300px">
             <Template Context="report">
-                <div title="@report.Name" style="@BasicTextStyle">
+                <div title="@report.Name" style="@_basicTextStyle">
                     @(report.Name)
                 </div>
             </Template>
@@ -88,7 +88,7 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Report" Property="Status" Title="Status" Width="250px">
             <Template Context="report">
-                <div title="@report.Status" style="@BasicTextStyle">
+                <div title="@report.Status" style="@_basicTextStyle">
                     @(report.Status)
                 </div>
             </Template>
@@ -96,21 +96,21 @@
 
         <RadzenDataGridColumn TItem="Report" Property="SubmittedBy" Title="Submitted By" Width="150px">
             <Template Context="report">
-                <div title="@report.SubmittedBy" style="@BasicTextStyle">
+                <div title="@report.SubmittedBy" style="@_basicTextStyle">
                     @(report.SubmittedBy)
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Report" Property="SubmittedDate" Title="Submitted Date" Width="150px" FormatString="{0:MM/dd/yyyy}">
             <Template Context="report">
-                <div title="@report.SubmittedDate" style="@BasicTextStyle">
+                <div title="@report.SubmittedDate" style="@_basicTextStyle">
                     @(report.SubmittedDate)
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Report" Property="SubmittingDepartment" Title="Submitting Department" Width="250px">
             <Template Context="report">
-                <div title="@report.SubmittingDepartment" style="@BasicTextStyle">
+                <div title="@report.SubmittingDepartment" style="@_basicTextStyle">
                     @(report.SubmittingDepartment)
                 </div>
             </Template>
@@ -339,7 +339,7 @@
 }
 
 <!-- Custom Reset Confirmation Modal -->
-@if (showResetConfirmModal)
+@if (_showResetConfirmModal)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog" style="max-width: 700px; width: 90%;">
@@ -359,7 +359,7 @@
                 </div>
                 <div class="sms-modal-body" style="padding: 1.5rem;">
                     <div class="reset-confirmation-message">
-                        @resetConfirmationMessage
+                        @_resetConfirmationMessage
                     </div>
                     <div class="reset-warning-final">
                         @GetResetFinalWarning()
@@ -377,7 +377,7 @@
                                     Icon="refresh"
                                     Click="HandleResetConfirmation"
                                     Size="ButtonSize.Medium"
-                                    Disabled="@isLoading" />
+                                    Disabled="@_isLoading" />
                     </div>
                 </div>
             </div>
@@ -385,7 +385,7 @@
     </div>
 }
 
-@if (ShowDescriptionModal)
+@if (_showDescriptionModal)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-md">
@@ -393,7 +393,7 @@
                 <div class="sms-modal-header sms-header-primary">
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <h5 class="sms-modal-title mb-0">
-                            <i class="fas fa-file-alt"></i> Report Description - @SelectedReportId
+                            <i class="fas fa-file-alt"></i> Report Description - @_selectedReportId
                         </h5>
                         <RadzenButton ButtonStyle="ButtonStyle.Light"
                                       Variant="Variant.Text"
@@ -406,7 +406,7 @@
                     <RadzenCard Variant="Variant.Outlined">
                         <div class="p-3">
                             <div style="line-height: 1.6; white-space: normal;">
-                                @((MarkupString)(SelectedDescription ?? "No description available"))
+                                @((MarkupString)(_selectedDescription ?? "No description available"))
                             </div>
                         </div>
                     </RadzenCard>

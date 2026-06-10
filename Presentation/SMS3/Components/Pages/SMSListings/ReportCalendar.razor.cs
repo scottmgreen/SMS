@@ -16,10 +16,10 @@ public partial class ReportCalendar : ComponentBase
     #endregion
 
     #region Component State
-    private bool IsLoading { get; set; } = true;
-    private RadzenScheduler<ReportSchedulerItem> scheduler = default!;
-    private List<Report> Reports { get; set; } = new();
-    private List<ReportSchedulerItem> SchedulerData { get; set; } = new();
+    private bool _isLoading { get; set; } = true;
+    private RadzenScheduler<ReportSchedulerItem> _scheduler = default!;
+    private List<Report> _reports { get; set; } = new();
+    private List<ReportSchedulerItem> _schedulerData { get; set; } = new();
     #endregion
 
     #region Lifecycle Methods
@@ -34,7 +34,7 @@ public partial class ReportCalendar : ComponentBase
     {
         try
         {
-            IsLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("Loading reports for calendar display");
@@ -44,18 +44,18 @@ public partial class ReportCalendar : ComponentBase
 
             if (result.IsSuccess && result.Value is not null)
             {
-                Reports = result.Value.ToList();
-                _logger.LogInformation("Loaded {Count} reports for calendar", Reports.Count);
+                _reports = result.Value.ToList();
+                _logger.LogInformation("Loaded {Count} reports for calendar", _reports.Count);
 
                 // Convert reports to scheduler items
-                SchedulerData = Reports.Select(MapReportToSchedulerItem).ToList();
+                _schedulerData = _reports.Select(MapReportToSchedulerItem).ToList();
             }
             else
             {
                 _logger.LogError("Failed to load reports: {Error}", result.Error?.Message);
                 await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load reports for calendar"));
-                Reports = new List<Report>();
-                SchedulerData = new List<ReportSchedulerItem>();
+                _reports = new List<Report>();
+                _schedulerData = new List<ReportSchedulerItem>();
             }
         }
         catch (Exception ex)
@@ -65,7 +65,7 @@ public partial class ReportCalendar : ComponentBase
         }
         finally
         {
-            IsLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -221,11 +221,11 @@ public partial class ReportCalendar : ComponentBase
     {
         try
         {
-            if (scheduler is not null)
+        if (_scheduler is not null)
             {
                 // Navigate the scheduler to today's date
-                scheduler.CurrentDate = DateTime.Today;
-                await scheduler.Reload();
+            _scheduler.CurrentDate = DateTime.Today;
+            await _scheduler.Reload();
             }
         }
         catch (Exception ex)
@@ -239,7 +239,7 @@ public partial class ReportCalendar : ComponentBase
     private int GetReportsThisMonth()
     {
         var now = DateTime.Now;
-        return Reports.Count(r => r.CreatedDate?.Year == now.Year && r.CreatedDate?.Month == now.Month);
+        return _reports.Count(r => r.CreatedDate?.Year == now.Year && r.CreatedDate?.Month == now.Month);
     }
 
     private int GetReportsThisWeek()
@@ -248,13 +248,13 @@ public partial class ReportCalendar : ComponentBase
         var startOfWeek = now.Date.AddDays(-(int)now.DayOfWeek);
         var endOfWeek = startOfWeek.AddDays(7);
 
-        return Reports.Count(r => r.CreatedDate >= startOfWeek && r.CreatedDate < endOfWeek);
+        return _reports.Count(r => r.CreatedDate >= startOfWeek && r.CreatedDate < endOfWeek);
     }
 
     private int GetReportsToday()
     {
         var today = DateTime.Today;
-        return Reports.Count(r => r.CreatedDate?.Date == today);
+        return _reports.Count(r => r.CreatedDate?.Date == today);
     }
     #endregion
 

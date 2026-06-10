@@ -18,7 +18,7 @@
 <!-- Calendar Controls -->
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-4 rz-mb-6 rz-border-radius-1" Style="border: var(--rz-grid-cell-border);height:4rem;">
     <RadzenLabel Text="Show Header:" />
-    <RadzenSwitch @bind-Value="@showHeader" />
+    <RadzenSwitch @bind-Value="@_showHeader" />
     
     <RadzenButton Icon="today" Text="Today" Click="@GoToToday" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" />
     <RadzenButton Icon="refresh" Text="Refresh" Click="@RefreshData" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@IsLoading" />
@@ -47,14 +47,14 @@
             else
             {
                 <!-- Enhanced Scheduler Component -->
-                <RadzenScheduler @ref="scheduler"  
+                <RadzenScheduler @ref="_scheduler"  
                                 TItem="InterviewSchedulerItem" 
                                 Data="@SchedulerData"
                                 StartProperty="@nameof(InterviewSchedulerItem.Start)"
                                 EndProperty="@nameof(InterviewSchedulerItem.End)"
                                 TextProperty="@nameof(InterviewSchedulerItem.Text)"
                                 SelectedIndex="2"
-                                ShowHeader="@showHeader"
+                                ShowHeader="@_showHeader"
                                 SlotSelect="@OnSlotSelect"
                                 AppointmentSelect="@OnAppointmentSelect"
                                 AppointmentRender="@OnAppointmentRender"

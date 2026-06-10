@@ -27,7 +27,7 @@ namespace SMS3.Components.Pages.SMSListings;
 /// </summary>
 public partial class MitigationListing : ComponentBase
 {
-    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+    private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Parameters
     [Parameter] public string? ReportId { get; set; }
@@ -47,22 +47,22 @@ public partial class MitigationListing : ComponentBase
     #endregion
 
     #region Properties
-    private RadzenDataGrid<MitigationModel>? mitigationsGrid;
-    private IEnumerable<Mitigation> mitigations = new List<Mitigation>();
-    private List<Mitigation> allMitigations = new List<Mitigation>(); // Store all mitigations for client-side filtering
-    private IEnumerable<MitigationModel> mitigationModels = new List<MitigationModel>();
-    private List<MitigationModel> allMitigationModels = new List<MitigationModel>(); // Store all models for client-side filtering
-    private IEnumerable<Mitigation> selectedMitigations = new List<Mitigation>();
-    private int totalCount;
-    private bool isLoading = false;
-    private bool ShowViewDialog = false;
-    private bool ShowBulkApprovalDialog = false;
-    private bool IsProcessingBulkApproval = false;
-    private Mitigation? SelectedMitigation = null;
+    private RadzenDataGrid<MitigationModel>? _mitigationsGrid;
+    private IEnumerable<Mitigation> _mitigations = new List<Mitigation>();
+    private List<Mitigation> _allMitigations = new List<Mitigation>(); // Store all mitigations for client-side filtering
+    private IEnumerable<MitigationModel> _mitigationModels = new List<MitigationModel>();
+    private List<MitigationModel> _allMitigationModels = new List<MitigationModel>(); // Store all models for client-side filtering
+    private IEnumerable<Mitigation> _selectedMitigations = new List<Mitigation>();
+    private int _totalCount;
+    private bool _isLoading = false;
+    private bool _showViewDialog = false;
+    private bool _showBulkApprovalDialog = false;
+    private bool _isProcessingBulkApproval = false;
+    private Mitigation? _selectedMitigation = null;
 
     // For context display
-    private Hazard? ContextHazard = null;
-    private Report? ContextReport = null;
+    private Hazard? _contextHazard = null;
+    private Report? _contextReport = null;
     #endregion
     
     #region Lifecycle Methods
@@ -93,7 +93,7 @@ public partial class MitigationListing : ComponentBase
 
                 if (hazardResult.IsSuccess && hazardResult.Value is not null)
                 {
-                    ContextHazard = hazardResult.Value;
+                    _contextHazard = hazardResult.Value;
                     _logger.LogInformation("Loaded context hazard: {HazardCode}", HazardCode);
                 }
             }
@@ -106,7 +106,7 @@ public partial class MitigationListing : ComponentBase
 
                 if (reportResult.IsSuccess && reportResult.Value is not null)
                 {
-                    ContextReport = reportResult.Value;
+                    _contextReport = reportResult.Value;
                     _logger.LogInformation("Loaded context report: {ReportId}", ReportId);
                 }
             }
@@ -123,7 +123,7 @@ public partial class MitigationListing : ComponentBase
     {
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("Loading mitigations for listing view");
@@ -139,19 +139,19 @@ public partial class MitigationListing : ComponentBase
                     var hazardMitigations = result.Value.ToList();
 
                     // Further filter by report if provided
-                    if (!string.IsNullOrEmpty(ReportId) && ContextHazard?.ReportCode is not null)
+                    if (!string.IsNullOrEmpty(ReportId) && _contextHazard?.ReportCode is not null)
                     {
                         hazardMitigations = hazardMitigations
-                            .Where(m => ContextHazard.ReportCode.Equals(ReportId, StringComparison.OrdinalIgnoreCase))
+                            .Where(m => _contextHazard.ReportCode.Equals(ReportId, StringComparison.OrdinalIgnoreCase))
                             .ToList();
                     }
 
-                    allMitigations = hazardMitigations;
-                    _logger.LogInformation("Loaded {Count} mitigations for hazard {HazardCode}", allMitigations.Count, HazardCode);
+                    _allMitigations = hazardMitigations;
+                    _logger.LogInformation("Loaded {Count} mitigations for hazard {HazardCode}", _allMitigations.Count, HazardCode);
                 }
                 else
                 {
-                    allMitigations = new List<Mitigation>();
+                    _allMitigations = new List<Mitigation>();
                     _logger.LogInformation("No mitigations found for hazard {HazardCode}", HazardCode);
                 }
             }
@@ -163,12 +163,12 @@ public partial class MitigationListing : ComponentBase
 
                 if (result.IsSuccess && result.Value is not null)
                 {
-                    allMitigations = result.Value.ToList();
-                    _logger.LogInformation("Loaded {Count} total mitigations", allMitigations.Count);
+                    _allMitigations = result.Value.ToList();
+                    _logger.LogInformation("Loaded {Count} total mitigations", _allMitigations.Count);
                 }
                 else
                 {
-                    allMitigations = new List<Mitigation>();
+                    _allMitigations = new List<Mitigation>();
                     await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load mitigations"));
                     _logger.LogError("Failed to load mitigations");
                 }
@@ -178,16 +178,16 @@ public partial class MitigationListing : ComponentBase
             await CreateMitigationViewModels();
 
             // Initially show all data
-            mitigations = allMitigations;
-            mitigationModels = allMitigationModels;
-            totalCount = allMitigationModels.Count();
+            _mitigations = _allMitigations;
+            _mitigationModels = _allMitigationModels;
+            _totalCount = _allMitigationModels.Count();
 
             // Show success notification if we have data
-            if (totalCount > 0)
+            if (_totalCount > 0)
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {totalCount} mitigations"));
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {_totalCount} mitigations"));
 
-                if (totalCount == 0)
+                if (_totalCount == 0)
                 {
                     await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No mitigations found"));
                 }
@@ -205,7 +205,7 @@ public partial class MitigationListing : ComponentBase
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -214,14 +214,14 @@ public partial class MitigationListing : ComponentBase
     {
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all mitigation models yet, load them first
-            if (allMitigationModels is null || !allMitigationModels.Any())
+            if (_allMitigationModels is null || !_allMitigationModels.Any())
             {
                 _logger.LogInformation("No mitigation models cached, loading initial data");
                 await LoadInitialData();
@@ -229,7 +229,7 @@ public partial class MitigationListing : ComponentBase
             }
 
             // Start with all mitigation models
-            var query = allMitigationModels.AsQueryable();
+            var query = _allMitigationModels.AsQueryable();
             _logger.LogInformation("Starting with {Count} total mitigation models", query.Count());
 
             // Apply filtering
@@ -241,7 +241,7 @@ public partial class MitigationListing : ComponentBase
             }
 
             // Get total count after filtering but before paging
-            totalCount = query.Count();
+            _totalCount = query.Count();
 
             // Apply sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
@@ -270,11 +270,11 @@ public partial class MitigationListing : ComponentBase
                 query = query.Take(args.Top.Value);
             }
 
-            mitigationModels = query.ToList();
-            mitigations = mitigationModels.Select(m => m.Mitigation).ToList();
+            _mitigationModels = query.ToList();
+            _mitigations = _mitigationModels.Select(m => m.Mitigation).ToList();
 
             _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} mitigations", 
-                mitigationModels.Count(), totalCount);
+                _mitigationModels.Count(), _totalCount);
         }
         catch (Exception ex)
         {
@@ -285,21 +285,21 @@ public partial class MitigationListing : ComponentBase
             // Fallback to show all data without filtering/sorting
             try
             {
-                mitigationModels = allMitigationModels ?? new List<MitigationModel>();
-                mitigations = allMitigations ?? new List<Mitigation>();
-                totalCount = mitigationModels.Count();
+                _mitigationModels = _allMitigationModels ?? new List<MitigationModel>();
+                _mitigations = _allMitigations ?? new List<Mitigation>();
+                _totalCount = _mitigationModels.Count();
             }
             catch (Exception fallbackEx)
             {
                 _logger.LogError(fallbackEx, "Error in LoadData fallback");
-                mitigationModels = new List<MitigationModel>();
-                mitigations = new List<Mitigation>();
-                totalCount = 0;
+                _mitigationModels = new List<MitigationModel>();
+                _mitigations = new List<Mitigation>();
+                _totalCount = 0;
             }
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -480,7 +480,7 @@ public partial class MitigationListing : ComponentBase
             var viewModels = new List<MitigationModel>();
 
             // Group mitigations by hazard code for efficient loading
-            var hazardCodes = allMitigations.Select(m => m.HazardCode).Distinct().ToList();
+            var hazardCodes = _allMitigations.Select(m => m.HazardCode).Distinct().ToList();
             var hazardLookup = new Dictionary<string, Hazard>();
 
             // Load all required hazards in parallel
@@ -516,7 +516,7 @@ public partial class MitigationListing : ComponentBase
             }
 
             // Create view models
-            foreach (var mitigation in allMitigations)
+            foreach (var mitigation in _allMitigations)
             {
                 var hazardCode = mitigation.HazardCode ?? "Unknown";
                 var reportId = "Unknown";
@@ -527,9 +527,9 @@ public partial class MitigationListing : ComponentBase
                 {
                     reportId = hazard.ReportCode ?? "Unknown";
                 }
-                else if (ContextHazard is not null)
+                else if (_contextHazard is not null)
                 {
-                    reportId = ContextHazard.ReportCode ?? "Unknown";
+                    reportId = _contextHazard.ReportCode ?? "Unknown";
                 }
                 else if (!string.IsNullOrEmpty(ReportId))
                 {
@@ -549,13 +549,13 @@ public partial class MitigationListing : ComponentBase
                 });
             }
 
-            allMitigationModels = viewModels;
+            _allMitigationModels = viewModels;
             _logger.LogInformation("Created {Count} mitigation view models", viewModels.Count);
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating mitigation view models");
-            allMitigationModels = new List<MitigationModel>();
+            _allMitigationModels = new List<MitigationModel>();
         }
     }
     #endregion
@@ -576,8 +576,8 @@ public partial class MitigationListing : ComponentBase
         try
         {
             _logger.LogInformation("Viewing mitigation: {Code}", mitigation.Code);
-            SelectedMitigation = mitigation;
-            ShowViewDialog = true;
+            _selectedMitigation = mitigation;
+            _showViewDialog = true;
             StateHasChanged();
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Viewing details for mitigation {mitigation.Code}"));
         }
@@ -637,7 +637,7 @@ public partial class MitigationListing : ComponentBase
     {
         try
         {
-            var approvableMitigations = allMitigations.Where(m => m.Status != MitigationStatus.Approved).ToList();
+            var approvableMitigations = _allMitigations.Where(m => m.Status != MitigationStatus.Approved).ToList();
 
             if (!approvableMitigations.Any())
             {
@@ -645,8 +645,8 @@ public partial class MitigationListing : ComponentBase
                 return;
             }
 
-            selectedMitigations = approvableMitigations;
-            ShowBulkApprovalDialog = true;
+            _selectedMitigations = approvableMitigations;
+            _showBulkApprovalDialog = true;
             StateHasChanged();
 
             _logger.LogInformation("Opening bulk approval dialog for {Count} mitigations", approvableMitigations.Count);
@@ -660,8 +660,8 @@ public partial class MitigationListing : ComponentBase
 
     private async Task CloseBulkApprovalDialog()
     {
-        ShowBulkApprovalDialog = false;
-        selectedMitigations = new List<Mitigation>();
+        _showBulkApprovalDialog = false;
+        _selectedMitigations = new List<Mitigation>();
         StateHasChanged();
     }
 
@@ -669,10 +669,10 @@ public partial class MitigationListing : ComponentBase
     {
         try
         {
-            IsProcessingBulkApproval = true;
+            _isProcessingBulkApproval = true;
             StateHasChanged();
 
-            var mitigationsToApprove = selectedMitigations.ToList();
+            var mitigationsToApprove = _selectedMitigations.ToList();
             var successCount = 0;
             var errorCount = 0;
 
@@ -731,7 +731,7 @@ public partial class MitigationListing : ComponentBase
         }
         finally
         {
-            IsProcessingBulkApproval = false;
+            _isProcessingBulkApproval = false;
             StateHasChanged();
         }
     }

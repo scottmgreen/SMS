@@ -76,24 +76,24 @@
 
     <!-- SPI Data Grid -->
     <RadzenCard Variant="Variant.Outlined">
-        @if (isLoading)
+        @if (_isLoading)
         {
             <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Gap="1rem" class="py-5">
                 <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Medium" />
                 <RadzenText>Loading SPIs...</RadzenText>
             </RadzenStack>
         }
-        else if (filteredSPIs?.Any() == true)
+        else if (_filteredSpis?.Any() == true)
         {
-            <RadzenDataGrid @ref="spGrid" 
-                            Data="@filteredSPIs" 
+            <RadzenDataGrid @ref="_spGrid" 
+                            Data="@_filteredSpis" 
                             TItem="SafetyPerformanceIndicator" 
                             AllowFiltering="false" 
                             AllowColumnResize="true" 
                             AllowAlternatingRows="true" 
                             FilterMode="FilterMode.Advanced" 
                             AllowSorting="true" 
-                            PageSize="@itemsPerPage" 
+                            PageSize="@_itemsPerPage" 
                             AllowPaging="true" 
                             PagerHorizontalAlign="HorizontalAlign.Left" 
                             ShowPagingSummary="true"

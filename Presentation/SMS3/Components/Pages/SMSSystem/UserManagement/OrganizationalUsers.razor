@@ -44,7 +44,7 @@
     <RadzenCard>
         @if (OrganizationalUsersList.Any())
         {
-            <RadzenDataGrid @ref="usersGrid" Data="@OrganizationalUsersList" TItem="SMSOrganizationalUser" 
+            <RadzenDataGrid @ref="_usersGrid" Data="@OrganizationalUsersList" TItem="SMSOrganizationalUser" 
                             AllowFiltering="true" AllowColumnResize="true" AllowSorting="true" 
                             PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" 
                             ShowPagingSummary="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
@@ -185,7 +185,7 @@
                             </RadzenFormField>
 
                             <RadzenFormField Text="SMS Organization Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenDropDown @bind-Value="@NewOrganizationLevelId" Data="@OrganizationLevelOptions"
+                                <RadzenDropDown @bind-Value="@NewOrganizationLevelId" Data="@_organizationLevelOptions"
                                                 TextProperty="Text" ValueProperty="Value"
                                                 Style="width: 100%;" Placeholder="Select SMS organizational role"
                                                 title="Select the Organization Level that determines authority and approval permissions" />
@@ -293,7 +293,7 @@
                             </RadzenFormField>
 
                             <RadzenFormField Text="SMS Organization Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenDropDown @bind-Value="@EditOrganizationLevelId" Data="@OrganizationLevelOptions"
+                                <RadzenDropDown @bind-Value="@EditOrganizationLevelId" Data="@_organizationLevelOptions"
                                                 TextProperty="Text" ValueProperty="Value"
                                                 Style="width: 100%;"
                                                 title="Select the SMS role that determines authority and approval permissions" />

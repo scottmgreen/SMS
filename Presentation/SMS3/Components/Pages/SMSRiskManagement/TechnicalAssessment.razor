@@ -27,7 +27,7 @@
                 <RadzenRow AlignItems="AlignItems.Center">
                     <RadzenColumn Size="12" SizeMD="4">
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.25rem">
-                            @if (!IsAssessmentModeResolved)
+                            @if (!_isAssessmentModeResolved)
                             {
                                 <RadzenText TextStyle="TextStyle.H5" Style="margin: 0;">
                                     <RadzenIcon Icon="hourglass_top" Style="margin-right: 0.5rem;" />
@@ -72,7 +72,7 @@
             </RadzenCard>
         </RadzenCard>
 
-        @if (IsAssessmentModeResolved && !IsRiskRegistryOnly)
+        @if (_isAssessmentModeResolved && !IsRiskRegistryOnly)
         {
             <!-- Progress Bar -->
             <RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
@@ -192,7 +192,7 @@
                                      Disabled="@(IsRiskRegistryOnly || CurrentStep <= 1 || IsSaving)"
                                      Click="@PreviousStep" />
 
-                        @if (!IsRiskRegistryOnly && IsCurrentStepDirty)
+                        @if (!IsRiskRegistryOnly && _isCurrentStepDirty)
                         {
                             <RadzenButton Text="Save Step"
                                          Icon="save"
@@ -232,7 +232,7 @@
     </RadzenColumn>
 </RadzenRow>
 
-@if (ShowDescriptionModal)
+@if (_showDescriptionModal)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-md">
@@ -240,7 +240,7 @@
                 <div class="sms-modal-header sms-header-primary">
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <h5 class="sms-modal-title mb-0">
-                            <i class="fas fa-file-alt"></i> Report Description - @SelectedReportId
+                            <i class="fas fa-file-alt"></i> Report Description - @_selectedReportId
                         </h5>
                         <RadzenButton ButtonStyle="ButtonStyle.Light"
                                       Variant="Variant.Text"
@@ -253,7 +253,7 @@
                     <RadzenCard Variant="Variant.Outlined">
                         <div class="p-3">
                             <div style="line-height: 1.6; white-space: normal;">
-                                @((MarkupString)(SelectedDescription ?? "No description available"))
+                                @((MarkupString)(_selectedDescription ?? "No description available"))
                             </div>
                         </div>
                     </RadzenCard>

@@ -77,7 +77,7 @@
                     </RadzenStack>
                 </RadzenCard>
             }
-            <RadzenDataGrid @ref="RiskRegistryGrid"
+            <RadzenDataGrid @ref="_riskRegistryGrid"
                             Data="@FilteredRiskRegistryEntries"
                             Count="@FilteredRiskRegistryEntries.Count"
                             LoadData="@LoadRiskRegistryData"
@@ -94,14 +94,14 @@
             <Columns>
                     <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="ReportCode" Title="Report ID" Width="100px">
                         <Template Context="registry">
-                            <div style="@BasicTextStyle">
+                            <div style="@_basicTextStyle">
                                 @registry.ReportCode
                             </div>
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="ReportStatus" Title="Report Status" Width="290px">
                         <Template Context="registry">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.35rem" Style="@BasicTextStyle">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.35rem" Style="@_basicTextStyle">
                                 <span>@registry.ReportStatus</span>
                                 @if (IsAssessmentInProgressStatus(registry.ReportStatus))
                                 {
@@ -114,7 +114,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="HazardCode" Title="Hazard ID" Width="100px" >
                         <Template Context="registry">
-                            <div style="@BasicTextStyle">
+                            <div style="@_basicTextStyle">
                                 @if (!string.IsNullOrWhiteSpace(registry.HazardCode))
                                 {
                                     <a href="@GetHazardReportingUrl(registry)">@registry.HazardCode</a>
@@ -131,7 +131,7 @@
                             <div style="@GetAviationMatrixCellStyle(registry.EffectiveRiskMatrixCode?.Trim() ?? string.Empty)" class="text-center fw-bold">
                                 @if (!string.IsNullOrEmpty(registry.EffectiveRiskMatrixCode) && registry.EffectiveRiskMatrixCode != "-" && registry.EffectiveRiskMatrixCode != "TBD")
                                 {
-                                    <div style="@BasicTextStyle">                   
+                                    <div style="@_basicTextStyle">                   
                                         @if (CanNavigateToTechnicalAssessmentStep4(registry))
                                         {
                                             <a href="@GetTechnicalAssessmentStep4Url(registry)">@($"{registry.EffectiveRiskMatrixCode} - {registry.EffectiveHazardRiskLevel.Value}")</a>
@@ -156,7 +156,7 @@
                             <div style="@GetAviationMatrixCellStyle(registry.InitialRiskMatrixCode?.Trim() ?? string.Empty)" class="text-center fw-bold">
                                 @if (!string.IsNullOrEmpty(registry.InitialRiskMatrixCode) && registry.InitialRiskMatrixCode != "-" && registry.InitialRiskMatrixCode != "TBD")
                                 {
-                                    <div style="@BasicTextStyle">
+                                    <div style="@_basicTextStyle">
                                         @if (CanNavigateToTechnicalAssessmentStep4(registry))
                                         {
                                             <a href="@GetTechnicalAssessmentStep4Url(registry)">@($"{registry.InitialRiskMatrixCode} - {registry.InitialHazardRiskLevel?.Value}")</a>
@@ -180,7 +180,7 @@
                             <div style="@GetAviationMatrixCellStyle(registry.ResidualRiskMatrixCode?.Trim() ?? string.Empty)" class="text-center fw-bold">
                                 @if (!string.IsNullOrEmpty(registry.ResidualRiskMatrixCode) && registry.ResidualRiskMatrixCode != "-" && registry.ResidualRiskMatrixCode != "TBD")
                                 {
-                                    <div style="@BasicTextStyle">
+                                    <div style="@_basicTextStyle">
                                         @if (CanNavigateToTechnicalAssessmentStep4(registry))
                                         {
                                             <a href="@GetTechnicalAssessmentStep4Url(registry)">@($"{registry.ResidualRiskMatrixCode} - {registry.ResidualHazardRiskLevel?.Value}")</a>
@@ -215,7 +215,7 @@
                         <Template Context="registry">
                             @if (registry.MitigationStatus !=null)
                             {
-                                <div style="@BasicTextStyle">
+                                <div style="@_basicTextStyle">
                                     @registry.MitigationStatus.Value
                                 </div>
                             }
@@ -225,7 +225,7 @@
                         <Template Context="registry">
                             @if (registry.TargetDate.HasValue)
                             {
-                                <div style="@BasicTextStyle">
+                                <div style="@_basicTextStyle">
                                         @registry.TargetDate.Value.ToString("MMM dd, yyyy")
                                 </div>
                             }
@@ -234,7 +234,7 @@
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="AssignedTo" Title="Owner" Width="120px">
                         <Template Context="registry">
-                            <div style="@BasicTextStyle">
+                            <div style="@_basicTextStyle">
                                 @registry.AssignedTo
                             </div>
                         </Template>
@@ -245,7 +245,7 @@
                         <Template Context="registry">
                             @if (registry.LastUpdated.HasValue)
                             {
-                                <div style="@BasicTextStyle"> 
+                                <div style="@_basicTextStyle"> 
                                         @registry.LastUpdated.Value.ToString("MMM dd, yyyy")
                                 </div>
                             }
@@ -260,7 +260,7 @@
         </RadzenStack>
     </RadzenColumn>
 </RadzenRow>
-@if (ShowDescriptionModal)
+@if (_showDescriptionModal)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-md">
@@ -268,7 +268,7 @@
                 <div class="sms-modal-header sms-header-primary">
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <h5 class="sms-modal-title mb-0">
-                            <i class="fas fa-file-alt"></i> Hazard Description - @SelectedHazardId
+                            <i class="fas fa-file-alt"></i> Hazard Description - @_selectedHazardId
                         </h5>
                         <RadzenButton ButtonStyle="ButtonStyle.Light"
                                       Variant="Variant.Text"
@@ -281,7 +281,7 @@
                     <RadzenCard Variant="Variant.Outlined">
                         <div class="p-3">
                             <div style="line-height: 1.6; white-space: normal;">
-                                @((MarkupString)(SelectedDescription ?? "No description available"))
+                                @((MarkupString)(_selectedDescription ?? "No description available"))
                             </div>
                         </div>
                     </RadzenCard>

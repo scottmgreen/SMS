@@ -27,13 +27,13 @@ public partial class HazardMitigation : ComponentBase
     #region State Properties
     private bool IsLoading { get; set; } = true;
     private bool IsSaving { get; set; } = false;
-    private bool IsEditMode => !string.IsNullOrWhiteSpace(MitigationCode);
+    private bool _isEditMode => !string.IsNullOrWhiteSpace(MitigationCode);
 
     // Use the Domain Entity directly - NO MODELS!
     public Mitigation CurrentMitigation { get; set; } = new(new MitigationID(Guid.NewGuid().ToString()));
 
-    public string PageTitle => IsEditMode ? "Edit Hazard Mitigation" : "Create Hazard Mitigation";
-    public string PageSubtitle => IsEditMode ? $"Modify hazard mitigation strategy {MitigationCode}" : "Create new hazard mitigation strategy";
+    public string PageTitle => _isEditMode ? "Edit Hazard Mitigation" : "Create Hazard Mitigation";
+    public string PageSubtitle => _isEditMode ? $"Modify hazard mitigation strategy {MitigationCode}" : "Create new hazard mitigation strategy";
     #endregion
 
     #region Dropdown Options
@@ -67,7 +67,7 @@ public partial class HazardMitigation : ComponentBase
         {
             IsLoading = true;
 
-            if (IsEditMode)
+            if (_isEditMode)
             {
                 // Edit mode: Load existing mitigation
                 await LoadExistingMitigation();
@@ -90,7 +90,7 @@ public partial class HazardMitigation : ComponentBase
             }
 
             _logger.LogInformation("Loaded hazard mitigation {Mode} page for Code: {Code} by user: {UserId}",
-                IsEditMode ? "edit" : "creation", MitigationCode ?? "New", GetCurrentUserId());
+                _isEditMode ? "edit" : "creation", MitigationCode ?? "New", GetCurrentUserId());
         }
         catch (Exception ex)
         {
@@ -157,7 +157,7 @@ public partial class HazardMitigation : ComponentBase
                 return;
             }
 
-            if (IsEditMode)
+            if (_isEditMode)
             {
                 await UpdateExistingMitigation();
             }
@@ -262,13 +262,13 @@ public partial class HazardMitigation : ComponentBase
     // Get the appropriate button text based on mode
     public string GetSaveButtonText()
     {
-        return IsEditMode ? "Update Hazard Mitigation" : "Create Hazard Mitigation";
+        return _isEditMode ? "Update Hazard Mitigation" : "Create Hazard Mitigation";
     }
 
     // Get the appropriate button icon based on mode
     public string GetSaveButtonIcon()
     {
-        return IsEditMode ? "save" : "add";
+        return _isEditMode ? "save" : "add";
     }
     #endregion
 

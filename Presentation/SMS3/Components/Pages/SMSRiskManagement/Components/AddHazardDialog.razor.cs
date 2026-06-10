@@ -19,9 +19,9 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     [Parameter] public string RiskAssessmentId { get; set; } = string.Empty;
 
     [Inject] ICurrentUserService _currentUserService { get; set; } = default!;
-    [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
-    [Inject] private IBaseMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<AddHazardDialog>? Logger { get; set; }
+    [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
+    [Inject] private ILogger<AddHazardDialog>? _logger { get; set; }
 
     // Form properties
     private string NewHazardDescription { get; set; } = string.Empty;
@@ -36,7 +36,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     private List<DropdownOption> HazardTypeOptions { get; set; } = new();
 
     // Location properties - EXACTLY like HazardReporting
-    private bool ShowMapModal { get; set; } = false;
+    private bool _showMapModal { get; set; } = false;
     public decimal SelectedLatitude { get; set; }
     public decimal SelectedLongitude { get; set; }
     public string LocationDescription { get; set; } = string.Empty;
@@ -55,9 +55,9 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     private DotNetObjectReference<AddHazardDialog>? _dotNetRef;
 
     // Airport coordinates - EXACTLY like HazardReporting
-    private double AirportCenterLatitude => 45.5898;
-    private double AirportCenterLongitude => -122.5951;
-    private int DefaultZoomLevel => 20;
+    private double _airportCenterLatitude => 45.5898;
+    private double _airportCenterLongitude => -122.5951;
+    private int _defaultZoomLevel => 20;
 
     // Form validation - UPDATED to be more lenient for debugging
     private bool IsFormValid =>
@@ -66,25 +66,10 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         !string.IsNullOrWhiteSpace(NewHazardCategory) &&
         !string.IsNullOrWhiteSpace(NewHazardType) &&
         !IsSubmitting;
-        // TEMPORARILY REMOVED: && HasGeoLocation for debugging
-
-    // Separate validation for location specifically
-    private bool IsLocationValid => HasGeoLocation;
-    private string LocationValidationMessage => 
-        !HasGeoLocation ? "Location is required. Please select a location on the map." : 
-        "";
-
-    // Complete form validation including location
-    private bool IsFormCompletelyValid =>
-        !string.IsNullOrWhiteSpace(NewHazardDescription?.Trim()) &&
-        NewHazardDescription.Trim().Length >= 10 &&
-        !string.IsNullOrWhiteSpace(NewHazardCategory) &&
-        !string.IsNullOrWhiteSpace(NewHazardType) &&
-        HasGeoLocation &&
-        !IsSubmitting;
+        
 
     // UI computed properties for edit mode
-    private string ModalTitle => IsEditMode ? "Edit Hazard" : "Add New Hazard";
+    private string _modalTitle => IsEditMode ? "Edit Hazard" : "Add New Hazard";
     private string ActionButtonText => IsSubmitting 
         ? (IsEditMode ? "Updating..." : "Adding...") 
         : (IsEditMode ? "Update Hazard" : "Add Hazard");
@@ -105,7 +90,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         // Create DotNet reference for JavaScript callbacks - EXACTLY like HazardReporting
         _dotNetRef = DotNetObjectReference.Create(this);
         
-        Logger?.LogInformation("AddHazardDialog initialized. SelectedGeoLocation.IsValid: {IsValid}", SelectedGeoLocation.IsValid);
+        _logger?.LogInformation("AddHazardDialog initialized. SelectedGeoLocation.IsValid: {IsValid}", SelectedGeoLocation.IsValid);
     }
 
     protected override async Task OnParametersSetAsync()
@@ -128,12 +113,12 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             try
             {
                 // Initialize JavaScript mapping module only once - EXACTLY like HazardReporting
-                _mapModule = await JSRuntime.InvokeAsync<IJSObjectReference>("import", "/js/hazard-map.js");
-                Logger?.LogInformation("Map module loaded successfully");
+                _mapModule = await _jsRuntime.InvokeAsync<IJSObjectReference>("import", "/js/hazard-map.js");
+                _logger?.LogInformation("Map module loaded successfully");
             }
             catch (Exception ex)
             {
-                Logger?.LogWarning(ex, "Could not load JavaScript map module");
+                _logger?.LogWarning(ex, "Could not load JavaScript map module");
             }
         }
     }
@@ -152,7 +137,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     {
         if (EditingHazard is null) return;
 
-        Logger?.LogInformation("Populating form for editing hazard: {HazardCode}", EditingHazard.Code);
+        _logger?.LogInformation("Populating form for editing hazard: {HazardCode}", EditingHazard.Code);
 
         // Populate basic fields
         NewHazardDescription = EditingHazard.Description ?? string.Empty;
@@ -181,7 +166,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                 DateSelected = DateTime.UtcNow
             };
 
-            Logger?.LogInformation("Populated location data for editing: {Lat}, {Lng}", 
+            _logger?.LogInformation("Populated location data for editing: {Lat}, {Lng}", 
                 SelectedLatitude, SelectedLongitude);
         }
 
@@ -219,7 +204,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     /// </summary>
     public async Task OnHazardCategoryChanged(string? categoryValue)
     {
-        Logger?.LogInformation("Hazard category changed to: {Category}", categoryValue);
+        _logger?.LogInformation("Hazard category changed to: {Category}", categoryValue);
 
         NewHazardCategory = categoryValue ?? string.Empty;
 
@@ -252,13 +237,13 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                 .Select(ht => new DropdownOption(ht.Value, ht.Name))
                 .ToList();
 
-            Logger?.LogInformation("Loaded {Count} hazard types for category: {Category}",
+            _logger?.LogInformation("Loaded {Count} hazard types for category: {Category}",
                 HazardTypeOptions.Count, category.Name);
         }
         else
         {
             HazardTypeOptions.Clear();
-            Logger?.LogWarning("Category not found: {CategoryValue}", categoryValue);
+            _logger?.LogWarning("Category not found: {CategoryValue}", categoryValue);
         }
 
         await InvokeAsync(StateHasChanged);
@@ -276,7 +261,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             var hazardType = HazardType.FromValue(hazardTypeValue);
             if (hazardType is not null)
             {
-                Logger?.LogInformation("Hazard type changed to: {HazardType}", hazardType.Name);
+                _logger?.LogInformation("Hazard type changed to: {HazardType}", hazardType.Name);
             }
         }
 
@@ -347,7 +332,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         }
         catch (Exception ex)
         {
-            Logger?.LogError(ex, "Exception during hazard {Action}", IsEditMode ? "update" : "creation");
+            _logger?.LogError(ex, "Exception during hazard {Action}", IsEditMode ? "update" : "creation");
         }
         finally
         {
@@ -364,11 +349,11 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     {
         if (EditingHazard is null)
         {
-            Logger?.LogError("Cannot update hazard: EditingHazard is null");
+            _logger?.LogError("Cannot update hazard: EditingHazard is null");
             return;
         }
 
-        Logger?.LogInformation("Starting hazard update for: {HazardCode}", EditingHazard.Code);
+        _logger?.LogInformation("Starting hazard update for: {HazardCode}", EditingHazard.Code);
 
         // Update the existing hazard properties
         EditingHazard.Name = NewHazardDescription.Trim();
@@ -383,11 +368,11 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
         // Update the hazard
         var updateHazardCommand = new UpdateHazardCommand(EditingHazard);
-        var hazardResult = await Mediator.SendAsync(updateHazardCommand, CancellationToken.None);
+        var hazardResult = await _mediator.SendAsync(updateHazardCommand, CancellationToken.None);
 
         if (!hazardResult.IsSuccess)
         {
-            Logger?.LogError("Failed to update hazard: {Error}", hazardResult.Error?.Message);
+            _logger?.LogError("Failed to update hazard: {Error}", hazardResult.Error?.Message);
             return;
         }
 
@@ -399,14 +384,14 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
 
 
-        Logger?.LogInformation("Successfully updated hazard: {HazardCode} with Category: {Category}, Type: {Type}", 
+        _logger?.LogInformation("Successfully updated hazard: {HazardCode} with Category: {Category}, Type: {Type}", 
             updatedHazard?.Code, NewHazardCategory, NewHazardType);
 
         // Invoke callback with the updated hazard
         await OnHazardUpdated.InvokeAsync(updatedHazard);
         await CloseModal();
 
-        Logger?.LogInformation("Hazard update process completed for: {HazardCode}", updatedHazard?.Code);
+        _logger?.LogInformation("Hazard update process completed for: {HazardCode}", updatedHazard?.Code);
     }
 
     /// <summary>
@@ -415,7 +400,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     private async Task CreateNewHazard()
     {
         
-        Logger?.LogInformation("Starting hazard creation with description: {Description}, Category: {Category}, Type: {Type}", NewHazardDescription?.Trim(), NewHazardCategory, NewHazardType);
+        _logger?.LogInformation("Starting hazard creation with description: {Description}, Category: {Category}, Type: {Type}", NewHazardDescription?.Trim(), NewHazardCategory, NewHazardType);
 
         // Create hazard
         HazardID hazardID = new HazardID("HZ-0000");
@@ -439,16 +424,16 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
         // Create the hazard
         var createHazardCommand = new CreateHazardCommand(hazard);
-        var hazardResult = await Mediator.SendAsync(createHazardCommand, CancellationToken.None);
+        var hazardResult = await _mediator.SendAsync(createHazardCommand, CancellationToken.None);
 
         if (!hazardResult.IsSuccess)
         {
-            Logger?.LogError("Failed to create hazard: {Error}", hazardResult.Error?.Message);
+            _logger?.LogError("Failed to create hazard: {Error}", hazardResult.Error?.Message);
             return;
         }
 
         var createdHazard = hazardResult.Value;
-        Logger?.LogInformation("Successfully created hazard: {HazardCode} with Category: {Category}, Type: {Type}", createdHazard.Code, NewHazardCategory, NewHazardType);
+        _logger?.LogInformation("Successfully created hazard: {HazardCode} with Category: {Category}, Type: {Type}", createdHazard.Code, NewHazardCategory, NewHazardType);
 
         //Create RiskAnalysis 
         
@@ -457,10 +442,10 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         riskAnalysis.HazardCode = createdHazard.Code;
         riskAnalysis.RiskAssessmentCode = RiskAssessmentId ?? "";
         var createRiskAnalysis = new CreateRiskAnalysisCommand(riskAnalysis);
-        var riskAnalysisResult = await Mediator.SendAsync(createRiskAnalysis, CancellationToken.None);
+        var riskAnalysisResult = await _mediator.SendAsync(createRiskAnalysis, CancellationToken.None);
         if (!riskAnalysisResult.IsSuccess)
         {
-            Logger?.LogError("Failed to get RiskAssessment for Hazard: {Error}", hazardResult.Error?.Message);
+            _logger?.LogError("Failed to get RiskAssessment for Hazard: {Error}", hazardResult.Error?.Message);
             return;
         }
 
@@ -479,7 +464,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         await OnHazardAdded.InvokeAsync(createdHazard);
         await CloseModal();
 
-        Logger?.LogInformation("Hazard creation process completed for: {HazardCode}", createdHazard?.Code);
+        _logger?.LogInformation("Hazard creation process completed for: {HazardCode}", createdHazard?.Code);
     }
 
     /// <summary>
@@ -523,7 +508,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
             // Create the new HazardLocation
             var createLocationCommand = new CreateHazardLocationCommand(newHazardLocation);
-            var locationCreateResult = await Mediator.SendAsync(createLocationCommand, CancellationToken.None);
+            var locationCreateResult = await _mediator.SendAsync(createLocationCommand, CancellationToken.None);
 
             if (locationCreateResult.IsSuccess)
             {
@@ -537,16 +522,16 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                     hazard.LocationSubArea = SelectedGeoLocation.Description;
                 }
 
-                Logger?.LogInformation("Successfully created hazard location: {LocationCode}", createdLocation?.Code);
+                _logger?.LogInformation("Successfully created hazard location: {LocationCode}", createdLocation?.Code);
             }
             else
             {
-                Logger?.LogWarning("Failed to create hazard location: {Error}", locationCreateResult.Error?.Message);
+                _logger?.LogWarning("Failed to create hazard location: {Error}", locationCreateResult.Error?.Message);
             }
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "Failed to create/update hazard location, but continuing with hazard update");
+            _logger?.LogWarning(ex, "Failed to create/update hazard location, but continuing with hazard update");
 
             // Set location in hazard fields as fallback - EXACTLY like HazardReporting
             hazard.LocationArea = $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}";
@@ -567,7 +552,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         try
         {
             // Check if HazardLocation already exists for this hazard
-            var hazardLocationResult = await Mediator.SendAsync(new GetHazardLocationsByHazardCodeQuery(hazard.Code), CancellationToken.None);
+            var hazardLocationResult = await _mediator.SendAsync(new GetHazardLocationsByHazardCodeQuery(hazard.Code), CancellationToken.None);
 
             HazardLocation? hazardLocation = null;
 
@@ -585,12 +570,12 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                     hazardLocation.UpdatedBy = _currentUserService?.UserDisplayName;
                     hazard.HazardLocation = hazardLocation;
 
-                    var locationUpdateResult = await Mediator.SendAsync(
+                    var locationUpdateResult = await _mediator.SendAsync(
                         new UpdateHazardLocationCommand(hazardLocation), CancellationToken.None);
 
                     if (locationUpdateResult.IsSuccess)
                     {
-                        Logger?.LogInformation("Successfully updated hazard location: {LocationCode}", hazardLocation.Code);
+                        _logger?.LogInformation("Successfully updated hazard location: {LocationCode}", hazardLocation.Code);
                       }
                 }
             }
@@ -610,7 +595,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         }
         catch (Exception ex)
         {
-            Logger?.LogWarning(ex, "Failed to update hazard location, but continuing with hazard update");
+            _logger?.LogWarning(ex, "Failed to update hazard location, but continuing with hazard update");
 
             // Set location in hazard fields as fallback - EXACTLY like HazardReporting
             hazard.LocationArea = $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}";
@@ -632,7 +617,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         SelectedLongitude = 0;
         LocationDescription = string.Empty;
         SelectedGeoLocation = new HazardLocation();
-        ShowMapModal = false;
+        _showMapModal = false;
         
         // Reset dropdown options
         HazardTypeOptions.Clear();
@@ -645,7 +630,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     /// </summary>
     public async Task OpenMapSelector()
     {
-        ShowMapModal = true;
+        _showMapModal = true;
         StateHasChanged();
 
         // Give DOM time to render the modal
@@ -658,9 +643,9 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             {
                 // Always reinitialize the map since the DOM element is recreated
                 await _mapModule.InvokeVoidAsync("initializeMap",
-                    AirportCenterLatitude, AirportCenterLongitude, DefaultZoomLevel, _dotNetRef);
+                    _airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef);
 
-                Logger?.LogInformation("Map reinitialized for modal opening");
+                _logger?.LogInformation("Map reinitialized for modal opening");
 
                 // Restore existing location if we have one
                 if (HasGeoLocation)
@@ -676,7 +661,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                     SelectedLongitude = SelectedGeoLocation.Longitude ?? 0;
                     LocationDescription = SelectedGeoLocation.Description ?? "";
 
-                    Logger?.LogInformation("Existing location restored: {Lat}, {Lng}",
+                    _logger?.LogInformation("Existing location restored: {Lat}, {Lng}",
                         SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
 
                     StateHasChanged();
@@ -684,7 +669,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             }
             catch (Exception ex)
             {
-                Logger?.LogError(ex, "Error initializing map in OpenMapSelector");
+                _logger?.LogError(ex, "Error initializing map in OpenMapSelector");
             }
         }
     }
@@ -694,7 +679,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     /// </summary>
     public void CloseMapSelector()
     {
-        ShowMapModal = false;
+        _showMapModal = false;
         StateHasChanged();
     }
 
@@ -705,7 +690,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     {
         if (!HasValidCoordinates)
         {
-            Logger?.LogWarning("UseSelectedLocation called but no valid coordinates: Lat={Lat}, Lng={Lng}", 
+            _logger?.LogWarning("UseSelectedLocation called but no valid coordinates: Lat={Lat}, Lng={Lng}", 
                 SelectedLatitude, SelectedLongitude);
             return;
         }
@@ -720,13 +705,13 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         };
 
         // IMPORTANT: Verify that the location is now considered valid
-        Logger?.LogInformation("Location set - Lat: {Lat}, Lng: {Lng}, IsValid: {IsValid}, HasGeoLocation: {HasGeoLocation}", 
+        _logger?.LogInformation("Location set - Lat: {Lat}, Lng: {Lng}, IsValid: {IsValid}, HasGeoLocation: {HasGeoLocation}", 
             SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude, SelectedGeoLocation.IsValid, HasGeoLocation);
 
-        ShowMapModal = false;
+        _showMapModal = false;
         StateHasChanged();
 
-        Logger?.LogInformation("Location successfully set: {GeoLocationDisplay}", GeoLocationDisplay);
+        _logger?.LogInformation("Location successfully set: {GeoLocationDisplay}", GeoLocationDisplay);
     }
 
     /// <summary>
@@ -747,13 +732,13 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             }
             catch (Exception ex)
             {
-                Logger?.LogWarning(ex, "Error clearing map selection");
+                _logger?.LogWarning(ex, "Error clearing map selection");
             }
         }
 
         StateHasChanged();
 
-        Logger?.LogInformation("Map selection cleared");
+        _logger?.LogInformation("Map selection cleared");
     }
 
     /// <summary>
@@ -769,15 +754,15 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         // Validate that we received proper coordinates
         if (latitude == 0 && longitude == 0)
         {
-            Logger?.LogWarning("Received zero coordinates from map click");
+            _logger?.LogWarning("Received zero coordinates from map click");
         }
 
-        Logger?.LogInformation("Map location received from JS: Lat={Lat}, Lng={Lng}, Description={Desc}", 
+        _logger?.LogInformation("Map location received from JS: Lat={Lat}, Lng={Lng}, Description={Desc}", 
             latitude, longitude, description);
 
         await InvokeAsync(StateHasChanged);
 
-        Logger?.LogInformation("Map location selected: {Lat}, {Lng} - HasValidCoordinates: {HasValid}", 
+        _logger?.LogInformation("Map location selected: {Lat}, {Lng} - HasValidCoordinates: {HasValid}", 
             latitude, longitude, HasValidCoordinates);
     }
 

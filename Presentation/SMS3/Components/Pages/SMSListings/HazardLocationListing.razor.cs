@@ -38,11 +38,11 @@ public partial class HazardLocationListing : ComponentBase
     #endregion
 
     #region Properties
-    private RadzenDataGrid<HazardLocation>? locationsGrid;
-    private IEnumerable<HazardLocation> locations = new List<HazardLocation>();
-    private List<HazardLocation> allLocations = new List<HazardLocation>(); // Store all locations for client-side filtering
-    private int totalCount;
-    private bool isLoading = false;
+    private RadzenDataGrid<HazardLocation>? _locationsGrid;
+    private IEnumerable<HazardLocation> _locations = new List<HazardLocation>();
+    private List<HazardLocation> _allLocations = new List<HazardLocation>(); // Store all locations for client-side filtering
+    private int _totalCount;
+    private bool _isLoading = false;
     #endregion
     
     #region Lifecycle Methods
@@ -57,7 +57,7 @@ public partial class HazardLocationListing : ComponentBase
     {
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("Loading hazard locations for listing view");
@@ -67,15 +67,15 @@ public partial class HazardLocationListing : ComponentBase
 
             if (result.IsSuccess && result.Value is not null)
             {
-                allLocations = result.Value.ToList(); // Store all locations for filtering/sorting
-                locations = allLocations; // Initially show all locations
-                totalCount = allLocations.Count();
-                _logger.LogInformation("Loaded {Count} hazard locations for listing", totalCount);
+                _allLocations = result.Value.ToList(); // Store all locations for filtering/sorting
+                _locations = _allLocations; // Initially show all locations
+                _totalCount = _allLocations.Count();
+                _logger.LogInformation("Loaded {Count} hazard locations for listing", _totalCount);
 
                 // Show success notification if we have data
-                if (totalCount > 0)
+                if (_totalCount > 0)
                 {
-                    await ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazard locations");
+                    await ShowSuccessAsyncNotification($"Successfully loaded {_totalCount} hazard locations");
                 }
                 else
                 {
@@ -85,9 +85,9 @@ public partial class HazardLocationListing : ComponentBase
             else
             {
                 // Initialize with empty lists to prevent null reference issues
-                allLocations = new List<HazardLocation>();
-                locations = allLocations;
-                totalCount = 0;
+                _allLocations = new List<HazardLocation>();
+                _locations = _allLocations;
+                _totalCount = 0;
                 
                 await ShowErrorAsyncNotification("Failed to load hazard locations");
                 _logger.LogError("Failed to load hazard locations: {Error}", result.Error?.Message);
@@ -96,16 +96,16 @@ public partial class HazardLocationListing : ComponentBase
         catch (Exception ex)
         {
             // Ensure we always have valid collections even if an error occurs
-            allLocations = new List<HazardLocation>();
-            locations = allLocations;
-            totalCount = 0;
+            _allLocations = new List<HazardLocation>();
+            _locations = _allLocations;
+            _totalCount = 0;
             
             _logger.LogError(ex, "Error loading hazard locations");
             await ShowErrorAsyncNotification($"Error loading hazard locations: {ex.Message}");
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -114,14 +114,14 @@ public partial class HazardLocationListing : ComponentBase
     {
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all locations yet, load them first
-            if (allLocations is null || !allLocations.Any())
+            if (_allLocations is null || !_allLocations.Any())
             {
                 _logger.LogInformation("No locations cached, loading initial data");
                 await LoadInitialData();
@@ -129,7 +129,7 @@ public partial class HazardLocationListing : ComponentBase
             }
 
             // Start with all locations
-            var query = allLocations.AsQueryable();
+            var query = _allLocations.AsQueryable();
             _logger.LogInformation("Starting with {Count} total locations", query.Count());
 
             // Apply filtering
@@ -141,7 +141,7 @@ public partial class HazardLocationListing : ComponentBase
             }
 
             // Get total count after filtering but before paging
-            totalCount = query.Count();
+            _totalCount = query.Count();
 
             // Apply sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
@@ -170,10 +170,10 @@ public partial class HazardLocationListing : ComponentBase
                 query = query.Take(args.Top.Value);
             }
 
-            locations = query.ToList();
+            _locations = query.ToList();
 
             _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} locations", 
-                locations.Count(), totalCount);
+                _locations.Count(), _totalCount);
         }
         catch (Exception ex)
         {
@@ -184,19 +184,19 @@ public partial class HazardLocationListing : ComponentBase
             // Fallback to show all data without filtering/sorting
             try
             {
-                locations = allLocations ?? new List<HazardLocation>();
-                totalCount = locations.Count();
+                _locations = _allLocations ?? new List<HazardLocation>();
+                _totalCount = _locations.Count();
             }
             catch (Exception fallbackEx)
             {
                 _logger.LogError(fallbackEx, "Error in LoadData fallback");
-                locations = new List<HazardLocation>();
-                totalCount = 0;
+                _locations = new List<HazardLocation>();
+                _totalCount = 0;
             }
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }

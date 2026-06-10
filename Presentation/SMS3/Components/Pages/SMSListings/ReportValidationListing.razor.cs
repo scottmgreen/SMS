@@ -12,9 +12,9 @@ public partial class ReportValidationListing : ComponentBase
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     
 
-    private RadzenDataGrid<ReportValidation>? validationsGrid;
-    private IEnumerable<ReportValidation> validations = new List<ReportValidation>();
-    private int totalCount;
+    private RadzenDataGrid<ReportValidation>? _validationsGrid;
+    private IEnumerable<ReportValidation> _validations = new List<ReportValidation>();
+    private int _totalCount;
 
     protected override async Task OnInitializedAsync()
     {
@@ -30,9 +30,9 @@ public partial class ReportValidationListing : ComponentBase
 
             if (result.IsSuccess && result.Value is not null)
             {
-                validations = result.Value;
-                totalCount = validations.Count();
-                _logger.LogInformation("Loaded {Count} report validations", totalCount);
+                _validations = result.Value;
+                _totalCount = _validations.Count();
+                _logger.LogInformation("Loaded {Count} report validations", _totalCount);
             }
             else
             {
@@ -53,7 +53,7 @@ public partial class ReportValidationListing : ComponentBase
         {
             await LoadInitialData();
 
-            var query = validations.AsQueryable();
+            var query = _validations.AsQueryable();
 
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
@@ -72,8 +72,8 @@ public partial class ReportValidationListing : ComponentBase
                 query = query.Take(args.Top.Value);
             }
 
-            validations = query.ToList();
-            totalCount = validations.Count();
+            _validations = query.ToList();
+            _totalCount = _validations.Count();
         }
         catch (Exception ex)
         {

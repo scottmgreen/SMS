@@ -45,7 +45,7 @@
    <RadzenCard>
         @if (SMSApplicationGroups.Any())
         {
-            <RadzenDataGrid @ref="groupsGrid" Data="@SMSApplicationGroups" TItem="SMSApplicationGroup" 
+            <RadzenDataGrid @ref="_groupsGrid" Data="@SMSApplicationGroups" TItem="SMSApplicationGroup" 
                             AllowFiltering="true" AllowColumnResize="true" AllowSorting="true" 
                             PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" 
                             ShowPagingSummary="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">

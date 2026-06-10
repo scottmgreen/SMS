@@ -15,7 +15,7 @@
 <PageHeader Title="SMS Report Validation"
            Subtitle="Review and validate incoming safety reports for accuracy and completeness"
            Icon="fas fa-check-circle" />
-@if (IsLoading)
+@if (_isLoading)
 {
     <!-- Loading State -->
     <div class="text-center py-5">
@@ -61,9 +61,9 @@ else
                                             <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Incident Date/Time:</strong>@(ReportDetails?.IncidentDateTime.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
                                             <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Submitted Date/Time:</strong>@(ReportDetails?.SubmittedDate.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
                                             <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Submitted By:</strong>@(ReportDetails?.SubmittedBy ?? "N/A")</RadzenText>
-                                            @if (IsUpdate)
+                                            @if (_isUpdate)
                                             {
-                                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Validation Code:</strong>@ValidationCode</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Validation Code:</strong>@_validationCode</RadzenText>
                                             }
                                         </RadzenStack>
                                     </RadzenColumn>                                  
@@ -82,7 +82,7 @@ else
                                     <RadzenCheckBox @bind-Value="@this.RiskRegistryOnly"
                                                     Name="registryonly"
                                                     TriState="false" 
-                                                    Disabled="@IsRiskRegistryCheckboxDisabled" />
+                                                    Disabled="@_isRiskRegistryCheckboxDisabled" />
                                     <RadzenLabel Style="font-weight:600" Text="Risk Registry Only" Component="registryonly" />
                                 </RadzenStack>
                                 <br />

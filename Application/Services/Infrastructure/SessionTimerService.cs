@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Configuration;
 using SMS_Application.Interfaces;
@@ -21,6 +22,7 @@ namespace SMS_Application.Services;
 public class SessionTimerService : IDisposable
 {
     private readonly ILogger<SessionTimerService> _logger;
+    private readonly IConfiguration _configuration;
     private readonly SessionConfiguration _sessionConfig;
     private readonly ICurrentUserService _currentUserService;
     private readonly ISMSSessionService _sessionService;
@@ -35,14 +37,21 @@ public class SessionTimerService : IDisposable
 
     public SessionTimerService(
         ILogger<SessionTimerService> logger,
+        IConfiguration configuration,
         SessionConfiguration sessionConfig,
         ICurrentUserService currentUserService,
         ISMSSessionService sessionService)
     {
         _logger = logger;
+        _configuration = configuration;
         _sessionConfig = sessionConfig;
         _currentUserService = currentUserService;
         _sessionService = sessionService;
+    }
+
+    private bool IsSessionTimerEnabled()
+    {
+        return _configuration.GetValue<bool>("FeatureManagement:EnableSessionTimer", true);
     }
 
     /// <summary>
@@ -50,6 +59,13 @@ public class SessionTimerService : IDisposable
     /// </summary>
     public void StartTimer()
     {
+        if (!IsSessionTimerEnabled())
+        {
+            _logger.LogApplicationDebug("Session timer is disabled by feature flag", ApplicationEventIds.Debug);
+            StopTimer();
+            return;
+        }
+
         if (!_currentUserService.IsAuthenticated)
         {
             _logger.LogApplicationDebug("Cannot start timer - user not authenticated", ApplicationEventIds.Debug);
@@ -72,6 +88,9 @@ public class SessionTimerService : IDisposable
     /// </summary>
     public void UpdateActivity()
     {
+        if (!IsSessionTimerEnabled())
+            return;
+
         if (_isActive && _currentUserService.IsAuthenticated)
         {
             _lastActivity = DateTime.UtcNow;
@@ -95,6 +114,9 @@ public class SessionTimerService : IDisposable
     /// </summary>
     public TimeSpan GetRemainingTime()
     {
+        if (!IsSessionTimerEnabled())
+            return TimeSpan.Zero;
+
         if (!_isActive || !_currentUserService.IsAuthenticated)
             return TimeSpan.Zero;
 
@@ -150,6 +172,12 @@ public class SessionTimerService : IDisposable
     {
         try
         {
+            if (!IsSessionTimerEnabled())
+            {
+                StopTimer();
+                return;
+            }
+
             if (!_isActive || !_currentUserService.IsAuthenticated)
                 return;
 

@@ -33,7 +33,7 @@
 <RadzenRow Gap="1rem">
     <RadzenColumn Size="12">
         <RadzenCard>
-            @if (IsLoading)
+            @if (_isLoading)
             {
                 <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
                     <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
@@ -42,9 +42,9 @@
             else
             {
                 <!-- Scheduler Component -->
-                <RadzenScheduler @ref="scheduler" 
+            <RadzenScheduler @ref="_scheduler"
                                 TItem="ReportSchedulerItem" 
-                                Data="@SchedulerData"
+                                Data="@_schedulerData"
                                 Class="report-scheduler"
                                 StartProperty="@nameof(ReportSchedulerItem.Start)"
                                 EndProperty="@nameof(ReportSchedulerItem.End)"

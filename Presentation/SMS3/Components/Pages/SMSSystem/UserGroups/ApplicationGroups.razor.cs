@@ -46,7 +46,7 @@ public partial class ApplicationGroups : ComponentBase
     private string? CurrentGroupCode { get; set; }
 
     // Grid reference
-    private RadzenDataGrid<SMSApplicationGroup>? groupsGrid;
+    private RadzenDataGrid<SMSApplicationGroup>? _groupsGrid;
 
     // Selection tracking for member management
     private Dictionary<string, bool> SelectedUsers { get; set; } = new();
@@ -75,7 +75,7 @@ public partial class ApplicationGroups : ComponentBase
 
     #region Dropdown Options
 
-    private readonly List<StatusOption> ActiveInactiveStatusOptions = StatusOptions.ActiveInactiveOptions;
+    private readonly List<StatusOption> _activeInactiveStatusOptions = StatusOptions.ActiveInactiveOptions;
 
     #endregion
 
@@ -219,8 +219,8 @@ public partial class ApplicationGroups : ComponentBase
                 await ShowSuccessAsyncNotification($"Application group '{NewGroupName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
-                if (groupsGrid != null)
-                    await groupsGrid.Reload();
+                if (_groupsGrid != null)
+                    await _groupsGrid.Reload();
             }
             else
             {
@@ -265,8 +265,8 @@ public partial class ApplicationGroups : ComponentBase
                 await ShowSuccessAsyncNotification($"Application group '{EditGroupName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
-                if (groupsGrid != null)
-                    await groupsGrid.Reload();
+                if (_groupsGrid != null)
+                    await _groupsGrid.Reload();
             }
             else
             {
@@ -306,8 +306,8 @@ public partial class ApplicationGroups : ComponentBase
                 await ShowSuccessAsyncNotification("Application group deleted successfully.");
                 CloseDeleteModal();
                 await LoadDataAsync();
-                if (groupsGrid != null)
-                    await groupsGrid.Reload();
+                if (_groupsGrid != null)
+                    await _groupsGrid.Reload();
 
                 // If we're editing the deleted group, cancel edit mode
                 if (CurrentGroup?.Code == DeleteGroupCode)

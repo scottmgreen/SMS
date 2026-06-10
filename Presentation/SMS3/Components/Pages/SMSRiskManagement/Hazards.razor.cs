@@ -19,7 +19,7 @@ public partial class Hazards : ComponentBase
     // **CASCADING PARAMETER**: Get authentication from MainLayout (same pattern as Reports.razor)
     
     // Radzen DataList Reference
-    private RadzenDataList<Hazard>? hazardsDataList;
+    private RadzenDataList<Hazard>? _hazardsDataList;
 
     // State Properties
     private List<Hazard> AllHazards { get; set; } = new();
@@ -27,12 +27,12 @@ public partial class Hazards : ComponentBase
     private string ErrorMessage { get; set; } = string.Empty;
 
     // Authentication Properties (same pattern as Reports.razor)
-    private bool IsAuthenticated => _currentUserService?.IsAuthenticated == true;
-    private string? CurrentUserName => _currentUserService?.UserDisplayName;
+    private bool _isAuthenticated => _currentUserService?.IsAuthenticated == true;
+    private string? _currentUserName => _currentUserService?.UserDisplayName;
 
     // Pagination Properties
     private int PageSize { get; set; } = 10;
-    private readonly int[] PageSizeOptions = { 5, 10, 20, 50 };
+    private readonly int[] _pageSizeOptions = { 5, 10, 20, 50 };
 
     // Row Expansion State
     private readonly HashSet<string> _expandedRows = new();
@@ -50,14 +50,14 @@ public partial class Hazards : ComponentBase
     {
         try
         {
-            if (!IsAuthenticated)
+            if (!_isAuthenticated)
             {
                 _logger.LogWarning("Unauthorized access attempt to Hazards page");
                 ErrorMessage = "You must be logged in to view hazards.";
             }
             else
             {
-                _logger.LogInformation("Authenticated user {UserName} accessing Hazards page", CurrentUserName);
+                _logger.LogInformation("Authenticated user {UserName} accessing Hazards page", _currentUserName);
             }
         }
         catch (Exception ex)
@@ -69,7 +69,7 @@ public partial class Hazards : ComponentBase
 
     private async Task LoadHazardsAsync()
     {
-        if (!IsAuthenticated)
+        if (!_isAuthenticated)
         {
             IsLoading = false;
             return;
@@ -80,9 +80,9 @@ public partial class Hazards : ComponentBase
             IsLoading = true;
             ErrorMessage = string.Empty;
 
-            _logger.LogInformation("Loading all hazards for user: {UserName}", CurrentUserName);
+            _logger.LogInformation("Loading all hazards for user: {UserName}", _currentUserName);
 
-            // Execute GetAllHazardsQuery via Mediator
+            // Execute GetAllHazardsQuery via _mediator
             var query = new GetAllHazardsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
@@ -102,7 +102,7 @@ public partial class Hazards : ComponentBase
         catch (Exception ex)
         {
             ErrorMessage = "An unexpected error occurred while loading hazards.";
-            _logger.LogError(ex, "Exception loading hazards for user: {UserName}", CurrentUserName);
+            _logger.LogError(ex, "Exception loading hazards for user: {UserName}", _currentUserName);
             await _notificationHelper.ShowErrorAsync("An unexpected error occurred while loading hazards.");
         }
         finally
@@ -206,9 +206,9 @@ public partial class Hazards : ComponentBase
             _expandedRows.Clear();
 
             // Refresh the data list to apply new page size
-            if (hazardsDataList is not null)
+            if (_hazardsDataList is not null)
             {
-                await hazardsDataList.Reload();
+                await _hazardsDataList.Reload();
             }
 
             StateHasChanged();

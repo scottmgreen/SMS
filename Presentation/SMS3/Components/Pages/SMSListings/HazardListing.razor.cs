@@ -26,7 +26,7 @@ namespace SMS3.Components.Pages.SMSListings;
 /// </summary>
 public partial class HazardListing : ComponentBase
 {
-    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+    private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Dependencies
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
@@ -38,16 +38,16 @@ public partial class HazardListing : ComponentBase
     #endregion
 
     #region Properties
-    private RadzenDataGrid<Hazard>? hazardsGrid;
-    private IEnumerable<Hazard> hazards = new List<Hazard>();
-    private List<Hazard> allHazards = new List<Hazard>(); // Store all hazards for client-side filtering
-    private HashSet<string> riskRegistryOnlyReportCodes = new(StringComparer.OrdinalIgnoreCase);
-    private int totalCount;
-    private bool isLoading = false;
+    private RadzenDataGrid<Hazard>? _hazardsGrid;
+    private IEnumerable<Hazard> _hazards = new List<Hazard>();
+    private List<Hazard> _allHazards = new List<Hazard>(); // Store all hazards for client-side filtering
+    private HashSet<string> _riskRegistryOnlyReportCodes = new(StringComparer.OrdinalIgnoreCase);
+    private int _totalCount;
+    private bool _isLoading = false;
 
-    private bool ShowDescriptionModal = false;
-    private string SelectedDescription = string.Empty;
-    private string SelectedHazardId = string.Empty;
+    private bool _showDescriptionModal = false;
+    private string _selectedDescription = string.Empty;
+    private string _selectedHazardId = string.Empty;
     #endregion
     
     #region Lifecycle Methods
@@ -62,7 +62,7 @@ public partial class HazardListing : ComponentBase
     {
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("Loading hazards for listing view");
@@ -74,7 +74,7 @@ public partial class HazardListing : ComponentBase
             var reportsResult = await _mediator.SendAsync(reportsQuery, CancellationToken.None);
             if (reportsResult.IsSuccess && reportsResult.Value is not null)
             {
-                riskRegistryOnlyReportCodes = reportsResult.Value
+                _riskRegistryOnlyReportCodes = reportsResult.Value
                     .Where(r => IsRiskRegistryOnlyStatus(r.Status))
                     .Select(r => (r.Code ?? string.Empty).Trim())
                     .Where(code => !string.IsNullOrWhiteSpace(code))
@@ -82,17 +82,17 @@ public partial class HazardListing : ComponentBase
             }
             else
             {
-                riskRegistryOnlyReportCodes.Clear();
+                _riskRegistryOnlyReportCodes.Clear();
             }
 
             if (result.IsSuccess && result.Value is not null)
             {
-                allHazards = result.Value; // Store all hazards for filtering/sorting
-                hazards = allHazards; // Initially show all hazards
-                totalCount = allHazards.Count();
-                _logger.LogInformation("Loaded {Count} hazards for listing", totalCount);
+                _allHazards = result.Value; // Store all hazards for filtering/sorting
+                _hazards = _allHazards; // Initially show all hazards
+                _totalCount = _allHazards.Count();
+                _logger.LogInformation("Loaded {Count} hazards for listing", _totalCount);
 
-                await ShowSuccessAsyncNotification($"Successfully loaded {totalCount} hazards");
+                await ShowSuccessAsyncNotification($"Successfully loaded {_totalCount} hazards");
                
             }
             else
@@ -108,7 +108,7 @@ public partial class HazardListing : ComponentBase
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -117,21 +117,21 @@ public partial class HazardListing : ComponentBase
     {
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all hazards yet, load them first
-            if (allHazards is null || !allHazards.Any())
+            if (_allHazards is null || !_allHazards.Any())
             {
                 await LoadInitialData();
                 return;
             }
 
             // Start with all hazards
-            var query = allHazards.AsQueryable();
+            var query = _allHazards.AsQueryable();
 
             // Apply filtering
             if (!string.IsNullOrEmpty(args.Filter))
@@ -140,7 +140,7 @@ public partial class HazardListing : ComponentBase
             }
 
             // Get total count after filtering but before paging
-            totalCount = query.Count();
+            _totalCount = query.Count();
 
             // Apply sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
@@ -164,10 +164,10 @@ public partial class HazardListing : ComponentBase
                 query = query.Take(args.Top.Value);
             }
 
-            hazards = query.ToList();
+            _hazards = query.ToList();
 
             _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} hazards", 
-                hazards.Count(), totalCount);
+                _hazards.Count(), _totalCount);
         }
         catch (Exception ex)
         {
@@ -176,7 +176,7 @@ public partial class HazardListing : ComponentBase
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -367,7 +367,7 @@ public partial class HazardListing : ComponentBase
     private bool IsRiskRegistryOnlyHazard(Hazard hazard)
     {
         var reportCode = hazard.ReportCode?.Trim();
-        return !string.IsNullOrWhiteSpace(reportCode) && riskRegistryOnlyReportCodes.Contains(reportCode);
+        return !string.IsNullOrWhiteSpace(reportCode) && _riskRegistryOnlyReportCodes.Contains(reportCode);
     }
 
     private static bool IsRiskRegistryOnlyStatus(string? status)
@@ -416,7 +416,7 @@ public partial class HazardListing : ComponentBase
 
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             // TODO: Implement hazard details modal when ready
@@ -430,7 +430,7 @@ public partial class HazardListing : ComponentBase
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -540,9 +540,9 @@ public partial class HazardListing : ComponentBase
     {
         try
         {
-            SelectedDescription = hazard.Description ?? "No description available";
-            SelectedHazardId = hazard.Code ?? "Unknown";
-            ShowDescriptionModal = true;
+            _selectedDescription = hazard.Description ?? "No description available";
+            _selectedHazardId = hazard.Code ?? "Unknown";
+            _showDescriptionModal = true;
             StateHasChanged();
 
             _logger.LogInformation("Showing description modal for hazard {HazardId}", hazard.Code);
@@ -556,9 +556,9 @@ public partial class HazardListing : ComponentBase
 
     private void CloseDescriptionModal()
     {
-        ShowDescriptionModal = false;
-        SelectedDescription = string.Empty;
-        SelectedHazardId = string.Empty;
+        _showDescriptionModal = false;
+        _selectedDescription = string.Empty;
+        _selectedHazardId = string.Empty;
         StateHasChanged();
     }
 }

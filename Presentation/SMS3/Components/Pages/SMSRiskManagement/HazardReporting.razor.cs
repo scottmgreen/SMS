@@ -251,9 +251,9 @@ public partial class HazardReporting : ComponentBase, IDisposable
         IsEditMode && string.Equals(HazardReport?.SubmittedBy?.Trim(), "EXTERNAL_SYSTEM", StringComparison.OrdinalIgnoreCase);
 
     // Airport coordinates //GOLDKEY
-    private double AirportCenterLatitude => 45.58808;
-    private double AirportCenterLongitude => -122.592430;
-    private int DefaultZoomLevel => 20;
+    private double _airportCenterLatitude => 45.58808;
+    private double _airportCenterLongitude => -122.592430;
+    private int _defaultZoomLevel => 20;
 
     private IJSObjectReference? _mapModule;
     private DotNetObjectReference<HazardReporting>? _dotNetRef;
@@ -884,7 +884,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             try
             {
                 // Always reinitialize the map since the DOM element is recreated
-                await _mapModule.InvokeVoidAsync("initializeMap",AirportCenterLatitude, AirportCenterLongitude, DefaultZoomLevel, _dotNetRef);
+            await _mapModule.InvokeVoidAsync("initializeMap",_airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef);
 
                 _logger.LogInformation("Map reinitialized for modal opening");
 

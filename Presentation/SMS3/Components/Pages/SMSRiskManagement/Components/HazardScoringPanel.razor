@@ -40,7 +40,7 @@
                         @{
                             var average = GetAverageScore();
                             var completedCount = GetCompletedScoreCount();
-                            var totalCount = HazardScoringPanels.Count;
+                            var totalCount = _hazardScoringPanels.Count;
                         }
                         @if (average.HasValue)
                         {
@@ -70,7 +70,7 @@
                 <RadzenColumn Size="12">
                     <RadzenStack Gap="0.25rem">
                         <RadzenText TextStyle="TextStyle.Subtitle1">
-                            <strong>Scoring Panelists: </strong>  @HazardScoringPanels.Count
+                            <strong>Scoring Panelists: </strong>  @_hazardScoringPanels.Count
                         </RadzenText>
                     </RadzenStack>
                 </RadzenColumn>
@@ -79,10 +79,10 @@
         </RadzenRow>
 
         <!-- Scoring Panel -->
-        @if (HazardScoringPanels.Any())
+        @if (_hazardScoringPanels.Any())
         {
             <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-100);">
-                <RadzenDataGrid @ref="ScoringGrid" Data="@HazardScoringPanels" TItem="ScoringPanel" AllowPaging="false" AllowSorting="false">
+                <RadzenDataGrid @ref="_scoringGrid" Data="@_hazardScoringPanels" TItem="ScoringPanel" AllowPaging="false" AllowSorting="false">
                     <Columns>
                         <RadzenDataGridColumn TItem="ScoringPanel" Title="Panel Member" Width="200px" TextAlign="TextAlign.Start">
                             <Template Context="panel">
@@ -104,7 +104,7 @@
                                 else
                                 {
                                     <RadzenDropDown @bind-Value="@panel.Severity" 
-                                                    Data="@SeverityOptions" 
+                                                    Data="@_severityOptions" 
                                                     TextProperty="Text" 
                                                     ValueProperty="Value"
                                                     Placeholder="Select..."
@@ -127,7 +127,7 @@
                                 else
                                 {
                                     <RadzenDropDown @bind-Value="@panel.Likelihood" 
-                                                    Data="@LikelihoodOptions" 
+                                                    Data="@_likelihoodOptions" 
                                                     TextProperty="Text" 
                                                     ValueProperty="Value"
                                                     Placeholder="Select..."

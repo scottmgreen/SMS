@@ -202,9 +202,9 @@ public partial class ExternalReporting : ComponentBase, IDisposable
     public string PageSubtitle => "";
 
     // Airport coordinates
-    private double AirportCenterLatitude => 45.58808;
-    private double AirportCenterLongitude => -122.592430;
-    private int DefaultZoomLevel => 20;
+    private double _airportCenterLatitude => 45.58808;
+    private double _airportCenterLongitude => -122.592430;
+    private int _defaultZoomLevel => 20;
 
     private IJSObjectReference? _mapModule;
     private DotNetObjectReference<ExternalReporting>? _dotNetRef;
@@ -479,7 +479,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             try
             {
                 await _mapModule.InvokeVoidAsync("initializeMap",
-                    AirportCenterLatitude, AirportCenterLongitude, DefaultZoomLevel, _dotNetRef);
+                    _airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef);
 
                 _logger.LogInformation("Map reinitialized for confidential reporting modal");
 

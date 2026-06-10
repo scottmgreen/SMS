@@ -791,8 +791,9 @@ public static class FieldNames
     private static readonly Lazy<string> _fReportIncidentDateTime = new Lazy<string>(() => "fldd_IncidentDateTime");
     public static string fReportIncidentDateTime => _fReportIncidentDateTime.Value;
 
-    
 
+    private static readonly Lazy<string> _fReportIsAnonymous = new Lazy<string>(() => "fldb_IsAnonymous");
+    public static string fReportIsAnonymous => _fReportIsAnonymous.Value;
 
 
 

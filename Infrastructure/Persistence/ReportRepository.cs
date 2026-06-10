@@ -59,6 +59,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittedDate, report.SubmittedDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittingDepartment, report.SubmittingDepartment));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittingDepartmentJobFunction, report.SubmittingDepartmentJobFunction));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmIsAnonymous, report.IsAnonymous));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactName, report.ReportContactName));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactCell, report.ReportContactCell));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactEmail, report.ReportContactEmail));
@@ -199,6 +200,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittedDate, report.SubmittedDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittingDepartment, report.SubmittingDepartment));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSubmittingDepartmentJobFunction, report.SubmittingDepartmentJobFunction));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmIsAnonymous, report.IsAnonymous));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactName, report.ReportContactName));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactCell, report.ReportContactCell));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactEmail, report.ReportContactEmail));

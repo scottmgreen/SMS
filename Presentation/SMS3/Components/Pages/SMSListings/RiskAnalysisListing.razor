@@ -14,9 +14,9 @@
            Subtitle="Complete listing and management interface for all SMS Risk Analysis"
            Icon="fas fa-list" />
 
-<RadzenDataGrid @ref="analysisGrid" 
-                Data="@analysisResults" 
-                Count="@totalCount" 
+<RadzenDataGrid @ref="_analysisGrid" 
+                Data="@_analysisResults" 
+                Count="@_totalCount" 
                 LoadData="@LoadData"
                 AllowPaging="true" 
                 AllowSorting="true" 

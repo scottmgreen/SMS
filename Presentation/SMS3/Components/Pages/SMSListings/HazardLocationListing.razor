@@ -15,9 +15,9 @@
             Subtitle="Complete listing and management interface for all SMS Hazard Locations"
             Icon="fas fa-list" />
 
-<RadzenDataGrid @ref="locationsGrid" 
-                Data="@locations" 
-                Count="@totalCount" 
+<RadzenDataGrid @ref="_locationsGrid" 
+                Data="@_locations" 
+                Count="@_totalCount" 
                 LoadData="@LoadData"
                 AllowPaging="true" 
                 AllowSorting="true" 
@@ -28,7 +28,7 @@
                 FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Multiple"
                 Style="height: calc(100vh - 200px)"
-                IsLoading="@isLoading">
+                IsLoading="@_isLoading">
     
     <Columns>
         <RadzenDataGridColumn TItem="HazardLocation" Width="60px" Sortable="false" Filterable="false">

@@ -322,7 +322,7 @@
     <RadzenCard>
         @if (SMSStakeholderGroups.Any())
         {
-            <RadzenDataGrid @ref="groupsGrid" Data="@SMSStakeholderGroups" TItem="SMSStakeholderGroup" 
+            <RadzenDataGrid @ref="_groupsGrid" Data="@SMSStakeholderGroups" TItem="SMSStakeholderGroup" 
                             AllowFiltering="true" AllowColumnResize="true" AllowSorting="true" 
                             PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" 
                             ShowPagingSummary="true" FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">

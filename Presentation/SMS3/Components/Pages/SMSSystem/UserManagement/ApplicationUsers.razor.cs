@@ -71,8 +71,8 @@ public partial class ApplicationUsers : ComponentBase
     private Dictionary<string, bool> SelectedGroups { get; set; } = new();
 
     // Form Models
-    private EditUserModel editUser = new();
-    private CreateUserModel NewUser = new();
+    private EditUserModel _editUser = new();
+    private CreateUserModel _newUser = new();
     private string? EditUserRoleCode { get; set; }
 
     // Create Modal Properties
@@ -80,7 +80,7 @@ public partial class ApplicationUsers : ComponentBase
     private bool IsSaving { get; set; }
 
     // Component References
-    private RadzenDataGrid<SMSApplicationUser>? usersGrid;
+    private RadzenDataGrid<SMSApplicationUser>? _usersGrid;
 
     protected override async Task OnInitializedAsync()
     {
@@ -182,7 +182,7 @@ public partial class ApplicationUsers : ComponentBase
                 CurrentUser?.Code, IsEditMode);
 
             // Populate edit form
-            editUser = new EditUserModel
+            _editUser = new EditUserModel
             {
                 FirstName = CurrentUser?.FirstName?.Value ?? "",
                 LastName = CurrentUser?.LastName?.Value ?? ""
@@ -192,7 +192,7 @@ public partial class ApplicationUsers : ComponentBase
             EditUserRoleCode = CurrentUser?.UserRole?.Code;
 
             _logger.LogInformation("Edit form populated - FirstName: {FirstName}, LastName: {LastName}, RoleCode: {RoleCode}", 
-                editUser.FirstName, editUser.LastName, EditUserRoleCode);
+                _editUser.FirstName, _editUser.LastName, EditUserRoleCode);
 
             StateHasChanged();
         }
@@ -376,7 +376,7 @@ public partial class ApplicationUsers : ComponentBase
 
     private async Task ShowCreateDialog()
     {
-        NewUser = new CreateUserModel
+            _newUser = new CreateUserModel
         {
             TwoFactorEnabled = false
         };
@@ -400,9 +400,9 @@ public partial class ApplicationUsers : ComponentBase
 
             // ?? NEW: Get selected role if provided
             SMSUserRole? selectedRole = null;
-            if (!string.IsNullOrEmpty(NewUser.UserRoleCode))
+            if (!string.IsNullOrEmpty(_newUser.UserRoleCode))
             {
-                selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == NewUser.UserRoleCode);
+                selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == _newUser.UserRoleCode);
             }
 
             // Create user entity
@@ -410,12 +410,12 @@ public partial class ApplicationUsers : ComponentBase
             var user = new SMSApplicationUser(userId)
             {
                 Code = userId.Value,
-                FirstName = FirstName.Create(NewUser.FirstName).Value,
-                LastName = LastName.Create(NewUser.LastName).Value,
-                UserName = UserName.Create(NewUser.UserName).Value,
-                Password = Password.Create(NewUser.Password).Value,
+                FirstName = FirstName.Create(_newUser.FirstName).Value,
+                LastName = LastName.Create(_newUser.LastName).Value,
+                UserName = UserName.Create(_newUser.UserName).Value,
+                Password = Password.Create(_newUser.Password).Value,
                 UserRole = selectedRole ?? new SMSUserRole(new SMSUserRoleID("ROLE-UNASSIGNED")) { Name = "Unassigned" }, // ?? NEW: Assign role during creation
-                TwoFactorEnabled = NewUser.TwoFactorEnabled, // ?? NEW: Set 2FA requirement
+                TwoFactorEnabled = _newUser.TwoFactorEnabled, // ?? NEW: Set 2FA requirement
                 IsActive = NewIsActive, // UPDATED: Use NewIsActive property
                 SMSUserType = SMSUserType.Application
                 // ? FIXED: Removed manual audit field assignments
@@ -430,7 +430,7 @@ public partial class ApplicationUsers : ComponentBase
             if (result.IsSuccess)
             {
                 var roleText = selectedRole is not null ? $" with role '{selectedRole.Name}'" : "";
-                await ShowSuccessAsyncNotification($"Application user '{NewUser.FirstName} {NewUser.LastName}' created successfully{roleText}!");
+            await ShowSuccessAsyncNotification($"Application user '{_newUser.FirstName} {_newUser.LastName}' created successfully{roleText}!");
                 CloseCreateModal();
                 await LoadDataAsync();
             }
@@ -454,7 +454,7 @@ public partial class ApplicationUsers : ComponentBase
     private void CloseCreateModal()
     {
         ShowCreateModal = false;
-        NewUser = new CreateUserModel
+            _newUser = new CreateUserModel
         {
             TwoFactorEnabled = false
         };
@@ -463,10 +463,10 @@ public partial class ApplicationUsers : ComponentBase
     }
 
     private bool IsCreateFormValid =>
-        !string.IsNullOrWhiteSpace(NewUser.FirstName) &&
-        !string.IsNullOrWhiteSpace(NewUser.LastName) &&
-        !string.IsNullOrWhiteSpace(NewUser.UserName) &&
-        !string.IsNullOrWhiteSpace(NewUser.Password);
+        !string.IsNullOrWhiteSpace(_newUser.FirstName) &&
+        !string.IsNullOrWhiteSpace(_newUser.LastName) &&
+        !string.IsNullOrWhiteSpace(_newUser.UserName) &&
+        !string.IsNullOrWhiteSpace(_newUser.Password);
 
     private void EditUser(string userId)
     {
@@ -625,7 +625,7 @@ public partial class ApplicationUsers : ComponentBase
         IsEditMode = false;
         CurrentUser = null;
         EditUserRoleCode = null;
-        editUser = new EditUserModel();
+        _editUser = new EditUserModel();
         _navigation.NavigateToSecure("/SMSSystem/UserManagement/ApplicationUsers");
     }
 

@@ -13,7 +13,7 @@
 @using SMS3.Components.Shared
 
 <!-- Context Header -->
-@if (ContextHazard is not null || ContextReport is not null)
+@if (_contextHazard is not null || _contextReport is not null)
 {
     <RadzenCard Variant="Variant.Outlined" Class="mb-3" Style="border-left: 4px solid var(--rz-info);">
         <RadzenStack Gap="1rem">
@@ -22,23 +22,23 @@
                 Context Information
             </RadzenText>
             <RadzenRow Gap="1rem">
-                @if (ContextReport is not null)
+                @if (_contextReport is not null)
                 {
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenText TextStyle="TextStyle.Body2">
-                            <strong>Report:</strong> @ContextReport.Code<br>
-                            @* <strong>Report Type:</strong> @ContextReport.ReportType<br> *@
-                            <strong>Status:</strong> <RadzenBadge Text="@ContextReport.Status" BadgeStyle="BadgeStyle.Info" />
+                            <strong>Report:</strong> @_contextReport.Code<br>
+                            @* <strong>Report Type:</strong> @_contextReport.ReportType<br> *@
+                            <strong>Status:</strong> <RadzenBadge Text="@_contextReport.Status" BadgeStyle="BadgeStyle.Info" />
                         </RadzenText>
                     </RadzenColumn>
                 }
-                @if (ContextHazard is not null)
+                @if (_contextHazard is not null)
                 {
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenText TextStyle="TextStyle.Body2">
-                            <strong>Hazard:</strong> @ContextHazard.Code<br>
-                            <strong>Category:</strong> @ContextHazard.HazardCategory<br>
-                            <strong>Risk Level:</strong> @ContextHazard.HazardRiskLevel.Value
+                            <strong>Hazard:</strong> @_contextHazard.Code<br>
+                            <strong>Category:</strong> @_contextHazard.HazardCategory<br>
+                            <strong>Risk Level:</strong> @_contextHazard.HazardRiskLevel.Value
                         </RadzenText>
                     </RadzenColumn>
                 }
@@ -52,9 +52,9 @@
             Icon="fas fa-list" />
 
 <!-- Mitigations Data Grid -->
-<RadzenDataGrid @ref="mitigationsGrid"
-                Data="@mitigationModels"
-                Count="@totalCount"
+<RadzenDataGrid @ref="_mitigationsGrid"
+                Data="@_mitigationModels"
+                Count="@_totalCount"
                 LoadData="@LoadData"
                 AllowPaging="true"
                 AllowSorting="true"
@@ -65,7 +65,7 @@
                 FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Multiple"
                 Style="height: calc(100vh - 300px)"
-                IsLoading="@isLoading">
+                IsLoading="@_isLoading">
 
     <Columns>
         <RadzenDataGridColumn TItem="MitigationModel" Width="60px" Sortable="false" Filterable="false">
@@ -79,7 +79,7 @@
         <!-- Report ID Column -->
         <RadzenDataGridColumn TItem="MitigationModel" Property="ReportCode" Title="Report ID" Width="120px">
             <Template Context="mitigation">
-                <div title="@mitigation.ReportCode" style="@BasicTextStyle">
+                <div title="@mitigation.ReportCode" style="@_basicTextStyle">
                     @(mitigation.ReportCode)
                 </div>
             </Template>
@@ -88,7 +88,7 @@
         <!-- Hazard ID Column -->
         <RadzenDataGridColumn TItem="MitigationModel" Property="HazardCode" Title="Hazard ID" Width="120px">
             <Template Context="mitigation">
-                <div title="@mitigation.HazardCode" style="@BasicTextStyle">
+                <div title="@mitigation.HazardCode" style="@_basicTextStyle">
                     @(mitigation.HazardCode)
                 </div>
             </Template>
@@ -97,7 +97,7 @@
         <!-- Mitigation ID Column -->
         <RadzenDataGridColumn TItem="MitigationModel" Property="Code" Title="Mitigation ID" Width="120px">
             <Template Context="mitigation">
-                <div title="@mitigation.Code" style="@BasicTextStyle">
+                <div title="@mitigation.Code" style="@_basicTextStyle">
                     @(mitigation.Code)
                 </div>
             </Template>
@@ -113,7 +113,7 @@
         <!-- Status Column -->
         <RadzenDataGridColumn TItem="MitigationModel" Property="Status" Title="Status" Width="120px">
             <Template Context="mitigation">
-                <div title="@mitigation.Status.ToString()" style="@BasicTextStyle">
+                <div title="@mitigation.Status.ToString()" style="@_basicTextStyle">
                     @mitigation.Status.Value
                 </div>
             </Template>
@@ -134,7 +134,7 @@
             <Template Context="mitigation">
                 @if (mitigation.TargetDate.HasValue)
                 {
-                    <div title="@mitigation.TargetDate.Value.ToString("MM/dd/yyyy")" style="@BasicTextStyle">
+                    <div title="@mitigation.TargetDate.Value.ToString("MM/dd/yyyy")" style="@_basicTextStyle">
                         @mitigation.TargetDate.Value.ToString("MM/dd/yyyy")
                     </div>
                 }
@@ -174,7 +174,7 @@
 </RadzenDataGrid>
 
 <!-- Bulk Approval Dialog -->
-@if (ShowBulkApprovalDialog && selectedMitigations.Any())
+@if (_showBulkApprovalDialog && _selectedMitigations.Any())
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-lg">
@@ -194,7 +194,7 @@
                 <div class="sms-modal-body">
 
                     <!-- Context Information -->
-                    @if (ContextHazard is not null)
+                    @if (_contextHazard is not null)
                     {
                         <RadzenCard Variant="Variant.Outlined" Class="mb-3">
                             <div class="p-3">
@@ -202,20 +202,20 @@
                                     <i class="fas fa-exclamation-triangle text-warning"></i> Confirmation Required
                                 </h6>
                                 <p class="mb-3">
-                                    You are about to <strong>approve @selectedMitigations.Count() mitigation(s)</strong> for:
+                                    You are about to <strong>approve @_selectedMitigations.Count() mitigation(s)</strong> for:
                                 </p>
                                 <div class="row mb-3">
                                     <div class="col-sm-6">
-                                        <strong>Report:</strong> @(ContextReport?.Code ?? ReportId ?? "N/A")<br>
-                                        <strong>Hazard:</strong> @ContextHazard.Code<br>
+                                        <strong>Report:</strong> @(_contextReport?.Code ?? ReportId ?? "N/A")<br>
+                                        <strong>Hazard:</strong> @_contextHazard.Code<br>
                                     </div>
                                     <div class="col-sm-6">
-                                        <strong>Total Mitigations:</strong> @selectedMitigations.Count()<br>
-                                        <strong>Hazard Category:</strong> @ContextHazard.HazardCategory
+                                        <strong>Total Mitigations:</strong> @_selectedMitigations.Count()<br>
+                                        <strong>Hazard Category:</strong> @_contextHazard.HazardCategory
                                     </div>
                                 </div>
                                 <div class="bg-light p-2 rounded mb-3">
-                                    <strong>Hazard Description:</strong> @ContextHazard.Description
+                                    <strong>Hazard Description:</strong> @_contextHazard.Description
                                 </div>
                             </div>
                         </RadzenCard>
@@ -239,7 +239,7 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach (var mitigation in selectedMitigations)
+                                        @foreach (var mitigation in _selectedMitigations)
                                         {
                                             <tr>
                                                 <td><code>@mitigation.Code</code></td>
@@ -272,13 +272,13 @@
                                       Icon="close"
                                       Click="@CloseBulkApprovalDialog"
                                       Size="ButtonSize.Medium"
-                                      Disabled="@IsProcessingBulkApproval" />
+                                      Disabled="@_isProcessingBulkApproval" />
                         <RadzenButton ButtonStyle="ButtonStyle.Success"
-                                      Text="@(IsProcessingBulkApproval ? "Processing..." : $"Approve All {selectedMitigations.Count()} Mitigations")"
-                                      Icon="@(IsProcessingBulkApproval ? "hourglass_empty" : "verified")"
+                                      Text="@(_isProcessingBulkApproval ? "Processing..." : $"Approve All {_selectedMitigations.Count()} Mitigations")"
+                                      Icon="@(_isProcessingBulkApproval ? "hourglass_empty" : "verified")"
                                       Click="@ProcessBulkApproval"
                                       Size="ButtonSize.Medium"
-                                      Disabled="@IsProcessingBulkApproval" />
+                                      Disabled="@_isProcessingBulkApproval" />
                     </div>
                 </div>
             </div>
@@ -287,7 +287,7 @@
 }
 
 <!-- View Mitigation Modal Dialog (unchanged from original) -->
-@if (ShowViewDialog && SelectedMitigation is not null)
+@if (_showViewDialog && _selectedMitigation is not null)
 {
     <!-- Keep existing view dialog markup -->
 }

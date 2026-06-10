@@ -14,10 +14,10 @@ public partial class AuditCalendar : ComponentBase
     #endregion
 
     #region Component State - Matching Radzen sample
-    private RadzenScheduler<AuditSchedulerItem> scheduler = default!;
-    private EventConsole? console;
+    private RadzenScheduler<AuditSchedulerItem> _scheduler = default!;
+    private EventConsole? _console;
     private bool IsLoading { get; set; } = true;
-    private bool showHeader = true;
+    private bool _showHeader = true;
     private List<SMSAuditPlan> AuditPlans { get; set; } = new();
     private IList<AuditSchedulerItem> SchedulerData { get; set; } = new List<AuditSchedulerItem>();
     #endregion
@@ -77,17 +77,17 @@ public partial class AuditCalendar : ComponentBase
 
     private async Task RefreshData()
     {
-        console?.Log("Refreshing calendar data...");
+        _console?.Log("Refreshing calendar data...");
         await LoadAuditPlansAsync();
 
         // Reload the scheduler
-        if (scheduler is not null)
+        if (_scheduler is not null)
         {
-            await scheduler.Reload();
+            await _scheduler.Reload();
         }
 
         await _notificationHelper.ShowSuccessAsync("Calendar data refreshed");
-        console?.Log("Calendar refresh completed");
+        _console?.Log("Calendar refresh completed");
     }
     #endregion
 
@@ -159,7 +159,7 @@ public partial class AuditCalendar : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error rendering slot");
-            console?.Log($"Error in SlotRender: {ex.Message}");
+            _console?.Log($"Error in SlotRender: {ex.Message}");
         }
     }
 
@@ -167,7 +167,7 @@ public partial class AuditCalendar : ComponentBase
     {
         try
         {
-            console?.Log($"SlotSelect: Start={args.Start:yyyy-MM-dd HH:mm} End={args.End:yyyy-MM-dd HH:mm}");
+            _console?.Log($"SlotSelect: Start={args.Start:yyyy-MM-dd HH:mm} End={args.End:yyyy-MM-dd HH:mm}");
             _logger.LogInformation("Slot selected: {Start} to {End}", args.Start, args.End);
 
             // Don't create appointments in year view (like Radzen sample)
@@ -191,16 +191,16 @@ public partial class AuditCalendar : ComponentBase
                 {
                     await LoadAuditPlansAsync();
                     // Either call the Reload method or reassign the Data property of the Scheduler
-                    await scheduler.Reload();
+                    await _scheduler.Reload();
                     await _notificationHelper.ShowSuccessAsync("Audit plan created successfully");
-                    console?.Log("New audit plan created successfully");
+                    _console?.Log("New audit plan created successfully");
                 }
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error handling slot selection");
-            console?.Log($"Error in SlotSelect: {ex.Message}");
+            _console?.Log($"Error in SlotSelect: {ex.Message}");
         }
     }
 
@@ -208,7 +208,7 @@ public partial class AuditCalendar : ComponentBase
     {
         try
         {
-            console?.Log($"AppointmentSelect: AuditPlan={args.Data?.AuditPlanCode}");
+            _console?.Log($"AppointmentSelect: AuditPlan={args.Data?.AuditPlanCode}");
             _logger.LogInformation("Audit appointment selected: {AuditCode}", args.Data?.AuditPlanCode);
 
             // Find the actual audit plan
@@ -250,9 +250,9 @@ public partial class AuditCalendar : ComponentBase
                 {
                     // Reload the data and scheduler
                     await LoadAuditPlansAsync();
-                    await scheduler.Reload();
+                    await _scheduler.Reload();
                     await _notificationHelper.ShowSuccessAsync("Audit plan updated successfully");
-                    console?.Log($"Audit plan {auditPlan.Code} updated successfully");
+                    _console?.Log($"Audit plan {auditPlan.Code} updated successfully");
                 }
             }
         }
@@ -260,7 +260,7 @@ public partial class AuditCalendar : ComponentBase
         {
             _logger.LogError(ex, "Error handling appointment selection");
             await _notificationHelper.ShowErrorAsync("Error opening audit plan details");
-            console?.Log($"Error in AppointmentSelect: {ex.Message}");
+            _console?.Log($"Error in AppointmentSelect: {ex.Message}");
         }
     }
 
@@ -302,7 +302,7 @@ public partial class AuditCalendar : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error rendering appointment");
-            console?.Log($"Error in AppointmentRender: {ex.Message}");
+            _console?.Log($"Error in AppointmentRender: {ex.Message}");
         }
     }
 
@@ -315,7 +315,7 @@ public partial class AuditCalendar : ComponentBase
 
             if (draggedAppointment is not null)
             {
-                console?.Log($"AppointmentMove: AuditPlan={draggedAppointment.AuditPlanCode} moved to {args.SlotDate:yyyy-MM-dd HH:mm}");
+            _console?.Log($"AppointmentMove: AuditPlan={draggedAppointment.AuditPlanCode} moved to {args.SlotDate:yyyy-MM-dd HH:mm}");
 
                 var duration = draggedAppointment.End - draggedAppointment.Start;
 
@@ -333,15 +333,15 @@ public partial class AuditCalendar : ComponentBase
                 // Update the actual audit plan record
                 await UpdateAuditPlanDateTime(draggedAppointment);
 
-                await scheduler.Reload();
+                await _scheduler.Reload();
                 await _notificationHelper.ShowSuccessAsync($"Audit plan {draggedAppointment.AuditPlanCode} rescheduled successfully");
-                console?.Log($"Audit plan {draggedAppointment.AuditPlanCode} rescheduled successfully");
+                _console?.Log($"Audit plan {draggedAppointment.AuditPlanCode} rescheduled successfully");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error moving appointment");
-            console?.Log($"Error in AppointmentMove: {ex.Message}");
+            _console?.Log($"Error in AppointmentMove: {ex.Message}");
             await _notificationHelper.ShowErrorAsync("Error rescheduling audit plan");
         }
     }
@@ -369,12 +369,12 @@ public partial class AuditCalendar : ComponentBase
                 if (result.IsSuccess)
                 {
                     _logger.LogInformation("Audit plan {AuditCode} datetime updated successfully", auditPlan.Code);
-                    console?.Log($"Audit plan {auditPlan.Code} updated in database");
+                    _console?.Log($"Audit plan {auditPlan.Code} updated in database");
                 }
                 else
                 {
                     _logger.LogError("Failed to update audit plan datetime: {Error}", result.Error?.Message);
-                    console?.Log($"Error updating audit plan: {result.Error?.Message}");
+                    _console?.Log($"Error updating audit plan: {result.Error?.Message}");
                     await _notificationHelper.ShowErrorAsync("Failed to save audit plan changes");
                 }
             }
@@ -382,7 +382,7 @@ public partial class AuditCalendar : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error updating audit plan datetime");
-            console?.Log($"Exception updating audit plan: {ex.Message}");
+            _console?.Log($"Exception updating audit plan: {ex.Message}");
         }
     }
     #endregion
@@ -392,17 +392,17 @@ public partial class AuditCalendar : ComponentBase
     {
         try
         {
-            if (scheduler is not null)
+            if (_scheduler is not null)
             {
-                scheduler.CurrentDate = DateTime.Today;
-                await scheduler.Reload();
-                console?.Log("Navigated to today's date");
+                _scheduler.CurrentDate = DateTime.Today;
+                await _scheduler.Reload();
+                _console?.Log("Navigated to today's date");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error navigating to today");
-            console?.Log($"Error navigating to today: {ex.Message}");
+            _console?.Log($"Error navigating to today: {ex.Message}");
         }
     }
 
@@ -414,7 +414,7 @@ public partial class AuditCalendar : ComponentBase
             var startDate = DateTime.Today.AddDays(30);
             var endDate = startDate.AddDays(1);
 
-            console?.Log($"Opening create audit plan dialog for {startDate:yyyy-MM-dd}");
+            _console?.Log($"Opening create audit plan dialog for {startDate:yyyy-MM-dd}");
 
             var newAuditPlan = new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), "CURRENT_USER")
             {
@@ -433,16 +433,16 @@ public partial class AuditCalendar : ComponentBase
             if (result == true)
             {
                 await LoadAuditPlansAsync();
-                await scheduler.Reload();
+                await _scheduler.Reload();
                 await _notificationHelper.ShowSuccessAsync("Audit plan created successfully");
-                console?.Log("New audit plan created successfully");
+                _console?.Log("New audit plan created successfully");
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error showing create audit plan dialog");
             await _notificationHelper.ShowErrorAsync("Error opening create audit plan dialog");
-            console?.Log($"Error in create dialog: {ex.Message}");
+            _console?.Log($"Error in create dialog: {ex.Message}");
         }
     }
     #endregion

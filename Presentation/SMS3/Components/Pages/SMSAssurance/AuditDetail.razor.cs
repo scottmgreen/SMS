@@ -38,8 +38,8 @@ public partial class AuditDetail : ComponentBase
     private int ActiveTabIndex { get; set; } = 0;
 
     // Grid References
-    private RadzenDataGrid<SMSAuditFinding>? findingsGrid;
-    private RadzenDataGrid<SMSAuditEvidence>? evidenceGrid;
+    private RadzenDataGrid<SMSAuditFinding>? _findingsGrid;
+    private RadzenDataGrid<SMSAuditEvidence>? _evidenceGrid;
 
     // Statistics
     private AuditDetailStats Stats { get; set; } = new();

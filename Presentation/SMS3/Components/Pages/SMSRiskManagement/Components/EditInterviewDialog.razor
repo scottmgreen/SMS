@@ -33,12 +33,12 @@
                                
                             </RadzenStack>
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                @if (CanStartInterview)
+                                @if (_canStartInterview)
                                 {
                                     <RadzenButton Text="Start Interview" Icon="play_arrow" ButtonStyle="ButtonStyle.Success" 
                                                 Size="ButtonSize.Small" Click="StartInterview" />
                                 }
-                                @if (CanCompleteInterview)
+                                @if (_canCompleteInterview)
                                 {
                                     <RadzenButton Text="Complete Interview" Icon="check_circle" ButtonStyle="ButtonStyle.Primary" 
                                                 Size="ButtonSize.Small" Click="CompleteInterview" />
@@ -48,7 +48,7 @@
                     </RadzenCard>
 
                     <!-- Compact Layout with Tabs -->
-                    <RadzenTabs @bind-SelectedIndex="@selectedTabIndex" RenderMode="TabRenderMode.Client" Style="min-height: 400px;">
+                    <RadzenTabs @bind-SelectedIndex="@_selectedTabIndex" RenderMode="TabRenderMode.Client" Style="min-height: 400px;">
                         <Tabs>
                             <!-- Basic Information Tab -->
                             <RadzenTabsItem Text="Basic Info" Icon="person" >
@@ -221,7 +221,7 @@
                                             <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat">
                                                 <RadzenText TextStyle="TextStyle.H6">Interview Not Started</RadzenText>
                                                 <RadzenText>Start the interview to begin recording notes and findings.</RadzenText>
-                                                @if (CanStartInterview)
+                                @if (_canStartInterview)
                                                 {
                                                     <RadzenButton Text="Start Interview Now" Icon="play_arrow" ButtonStyle="ButtonStyle.Success"
                                                                   Click="StartInterview" Style="margin-top: 0.75rem;" />

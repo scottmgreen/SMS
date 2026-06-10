@@ -27,14 +27,14 @@ public partial class SPIDataPointDialog : ComponentBase
     #endregion
 
     #region Component State
-    private SPIDataPoint currentDataPoint = default!;
+    private SPIDataPoint _currentDataPoint = default!;
     private bool IsSaving { get; set; } = false;
 
     private bool IsValid =>
-        currentDataPoint.Value >= 0 &&
-        currentDataPoint.MeasurementDate != default &&
-        !string.IsNullOrWhiteSpace(currentDataPoint.DataSource) &&
-        (!currentDataPoint.IsVerified || !string.IsNullOrWhiteSpace(currentDataPoint.VerifiedBy));
+        _currentDataPoint.Value >= 0 &&
+        _currentDataPoint.MeasurementDate != default &&
+        !string.IsNullOrWhiteSpace(_currentDataPoint.DataSource) &&
+        (!_currentDataPoint.IsVerified || !string.IsNullOrWhiteSpace(_currentDataPoint.VerifiedBy));
     #endregion
 
     #region Lifecycle Methods
@@ -51,7 +51,7 @@ public partial class SPIDataPointDialog : ComponentBase
         if (DataPoint is not null)
         {
             // Edit mode - clone existing data point
-            currentDataPoint = new SPIDataPoint(new SPIDataPointID(DataPoint.Code))
+            _currentDataPoint = new SPIDataPoint(new SPIDataPointID(DataPoint.Code))
             {
                 SPIId = DataPoint.SPIId,
                 Value = DataPoint.Value,
@@ -65,14 +65,14 @@ public partial class SPIDataPointDialog : ComponentBase
             };
 
             // Preserve audit fields from original
-            currentDataPoint.CreatedDate = DataPoint.CreatedDate;
-            currentDataPoint.UpdatedBy = DataPoint.UpdatedBy;
-            currentDataPoint.UpdatedDate = DataPoint.UpdatedDate;
+            _currentDataPoint.CreatedDate = DataPoint.CreatedDate;
+            _currentDataPoint.UpdatedBy = DataPoint.UpdatedBy;
+            _currentDataPoint.UpdatedDate = DataPoint.UpdatedDate;
         }
         else
         {
             // Add mode - create new data point
-            currentDataPoint = new SPIDataPoint(
+            _currentDataPoint = new SPIDataPoint(
                 new SPIDataPointID("DP-0000")) // TODO: Get current user
             {
                 SPIId = SPI?.Code ?? string.Empty,
@@ -89,7 +89,7 @@ public partial class SPIDataPointDialog : ComponentBase
     {
         if (SPI is not null)
         {
-            currentDataPoint.Period = GetPeriodFromDate(currentDataPoint.MeasurementDate);
+            _currentDataPoint.Period = GetPeriodFromDate(_currentDataPoint.MeasurementDate);
         }
     }
 
@@ -142,21 +142,21 @@ public partial class SPIDataPointDialog : ComponentBase
         try
         {
             // Set verification details if verified
-            if (currentDataPoint.IsVerified)
+            if (_currentDataPoint.IsVerified)
             {
-                currentDataPoint.VerifiedDate = DateTime.UtcNow;
-                if (string.IsNullOrWhiteSpace(currentDataPoint.VerifiedBy))
+                _currentDataPoint.VerifiedDate = DateTime.UtcNow;
+                if (string.IsNullOrWhiteSpace(_currentDataPoint.VerifiedBy))
                 {
-                    currentDataPoint.VerifiedBy = "SYSTEM"; // Fallback
+                    _currentDataPoint.VerifiedBy = "SYSTEM"; // Fallback
                 }
             }
             else
             {
-                currentDataPoint.VerifiedBy = null;
-                currentDataPoint.VerifiedDate = null;
+                _currentDataPoint.VerifiedBy = null;
+                _currentDataPoint.VerifiedDate = null;
             }
 
-            await OnSave.InvokeAsync(currentDataPoint);
+            await OnSave.InvokeAsync(_currentDataPoint);
             _dialogService.Close();
         }
         catch (Exception ex)

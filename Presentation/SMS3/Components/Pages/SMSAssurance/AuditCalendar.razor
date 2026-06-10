@@ -33,7 +33,7 @@
 <!-- Calendar Controls - Simplified like Radzen sample -->
 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" class="rz-p-4 rz-mb-6 rz-border-radius-1" Style="border: var(--rz-grid-cell-border);height:4rem;">
     <RadzenLabel Text="Show Header:" />
-    <RadzenSwitch @bind-Value="@showHeader" />
+    <RadzenSwitch @bind-Value="@_showHeader" />
     
     <RadzenButton Icon="today" Text="Today" Click="@GoToToday" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" />
     <RadzenButton Icon="refresh" Text="Refresh" Click="@RefreshData" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@IsLoading" />
@@ -60,14 +60,14 @@
 }
 else
 {
-    <RadzenScheduler @ref="scheduler" 
+    <RadzenScheduler @ref="_scheduler" 
                      SlotRender="@OnSlotRender" 
                      style="height: 768px;" 
                      TItem="AuditSchedulerItem" 
                      Data="@SchedulerData"
                      StartProperty="@nameof(AuditSchedulerItem.Start)" 
                      EndProperty="@nameof(AuditSchedulerItem.End)" 
-                     ShowHeader="@showHeader"
+                     ShowHeader="@_showHeader"
                      TextProperty="@nameof(AuditSchedulerItem.Text)" 
                      SelectedIndex="2"
                      SlotSelect="@OnSlotSelect" 
@@ -83,7 +83,7 @@ else
 }
 
 <!-- Event Console for debugging like Radzen sample -->
-<EventConsole @ref="@console" />
+<EventConsole @ref="@_console" />
 
 <!-- Audit Statistics Card -->
 <RadzenRow Gap="1rem" Style="margin-top: 1rem;">

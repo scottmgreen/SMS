@@ -34,7 +34,7 @@ public partial class RiskAssessmentListing : ComponentBase
         public string Summary { get; init; } = string.Empty;
     }
 
-    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+    private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
     #region Dependencies
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
@@ -46,15 +46,15 @@ public partial class RiskAssessmentListing : ComponentBase
     #endregion
 
     #region Properties
-    private RadzenDataGrid<RiskAssessment>? assessmentsGrid;
-    private IEnumerable<RiskAssessment> assessments = new List<RiskAssessment>();
-    private List<RiskAssessment> allAssessments = new List<RiskAssessment>(); // Store all assessments for client-side filtering
-    private HashSet<string> riskRegistryOnlyReportCodes = new(StringComparer.OrdinalIgnoreCase);
-    private Dictionary<string, AssessmentValidationSnapshot> assessmentValidationStatus = new(StringComparer.OrdinalIgnoreCase);
-    private int totalCount;
-    private bool isLoading = false;
-    private bool ShowViewDialog = false;
-    private RiskAssessment? SelectedAssessment = null;
+    private RadzenDataGrid<RiskAssessment>? _assessmentsGrid;
+    private IEnumerable<RiskAssessment> _assessments = new List<RiskAssessment>();
+    private List<RiskAssessment> _allAssessments = new List<RiskAssessment>(); // Store all assessments for client-side filtering
+    private HashSet<string> _riskRegistryOnlyReportCodes = new(StringComparer.OrdinalIgnoreCase);
+    private Dictionary<string, AssessmentValidationSnapshot> _assessmentValidationStatus = new(StringComparer.OrdinalIgnoreCase);
+    private int _totalCount;
+    private bool _isLoading = false;
+    private bool _showViewDialog = false;
+    private RiskAssessment? _selectedAssessment = null;
     #endregion
     
     #region Lifecycle Methods
@@ -69,7 +69,7 @@ public partial class RiskAssessmentListing : ComponentBase
     {
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("Loading risk assessments for listing view");
@@ -81,7 +81,7 @@ public partial class RiskAssessmentListing : ComponentBase
             var reportsResult = await _mediator.SendAsync(reportsQuery, CancellationToken.None);
             if (reportsResult.IsSuccess && reportsResult.Value is not null)
             {
-                riskRegistryOnlyReportCodes = reportsResult.Value
+                _riskRegistryOnlyReportCodes = reportsResult.Value
                     .Where(r => IsRiskRegistryOnlyStatus(r.Status))
                     .Select(r => (r.Code ?? string.Empty).Trim())
                     .Where(code => !string.IsNullOrWhiteSpace(code))
@@ -89,21 +89,21 @@ public partial class RiskAssessmentListing : ComponentBase
             }
             else
             {
-                riskRegistryOnlyReportCodes.Clear();
+                _riskRegistryOnlyReportCodes.Clear();
             }
 
             if (result.IsSuccess && result.Value is not null)
             {
-                allAssessments = result.Value.ToList(); // Ensure it's a concrete list
-                await LoadAssessmentValidationStatusAsync(allAssessments);
-                assessments = allAssessments; // Initially show all assessments
-                totalCount = allAssessments.Count();
-                _logger.LogInformation("Loaded {Count} risk assessments for listing", totalCount);
+                _allAssessments = result.Value.ToList(); // Ensure it's a concrete list
+                await LoadAssessmentValidationStatusAsync(_allAssessments);
+                _assessments = _allAssessments; // Initially show all assessments
+                _totalCount = _allAssessments.Count();
+                _logger.LogInformation("Loaded {Count} risk assessments for listing", _totalCount);
 
                 // Only show success notification if we have data
-                if (totalCount > 0)
+                if (_totalCount > 0)
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {totalCount} risk assessments"));
+                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {_totalCount} risk assessments"));
                 }
 
                 else
@@ -114,10 +114,10 @@ public partial class RiskAssessmentListing : ComponentBase
             else
             {
                 // Initialize with empty lists to prevent null reference issues
-                allAssessments = new List<RiskAssessment>();
-                assessments = allAssessments;
-                assessmentValidationStatus.Clear();
-                totalCount = 0;
+                _allAssessments = new List<RiskAssessment>();
+                _assessments = _allAssessments;
+                _assessmentValidationStatus.Clear();
+                _totalCount = 0;
                 
                 await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load risk assessments"));
                 _logger.LogError("Failed to load risk assessments: {Error}", result.Error?.Message);
@@ -126,17 +126,17 @@ public partial class RiskAssessmentListing : ComponentBase
         catch (Exception ex)
         {
             // Ensure we always have valid collections even if an error occurs
-            allAssessments = new List<RiskAssessment>();
-            assessments = allAssessments;
-            assessmentValidationStatus.Clear();
-            totalCount = 0;
+            _allAssessments = new List<RiskAssessment>();
+            _assessments = _allAssessments;
+            _assessmentValidationStatus.Clear();
+            _totalCount = 0;
             
             _logger.LogError(ex, "Error loading risk assessments");
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error loading risk assessments: {ex.Message}"));
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -152,7 +152,7 @@ public partial class RiskAssessmentListing : ComponentBase
 
         // Backward-compatibility fallback: older records may only be inferred from report status.
         var reportCode = assessment.ReportCode?.Trim();
-        return !string.IsNullOrWhiteSpace(reportCode) && riskRegistryOnlyReportCodes.Contains(reportCode);
+        return !string.IsNullOrWhiteSpace(reportCode) && _riskRegistryOnlyReportCodes.Contains(reportCode);
     }
 
     private async Task LoadAssessmentValidationStatusAsync(List<RiskAssessment> riskAssessments)
@@ -234,12 +234,12 @@ public partial class RiskAssessmentListing : ComponentBase
                 };
             }
 
-            assessmentValidationStatus = map;
+            _assessmentValidationStatus = map;
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Unable to compute detailed validation status; using fallback progress indicators");
-            assessmentValidationStatus.Clear();
+            _assessmentValidationStatus.Clear();
         }
     }
 
@@ -289,7 +289,7 @@ public partial class RiskAssessmentListing : ComponentBase
     private AssessmentValidationSnapshot GetValidationSnapshot(RiskAssessment assessment)
     {
         var code = assessment.Code?.Trim() ?? string.Empty;
-        if (!string.IsNullOrWhiteSpace(code) && assessmentValidationStatus.TryGetValue(code, out var snapshot))
+        if (!string.IsNullOrWhiteSpace(code) && _assessmentValidationStatus.TryGetValue(code, out var snapshot))
         {
             return snapshot;
         }
@@ -399,14 +399,14 @@ public partial class RiskAssessmentListing : ComponentBase
     {
         try
         {
-            isLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
             // If we don't have all assessments yet, load them first
-            if (allAssessments is null || !allAssessments.Any())
+            if (_allAssessments is null || !_allAssessments.Any())
             {
                 _logger.LogInformation("No assessments cached, loading initial data");
                 await LoadInitialData();
@@ -414,7 +414,7 @@ public partial class RiskAssessmentListing : ComponentBase
             }
 
             // Start with all assessments
-            var query = allAssessments.AsQueryable();
+            var query = _allAssessments.AsQueryable();
             _logger.LogInformation("Starting with {Count} total assessments", query.Count());
 
             // Apply filtering
@@ -426,7 +426,7 @@ public partial class RiskAssessmentListing : ComponentBase
             }
 
             // Get total count after filtering but before paging
-            totalCount = query.Count();
+            _totalCount = query.Count();
 
             // Apply sorting
             if (!string.IsNullOrEmpty(args.OrderBy))
@@ -455,10 +455,10 @@ public partial class RiskAssessmentListing : ComponentBase
                 query = query.Take(args.Top.Value);
             }
 
-            assessments = query.ToList();
+            _assessments = query.ToList();
 
             _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} assessments", 
-                assessments.Count(), totalCount);
+                _assessments.Count(), _totalCount);
         }
         catch (Exception ex)
         {
@@ -469,19 +469,19 @@ public partial class RiskAssessmentListing : ComponentBase
             // Fallback to show all data without filtering/sorting
             try
             {
-                assessments = allAssessments ?? new List<RiskAssessment>();
-                totalCount = assessments.Count();
+                _assessments = _allAssessments ?? new List<RiskAssessment>();
+                _totalCount = _assessments.Count();
             }
             catch (Exception fallbackEx)
             {
                 _logger.LogError(fallbackEx, "Error in LoadData fallback");
-                assessments = new List<RiskAssessment>();
-                totalCount = 0;
+                _assessments = new List<RiskAssessment>();
+                _totalCount = 0;
             }
         }
         finally
         {
-            isLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -749,8 +749,8 @@ public partial class RiskAssessmentListing : ComponentBase
         try
         {
             _logger.LogInformation("Viewing risk assessment: {Code}", assessment.Code);
-            SelectedAssessment = assessment;
-            ShowViewDialog = true;
+            _selectedAssessment = assessment;
+            _showViewDialog = true;
             StateHasChanged();
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Viewing details for assessment {assessment.Code}"));
         }
@@ -777,13 +777,13 @@ public partial class RiskAssessmentListing : ComponentBase
 
     private async Task OnEditAssessmentFromDialog()
     {
-        if (SelectedAssessment is null)
+        if (_selectedAssessment is null)
         {
             return;
         }
 
-        ShowViewDialog = false;
-        await EditAssessment(SelectedAssessment);
+        _showViewDialog = false;
+        await EditAssessment(_selectedAssessment);
     }
     
     private async Task NavigateToTechnicalAssessment(RiskAssessment assessment)

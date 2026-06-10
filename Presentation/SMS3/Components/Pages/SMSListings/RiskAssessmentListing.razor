@@ -18,9 +18,9 @@
            Subtitle="Manage and view preliminary and technical risk assessments"
            Icon="fas fa-chart-line" />
 
-<RadzenDataGrid @ref="assessmentsGrid" 
-                Data="@assessments" 
-                Count="@totalCount" 
+<RadzenDataGrid @ref="_assessmentsGrid" 
+                Data="@_assessments" 
+                Count="@_totalCount" 
                 LoadData="@LoadData"
                 AllowPaging="true" 
                 AllowSorting="true" 
@@ -31,7 +31,7 @@
                 FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Multiple"
                 Style="height: calc(100vh - 200px)"
-                IsLoading="@isLoading">
+                IsLoading="@_isLoading">
     
     <Columns>
         <RadzenDataGridColumn TItem="RiskAssessment" Width="60px" Sortable="false" Filterable="false">
@@ -44,21 +44,21 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="RiskAssessment" Property="ReportCode" Title="Report ID" Width="150px">
             <Template Context="assessment">
-                <div title="@assessment.ReportCode" style="@BasicTextStyle">
+                <div title="@assessment.ReportCode" style="@_basicTextStyle">
                     @(assessment.ReportCode)
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="RiskAssessment" Property="Code" Title="Risk Assessment ID" Width="150px" >
             <Template Context="assessment">
-                <div title="@assessment.Code" style="@BasicTextStyle">
+                <div title="@assessment.Code" style="@_basicTextStyle">
                     @(assessment.Code)
                 </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="RiskAssessment" Property="HazardCode" Title="Initial Hazard ID" Width="150px">
             <Template Context="assessment">
-                <div title="@assessment.HazardCode" style="@BasicTextStyle">
+                <div title="@assessment.HazardCode" style="@_basicTextStyle">
                     @(assessment.HazardCode)
                 </div>
             </Template>
@@ -66,7 +66,7 @@
            
         <RadzenDataGridColumn TItem="RiskAssessment" Property="Status" Title="Status" Width="150px">
             <Template Context="assessment">
-                <div title="@assessment.Status" style="@BasicTextStyle">
+                <div title="@assessment.Status" style="@_basicTextStyle">
                     @(assessment.Status)
                 </div>
             </Template>
@@ -107,7 +107,7 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="RiskAssessment" Property="Stage" Title="Stage" Width="150px">
             <Template Context="assessment">
-                <div title="@assessment.Stage" style="@BasicTextStyle">
+                <div title="@assessment.Stage" style="@_basicTextStyle">
                     @(assessment.Stage)
                 </div>
             </Template>
@@ -140,7 +140,7 @@
 <RadzenDialog />
 
 <!-- View Assessment Modal Dialog -->
-@if (ShowViewDialog && SelectedAssessment is not null)
+@if (_showViewDialog && _selectedAssessment is not null)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-lg">
@@ -154,7 +154,7 @@
                                     Variant="Variant.Text"
                                     Icon="close"
                                     Size="ButtonSize.Small"
-                                    Click="@(() => { ShowViewDialog = false; SelectedAssessment = null; })" />
+                                    Click="@(() => { _showViewDialog = false; _selectedAssessment = null; })" />
                     </div>
                 </div>
                 <div class="sms-modal-body">
@@ -167,22 +167,22 @@
                             </h6>
                             <div class="row">
                                 <div class="col-sm-6">
-                                    <strong>Code:</strong> @SelectedAssessment.Code<br>
-                                    <strong>Name:</strong> @SelectedAssessment.Name<br>
-                                    <strong>Type:</strong> @SelectedAssessment.AssessmentType<br>
-                                    <strong>Category:</strong> @SelectedAssessment.RiskAssessmentCategory<br>
+                                    <strong>Code:</strong> @_selectedAssessment.Code<br>
+                                    <strong>Name:</strong> @_selectedAssessment.Name<br>
+                                    <strong>Type:</strong> @_selectedAssessment.AssessmentType<br>
+                                    <strong>Category:</strong> @_selectedAssessment.RiskAssessmentCategory<br>
                                 </div>
                                 <div class="col-sm-6">
-                                    <strong>Status:</strong> <RadzenBadge Text="@SelectedAssessment.Status.ToString()" BadgeStyle="@GetStatusBadgeStyle(SelectedAssessment.Status.ToString())" /><br>
-                                    <strong>Final Risk Level:</strong> @(SelectedAssessment.FinalRiskLevel ?? "Not determined")<br>
-                                    <strong>Risk Score:</strong> @(SelectedAssessment.FinalSeverityScore?.ToString() ?? "N/A")<br>
+                                        <strong>Status:</strong> <RadzenBadge Text="@_selectedAssessment.Status.ToString()" BadgeStyle="@GetStatusBadgeStyle(_selectedAssessment.Status.ToString())" /><br>
+                                        <strong>Final Risk Level:</strong> @(_selectedAssessment.FinalRiskLevel ?? "Not determined")<br>
+                                        <strong>Risk Score:</strong> @(_selectedAssessment.FinalSeverityScore?.ToString() ?? "N/A")<br>
                                 </div>
                             </div>
-                            @if (!string.IsNullOrWhiteSpace(SelectedAssessment.Description))
+                            @if (!string.IsNullOrWhiteSpace(_selectedAssessment.Description))
                             {
                                 <div class="mt-3">
                                     <strong>Description:</strong><br>
-                                    <div class="bg-light p-2 rounded" style="white-space: pre-wrap;">@SelectedAssessment.Description</div>
+                                    <div class="bg-light p-2 rounded" style="white-space: pre-wrap;">@_selectedAssessment.Description</div>
                                 </div>
                             }
                         </div>
@@ -196,13 +196,13 @@
                             </h6>
                             <div class="row">
                                 <div class="col-sm-6">
-                                    @if (!string.IsNullOrWhiteSpace(SelectedAssessment.HazardCode))
+                                    @if (!string.IsNullOrWhiteSpace(_selectedAssessment.HazardCode))
                                     {
-                                        <strong>Hazard Code:</strong> @SelectedAssessment.HazardCode<br>
+                                        <strong>Hazard Code:</strong> @_selectedAssessment.HazardCode<br>
                                     }
-                                    @if (!string.IsNullOrWhiteSpace(SelectedAssessment.LeadAssessorId))
+                                    @if (!string.IsNullOrWhiteSpace(_selectedAssessment.LeadAssessorId))
                                     {
-                                        <strong>Lead Assessor:</strong> @SelectedAssessment.LeadAssessorId<br>
+                                        <strong>Lead Assessor:</strong> @_selectedAssessment.LeadAssessorId<br>
                                     }
                                     
                                 </div>
@@ -211,13 +211,13 @@
                                     {
                                         <strong>Target Date:</strong> @SelectedAssessment.OverallTargetDate.Value.ToString("MMM dd, yyyy")<br>
                                     } *@
-                                    @if (SelectedAssessment.CompletedDate.HasValue)
+                                    @if (_selectedAssessment.CompletedDate.HasValue)
                                     {
-                                        <strong>Completed:</strong> @SelectedAssessment.CompletedDate.Value.ToString("MMM dd, yyyy")<br>
+                                        <strong>Completed:</strong> @_selectedAssessment.CompletedDate.Value.ToString("MMM dd, yyyy")<br>
                                     }
-                                    @if (!string.IsNullOrWhiteSpace(SelectedAssessment.CompletedBy))
+                                    @if (!string.IsNullOrWhiteSpace(_selectedAssessment.CompletedBy))
                                     {
-                                        <strong>Completed By:</strong> @SelectedAssessment.CompletedBy<br>
+                                        <strong>Completed By:</strong> @_selectedAssessment.CompletedBy<br>
                                     }
                                 </div>
                             </div>
@@ -233,17 +233,17 @@
                             </h6>
                             <div class="row">
                                 <div class="col-sm-6">
-                                    <strong>Created:</strong> @SelectedAssessment.CreatedDate?.ToString("MMM dd, yyyy HH:mm")<br>
-                                    <strong>Created By:</strong> @SelectedAssessment.CreatedBy<br>
+                                    <strong>Created:</strong> @_selectedAssessment.CreatedDate?.ToString("MMM dd, yyyy HH:mm")<br>
+                                    <strong>Created By:</strong> @_selectedAssessment.CreatedBy<br>
                                 </div>
                                 <div class="col-sm-6">
-                                    @if (SelectedAssessment.UpdatedDate.HasValue)
+                                    @if (_selectedAssessment.UpdatedDate.HasValue)
                                     {
-                                        <strong>Last Updated:</strong> @SelectedAssessment.UpdatedDate.Value.ToString("MMM dd, yyyy HH:mm")<br>
+                                        <strong>Last Updated:</strong> @_selectedAssessment.UpdatedDate.Value.ToString("MMM dd, yyyy HH:mm")<br>
                                     }
-                                    @if (!string.IsNullOrWhiteSpace(SelectedAssessment.UpdatedBy))
+                                    @if (!string.IsNullOrWhiteSpace(_selectedAssessment.UpdatedBy))
                                     {
-                                        <strong>Updated By:</strong> @SelectedAssessment.UpdatedBy<br>
+                                        <strong>Updated By:</strong> @_selectedAssessment.UpdatedBy<br>
                                     }
                                 </div>
                             </div>
@@ -256,7 +256,7 @@
                         <RadzenButton ButtonStyle="ButtonStyle.Base" 
                                     Text="Close" 
                                     Icon="close"
-                                    Click="@(() => { ShowViewDialog = false; SelectedAssessment = null; })"
+                                    Click="@(() => { _showViewDialog = false; _selectedAssessment = null; })"
                                     Size="ButtonSize.Medium" />
                         <RadzenButton ButtonStyle="ButtonStyle.Primary" 
                                     Text="Edit Assessment" 

@@ -34,7 +34,7 @@ public partial class SPIDetail : ComponentBase
     private bool IsEditingDataPoint { get; set; }
 
     // Component References
-    private RadzenDataGrid<SPIDataPoint>? dataPointsGrid;
+    private RadzenDataGrid<SPIDataPoint>? _dataPointsGrid;
     #endregion
 
     #region Lifecycle Methods

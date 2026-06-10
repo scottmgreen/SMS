@@ -287,7 +287,7 @@ public partial class ReportProcessing : ComponentBase
     private List<ReportProcessingSummary> PendingMitigation { get; set; } = new();
     private List<ReportProcessingSummary> ClosedReferred { get; set; } = new();
 
-    private int selectedTabIndex = 0;
+    private int _selectedTabIndex = 0;
     private bool IsLoading { get; set; } = true;
     private List<SMSOrganizationalUser> AvailableApprovers { get; set; } = new();
     private string? SelectedApprover { get; set; }
@@ -302,11 +302,11 @@ public partial class ReportProcessing : ComponentBase
     private string SelectedReportId { get; set; } = string.Empty;
 
 
-    private string BasicTextStyle = "font-size:smaller;font-weight: 600";
+    private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
     protected override void OnParametersSet()
     {
-        selectedTabIndex = ResolveTabIndex(Tab);
+        _selectedTabIndex = ResolveTabIndex(Tab);
     }
 
     protected override async Task OnInitializedAsync()
@@ -1256,7 +1256,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.MitigationCode) ? mitigation.MitigationCode : "Not Specified");
                 templateBuilder.CloseComponent();
             }
@@ -1274,7 +1274,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.MitigationName) ? mitigation.MitigationName : "Not Specified");
                 templateBuilder.CloseComponent();
             }
@@ -1290,7 +1290,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.Status) ? mitigation.Status : "Not Specified");
                 templateBuilder.CloseComponent();
             }
@@ -1310,7 +1310,7 @@ public partial class ReportProcessing : ComponentBase
                 if (mitigation.TargetDate.HasValue)
                 {
                     templateBuilder.OpenComponent<RadzenText>(0);
-                    templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                     templateBuilder.AddAttribute(2, "Text", mitigation.TargetDate.Value.ToString("MM/dd/yyyy"));
                     templateBuilder.CloseComponent(); 
 
@@ -1319,7 +1319,7 @@ public partial class ReportProcessing : ComponentBase
                 else
                 {
                     templateBuilder.OpenComponent<RadzenText>(10);
-                    templateBuilder.AddAttribute(11, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(11, "style", _basicTextStyle);
                     templateBuilder.AddAttribute(12, "Text", "Not set");
                     templateBuilder.CloseComponent(); 
                 }
@@ -1334,7 +1334,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.AssignedDepartment) ? mitigation.AssignedDepartment : "Not assigned");
                 templateBuilder.CloseComponent(); // ? Close RadzenText
             })));
@@ -1349,7 +1349,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(mitigation.AssignedTo) ? mitigation.AssignedTo : "Not assigned");
                 templateBuilder.CloseComponent(); // ? Close RadzenText
             })));
@@ -1591,7 +1591,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.ReportStatus) ? report.ReportStatus : "Not Specified");
                 templateBuilder.CloseComponent();
             })));
@@ -1606,7 +1606,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.SubmittedBy) ? report.SubmittedBy : "Not Specified");
                 templateBuilder.CloseComponent();
             })));
@@ -1621,7 +1621,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", report.CreatedDate.ToString("MM/dd/yyyy"));
                 templateBuilder.CloseComponent();
             })));
@@ -1644,7 +1644,7 @@ public partial class ReportProcessing : ComponentBase
                 {
                     // Show orange warning badge for default values
                     templateBuilder.OpenComponent<RadzenText>(0);
-                    templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                     templateBuilder.AddAttribute(2, "Text", $"{report.HazardCategory} / {report.HazardType}");
                     templateBuilder.AddAttribute(3, "Title", $"{report.HazardCategory} / {report.HazardType}");
                     templateBuilder.CloseComponent();
@@ -1655,7 +1655,7 @@ public partial class ReportProcessing : ComponentBase
                     templateBuilder.OpenComponent<RadzenBadge>(0);
                     templateBuilder.AddAttribute(1, "BadgeStyle", BadgeStyle.Success);
                     templateBuilder.AddAttribute(2, "Shade", Shade.Default);
-                    //templateBuilder.AddAttribute(3, "style", BasicTextStyle);
+            //templateBuilder.AddAttribute(3, "style", _basicTextStyle);
                     templateBuilder.AddAttribute(4, "Text", $"{report.HazardCategory}/ {report.HazardType}");
                     templateBuilder.AddAttribute(5, "Title", $"{report.HazardCategory} / {report.HazardType}");
                     templateBuilder.CloseComponent();
@@ -1680,7 +1680,7 @@ public partial class ReportProcessing : ComponentBase
                 var navigationUrl = report.SmartUrl;
 
                 templateBuilder.OpenComponent<RadzenButton>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", buttonText);
                 templateBuilder.AddAttribute(3, "Icon", buttonIcon);
                 templateBuilder.AddAttribute(4, "ButtonStyle", buttonStyle);
@@ -1703,7 +1703,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
                 {
                     templateBuilder.OpenComponent<RadzenText>(0);
-                    templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                     templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.ReportId) ? report.ReportId : "Not Specified");
                     templateBuilder.CloseComponent();
                 }
@@ -1721,7 +1721,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.InvestigationId) ? report.InvestigationId : "Not Specified");
                 templateBuilder.CloseComponent();
             }
@@ -1738,7 +1738,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.HazardId) ? report.HazardId : "Not Specified");
                 templateBuilder.CloseComponent();
             }
@@ -1756,7 +1756,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.RiskAssessmentId) ? report.RiskAssessmentId : "Not Specified");
                 templateBuilder.CloseComponent();
             }
@@ -1805,7 +1805,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", report.AssignedTo ?? "Not Assigned");
                 templateBuilder.CloseComponent();
             })));
@@ -1820,7 +1820,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", report.CreatedDate.ToString("MM/dd/yyyy"));
                 templateBuilder.CloseComponent();
             })));
@@ -1840,7 +1840,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenButton>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", report.ActionButtonText);
                 templateBuilder.AddAttribute(3, "Icon", GetAssessmentIcon(report));
                 templateBuilder.AddAttribute(4, "ButtonStyle", GetAssessmentButtonStyle(report));
@@ -1870,7 +1870,7 @@ public partial class ReportProcessing : ComponentBase
                 var statusText = report.HasInvestigation ? report.InvestigationStatus : "Not Started";
 
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.InvestigationStatus) ? report.InvestigationStatus : "Not Specified");
                 templateBuilder.CloseComponent();
             }
@@ -1886,7 +1886,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", report.AssignedInvestigator ?? "Not Assigned");
                 templateBuilder.CloseComponent();
             })));
@@ -1901,7 +1901,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", report.InterviewCount.ToString() ?? "Not Assigned");
                 templateBuilder.CloseComponent();
             })));
@@ -1916,7 +1916,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-                templateBuilder.AddAttribute(1, "style", BasicTextStyle);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", report.HasInvestigation ? report.DaysInInvestigation.ToString() : "N/A");
                 templateBuilder.CloseComponent();
             })));
