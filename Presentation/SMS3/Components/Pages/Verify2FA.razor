@@ -1,4 +1,4 @@
-@page "/verify-2fa"
+﻿@page "/verify-2fa"
 @layout SMS3.Components.Layout.LoginLayout
 @using SMS_Application.Services
 @using SMS3.Components.Shared
@@ -7,7 +7,7 @@
     <div class="sms-2fa-card">
         <!-- 2FA Header -->
         <div class="sms-login-header">
-            @if (ShowSetupPage)
+            @if (_showSetupPage)
             {
                 <i class="fas fa-qrcode sms-login-icon"></i>
                 <h2 class="sms-login-title">Setup Two-Factor Authentication</h2>
@@ -21,11 +21,11 @@
             }
         </div>
 
-        @if (!string.IsNullOrEmpty(ErrorMessage))
+        @if (!string.IsNullOrEmpty(_errorMessage))
         {
             <div class="alert alert-danger sms-login-error">
                 <i class="fas fa-exclamation-triangle me-2"></i>
-                <strong>Verification Failed:</strong> @ErrorMessage
+                <strong>Verification Failed:</strong> @_errorMessage
             </div>
         }
 
@@ -38,7 +38,7 @@
         }
         
        
-        @if (ShowSetupPage)
+        @if (_showSetupPage)
         {
             <!-- QR Code Setup Page -->
             <div class="sms-2fa-setup">
@@ -57,9 +57,9 @@
                 <!-- QR Code Display using Radzen -->
                 <div class="sms-qr-container">
                     <div class="sms-qr-code">
-                        @if (!string.IsNullOrEmpty(QRCodeUrl))
+                        @if (!string.IsNullOrEmpty(_qrCodeUrl))
                         {
-                            <RadzenQRCode Value="@QRCodeUrl" 
+                            <RadzenQRCode Value="@_qrCodeUrl" 
                                           Size="200" 
                                           ErrorCorrectionLevel="QRCodeErrorCorrectionLevel.M"
                                           Style="border: 2px solid var(--sms-blue-light); border-radius: 8px; padding: 10px; background: white;" />
@@ -73,11 +73,11 @@
                         }
                     </div>
                     
-                    @if (!string.IsNullOrEmpty(ManualEntryCode))
+                    @if (!string.IsNullOrEmpty(_manualEntryCode))
                     {
                         <div class="sms-manual-entry">
                             <p><strong>Can't scan?</strong> Enter this code manually:</p>
-                            <code class="sms-manual-code">@ManualEntryCode</code>
+                            <code class="sms-manual-code">@_manualEntryCode</code>
                             <RadzenButton Text="Copy Code" 
                                           Icon="content_copy" 
                                           ButtonStyle="ButtonStyle.Light" 
@@ -100,7 +100,7 @@
                                            MaxLength="6"
                                            Class="sms-2fa-input" 
                                            autocomplete="off"
-                                           Disabled="@IsLoading" />
+                                           Disabled="@_isLoading" />
                             <RadzenRequiredValidator Component="SetupCode" Text="Verification code is required" Class="sms-validation-error" />
                             <RadzenRegexValidator Component="SetupCode" Pattern="^\d{6}$" Text="Code must be 6 digits" Class="sms-validation-error" />
                         </div>
@@ -108,11 +108,11 @@
                         <div class="d-grid">
                             <RadzenButton ButtonType="ButtonType.Submit" 
                                           ButtonStyle="ButtonStyle.Dark" 
-                                          Text="@(IsLoading ? "Verifying..." : "Complete Setup")"
-                                          Disabled="@IsLoading" 
+                                          Text="@(_isLoading ? "Verifying..." : "Complete Setup")"
+                                          Disabled="@_isLoading" 
                                           Size="ButtonSize.Large"
                                           Class="sms-login-button" 
-                                          Icon="@(IsLoading ? "hourglass_empty" : "check_circle")" />
+                                          Icon="@(_isLoading ? "hourglass_empty" : "check_circle")" />
                         </div>
                     </RadzenTemplateForm>
                 </div>
@@ -126,8 +126,8 @@
                     <h6 class="alert-heading">
                         <i class="fas fa-shield-alt me-2"></i>Security Verification
                     </h6>
-                    <p class="mb-2">Using the <strong>Microsoft Authenticator</strong> app, enter the 6-digit code<br /> for <strong>@UserDisplayName</strong>.</p>
-                    <p class="mb-0"><small>Code refreshes every 30 seconds � Time remaining: <strong>@GetTimeRemaining()</strong></small></p>
+                    <p class="mb-2">Using the <strong>Microsoft Authenticator</strong> app, enter the 6-digit code<br /> for <strong>@_userDisplayName</strong>.</p>
+                    <p class="mb-0"><small>Code refreshes every 30 seconds • Time remaining: <strong>@GetTimeRemaining()</strong></small></p>
                 </div>
 
                 <!-- 2FA Code Input -->
@@ -142,7 +142,7 @@
                                        MaxLength="6"
                                        Class="sms-2fa-input" 
                                        autocomplete="off"
-                                       Disabled="@IsLoading" />
+                                       Disabled="@_isLoading" />
                         <RadzenRequiredValidator Component="Code" Text="Verification code is required" Class="sms-validation-error" />
                         <RadzenRegexValidator Component="Code" Pattern="^\d{6}$" Text="Code must be 6 digits" Class="sms-validation-error" />
                     </div>
@@ -150,11 +150,11 @@
                     <div class="d-grid mb-3">
                         <RadzenButton ButtonType="ButtonType.Submit" 
                                       ButtonStyle="ButtonStyle.Dark" 
-                                      Text="@(IsLoading ? "Verifying..." : "Verify Code")"
-                                      Disabled="@IsLoading" 
+                                      Text="@(_isLoading ? "Verifying..." : "Verify Code")"
+                                      Disabled="@_isLoading" 
                                       Size="ButtonSize.Large"
                                       Class="sms-login-button" 
-                                      Icon="@(IsLoading ? "hourglass_empty" : "verified_user")" />
+                                      Icon="@(_isLoading ? "hourglass_empty" : "verified_user")" />
                     </div>
                 </RadzenTemplateForm>
 
@@ -168,7 +168,7 @@
                                       Class="sms-backup-link" />
                     </div>
 
-                    @if (ShowBackupMethods)
+                    @if (_showBackupMethods)
                     {
                         <div class="sms-backup-methods mt-3">
                             <h6>Alternative Methods:</h6>
@@ -186,11 +186,11 @@
                                           Class="mb-2" />
                         </div>
 
-                        @if (ShowBackupCodeEntry)
+                        @if (_showBackupCodeEntry)
                         {
                             <div class="sms-backup-code-entry mt-3">
                                 <RadzenFormField Text="Backup Recovery Code:" Variant="Variant.Outlined">
-                                    <RadzenTextBox @bind-Value="@BackupCode" 
+                                    <RadzenTextBox @bind-Value="@_backupCode" 
                                                    Placeholder="XXXX-XXXX" 
                                                    MaxLength="9" 
                                                    autocomplete="off" 
@@ -199,7 +199,7 @@
                                 <RadzenButton Text="Verify Backup Code" 
                                               ButtonStyle="ButtonStyle.Warning" 
                                               Icon="lock_open"
-                                              Disabled="@IsLoading"
+                                              Disabled="@_isLoading"
                                               Click="@VerifyBackupCode" />
                             </div>
                         }
@@ -469,3 +469,4 @@
    END SMS 2FA VERIFICATION STYLING
    ============================================================================= */
 </style>
+

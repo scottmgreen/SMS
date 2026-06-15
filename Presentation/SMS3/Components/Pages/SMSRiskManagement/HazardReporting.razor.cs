@@ -1471,6 +1471,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     Latitude = SelectedGeoLocation.Latitude,
                     Longitude = SelectedGeoLocation.Longitude,
                     Description = SelectedGeoLocation.Description ?? "Map selected location",
+                    IsValidated = false, // Initial state - can be updated later by validation process
                     CreatedBy = _currentUserService?.UserDisplayName,
                     CreatedDate = DateTime.UtcNow,
                     IsValid = true

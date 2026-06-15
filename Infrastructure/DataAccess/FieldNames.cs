@@ -516,6 +516,10 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardLocationDescription = new Lazy<string>(() => "fldv_Description");
     public static string fHazardLocationDescription => _fHazardLocationDescription.Value;
 
+    //fldb_IsValidated
+    private static readonly Lazy<string> _fHazardLocationIsValidated = new Lazy<string>(() => "fldb_IsValidated");
+    public static string fHazardLocationIsValidated => _fHazardLocationIsValidated.Value;
+
     private static readonly Lazy<string> _fHazardLocationDateSelected = new Lazy<string>(() => "fldd_DateSelected");
     public static string fHazardLocationDateSelected => _fHazardLocationDateSelected.Value;
 
@@ -537,9 +541,7 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardLocationStatus = new Lazy<string>(() => "fldv_Status");
     public static string fHazardLocationStatus => _fHazardLocationStatus.Value;
 
-    private static readonly Lazy<string> _fHazardLocationIsValidated = new Lazy<string>(() => "fldb_IsValidated");
-    public static string fHazardLocationIsValidated => _fHazardLocationIsValidated.Value;
-
+    
     private static readonly Lazy<string> _fHazardLocationValidatedDate = new Lazy<string>(() => "fldd_ValidatedDate");
     public static string fHazardLocationValidatedDate => _fHazardLocationValidatedDate.Value;
 

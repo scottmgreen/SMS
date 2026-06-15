@@ -1,4 +1,4 @@
-using SMS_Application.Interfaces;
+﻿using SMS_Application.Interfaces;
 using SMS_Domain.Events;
 using SMS_Shared.Configuration;
 
@@ -49,10 +49,10 @@ public partial class OrganizationalGroups : ComponentBase
     private List<SMSOrganizationalUser> SMSOrganizationalUsers { get; set; } = new();
     private List<SMSOrganizationalUser> GroupMembers { get; set; } = new();
     private List<SMSOrganizationalUser> AvailableUsers { get; set; } = new();
-    private SMSOrganizationalGroup? CurrentGroup { get; set; }
-    private bool IsEditMode { get; set; }
-    private bool IsManagingMembers { get; set; }
-    private string? CurrentGroupCode { get; set; }
+    private SMSOrganizationalGroup? _currentGroup { get; set; }
+    private bool _isEditMode { get; set; }
+    private bool _isManagingMembers { get; set; }
+    private string? _currentGroupCode { get; set; }
 
     // Grid reference
     private RadzenDataGrid<SMSOrganizationalGroup>? _groupsGrid;
@@ -60,29 +60,29 @@ public partial class OrganizationalGroups : ComponentBase
     // Selection tracking for member management
     private Dictionary<string, bool> SelectedUsers { get; set; } = new();
 
-    private string SuccessMessage { get; set; } = string.Empty;
-    private string ErrorMessage { get; set; } = string.Empty;
-    private bool IsSaving { get; set; } = false;
+    private string _successMessage { get; set; } = string.Empty;
+    private string _errorMessage { get; set; } = string.Empty;
+    private bool _isSaving { get; set; } = false;
 
     #endregion
 
     #region Modal Properties
 
-    private bool ShowCreateModal { get; set; } = false;
-    private bool ShowEditModal { get; set; } = false;
-    private bool ShowMembersModal { get; set; } = false;
-    private bool ShowDeleteModal { get; set; } = false;
-    private string NewGroupName { get; set; } = string.Empty;
-    private string NewDescription { get; set; } = string.Empty;
-    private string NewGroupType { get; set; } = string.Empty;
-    private string NewAuthorityLevel { get; set; } = string.Empty;
-    private string EditGroupName { get; set; } = string.Empty;
-    private string EditDescription { get; set; } = string.Empty;
-    private string EditGroupType { get; set; } = string.Empty;
-    private string EditAuthorityLevel { get; set; } = string.Empty;
-    private bool EditIsActive { get; set; } = true;
-    private string DeleteGroupCode { get; set; } = string.Empty;
-    private string DeleteGroupName { get; set; } = string.Empty;
+    private bool _showCreateModal { get; set; } = false;
+    private bool _showEditModal { get; set; } = false;
+    private bool _showMembersModal { get; set; } = false;
+    private bool _showDeleteModal { get; set; } = false;
+    private string _newGroupName { get; set; } = string.Empty;
+    private string _newDescription { get; set; } = string.Empty;
+    private string _newGroupType { get; set; } = string.Empty;
+    private string _newAuthorityLevel { get; set; } = string.Empty;
+    private string _editGroupName { get; set; } = string.Empty;
+    private string _editDescription { get; set; } = string.Empty;
+    private string _editGroupType { get; set; } = string.Empty;
+    private string _editAuthorityLevel { get; set; } = string.Empty;
+    private bool _editIsActive { get; set; } = true;
+    private string _deleteGroupCode { get; set; } = string.Empty;
+    private string _deleteGroupName { get; set; } = string.Empty;
 
     #endregion
 
@@ -170,21 +170,21 @@ public partial class OrganizationalGroups : ComponentBase
                 return;
             }
 
-            CurrentGroup = groupResult.Value;
+            _currentGroup = groupResult.Value;
 
             // Set edit form values
-            EditGroupName = CurrentGroup.Name ?? string.Empty;
-            EditDescription = CurrentGroup.Description ?? string.Empty;
-            EditGroupType = CurrentGroup.GroupType.ToUpper() ?? string.Empty;
-            EditAuthorityLevel = CurrentGroup.AuthorityLevel.ToUpper() ?? string.Empty;
-            EditIsActive = CurrentGroup.IsActive;
+            _editGroupName = _currentGroup.Name ?? string.Empty;
+            _editDescription = _currentGroup.Description ?? string.Empty;
+            _editGroupType = _currentGroup.GroupType.ToUpper() ?? string.Empty;
+            _editAuthorityLevel = _currentGroup.AuthorityLevel.ToUpper() ?? string.Empty;
+            _editIsActive = _currentGroup.IsActive;
 
             // Debug logging to help identify binding issues
             _logger.LogInformation("Edit Modal - GroupType: {GroupType}, AuthorityLevel: {AuthorityLevel}", 
-                EditGroupType, EditAuthorityLevel);
+                _editGroupType, _editAuthorityLevel);
 
             // Open edit modal
-            ShowEditModal = true;
+            _showEditModal = true;
             StateHasChanged(); // Force UI refresh
         }
         catch (Exception ex)
@@ -196,25 +196,25 @@ public partial class OrganizationalGroups : ComponentBase
 
     private void CancelEdit()
     {
-        IsEditMode = false;
-        CurrentGroup = null;
-        EditGroupName = string.Empty;
-        EditDescription = string.Empty;
-        EditGroupType = string.Empty;
-        EditAuthorityLevel = string.Empty;
-        EditIsActive = true;
+        _isEditMode = false;
+        _currentGroup = null;
+        _editGroupName = string.Empty;
+        _editDescription = string.Empty;
+        _editGroupType = string.Empty;
+        _editAuthorityLevel = string.Empty;
+        _editIsActive = true;
         _navigation.NavigateToSecure("/System/UserGroups/OrganizationalGroups");
     }
 
     private void CloseEditModal()
     {
-        ShowEditModal = false;
-        CurrentGroup = null;
-        EditGroupName = string.Empty;
-        EditDescription = string.Empty;
-        EditGroupType = string.Empty; // This will select the default "-- Select --" option
-        EditAuthorityLevel = string.Empty; // This will select the default "-- Select --" option
-        EditIsActive = true;
+        _showEditModal = false;
+        _currentGroup = null;
+        _editGroupName = string.Empty;
+        _editDescription = string.Empty;
+        _editGroupType = string.Empty; // This will select the default "-- Select --" option
+        _editAuthorityLevel = string.Empty; // This will select the default "-- Select --" option
+        _editIsActive = true;
     }
 
     #endregion
@@ -223,7 +223,7 @@ public partial class OrganizationalGroups : ComponentBase
 
     private async Task CreateGroup()
     {
-        if (string.IsNullOrWhiteSpace(NewGroupName))
+        if (string.IsNullOrWhiteSpace(_newGroupName))
         {
             await ShowErrorAsyncNotification("Group name is required.");
             return;
@@ -231,7 +231,7 @@ public partial class OrganizationalGroups : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Create group entity
@@ -240,10 +240,10 @@ public partial class OrganizationalGroups : ComponentBase
             var group = new SMSOrganizationalGroup(groupId)
             {
                 Code = groupCode,
-                Name = NewGroupName,
-                Description = NewDescription,
-                GroupType = NewGroupType,
-                AuthorityLevel = NewAuthorityLevel,
+                Name = _newGroupName,
+                Description = _newDescription,
+                GroupType = _newGroupType,
+                AuthorityLevel = _newAuthorityLevel,
                 IsActive = true
             };
 
@@ -252,7 +252,7 @@ public partial class OrganizationalGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Organizational group '{NewGroupName}' created successfully.");
+                await ShowSuccessAsyncNotification($"Organizational group '{_newGroupName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
                 if (_groupsGrid != null)
@@ -270,14 +270,14 @@ public partial class OrganizationalGroups : ComponentBase
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
 
     private async Task UpdateGroup()
     {
-        if (CurrentGroup is null || string.IsNullOrWhiteSpace(EditGroupName))
+        if (_currentGroup is null || string.IsNullOrWhiteSpace(_editGroupName))
         {
             await ShowErrorAsyncNotification("Group name is required.");
             return;
@@ -285,22 +285,22 @@ public partial class OrganizationalGroups : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Update group properties
-            CurrentGroup.Name = EditGroupName;
-            CurrentGroup.Description = EditDescription;
-            CurrentGroup.GroupType = EditGroupType;
-            CurrentGroup.AuthorityLevel = EditAuthorityLevel;
-            CurrentGroup.IsActive = EditIsActive;
+            _currentGroup.Name = _editGroupName;
+            _currentGroup.Description = _editDescription;
+            _currentGroup.GroupType = _editGroupType;
+            _currentGroup.AuthorityLevel = _editAuthorityLevel;
+            _currentGroup.IsActive = _editIsActive;
 
-            var updateCommand = new UpdateSMSOrganizationalGroupCommand(CurrentGroup);
+            var updateCommand = new UpdateSMSOrganizationalGroupCommand(_currentGroup);
             var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Organizational group '{EditGroupName}' updated successfully.");
+                await ShowSuccessAsyncNotification($"Organizational group '{_editGroupName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
                 if (_groupsGrid != null)
@@ -313,19 +313,19 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating organizational group: {GroupCode}", CurrentGroup.Code);
+            _logger.LogError(ex, "Error updating organizational group: {GroupCode}", _currentGroup.Code);
             await ShowErrorAsyncNotification("Error updating organizational group. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
 
     private async Task DeleteGroup()
     {
-        if (string.IsNullOrWhiteSpace(DeleteGroupCode))
+        if (string.IsNullOrWhiteSpace(_deleteGroupCode))
         {
             await ShowErrorAsyncNotification("Group code is required for deletion.");
             return;
@@ -333,11 +333,11 @@ public partial class OrganizationalGroups : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Get existing group to pass to delete command
-            var getGroupQuery = new GetSMSOrganizationalGroupByCodeQuery(DeleteGroupCode);
+            var getGroupQuery = new GetSMSOrganizationalGroupByCodeQuery(_deleteGroupCode);
             var groupResult = await _mediator.SendAsync(getGroupQuery, CancellationToken.None);
 
             if (groupResult.IsFailure)
@@ -358,7 +358,7 @@ public partial class OrganizationalGroups : ComponentBase
                     await _groupsGrid.Reload();
 
                 // If we're editing the deleted group, cancel edit mode
-                if (CurrentGroup?.Code == DeleteGroupCode)
+                if (_currentGroup?.Code == _deleteGroupCode)
                 {
                     CancelEdit();
                 }
@@ -370,12 +370,12 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error deleting organizational group: {GroupCode}", DeleteGroupCode);
+            _logger.LogError(ex, "Error deleting organizational group: {GroupCode}", _deleteGroupCode);
             await ShowErrorAsyncNotification("Error deleting organizational group. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
@@ -386,34 +386,34 @@ public partial class OrganizationalGroups : ComponentBase
 
     private void OpenCreateModal()
     {
-        NewGroupName = string.Empty;
-        NewDescription = string.Empty;
-        NewGroupType = string.Empty;
-        NewAuthorityLevel = string.Empty;
-        ShowCreateModal = true;
+        _newGroupName = string.Empty;
+        _newDescription = string.Empty;
+        _newGroupType = string.Empty;
+        _newAuthorityLevel = string.Empty;
+        _showCreateModal = true;
     }
 
     private void CloseCreateModal()
     {
-        ShowCreateModal = false;
-        NewGroupName = string.Empty;
-        NewDescription = string.Empty;
-        NewGroupType = string.Empty;
-        NewAuthorityLevel = string.Empty;
+        _showCreateModal = false;
+        _newGroupName = string.Empty;
+        _newDescription = string.Empty;
+        _newGroupType = string.Empty;
+        _newAuthorityLevel = string.Empty;
     }
 
     private void ConfirmDelete(string groupCode, string groupName)
     {
-        DeleteGroupCode = groupCode;
-        DeleteGroupName = groupName;
-        ShowDeleteModal = true;
+        _deleteGroupCode = groupCode;
+        _deleteGroupName = groupName;
+        _showDeleteModal = true;
     }
 
     private void CloseDeleteModal()
     {
-        ShowDeleteModal = false;
-        DeleteGroupCode = string.Empty;
-        DeleteGroupName = string.Empty;
+        _showDeleteModal = false;
+        _deleteGroupCode = string.Empty;
+        _deleteGroupName = string.Empty;
     }
 
     #endregion
@@ -449,16 +449,16 @@ public partial class OrganizationalGroups : ComponentBase
 
         try
         {
-            CurrentGroupCode = groupCode;
-            IsManagingMembers = true;
+            _currentGroupCode = groupCode;
+            _isManagingMembers = true;
 
             // Find the current group
-            CurrentGroup = SMSOrganizationalGroups.FirstOrDefault(g => g.Code == groupCode);
+            _currentGroup = SMSOrganizationalGroups.FirstOrDefault(g => g.Code == groupCode);
 
             await LoadGroupMembersAsync(groupCode);
 
             // Show modal instead of navigating
-            ShowMembersModal = true;
+            _showMembersModal = true;
         }
         catch (Exception ex)
         {
@@ -510,9 +510,9 @@ public partial class OrganizationalGroups : ComponentBase
     private async Task ExitMemberManagement()
     {
         // Reset member management state
-        IsManagingMembers = false;
-        CurrentGroupCode = null;
-        CurrentGroup = null;
+        _isManagingMembers = false;
+        _currentGroupCode = null;
+        _currentGroup = null;
 
         _logger.LogInformation("Exited member management view");
         await ShowInfoAsyncNotification("Returned to group management");
@@ -522,10 +522,10 @@ public partial class OrganizationalGroups : ComponentBase
 
     private void CloseMembersModal()
     {
-        ShowMembersModal = false;
-        IsManagingMembers = false;
-        CurrentGroupCode = null;
-        CurrentGroup = null;
+        _showMembersModal = false;
+        _isManagingMembers = false;
+        _currentGroupCode = null;
+        _currentGroup = null;
         GroupMembers.Clear();
         AvailableUsers.Clear();
         SelectedUsers.Clear();
@@ -533,7 +533,7 @@ public partial class OrganizationalGroups : ComponentBase
 
     private async Task RemoveUser(string userCode)
     {
-        if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(CurrentGroupCode))
+        if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(_currentGroupCode))
         {
             await ShowErrorAsyncNotification("User code and group code are required.");
             return;
@@ -541,14 +541,14 @@ public partial class OrganizationalGroups : ComponentBase
 
         try
         {
-            var groupId = new SMSOrganizationalGroupID(CurrentGroupCode);
+            var groupId = new SMSOrganizationalGroupID(_currentGroupCode);
             var command = new RemoveUserFromOrganizationalGroupCommand(userCode, groupId);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 await ShowSuccessAsyncNotification("User removed from group successfully.");
-                await LoadGroupMembersAsync(CurrentGroupCode);
+                await LoadGroupMembersAsync(_currentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
@@ -558,14 +558,14 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, CurrentGroupCode);
+            _logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, _currentGroupCode);
             await ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
 
     private async Task AssignMultipleUsers()
     {
-        if (string.IsNullOrWhiteSpace(CurrentGroupCode) || !SelectedUsers.Any(s => s.Value))
+        if (string.IsNullOrWhiteSpace(_currentGroupCode) || !SelectedUsers.Any(s => s.Value))
         {
             await ShowErrorAsyncNotification("Group code and at least one user must be selected.");
             return;
@@ -581,7 +581,7 @@ public partial class OrganizationalGroups : ComponentBase
             {
                 try
                 {
-                    var groupId = new SMSOrganizationalGroupID(CurrentGroupCode);
+                    var groupId = new SMSOrganizationalGroupID(_currentGroupCode);
                     var command = new AssignUserToOrganizationalGroupCommand(userCode, groupId);
                     var result = await _mediator.SendAsync(command, CancellationToken.None);
 
@@ -592,7 +592,7 @@ public partial class OrganizationalGroups : ComponentBase
                 }
                 catch (Exception ex)
                 {
-                    _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
+                    _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, _currentGroupCode);
                     failureCount++;
                 }
             }
@@ -604,7 +604,7 @@ public partial class OrganizationalGroups : ComponentBase
                     message += $" {failureCount} assignment(s) failed.";
                 await ShowSuccessAsyncNotification(message);
 
-                await LoadGroupMembersAsync(CurrentGroupCode);
+                await LoadGroupMembersAsync(_currentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
@@ -614,14 +614,14 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning multiple users to group {GroupCode}", CurrentGroupCode);
+            _logger.LogError(ex, "Error assigning multiple users to group {GroupCode}", _currentGroupCode);
             await ShowErrorAsyncNotification("Error assigning users to group. Please try again.");
         }
     }
 
     private async Task AssignSingleUser(string userCode)
     {
-        if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(CurrentGroupCode))
+        if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(_currentGroupCode))
         {
             await ShowErrorAsyncNotification("User code and group code are required.");
             return;
@@ -629,14 +629,14 @@ public partial class OrganizationalGroups : ComponentBase
 
         try
         {
-            var groupId = new SMSOrganizationalGroupID(CurrentGroupCode);
+            var groupId = new SMSOrganizationalGroupID(_currentGroupCode);
             var command = new AssignUserToOrganizationalGroupCommand(userCode, groupId);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 await ShowSuccessAsyncNotification("User assigned to group successfully.");
-                await LoadGroupMembersAsync(CurrentGroupCode);
+                await LoadGroupMembersAsync(_currentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
@@ -646,7 +646,7 @@ public partial class OrganizationalGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
+            _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, _currentGroupCode);
             await ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }
@@ -697,3 +697,5 @@ public partial class OrganizationalGroups : ComponentBase
 
     #endregion
 }
+
+

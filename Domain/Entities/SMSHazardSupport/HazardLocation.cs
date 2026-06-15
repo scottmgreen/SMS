@@ -23,25 +23,13 @@ public sealed class HazardLocation : BaseAuditableEntity
     // Public constructor for domain usage
     public HazardLocation(HazardLocationID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
 
-    // Private constructor for creation with validation
-    private HazardLocation(HazardLocationID id, string code, string hazardCode)
-        : base(id, "SYSTEM", DateTime.UtcNow)
-    {
-        Code = code;
-        HazardCode = hazardCode;
-
-        DateSelected = DateTime.UtcNow;
-
-
-    }
-
+    
     #region Core Properties
 
     public string Code { get; set; } = string.Empty;
     public string HazardCode { get; set; } = string.Empty;
 
-    public bool IsValid { get; set; }
-
+    public bool IsValid { get; set; } = true;              // Indicates if location data is valid and usable    
     #endregion
 
     #region Geospatial Properties
@@ -53,66 +41,11 @@ public sealed class HazardLocation : BaseAuditableEntity
 
     #endregion
 
-    #region Map Visualization Properties
-
-
-
-    #endregion
-
-    #region Precision and Accuracy Properties
-
-
-    #endregion
-
-    #region Airport Reference Properties
-
-
-
-    #endregion
-
     #region Status and Validation Properties
 
-
-
-    #endregion
-
-    #region Additional Properties
-
-    // Comma-separated tags for categorization
+    public bool IsValidated { get; set; }                  // Indicates if location has been validated  
 
     #endregion
-
-    #region Factory Methods
-
-    /// <summary>
-    /// Create a new hazard location with basic information
-    /// </summary>
-
-    /// <summary>
-    /// Create hazard location with GPS data
-    /// </summary>
-
-
-    #endregion
-
-    #region Domain Behavior Methods
-
-    /// <summary>
-    /// Update location coordinates
-    /// </summary>
-
-
-    /// <summary>
-    /// Update location description and area information
-    /// </summary>
-
-
-
-
-
-    #endregion
-
-    #region Query Methods
 
     /// <summary>
     /// Check if location has coordinates
@@ -122,19 +55,7 @@ public sealed class HazardLocation : BaseAuditableEntity
         return Latitude.HasValue && Longitude.HasValue;
     }
 
-    /// <summary>
-    /// Check if location is GPS sourced
-    /// </summary>
 
-
-    /// <summary>
-    /// Check if location needs validation
-    /// </summary>
-
-
-    /// <summary>
-    /// Get location accuracy category
-    /// </summary>
 
 
     /// <summary>
@@ -171,18 +92,7 @@ public sealed class HazardLocation : BaseAuditableEntity
         return $"{Latitude:F6}°, {Longitude:F6}°";
     }
 
-    /// <summary>
-    /// Get full location display name
-
-    #endregion
-
-    #region Private Helper Methods
-
-
-
-
-
-    #endregion
+  
 }
 
 /// <summary>

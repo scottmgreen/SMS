@@ -1,4 +1,4 @@
-using SMS_Domain.Enums;
+﻿using SMS_Domain.Enums;
 using SMS_Domain.Events;
 using SMS_Application.Services;
 using SMS_Domain.Errors;
@@ -24,30 +24,30 @@ public partial class ReportValidation : ComponentBase
     [Inject] private DialogService _dialogService { get; set; } = default!;
 
     // Form Data Properties - Using Smart Enum
-    private ValidationDecision? SelectedValidationDecision { get; set; }
-    private string ValidationComments { get; set; } = "";
-    private RiskAssessmentCategory ValidationType { get; set; } = RiskAssessmentCategory.Technical;
-    private string _currentValidationType => RiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly.Value : ValidationType.Value;
-    private string ValidatedBy { get; set; } = "";
+    private ValidationDecision? _selectedValidationDecision { get; set; }
+    private string _validationComments { get; set; } = "";
+    private RiskAssessmentCategory _validationType { get; set; } = RiskAssessmentCategory.Technical;
+    private string _currentValidationType => _riskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly.Value : _validationType.Value;
+    private string _validatedBy { get; set; } = "";
 
-    private string LeadAssessor { get; set; } = "";
+    private string _leadAssessor { get; set; } = "";
 
-    private string LeadInvestigator { get; set; } = "";
+    private string _leadInvestigator { get; set; } = "";
 
     // Helper property for string-based UI binding - renamed to avoid conflicts
     private string ValidationDecisionValue
     {
-        get => SelectedValidationDecision?.Value ?? "";
-        set => SelectedValidationDecision = string.IsNullOrWhiteSpace(value) ? null : SMS_Domain.Enums.ValidationDecision.FromValue(value);
+        get => _selectedValidationDecision?.Value ?? "";
+        set => _selectedValidationDecision = string.IsNullOrWhiteSpace(value) ? null : SMS_Domain.Enums.ValidationDecision.FromValue(value);
     }
 
     // Display Properties
     private bool _isLoading = true;
-    private bool _isRiskRegistryCheckboxDisabled => SelectedValidationDecision != ValidationDecision.SmsRisk;
-    private Report? ReportDetails { get; set; } = default!;
-    private Hazard? ReportHazard { get; set; } = default!;
+    private bool _isRiskRegistryCheckboxDisabled => _selectedValidationDecision != ValidationDecision.SmsRisk;
+    private Report? _reportDetails { get; set; } = default!;
+    private Hazard? _reportHazard { get; set; } = default!;
 
-    private bool RiskRegistryOnly { get; set; }
+    private bool _riskRegistryOnly { get; set; }
     private SMS_Domain.Entities.ReportValidation? ExistingValidation { get; set; }
     private List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
 
@@ -57,7 +57,7 @@ public partial class ReportValidation : ComponentBase
     private bool _isUpdate => ExistingValidation is not null;
     private string _validationCode => ExistingValidation?.Code ?? "New";
     //private string CurrentStatus { get; set;}= string.Empty; // ExistingValidation?.Status ?? "New";
-    private bool IsProcessing { get; set; } = false;
+    private bool _isProcessing { get; set; } = false;
 
     
 
@@ -93,13 +93,13 @@ public partial class ReportValidation : ComponentBase
             var reportResult = await _mediator.SendAsync(new GetReportByCodeQuery(reportCode), CancellationToken.None);
             if (reportResult.IsSuccess)
             {
-                ReportDetails = reportResult.Value;
+                _reportDetails = reportResult.Value;
 
                 // Load associated hazard
                 var hazardResult = await _mediator.SendAsync(new GetHazardsByReportCodeQuery(reportCode), CancellationToken.None);
                 if (hazardResult.IsSuccess)
                 {
-                    ReportHazard = hazardResult.Value?.FirstOrDefault(h => h.ReportCode.Trim() == reportCode.Value.Trim());
+                    _reportHazard = hazardResult.Value?.FirstOrDefault(h => h.ReportCode.Trim() == reportCode.Value.Trim());
                 }
             }
             
@@ -117,25 +117,25 @@ public partial class ReportValidation : ComponentBase
                 {
                     if (SMS_Domain.Enums.ValidationDecision.TryFromValue(ExistingValidation.ValidationDecision, out var decision))
                     {
-                        SelectedValidationDecision = decision;
+                        _selectedValidationDecision = decision;
                     }
                 }
-                ValidationComments = ExistingValidation.ValidationComments ?? "";
-                ValidationType = RiskAssessmentCategory.Technical ;
-                ValidatedBy = ExistingValidation.ValidatedBy ?? "";
+                _validationComments = ExistingValidation.ValidationComments ?? "";
+                _validationType = RiskAssessmentCategory.Technical ;
+                _validatedBy = ExistingValidation.ValidatedBy ?? "";
 
                 _logger.LogInformation("Found existing ReportValidation for report {ReportId} - Decision: {Decision}",
-                    ReportId, SelectedValidationDecision?.Name ?? "None");
+                    ReportId, _selectedValidationDecision?.Name ?? "None");
             }
             else
             {
                 _logger.LogInformation("No existing ReportValidation found for report: {ReportId}", ReportId);
 
                 // Set defaults for new validation
-                SelectedValidationDecision = null;
-                ValidatedBy = _currentUserService?.UserDisplayName ?? string.Empty;
-                ValidationType = RiskAssessmentCategory.Technical;
-                ValidationComments = "";
+                _selectedValidationDecision = null;
+                _validatedBy = _currentUserService?.UserDisplayName ?? string.Empty;
+                _validationType = RiskAssessmentCategory.Technical;
+                _validationComments = "";
             }
 
             // Load available assessors
@@ -233,10 +233,10 @@ public partial class ReportValidation : ComponentBase
     {
         if (SMS_Domain.Enums.ValidationDecision.TryFromValue(decision, out var validationDecision))
         {
-            SelectedValidationDecision = validationDecision;
-            if (SelectedValidationDecision != ValidationDecision.SmsRisk)
+            _selectedValidationDecision = validationDecision;
+            if (_selectedValidationDecision != ValidationDecision.SmsRisk)
             {
-                this.RiskRegistryOnly = false;
+                this._riskRegistryOnly = false;
                 // The checkbox will automatically be disabled due to the Disabled binding
             }
             StateHasChanged();
@@ -252,23 +252,23 @@ public partial class ReportValidation : ComponentBase
     /// </summary>
     private async Task HandleSubmit()
     {
-        if (IsProcessing) return; // Prevent double-click
+        if (_isProcessing) return; // Prevent double-click
 
         try
         {
-            IsProcessing = true;
+            _isProcessing = true;
             StateHasChanged();
 
-            _logger.LogInformation("HandleSubmit called for ReportId: {ReportId}, Decision: {Decision}", ReportId, SelectedValidationDecision?.Value);
+            _logger.LogInformation("HandleSubmit called for ReportId: {ReportId}, Decision: {Decision}", ReportId, _selectedValidationDecision?.Value);
 
             // Manual validation
-            if (SelectedValidationDecision is null)
+            if (_selectedValidationDecision is null)
             {
                 await _notificationHelper.ShowErrorAsync("Please select a validation decision");
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(ValidationComments))
+            if (string.IsNullOrWhiteSpace(_validationComments))
             {
                 await _notificationHelper.ShowErrorAsync("Validation comments are required");
                 return;
@@ -278,12 +278,12 @@ public partial class ReportValidation : ComponentBase
             await CreateValidationRecord();
 
                                                
-            var navigationTask = SelectedValidationDecision switch
+            var navigationTask = _selectedValidationDecision switch
             {
-                _ when SelectedValidationDecision == ValidationDecision.SmsRisk => NavigateToRiskAssessment(),
-                _ when SelectedValidationDecision == ValidationDecision.NeedsInvestigation => NavigateToInvestigation(),
-                _ when SelectedValidationDecision == ValidationDecision.NotSmsRisk => HandleNotSmsRisk(),
-                _ => throw new InvalidOperationException($"Unhandled validation decision: {SelectedValidationDecision.Name}")
+                _ when _selectedValidationDecision == ValidationDecision.SmsRisk => NavigateToRiskAssessment(),
+                _ when _selectedValidationDecision == ValidationDecision.NeedsInvestigation => NavigateToInvestigation(),
+                _ when _selectedValidationDecision == ValidationDecision.NotSmsRisk => HandleNotSmsRisk(),
+                _ => throw new InvalidOperationException($"Unhandled validation decision: {_selectedValidationDecision.Name}")
             };
             await navigationTask;
 
@@ -296,7 +296,7 @@ public partial class ReportValidation : ComponentBase
         }
         finally
         {
-            IsProcessing = false;
+            _isProcessing = false;
             StateHasChanged();
         }
     }
@@ -304,20 +304,20 @@ public partial class ReportValidation : ComponentBase
     private RiskAssessment CreateRiskAssessmentEntity()
     {
         var assessmentId = new RiskAssessmentID("RS-0000"); // Database will generate actual ID
-        var initialStep = RiskRegistryOnly ? 4 : 1;
-        var initialStage = RiskRegistryOnly ? RiskAssessmentStage.AssessingRisk : RiskAssessmentStage.DescribingSystem;
-        var initialStatus = RiskRegistryOnly ? RiskAssessmentStatus.AssessmentUnderway : RiskAssessmentStatus.AssessmentCreate;
-        var assessmentType = RiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly : RiskAssessmentType.Technical;
-        var assessmentLabel = RiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly.Name : RiskAssessmentType.Technical.Name;
+        var initialStep = _riskRegistryOnly ? 4 : 1;
+        var initialStage = _riskRegistryOnly ? RiskAssessmentStage.AssessingRisk : RiskAssessmentStage.DescribingSystem;
+        var initialStatus = _riskRegistryOnly ? RiskAssessmentStatus.AssessmentUnderway : RiskAssessmentStatus.AssessmentCreate;
+        var assessmentType = _riskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly : RiskAssessmentType.Technical;
+        var assessmentLabel = _riskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly.Name : RiskAssessmentType.Technical.Name;
 
         return new RiskAssessment(assessmentId)
         {
             Name = $"{assessmentLabel} Risk Assessment for Report {ReportId}",
-            LeadAssessorId = LeadAssessor,
+            LeadAssessorId = _leadAssessor,
             AssessmentType = assessmentType,
             RiskAssessmentCategory = RiskAssessmentCategory.Technical,
-            HazardCode = ReportHazard!.Code,
-            PrimaryHazardId = ReportHazard.Code,
+            HazardCode = _reportHazard!.Code,
+            PrimaryHazardId = _reportHazard.Code,
             Description = $"{assessmentLabel} assessment created from Report {ReportId}",
             Stage = initialStage,
             Code = assessmentId.Value,
@@ -361,9 +361,9 @@ public partial class ReportValidation : ComponentBase
 
                 // Update the existing validation with new values
                 ExistingValidation.ValidationDecision = ValidationDecisionValue;
-                ExistingValidation.ValidationComments = ValidationComments;
+                ExistingValidation.ValidationComments = _validationComments;
                 ExistingValidation.ValidationType = _currentValidationType;
-                ExistingValidation.ValidatedBy = ValidatedBy;
+                ExistingValidation.ValidatedBy = _validatedBy;
                 ExistingValidation.Status = ReportValidationStatus.Revised;
                 ExistingValidation.Stage = "COMPLETE";
                 ExistingValidation.ValidatedDate = DateTime.UtcNow;
@@ -385,7 +385,7 @@ public partial class ReportValidation : ComponentBase
                 }
 
                 _logger.LogInformation("Successfully updated existing ReportValidation: {ValidationCode}", ExistingValidation.Code);
-                await _notificationHelper.ShowSuccessAsync($"Validation updated successfully. Decision: {SelectedValidationDecision?.Name}");
+                await _notificationHelper.ShowSuccessAsync($"Validation updated successfully. Decision: {_selectedValidationDecision?.Name}");
 
                 // NEW: SPI AUTOMATION - Trigger validation decision event ??
                 await TriggerValidationSPIAutomation(ExistingValidation.Code, ValidationDecisionValue, ExistingValidation.ValidatedDate ?? DateTime.UtcNow);
@@ -400,9 +400,9 @@ public partial class ReportValidation : ComponentBase
                 {
                     Code = validationId.Value,
                     ReportCode = ReportId,
-                    ValidatedBy = ValidatedBy,
+                    ValidatedBy = _validatedBy,
                     ValidationDecision = ValidationDecisionValue,
-                    ValidationComments = ValidationComments,
+                    ValidationComments = _validationComments,
                     ValidationType = _currentValidationType,
                     Status = ReportValidationStatus.ValidationComplete,
                     Stage = "NEW",
@@ -424,7 +424,7 @@ public partial class ReportValidation : ComponentBase
                     throw new Exception($"Failed to Update Report Status during Create new validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.CreateFailed.Message}");
                 }
                 _logger.LogInformation("Successfully created new ReportValidation: {ValidationCode}", result.Value.Code);
-                await _notificationHelper.ShowSuccessAsync($"Validation recorded successfully. Decision: {SelectedValidationDecision?.Name}");
+                await _notificationHelper.ShowSuccessAsync($"Validation recorded successfully. Decision: {_selectedValidationDecision?.Name}");
 
                 // NEW: SPI AUTOMATION - Trigger validation decision event ??
                 await TriggerValidationSPIAutomation(result.Value.Code, ValidationDecisionValue, validation.ValidatedDate ?? DateTime.UtcNow);
@@ -457,8 +457,8 @@ public partial class ReportValidation : ComponentBase
                 validationDecision,
                 validatedDate)
             {
-                ValidatedBy = ValidatedBy,
-                ValidationComments = ValidationComments
+                ValidatedBy = _validatedBy,
+                ValidationComments = _validationComments
             };
 
             var publishResult = await _eventBus.PublishDomainEventAsync(validationEvent, CancellationToken.None);
@@ -489,9 +489,9 @@ public partial class ReportValidation : ComponentBase
                 return;
             }
 
-            if (RiskRegistryOnly)
+            if (_riskRegistryOnly)
             {
-                _logger.LogInformation("RiskRegistryOnly selected. Routing to Technical Assessment Step 4 for Report: {ReportId}", ReportId);
+                _logger.LogInformation("_riskRegistryOnly selected. Routing to Technical Assessment Step 4 for Report: {ReportId}", ReportId);
 
                 var (riskAssessment, created) = await EnsureRiskAssessmentForCurrentHazardAsync();
                 if (created)
@@ -506,7 +506,7 @@ public partial class ReportValidation : ComponentBase
                 await UpdateReportStatusWithValidation(ReportStatus.RiskRegistryOnly, "Risk registry only");
 
                 var encodedReportCode = Uri.EscapeDataString((ReportId ?? string.Empty).Trim());
-                var hazardCode = ReportHazard?.Code ?? riskAssessment.HazardCode ?? riskAssessment.PrimaryHazardId ?? string.Empty;
+                var hazardCode = _reportHazard?.Code ?? riskAssessment.HazardCode ?? riskAssessment.PrimaryHazardId ?? string.Empty;
                 var encodedHazardCode = Uri.EscapeDataString(hazardCode.Trim());
                 var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{encodedReportCode}/{encodedHazardCode}/4";
                 await DelayAndNavigate(navigationUrl);
@@ -527,13 +527,13 @@ public partial class ReportValidation : ComponentBase
     {
         try
         {
-            if (ReportHazard is null)
+            if (_reportHazard is null)
             {
                 await _notificationHelper.ShowErrorAsync("Cannot create investigation - hazard information not found");
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(ReportHazard.Code))
+            if (string.IsNullOrWhiteSpace(_reportHazard.Code))
             {
                 await _notificationHelper.ShowErrorAsync("Cannot create investigation - invalid hazard code");
                 return;
@@ -547,7 +547,7 @@ public partial class ReportValidation : ComponentBase
             if (existingResult.IsSuccess && existingResult.Value is not null)
             {
                 existingInvestigation = existingResult.Value.FirstOrDefault(inv =>
-                    !string.IsNullOrWhiteSpace(inv.HazardCode) && inv.HazardCode.Equals(ReportHazard.Code, StringComparison.OrdinalIgnoreCase) ||
+                    !string.IsNullOrWhiteSpace(inv.HazardCode) && inv.HazardCode.Equals(_reportHazard.Code, StringComparison.OrdinalIgnoreCase) ||
                     !string.IsNullOrWhiteSpace(inv.ReportCode) && inv.ReportCode.Equals(ReportId, StringComparison.OrdinalIgnoreCase));
             }
 
@@ -555,7 +555,7 @@ public partial class ReportValidation : ComponentBase
             {
                 // Navigate to existing investigation
                 await _notificationHelper.ShowSuccessAsync($"Loading existing investigation {existingInvestigation.Code}");
-                var navigationUrl = $"/SMSRiskManagement/Investigations/{existingInvestigation.Code}/{ReportHazard.Code}";
+                var navigationUrl = $"/SMSRiskManagement/Investigations/{existingInvestigation.Code}/{_reportHazard.Code}";
                 _logger.LogInformation("Navigating to existing investigation: {Url}", navigationUrl);
                 bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.UnderInvestigation);
                 if (!flowControl)
@@ -572,13 +572,13 @@ public partial class ReportValidation : ComponentBase
                 var investigationCode = $"IN-0000";
                 var investigationId = new InvestigationID(investigationCode);
                 Investigation investigation = new Investigation(investigationId);
-                investigation.HazardCode = ReportHazard.Code;
+                investigation.HazardCode = _reportHazard.Code;
                 investigation.Status = InvestigationStatus.InvestigatorAssigned;
                 investigation.CreatedBy = _currentUserService?.UserDisplayName;
                 investigation.ReportCode = ReportId;
-                investigation.AssignedInvestigatorId = LeadInvestigator;
-                investigation.InvestigationObjectives = $"Investigation required based on validation decision for hazard {ReportHazard.Code}";
-                investigation.InvestigationNotes = $"Investigation initiated from report validation. Validation comments: {ValidationComments}";
+                investigation.AssignedInvestigatorId = _leadInvestigator;
+                investigation.InvestigationObjectives = $"Investigation required based on validation decision for hazard {_reportHazard.Code}";
+                investigation.InvestigationNotes = $"Investigation initiated from report validation. Validation comments: {_validationComments}";
 
                 CreateInvestigationCommand command = new CreateInvestigationCommand(investigation);
                 var createResult = await _mediator.SendAsync(command, CancellationToken.None);
@@ -587,7 +587,7 @@ public partial class ReportValidation : ComponentBase
                 {
                     var newInvestigation = createResult.Value;
                     await _notificationHelper.ShowSuccessAsync($"Investigation {newInvestigation.Code} created successfully");
-                    var navigationUrl = $"/SMSRiskManagement/Investigations/{newInvestigation.Code}/{ReportHazard.Code}";
+                    var navigationUrl = $"/SMSRiskManagement/Investigations/{newInvestigation.Code}/{_reportHazard.Code}";
                     _logger.LogInformation("Navigating to new investigation: {Url}", navigationUrl);
 
                     bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.UnderInvestigation);
@@ -640,13 +640,13 @@ public partial class ReportValidation : ComponentBase
     {
         try
         {
-            if (ReportDetails is null)
+            if (_reportDetails is null)
             {
                 throw new Exception("Report details not loaded");
             }
 
             // Update report status to Closed
-            bool flowControl = await UpdateReportStatus(ReportDetails.Code, ReportStatus.Closed);
+            bool flowControl = await UpdateReportStatus(_reportDetails.Code, ReportStatus.Closed);
             if (!flowControl)
             {
                 throw new Exception($"Failed to Update Report Status during exsiting investigation: {DomainErrors.ReportValidationError.CreateFailed.Message}");
@@ -677,7 +677,7 @@ public partial class ReportValidation : ComponentBase
         //var baseStyle = "border: 2px solid var(--rz-border-color);";
         var baseStyle = "border: 2px solid; color:black;height:110px;";
 
-        if (SelectedValidationDecision?.Value == decisionValue)
+        if (_selectedValidationDecision?.Value == decisionValue)
         {
             return decisionValue switch
             {
@@ -724,9 +724,9 @@ public partial class ReportValidation : ComponentBase
         _logger.LogInformation("User chose to create Airport Shared Dataset for Report: {ReportId}", ReportId);
         
         var datasetUrl = $"/SMSRiskManagement/AirportSharedDataset/{ReportId}";
-        if (!string.IsNullOrEmpty(ReportHazard?.Code))
+        if (!string.IsNullOrEmpty(_reportHazard?.Code))
         {
-            datasetUrl += $"/{ReportHazard.Code}";
+            datasetUrl += $"/{_reportHazard.Code}";
         }
 
         // Use secure navigation for consistency
@@ -759,10 +759,10 @@ public partial class ReportValidation : ComponentBase
     /// </summary>
     private async Task<RiskAssessment?> FindExistingRiskAssessment()
     {
-        if (string.IsNullOrEmpty(ReportHazard?.Code))
+        if (string.IsNullOrEmpty(_reportHazard?.Code))
             return null;
 
-        var expectedAssessmentType = RiskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly : RiskAssessmentType.Technical;
+        var expectedAssessmentType = _riskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly : RiskAssessmentType.Technical;
 
         var query = new GetAllRiskAssessmentsQuery();
         var result = await _mediator.SendAsync(query, CancellationToken.None);
@@ -772,7 +772,7 @@ public partial class ReportValidation : ComponentBase
 
         return result.Value.FirstOrDefault(ra => 
             !string.IsNullOrWhiteSpace(ra.HazardCode) && 
-            ra.HazardCode.Equals(ReportHazard.Code, StringComparison.OrdinalIgnoreCase) &&
+            ra.HazardCode.Equals(_reportHazard.Code, StringComparison.OrdinalIgnoreCase) &&
             ra.AssessmentType == expectedAssessmentType);
     }
 
@@ -788,7 +788,7 @@ public partial class ReportValidation : ComponentBase
             return (existingRiskAssessment, false);
         }
 
-        if (ReportHazard is null)
+        if (_reportHazard is null)
         {
             throw new InvalidOperationException("Cannot create risk assessment - hazard information not found");
         }
@@ -811,9 +811,9 @@ public partial class ReportValidation : ComponentBase
     private async Task NavigateToExistingRiskAssessment(RiskAssessment existingRiskAssessment)
     {
         // Update lead assessor if provided
-        if (!string.IsNullOrEmpty(LeadAssessor))
+        if (!string.IsNullOrEmpty(_leadAssessor))
         {
-            existingRiskAssessment.LeadAssessorId = LeadAssessor;
+            existingRiskAssessment.LeadAssessorId = _leadAssessor;
             
             var updateCmd = new UpdateRiskAssessmentCommand(existingRiskAssessment);
             await _mediator.SendAsync(updateCmd, CancellationToken.None);
@@ -825,8 +825,8 @@ public partial class ReportValidation : ComponentBase
 
         await _notificationHelper.ShowSuccessAsync($"Loading existing Risk Assessment {existingRiskAssessment.Code}");
         
-        // Fix: Use the hazard code from the existing risk assessment if ReportHazard is null
-        var hazardCode = ReportHazard?.Code ?? existingRiskAssessment.HazardCode ?? existingRiskAssessment.PrimaryHazardId;
+        // Fix: Use the hazard code from the existing risk assessment if _reportHazard is null
+        var hazardCode = _reportHazard?.Code ?? existingRiskAssessment.HazardCode ?? existingRiskAssessment.PrimaryHazardId;
         var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{hazardCode}/1";
         _logger.LogInformation("Navigating to existing Risk Assessment: {Url}", navigationUrl);
 
@@ -845,8 +845,8 @@ public partial class ReportValidation : ComponentBase
 
         await _notificationHelper.ShowSuccessAsync($"Risk Assessment {newRiskAssessment.Code} created successfully");
 
-        // Fix: Ensure hazard code is properly passed - use ReportHazard if available, else assessment hazard
-        var hazardCode = ReportHazard?.Code ?? newRiskAssessment.HazardCode ?? newRiskAssessment.PrimaryHazardId;
+        // Fix: Ensure hazard code is properly passed - use _reportHazard if available, else assessment hazard
+        var hazardCode = _reportHazard?.Code ?? newRiskAssessment.HazardCode ?? newRiskAssessment.PrimaryHazardId;
         var navigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{hazardCode}/1";
         _logger.LogInformation("Navigating to new risk assessment: {Url}", navigationUrl);
 
@@ -876,3 +876,5 @@ public partial class ReportValidation : ComponentBase
         _navigation.NavigateToSecure(url); // Use secure navigation consistently
     }
 }
+
+

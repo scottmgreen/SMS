@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Components.Rendering;
+﻿using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 
 using SMS_Application.Interfaces;
@@ -288,18 +288,18 @@ public partial class ReportProcessing : ComponentBase
     private List<ReportProcessingSummary> ClosedReferred { get; set; } = new();
 
     private int _selectedTabIndex = 0;
-    private bool IsLoading { get; set; } = true;
+    private bool _isLoading { get; set; } = true;
     private List<SMSOrganizationalUser> AvailableApprovers { get; set; } = new();
-    private string? SelectedApprover { get; set; }
+    private string? _selectedApprover { get; set; }
 
-    private bool ShowBulkApprovalDialog { get; set; } = false;
-    private ReportProcessingSummary? SelectedReportForApproval { get; set; }
-    private bool IsProcessingApproval { get; set; } = false;
+    private bool _showBulkApprovalDialog { get; set; } = false;
+    private ReportProcessingSummary? _selectedReportForApproval { get; set; }
+    private bool _isProcessingApproval { get; set; } = false;
 
     // NEW: Description modal dialog properties
-    private bool ShowDescriptionModal { get; set; } = false;
-    private string SelectedDescription { get; set; } = string.Empty;
-    private string SelectedReportId { get; set; } = string.Empty;
+    private bool _showDescriptionModal { get; set; } = false;
+    private string _selectedDescription { get; set; } = string.Empty;
+    private string _selectedReportId { get; set; } = string.Empty;
 
 
     private string _basicTextStyle = "font-size:smaller;font-weight: 600";
@@ -364,7 +364,7 @@ public partial class ReportProcessing : ComponentBase
     {
         try
         {
-            IsLoading = true;
+            _isLoading = true;
             await LoadAvailableApprovers();
 
 
@@ -392,7 +392,7 @@ public partial class ReportProcessing : ComponentBase
         }
         finally
         {
-            IsLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -1008,7 +1008,7 @@ public partial class ReportProcessing : ComponentBase
     {
         return builder =>
         {
-            if (IsLoading)
+            if (_isLoading)
             {
                 builder.OpenComponent<RadzenProgressBarCircular>(0);
                 builder.AddAttribute(1, "ShowValue", false);
@@ -1039,7 +1039,7 @@ public partial class ReportProcessing : ComponentBase
     {
         return builder =>
         {
-            if (IsLoading)
+            if (_isLoading)
             {
                 builder.OpenComponent<RadzenProgressBarCircular>(0);
                 builder.AddAttribute(1, "ShowValue", false);
@@ -1070,7 +1070,7 @@ public partial class ReportProcessing : ComponentBase
     {
         return builder =>
         {
-            if (IsLoading)
+            if (_isLoading)
             {
                 builder.OpenComponent<RadzenProgressBarCircular>(0);
                 builder.AddAttribute(1, "ShowValue", false);
@@ -1101,7 +1101,7 @@ public partial class ReportProcessing : ComponentBase
     {
         return builder =>
         {
-            if (IsLoading)
+            if (_isLoading)
             {
                 builder.OpenComponent<RadzenProgressBarCircular>(0);
                 builder.AddAttribute(1, "ShowValue", false);
@@ -1209,7 +1209,7 @@ public partial class ReportProcessing : ComponentBase
                             rightBuilder.AddAttribute(4, "Size", ButtonSize.Medium);
                             rightBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
                                 (args) => ShowBulkApprovalConfirmation(report)));
-                            rightBuilder.AddAttribute(6, "Disabled", IsProcessingApproval || GetApprovableMitigationCount(report) == 0);
+                            rightBuilder.AddAttribute(6, "Disabled", _isProcessingApproval || GetApprovableMitigationCount(report) == 0);
                             rightBuilder.CloseComponent(); // ? Close RadzenButton
                         }
                     }));
@@ -1413,7 +1413,7 @@ public partial class ReportProcessing : ComponentBase
     {
         try
         {
-            IsProcessingApproval = true;
+            _isProcessingApproval = true;
             StateHasChanged();
 
             _logger.LogInformation("Quick approving mitigation: {Code}", mitigation.MitigationCode);
@@ -1460,7 +1460,7 @@ public partial class ReportProcessing : ComponentBase
         }
         finally
         {
-            IsProcessingApproval = false;
+            _isProcessingApproval = false;
             StateHasChanged();
         }
     }
@@ -1955,8 +1955,8 @@ public partial class ReportProcessing : ComponentBase
     {
         try
         {
-            SelectedReportForApproval = report;
-            ShowBulkApprovalDialog = true;
+            _selectedReportForApproval = report;
+            _showBulkApprovalDialog = true;
             StateHasChanged();
 
             _logger.LogInformation("Showing bulk approval confirmation for report {ReportId} - hazard {HazardId}",
@@ -2037,7 +2037,7 @@ public partial class ReportProcessing : ComponentBase
     {
         try
         {
-            IsProcessingApproval = true;
+            _isProcessingApproval = true;
             StateHasChanged();
 
             _logger.LogInformation("Starting bulk approval for ALL mitigations in report: {ReportId}", reportId);
@@ -2162,7 +2162,7 @@ public partial class ReportProcessing : ComponentBase
         }
         finally
         {
-            IsProcessingApproval = false;
+            _isProcessingApproval = false;
             StateHasChanged();
         }
     }
@@ -2336,21 +2336,21 @@ public partial class ReportProcessing : ComponentBase
     /// </summary>
     private async Task ProcessBulkApprovalConfirmation()
     {
-        if (SelectedReportForApproval is null)
+        if (_selectedReportForApproval is null)
         {
             await ShowErrorAsyncNotification("No report selected for approval.");
             return;
         }
 
-        if (string.IsNullOrEmpty(SelectedApprover))
+        if (string.IsNullOrEmpty(_selectedApprover))
         {
             await ShowErrorAsyncNotification("Please select an authorized approver before proceeding.");
             return;
         }
 
         // ?? CRITICAL: Verify approver has authority for the highest risk level using enum
-        var highestRiskLevel = GetHighestRiskLevelAcrossAllHazards(SelectedReportForApproval);
-        var approver = AvailableApprovers.FirstOrDefault(a => a.Code == SelectedApprover);
+        var highestRiskLevel = GetHighestRiskLevelAcrossAllHazards(_selectedReportForApproval);
+        var approver = AvailableApprovers.FirstOrDefault(a => a.Code == _selectedApprover);
 
         if (approver is null || !CanApproveRiskLevel(approver, highestRiskLevel))
         {
@@ -2368,9 +2368,9 @@ public partial class ReportProcessing : ComponentBase
         }
 
         _logger.LogInformation("Bulk approval authorized: {ApproverName} ({ApproverCode}) approving {RiskLevel} risk mitigations for report {ReportId}",
-            $"{approver.FirstName?.Value} {approver.LastName?.Value}", SelectedApprover, highestRiskLevel, SelectedReportForApproval.ReportId);
+            $"{approver.FirstName?.Value} {approver.LastName?.Value}", _selectedApprover, highestRiskLevel, _selectedReportForApproval.ReportId);
 
-        await BulkApproveAllMitigationsForReport(SelectedReportForApproval.ReportId, approver.DisplayName); //SelectedApprover);
+        await BulkApproveAllMitigationsForReport(_selectedReportForApproval.ReportId, approver.DisplayName); //_selectedApprover);
         await CloseBulkApprovalConfirmation();
     }
 
@@ -2379,9 +2379,9 @@ public partial class ReportProcessing : ComponentBase
     /// </summary>
     private async Task CloseBulkApprovalConfirmation()
     {
-        ShowBulkApprovalDialog = false;
-        SelectedReportForApproval = null;
-        SelectedApprover = null;
+        _showBulkApprovalDialog = false;
+        _selectedReportForApproval = null;
+        _selectedApprover = null;
         StateHasChanged();
     }
 
@@ -2396,9 +2396,9 @@ public partial class ReportProcessing : ComponentBase
     {
         try
         {
-            SelectedDescription = report.HazardDescription ?? "No description available";
-            SelectedReportId = report.ReportId ?? "Unknown";
-            ShowDescriptionModal = true;
+            _selectedDescription = report.HazardDescription ?? "No description available";
+            _selectedReportId = report.ReportId ?? "Unknown";
+            _showDescriptionModal = true;
             StateHasChanged();
 
             _logger.LogInformation("Showing description modal for report {ReportId}", report.ReportId);
@@ -2415,9 +2415,9 @@ public partial class ReportProcessing : ComponentBase
     /// </summary>
     private void CloseDescriptionModal()
     {
-        ShowDescriptionModal = false;
-        SelectedDescription = string.Empty;
-        SelectedReportId = string.Empty;
+        _showDescriptionModal = false;
+        _selectedDescription = string.Empty;
+        _selectedReportId = string.Empty;
         StateHasChanged();
     }
 
@@ -2497,3 +2497,5 @@ public partial class ReportProcessing : ComponentBase
 
     
 }
+
+

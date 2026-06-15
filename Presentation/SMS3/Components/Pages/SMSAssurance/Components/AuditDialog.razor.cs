@@ -1,4 +1,4 @@
-using SMS_Domain.Enums;
+﻿using SMS_Domain.Enums;
 using SMS3.Components.Shared.UIHelpers;
 using Radzen;
 using SMS_Domain.Entities;
@@ -20,31 +20,31 @@ public partial class AuditDialog : ComponentBase
     #endregion
 
     #region Form State
-    private bool IsSubmitting { get; set; } = false;
-    private bool IsValid { get; set; } = true;
-    private string ValidationMessage { get; set; } = string.Empty;
+    private bool _isSubmitting { get; set; } = false;
+    private bool _isValid { get; set; } = true;
+    private string _validationMessage { get; set; } = string.Empty;
 
     // Form Data
-    private string? Code { get; set; }
-    private string? Name { get; set; }
-    private string? Description { get; set; }
-    private string? AuditPlanCode { get; set; }
-    private string? AuditType { get; set; }
-    private string? Scope { get; set; }
-    private string? Objectives { get; set; }
-    private string? ResponsibleDepartment { get; set; }
-    private string? LeadAuditor { get; set; }
-    private string? AuditorTeam { get; set; }
-    private string? ContactPerson { get; set; }
-    private string? AuditLocation { get; set; }
-    private DateTime? ScheduledStartDate { get; set; }
-    private DateTime? ScheduledEndDate { get; set; }
-    private DateTime? ActualStartDate { get; set; }
-    private DateTime? ActualEndDate { get; set; }
-    private string? Priority { get; set; }
-    private string? Status { get; set; }
-    private string? ExecutiveSummary { get; set; }
-    private string? Notes { get; set; }
+    private string? _code { get; set; }
+    private string? _name { get; set; }
+    private string? _description { get; set; }
+    private string? _auditPlanCode { get; set; }
+    private string? _auditType { get; set; }
+    private string? _scope { get; set; }
+    private string? _objectives { get; set; }
+    private string? _responsibleDepartment { get; set; }
+    private string? _leadAuditor { get; set; }
+    private string? _auditorTeam { get; set; }
+    private string? _contactPerson { get; set; }
+    private string? _auditLocation { get; set; }
+    private DateTime? _scheduledStartDate { get; set; }
+    private DateTime? _scheduledEndDate { get; set; }
+    private DateTime? _actualStartDate { get; set; }
+    private DateTime? _actualEndDate { get; set; }
+    private string? _priority { get; set; }
+    private string? _status { get; set; }
+    private string? _executiveSummary { get; set; }
+    private string? _notes { get; set; }
     #endregion
 
     #region Options
@@ -80,36 +80,36 @@ public partial class AuditDialog : ComponentBase
     {
         if (Audit is not null)
         {
-            Code = Audit.Code;
-            Name = Audit.Name;
-            Description = Audit.Description;
-            AuditPlanCode = Audit.AuditPlanCode;
-            AuditType = Audit.AuditType;
-            Scope = Audit.Scope;
-            Objectives = Audit.Objectives;
-            ResponsibleDepartment = Audit.ResponsibleDepartment;
-            LeadAuditor = Audit.LeadAuditor;
-            AuditorTeam = Audit.AuditorTeam;
-            ContactPerson = Audit.ContactPerson;
-            AuditLocation = Audit.AuditLocation;
-            ScheduledStartDate = Audit.ScheduledStartDate;
-            ScheduledEndDate = Audit.ScheduledEndDate;
-            ActualStartDate = Audit.ActualStartDate;
-            ActualEndDate = Audit.ActualEndDate;
-            Priority = Audit.Priority;
-            Status = Audit.Status;
-            ExecutiveSummary = Audit.ExecutiveSummary;
-            Notes = Audit.Notes;
+            _code = Audit.Code;
+            _name = Audit.Name;
+            _description = Audit.Description;
+            _auditPlanCode = Audit.AuditPlanCode;
+            _auditType = Audit.AuditType;
+            _scope = Audit.Scope;
+            _objectives = Audit.Objectives;
+            _responsibleDepartment = Audit.ResponsibleDepartment;
+            _leadAuditor = Audit.LeadAuditor;
+            _auditorTeam = Audit.AuditorTeam;
+            _contactPerson = Audit.ContactPerson;
+            _auditLocation = Audit.AuditLocation;
+            _scheduledStartDate = Audit.ScheduledStartDate;
+            _scheduledEndDate = Audit.ScheduledEndDate;
+            _actualStartDate = Audit.ActualStartDate;
+            _actualEndDate = Audit.ActualEndDate;
+            _priority = Audit.Priority;
+            _status = Audit.Status;
+            _executiveSummary = Audit.ExecutiveSummary;
+            _notes = Audit.Notes;
         }
 
         if (IsNew)
         {
-            Status = "Scheduled";
-            Priority = "Medium";
-            if (!ScheduledStartDate.HasValue)
-                ScheduledStartDate = DateTime.Today.AddDays(7);
-            if (!ScheduledEndDate.HasValue)
-                ScheduledEndDate = ScheduledStartDate?.AddDays(5);
+            _status = "Scheduled";
+            _priority = "Medium";
+            if (!_scheduledStartDate.HasValue)
+                _scheduledStartDate = DateTime.Today.AddDays(7);
+            if (!_scheduledEndDate.HasValue)
+                _scheduledEndDate = _scheduledStartDate?.AddDays(5);
         }
     }
     #endregion
@@ -119,51 +119,51 @@ public partial class AuditDialog : ComponentBase
     {
         var errors = new List<string>();
 
-        if (string.IsNullOrWhiteSpace(Code))
+        if (string.IsNullOrWhiteSpace(_code))
             errors.Add("Audit code is required");
 
-        if (string.IsNullOrWhiteSpace(Name))
+        if (string.IsNullOrWhiteSpace(_name))
             errors.Add("Audit name is required");
 
-        if (string.IsNullOrWhiteSpace(AuditType))
+        if (string.IsNullOrWhiteSpace(_auditType))
             errors.Add("Audit type is required");
 
-        if (string.IsNullOrWhiteSpace(Scope))
-            errors.Add("Scope is required");
+        if (string.IsNullOrWhiteSpace(_scope))
+            errors.Add("_scope is required");
 
-        if (string.IsNullOrWhiteSpace(ResponsibleDepartment))
+        if (string.IsNullOrWhiteSpace(_responsibleDepartment))
             errors.Add("Responsible department is required");
 
-        if (string.IsNullOrWhiteSpace(LeadAuditor))
+        if (string.IsNullOrWhiteSpace(_leadAuditor))
             errors.Add("Lead auditor is required");
 
-        if (!ScheduledStartDate.HasValue)
+        if (!_scheduledStartDate.HasValue)
             errors.Add("Scheduled start date is required");
 
-        if (!ScheduledEndDate.HasValue)
+        if (!_scheduledEndDate.HasValue)
             errors.Add("Scheduled end date is required");
 
-        if (ScheduledStartDate.HasValue && ScheduledEndDate.HasValue && ScheduledEndDate <= ScheduledStartDate)
+        if (_scheduledStartDate.HasValue && _scheduledEndDate.HasValue && _scheduledEndDate <= _scheduledStartDate)
             errors.Add("Scheduled end date must be after start date");
 
-        if (ActualStartDate.HasValue && ActualEndDate.HasValue && ActualEndDate <= ActualStartDate)
+        if (_actualStartDate.HasValue && _actualEndDate.HasValue && _actualEndDate <= _actualStartDate)
             errors.Add("Actual end date must be after actual start date");
 
-        if (Status == "In Progress" && !ActualStartDate.HasValue)
+        if (_status == "In Progress" && !_actualStartDate.HasValue)
             errors.Add("Actual start date is required when status is 'In Progress'");
 
-        if (Status == "Completed" && (!ActualStartDate.HasValue || !ActualEndDate.HasValue))
+        if (_status == "Completed" && (!_actualStartDate.HasValue || !_actualEndDate.HasValue))
             errors.Add("Both actual start and end dates are required when status is 'Completed'");
 
         if (errors.Any())
         {
-            ValidationMessage = string.Join("; ", errors);
-            IsValid = false;
+            _validationMessage = string.Join("; ", errors);
+            _isValid = false;
             return false;
         }
 
-        ValidationMessage = string.Empty;
-        IsValid = true;
+        _validationMessage = string.Empty;
+        _isValid = true;
         return true;
     }
     #endregion
@@ -175,32 +175,32 @@ public partial class AuditDialog : ComponentBase
 
         try
         {
-            IsSubmitting = true;
+            _isSubmitting = true;
             StateHasChanged();
 
             if (IsNew)
             {
                 var command = new CreateSMSAuditCommand(
-                    code: Code!,
-                    name: Name!,
-                    description: Description,
-                    auditPlanCode: AuditPlanCode,
-                    auditType: AuditType!,
-                    scope: Scope!,
-                    objectives: Objectives,
-                    scheduledStartDate: ScheduledStartDate!.Value,
-                    scheduledEndDate: ScheduledEndDate!.Value,
-                    actualStartDate: ActualStartDate,
-                    actualEndDate: ActualEndDate,
-                    leadAuditor: LeadAuditor!,
-                    auditorTeam: AuditorTeam,
-                    responsibleDepartment: ResponsibleDepartment!,
-                    contactPerson: ContactPerson,
-                    auditLocation: AuditLocation,
-                    status: Status!,
-                    priority: Priority!,
-                    executiveSummary: ExecutiveSummary,
-                    notes: Notes,
+                    code: _code!,
+                    name: _name!,
+                    description: _description,
+                    auditPlanCode: _auditPlanCode,
+                    auditType: _auditType!,
+                    scope: _scope!,
+                    objectives: _objectives,
+                    scheduledStartDate: _scheduledStartDate!.Value,
+                    scheduledEndDate: _scheduledEndDate!.Value,
+                    actualStartDate: _actualStartDate,
+                    actualEndDate: _actualEndDate,
+                    leadAuditor: _leadAuditor!,
+                    auditorTeam: _auditorTeam,
+                    responsibleDepartment: _responsibleDepartment!,
+                    contactPerson: _contactPerson,
+                    auditLocation: _auditLocation,
+                    status: _status!,
+                    priority: _priority!,
+                    executiveSummary: _executiveSummary,
+                    notes: _notes,
                     createdBy: "CURRENT_USER"
                 );
 
@@ -208,7 +208,7 @@ public partial class AuditDialog : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    _logger.LogInformation("Audit created successfully: {Code}", Code);
+                    _logger.LogInformation("Audit created successfully: {_code}", _code);
                     await _notificationHelper.ShowSuccessAsync("Audit created successfully");
                     _dialogService.Close(true);
                 }
@@ -221,26 +221,26 @@ public partial class AuditDialog : ComponentBase
             else
             {
                 // Update the existing audit entity with form data
-                Audit.Code = Code!;
-                Audit.Name = Name!;
-                Audit.Description = Description ?? string.Empty;
-                Audit.AuditPlanCode = AuditPlanCode ?? string.Empty;
-                Audit.AuditType = AuditType!;
-                Audit.Scope = Scope!;
-                Audit.Objectives = Objectives ?? string.Empty;
-                Audit.ResponsibleDepartment = ResponsibleDepartment!;
-                Audit.LeadAuditor = LeadAuditor!;
-                Audit.AuditorTeam = AuditorTeam ?? string.Empty;
-                Audit.ContactPerson = ContactPerson ?? string.Empty;
-                Audit.AuditLocation = AuditLocation ?? string.Empty;
-                Audit.ScheduledStartDate = ScheduledStartDate!.Value;
-                Audit.ScheduledEndDate = ScheduledEndDate!.Value;
-                Audit.ActualStartDate = ActualStartDate;
-                Audit.ActualEndDate = ActualEndDate;
-                Audit.Priority = Priority!;
-                Audit.Status = Status!;
-                Audit.ExecutiveSummary = ExecutiveSummary ?? string.Empty;
-                Audit.Notes = Notes ?? string.Empty;
+                Audit.Code = _code!;
+                Audit.Name = _name!;
+                Audit.Description = _description ?? string.Empty;
+                Audit.AuditPlanCode = _auditPlanCode ?? string.Empty;
+                Audit.AuditType = _auditType!;
+                Audit.Scope = _scope!;
+                Audit.Objectives = _objectives ?? string.Empty;
+                Audit.ResponsibleDepartment = _responsibleDepartment!;
+                Audit.LeadAuditor = _leadAuditor!;
+                Audit.AuditorTeam = _auditorTeam ?? string.Empty;
+                Audit.ContactPerson = _contactPerson ?? string.Empty;
+                Audit.AuditLocation = _auditLocation ?? string.Empty;
+                Audit.ScheduledStartDate = _scheduledStartDate!.Value;
+                Audit.ScheduledEndDate = _scheduledEndDate!.Value;
+                Audit.ActualStartDate = _actualStartDate;
+                Audit.ActualEndDate = _actualEndDate;
+                Audit.Priority = _priority!;
+                Audit.Status = _status!;
+                Audit.ExecutiveSummary = _executiveSummary ?? string.Empty;
+                Audit.Notes = _notes ?? string.Empty;
                 Audit.UpdatedBy = "CURRENT_USER";
                 Audit.UpdatedDate = DateTime.UtcNow;
 
@@ -249,7 +249,7 @@ public partial class AuditDialog : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    _logger.LogInformation("Audit updated successfully: {Code}", Code);
+                    _logger.LogInformation("Audit updated successfully: {_code}", _code);
                     await _notificationHelper.ShowSuccessAsync("Audit updated successfully");
                     _dialogService.Close(true);
                 }
@@ -267,7 +267,7 @@ public partial class AuditDialog : ComponentBase
         }
         finally
         {
-            IsSubmitting = false;
+            _isSubmitting = false;
             StateHasChanged();
         }
     }
@@ -279,12 +279,12 @@ public partial class AuditDialog : ComponentBase
 
     private void OnScheduledStartDateChanged(DateTime? value)
     {
-        ScheduledStartDate = value;
+        _scheduledStartDate = value;
 
         // Automatically adjust end date if start date changes
-        if (value.HasValue && (!ScheduledEndDate.HasValue || ScheduledEndDate.Value <= value.Value))
+        if (value.HasValue && (!_scheduledEndDate.HasValue || _scheduledEndDate.Value <= value.Value))
         {
-            ScheduledEndDate = value.Value.AddDays(5);
+            _scheduledEndDate = value.Value.AddDays(5);
         }
 
         StateHasChanged();
@@ -292,34 +292,34 @@ public partial class AuditDialog : ComponentBase
 
     private void OnScheduledEndDateChanged(DateTime? value)
     {
-        ScheduledEndDate = value;
+        _scheduledEndDate = value;
         StateHasChanged();
     }
 
     private void OnActualStartDateChanged(DateTime? value)
     {
-        ActualStartDate = value;
+        _actualStartDate = value;
         StateHasChanged();
     }
 
     private void OnActualEndDateChanged(DateTime? value)
     {
-        ActualEndDate = value;
+        _actualEndDate = value;
         StateHasChanged();
     }
 
     private void OnStatusChanged(object args)
     {
-        Status = args?.ToString();
+        _status = args?.ToString();
 
         // Set actual dates based on status
-        if (Status == "In Progress" && !ActualStartDate.HasValue)
+        if (_status == "In Progress" && !_actualStartDate.HasValue)
         {
-            ActualStartDate = DateTime.Now;
+            _actualStartDate = DateTime.Now;
         }
-        else if (Status == "Completed" && !ActualEndDate.HasValue)
+        else if (_status == "Completed" && !_actualEndDate.HasValue)
         {
-            ActualEndDate = DateTime.Now;
+            _actualEndDate = DateTime.Now;
         }
 
         StateHasChanged();
@@ -329,9 +329,9 @@ public partial class AuditDialog : ComponentBase
     #region Helper Methods
     private void GenerateCode()
     {
-        if (string.IsNullOrWhiteSpace(Code) && !string.IsNullOrWhiteSpace(AuditType))
+        if (string.IsNullOrWhiteSpace(_code) && !string.IsNullOrWhiteSpace(_auditType))
         {
-            var prefix = AuditType switch
+            var prefix = _auditType switch
             {
                 "Internal" => "AUD-INT",
                 "External" => "AUD-EXT",
@@ -347,11 +347,12 @@ public partial class AuditDialog : ComponentBase
             var month = DateTime.Now.Month.ToString("D2");
             var random = new Random().Next(100, 999);
 
-            Code = $"{prefix}-{year}{month}-{random}";
+            _code = $"{prefix}-{year}{month}-{random}";
             StateHasChanged();
         }
     }
 
-    private bool _showActualDates => Status == "In Progress" || Status == "Completed";
+    private bool _showActualDates => _status == "In Progress" || _status == "Completed";
     #endregion
 }
+

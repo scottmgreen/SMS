@@ -1,4 +1,4 @@
-@page "/SMSAssurance/AuditManagement"
+﻿@page "/SMSAssurance/AuditManagement"
 
 @using Radzen
 @using Radzen.Blazor
@@ -21,7 +21,7 @@
 </PageHeader>
 
 <div class="container-fluid">
-    @if (IsLoading)
+    @if (_isLoading)
     {
         <div class="d-flex justify-content-center align-items-center" style="height: 400px;">
             <RadzenProgressBarCircular ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
@@ -61,14 +61,14 @@
                                     <RadzenIcon Icon="dashboard" Style="margin-right: 0.5rem;" />
                                     SMS Audit Management Dashboard
                                 </RadzenText>
-                                <RadzenButton Icon="@(showCategorySummary ? "expand_less" : "expand_more")" 
+                                <RadzenButton Icon="@(_showCategorySummary ? "expand_less" : "expand_more")" 
                                              ButtonStyle="ButtonStyle.Light" 
                                              Size="ButtonSize.Small"
-                                             Click="@(() => showCategorySummary = !showCategorySummary)" 
-                                             title="@(showCategorySummary ? "Collapse" : "Expand")" />
+                                             Click="@(() => _showCategorySummary = !_showCategorySummary)" 
+                                             title="@(_showCategorySummary ? "Collapse" : "Expand")" />
                             </RadzenStack>
                         </RadzenCard>
-                        @if (showCategorySummary)
+                        @if (_showCategorySummary)
                         {
                             <!-- Statistics Cards -->
                             <RadzenRow Gap="1rem">
@@ -235,14 +235,14 @@
                                     <RadzenIcon Icon="filter_list" Style="margin-right: 0.5rem;" />
                                     Audit Filters & Search
                                 </RadzenText>
-                                <RadzenButton Icon="@(showFilterPanel ? "expand_less" : "expand_more")" 
+                                <RadzenButton Icon="@(_showFilterPanel ? "expand_less" : "expand_more")" 
                                              ButtonStyle="ButtonStyle.Light" 
                                              Size="ButtonSize.Small"
-                                             Click="@(() => showFilterPanel = !showFilterPanel)" 
-                                             title="@(showFilterPanel ? "Collapse" : "Expand")" />
+                                             Click="@(() => _showFilterPanel = !_showFilterPanel)" 
+                                             title="@(_showFilterPanel ? "Collapse" : "Expand")" />
                             </RadzenStack>
                         </RadzenCard>
-                        @if (showFilterPanel)
+                        @if (_showFilterPanel)
                         {
                             <RadzenCard Style="padding: 1rem;">
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" AlignItems="AlignItems.Center" Wrap="FlexWrap.Wrap">
@@ -250,7 +250,7 @@
                                     
                                     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                                         <RadzenText TextStyle="TextStyle.Body2">Search:</RadzenText>
-                                        <RadzenTextBox @bind-Value="@SearchText" 
+                                        <RadzenTextBox @bind-Value="@_searchText" 
                                                      Placeholder="Search audits..." 
                                                      oninput="@(OnSearchTextChanged)"
                                                      Style="width: 200px;" />
@@ -258,7 +258,7 @@
                                     
                                     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                                         <RadzenText TextStyle="TextStyle.Body2">Status:</RadzenText>
-                                        <RadzenDropDown @bind-Value="@SelectedStatus" 
+                                        <RadzenDropDown @bind-Value="@_selectedStatus" 
                                                       Data="@StatusOptions" 
                                                       Change="@OnStatusFilterChanged"
                                                       Style="width: 120px;" />
@@ -266,7 +266,7 @@
                                     
                                     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                                         <RadzenText TextStyle="TextStyle.Body2">Type:</RadzenText>
-                                        <RadzenDropDown @bind-Value="@SelectedType" 
+                                        <RadzenDropDown @bind-Value="@_selectedType" 
                                                       Data="@TypeOptions" 
                                                       Change="@OnTypeFilterChanged"
                                                       Style="width: 150px;" />
@@ -274,7 +274,7 @@
                                     
                                     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                                         <RadzenText TextStyle="TextStyle.Body2">Department:</RadzenText>
-                                        <RadzenDropDown @bind-Value="@SelectedDepartment" 
+                                        <RadzenDropDown @bind-Value="@_selectedDepartment" 
                                                       Data="@DepartmentOptions" 
                                                       Change="@OnDepartmentFilterChanged"
                                                       Style="width: 150px;" />
@@ -605,3 +605,4 @@
 @code {
     // Component state and data binding will be in the code-behind file
 }
+

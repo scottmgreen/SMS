@@ -1,4 +1,4 @@
-@page "/SMSRiskManagement/ReportValidation"
+﻿@page "/SMSRiskManagement/ReportValidation"
 @page "/SMSRiskManagement/ReportValidation/{ReportId}"
 @using SMS3.Configuration.Extensions
 @using SMS_Application.Commands
@@ -46,10 +46,10 @@ else
                                     <!-- Column 1: Report Description -->
                                     <RadzenColumn Size="12" SizeLG="6">
                                         <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Report Code:</strong>@(ReportId ?? "N/A")</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Hazard Category:</strong>@(ReportHazard?.HazardCategory ?? "N/A")</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Hazard Category:</strong>@(ReportHazard?.HazardType ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Hazard Category:</strong>@(_reportHazard?.HazardCategory ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Hazard Category:</strong>@(_reportHazard?.HazardType ?? "N/A")</RadzenText>
                                         <div style="margin: 0; padding: 0.5rem; background: white; border-radius: 4px; border: 1px solid var(--rz-border-color); min-height: 100px; line-height: 1.6;">
-                                            @((MarkupString)(ReportDetails?.Description ?? "Report description not available"))
+                                            @((MarkupString)(_reportDetails?.Description ?? "Report description not available"))
                                         </div>
                                     </RadzenColumn>
 
@@ -57,10 +57,10 @@ else
                                     <RadzenColumn Size="12" SizeLG="6">
                                         <RadzenStack Gap="0.25rem">
                                             <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Report Code:</strong>@(ReportId ?? "N/A")</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Status:</strong>@(ReportDetails?.Status ?? "N/A")</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Incident Date/Time:</strong>@(ReportDetails?.IncidentDateTime.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Submitted Date/Time:</strong>@(ReportDetails?.SubmittedDate.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Submitted By:</strong>@(ReportDetails?.SubmittedBy ?? "N/A")</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Status:</strong>@(_reportDetails?.Status ?? "N/A")</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Incident Date/Time:</strong>@(_reportDetails?.IncidentDateTime.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Submitted Date/Time:</strong>@(_reportDetails?.SubmittedDate.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Submitted By:</strong>@(_reportDetails?.SubmittedBy ?? "N/A")</RadzenText>
                                             @if (_isUpdate)
                                             {
                                                 <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Validation Code:</strong>@_validationCode</RadzenText>
@@ -79,7 +79,7 @@ else
                             <!-- SMS Risk Decision -->
                             <RadzenFieldset Text="Validation Decision" Style="margin-bottom: 0.5rem;">
                                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Start" Gap="0.5rem">
-                                    <RadzenCheckBox @bind-Value="@this.RiskRegistryOnly"
+                                    <RadzenCheckBox @bind-Value="@this._riskRegistryOnly"
                                                     Name="registryonly"
                                                     TriState="false" 
                                                     Disabled="@_isRiskRegistryCheckboxDisabled" />
@@ -145,10 +145,10 @@ else
 
                             <!-- Validation Comments -->
                             <RadzenFieldset Text="Validation Comments">
-                                <RadzenTextArea @bind-Value="@ValidationComments" Rows="4"
+                                <RadzenTextArea @bind-Value="@_validationComments" Rows="4"
                                                 Placeholder="Provide detailed reasoning for your validation decision..."
                                                 Style="width: 100%;" />
-                                @if (string.IsNullOrWhiteSpace(ValidationComments))
+                                @if (string.IsNullOrWhiteSpace(_validationComments))
                                 {
                                     <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger); margin-top: 0.25rem;">
                                         <RadzenIcon Icon="error" Style="font-size: 0.875rem; margin-right: 0.25rem;" />
@@ -158,13 +158,13 @@ else
                             </RadzenFieldset>
 
                             <!-- SMS Risk Fields (Conditional) -->
-                            @if (SelectedValidationDecision == ValidationDecision.SmsRisk)
+                            @if (_selectedValidationDecision == ValidationDecision.SmsRisk)
                             {
                                 <RadzenFieldset Text="Assessment Assignment" Style="margin-top: 1rem;">
                                     <RadzenRow Gap="1rem">
                                         <RadzenColumn Size="12" SizeMD="6">
                                             <RadzenFormField Text="Assigned Assessor" Variant="Variant.Outlined">
-                                                <RadzenDropDown @bind-Value="@LeadAssessor"
+                                                <RadzenDropDown @bind-Value="@_leadAssessor"
                                                                 Data="@LeadAssessorOptions"
                                                                 TextProperty="Text"
                                                                 ValueProperty="Value"
@@ -176,13 +176,13 @@ else
                                     </RadzenRow>
                                 </RadzenFieldset>
                             }
-                            @if (SelectedValidationDecision == ValidationDecision.NeedsInvestigation)
+                            @if (_selectedValidationDecision == ValidationDecision.NeedsInvestigation)
                             {
                                 <RadzenFieldset Text="Investigator Assignment" Style="margin-top: 1rem;">
                                     <RadzenRow Gap="1rem">
                                         <RadzenColumn Size="12" SizeMD="6">
                                             <RadzenFormField Text="Assigned Investigator" Variant="Variant.Outlined">
-                                                <RadzenDropDown @bind-Value="@LeadInvestigator"
+                                                <RadzenDropDown @bind-Value="@_leadInvestigator"
                                                                 Data="@LeadInvestigatorOptions"
                                                                 TextProperty="Text"
                                                                 ValueProperty="Value"
@@ -200,23 +200,23 @@ else
                                               Click="@(() => _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing"))" />
 
                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                    @if (SelectedValidationDecision == ValidationDecision.SmsRisk && !this.RiskRegistryOnly)
+                                    @if (_selectedValidationDecision == ValidationDecision.SmsRisk && !this._riskRegistryOnly)
                                     {
                                         <RadzenButton Text="Proceed to Risk Assessment" Icon="arrow_forward" ButtonStyle="ButtonStyle.Success"
-                                                      Click="@HandleSubmit" Disabled="@IsProcessing" />
+                                                      Click="@HandleSubmit" Disabled="@_isProcessing" />
                                     }
-                                    else if (SelectedValidationDecision == ValidationDecision.SmsRisk && this.RiskRegistryOnly)
+                                    else if (_selectedValidationDecision == ValidationDecision.SmsRisk && this._riskRegistryOnly)
                                     {
                                         <RadzenButton Text="Proceed to Risk Assessment" Icon="arrow_forward" ButtonStyle="ButtonStyle.Success"
-                                                      Click="@HandleSubmit" Disabled="@IsProcessing" />
+                                                      Click="@HandleSubmit" Disabled="@_isProcessing" />
                                     }
-                                    else if (SelectedValidationDecision != null)
+                                    else if (_selectedValidationDecision != null)
                                     {
                                         <RadzenButton Text="Submit Validation" Icon="check" ButtonStyle="ButtonStyle.Primary"
-                                                      Click="@HandleSubmit" Disabled="@IsProcessing" />
+                                                      Click="@HandleSubmit" Disabled="@_isProcessing" />
                                     }
 
-                                    @if (IsProcessing)
+                                    @if (_isProcessing)
                                     {
                                         <RadzenProgressBarCircular ShowValue="false" Size="ProgressBarCircularSize.Small" />
                                     }
@@ -310,3 +310,4 @@ else
         width: calc(100% - 32px) !important;
     }
 </style>
+

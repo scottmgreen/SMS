@@ -566,6 +566,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                     hazardLocation.Latitude = SelectedGeoLocation.Latitude;
                     hazardLocation.Longitude = SelectedGeoLocation.Longitude;
                     hazardLocation.Description = SelectedGeoLocation.Description ?? "Map selected location";
+                    hazardLocation.IsValidated = false; // Initial state - can be updated later by validation process
                     hazardLocation.UpdatedDate = DateTime.UtcNow;
                     hazardLocation.UpdatedBy = _currentUserService?.UserDisplayName;
                     hazard.HazardLocation = hazardLocation;

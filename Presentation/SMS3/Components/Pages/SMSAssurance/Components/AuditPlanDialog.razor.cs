@@ -1,4 +1,4 @@
-
+﻿
 
 using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
@@ -25,45 +25,45 @@ public partial class AuditPlanDialog : ComponentBase
     #endregion
 
     #region Form State
-    private bool IsSubmitting { get; set; } = false;
-    private bool IsValid { get; set; } = true;
+    private bool _isSubmitting { get; set; } = false;
+    private bool _isValid { get; set; } = true;
     private bool _isReadOnly => !IsNew && AuditPlan?.Status == "Completed";
-    private string ValidationMessage { get; set; } = string.Empty;
+    private string _validationMessage { get; set; } = string.Empty;
     private int _selectedTabIndex = 0;
 
     // Form Data
-    private string? Code { get; set; }
-    private string? Name { get; set; }
-    private string? Description { get; set; }
-    private string? AuditType { get; set; }
-    private string? Scope { get; set; }
-    private string? Objectives { get; set; }
-    private string? ResponsibleDepartment { get; set; }
-    private string? LeadAuditor { get; set; }
-    private string? AuditorTeam { get; set; }
-    private DateTime? PlannedStartDate { get; set; }
-    private DateTime? PlannedEndDate { get; set; }
-    private int? EstimatedHours { get; set; }
-    private string? Priority { get; set; }
-    private string? Status { get; set; }
-    private string? Notes { get; set; }
+    private string? _code { get; set; }
+    private string? _name { get; set; }
+    private string? _description { get; set; }
+    private string? _auditType { get; set; }
+    private string? _scope { get; set; }
+    private string? _objectives { get; set; }
+    private string? _responsibleDepartment { get; set; }
+    private string? _leadAuditor { get; set; }
+    private string? _auditorTeam { get; set; }
+    private DateTime? _plannedStartDate { get; set; }
+    private DateTime? _plannedEndDate { get; set; }
+    private int? _estimatedHours { get; set; }
+    private string? _priority { get; set; }
+    private string? _status { get; set; }
+    private string? _notes { get; set; }
 
     // Approval Workflow Fields - ADDED
-    private bool RequiresApproval { get; set; } = true;
-    private string? ApprovedBy { get; set; }
-    private DateTime? ApprovedDate { get; set; }
-    private string? ApprovalNotes { get; set; }
+    private bool _requiresApproval { get; set; } = true;
+    private string? _approvedBy { get; set; }
+    private DateTime? _approvedDate { get; set; }
+    private string? _approvalNotes { get; set; }
 
     // Additional Entity Fields
-    private string? ContactPerson { get; set; }
-    private string? RecurrencePattern { get; set; }
-    private DateTime? NextScheduledDate { get; set; }
+    private string? _contactPerson { get; set; }
+    private string? _recurrencePattern { get; set; }
+    private DateTime? _nextScheduledDate { get; set; }
 
     // UI Mapping Fields (for backward compatibility)
-    private string? RegulatoryRequirements { get; set; }
-    private string? Resources { get; set; }
-    private string? Deliverables { get; set; }
-    private string? SuccessCriteria { get; set; }
+    private string? _regulatoryRequirements { get; set; }
+    private string? _resources { get; set; }
+    private string? _deliverables { get; set; }
+    private string? _successCriteria { get; set; }
     #endregion
 
     #region Options
@@ -97,62 +97,62 @@ public partial class AuditPlanDialog : ComponentBase
     #region Lifecycle Methods
     protected override void OnInitialized()
     {
-        _logger.LogInformation("DEBUG: OnInitialized called - IsNew: {IsNew}, AuditPlan.Status: {Status}", IsNew, AuditPlan?.Status);
+        _logger.LogInformation("DEBUG: OnInitialized called - IsNew: {IsNew}, AuditPlan.Status: {_status}", IsNew, AuditPlan?.Status);
         InitializeFormData();
     }
 
     private void InitializeFormData()
     {
-        _logger.LogInformation("DEBUG: InitializeFormData called - AuditPlan.Status: {Status}", AuditPlan?.Status);
+        _logger.LogInformation("DEBUG: InitializeFormData called - AuditPlan.Status: {_status}", AuditPlan?.Status);
 
         if (AuditPlan is not null)
         {
-            Code = AuditPlan.Code;
-            Name = AuditPlan.Name;
-            Description = AuditPlan.Description;
-            AuditType = AuditPlan.AuditType;
-            Scope = AuditPlan.Scope;
-            Objectives = AuditPlan.Objectives;
-            ResponsibleDepartment = AuditPlan.ResponsibleDepartment;
-            LeadAuditor = AuditPlan.LeadAuditor;
-            AuditorTeam = AuditPlan.AuditorTeam;
-            PlannedStartDate = AuditPlan.PlannedStartDate;
-            PlannedEndDate = AuditPlan.PlannedEndDate;
-            EstimatedHours = AuditPlan.EstimatedDurationHours;
-            Priority = AuditPlan.Priority;
-            Status = AuditPlan.Status;
-            Notes = AuditPlan.Notes;
+            _code = AuditPlan.Code;
+            _name = AuditPlan.Name;
+            _description = AuditPlan.Description;
+            _auditType = AuditPlan.AuditType;
+            _scope = AuditPlan.Scope;
+            _objectives = AuditPlan.Objectives;
+            _responsibleDepartment = AuditPlan.ResponsibleDepartment;
+            _leadAuditor = AuditPlan.LeadAuditor;
+            _auditorTeam = AuditPlan.AuditorTeam;
+            _plannedStartDate = AuditPlan.PlannedStartDate;
+            _plannedEndDate = AuditPlan.PlannedEndDate;
+            _estimatedHours = AuditPlan.EstimatedDurationHours;
+            _priority = AuditPlan.Priority;
+            _status = AuditPlan.Status;
+            _notes = AuditPlan.Notes;
 
             // Approval Workflow Fields - ADDED
-            RequiresApproval = AuditPlan.RequiresApproval;
-            ApprovedBy = AuditPlan.ApprovedBy;
-            ApprovedDate = AuditPlan.ApprovedDate;
-            ApprovalNotes = AuditPlan.ApprovalNotes;
+            _requiresApproval = AuditPlan.RequiresApproval;
+            _approvedBy = AuditPlan.ApprovedBy;
+            _approvedDate = AuditPlan.ApprovedDate;
+            _approvalNotes = AuditPlan.ApprovalNotes;
 
             // Additional Fields
-            ContactPerson = AuditPlan.ContactPerson;
-            RecurrencePattern = AuditPlan.RecurrencePattern;
-            NextScheduledDate = AuditPlan.NextScheduledDate;
+            _contactPerson = AuditPlan.ContactPerson;
+            _recurrencePattern = AuditPlan.RecurrencePattern;
+            _nextScheduledDate = AuditPlan.NextScheduledDate;
 
             // UI Mapping Fields (for tabs)
-            RegulatoryRequirements = AuditPlan.AuditCriteria;
-            Resources = AuditPlan.RequiredDocuments;
-            Deliverables = AuditPlan.SpecialRequirements;
-            SuccessCriteria = AuditPlan.RiskAreas;
+            _regulatoryRequirements = AuditPlan.AuditCriteria;
+            _resources = AuditPlan.RequiredDocuments;
+            _deliverables = AuditPlan.SpecialRequirements;
+            _successCriteria = AuditPlan.RiskAreas;
         }
 
         if (IsNew)
         {
-            Status = "Draft";
-            PlannedStartDate = DateTime.Today.AddDays(30);
-            PlannedEndDate = DateTime.Today.AddDays(37);
-            Priority = "Medium";
-            EstimatedHours = 8;
-            RequiresApproval = true;
-            RecurrencePattern = "None";
+            _status = "Draft";
+            _plannedStartDate = DateTime.Today.AddDays(30);
+            _plannedEndDate = DateTime.Today.AddDays(37);
+            _priority = "Medium";
+            _estimatedHours = 8;
+            _requiresApproval = true;
+            _recurrencePattern = "None";
         }
 
-        _logger.LogInformation("DEBUG: InitializeFormData completed - Status set to: {Status}", Status);
+        _logger.LogInformation("DEBUG: InitializeFormData completed - _status set to: {_status}", _status);
     }
     #endregion
 
@@ -161,46 +161,46 @@ public partial class AuditPlanDialog : ComponentBase
     {
         var errors = new List<string>();
 
-        if (string.IsNullOrWhiteSpace(Code))
+        if (string.IsNullOrWhiteSpace(_code))
             errors.Add("Audit plan code is required");
 
-        if (string.IsNullOrWhiteSpace(Name))
+        if (string.IsNullOrWhiteSpace(_name))
             errors.Add("Audit plan name is required");
 
-        if (string.IsNullOrWhiteSpace(AuditType))
+        if (string.IsNullOrWhiteSpace(_auditType))
             errors.Add("Audit type is required");
 
         // Make scope and objectives optional for now to debug the issue
-        // if (string.IsNullOrWhiteSpace(Scope))
-        //     errors.Add("Scope is required");
+        // if (string.IsNullOrWhiteSpace(_scope))
+        //     errors.Add("_scope is required");
 
-        if (string.IsNullOrWhiteSpace(ResponsibleDepartment))
+        if (string.IsNullOrWhiteSpace(_responsibleDepartment))
             errors.Add("Responsible department is required");
 
-        if (string.IsNullOrWhiteSpace(LeadAuditor))
+        if (string.IsNullOrWhiteSpace(_leadAuditor))
             errors.Add("Lead auditor is required");
 
-        if (!PlannedStartDate.HasValue)
+        if (!_plannedStartDate.HasValue)
             errors.Add("Planned start date is required");
 
-        if (!PlannedEndDate.HasValue)
+        if (!_plannedEndDate.HasValue)
             errors.Add("Planned end date is required");
 
-        if (PlannedStartDate.HasValue && PlannedEndDate.HasValue && PlannedEndDate <= PlannedStartDate)
+        if (_plannedStartDate.HasValue && _plannedEndDate.HasValue && _plannedEndDate <= _plannedStartDate)
             errors.Add("Planned end date must be after start date");
 
-        if (PlannedStartDate.HasValue && PlannedStartDate.Value < DateTime.Today)
+        if (_plannedStartDate.HasValue && _plannedStartDate.Value < DateTime.Today)
             errors.Add("Planned start date cannot be in the past");
 
         if (errors.Any())
         {
-            ValidationMessage = string.Join("; ", errors);
-            IsValid = false;
+            _validationMessage = string.Join("; ", errors);
+            _isValid = false;
             return false;
         }
 
-        ValidationMessage = string.Empty;
-        IsValid = true;
+        _validationMessage = string.Empty;
+        _isValid = true;
         return true;
     }
     #endregion
@@ -212,7 +212,7 @@ public partial class AuditPlanDialog : ComponentBase
 
         try
         {
-            IsSubmitting = true;
+            _isSubmitting = true;
             StateHasChanged();
 
 
@@ -221,7 +221,7 @@ public partial class AuditPlanDialog : ComponentBase
 
             if (IsNew)
             {
-                auditPlan = new SMSAuditPlan(new SMSAuditPlanID(Code!), "CURRENT_USER");
+                auditPlan = new SMSAuditPlan(new SMSAuditPlanID(_code!), "CURRENT_USER");
             }
             else
             {
@@ -232,50 +232,50 @@ public partial class AuditPlanDialog : ComponentBase
             }
 
             // Map form fields to entity properties - COMPLETE MAPPING
-            auditPlan.Code = Code!;
-            auditPlan.Name = Name!;
-            auditPlan.Description = Description ?? string.Empty;
-            auditPlan.AuditType = AuditType!;
-            auditPlan.Scope = Scope ?? string.Empty;
-            auditPlan.Objectives = Objectives ?? string.Empty;
-            auditPlan.AuditScope = Scope ?? string.Empty; // Compatibility
-            auditPlan.AuditObjectives = Objectives ?? string.Empty; // Compatibility
-            auditPlan.ResponsibleDepartment = ResponsibleDepartment!;
-            auditPlan.LeadAuditor = LeadAuditor!;
-            auditPlan.AuditorTeam = AuditorTeam ?? string.Empty;
-            auditPlan.PlannedStartDate = PlannedStartDate!.Value;
-            auditPlan.PlannedEndDate = PlannedEndDate!.Value;
-            auditPlan.EstimatedDurationHours = EstimatedHours ?? 8;
-            auditPlan.ExpectedDurationHours = EstimatedHours ?? 8; // Compatibility
-            auditPlan.Priority = Priority ?? "Medium";
-            auditPlan.Status = Status!;
-            auditPlan.Notes = Notes ?? string.Empty;
+            auditPlan.Code = _code!;
+            auditPlan.Name = _name!;
+            auditPlan.Description = _description ?? string.Empty;
+            auditPlan.AuditType = _auditType!;
+            auditPlan.Scope = _scope ?? string.Empty;
+            auditPlan.Objectives = _objectives ?? string.Empty;
+            auditPlan.AuditScope = _scope ?? string.Empty; // Compatibility
+            auditPlan.AuditObjectives = _objectives ?? string.Empty; // Compatibility
+            auditPlan.ResponsibleDepartment = _responsibleDepartment!;
+            auditPlan.LeadAuditor = _leadAuditor!;
+            auditPlan.AuditorTeam = _auditorTeam ?? string.Empty;
+            auditPlan.PlannedStartDate = _plannedStartDate!.Value;
+            auditPlan.PlannedEndDate = _plannedEndDate!.Value;
+            auditPlan.EstimatedDurationHours = _estimatedHours ?? 8;
+            auditPlan.ExpectedDurationHours = _estimatedHours ?? 8; // Compatibility
+            auditPlan.Priority = _priority ?? "Medium";
+            auditPlan.Status = _status!;
+            auditPlan.Notes = _notes ?? string.Empty;
 
             // Approval Workflow Fields - ADDED
-            auditPlan.RequiresApproval = RequiresApproval;
-            auditPlan.ApprovedBy = ApprovedBy ?? string.Empty;
-            auditPlan.ApprovedDate = ApprovedDate;
-            auditPlan.ApprovalNotes = ApprovalNotes ?? string.Empty;
+            auditPlan.RequiresApproval = _requiresApproval;
+            auditPlan.ApprovedBy = _approvedBy ?? string.Empty;
+            auditPlan.ApprovedDate = _approvedDate;
+            auditPlan.ApprovalNotes = _approvalNotes ?? string.Empty;
 
             // Additional Fields
-            auditPlan.ContactPerson = ContactPerson ?? string.Empty;
-            auditPlan.RecurrencePattern = RecurrencePattern ?? "None";
-            auditPlan.NextScheduledDate = NextScheduledDate;
+            auditPlan.ContactPerson = _contactPerson ?? string.Empty;
+            auditPlan.RecurrencePattern = _recurrencePattern ?? "None";
+            auditPlan.NextScheduledDate = _nextScheduledDate;
 
             // Map UI fields to entity properties
-            auditPlan.AuditCriteria = RegulatoryRequirements ?? string.Empty;
-            auditPlan.RequiredDocuments = Resources ?? string.Empty;
-            auditPlan.SpecialRequirements = Deliverables ?? string.Empty;
-            auditPlan.RiskAreas = SuccessCriteria ?? string.Empty;
+            auditPlan.AuditCriteria = _regulatoryRequirements ?? string.Empty;
+            auditPlan.RequiredDocuments = _resources ?? string.Empty;
+            auditPlan.SpecialRequirements = _deliverables ?? string.Empty;
+            auditPlan.RiskAreas = _successCriteria ?? string.Empty;
 
             // Set audit metadata
             auditPlan.UpdatedBy = "CURRENT_USER";
             auditPlan.UpdatedDate = DateTime.UtcNow;
 
             // DEBUG: Log entity values after mapping
-            _logger.LogInformation("DEBUG Entity: Status = {Status}", auditPlan.Status);
-            _logger.LogInformation("DEBUG Entity: Scope = {Scope}", auditPlan.Scope);
-            _logger.LogInformation("DEBUG Entity: ApprovedBy = {ApprovedBy}", auditPlan.ApprovedBy);
+            _logger.LogInformation("DEBUG Entity: _status = {_status}", auditPlan.Status);
+            _logger.LogInformation("DEBUG Entity: _scope = {_scope}", auditPlan.Scope);
+            _logger.LogInformation("DEBUG Entity: _approvedBy = {_approvedBy}", auditPlan.ApprovedBy);
 
             if (IsNew)
             {
@@ -284,7 +284,7 @@ public partial class AuditPlanDialog : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    _logger.LogInformation("Audit plan created successfully: {Code}", Code);
+                    _logger.LogInformation("Audit plan created successfully: {_code}", _code);
                     await ShowSuccessAsyncNotification("Audit plan created successfully");
                     _dialogService.Close(true);
                 }
@@ -301,7 +301,7 @@ public partial class AuditPlanDialog : ComponentBase
 
                 if (result.IsSuccess)
                 {
-                    _logger.LogInformation("Audit plan updated successfully: {Code}", Code);
+                    _logger.LogInformation("Audit plan updated successfully: {_code}", _code);
                     await ShowSuccessAsyncNotification("Audit plan updated successfully");
                     _dialogService.Close(true);
                 }
@@ -319,7 +319,7 @@ public partial class AuditPlanDialog : ComponentBase
         }
         finally
         {
-            IsSubmitting = false;
+            _isSubmitting = false;
             StateHasChanged();
         }
     }
@@ -331,12 +331,12 @@ public partial class AuditPlanDialog : ComponentBase
 
     private void OnStartDateChanged(DateTime? value)
     {
-        PlannedStartDate = value;
+        _plannedStartDate = value;
 
         // Automatically adjust end date if start date changes
-        if (value.HasValue && (!PlannedEndDate.HasValue || PlannedEndDate.Value <= value.Value))
+        if (value.HasValue && (!_plannedEndDate.HasValue || _plannedEndDate.Value <= value.Value))
         {
-            PlannedEndDate = value.Value.AddDays(7);
+            _plannedEndDate = value.Value.AddDays(7);
         }
 
         // Calculate estimated hours based on duration
@@ -347,7 +347,7 @@ public partial class AuditPlanDialog : ComponentBase
 
     private void OnEndDateChanged(DateTime? value)
     {
-        PlannedEndDate = value;
+        _plannedEndDate = value;
 
         // Calculate estimated hours based on duration
         CalculateEstimatedHours();
@@ -357,13 +357,13 @@ public partial class AuditPlanDialog : ComponentBase
 
     private void CalculateEstimatedHours()
     {
-        if (PlannedStartDate.HasValue && PlannedEndDate.HasValue && PlannedEndDate.Value > PlannedStartDate.Value)
+        if (_plannedStartDate.HasValue && _plannedEndDate.HasValue && _plannedEndDate.Value > _plannedStartDate.Value)
         {
-            var duration = PlannedEndDate.Value - PlannedStartDate.Value;
+            var duration = _plannedEndDate.Value - _plannedStartDate.Value;
             var totalDays = (int)duration.TotalDays;
 
             // Calculate estimated hours based on audit type and duration
-            var baseHoursPerDay = AuditType switch
+            var baseHoursPerDay = _auditType switch
             {
                 "Internal" => 6, // 6 hours per day for internal audits
                 "External" => 8, // 8 hours per day for external audits  
@@ -377,41 +377,41 @@ public partial class AuditPlanDialog : ComponentBase
             var calculatedHours = totalDays * baseHoursPerDay;
 
             // Apply reasonable bounds (minimum 2 hours, maximum 200 hours)
-            EstimatedHours = Math.Max(2, Math.Min(200, calculatedHours));
+            _estimatedHours = Math.Max(2, Math.Min(200, calculatedHours));
 
-            _logger.LogInformation("Calculated EstimatedHours: {Hours} for {Days} days of {AuditType} audit",
-                EstimatedHours, totalDays, AuditType);
+            _logger.LogInformation("Calculated _estimatedHours: {Hours} for {Days} days of {_auditType} audit",
+                _estimatedHours, totalDays, _auditType);
         }
     }
 
     private void OnStatusChanged(string value)
     {
-        if (value != Status)
+        if (value != _status)
         {
-            Status = value;
+            _status = value;
 
             // Handle approval workflow
             if (value == "Approved")
             {
-                // If status is set to Approved, RequiresApproval should be true
-                if (!RequiresApproval)
+                // If status is set to Approved, _requiresApproval should be true
+                if (!_requiresApproval)
                 {
-                    RequiresApproval = true;
+                    _requiresApproval = true;
                 }
 
                 // Auto-populate approval fields if empty
-                if (string.IsNullOrEmpty(ApprovedBy))
+                if (string.IsNullOrEmpty(_approvedBy))
                 {
-                    ApprovedBy = "CURRENT_USER"; // Replace with actual current user
-                    ApprovedDate = DateTime.UtcNow;
+                    _approvedBy = "CURRENT_USER"; // Replace with actual current user
+                    _approvedDate = DateTime.UtcNow;
                 }
             }
             else if (value != "Approved")
             {
                 // Clear approval fields if status is changed from approved
-                ApprovedBy = string.Empty;
-                ApprovedDate = null;
-                ApprovalNotes = string.Empty;
+                _approvedBy = string.Empty;
+                _approvedDate = null;
+                _approvalNotes = string.Empty;
             }
 
             StateHasChanged();
@@ -420,16 +420,16 @@ public partial class AuditPlanDialog : ComponentBase
 
     private void OnRequiresApprovalChanged(bool value)
     {
-        RequiresApproval = value;
+        _requiresApproval = value;
 
         // If approval is not required and status is approved, clear approval fields
-        if (!value && Status == "Approved")
+        if (!value && _status == "Approved")
         {
-            ApprovedBy = string.Empty;
-            ApprovedDate = null;
-            ApprovalNotes = string.Empty;
+            _approvedBy = string.Empty;
+            _approvedDate = null;
+            _approvalNotes = string.Empty;
             // Also change status back to a non-approved state
-            Status = "Draft";
+            _status = "Draft";
         }
 
         // Trigger re-render to show/hide the Approval Workflow tab
@@ -438,10 +438,10 @@ public partial class AuditPlanDialog : ComponentBase
 
     private void OnAuditTypeChanged(string value)
     {
-        AuditType = value;
+        _auditType = value;
 
         // Auto-generate code if it's empty and we have an audit type
-        if (string.IsNullOrWhiteSpace(Code) && !string.IsNullOrWhiteSpace(AuditType))
+        if (string.IsNullOrWhiteSpace(_code) && !string.IsNullOrWhiteSpace(_auditType))
         {
             GenerateCode();
         }
@@ -456,9 +456,9 @@ public partial class AuditPlanDialog : ComponentBase
     #region Helper Methods
     private void GenerateCode()
     {
-        if (string.IsNullOrWhiteSpace(Code) && !string.IsNullOrWhiteSpace(AuditType))
+        if (string.IsNullOrWhiteSpace(_code) && !string.IsNullOrWhiteSpace(_auditType))
         {
-            var prefix = AuditType switch
+            var prefix = _auditType switch
             {
                 "Internal" => "INT",
                 "External" => "EXT",
@@ -474,7 +474,7 @@ public partial class AuditPlanDialog : ComponentBase
             var month = DateTime.Now.Month.ToString("D2");
             var random = new Random().Next(100, 999);
 
-            Code = $"{prefix}-{year}{month}-{random}";
+            _code = $"{prefix}-{year}{month}-{random}";
             StateHasChanged();
         }
     }
@@ -492,3 +492,4 @@ public partial class AuditPlanDialog : ComponentBase
     }
     #endregion
 }
+

@@ -99,6 +99,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationLatitude, hazardLocation.Latitude));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationLongitude, hazardLocation.Longitude));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationDescription, hazardLocation.Description ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationIsValidated, hazardLocation.IsValidated));
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationDateSelected, hazardLocation.DateSelected));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, hazardLocation.CreatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
@@ -269,6 +270,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationLatitude, hazardLocation.Latitude));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationLongitude, hazardLocation.Longitude));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationDescription, hazardLocation.Description ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationIsValidated, hazardLocation.IsValidated));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazardLocation.UpdatedBy ?? "SYSTEM"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 

@@ -6,6 +6,7 @@ using Radzen;
 using Radzen.Blazor;
 
 using SMS_Application.Interfaces;
+using SMS_Application.Commands;
 using SMS_Application.Queries;
 
 using SMS_Domain.Entities;
@@ -614,6 +615,59 @@ public partial class HazardLocationListing : ComponentBase
     private void ShowActions(HazardLocation location)
     {
         _logger.LogInformation("Actions requested for hazard location: {Code}", location.Code);
+    }
+
+    private async Task ValidateLocation(HazardLocation location)
+    {
+        try
+        {
+            if (location is null || string.IsNullOrWhiteSpace(location.Code))
+            {
+                await ShowErrorAsyncNotification("Invalid location selected.");
+                return;
+            }
+
+            if (location.IsValidated)
+            {
+                await ShowInfoAsyncNotification($"Location {location.Code} is already validated.");
+                return;
+            }
+
+            var confirmResult = await _dialogService.Confirm(
+                $"Validate location '{location.Code}'? This will set IsValidated to true.",
+                "Confirm Location Validation",
+                new ConfirmOptions
+                {
+                    OkButtonText = "Validate",
+                    CancelButtonText = "Cancel"
+                });
+
+            if (confirmResult != true)
+            {
+                return;
+            }
+
+            location.IsValidated = true;
+
+            var command = new UpdateHazardLocationCommand(location);
+            var result = await _mediator.SendAsync(command, CancellationToken.None);
+
+            if (!result.IsSuccess)
+            {
+                location.IsValidated = false;
+                await ShowErrorAsyncNotification(result.Error?.Message ?? "Failed to validate location.");
+                return;
+            }
+
+            await ShowSuccessAsyncNotification($"Location {location.Code} validated successfully.");
+            await _locationsGrid!.Reload();
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error validating location {LocationCode}", location?.Code);
+            await ShowErrorAsyncNotification("Error validating location.");
+        }
     }
     #endregion
 }

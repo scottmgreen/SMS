@@ -54,7 +54,7 @@
 
 
 <!-- 🚀 ENHANCED: Bulk Mitigation Approval Confirmation Dialog with Risk-Based Approver Selection -->
-@if (ShowBulkApprovalDialog && SelectedReportForApproval != null)
+@if (_showBulkApprovalDialog && _selectedReportForApproval != null)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-lg">
@@ -84,18 +84,18 @@
                             </p>
                             <div class="row mb-3">
                                 <div class="col-sm-6">
-                                    <strong>Report ID:</strong> @SelectedReportForApproval.ReportId<br>
-                                    <strong>Total Hazards:</strong> @GetUniqueHazardCount(SelectedReportForApproval)<br>
+                                    <strong>Report ID:</strong> @_selectedReportForApproval.ReportId<br>
+                                    <strong>Total Hazards:</strong> @GetUniqueHazardCount(_selectedReportForApproval)<br>
                                 </div>
                                 <div class="col-sm-6">
-                                    <strong>Total Mitigations:</strong> @SelectedReportForApproval.MitigationCount<br>
-                                    <strong>Highest Risk Level:</strong> <span class="fw-bold text-danger">@GetHighestRiskLevelAcrossAllHazards(SelectedReportForApproval)</span>
+                                    <strong>Total Mitigations:</strong> @_selectedReportForApproval.MitigationCount<br>
+                                    <strong>Highest Risk Level:</strong> <span class="fw-bold text-danger">@GetHighestRiskLevelAcrossAllHazards(_selectedReportForApproval)</span>
                                 </div>
                             </div>
                             <div class="bg-light p-2 rounded mb-3">
                                 <strong>Description:</strong>
                                 <div>
-                                    @((MarkupString)(SelectedReportForApproval.HazardDescription ?? "No description available"))
+                                    @((MarkupString)(_selectedReportForApproval.HazardDescription ?? "No description available"))
                                 </div>
                             </div>
                         </div>
@@ -108,14 +108,14 @@
                                 <i class="fas fa-user-shield"></i> Required Authorization
                             </h6>
                             <p class="small text-muted mb-3">
-                                This approval includes hazards with <span class="fw-bold text-danger">@GetHighestRiskLevelAcrossAllHazards(SelectedReportForApproval)</span> risk level.
+                                This approval includes hazards with <span class="fw-bold text-danger">@GetHighestRiskLevelAcrossAllHazards(_selectedReportForApproval)</span> risk level.
                                 <br />
                                 Only authorized personnel with sufficient authority should have approved these mitigations.
                             </p>
 
                             <RadzenFormField Text="Select Authorized Approver *" Variant="Variant.Outlined" Style="width: 100%;">
-                                <RadzenDropDown Data="@GetApproversForHighestRiskLevel(SelectedReportForApproval)"
-                                                @bind-Value="@SelectedApprover"
+                                <RadzenDropDown Data="@GetApproversForHighestRiskLevel(_selectedReportForApproval)"
+                                                @bind-Value="@_selectedApprover"
                                                 TextProperty="DisplayName"
                                                 ValueProperty="Code"
                                                 Placeholder="Select an authorized approver..."
@@ -123,9 +123,9 @@
                                                 AllowClear="true" />
                             </RadzenFormField>
 
-                            @if (!string.IsNullOrEmpty(SelectedApprover))
+                            @if (!string.IsNullOrEmpty(_selectedApprover))
                             {
-                                var approver = GetApproverDetails(SelectedApprover);
+                                var approver = GetApproverDetails(_selectedApprover);
                                 <div class="mt-2">
                                     <RadzenAlert AlertStyle="AlertStyle.Success" ShowIcon="true" Style="margin-bottom: 0;">
                                         <strong>Selected Approver:</strong> @approver.DisplayName<br>
@@ -137,11 +137,11 @@
                                     </RadzenAlert>
                                 </div>
                             }
-                            else if (GetApproversForHighestRiskLevel(SelectedReportForApproval).Count == 0)
+                            else if (GetApproversForHighestRiskLevel(_selectedReportForApproval).Count == 0)
                             {
                                 <RadzenAlert AlertStyle="AlertStyle.Danger" ShowIcon="true" Style="margin-top: 1rem;">
                                     <strong>No Authorized Approvers Found!</strong><br>
-                                    No organizational users have sufficient authority to approve <strong>@GetHighestRiskLevelAcrossAllHazards(SelectedReportForApproval)</strong> risk level mitigations.
+                                    No organizational users have sufficient authority to approve <strong>@GetHighestRiskLevelAcrossAllHazards(_selectedReportForApproval)</strong> risk level mitigations.
                                     Please contact your SMS Administrator.
                                 </RadzenAlert>
                             }
@@ -155,7 +155,7 @@
                             <h6 class="text-primary mb-3">
                                 <i class="fas fa-list"></i> Mitigations to be Approved
                             </h6>
-                            @if (SelectedReportForApproval.HasMitigations)
+                            @if (_selectedReportForApproval.HasMitigations)
                             {
                                 <div class="table-responsive">
                                     <table class="table table-sm table-striped">
@@ -169,7 +169,7 @@
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            @foreach (var mitigation in SelectedReportForApproval.AllMitigations)
+                                            @foreach (var mitigation in _selectedReportForApproval.AllMitigations)
                                             {
                                                 <tr>
                                                     <td>@mitigation.MitigationCode</td>
@@ -203,13 +203,13 @@
                                       Icon="close"
                                       Click="@CloseBulkApprovalConfirmation"
                                       Size="ButtonSize.Medium"
-                                      Disabled="@IsProcessingApproval" />
+                                      Disabled="@_isProcessingApproval" />
                         <RadzenButton ButtonStyle="ButtonStyle.Success"
-                                      Text="@(IsProcessingApproval ? "Processing..." : $"Approve All {SelectedReportForApproval.MitigationCount} Mitigations")"
-                                      Icon="@(IsProcessingApproval ? "hourglass_empty" : "verified")"
+                                      Text="@(_isProcessingApproval ? "Processing..." : $"Approve All {_selectedReportForApproval.MitigationCount} Mitigations")"
+                                      Icon="@(_isProcessingApproval ? "hourglass_empty" : "verified")"
                                       Click="@ProcessBulkApprovalConfirmation"
                                       Size="ButtonSize.Medium"
-                                      Disabled="@(IsProcessingApproval || string.IsNullOrEmpty(SelectedApprover) || GetApproversForHighestRiskLevel(SelectedReportForApproval).Count == 0)" />
+                                      Disabled="@(_isProcessingApproval || string.IsNullOrEmpty(_selectedApprover) || GetApproversForHighestRiskLevel(_selectedReportForApproval).Count == 0)" />
                     </div>
                 </div>
             </div>
@@ -218,7 +218,7 @@
 }
 
 <!-- Description Modal Dialog -->
-@if (ShowDescriptionModal)
+@if (_showDescriptionModal)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-md">
@@ -226,7 +226,7 @@
                 <div class="sms-modal-header sms-header-primary">
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <h5 class="sms-modal-title mb-0">
-                            <i class="fas fa-file-alt"></i> Hazard Description - @SelectedReportId
+                            <i class="fas fa-file-alt"></i> Hazard Description - @_selectedReportId
                         </h5>
                         <RadzenButton ButtonStyle="ButtonStyle.Light"
                                       Variant="Variant.Text"
@@ -239,7 +239,7 @@
                     <RadzenCard Variant="Variant.Outlined">
                         <div class="p-3">
                             <div style="line-height: 1.6; white-space: normal;">
-                                @((MarkupString)(SelectedDescription ?? "No description available"))
+                                @((MarkupString)(_selectedDescription ?? "No description available"))
                             </div>
                         </div>
                     </RadzenCard>
@@ -334,3 +334,4 @@
         padding: 0.25rem 0.5rem !important;
     }
 </style>
+

@@ -1,4 +1,4 @@
-
+﻿
 using SMS_Application.Interfaces;
 using SMS_Application.Commands;
 using SMS_Application.Queries;
@@ -37,10 +37,10 @@ public partial class StakeholderGroups : ComponentBase
     private List<SMSStakeholderUser> SMSStakeholderUsers { get; set; } = new();
     private List<SMSStakeholderUser> GroupMembers { get; set; } = new();
     private List<SMSStakeholderUser> AvailableUsers { get; set; } = new();
-    private SMSStakeholderGroup? CurrentGroup { get; set; }
-    private bool IsEditMode { get; set; }
-    private bool IsManagingMembers { get; set; }
-    private string? CurrentGroupCode { get; set; }
+    private SMSStakeholderGroup? _currentGroup { get; set; }
+    private bool _isEditMode { get; set; }
+    private bool _isManagingMembers { get; set; }
+    private string? _currentGroupCode { get; set; }
 
     // Grid reference
     private RadzenDataGrid<SMSStakeholderGroup>? _groupsGrid;
@@ -48,25 +48,25 @@ public partial class StakeholderGroups : ComponentBase
     // Selection tracking for member management
     private Dictionary<string, bool> SelectedUsers { get; set; } = new();
 
-    private string SuccessMessage { get; set; } = string.Empty;
-    private string ErrorMessage { get; set; } = string.Empty;
-    private bool IsSaving { get; set; } = false;
+    private string _successMessage { get; set; } = string.Empty;
+    private string _errorMessage { get; set; } = string.Empty;
+    private bool _isSaving { get; set; } = false;
 
     #endregion
 
     #region Modal Properties
 
-    private bool ShowCreateModal { get; set; } = false;
-    private bool ShowEditModal { get; set; } = false;
-    private bool ShowMembersModal { get; set; } = false;
-    private bool ShowDeleteModal { get; set; } = false;
-    private string NewGroupName { get; set; } = string.Empty;
-    private string NewDescription { get; set; } = string.Empty;
-    private string EditGroupName { get; set; } = string.Empty;
-    private string EditDescription { get; set; } = string.Empty;
-    private bool EditIsActive { get; set; } = true;
-    private string DeleteGroupCode { get; set; } = string.Empty;
-    private string DeleteGroupName { get; set; } = string.Empty;
+    private bool _showCreateModal { get; set; } = false;
+    private bool _showEditModal { get; set; } = false;
+    private bool _showMembersModal { get; set; } = false;
+    private bool _showDeleteModal { get; set; } = false;
+    private string _newGroupName { get; set; } = string.Empty;
+    private string _newDescription { get; set; } = string.Empty;
+    private string _editGroupName { get; set; } = string.Empty;
+    private string _editDescription { get; set; } = string.Empty;
+    private bool _editIsActive { get; set; } = true;
+    private string _deleteGroupCode { get; set; } = string.Empty;
+    private string _deleteGroupName { get; set; } = string.Empty;
 
     #endregion
 
@@ -144,15 +144,15 @@ public partial class StakeholderGroups : ComponentBase
                 return;
             }
 
-            CurrentGroup = groupResult.Value;
+            _currentGroup = groupResult.Value;
 
             // Set edit form values
-            EditGroupName = CurrentGroup.Name ?? string.Empty;
-            EditDescription = CurrentGroup.Description ?? string.Empty;
-            EditIsActive = CurrentGroup.IsActive;
+            _editGroupName = _currentGroup.Name ?? string.Empty;
+            _editDescription = _currentGroup.Description ?? string.Empty;
+            _editIsActive = _currentGroup.IsActive;
 
             // Open edit modal
-            ShowEditModal = true;
+            _showEditModal = true;
         }
         catch (Exception ex)
         {
@@ -163,11 +163,11 @@ public partial class StakeholderGroups : ComponentBase
 
     private async Task CancelEdit()
     {
-        IsEditMode = false;
-        CurrentGroup = null;
-        EditGroupName = string.Empty;
-        EditDescription = string.Empty;
-        EditIsActive = true;
+        _isEditMode = false;
+        _currentGroup = null;
+        _editGroupName = string.Empty;
+        _editDescription = string.Empty;
+        _editIsActive = true;
         Logger.LogInformation("Group edit cancelled");
         await EventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "Edit cancelled"));
         Navigation.NavigateToSecure("/System/UserGroups/StakeholderGroups");
@@ -175,11 +175,11 @@ public partial class StakeholderGroups : ComponentBase
 
     private void CloseEditModal()
     {
-        ShowEditModal = false;
-        CurrentGroup = null;
-        EditGroupName = string.Empty;
-        EditDescription = string.Empty;
-        EditIsActive = true;
+        _showEditModal = false;
+        _currentGroup = null;
+        _editGroupName = string.Empty;
+        _editDescription = string.Empty;
+        _editIsActive = true;
     }
 
     #endregion
@@ -188,7 +188,7 @@ public partial class StakeholderGroups : ComponentBase
 
     private async Task CreateGroup()
     {
-        if (string.IsNullOrWhiteSpace(NewGroupName))
+        if (string.IsNullOrWhiteSpace(_newGroupName))
         {
             await ShowErrorAsyncNotification("Group name is required.");
             return;
@@ -196,7 +196,7 @@ public partial class StakeholderGroups : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Create group entity
@@ -205,8 +205,8 @@ public partial class StakeholderGroups : ComponentBase
             var group = new SMSStakeholderGroup(groupId)
             {
                 Code = groupCode,
-                Name = NewGroupName,
-                Description = NewDescription,
+                Name = _newGroupName,
+                Description = _newDescription,
                 IsActive = true
             };
 
@@ -215,7 +215,7 @@ public partial class StakeholderGroups : ComponentBase
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Stakeholder group '{NewGroupName}' created successfully.");
+                await ShowSuccessAsyncNotification($"Stakeholder group '{_newGroupName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
                 if (_groupsGrid != null)
@@ -233,14 +233,14 @@ public partial class StakeholderGroups : ComponentBase
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
 
     private async Task UpdateGroup()
     {
-        if (CurrentGroup is null || string.IsNullOrWhiteSpace(EditGroupName))
+        if (_currentGroup is null || string.IsNullOrWhiteSpace(_editGroupName))
         {
             await ShowErrorAsyncNotification("Group name is required.");
             return;
@@ -248,20 +248,20 @@ public partial class StakeholderGroups : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Update group properties
-            CurrentGroup.Name = EditGroupName;
-            CurrentGroup.Description = EditDescription;
-            CurrentGroup.IsActive = EditIsActive;
+            _currentGroup.Name = _editGroupName;
+            _currentGroup.Description = _editDescription;
+            _currentGroup.IsActive = _editIsActive;
 
-            var updateCommand = new UpdateSMSStakeholderGroupCommand(CurrentGroup);
+            var updateCommand = new UpdateSMSStakeholderGroupCommand(_currentGroup);
             var result = await Mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Stakeholder group '{EditGroupName}' updated successfully.");
+                await ShowSuccessAsyncNotification($"Stakeholder group '{_editGroupName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
                 if (_groupsGrid != null)
@@ -274,19 +274,19 @@ public partial class StakeholderGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error updating stakeholder group: {GroupCode}", CurrentGroup.Code);
+            Logger.LogError(ex, "Error updating stakeholder group: {GroupCode}", _currentGroup.Code);
             await ShowErrorAsyncNotification("Error updating stakeholder group. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
 
     private async Task DeleteGroup()
     {
-        if (string.IsNullOrWhiteSpace(DeleteGroupCode))
+        if (string.IsNullOrWhiteSpace(_deleteGroupCode))
         {
             await ShowErrorAsyncNotification("Group code is required for deletion.");
             return;
@@ -294,11 +294,11 @@ public partial class StakeholderGroups : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Get existing group to pass to delete command
-            var getGroupQuery = new GetSMSStakeholderGroupByCodeQuery(DeleteGroupCode);
+            var getGroupQuery = new GetSMSStakeholderGroupByCodeQuery(_deleteGroupCode);
             var groupResult = await Mediator.SendAsync(getGroupQuery, CancellationToken.None);
 
             if (groupResult.IsFailure)
@@ -319,7 +319,7 @@ public partial class StakeholderGroups : ComponentBase
                     await _groupsGrid.Reload();
 
                 // If we're editing the deleted group, cancel edit mode
-                if (CurrentGroup?.Code == DeleteGroupCode)
+                if (_currentGroup?.Code == _deleteGroupCode)
                 {
                     await CancelEdit();
                 }
@@ -331,12 +331,12 @@ public partial class StakeholderGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error deleting stakeholder group: {GroupCode}", DeleteGroupCode);
+            Logger.LogError(ex, "Error deleting stakeholder group: {GroupCode}", _deleteGroupCode);
             await ShowErrorAsyncNotification("Error deleting stakeholder group. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
@@ -348,11 +348,11 @@ public partial class StakeholderGroups : ComponentBase
 
     #region Filtering Methods
 
-    private bool FilterPOPEmployeesOnly { get; set; } = false;
+    private bool _filterPopEmployeesOnly { get; set; } = false;
 
     private List<SMSStakeholderUser> GetFilteredAvailableUsers()
     {
-        return FilterPOPEmployeesOnly ?
+        return _filterPopEmployeesOnly ?
             AvailableUsers.Where(u => u.IsPOPEmployee).ToList() :
             AvailableUsers;
     }
@@ -362,30 +362,30 @@ public partial class StakeholderGroups : ComponentBase
     #endregion
     private void OpenCreateModal()
     {
-        NewGroupName = string.Empty;
-        NewDescription = string.Empty;
-        ShowCreateModal = true;
+        _newGroupName = string.Empty;
+        _newDescription = string.Empty;
+        _showCreateModal = true;
     }
 
     private void CloseCreateModal()
     {
-        ShowCreateModal = false;
-        NewGroupName = string.Empty;
-        NewDescription = string.Empty;
+        _showCreateModal = false;
+        _newGroupName = string.Empty;
+        _newDescription = string.Empty;
     }
 
     private void ConfirmDelete(string groupCode, string groupName)
     {
-        DeleteGroupCode = groupCode;
-        DeleteGroupName = groupName;
-        ShowDeleteModal = true;
+        _deleteGroupCode = groupCode;
+        _deleteGroupName = groupName;
+        _showDeleteModal = true;
     }
 
     private void CloseDeleteModal()
     {
-        ShowDeleteModal = false;
-        DeleteGroupCode = string.Empty;
-        DeleteGroupName = string.Empty;
+        _showDeleteModal = false;
+        _deleteGroupCode = string.Empty;
+        _deleteGroupName = string.Empty;
     }
 
     #endregion
@@ -416,16 +416,16 @@ public partial class StakeholderGroups : ComponentBase
 
         try
         {
-            CurrentGroupCode = groupCode;
-            IsManagingMembers = true;
+            _currentGroupCode = groupCode;
+            _isManagingMembers = true;
 
             // Find the current group
-            CurrentGroup = SMSStakeholderGroups.FirstOrDefault(g => g.Code == groupCode);
+            _currentGroup = SMSStakeholderGroups.FirstOrDefault(g => g.Code == groupCode);
 
             await LoadGroupMembersAsync(groupCode);
 
             // Show modal instead of navigating
-            ShowMembersModal = true;
+            _showMembersModal = true;
         }
         catch (Exception ex)
         {
@@ -477,9 +477,9 @@ public partial class StakeholderGroups : ComponentBase
     private async Task ExitMemberManagement()
     {
         // Reset member management state
-        IsManagingMembers = false;
-        CurrentGroupCode = null;
-        CurrentGroup = null;
+        _isManagingMembers = false;
+        _currentGroupCode = null;
+        _currentGroup = null;
         GroupMembers.Clear();
         AvailableUsers.Clear();
         SelectedUsers.Clear();
@@ -491,10 +491,10 @@ public partial class StakeholderGroups : ComponentBase
 
     private void CloseMembersModal()
     {
-        ShowMembersModal = false;
-        IsManagingMembers = false;
-        CurrentGroupCode = null;
-        CurrentGroup = null;
+        _showMembersModal = false;
+        _isManagingMembers = false;
+        _currentGroupCode = null;
+        _currentGroup = null;
         GroupMembers.Clear();
         AvailableUsers.Clear();
         SelectedUsers.Clear();
@@ -502,7 +502,7 @@ public partial class StakeholderGroups : ComponentBase
 
     private async Task RemoveUser(string userCode)
     {
-        if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(CurrentGroupCode))
+        if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(_currentGroupCode))
         {
             await ShowErrorAsyncNotification("User code and group code are required.");
             return;
@@ -510,14 +510,14 @@ public partial class StakeholderGroups : ComponentBase
 
         try
         {
-            var groupId = new SMSStakeholderGroupID(CurrentGroupCode);
+            var groupId = new SMSStakeholderGroupID(_currentGroupCode);
             var command = new RemoveUserFromStakeholderGroupCommand(userCode, groupId);
             var result = await Mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 await ShowSuccessAsyncNotification("User removed from group successfully.");
-                await LoadGroupMembersAsync(CurrentGroupCode);
+                await LoadGroupMembersAsync(_currentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
@@ -527,14 +527,14 @@ public partial class StakeholderGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, CurrentGroupCode);
+            Logger.LogError(ex, "Error removing user {UserCode} from group {GroupCode}", userCode, _currentGroupCode);
             await ShowErrorAsyncNotification("Error removing user from group. Please try again.");
         }
     }
 
     private async Task AssignMultipleUsers()
     {
-        if (string.IsNullOrWhiteSpace(CurrentGroupCode) || !SelectedUsers.Any(s => s.Value))
+        if (string.IsNullOrWhiteSpace(_currentGroupCode) || !SelectedUsers.Any(s => s.Value))
         {
             await ShowErrorAsyncNotification("Group code and at least one user must be selected.");
             return;
@@ -550,7 +550,7 @@ public partial class StakeholderGroups : ComponentBase
             {
                 try
                 {
-                    var groupId = new SMSStakeholderGroupID(CurrentGroupCode);
+                    var groupId = new SMSStakeholderGroupID(_currentGroupCode);
                     var command = new AssignUserToStakeholderGroupCommand(userCode, groupId);
                     var result = await Mediator.SendAsync(command, CancellationToken.None);
 
@@ -561,7 +561,7 @@ public partial class StakeholderGroups : ComponentBase
                 }
                 catch (Exception ex)
                 {
-                    Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
+                    Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, _currentGroupCode);
                     failureCount++;
                 }
             }
@@ -573,7 +573,7 @@ public partial class StakeholderGroups : ComponentBase
                     message += $" {failureCount} assignment(s) failed.";
                 await ShowSuccessAsyncNotification(message);
 
-                await LoadGroupMembersAsync(CurrentGroupCode);
+                await LoadGroupMembersAsync(_currentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
@@ -583,14 +583,14 @@ public partial class StakeholderGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning multiple users to group {GroupCode}", CurrentGroupCode);
+            Logger.LogError(ex, "Error assigning multiple users to group {GroupCode}", _currentGroupCode);
             await ShowErrorAsyncNotification("Error assigning users to group. Please try again.");
         }
     }
 
     private async Task AssignSingleUser(string userCode)
     {
-        if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(CurrentGroupCode))
+        if (string.IsNullOrWhiteSpace(userCode) || string.IsNullOrWhiteSpace(_currentGroupCode))
         {
             await ShowErrorAsyncNotification("User code and group code are required.");
             return;
@@ -598,14 +598,14 @@ public partial class StakeholderGroups : ComponentBase
 
         try
         {
-            var groupId = new SMSStakeholderGroupID(CurrentGroupCode);
+            var groupId = new SMSStakeholderGroupID(_currentGroupCode);
             var command = new AssignUserToStakeholderGroupCommand(userCode, groupId);
             var result = await Mediator.SendAsync(command, CancellationToken.None);
 
             if (result.IsSuccess)
             {
                 await ShowSuccessAsyncNotification("User assigned to group successfully.");
-                await LoadGroupMembersAsync(CurrentGroupCode);
+                await LoadGroupMembersAsync(_currentGroupCode);
                 StateHasChanged(); // Refresh the modal
             }
             else
@@ -615,7 +615,7 @@ public partial class StakeholderGroups : ComponentBase
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, CurrentGroupCode);
+            Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, _currentGroupCode);
             await ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
     }
@@ -624,3 +624,5 @@ public partial class StakeholderGroups : ComponentBase
 
     
 }
+
+

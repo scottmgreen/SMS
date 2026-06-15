@@ -471,6 +471,9 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmHazardLocationDescription = new Lazy<string>(() => "@pDescription");
     public static string pmHazardLocationDescription => _pmHazardLocationDescription.Value;
 
+    private static readonly Lazy<string> _pmHazardLocationIsValidated = new Lazy<string>(() => "@pIsValidated");
+    public static string pmHazardLocationIsValidated => _pmHazardLocationIsValidated.Value;
+
     private static readonly Lazy<string> _pmHazardLocationDateSelected = new Lazy<string>(() => "@pDateSelected");
     public static string pmHazardLocationDateSelected => _pmHazardLocationDateSelected.Value;
 
@@ -499,9 +502,7 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmHazardLocationStatus = new Lazy<string>(() => "@pStatus");
     public static string pmHazardLocationStatus => _pmHazardLocationStatus.Value;
 
-    private static readonly Lazy<string> _pmHazardLocationIsValidated = new Lazy<string>(() => "@pIsValidated");
-    public static string pmHazardLocationIsValidated => _pmHazardLocationIsValidated.Value;
-
+  
     private static readonly Lazy<string> _pmHazardLocationValidatedDate = new Lazy<string>(() => "@pValidatedDate");
     public static string pmHazardLocationValidatedDate => _pmHazardLocationValidatedDate.Value;
 

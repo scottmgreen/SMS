@@ -378,6 +378,7 @@ public static partial class Mappers
         hazardLocation.Latitude = reader.IsDBNull(FieldNames.fHazardLocationLatitude) ? null : reader.GetDecimal(FieldNames.fHazardLocationLatitude);
         hazardLocation.Longitude = reader.IsDBNull(FieldNames.fHazardLocationLongitude) ? null : reader.GetDecimal(FieldNames.fHazardLocationLongitude);
         hazardLocation.Description = reader.GetValue<string>(FieldNames.fHazardLocationDescription);
+        hazardLocation.IsValidated = reader.GetValue<bool>(FieldNames.fHazardLocationIsValidated);
 
         return hazardLocation;
     }

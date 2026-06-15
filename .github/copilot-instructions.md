@@ -35,4 +35,5 @@
 - Use Radzen DialogService for confirmation prompts; do not use IJSRuntime/JavaScript confirm dialogs in this codebase.
 
 ## Code Style
-- Private variables in SMS3 code-behind files must consistently follow the _variableName naming convention.
+- Private variables in SMS3 code-behind files must consistently follow the _variableName naming convention (e.g., _memberName). 
+- Cleanup should continue in targeted batches with build validation.

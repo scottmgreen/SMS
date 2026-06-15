@@ -1,4 +1,4 @@
-@page "/SMSSystem/UserRoles/UserRoles"
+﻿@page "/SMSSystem/UserRoles/UserRoles"
 
 @using Radzen
 @using Radzen.Blazor
@@ -26,25 +26,25 @@
 
 <div class="container-fluid">
     <!-- Messages -->
-    @if (!string.IsNullOrEmpty(SuccessMessage))
+    @if (!string.IsNullOrEmpty(_successMessage))
     {
         <RadzenRow Gap="1rem" class="rz-mb-3">
             <RadzenColumn Size="12">
                 <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter">
                     <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
-                    @SuccessMessage
+                    @_successMessage
                 </RadzenAlert>
             </RadzenColumn>
         </RadzenRow>
     }
 
-    @if (!string.IsNullOrEmpty(ErrorMessage))
+    @if (!string.IsNullOrEmpty(_errorMessage))
     {
         <RadzenRow Gap="1rem" class="rz-mb-3">
             <RadzenColumn Size="12">
                 <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
                     <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
-                    @ErrorMessage
+                    @_errorMessage
                 </RadzenAlert>
             </RadzenColumn>
         </RadzenRow>
@@ -132,7 +132,7 @@
 </div>
 
 <!-- Create Role Modal -->
-@if (ShowCreateModal)
+@if (_showCreateModal)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-xl">
@@ -227,7 +227,7 @@
                         <div class="d-flex gap-2">
                             <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
                             <RadzenButton Text="Create Role" Icon="save" ButtonStyle="ButtonStyle.Primary" 
-                                          Click="@CreateRole" Disabled="@(!_isCreateFormValid || IsSaving)"
+                                          Click="@CreateRole" Disabled="@(!_isCreateFormValid || _isSaving)"
                                           Style="background-color: #212e61; border-color: #212e61;" />
                         </div>
                     </div>
@@ -238,14 +238,14 @@
 }
 
 <!-- Edit Role Modal -->
-@if (ShowEditModal && CurrentEditRole is not null)
+@if (_showEditModal && _currentEditRole is not null)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-xl">
             <div class="sms-modal-content">
                 <div class="sms-modal-header sms-header-primary">
                     <h5 class="sms-modal-title">
-                        <i class="fas fa-edit"></i> Edit Role: @CurrentEditRole.Name
+                        <i class="fas fa-edit"></i> Edit Role: @_currentEditRole.Name
                     </h5>
                 </div>
                 <div class="sms-modal-body">
@@ -333,7 +333,7 @@
                         <div class="d-flex gap-2">
                             <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
                             <RadzenButton Text="Update Role" Icon="save" ButtonStyle="ButtonStyle.Warning" 
-                                          Click="@UpdateRole" Disabled="@(!_isEditFormValid || IsSaving)"
+                                          Click="@UpdateRole" Disabled="@(!_isEditFormValid || _isSaving)"
                                           Style="background-color: #f39c12; border-color: #f39c12;" />
                         </div>
                     </div>
@@ -344,22 +344,22 @@
 }
 
 <!-- View Permissions Modal -->
-@if (ShowPermissionsModal && ViewRole is not null)
+@if (_showPermissionsModal && _viewRole is not null)
 {
     <div class="modal-overlay">
         <div class="sms-modal-dialog sms-modal-lg">
             <div class="sms-modal-content">
                 <div class="sms-modal-header sms-header-primary">
                     <h5 class="sms-modal-title">
-                        <i class="fas fa-eye"></i> View Permissions: @ViewRole.Name
+                        <i class="fas fa-eye"></i> View Permissions: @_viewRole.Name
                     </h5>
                 </div>
                 <div class="sms-modal-body">
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0 0 1rem 0; text-align: center;">
-                        Code: @ViewRole.Code
+                        Code: @_viewRole.Code
                     </RadzenText>
 
-                    @if (ViewRole.Permissions?.Any() == true)
+                    @if (_viewRole.Permissions?.Any() == true)
                     {
                         <RadzenDataGrid Data="@SMSModules" TItem="string" AllowPaging="false" class="permission-view-grid" Style="height: 700px; overflow-y:auto">
                             <Columns>
@@ -542,3 +542,5 @@
     border-radius: 0.375rem;
 }
 </style>
+
+

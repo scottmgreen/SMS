@@ -1,4 +1,4 @@
-using System.Security;
+﻿using System.Security;
 
 using SMS3.Components.Shared.UIHelpers;
 
@@ -15,8 +15,8 @@ public partial class UserRoles : ComponentBase
 
     // Data Properties
     private List<SMSUserRole> UserRolesList { get; set; } = new();
-    private string? SuccessMessage { get; set; }
-    private string? ErrorMessage { get; set; }
+    private string? _successMessage { get; set; }
+    private string? _errorMessage { get; set; }
 
     // Predefined SMS Modules
     private static string[] SMSModules { get; set; } = Array.Empty<string>();
@@ -47,16 +47,16 @@ public partial class UserRoles : ComponentBase
     private CreateRoleModel _newRole = new();
 
     // Create Modal Properties
-    private bool ShowCreateModal { get; set; }
-    private bool IsSaving { get; set; }
+    private bool _showCreateModal { get; set; }
+    private bool _isSaving { get; set; }
 
     // View Permissions Modal Properties
-    private bool ShowPermissionsModal { get; set; }
-    private SMSUserRole? ViewRole { get; set; }
+    private bool _showPermissionsModal { get; set; }
+    private SMSUserRole? _viewRole { get; set; }
 
     // Edit Role Modal Properties
-    private bool ShowEditModal { get; set; }
-    private SMSUserRole? CurrentEditRole { get; set; }
+    private bool _showEditModal { get; set; }
+    private SMSUserRole? _currentEditRole { get; set; }
 
     // Component References
     private RadzenDataGrid<SMSUserRole>? _rolesGrid;
@@ -105,7 +105,7 @@ public partial class UserRoles : ComponentBase
             UpdatePermissions = SMSModules.ToDictionary(m => m, m => false),
             DeletePermissions = SMSModules.ToDictionary(m => m, m => false)
         };
-        ShowCreateModal = true;
+        _showCreateModal = true;
         StateHasChanged();
     }
 
@@ -119,7 +119,7 @@ public partial class UserRoles : ComponentBase
 
         try
         {
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
             // Create role entity
@@ -171,14 +171,14 @@ public partial class UserRoles : ComponentBase
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
 
     private void CloseCreateModal()
     {
-        ShowCreateModal = false;
+        _showCreateModal = false;
         _newRole = new CreateRoleModel();
         StateHasChanged();
     }
@@ -240,19 +240,19 @@ public partial class UserRoles : ComponentBase
                 return;
             }
 
-            CurrentEditRole = roleResult.Value;
+            _currentEditRole = roleResult.Value;
 
             // Populate edit form with permission matrices
             _editRole = new EditRoleModel
             {
-                RoleName = CurrentEditRole?.Name ?? "",
+                RoleName = _currentEditRole?.Name ?? "",
                 CreatePermissions = SMSModules.ToDictionary(m => m, m => GetPermissionValue(m, "create")),
                 ReadPermissions = SMSModules.ToDictionary(m => m, m => GetPermissionValue(m, "read")),
                 UpdatePermissions = SMSModules.ToDictionary(m => m, m => GetPermissionValue(m, "update")),
                 DeletePermissions = SMSModules.ToDictionary(m => m, m => GetPermissionValue(m, "delete"))
             };
 
-            ShowEditModal = true;
+            _showEditModal = true;
             StateHasChanged();
         }
         catch (Exception ex)
@@ -272,21 +272,21 @@ public partial class UserRoles : ComponentBase
 
         try
         {
-            if (CurrentEditRole is null)
+            if (_currentEditRole is null)
             {
                 await _notificationHelper.ShowErrorAsync("No role selected for update.");
                 return;
             }
 
-            IsSaving = true;
+            _isSaving = true;
             StateHasChanged();
 
-            CurrentEditRole.Name = _editRole.RoleName;
+            _currentEditRole.Name = _editRole.RoleName;
 
             // Update permissions for each module
             foreach (var module in SMSModules)
             {
-                var existingPermission = CurrentEditRole.Permissions?.FirstOrDefault(p => p.SMSModule == module);
+                var existingPermission = _currentEditRole.Permissions?.FirstOrDefault(p => p.SMSModule == module);
                 if (existingPermission is not null)
                 {
                     existingPermission.Create = _editRole.CreatePermissions.ContainsKey(module) && _editRole.CreatePermissions[module];
@@ -302,7 +302,7 @@ public partial class UserRoles : ComponentBase
                     var permission = new SMSUserRolePermission(permissionId)
                     {
                         Code = permissionCode,
-                        SMSUserRoleCode = CurrentEditRole.Code,
+                        SMSUserRoleCode = _currentEditRole.Code,
                         SMSModule = module,
                         Create = _editRole.CreatePermissions.ContainsKey(module) && _editRole.CreatePermissions[module],
                         Read = _editRole.ReadPermissions.ContainsKey(module) && _editRole.ReadPermissions[module],
@@ -311,12 +311,12 @@ public partial class UserRoles : ComponentBase
                     };
 
                     
-                    CurrentEditRole.Permissions ??= new List<SMSUserRolePermission>();
-                    CurrentEditRole.Permissions.Add(permission);
+                    _currentEditRole.Permissions ??= new List<SMSUserRolePermission>();
+                    _currentEditRole.Permissions.Add(permission);
                 }
             }
 
-            var updateCommand = new UpdateSMSUserRoleCommand(CurrentEditRole);
+            var updateCommand = new UpdateSMSUserRoleCommand(_currentEditRole);
             var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
             if (result.IsSuccess)
@@ -332,20 +332,20 @@ public partial class UserRoles : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating user role: {RoleCode}", CurrentEditRole?.Code);
+            _logger.LogError(ex, "Error updating user role: {RoleCode}", _currentEditRole?.Code);
             await _notificationHelper.ShowErrorAsync("Error updating user role. Please try again.");
         }
         finally
         {
-            IsSaving = false;
+            _isSaving = false;
             StateHasChanged();
         }
     }
 
     private void CloseEditModal()
     {
-        ShowEditModal = false;
-        CurrentEditRole = null;
+        _showEditModal = false;
+        _currentEditRole = null;
         _editRole = new EditRoleModel();
         StateHasChanged();
     }
@@ -421,23 +421,23 @@ public partial class UserRoles : ComponentBase
 
     private async Task ShowPermissionsDialog(SMSUserRole role)
     {
-        ViewRole = role;
-        ShowPermissionsModal = true;
+        _viewRole = role;
+        _showPermissionsModal = true;
         StateHasChanged();
     }
 
     private void ClosePermissionsModal()
     {
-        ShowPermissionsModal = false;
-        ViewRole = null;
+        _showPermissionsModal = false;
+        _viewRole = null;
         StateHasChanged();
     }
 
     private bool IsPermissionGranted(string module, string action)
     {
-        if (ViewRole?.Permissions is null) return false;
+        if (_viewRole?.Permissions is null) return false;
 
-        var permission = ViewRole.Permissions.FirstOrDefault(p => p.SMSModule == module);
+        var permission = _viewRole.Permissions.FirstOrDefault(p => p.SMSModule == module);
         return action switch
         {
             "Create" => permission?.Create == true,
@@ -450,7 +450,7 @@ public partial class UserRoles : ComponentBase
 
     private int GetViewRoleTotalPermissions()
     {
-        return ViewRole?.Permissions?.Sum(p => (p.Create ? 1 : 0) + (p.Read ? 1 : 0) + (p.Update ? 1 : 0) + (p.Delete ? 1 : 0)) ?? 0;
+        return _viewRole?.Permissions?.Sum(p => (p.Create ? 1 : 0) + (p.Read ? 1 : 0) + (p.Update ? 1 : 0) + (p.Delete ? 1 : 0)) ?? 0;
     }
 
     private int GetMaxPermissions()
@@ -459,9 +459,9 @@ public partial class UserRoles : ComponentBase
     }
     private bool GetPermissionValue(string module, string permissionType)
     {
-        if (CurrentEditRole?.Permissions is null) return false;
+        if (_currentEditRole?.Permissions is null) return false;
 
-        var permission = CurrentEditRole.Permissions.FirstOrDefault(p => p.SMSModule == module);
+        var permission = _currentEditRole.Permissions.FirstOrDefault(p => p.SMSModule == module);
         if (permission is null) return false;
 
         return permissionType.ToLower() switch
@@ -506,3 +506,5 @@ public partial class UserRoles : ComponentBase
 
     #endregion
 }
+
+

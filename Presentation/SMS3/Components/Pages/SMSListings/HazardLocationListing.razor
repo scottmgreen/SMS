@@ -31,15 +31,15 @@
                 IsLoading="@_isLoading">
     
     <Columns>
-        <RadzenDataGridColumn TItem="HazardLocation" Width="60px" Sortable="false" Filterable="false">
+        @* <RadzenDataGridColumn TItem="HazardLocation" Width="60px" Sortable="false" Filterable="false">
             <HeaderTemplate>
                 <input type="checkbox" />
             </HeaderTemplate>
             <Template Context="location">
                 <input type="checkbox" @onclick:stopPropagation="true" />
             </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="HazardLocation" Property="Code" Title="Location ID" Width="150px">
+        </RadzenDataGridColumn> *@
+        <RadzenDataGridColumn TItem="HazardLocation" Property="Code" Title="Location ID" Width="100px">
             <Template Context="location">
                                                 <div title="@location.Code" style="@_basicTextStyle">
                     @(location.Code)
@@ -47,21 +47,21 @@
             </Template>
 
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="HazardLocation" Property="HazardCode" Title="Hazard ID" Width="120px">
+        <RadzenDataGridColumn TItem="HazardLocation" Property="HazardCode" Title="Hazard ID" Width="100px">
             <Template Context="location">
                                                 <div title="@location.HazardCode" style="@_basicTextStyle">
                     @(location.HazardCode)
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="HazardLocation" Property="Latitude" Title="Latitude" Width="120px">
+        <RadzenDataGridColumn TItem="HazardLocation" Property="Latitude" Title="Latitude" Width="100px">
             <Template Context="location">
                                                 <div title="@(location.Latitude?.ToString("F6"))" style="@_basicTextStyle">
                     @(location.Latitude?.ToString("F6") ?? "N/A")
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="HazardLocation" Property="Longitude" Title="Longitude" Width="120px">
+        <RadzenDataGridColumn TItem="HazardLocation" Property="Longitude" Title="Longitude" Width="100px">
             <Template Context="location">
                                                 <div title="@(location.Longitude?.ToString("F6"))" style="@_basicTextStyle">
                     @(location.Longitude?.ToString("F6") ?? "N/A")
@@ -75,14 +75,14 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedBy" Title="Created By" Width="150px">
+        <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedBy" Title="Created By" Width="120px">
             <Template Context="location">
                                                 <div title="@location.CreatedBy" style="@_basicTextStyle">
                     @(location.CreatedBy)
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}">
+        <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedDate" Title="Created Date" Width="120px" FormatString="{0:MM/dd/yyyy}">
             <Template Context="location">
                                                 <div title="@location.CreatedDate" style="@_basicTextStyle">
                     @if (location.CreatedDate.HasValue)
@@ -92,16 +92,44 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
+
+        <RadzenDataGridColumn TItem="HazardLocation" Property="IsValidated" Title="Validated" Width="100px">
+            <Template Context="location">
+                @if (location.IsValidated)
+                {
+                    <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" title="Validated" />
+                }
+                else
+                {
+                    <RadzenIcon Icon="fiber_manual_record" Style="color: var(--rz-danger);" title="Not validated" />
+                }
+            </Template>
+        </RadzenDataGridColumn>
         
-        <RadzenDataGridColumn TItem="HazardLocation" Title="Actions" Width="120px" Sortable="false" Filterable="false">
+
+        <RadzenDataGridColumn TItem="HazardLocation" Title="Actions" Width="100px" Sortable="false" Filterable="false">
             <Template Context="location">
                 <RadzenButton Icon="map" 
                             ButtonStyle="ButtonStyle.Base" 
                             Size="ButtonSize.Small" 
-                            Text="View Map"
+                            Text="View"
                             Click="@(() => ViewLocationMap(location))"
                             Disabled="@(!HasValidCoordinates(location))"
                             title="@(HasValidCoordinates(location) ? "View location on map" : "No valid coordinates available")" />
+
+            </Template>
+        </RadzenDataGridColumn>       
+        
+
+        <RadzenDataGridColumn TItem="HazardLocation" Title="" Width="100px" Sortable="false" Filterable="false">
+            <Template Context="location">
+                <RadzenButton Icon="map"
+                              ButtonStyle="ButtonStyle.Base"
+                              Size="ButtonSize.Small"
+                              Text="Validate"
+                              Click="@(() => ValidateLocation(location))"
+                              Disabled="@(!HasValidCoordinates(location))"
+                              title="@(HasValidCoordinates(location) ? "Validate location" : "No valid coordinates available")" />
             </Template>
         </RadzenDataGridColumn>
     </Columns>

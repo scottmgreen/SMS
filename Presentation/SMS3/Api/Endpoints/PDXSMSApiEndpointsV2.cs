@@ -5,25 +5,14 @@
 //     Description: API endpoints for PDXSMS API version 2.
 //-----------------------------------------------------------------------
 
-using Asp.Versioning;
 using Asp.Versioning.Builder;
 
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.FeatureManagement;
-using Microsoft.OpenApi;
-
-using SMS_Application.Interfaces;
-using SMS_Application.Commands;
-
-using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.ValueObjects;
 
 using SMS_Infrastructure.Security;
 
 using SMS3.Api.Models;
 using SMS3.Api.Services;
-using SMS3.Components;
 
 
 
@@ -77,6 +66,15 @@ namespace SMS3.Api.Endpoints
                 .Produces<ApiErrorResponse>(StatusCodes.Status500InternalServerError);
                 //.WithApiVersionSet(app.GetApiVersionSet("v2"));
 
+            // Get validated hazard locations only
+            group.MapGet("/hazard-locations", GetHazardLocations)
+                .AddEndpointFilter<ApiKeyAuthenticationFilter>()
+                .WithName("GetHazardLocationsV2")
+                .WithSummary("Get validated hazard locations (v2)")
+                .WithDescription("Returns only hazard locations where IsValidated is true (API v2)")
+                .Produces<object>(StatusCodes.Status200OK)
+                .Produces<ApiErrorResponse>(StatusCodes.Status500InternalServerError);
+
             // Get hazard categories
             //group.MapGet("/hazard-categories", GetHazardCategories)
             //    .AddEndpointFilter<ApiKeyAuthenticationFilter>()
@@ -102,6 +100,58 @@ namespace SMS3.Api.Endpoints
             //    .Produces<object>(StatusCodes.Status200OK);
 
             return app;
+        }
+
+        private static async Task<IResult> GetHazardLocations(
+            IBaseMediator mediator,
+            ILogger<Program> logger,
+            HttpContext httpContext)
+        {
+            try
+            {
+                var query = new GetAllHazardLocationsQuery();
+                var result = await mediator.SendAsync(query, CancellationToken.None);
+
+                if (!result.IsSuccess || result.Value is null)
+                {
+                    logger.LogWarning("Failed to load hazard locations for v2 API: {Error}", result.Error?.Message);
+                    return Results.Problem(
+                        detail: result.Error?.Message ?? "Failed to retrieve hazard locations.",
+                        title: "Hazard Locations Retrieval Failed",
+                        statusCode: StatusCodes.Status500InternalServerError);
+                }
+
+                var validatedLocations = result.Value
+                    .Where(l => l.IsValidated)
+                    .Select(l => new
+                    {
+                        l.Code,
+                        l.HazardCode,
+                        l.Latitude,
+                        l.Longitude,
+                        l.Description,
+                        l.DateSelected,
+                        l.IsValidated,
+                        l.CreatedDate,
+                        l.UpdatedDate
+                    })
+                    .ToList();
+
+                return Results.Ok(new
+                {
+                    message = "Validated hazard locations retrieved successfully",
+                    totalCount = validatedLocations.Count,
+                    hazardLocations = validatedLocations
+                });
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Unexpected error retrieving validated hazard locations for v2 API");
+                return Results.Problem(
+                    detail: "An unexpected error occurred while retrieving validated hazard locations.",
+                    title: "Internal Server Error",
+                    statusCode: StatusCodes.Status500InternalServerError);
+            }
         }
 
         private static async Task<IResult> SubmitPDXSMSReport(

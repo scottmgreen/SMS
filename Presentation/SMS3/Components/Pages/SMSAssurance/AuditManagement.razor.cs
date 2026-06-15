@@ -1,4 +1,4 @@
-using SMS_Domain.Entities;
+﻿using SMS_Domain.Entities;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
@@ -17,18 +17,18 @@ public partial class AuditManagement : ComponentBase
     #endregion
 
     #region Component State
-    private bool IsLoading { get; set; } = true;
-    private bool IsUpdating { get; set; } = false;
+    private bool _isLoading { get; set; } = true;
+    private bool _isUpdating { get; set; } = false;
 
     // Collapsible sections
-    private bool showCategorySummary { get; set; } = true;
-    private bool showFilterPanel { get; set; } = false;
+    private bool _showCategorySummary { get; set; } = true;
+    private bool _showFilterPanel { get; set; } = false;
 
     // Filter State
-    private string SearchText { get; set; } = string.Empty;
-    private string SelectedStatus { get; set; } = "All";
-    private string SelectedType { get; set; } = "All";
-    private string SelectedDepartment { get; set; } = "All";
+    private string _searchText { get; set; } = string.Empty;
+    private string _selectedStatus { get; set; } = "All";
+    private string _selectedType { get; set; } = "All";
+    private string _selectedDepartment { get; set; } = "All";
 
     // Filter Options
     private List<string> StatusOptions { get; set; } = new() { "All", "Draft", "Approved", "Scheduled", "In Progress", "Completed", "Cancelled" };
@@ -63,7 +63,7 @@ public partial class AuditManagement : ComponentBase
     {
         try
         {
-            IsLoading = true;
+            _isLoading = true;
             StateHasChanged();
 
             _logger.LogInformation("Loading Audit Management dashboard data");
@@ -86,7 +86,7 @@ public partial class AuditManagement : ComponentBase
         }
         finally
         {
-            IsLoading = false;
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -258,7 +258,7 @@ public partial class AuditManagement : ComponentBase
     #region Event Handlers
     private async Task OnSearchTextChanged(string value)
     {
-        SearchText = value;
+        _searchText = value;
             if (_auditPlansGrid != null)
                 await _auditPlansGrid.Reload();
             if (_activeAuditsGrid != null)
@@ -267,7 +267,7 @@ public partial class AuditManagement : ComponentBase
 
     private async Task OnStatusFilterChanged(object value)
     {
-        SelectedStatus = value?.ToString() ?? string.Empty;
+        _selectedStatus = value?.ToString() ?? string.Empty;
             if (_auditPlansGrid != null)
                 await _auditPlansGrid.Reload();
             if (_activeAuditsGrid != null)
@@ -276,7 +276,7 @@ public partial class AuditManagement : ComponentBase
 
     private async Task OnTypeFilterChanged(object value)
     {
-        SelectedType = value?.ToString() ?? string.Empty;
+        _selectedType = value?.ToString() ?? string.Empty;
             if (_auditPlansGrid != null)
                 await _auditPlansGrid.Reload();
             if (_activeAuditsGrid != null)
@@ -285,7 +285,7 @@ public partial class AuditManagement : ComponentBase
 
     private async Task OnDepartmentFilterChanged(object value)
     {
-        SelectedDepartment = value?.ToString() ?? string.Empty;
+        _selectedDepartment = value?.ToString() ?? string.Empty;
             if (_auditPlansGrid != null)
                 await _auditPlansGrid.Reload();
             if (_activeAuditsGrid != null)
@@ -525,25 +525,25 @@ public partial class AuditManagement : ComponentBase
     #region Helper Methods
     private IQueryable<SMSAuditPlan> GetFilteredAuditPlans(IQueryable<SMSAuditPlan> query)
     {
-        if (!string.IsNullOrWhiteSpace(SearchText))
+        if (!string.IsNullOrWhiteSpace(_searchText))
         {
-            query = query.Where(p => p.Name!.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                                   p.Description!.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+            query = query.Where(p => p.Name!.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                                   p.Description!.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
         }
 
-        if (SelectedStatus != "All")
+        if (_selectedStatus != "All")
         {
-            query = query.Where(p => p.Status == SelectedStatus);
+            query = query.Where(p => p.Status == _selectedStatus);
         }
 
-        if (SelectedType != "All")
+        if (_selectedType != "All")
         {
-            query = query.Where(p => p.AuditType == SelectedType);
+            query = query.Where(p => p.AuditType == _selectedType);
         }
 
-        if (SelectedDepartment != "All")
+        if (_selectedDepartment != "All")
         {
-            query = query.Where(p => p.ResponsibleDepartment == SelectedDepartment);
+            query = query.Where(p => p.ResponsibleDepartment == _selectedDepartment);
         }
 
         return query;
@@ -551,25 +551,25 @@ public partial class AuditManagement : ComponentBase
 
     private IQueryable<SMSAudit> GetFilteredAudits(IQueryable<SMSAudit> query)
     {
-        if (!string.IsNullOrWhiteSpace(SearchText))
+        if (!string.IsNullOrWhiteSpace(_searchText))
         {
-            query = query.Where(a => a.Name!.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
-                                   a.Description!.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+            query = query.Where(a => a.Name!.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ||
+                                   a.Description!.Contains(_searchText, StringComparison.OrdinalIgnoreCase));
         }
 
-        if (SelectedStatus != "All")
+        if (_selectedStatus != "All")
         {
-            query = query.Where(a => a.Status == SelectedStatus);
+            query = query.Where(a => a.Status == _selectedStatus);
         }
 
-        if (SelectedType != "All")
+        if (_selectedType != "All")
         {
-            query = query.Where(a => a.AuditType == SelectedType);
+            query = query.Where(a => a.AuditType == _selectedType);
         }
 
-        if (SelectedDepartment != "All")
+        if (_selectedDepartment != "All")
         {
-            query = query.Where(a => a.ResponsibleDepartment == SelectedDepartment);
+            query = query.Where(a => a.ResponsibleDepartment == _selectedDepartment);
         }
 
         return query;
@@ -735,10 +735,10 @@ public partial class AuditManagement : ComponentBase
 
     private void ClearFilters()
     {
-        SearchText = string.Empty;
-        SelectedStatus = "All";
-        SelectedType = "All";
-        SelectedDepartment = "All";
+        _searchText = string.Empty;
+        _selectedStatus = "All";
+        _selectedType = "All";
+        _selectedDepartment = "All";
         ApplyFilters();
     }
 
@@ -757,30 +757,30 @@ public partial class AuditManagement : ComponentBase
             var filteredPlans = AllAuditPlans.AsEnumerable();
 
             // Apply search text filter
-            if (!string.IsNullOrWhiteSpace(SearchText))
+            if (!string.IsNullOrWhiteSpace(_searchText))
             {
                 filteredPlans = filteredPlans.Where(p =>
-                    (p.Name?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    (p.Code?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    (p.Description?.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ?? false));
+                    (p.Name?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (p.Code?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (p.Description?.Contains(_searchText, StringComparison.OrdinalIgnoreCase) ?? false));
             }
 
             // Apply status filter
-            if (SelectedStatus != "All")
+            if (_selectedStatus != "All")
             {
-                filteredPlans = filteredPlans.Where(p => p.Status == SelectedStatus);
+                filteredPlans = filteredPlans.Where(p => p.Status == _selectedStatus);
             }
 
             // Apply type filter
-            if (SelectedType != "All")
+            if (_selectedType != "All")
             {
-                filteredPlans = filteredPlans.Where(p => p.AuditType == SelectedType);
+                filteredPlans = filteredPlans.Where(p => p.AuditType == _selectedType);
             }
 
             // Apply department filter
-            if (SelectedDepartment != "All")
+            if (_selectedDepartment != "All")
             {
-                filteredPlans = filteredPlans.Where(p => p.ResponsibleDepartment == SelectedDepartment);
+                filteredPlans = filteredPlans.Where(p => p.ResponsibleDepartment == _selectedDepartment);
             }
 
             AuditPlans = filteredPlans.ToList();
@@ -794,3 +794,4 @@ public partial class AuditManagement : ComponentBase
     }
     #endregion
 }
+
