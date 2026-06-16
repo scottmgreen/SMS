@@ -150,9 +150,9 @@ namespace SMS3.Api.Services
                 var report = new Report(new ReportID("RP-0000"))
                 {
                     Code = "RP-0000",
-                    Name = $"EXTERNAL/V2",
+                    Name = $"EXTERNAL_API_SOURCE",
                     Description = request.HazardDescription,
-                    SubmittedBy = "EXTERNAL_SYSTEM",
+                    SubmittedBy = "EXTERNAL_API_SOURCE",
                     SubmittedDate = request.ReportSubmittedDate ?? DateTime.UtcNow,
                     SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
                     SubmittingDepartmentJobFunction = request.ReportSubmittingDepartmentJobFunction ?? string.Empty,
@@ -163,7 +163,7 @@ namespace SMS3.Api.Services
                     ReportContactEmail = request.ReportContactEmail ?? string.Empty,
                     Stage = "INITIAL",
                     Status = ReportStatus.NeedsValidation,
-                    CreatedBy = "EXTERNAL_SYSTEM",
+                    CreatedBy = "EXTERNAL_API_SOURCE",
                     CreatedDate = DateTime.UtcNow
                 };
                 var reportResult = await _mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
@@ -177,14 +177,14 @@ namespace SMS3.Api.Services
                 var hazard = new Hazard(new HazardID("HZ-0000"))
                 {
                     Code = "HZ-0000",
-                    Name = $"EXTERNAL/V2",
+                    Name = $"EXTERNAL_API_SOURCE",
                     Description = request.HazardDescription ?? string.Empty,
                     HazardCategory = HazardCategory.Default.Value,
                     HazardType = HazardType.Default.Value,
                     ReportCode = actualReportCode,
                     IsInitialHazard = true,
                     Status = HazardStatus.InitialRiskAssessment,
-                    CreatedBy = "EXTERNAL_SYSTEM",
+                    CreatedBy = "EXTERNAL_API_SOURCE",
                     CreatedDate = DateTime.UtcNow
                 };
                 var hazardResult = await _mediator.SendAsync(new CreateHazardCommand(hazard), CancellationToken.None);
@@ -362,11 +362,11 @@ namespace SMS3.Api.Services
                         FileSizeBytes = fileData.Length,
                         StorageType = "Database",
                         FileData = fileData,
-                        UploadedBy = "EXTERNAL_SYSTEM",
+                        UploadedBy = "EXTERNAL_API_SOURCE",
                         UploadedDate = DateTime.UtcNow,
                         IsActive = true,
                         IsConfidential = true,
-                        CreatedBy = "EXTERNAL_SYSTEM",
+                        CreatedBy = "EXTERNAL_API_SOURCE",
                         CreatedDate = DateTime.UtcNow
                     };
 
@@ -408,7 +408,7 @@ namespace SMS3.Api.Services
                 Code = "RP-0000", // Database will generate actual code
                 Name = $"{request.HazardCategory}/{request.HazardType}",
                 Description = request.HazardDescription,
-                SubmittedBy = "EXTERNAL_SYSTEM",
+                SubmittedBy = "EXTERNAL_API_SOURCE",
                 SubmittedDate = request.ReportSubmittedDate.Value,
                 SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
                 SubmittingDepartmentJobFunction = request.ReportSubmittingDepartmentJobFunction ?? string.Empty,
@@ -419,7 +419,7 @@ namespace SMS3.Api.Services
                 ReportContactEmail = request.ReportContactEmail ?? string.Empty,
                 Stage = "INITIAL",
                 Status = ReportStatus.NeedsValidation,
-                CreatedBy = "EXTERNAL_SYSTEM",
+                CreatedBy = "EXTERNAL_API_SOURCE",
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -438,7 +438,7 @@ namespace SMS3.Api.Services
                 ReportCode = reportCode,
                 IsInitialHazard = true,
                 Status = HazardStatus.InitialRiskAssessment,
-                CreatedBy = "EXTERNAL_SYSTEM",
+                CreatedBy = "EXTERNAL_API_SOURCE",
                 CreatedDate = DateTime.UtcNow
             };
 

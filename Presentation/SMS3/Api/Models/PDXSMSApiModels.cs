@@ -26,8 +26,8 @@ namespace SMS3.Api.Models;
 
         public string? ReportSubmittedBy { get; init; }
         public DateTime? ReportSubmittedDate { get; init; }
-        public string? ReportSubmittingDepartment { get; init; } = "EXTERNAL_SYSTEM";
-        public string? ReportSubmittingDepartmentJobFunction { get; init; } = "EXTERNAL_SYSTEM";
+        public string? ReportSubmittingDepartment { get; init; } = "EXTERNAL_API_SOURCE";
+        public string? ReportSubmittingDepartmentJobFunction { get; init; } = "EXTERNAL_API_SOURCE";
         public bool? ReportIsAnonymous { get; init; }
         public string? ReportContactName { get; init; }
         public string? ReportContactCell { get; init; }
@@ -73,8 +73,8 @@ namespace SMS3.Api.Models;
 
         public string? ReportSubmittedBy { get; init; }
         public DateTime? ReportSubmittedDate { get; init; }
-        public string? ReportSubmittingDepartment { get; init; } = "EXTERNAL_SYSTEM";
-        public string? ReportSubmittingDepartmentJobFunction { get; init; } = "EXTERNAL_SYSTEM";
+        public string? ReportSubmittingDepartment { get; init; } = "EXTERNAL_API_SOURCE";
+        public string? ReportSubmittingDepartmentJobFunction { get; init; } = "EXTERNAL_API_SOURCE";
         public bool? ReportIsAnonymous { get; init; }
         public string? ReportContactName { get; init; }
         public string? ReportContactCell { get; init; }

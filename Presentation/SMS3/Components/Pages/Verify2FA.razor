@@ -92,9 +92,9 @@
                     <h6>Verify Setup:</h6>
                     <p class="text-muted">Enter a code from your authenticator app to confirm setup:</p>
                     
-                    <RadzenTemplateForm TItem="SetupFormModel" Data="@SetupModel" Submit="@CompleteSetupAsync">
+                    <RadzenTemplateForm TItem="SetupFormModel" Data="@_setupModel" Submit="@CompleteSetupAsync">
                         <div class="mb-3">
-                            <RadzenTextBox @bind-Value="@SetupModel.Code" 
+                            <RadzenTextBox @bind-Value="@_setupModel.Code" 
                                            Name="SetupCode" 
                                            Placeholder="000000"
                                            MaxLength="6"
@@ -131,12 +131,12 @@
                 </div>
 
                 <!-- 2FA Code Input -->
-                <RadzenTemplateForm TItem="TwoFactorFormModel" Data="@TwoFactorModel" Submit="@HandleVerificationAsync">
+                <RadzenTemplateForm TItem="TwoFactorFormModel" Data="@_twoFactorModel" Submit="@HandleVerificationAsync">
                     <div class="mb-3">
                         <label class="form-label sms-form-label">
                             <i class="fas fa-key me-2"></i>Authentication Code
                         </label>
-                        <RadzenTextBox @bind-Value="@TwoFactorModel.Code" 
+                        <RadzenTextBox @bind-Value="@_twoFactorModel.Code" 
                                        Name="Code" 
                                        Placeholder="000000"
                                        MaxLength="6"
