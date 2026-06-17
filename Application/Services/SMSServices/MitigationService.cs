@@ -9,6 +9,10 @@
 
 using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
+using SMS_Application.Interfaces;
+using SMS_Application.Queries;
+using SMS_Application.Commands;
+using SMS_Domain.ValueObjects;
 
 namespace SMS_Application.Services;
 
@@ -18,13 +22,16 @@ namespace SMS_Application.Services;
 public sealed class MitigationService : IMitigationService
 {
     private readonly MitigationDataService _dataService;
+    private readonly IBaseMediator _mediator;
     private readonly ILogger<MitigationService> _logger;
 
     public MitigationService(
         MitigationDataService dataService,
+        IBaseMediator mediator,
         ILogger<MitigationService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -136,11 +143,39 @@ public sealed class MitigationService : IMitigationService
         try
         {
             _logger.LogApplicationInformation("Updating mitigation with Code: {Code}", mitigation?.Code);
+
+            if (mitigation is not null)
+            {
+                var isOverdue = mitigation.TargetDate.HasValue && mitigation.TargetDate.Value.Date <= DateTime.UtcNow.Date;
+
+                if (mitigation.Progress >= 100)
+                {
+                    mitigation.Status = MitigationStatus.Complete;
+                }
+                else if (isOverdue && mitigation.Progress < 100)
+                {
+                    mitigation.Status = MitigationStatus.PastExpectedTargetDate;
+                }
+                else if (mitigation.Progress > 0)
+                {
+                    mitigation.Status = MitigationStatus.InProgress;
+                }
+                else if (!isOverdue && mitigation.Status == MitigationStatus.PastExpectedTargetDate)
+                {
+                    mitigation.Status = MitigationStatus.Approved;
+                }
+            }
+
             var result = await _dataService.UpdateMitigationAsync(mitigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation("Successfully updated mitigation with Code: {Code}", mitigation?.Code);
+
+                if (mitigation is not null && mitigation.Progress >= 100 && !string.IsNullOrWhiteSpace(mitigation.HazardCode))
+                {
+                    await UpdateReportStatusForCompletedMitigationAsync(mitigation.HazardCode.Trim(), ct).ConfigureAwait(false);
+                }
             }
             else
             {
@@ -153,6 +188,47 @@ public sealed class MitigationService : IMitigationService
         {
             _logger.LogApplicationError(ex, "Unexpected error updating mitigation with Code: {Code}", mitigation?.Code);
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.UpdateFailed);
+        }
+    }
+
+    private async Task UpdateReportStatusForCompletedMitigationAsync(string hazardCode, CancellationToken ct)
+    {
+        try
+        {
+            var hazardResult = await _mediator.SendAsync(new GetHazardByCodeQuery(new HazardID(hazardCode)), ct).ConfigureAwait(false);
+            if (hazardResult.IsFailure || hazardResult.Value is null || string.IsNullOrWhiteSpace(hazardResult.Value.ReportCode))
+            {
+                _logger.LogApplicationWarning("Could not resolve report for completed mitigation hazard: {HazardCode}", hazardCode);
+                return;
+            }
+
+            var reportCode = hazardResult.Value.ReportCode;
+            var reportResult = await _mediator.SendAsync(new GetReportByCodeQuery(new ReportID(reportCode)), ct).ConfigureAwait(false);
+            if (reportResult.IsFailure || reportResult.Value is null)
+            {
+                _logger.LogApplicationWarning("Could not load report {ReportCode} for mitigation completion update", reportCode);
+                return;
+            }
+
+            if (reportResult.Value.Status == ReportStatus.MitigationComplete)
+            {
+                return;
+            }
+
+            var statusResult = await _mediator.SendAsync(new UpdateReportStatusCommand(reportCode, ReportStatus.MitigationComplete, "SYSTEM"),ct).ConfigureAwait(false);
+
+            if (statusResult.IsSuccess)
+            {
+                _logger.LogApplicationInformation("Updated report {ReportCode} status to {Status} after mitigation completion", reportCode, ReportStatus.MitigationComplete.Value);
+            }
+            else
+            {
+                _logger.LogApplicationWarning("Failed to update report {ReportCode} status to mitigation complete. Error: {Error}", reportCode, statusResult.Error?.Message);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex, "Error updating report status from mitigation completion for hazard {HazardCode}", hazardCode);
         }
     }
 
@@ -228,7 +304,7 @@ public sealed class MitigationService : IMitigationService
             }
 
             var mitigation = mitigationResult.Value;
-            mitigation.Status = MitigationStatus.InProgressDueDate; // Use correct enum value
+            mitigation.Status = MitigationStatus.InProgress;
             mitigation.UpdatedBy = implementedBy;
             mitigation.UpdatedDate = DateTime.UtcNow;
             // Note: Set implementation date and notes if fields are available in the entity

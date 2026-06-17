@@ -2,6 +2,7 @@
 @using SMS3.Components.Shared
 @using SMS_Application.Queries
 @using SMS_Domain.Entities
+@using SMS_Domain.Enums
 @using SMS_Domain.ValueObjects
 @inherits ComponentBase
 
@@ -35,127 +36,115 @@ else if (ReportDetails is not null)
                     Report Details
                 </h5>
                 <RadzenStack Gap="1.5rem">
-                    <!-- Header Section -->
-                    @* <div class="card-header-section">
-                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                            <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: var(--rz-primary);">
-                                <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
-                                Report Information
-                            </RadzenText>
-                            @if (ReportDetails.IsAnonymous)
-                            {
-                                <RadzenBadge Text="Anonymous" BadgeStyle="BadgeStyle.Warning" />
-                            }
-                        </RadzenStack>
-                    </div> *@
-
+                    
                     <!-- Identification Section -->
                     
                         <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <div class="info-group">
-                                    <label class="info-label">Tracking Code</label>
-                                    <div class="info-value tracking-code">@(ReportDetails.TrackingCode ?? "Not Assigned")</div>
-                                </div>
+                            <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                                <strong>Tracking ID:</strong>                                
                             </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <div class="info-group">
-                                    <label class="info-label">Report Code</label>
-                                    <div class="info-value report-code">@(ReportDetails.ReportCode ?? "Not Assigned")</div>
-                                </div>
+                            <RadzenColumn Size="2" SizeMD="2" Style="text-align:start">
+                                @(ReportDetails.TrackingCode ?? "Not Assigned")
                             </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="4">
-                                <div class="info-group">
-                                    <label class="info-label">Hazard Code</label>
-                                    <div class="info-value hazard-code">@(ReportDetails.HazardCode ?? "Not Assigned")</div>
-                                </div>
+                            
+                            <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                            <strong>Report ID:</strong>
                             </RadzenColumn>
+                            <RadzenColumn Size="2" SizeMD="2" Style="text-align:start">
+                                @(ReportDetails.ReportCode ?? "Not Assigned")
+                            </RadzenColumn>
+                        
+                        
+                            <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                                <strong>Hazard ID:</strong>
+                            </RadzenColumn>
+                            <RadzenColumn Size="2" SizeMD="2" Style="text-align:start">
+                                @(ReportDetails.HazardCode ?? "Not Assigned")
+                            </RadzenColumn>
+
                         </RadzenRow>
-                    
+                    <!-- Submission Details Section -->
+
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                            <strong>Report Source:</strong>
+                        </RadzenColumn>
+                        <RadzenColumn Size="2" SizeMD="2" Style="text-align:start">
+                            @(ReportDetails.SubmittedBy ?? "Unknown")
+                        </RadzenColumn>
+                        <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                            <strong>Submission Date:</strong>
+                        </RadzenColumn>
+                        <RadzenColumn Size="2" SizeMD="2" Style="text-align:start">
+                            @(ReportDetails.SubmittedDate?.ToString("MMMM dd, yyyy 'at' HH:mm") ?? "Not Specified")
+                        </RadzenColumn>
+                        @* <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                            
+                        </RadzenColumn>
+                        <RadzenColumn Size="3" SizeMD="3" Style="text-align:start">
+                           
+                        </RadzenColumn> *@
+                    </RadzenRow>
+                    @if (!string.IsNullOrWhiteSpace(ReportDetails.SubmittingDepartment) || !string.IsNullOrWhiteSpace(ReportDetails.JobFunction))
+                    {
+                        <RadzenRow Gap="1rem">
+                            @if (!string.IsNullOrWhiteSpace(ReportDetails.SubmittingDepartment))
+                            {
+                                <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                                    <strong>Submitting Department:</strong>
+                                </RadzenColumn>
+                                <RadzenColumn Size="4" SizeMD="4" Style="text-align:start">
+                                    @ReportDetails.SubmittingDepartment
+                                </RadzenColumn>
+                            }
+
+                            @if (!string.IsNullOrWhiteSpace(ReportDetails.JobFunction))
+                            {
+                                <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                                    <strong>Job Function:</strong>
+                                </RadzenColumn>
+                                <RadzenColumn Size="4" SizeMD="4" Style="text-align:start">
+                                    @ReportDetails.JobFunction
+                                </RadzenColumn>
+                            }
+                        </RadzenRow>
+                    }
 
                     <!-- Hazard Classification Section -->
                     
                         <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <div class="info-group">
-                                    <label class="info-label">Hazard Category</label>
-                                    <div class="info-value hazard-category">
-                                        @if (!string.IsNullOrEmpty(ReportDetails.HazardCategory))
-                                        {
-                                            @ReportDetails.HazardCategory
-                                        }
-                                        else
-                                        {
-                                            <span class="not-specified">Not Specified</span>
-                                        }
-                                    </div>
-                                </div>
+                            <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                                <strong>Hazard Category/Type:</strong>
                             </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <div class="info-group">
-                                    <label class="info-label">Hazard Type</label>
-                                    <div class="info-value hazard-type">
-                                        @if (!string.IsNullOrEmpty(ReportDetails.HazardType))
-                                        {
-                                            @ReportDetails.HazardType
-                                        }
-                                        else
-                                        {
-                                            <span class="not-specified">Not Specified</span>
-                                        }
-                                    </div>
-                                </div>
+                            <RadzenColumn Size="10" SizeMD="10" Style="text-align:start">
+                                @if (!string.IsNullOrWhiteSpace(ReportDetails.HazardCategory) || !string.IsNullOrWhiteSpace(ReportDetails.HazardType))
+                                {
+                                    @string.Join(" - ", new[] { ReportDetails.HazardCategory, ReportDetails.HazardType }.Where(x => !string.IsNullOrWhiteSpace(x)))
+                                }
+                                else
+                                {
+                                    <span class="not-specified">Not Specified</span>
+                                }
                             </RadzenColumn>
                         </RadzenRow>
                     
 
-                    <!-- Submission Details Section -->
-                    
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <div class="info-group">
-                                    <label class="info-label">Submitted By</label>
-                                    <div class="info-value">
-                                        @(ReportDetails.SubmittedBy ?? "Unknown")
-                                    </div>
-                                </div>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <div class="info-group">
-                                    <label class="info-label">Submission Date</label>
-                                    <div class="info-value">
-                                        @(ReportDetails.SubmittedDate?.ToString("MMMM dd, yyyy 'at' HH:mm") ?? "Not Specified")
-                                    </div>
-                                </div>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <div class="info-group">
-                                    <label class="info-label">Submitting Department</label>
-                                    <div class="info-value">
-                                        @(ReportDetails.SubmittingDepartment ?? "Not Specified")
-                                    </div>
-                                </div>
-                            </RadzenColumn>
-                            <RadzenColumn Size="12" SizeMD="6">
-                                <div class="info-group">
-                                    <label class="info-label">Job Function</label>
-                                    <div class="info-value">
-                                        @(ReportDetails.JobFunction ?? "Not Specified")
-                                    </div>
-                                </div>
-                            </RadzenColumn>
-                        </RadzenRow>
+                   
                     
 
                     <!-- Description Section -->
                     @if (!string.IsNullOrEmpty(ReportDetails.Description))
                     {
-                        <div class="info-group">
-                            <label class="info-label">Hazard Description</label>
-                            <div class="description-content">
-                                @ReportDetails.Description
-                            </div>
-                        </div>
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                                <strong>Hazard Description:</strong>
+                            </RadzenColumn>
+                            <RadzenColumn Size="10" SizeMD="10" Style="text-align:start">
+                                <div class="description-content">
+                                    @((MarkupString)ReportDetails.Description)
+                                </div>
+                            </RadzenColumn>
+                        </RadzenRow>
                         
                     }
 
@@ -167,78 +156,31 @@ else if (ReportDetails is not null)
                                 <strong>Anonymous Report:</strong> This report contains anonymous information and should be handled with appropriate confidentiality measures.
                             </RadzenText>
                         </RadzenAlert>
-                        <!-- Contact Info for Reporter (if not anonymous) -->
-                        @if (!ReportDetails.IsAnonymous && _currentUserService.CanRead("SMS_Anonymous") && (!string.IsNullOrEmpty(ReportDetails.ContactName) || !string.IsNullOrEmpty(ReportDetails.ContactCell) || !string.IsNullOrEmpty(ReportDetails.ContactEmail)))
-                        {
-                            <RadzenCard class="guidance-card mb-4">
-                                <h6 class="mb-3">
-                                    <RadzenIcon Icon="account_circle" class="me-2" />
-                                    Contact Information
-                                </h6>
-
-                                <RadzenStack Gap="0.5rem">
-                                    @if (!string.IsNullOrEmpty(ReportDetails.ContactName))
-                                    {
-                                        <div class="contact-info-item">
-                                            <RadzenIcon Icon="person" class="me-2" />
-                                            <small>@ReportDetails.ContactName</small>
-                                        </div>
-                                    }
-                                    @if (!string.IsNullOrEmpty(ReportDetails.ContactCell))
-                                    {
-                                        <div class="contact-info-item">
-                                            <RadzenIcon Icon="phone" class="me-2" />
-                                            <small>@ReportDetails.ContactCell</small>
-                                        </div>
-                                    }
-                                    @if (!string.IsNullOrEmpty(ReportDetails.ContactEmail))
-                                    {
-                                        <div class="contact-info-item">
-                                            <RadzenIcon Icon="email" class="me-2" />
-                                            <small>@ReportDetails.ContactEmail</small>
-                                        </div>
-                                    }
-                                </RadzenStack>
-                            </RadzenCard>
-                        }
-
                     }
-                    else
-                    {
-                        <!-- Contact Info for Reporter (if not anonymous) -->
-                        @if (!ReportDetails.IsAnonymous && (!string.IsNullOrEmpty(ReportDetails.ContactName) ||!string.IsNullOrEmpty(ReportDetails.ContactCell) || !string.IsNullOrEmpty(ReportDetails.ContactEmail)))
-                        {
-                            <RadzenCard class="guidance-card mb-4">
-                                <h6 class="mb-3">
-                                    <RadzenIcon Icon="account_circle" class="me-2" />
-                                    Contact Information
-                                </h6>
 
-                                <RadzenStack Gap="0.5rem">
-                                    @if (!string.IsNullOrEmpty(ReportDetails.ContactName))
+                    @if (!ReportDetails.IsAnonymous && (!string.IsNullOrWhiteSpace(ReportDetails.ContactName) || !string.IsNullOrWhiteSpace(ReportDetails.ContactCell) || !string.IsNullOrWhiteSpace(ReportDetails.ContactEmail)))
+                    {
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
+                                <strong>Contact Information:</strong>
+                            </RadzenColumn>
+                            <RadzenColumn Size="10" SizeMD="10" Style="text-align:start">
+                                <RadzenStack Gap="0.25rem">
+                                    @if (!string.IsNullOrWhiteSpace(ReportDetails.ContactName))
                                     {
-                                        <div class="contact-info-item">
-                                            <RadzenIcon Icon="person" class="me-2" />
-                                            <small>@ReportDetails.ContactName</small>
-                                        </div>
+                                        <div class="info-line"><strong>Name:</strong> @ReportDetails.ContactName</div>
                                     }
-                                    @if (!string.IsNullOrEmpty(ReportDetails.ContactCell))
+                                    @if (!string.IsNullOrWhiteSpace(ReportDetails.ContactCell))
                                     {
-                                        <div class="contact-info-item">
-                                            <RadzenIcon Icon="phone" class="me-2" />
-                                            <small>@ReportDetails.ContactCell</small>
-                                        </div>
+                                        <div class="info-line"><strong>Phone:</strong> @ReportDetails.ContactCell</div>
                                     }
-                                    @if (!string.IsNullOrEmpty(ReportDetails.ContactEmail))
+                                    @if (!string.IsNullOrWhiteSpace(ReportDetails.ContactEmail))
                                     {
-                                        <div class="contact-info-item">
-                                            <RadzenIcon Icon="email" class="me-2" />
-                                            <small>@ReportDetails.ContactEmail</small>
-                                        </div>
+                                        <div class="info-line"><strong>Email:</strong> @ReportDetails.ContactEmail</div>
                                     }
                                 </RadzenStack>
-                            </RadzenCard>
-                        }
+                            </RadzenColumn>
+                        </RadzenRow>
                     }
                 </RadzenStack>
             </RadzenCard>
@@ -249,56 +191,46 @@ else if (ReportDetails is not null)
                     <RadzenIcon Icon="verified" class="me-2" />
                     Validation Status
                 </h5>
-                
-                @if (ReportValidation is not null)
-                {
-                    <div class="row g-3">
-                        <div class="col-lg-3 col-md-6">
-                            <div class="info-item">
-                                <label class="info-label">Validation Decision</label>
-                                <div class="info-value">
-                                    @GetValidationDecisionDisplay(ReportValidation.ValidationDecision)
-                                </div>
+
+                <RadzenRow Gap="1rem" Class="mb-3">
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                        <div class="info-item">
+                            <label class="info-label">Hazard Category</label>
+                            <div class="info-value">
+                                <RadzenIcon Icon="@GetBooleanValidationIcon(IsHazardCategoryValidated)" class="@($"me-2 {GetBooleanValidationIconClass(IsHazardCategoryValidated)}")" />
+                                @(IsHazardCategoryValidated ? "Validated" : "Default/Invalid")
                             </div>
                         </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="info-item">
-                                <label class="info-label">Validated By</label>
-                                <div class="info-value">@(ReportValidation.ValidatedBy ?? "N/A")</div>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                        <div class="info-item">
+                            <label class="info-label">Hazard Type</label>
+                            <div class="info-value">
+                                <RadzenIcon Icon="@GetBooleanValidationIcon(IsHazardTypeValidated)" class="@($"me-2 {GetBooleanValidationIconClass(IsHazardTypeValidated)}")" />
+                                @(IsHazardTypeValidated ? "Validated" : "Default/Invalid")
                             </div>
                         </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="info-item">
-                                <label class="info-label">Validation Date</label>
-                                <div class="info-value">@(ReportValidation.CreatedDate?.ToString("MM/dd/yyyy HH:mm tt") ?? "Not Completed")</div>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                        <div class="info-item">
+                            <label class="info-label">Hazard Location</label>
+                            <div class="info-value">
+                                <RadzenIcon Icon="@GetBooleanValidationIcon(IsHazardLocationValidated)" class="@($"me-2 {GetBooleanValidationIconClass(IsHazardLocationValidated)}")" />
+                                @HazardLocationValidationText
                             </div>
                         </div>
-                        <div class="col-lg-3 col-md-6">
-                            <div class="info-item">
-                                <label class="info-label">Validation Type</label>
-                                <div class="info-value">@(ReportValidation.ValidationType ?? "N/A")</div>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
+                        <div class="info-item">
+                            <label class="info-label">Report Validation</label>
+                            <div class="info-value">
+                                <RadzenIcon Icon="@GetReportValidationIcon()" class="@($"me-2 {GetReportValidationIconClass()}")" />
+                                @(ReportValidation is null ? "Pending" : GetValidationDecisionDisplay(ReportValidation.ValidationDecision))
                             </div>
                         </div>
-                    </div>
-                    
-                    @if (!string.IsNullOrEmpty(ReportValidation.ValidationComments))
-                    {
-                        <div class="mt-4">
-                            <div class="info-item">
-                                <label class="info-label">Validation Comments</label>
-                                <div class="info-value validation-comments">@ReportValidation.ValidationComments</div>
-                            </div>
-                        </div>
-                    }
-                }
-                else
-                {
-                    <div class="validation-pending">
-                        <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true">
-                            <strong>Validation Pending:</strong> This report has not yet been validated by SMS personnel.
-                        </RadzenAlert>
-                    </div>
-                }
+                    </RadzenColumn>
+                </RadzenRow>
+               
             </RadzenCard>
 
             <!-- Processing Status Card -->
@@ -350,45 +282,44 @@ else if (ReportDetails is not null)
                         {
                             if (CurrentRiskAssessment is not null)
                             {
-                                if(CurrentRiskAssessment.CurrentStep == 5)
+                                if (IsRiskAssessmentComplete)
                                 {
-                                    // Completed
                                     <div class="timeline-item completed">
                                         <div class="timeline-icon">
                                             <RadzenIcon Icon="assessment" />
                                         </div>
                                         <div class="timeline-content">
                                             <h6>Risk Assessment</h6>
-                                            @if (CurrentRiskAssessment is not null)
-                                            {
-                                                string msg = $"{CurrentRiskAssessment.Code} - Completed ";
-                                                <div class="text-success">
-                                                    <p class="@GetProcessingStatusTextClass()">@(msg.ToUpper())</p>
-                                                    <small class="text-muted">@(CurrentRiskAssessment.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
-                                                </div>
-                                            }
-                                            else
-                                            {
-                                                <p class="text-muted">Awaiting SMS risk assessment </p>
-                                            }
+                                            <div class="text-success">
+                                                <p class="@GetProcessingStatusTextClass()">
+                                                    @CurrentRiskAssessment.Code @CurrentRiskAssessment.Status
+                                                </p>
+                                                <small class="text-muted">@(CurrentRiskAssessment.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
+                                            </div>
                                         </div>
                                     </div>
 
-                                    @if(CurrentMitigation is not null)
+                                    @if (CurrentMitigation is not null)
                                     {
                                         if (CurrentMitigation.Status == MitigationStatus.Approved.Value)
                                         {
-                                            <div class="timeline-item completed">
+                                            var mitigationStatusClass = CurrentMitigation.Status == MitigationStatus.PastExpectedTargetDate
+                                                ? "rz-color-danger"
+                                                : (CurrentMitigation.Progress < 100 ? "rz-color-warning" : "rz-color-success");
+                                            var mitigationTimelineClass = CurrentMitigation.Status == MitigationStatus.PastExpectedTargetDate
+                                                ? "mitigation-overdue"
+                                                : (CurrentMitigation.Progress < 100 ? "mitigation-in-progress" : "mitigation-complete");
+                                            <div class="timeline-item completed @mitigationTimelineClass">
                                                 <div class="timeline-icon">
-                                                    <RadzenIcon Icon="assessment" />
+                                                    <RadzenIcon Icon="settings" />
                                                 </div>
                                                 <div class="timeline-content">
                                                     <h6>Mitigation</h6>
                                                     @if (CurrentMitigation is not null)
                                                     {
                                                         string msg = $"{CurrentMitigation.Code} - {CurrentMitigation.Status}  %{CurrentMitigation.Progress} COMPLETE";
-                                                        <div class="text-success">
-                                                            <p class="@GetProcessingStatusTextClass()">@(msg.ToUpper())</p>
+                                                        <div>
+                                                            <p class="@mitigationStatusClass">@(msg.ToUpper())</p>
                                                             <small class="text-muted">@(CurrentMitigation.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
                                                         </div>
                                                     }
@@ -402,15 +333,21 @@ else if (ReportDetails is not null)
                                         else
                                         {
                                             string msg = $"{CurrentMitigation.Code} - {CurrentMitigation.Status}";
+                                            var mitigationStatusClass = CurrentMitigation.Status == MitigationStatus.PastExpectedTargetDate
+                                                ? "rz-color-danger"
+                                                : (CurrentMitigation.Progress < 100 ? "rz-color-warning" : "rz-color-success");
+                                            var mitigationTimelineClass = CurrentMitigation.Status == MitigationStatus.PastExpectedTargetDate
+                                                ? "mitigation-overdue"
+                                                : (CurrentMitigation.Progress < 100 ? "mitigation-in-progress" : "mitigation-complete");
                                             <div class="timeline-content">
-                                                <div class="timeline-item in-progress">
+                                                <div class="timeline-item in-progress @mitigationTimelineClass">
                                                     <div class="timeline-icon">
-                                                        <RadzenIcon Icon="assessment" />
+                                                        <RadzenIcon Icon="settings" />
                                                     </div>
                                                     <div class="timeline-item in-progress">
                                                         <div class="timeline-content">
                                                             <h6>Mitigation</h6>
-                                                            <p class="@GetProcessingStatusTextClass()">@(msg.ToUpper())</p>
+                                                            <p class="@mitigationStatusClass">@(msg.ToUpper())</p>
                                                             <small class="text-muted">@(CurrentMitigation.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
                                                         </div>
                                                     </div>
@@ -424,33 +361,25 @@ else if (ReportDetails is not null)
                                 }
                                 else
                                 {
-                                    <div class="timeline-content">
-                                        <div class="timeline-item in-progress">
-                                            <div class="timeline-icon">
-                                                <RadzenIcon Icon="assessment" />
-                                            </div>
-                                            <div class="timeline-item in-progress">
-                                                <div class="timeline-content">
-                                                    <h6>Risk Assessment</h6>
-                                                    <p class="@GetProcessingStatusTextClass()">@($"{CurrentRiskAssessment.Code} {CurrentRiskAssessment.Stage}")</p>
-                                                    <small class="text-muted">@(CurrentRiskAssessment.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
-                                                </div>
-                                            </div>
+                                    <div class="timeline-item in-progress">
+                                        <div class="timeline-icon">
+                                            <RadzenIcon Icon="assessment" />
+                                        </div>
+                                        <div class="timeline-content">
+                                            <h6>Risk Assessment</h6>
+                                            <p class="text-info">
+                                                <strong>@CurrentRiskAssessment.Code</strong> @CurrentRiskAssessment.Status
+                                                <br />
+                                                Stage: @CurrentRiskAssessment.Stage - Step @CurrentRiskAssessment.CurrentStep / 5
+                                            </p>
+                                            <small class="text-muted">@(CurrentRiskAssessment.UpdatedDate?.ToString("MMMM dd, yyyy 'at' HH:mm tt"))</small>
                                         </div>
                                     </div>
                                 }
                             }
 
                             
-                            @* <div class="timeline-item @GetProcessingStatusClass()">
-                                <div class="timeline-icon">
-                                    <RadzenIcon Icon="@GetProcessingIcon()" />
-                                </div>
-                                <div class="timeline-content">
-                                    <h6>@CurrentRiskAssessment.Name</h6>
-                                        <p class="@GetProcessingStatusTextClass()">@($"{CurrentRiskAssessment.Status} {CurrentRiskAssessment.Stage}")  </p>
-                                </div>
-                            </div> *@
+                          
                         }
 
                     }
@@ -460,114 +389,26 @@ else if (ReportDetails is not null)
             <!-- Location Information Card -->
             @if (HazardLocation is not null)
             {
-                <RadzenCard class="mb-4">
-                    <h5 class="mb-3">
-                        <RadzenIcon Icon="place" class="me-2" />
-                        Location Information
-                    </h5>
+                                                      
                     
-                    <div class="row g-3">
-                        @if (HazardLocation.Latitude.HasValue && HazardLocation.Longitude.HasValue)
-                        {
-                            <div class="col-lg-6">
-                                <div class="info-item">
-                                    <label class="info-label">Coordinates</label>
-                                    <div class="info-value coordinates">
-                                        <i class="fas fa-map-marker-alt me-2"></i>
-                                        @HazardLocation.Latitude.Value.ToString("F6"), @HazardLocation.Longitude.Value.ToString("F6")
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="col-lg-6">
-                                <div class="info-item">
-                                    <label class="info-label">Location Code</label>
-                                    <div class="info-value">@HazardLocation.Code</div>
-                                </div>
-                            </div>
-                        }
-                        
-                        @if (!string.IsNullOrEmpty(HazardLocation.Description))
-                        {
-                            <div class="col-12">
-                                <div class="info-item">
-                                    <label class="info-label">Description</label>
-                                    <div class="info-value">@HazardLocation.Description</div>
-                                </div>
-                            </div>
-                        }
-
-                        @* @if (HazardLocation.CreatedDate != default)
-                        {
-                            <div class="col-lg-6">
-                                <div class="info-item">
-                                    <label class="info-label">Location Recorded</label>
-                                    <div class="info-value">@HazardLocation.CreatedDate.Value.ToString("MM/dd/yyyy")</div>
-                                </div>
-                            </div>
-                        }
-
-                        @if (!string.IsNullOrEmpty(HazardLocation.CreatedBy))
-                        {
-                            <div class="col-lg-6">
-                                <div class="info-item">
-                                    <label class="info-label">Recorded By</label>
-                                    <div class="info-value">@HazardLocation.CreatedBy</div>
-                                </div>
-                            </div>
-                        } *@
-                    </div>
 
                     @if (HazardLocation.Latitude.HasValue && HazardLocation.Longitude.HasValue)
                     {
                         <div class="mt-3">
                             <ReadOnlyLocationMap Latitude="@HazardLocation.Latitude.Value"
                                                Longitude="@HazardLocation.Longitude.Value"
+                                               LocationId="@HazardLocation.Code"
                                                LocationDescription="@(HazardLocation.Description ?? ReportDetails?.HazardCode ?? "Location")"
                                                MapHeight="200px"
                                                ShowZoomControls="false"
                                                ShowCoordinates="false"
-                                               ShowLocationDetails="false"
+                                               ShowLocationDetails="true"
                                                ZoomLevel="16" />
                         </div>
                     }
-                </RadzenCard>
+                
             }
-            else if (ReportDetails is not null && (!string.IsNullOrEmpty(ReportDetails.LocationArea) || !string.IsNullOrEmpty(ReportDetails.LocationSubArea)))
-            {
-                <!-- Fallback Location Card for text-based location info -->
-                <RadzenCard class="mb-4">
-                    <h5 class="mb-3">
-                        <RadzenIcon Icon="place" class="me-2" />
-                        Location Information
-                    </h5>
-                    
-                    <RadzenAlert AlertStyle="AlertStyle.Info" ShowIcon="true">
-                        <strong>Text-Based Location:</strong> This report contains location information but no geographic coordinates.
-                    </RadzenAlert>
-                    
-                    <div class="row g-3 mt-2">
-                        @if (!string.IsNullOrEmpty(ReportDetails.LocationArea))
-                        {
-                            <div class="col-lg-6">
-                                <div class="info-item">
-                                    <label class="info-label">Location Area</label>
-                                    <div class="info-value">@ReportDetails.LocationArea</div>
-                                </div>
-                            </div>
-                        }
-                        @if (!string.IsNullOrEmpty(ReportDetails.LocationSubArea))
-                        {
-                            <div class="col-lg-6">
-                                <div class="info-item">
-                                    <label class="info-label">Location Sub-Area</label>
-                                    <div class="info-value">@ReportDetails.LocationSubArea</div>
-                                </div>
-                            </div>
-                        }
-                    </div>
-                </RadzenCard>
-            }
-
+            
             <!-- Files and Attachments Card -->
             @if (AttachedFiles.Any())
             {
@@ -913,6 +754,24 @@ else if (!IsLoading && HasSearched)
         background-color: var(--rz-info-lighter);
         border-color: var(--rz-info);
         color: var(--rz-info);
+    }
+
+    .timeline-item.mitigation-in-progress .timeline-icon {
+        background-color: var(--rz-warning-lighter);
+        border-color: var(--rz-warning);
+        color: var(--rz-warning);
+    }
+
+    .timeline-item.mitigation-overdue .timeline-icon {
+        background-color: var(--rz-danger-lighter);
+        border-color: var(--rz-danger);
+        color: var(--rz-danger);
+    }
+
+    .timeline-item.mitigation-complete .timeline-icon {
+        background-color: var(--rz-success);
+        border-color: var(--rz-success);
+        color: white;
     }
 
     .timeline-content {

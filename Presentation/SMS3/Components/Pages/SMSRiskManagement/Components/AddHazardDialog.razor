@@ -23,109 +23,120 @@
                         
                         
                         <!-- Category and Hazard Type -->
-                            <RadzenRow Gap="1rem">
-                                <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenFormField Text="Hazard Category *" Variant="Variant.Outlined">
-                                        <RadzenDropDown @bind-Value="@NewHazardCategory"
-                                                        Data="@HazardCategoryOptions"
-                                                        TextProperty="Text"
-                                                        ValueProperty="Value"
-                                                        Placeholder="Select hazard category..."
-                                                        Change="@(async (object value) => await OnHazardCategoryChanged(value?.ToString()))"
-                                                        AllowClear="true"
-                                                        Style="width: 100%;" />
-                                    </RadzenFormField>
-                                </RadzenColumn>
-                                <RadzenColumn Size="12" SizeMD="6">
-                                    <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined">
-                                        <RadzenDropDown @bind-Value="@NewHazardType"
-                                                        Data="@HazardTypeOptions"
-                                                        TextProperty="Text"
-                                                        ValueProperty="Value"
-                                                        Placeholder="Select hazard type..."
-                                                        Change="@(async (object value) => await OnHazardTypeChanged(value?.ToString()))"
-                                                        Disabled="@(HazardTypeOptions.Count == 0)"
-                                                        AllowClear="true"
-                                                        Style="width: 100%;" />
-                                    </RadzenFormField>
-                                    @if (HazardTypeOptions.Count == 0 && string.IsNullOrEmpty(NewHazardCategory))
-                                    {
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-info);">
-                                            <RadzenIcon Icon="info" Style="font-size: 0.9rem;" />
-                                            Select a category first to see hazard types
-                                        </RadzenText>
-                                    }
-                                </RadzenColumn>
-                            </RadzenRow>
-                        
-                        
-                        
+                        <RadzenRow Gap="1rem">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Hazard Category *" Variant="Variant.Outlined" class="@(IsHazardCategoryDefault ? "validation-error-field" : "")">
+                                    <RadzenDropDown @bind-Value="@NewHazardCategory"
+                                                    Data="@HazardCategoryOptions"
+                                                    TextProperty="Text"
+                                                    ValueProperty="Value"
+                                                    Placeholder="Select hazard category..."
+                                                    Change="@(async (object value) => await OnHazardCategoryChanged(value?.ToString()))"
+                                                    class="@(IsHazardCategoryDefault ? "default-validation-dropdown" : "")"
+                                                    Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined" class="@(IsHazardTypeDefault ? "validation-error-field" : "")">
+                                    <RadzenDropDown @bind-Value="@NewHazardType"
+                                                    Data="@HazardTypeOptions"
+                                                    TextProperty="Text"
+                                                    ValueProperty="Value"
+                                                    Placeholder="Select hazard type..."
+                                                    Change="@(async (object value) => await OnHazardTypeChanged(value?.ToString()))"
+                                                    Disabled="@(HazardTypeOptions.Count == 0)"
+                                                    class="@(IsHazardTypeDefault ? "default-validation-dropdown" : "")"
+                                                    Style="width: 100%;" />
+                                </RadzenFormField>
+                                @if (HazardTypeOptions.Count == 0 && string.IsNullOrEmpty(NewHazardCategory))
+                                {
+                                    <br/>
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-info);">
+                                        <RadzenIcon Icon="info" Style="font-size: 0.9rem;" />
+                                        Select a category first to see hazard types
+                                    </RadzenText>
+                                }
+                            </RadzenColumn>
+                        </RadzenRow>
 
-                        <!-- Guidance Panel for Selected Hazard Type -->
-                        @if (!string.IsNullOrEmpty(NewHazardType))
-                        {
-                            <RadzenCard Variant="Variant.Text" Style="background: linear-gradient(135deg, rgba(201, 227, 237, 0.08) 0%, rgba(205, 235, 241, 0.08) 100%); border-color: #c9e3ed;">
-                                <RadzenStack Gap="0.5rem" Style="padding: 0.75rem;">
-                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                        <RadzenIcon Icon="info" Style="color: var(--rz-primary); font-size: 1rem;" />
-                                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Hazard Type Guidance</RadzenText>
+                        <RadzenRow Gap="1rem" Class="rz-mb-1">
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
+                                    <RadzenStack Gap="0.5rem" Class="rz-p-2">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                            <RadzenIcon Icon="category" Style="color: var(--rz-primary); font-size: 1rem;" />
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Hazard Category Guidance</RadzenText>
+                                        </RadzenStack>
+                                        @if (!IsHazardCategoryDefault)
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
+                                                @GetHazardCategoryDescription(NewHazardCategory)
+                                            </RadzenText>
+                                        }
+                                        else
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-info);">
+                                                Select a Hazard Category to view guidance.
+                                            </RadzenText>
+                                        }
                                     </RadzenStack>
+                                </RadzenCard>
+                            </RadzenColumn>
+                            <RadzenColumn Size="12" SizeMD="6">
+                                <RadzenCard Variant="Variant.Text" Class="sms-guidance-mini">
+                                    <RadzenStack Gap="0.5rem" Class="rz-p-2">
+                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                            <RadzenIcon Icon="info" Style="color: var(--rz-primary); font-size: 1rem;" />
+                                            <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Hazard Type Guidance</RadzenText>
+                                        </RadzenStack>
+                                        @if (!IsHazardTypeDefault)
+                                        {
+                                            @if (RequiresRegulatoryReporting(NewHazardType))
+                                            {
+                                                <RadzenAlert AlertStyle="AlertStyle.Warning" Size="AlertSize.Small" Variant="Variant.Flat">
+                                                    <strong>Regulatory Reporting Required</strong>
+                                                </RadzenAlert>
+                                            }
 
-                                    @if (RequiresRegulatoryReporting(NewHazardType))
-                                    {
-                                        <RadzenAlert AlertStyle="AlertStyle.Warning" Size="AlertSize.Small" Variant="Variant.Flat">
-                                            <strong>Regulatory Reporting Required</strong>
-                                        </RadzenAlert>
-                                    }
-
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
-                                        @GetHazardTypeGuidance(NewHazardType)
-                                    </RadzenText>
-
-                                    @if (!string.IsNullOrEmpty(NewHazardCategory))
-                                    {
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-style: italic; color: var(--rz-text-secondary-color);">
-                                            Category: @GetHazardCategoryDescription(NewHazardCategory)
-                                        </RadzenText>
-                                    }
-                                </RadzenStack>
-                            </RadzenCard>
-                        }
-                        else if (!string.IsNullOrEmpty(NewHazardCategory))
-                        {
-                            <RadzenCard Variant="Variant.Text" Style="background: linear-gradient(135deg, rgba(201, 227, 237, 0.08) 0%, rgba(205, 235, 241, 0.08) 100%); border-color: #c9e3ed;">
-                                <RadzenStack Gap="0.5rem" Style="padding: 0.75rem;">
-                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                        <RadzenIcon Icon="category" Style="color: var(--rz-primary); font-size: 1rem;" />
-                                        <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; color: var(--rz-primary);">Category Information</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
+                                                @GetHazardTypeGuidance(NewHazardType)
+                                            </RadzenText>
+                                        }
+                                        else
+                                        {
+                                            <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-info);">
+                                                Select a Hazard Type to view guidance.
+                                            </RadzenText>
+                                        }
                                     </RadzenStack>
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-size: 0.85rem;">
-                                        @GetHazardCategoryDescription(NewHazardCategory)
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-info);">
-                                        <RadzenIcon Icon="arrow_forward" Style="font-size: 0.8rem;" />
-                                        Select a hazard type for specific guidance
-                                    </RadzenText>
-                                </RadzenStack>
-                            </RadzenCard>
-                        }
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
                         <!-- Hazard Description -->
-                        <RadzenFormField Text="Hazard Description *" Variant="Variant.Outlined">
+                        <RadzenFormField Text="Hazard Description *" AllowFloatingLabel="false"    Variant="Variant.Outlined" class="@(IsHazardDescriptionInvalid ? "validation-error-field" : "")">
                             <RadzenTextArea @bind-Value="@NewHazardDescription" Rows="3"
                                             Placeholder="Describe the hazard clearly and specifically..."
+                                            class="@(IsHazardDescriptionInvalid ? "default-validation-dropdown" : "")"
                                             Style="width: 100%;" />
                         </RadzenFormField>
-                        @if (!string.IsNullOrWhiteSpace(NewHazardDescription) && NewHazardDescription.Trim().Length < 10)
+                        @if (IsHazardDescriptionInvalid)
                         {
                             <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
-                                Description must be at least 10 characters (currently @(NewHazardDescription.Trim().Length))
+                                @if (string.IsNullOrWhiteSpace(NewHazardDescription))
+                                {
+                                    <span>Hazard description is required.</span>
+                                }
+                                else
+                                {
+                                    <span>Description must be at least 10 characters (currently @(NewHazardDescription.Trim().Length))</span>
+                                }
                             </RadzenText>
                         }
                         <!-- Location Selection - EXACTLY like HazardReporting -->
-                        <RadzenFieldset Text="Location Selection" Style="margin-bottom: 1rem;">
+                        <RadzenFieldset Text="Location Selection *" Style="margin-bottom: 1rem;" class="@(IsHazardLocationInvalid ? "default-validation-alert" : "")">
                             <div class="location-row rz-mt-1">
                                 <div class="location-button">
-                                    <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                    <RadzenButton ButtonStyle="@(IsHazardLocationInvalid ? ButtonStyle.Danger : ButtonStyle.Primary)"
                                                   Click="OpenMapSelector"
                                                   Text="Select on Map"
                                                   Icon="map"
@@ -134,60 +145,43 @@
                                 </div>
 
                                 <div class="location-coordinate">
-                                    <RadzenFormField Text="Latitude" Variant="Variant.Outlined">
+                                    <RadzenFormField Text="Latitude" Variant="Variant.Outlined" class="@(IsHazardLocationInvalid ? "validation-error-field" : "")">
                                         <RadzenTextBox Value="@SelectedLatitudeText"
                                                        ReadOnly="true"
                                                        Placeholder="Select location first"
+                                                       class="@(IsHazardLocationInvalid ? "default-validation-dropdown" : "")"
                                                        Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
                                     </RadzenFormField>
                                 </div>
 
                                 <div class="location-coordinate">
-                                    <RadzenFormField Text="Longitude" Variant="Variant.Outlined">
+                                    <RadzenFormField Text="Longitude" Variant="Variant.Outlined" class="@(IsHazardLocationInvalid ? "validation-error-field" : "")">
                                         <RadzenTextBox Value="@SelectedLongitudeText"
                                                        ReadOnly="true"
                                                        Placeholder="Select location first"
+                                                       class="@(IsHazardLocationInvalid ? "default-validation-dropdown" : "")"
                                                        Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
                                     </RadzenFormField>
                                 </div>
 
                                 <div class="location-description">
-                                    <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;">
+                                    <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;" class="@(IsHazardLocationInvalid ? "validation-error-field" : "")">
                                         <RadzenTextBox @bind-Value="@LocationDescription"
                                                        Placeholder="Optional description (e.g., 'Terminal A, Gate 5, near security checkpoint')"
+                                                       class="@(IsHazardLocationInvalid ? "default-validation-dropdown" : "")"
                                                        Style="width: 100%;" />
                                     </RadzenFormField>
                                 </div>
                             </div>
+                            @if (IsHazardLocationInvalid)
+                            {
+                                <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger); margin-top: 0.5rem; display: block;">
+                                    Hazard location is required. Select a location on the map to continue.
+                                </RadzenText>
+                            }
                         </RadzenFieldset>
 
-                        <!-- DEBUG: Location Status Display -->
-                        @* <RadzenCard Variant="Variant.Text" Style="background-color: #f8f9fa; border: 1px dashed #dee2e6;">
-                            <RadzenStack Gap="0.5rem" Style="padding: 0.75rem;">
-                                <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Debug: Location Status</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                    • Selected Coordinates: @SelectedLatitude.ToString("F6"), @SelectedLongitude.ToString("F6")
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                    • HasValidCoordinates: @HasValidCoordinates
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                    • SelectedGeoLocation.IsValid: @SelectedGeoLocation.IsValid
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                    • HasGeoLocation: @HasGeoLocation
-                                </RadzenText>
-                                <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                    • LocationDisplayText: @LocationDisplayText
-                                </RadzenText>
-                                @if (!string.IsNullOrEmpty(LocationValidationMessage))
-                                {
-                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-danger);">
-                                        • Validation: @LocationValidationMessage
-                                    </RadzenText>
-                                }
-                            </RadzenStack>
-                        </RadzenCard> *@
+                        
                     </RadzenStack>
                 </div>
                 <div class="modal-footer">
@@ -205,7 +199,7 @@
     </div>
 }
 
-<!-- Map Modal - EXACTLY like HazardReporting -->
+<!-- Map Modal -  -->
 @if (_showMapModal)
 {
     <div class="modal-overlay" style="z-index: 2000;">
@@ -232,66 +226,37 @@
                     <!-- Location Form and Controls -->
                     <div class="p-4">
                         <!-- Selected Coordinates Display -->
-                        <div class="row mb-3">
-                            <div class="rz-w-25">
-                                <RadzenFormField Text="Selected Latitude" Variant="Variant.Outlined">
+                        <div class="location-row rz-mt-1">
+                            <div class="location-coordinate">
+                                <RadzenFormField Text="Latitude" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                     <RadzenTextBox Value="@SelectedLatitudeText"
                                                    ReadOnly="true"
-                                                   Placeholder="Select location first"
+                                                   Placeholder=""
                                                    Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
                                 </RadzenFormField>
                             </div>
-                            <div class="rz-w-25">
-                                <RadzenFormField Text="Selected Longitude" Variant="Variant.Outlined">
+
+                            <div class="location-coordinate">
+                                <RadzenFormField Text="Longitude" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                     <RadzenTextBox Value="@SelectedLongitudeText"
                                                    ReadOnly="true"
-                                                   Placeholder="Select location first"
+                                                   Placeholder=""
                                                    Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
                                 </RadzenFormField>
                             </div>
-                            <div class="rz-w-50">
-                                <RadzenFormField Text="Location Description" Variant="Variant.Outlined">
-                                    <RadzenTextBox @bind-Value="@LocationDescription" 
-                                                 Placeholder="Optional description"
-                                                   Style="width: 100%;min-width: 100%;" />
+
+                            <div class="location-description">
+                                <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                    <RadzenTextBox @bind-Value="@LocationDescription"
+                                                   Placeholder="Optional description (e.g., 'Terminal A, Gate 5, near security checkpoint')"
+                                                   Style="width: 100%;" />
                                 </RadzenFormField>
                             </div>
                         </div>
+                        <br />
                         
-                        <!-- Current Selection Display -->
-                        @if (HasGeoLocation)
-                        {
-                            @* <RadzenAlert AlertStyle="AlertStyle.Success" Size="AlertSize.Small" Variant="Variant.Flat" Class="mb-3">
-                                <h6 class="alert-heading"><i class="fas fa-map-pin"></i> Current Selection</h6>
-                                <p class="mb-1">
-                                    <strong>Coordinates:</strong> @GeoLocationDisplay
-                                </p>
-                                @if (!string.IsNullOrEmpty(SelectedGeoLocation.Description))
-                                {
-                                    <p class="mb-1">
-                                        <strong>Description:</strong> @SelectedGeoLocation.Description
-                                    </p>
-                                }
-                            </RadzenAlert> *@
-                        }
-                        else if (HasValidCoordinates)
-                        {
-                           @*  <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat" Class="mb-3">
-                                <h6 class="alert-heading"><i class="fas fa-map-pin"></i> Coordinates Selected</h6>
-                                <p class="mb-1">
-                                    <strong>Coordinates:</strong> @SelectedLatitude.ToString("F6"), @SelectedLongitude.ToString("F6")
-                                </p>
-                                @if (!string.IsNullOrEmpty(LocationDescription))
-                                {
-                                    <p class="mb-1">
-                                        <strong>Description:</strong> @LocationDescription
-                                    </p>
-                                }
-                                <p class="mb-1">
-                                    <em>Click "Use Selected Location" to confirm</em>
-                                </p>
-                            </RadzenAlert> *@
-                        }
+                        
+                        
                         
                         <div class="d-flex justify-content-end gap-2">
                             <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
@@ -299,11 +264,11 @@
                                         Icon="close"
                                         Size="ButtonSize.Medium"
                                         Click="CloseMapSelector" />
-                            <RadzenButton ButtonStyle="ButtonStyle.Warning" 
+                            @* <RadzenButton ButtonStyle="ButtonStyle.Warning" 
                                         Text="Clear Selection" 
                                         Icon="clear"
                                         Size="ButtonSize.Medium"
-                                        Click="ClearMapSelection" />
+                                        Click="ClearMapSelection" /> *@
                             <RadzenButton ButtonStyle="ButtonStyle.Success" 
                                         Text="Use Selected Location" 
                                         Icon="check"
@@ -346,7 +311,7 @@
 }
 
 .modal-lg {
-    max-width: 900px;
+    max-width: 1000px;
     width: 100%;
 }
 
@@ -358,7 +323,7 @@
 }
 
 .sms-modal-xl {
-    max-width: 1200px;
+    max-width: 1000px;
     width: 100%;
 }
 
@@ -395,6 +360,42 @@
     display: flex;
     justify-content: flex-end;
     gap: 0.5rem;
+}
+
+/* Default validation dropdown styling */
+.default-validation-dropdown {
+    border: 2px solid #dc3545 !important;
+    background-color: #fff5f5 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+/* Form field error state enhancement */
+.validation-error-field .rz-dropdown {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.validation-error-field .rz-textarea,
+.validation-error-field .rz-textbox {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.default-validation-alert {
+    border-left: 5px solid #dc3545;
+    background: #f8f9fa;
+}
+
+/* Mini Guidance Panel for Hazard Type/Category */
+.sms-guidance-mini {
+    background: linear-gradient(135deg, rgba(201, 227, 237, 0.08) 0%, rgba(205, 235, 241, 0.08) 100%);
+    border-color: #c9e3ed !important;
+    max-height: 250px;
+    overflow-y: auto;
+}
+
+.sms-guidance-mini .text-primary {
+    color: #212e61 !important;
 }
 
 /* Map styling */

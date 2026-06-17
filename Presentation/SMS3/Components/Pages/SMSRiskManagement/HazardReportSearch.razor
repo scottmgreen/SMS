@@ -19,8 +19,8 @@
     <div class="container-fluid">
         
         <!-- Primary Search: Tracking ID -->
-        <div class="row">
-            <div class="col-12">
+        <RadzenRow>
+            <RadzenColumn Size="12">
                 <h5 class="mb-3">
                     <RadzenIcon Icon="track_changes" class="me-2" />
                     Search by Tracking ID
@@ -28,53 +28,60 @@
                 @* <p class="text-muted mb-0">
                     Enter your tracking ID to get comprehensive report details and processing status.
                 </p> *@
-            </div>
-        </div>
+            </RadzenColumn>
+        </RadzenRow>
         
-        <div class="row mb-4">
-            <div class="col-lg-6 col-md-8 col-12">
+        <RadzenRow Gap="1rem" Class="mb-4">
+            <RadzenColumn Size="12" SizeMD="2" SizeLG="2">
                 <div class="search-input-container">
                     <RadzenTextBox @bind-Value="@TrackingIdSearch" 
                                    Placeholder="Enter tracking ID (e.g., HT-2026-0006)"
                                    class="w-100"
-                                   Style="height: 50px; font-size: 1.1rem;"
+                                   
                                    @onkeypress="@OnTrackingIdKeyPress" 
                                    @oninput="@OnTrackingIdInput" />
+                    
+                    
+                </div>
+            </RadzenColumn>
+            <RadzenColumn Size="12" SizeMD="8" SizeLG="8" class="d-flex align-items-start">
+                @if (!string.IsNullOrEmpty(TrackingIdFormatMessage))
+                {
+                    <small class="form-text mt-1" style="color: @TrackingIdFormatColor;">
+                        <i class="fas @TrackingIdFormatIcon me-1"></i>
+                        @TrackingIdFormatMessage
+                    </small>
+                }
+                else
+                {
                     <small class="form-text text-muted mt-1">
                         <i class="fas fa-info-circle me-1"></i>
                         Tracking ID format: <strong>HT-YYYY-NNNN</strong> (e.g., HT-2026-0006)
-                        <br />
-                        <span class="text-primary"> Tip: You can enter just numbers (e.g., 0006) and we'll try to find matches</span>
                     </small>
-                    @if (!string.IsNullOrEmpty(TrackingIdFormatMessage))
-                    {
-                        <small class="form-text mt-1" style="color: @TrackingIdFormatColor;">
-                            <i class="fas @TrackingIdFormatIcon me-1"></i>
-                            @TrackingIdFormatMessage
-                        </small>
-                    }
-                </div>
-            </div>
-            <div class="col-lg-3 col-md-4 col-12 d-flex align-items-start">
-                <RadzenButton ButtonType="ButtonType.Button" 
-                              Click="@SearchByTrackingId" 
-                              Text="Search"
-                              Icon="search"
-                              BusyText="Searching..."
-                              IsBusy="@IsSearching"
-                              ButtonStyle="ButtonStyle.Primary"
-                              Size="ButtonSize.Large"
-                              class="w-100"
-                              Disabled="@(string.IsNullOrWhiteSpace(TrackingIdSearch))" />
-            </div>
-        </div>
-
+                }
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow Class="mt-3">
+                    <RadzenColumn Size="12">
+                        <div class="d-flex gap-2">
+                    <RadzenButton ButtonType="ButtonType.Button"
+                                  Click="@SearchByTrackingId"
+                                  Text="Search"
+                                  Icon="search"
+                                  BusyText="Searching..."
+                                  IsBusy="@IsSearching"
+                                  ButtonStyle="ButtonStyle.Primary"
+                                  Size="ButtonSize.Medium"
+                                  Disabled="@(string.IsNullOrWhiteSpace(TrackingIdSearch))" />
+                        </div>
+            </RadzenColumn>
+        </RadzenRow>
         <!-- Divider -->
         <hr class="my-4" />
 
         <!-- Advanced Search Section -->
-        <div class="row">
-            <div class="col-12">
+        <RadzenRow>
+            <RadzenColumn Size="12">
                 <div class="d-flex align-items-center mb-3">
                     <h5 class="mb-0 me-3">
                         <RadzenIcon Icon="manage_search" class="me-2" />
@@ -83,45 +90,47 @@
                     <RadzenButton ButtonType="ButtonType.Button"
                                   Click="@ToggleAdvancedSearch"
                                   Text="@(ShowAdvancedSearch ? "Hide Advanced" : "Show Advanced")"
-                                  Variant="Variant.Text"
-                                  Size="ButtonSize.Small" />
+                                  
+                                  Size="ButtonSize.Medium" 
+                                  ButtonStyle="ButtonStyle.Base"
+                                  />
                 </div>
-            </div>
-        </div>
+            </RadzenColumn>
+        </RadzenRow>
 
         @if (ShowAdvancedSearch)
         {
             <div class="advanced-search-section" @key="@("advanced-search")">
-                <div class="row g-3">
+                <RadzenRow Gap="1rem">
                     <!-- Report Code -->
-                    <div class="col-lg-2 col-md-4">
+                    <RadzenColumn Size="12" SizeMD="4" SizeLG="2">
                         <RadzenLabel Text="Report Code" Component="ReportCodeSearch" class="fw-semibold" />
                         <RadzenTextBox @bind-Value="@ReportCodeSearch" 
                                        Name="ReportCodeSearch"
                                        Placeholder="RP-YYYY-XXXX" 
                                        class="w-100" />
-                    </div>
+                    </RadzenColumn>
 
                     <!-- Hazard Code -->
-                    <div class="col-lg-2 col-md-4">
+                    <RadzenColumn Size="12" SizeMD="4" SizeLG="2">
                         <RadzenLabel Text="Hazard Code" Component="HazardCodeSearch" class="fw-semibold" />
                         <RadzenTextBox @bind-Value="@HazardCodeSearch" 
                                        Name="HazardCodeSearch"
                                        Placeholder="HZ-YYYY-XXXX" 
                                        class="w-100" />
-                    </div>
+                    </RadzenColumn>
 
                     <!-- Reported By -->
-                    <div class="col-lg-3 col-md-6">
+                    @* <div class="col-lg-3 col-md-6">
                         <RadzenLabel Text="Reported By" Component="SubmittedBySearch" class="fw-semibold" />
                         <RadzenTextBox @bind-Value="@SubmittedBySearch" 
                                        Name="SubmittedBySearch"
                                        Placeholder="Reporter name" 
                                        class="w-100" />
-                    </div>
+                    </div> *@
 
                     <!-- Date Range -->
-                    <div class="col-lg-3 col-md-6">
+                    <RadzenColumn Size="12" SizeMD="6" SizeLG="3">
                         <RadzenLabel Text="Date Range" Component="DateFromSearch" class="fw-semibold" />
                         <div class="d-flex gap-2">
                             <RadzenDatePicker @bind-Value="@DateFromSearch" 
@@ -137,11 +146,11 @@
                                               ShowTime="false"
                                               DateFormat="MM/dd/yyyy" />
                         </div>
-                    </div>
-                </div>
+                    </RadzenColumn>
+                </RadzenRow>
 
-                <div class="row mt-3">
-                    <div class="col-12">
+                <RadzenRow Class="mt-3">
+                    <RadzenColumn Size="12">
                         <div class="d-flex gap-2">
                             <RadzenButton ButtonType="ButtonType.Button"
                                           Click="@SearchAdvanced"
@@ -157,8 +166,8 @@
                                           Icon="clear"
                                           ButtonStyle="ButtonStyle.Light" />
                         </div>
-                    </div>
-                </div>
+                    </RadzenColumn>
+                </RadzenRow>
             </div>
         }
     </div>
@@ -217,7 +226,7 @@
                                           Sortable="true"
                                           Width="110px">
                         <Template Context="result">
-                            <span class="fw-bold text-primary">@result.TrackingCode</span>
+                            <span class="text-primary">@result.TrackingCode</span>
                             @if (HasSimilarResults && IsHighMatch(result.TrackingCode))
                             {
                                 <RadzenBadge Text="Best Match" BadgeStyle="BadgeStyle.Success" class="ms-2" Style="font-size: 0.6rem;" />
@@ -231,7 +240,7 @@
                                           Sortable="true"
                                           Width="100px">
                         <Template Context="result">
-                            <span class="fw-bold text-primary">@result.ReportCode</span>
+                            <span class="text-primary">@result.ReportCode</span>
                         </Template>
                     </RadzenDataGridColumn>
 
@@ -241,17 +250,17 @@
                                           Sortable="true"
                                           Width="100px">
                         <Template Context="result">
-                            <span class="fw-bold text-primary">@result.HazardCode</span>
+                            <span class="text-primary">@result.HazardCode</span>
                         </Template>
                     </RadzenDataGridColumn>
 
                     <RadzenDataGridColumn TItem="HazardReportSearchResult" 
                                           Property="HazardType" 
-                                          Title="Type"
+                                          Title="Category/Type"
                                           Sortable="true"
                                           Width="160px">
                         <Template Context="result">
-                            <span class="fw-bold text-primary">
+                            <span class="text-primary">
                                 @($"{result.HazardCategory} - {result.HazardType}")
                             </span>
                         </Template>
@@ -259,11 +268,11 @@
 
                     <RadzenDataGridColumn TItem="HazardReportSearchResult" 
                                           Property="SubmittedBy" 
-                                          Title="Reported By"
+                                          Title="Report Source"
                                           Sortable="true"
                                           Width="130px">
                         <Template Context="result">
-                            <span class="fw-bold text-primary">
+                            <span class="text-primary">
                                 @result.SubmittedBy
                             </span>
                             
@@ -277,7 +286,7 @@
                                           Width="75px"
                                           FormatString="{0:MM/dd/yyyy}">
                         <Template Context="result">
-                            <span class="fw-bold text-primary">
+                            <span class="text-primary">
                                 @result.SubmittedDate.ToString("MM/dd/yyyy")
                             </span>
 
@@ -290,7 +299,7 @@
                                           Sortable="true"
                                           Width="175px">
                         <Template Context="result">
-                            <span class="fw-bold text-primary">
+                            <span class="text-primary">
                                 @result.CurrentStatus
                             </span>
                                                            
@@ -305,14 +314,14 @@
                         <Template Context="result">
                             @if (!string.IsNullOrEmpty(result.ValidationDecision))
                             {
-                                <span class="fw-bold text-primary">
+                                <span class="text-primary">
                                     @result.ValidationDecision
                                 </span>
                                 
                             }
                             else
                             {
-                                <span class="fw-bold text-primary">PENDING</span>
+                                <span class="text-primary">PENDING</span>
                             }
                         </Template>
                     </RadzenDataGridColumn>

@@ -27,6 +27,7 @@ public abstract class ReportStatus : BaseEnum<ReportStatus>
     public static readonly ReportStatus Updated = new ReportUpdatedStatus();
     public static readonly ReportStatus Closed = new ReportClosedStatus();
     public static readonly ReportStatus InMitigation = new ReportInMitigationStatus();
+    public static readonly ReportStatus MitigationComplete = new ReportMitigationCompleteStatus();
     public static readonly ReportStatus UnderInvestigation  = new ReportUnderInvestigationStatus();
     public static readonly ReportStatus RiskAssessmentSubmitted  = new ReportRiskAssessmentSubmittedStatus();
     public static readonly ReportStatus RiskAssessmentInProgress  = new ReportRiskAssessmentInProgressStatus();
@@ -114,6 +115,12 @@ public abstract class ReportStatus : BaseEnum<ReportStatus>
     private sealed class ReportInMitigationStatus : ReportStatus
     {
         public ReportInMitigationStatus() : base("REPORT_IN_MITIGATION", "REPORT_IN_MITIGATION")
+        {
+        }
+    }
+    private sealed class ReportMitigationCompleteStatus : ReportStatus
+    {
+        public ReportMitigationCompleteStatus() : base("REPORT_MITIGATION_COMPLETE", "REPORT_MITIGATION_COMPLETE")
         {
         }
     }

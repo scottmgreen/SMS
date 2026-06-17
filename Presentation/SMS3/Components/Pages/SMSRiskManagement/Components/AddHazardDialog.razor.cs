@@ -46,7 +46,11 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     public string SelectedLatitudeText => SelectedLatitude != 0 ? SelectedLatitude.ToString("F6") : "";
     public string SelectedLongitudeText => SelectedLongitude != 0 ? SelectedLongitude.ToString("F6") : "";
     public string LocationDisplayText => HasGeoLocation ? GetSelectedLocationText() : "No location selected";
-    public bool HasGeoLocation => SelectedGeoLocation?.IsValid == true;
+    public bool HasGeoLocation =>
+        SelectedGeoLocation is not null &&
+        SelectedGeoLocation.Latitude.HasValue &&
+        SelectedGeoLocation.Longitude.HasValue &&
+        SelectedGeoLocation.IsValidated;
     public bool HasValidCoordinates => SelectedLatitude != 0 && SelectedLongitude != 0;
     public string GeoLocationDisplay => HasGeoLocation ? $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" : "No coordinates selected";
 
@@ -64,8 +68,23 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         !string.IsNullOrWhiteSpace(NewHazardDescription?.Trim()) &&
         NewHazardDescription.Trim().Length >= 10 &&
         !string.IsNullOrWhiteSpace(NewHazardCategory) &&
+        !string.Equals(NewHazardCategory, HazardCategory.Default.Value, StringComparison.OrdinalIgnoreCase) &&
         !string.IsNullOrWhiteSpace(NewHazardType) &&
-        !IsSubmitting;
+        !string.Equals(NewHazardType, HazardType.Default.Value, StringComparison.OrdinalIgnoreCase) && HasGeoLocation && !IsSubmitting;
+
+    private bool IsHazardCategoryDefault =>
+        string.IsNullOrWhiteSpace(NewHazardCategory) ||
+        string.Equals(NewHazardCategory, HazardCategory.Default.Value, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsHazardTypeDefault =>
+        string.IsNullOrWhiteSpace(NewHazardType) ||
+        string.Equals(NewHazardType, HazardType.Default.Value, StringComparison.OrdinalIgnoreCase);
+
+    private bool IsHazardDescriptionInvalid =>
+        string.IsNullOrWhiteSpace(NewHazardDescription?.Trim()) ||
+        NewHazardDescription.Trim().Length < 10;
+
+    private bool IsHazardLocationInvalid => !HasGeoLocation;
         
 
     // UI computed properties for edit mode
@@ -84,7 +103,11 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         // Ensure SelectedGeoLocation is properly initialized
         if (SelectedGeoLocation is null)
         {
-            SelectedGeoLocation = new HazardLocation();
+            SelectedGeoLocation = new HazardLocation
+            {
+                IsValid = false,
+                IsValidated = false
+            };
         }
         
         // Create DotNet reference for JavaScript callbacks - EXACTLY like HazardReporting
@@ -163,6 +186,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                 Latitude = location.Latitude ?? 0,
                 Longitude = location.Longitude ?? 0,
                 Description = location.Description,
+                IsValidated = true,
                 DateSelected = DateTime.UtcNow
             };
 
@@ -192,6 +216,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     {
         // Hazard category options from Smart Enum
         HazardCategoryOptions = HazardCategory.GetAllValues()
+            .Where(hc => !string.Equals(hc.Value, HazardCategory.Default.Value, StringComparison.OrdinalIgnoreCase))
             .Select(hc => new DropdownOption(hc.Value, hc.Name))
             .ToList();
 
@@ -207,6 +232,11 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         _logger?.LogInformation("Hazard category changed to: {Category}", categoryValue);
 
         NewHazardCategory = categoryValue ?? string.Empty;
+
+        if (string.Equals(NewHazardCategory, HazardCategory.Default.Value, StringComparison.OrdinalIgnoreCase))
+        {
+            NewHazardCategory = string.Empty;
+        }
 
         // Clear selected hazard type when category changes (unless we're in edit mode and repopulating)
         if (!IsEditMode || string.IsNullOrEmpty(EditingHazard?.HazardType))
@@ -234,6 +264,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         {
             // Filter hazard types by selected category
             HazardTypeOptions = HazardType.GetByCategory(category)
+                .Where(ht => !string.Equals(ht.Value, HazardType.Default.Value, StringComparison.OrdinalIgnoreCase))
                 .Select(ht => new DropdownOption(ht.Value, ht.Name))
                 .ToList();
 
@@ -255,6 +286,11 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     public async Task OnHazardTypeChanged(string? hazardTypeValue)
     {
         NewHazardType = hazardTypeValue ?? string.Empty;
+
+        if (string.Equals(NewHazardType, HazardType.Default.Value, StringComparison.OrdinalIgnoreCase))
+        {
+            NewHazardType = string.Empty;
+        }
 
         if (!string.IsNullOrEmpty(hazardTypeValue))
         {
@@ -503,6 +539,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                 Description = SelectedGeoLocation.Description ?? "Map selected location",
                 CreatedBy = _currentUserService?.UserDisplayName,
                 CreatedDate = DateTime.UtcNow,
+                IsValidated = true,
                 IsValid = true
             };
 
@@ -566,7 +603,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                     hazardLocation.Latitude = SelectedGeoLocation.Latitude;
                     hazardLocation.Longitude = SelectedGeoLocation.Longitude;
                     hazardLocation.Description = SelectedGeoLocation.Description ?? "Map selected location";
-                    hazardLocation.IsValidated = false; // Initial state - can be updated later by validation process
+                    hazardLocation.IsValidated = true;
                     hazardLocation.UpdatedDate = DateTime.UtcNow;
                     hazardLocation.UpdatedBy = _currentUserService?.UserDisplayName;
                     hazard.HazardLocation = hazardLocation;
@@ -617,7 +654,11 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         SelectedLatitude = 0;
         SelectedLongitude = 0;
         LocationDescription = string.Empty;
-        SelectedGeoLocation = new HazardLocation();
+        SelectedGeoLocation = new HazardLocation
+        {
+            IsValid = false,
+            IsValidated = false
+        };
         _showMapModal = false;
         
         // Reset dropdown options
@@ -643,8 +684,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             try
             {
                 // Always reinitialize the map since the DOM element is recreated
-                await _mapModule.InvokeVoidAsync("initializeMap",
-                    _airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef);
+                await _mapModule.InvokeVoidAsync("initializeMap",_airportCenterLatitude, _airportCenterLongitude, _defaultZoomLevel, _dotNetRef);
 
                 _logger?.LogInformation("Map reinitialized for modal opening");
 
@@ -653,17 +693,24 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                 {
                     await Task.Delay(100); // Give map time to initialize
 
-                    await _mapModule.InvokeVoidAsync("setLocationFromCoordinates",
-                        (double)SelectedGeoLocation.Latitude, (double)SelectedGeoLocation.Longitude,
-                        SelectedGeoLocation.Description);
+                    var restoreLatitude = (double)(SelectedGeoLocation.Latitude ?? SelectedLatitude);
+                    var restoreLongitude = (double)(SelectedGeoLocation.Longitude ?? SelectedLongitude);
+
+                    // Use airport defaults if we still don't have usable coordinates.
+                    if (restoreLatitude == 0 && restoreLongitude == 0)
+                    {
+                        restoreLatitude = _airportCenterLatitude;
+                        restoreLongitude = _airportCenterLongitude;
+                    }
+
+                    await _mapModule.InvokeVoidAsync("setLocationFromCoordinates", restoreLatitude, restoreLongitude, SelectedGeoLocation.Description ?? string.Empty);
 
                     // Update the form fields to match the restored location
                     SelectedLatitude = SelectedGeoLocation.Latitude ?? 0;
                     SelectedLongitude = SelectedGeoLocation.Longitude ?? 0;
                     LocationDescription = SelectedGeoLocation.Description ?? "";
 
-                    _logger?.LogInformation("Existing location restored: {Lat}, {Lng}",
-                        SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
+                    _logger?.LogInformation("Existing location restored: {Lat}, {Lng}",SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
 
                     StateHasChanged();
                 }
@@ -702,6 +749,8 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             Latitude = SelectedLatitude,
             Longitude = SelectedLongitude,
             Description = LocationDescription,
+            IsValid = true,
+            IsValidated = true,
             DateSelected = DateTime.UtcNow
         };
 
@@ -723,7 +772,11 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         SelectedLatitude = 0;
         SelectedLongitude = 0;
         LocationDescription = string.Empty;
-        SelectedGeoLocation = new HazardLocation();
+        SelectedGeoLocation = new HazardLocation
+        {
+            IsValid = false,
+            IsValidated = false
+        };
 
         if (_mapModule is not null)
         {

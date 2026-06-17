@@ -22,7 +22,8 @@ public sealed class MitigationStatus : BaseEnum<MitigationStatus>
     // ? APPROVED FINAL STATUS VALUES FROM StatusList.txt
     public static readonly MitigationStatus PendingApproval = new("PENDING_APPROVAL", "Mitigation Pending Approval");
     public static readonly MitigationStatus Approved = new("APPROVED", "Mitigation Approved");
-    public static readonly MitigationStatus InProgressDueDate = new("IN_PROGRESS_DUE_DATE", "Mitigation in Progress – Due Date");
+    public static readonly MitigationStatus InProgress = new("IN_PROGRESS", "Mitigation in Progress");
+    public static readonly MitigationStatus PastExpectedTargetDate = new("PAST_EXPECTED_TARGET_DATE", "Mitigation Completion Past Expected Target Date");
     public static readonly MitigationStatus Rejected = new("REJECTED", "Mitigation Rejected");
     public static readonly MitigationStatus Complete = new("COMPLETE", "Mitigation Complete");
     public static readonly MitigationStatus MonitoringHazard = new("MONITORING_HAZARD", "Monitoring Hazard");

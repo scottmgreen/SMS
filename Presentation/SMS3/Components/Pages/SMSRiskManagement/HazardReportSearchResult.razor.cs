@@ -378,7 +378,11 @@ public partial class HazardReportSearchResult : ComponentBase
 
             if (locationResult.IsSuccess && locationResult.Value?.Any() == true)
             {
-                HazardLocation = locationResult.Value.FirstOrDefault();
+                HazardLocation = locationResult.Value
+                    .OrderByDescending(l => l.UpdatedDate ?? DateTime.MinValue)
+                    .ThenByDescending(l => l.DateSelected)
+                    .ThenByDescending(l => l.CreatedDate ?? DateTime.MinValue)
+                    .FirstOrDefault();
                 _logger.LogInformation("Loaded location information for hazard: {HazardCode}", hazardCode);
             }
             else
@@ -490,6 +494,65 @@ public partial class HazardReportSearchResult : ComponentBase
         return decision ?? "Unknown";
     }
 
+    public bool IsHazardCategoryValidated =>
+        !string.IsNullOrWhiteSpace(ReportDetails?.HazardCategory) &&
+        !string.Equals(ReportDetails.HazardCategory, HazardCategory.Default.Value, StringComparison.OrdinalIgnoreCase);
+
+    public bool IsHazardTypeValidated =>
+        !string.IsNullOrWhiteSpace(ReportDetails?.HazardType) &&
+        !string.Equals(ReportDetails.HazardType, HazardType.Default.Value, StringComparison.OrdinalIgnoreCase);
+
+    public bool IsHazardLocationValidated => HazardLocation?.IsValidated == true;
+
+    public string HazardLocationValidationText =>
+        HazardLocation is null
+            ? "No mapped location"
+            : (HazardLocation.IsValidated ? "Validated" : "Validation Required");
+
+    public string GetBooleanValidationIcon(bool isValid) => isValid ? "check_circle" : "cancel";
+
+    public string GetBooleanValidationIconClass(bool isValid) => isValid ? "text-success" : "text-danger";
+
+    public string GetReportValidationIcon()
+    {
+        if (ReportValidation is null)
+        {
+            return "schedule";
+        }
+
+        if (ValidationDecision.TryFromValue(ReportValidation.ValidationDecision, out var validationDecision))
+        {
+            if (validationDecision == ValidationDecision.SmsRisk)
+                return "check_circle";
+            if (validationDecision == ValidationDecision.NeedsInvestigation)
+                return "warning";
+            if (validationDecision == ValidationDecision.NotSmsRisk)
+                return "cancel";
+        }
+
+        return "help";
+    }
+
+    public string GetReportValidationIconClass()
+    {
+        if (ReportValidation is null)
+        {
+            return "text-muted";
+        }
+
+        if (ValidationDecision.TryFromValue(ReportValidation.ValidationDecision, out var validationDecision))
+        {
+            if (validationDecision == ValidationDecision.SmsRisk)
+                return "text-success";
+            if (validationDecision == ValidationDecision.NeedsInvestigation)
+                return "text-warning";
+            if (validationDecision == ValidationDecision.NotSmsRisk)
+                return "text-danger";
+        }
+
+        return "text-muted";
+    }
+
     /// <summary>
     /// Get processing status class for timeline
     /// </summary>
@@ -531,6 +594,9 @@ public partial class HazardReportSearchResult : ComponentBase
             _ => "text-muted"
         };
     }
+
+    public bool IsRiskAssessmentComplete =>
+        string.Equals(CurrentRiskAssessment?.Status, RiskAssessmentStatus.AssessmentComplete.Value, StringComparison.OrdinalIgnoreCase);
 
 
     /// <summary>

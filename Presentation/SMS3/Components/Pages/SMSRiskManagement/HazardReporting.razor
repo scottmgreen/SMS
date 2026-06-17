@@ -216,15 +216,8 @@ else
                                     </RadzenFormField>
                                 </RadzenColumn>
                                 <RadzenColumn Size="3">
-                                    @* <RadzenFormField Text="Source" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
-                                        <RadzenTextBox @bind-Value="@HazardReport.SubmittedBy"
-                                                       Placeholder="Name and position (e.g., 'John Smith - Ground Operations Supervisor')"
-                                                       Name="SubmittedBy"
-                                                       MaxLength="60"
-                                                       ReadOnly="@IsExternalSystemSubmittedReport"
-                                                       Style="width: 100%;min-width: 100%;" />
-                                    </RadzenFormField> *@
-                                    <RadzenRequiredValidator Component="SubmittedBy" Text="Report Source required" />
+                                   
+                                    @* <RadzenRequiredValidator Component="SubmittedBy" Text="Report Source required" /> *@
                                 </RadzenColumn>
                                 @if (!HazardReport.IsAnonymous)
                                 {
@@ -288,12 +281,7 @@ else
                                                       Style="width: 100%; min-width: 100%;" />
                                     </RadzenFormField>
                                     <RadzenRequiredValidator Component="HazardCategory" Text="Hazard category is required" />
-                                    @* @if (IsHazardCategoryDefault)
-                                    {
-                                        <RadzenAlert AlertStyle="AlertStyle.Danger" Size="AlertSize.ExtraSmall" Variant="Variant.Outlined" class="rz-mt-1 default-validation-alert">
-                                            <small>Default Hazard Category detected</small> 
-                                        </RadzenAlert>
-                                    } *@
+                                   
                                 </RadzenColumn>
                                 <RadzenColumn Size="4">
                                     <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false" class="@(IsHazardTypeDefault ? "validation-error-field" : "")">

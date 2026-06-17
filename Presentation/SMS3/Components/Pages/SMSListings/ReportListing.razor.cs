@@ -910,14 +910,28 @@ public partial class ReportListing : ComponentBase
     /// </summary>
     public BadgeStyle GetStatusBadgeStyle(string? status)
     {
-        return status?.ToLower() switch
+        if (!ReportStatus.TryFromValue(status, out var reportStatus) || reportStatus is null)
         {
-            "active" => BadgeStyle.Success,
-            "pending" => BadgeStyle.Warning,
-            "closed" => BadgeStyle.Secondary,
-            "cancelled" => BadgeStyle.Danger,
-            _ => BadgeStyle.Info
-        };
+            return BadgeStyle.Info;
+        }
+
+        if (reportStatus == ReportStatus.NeedsValidation)
+            return BadgeStyle.Warning;
+        if (reportStatus == ReportStatus.ValidationCompleted ||
+            reportStatus == ReportStatus.ReadyForProcessing ||
+            reportStatus == ReportStatus.MitigationComplete ||
+            reportStatus == ReportStatus.Closed)
+            return BadgeStyle.Success;
+        if (reportStatus == ReportStatus.ValidationRevised ||
+            reportStatus == ReportStatus.RiskAssessmentInProgress ||
+            reportStatus == ReportStatus.RiskAssessmentSubmitted ||
+            reportStatus == ReportStatus.InMitigation ||
+            reportStatus == ReportStatus.UnderInvestigation)
+            return BadgeStyle.Info;
+        if (reportStatus == ReportStatus.RiskRegistryOnly)
+            return BadgeStyle.Danger;
+
+        return BadgeStyle.Secondary;
     }
 
     /// <summary>

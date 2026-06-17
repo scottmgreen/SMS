@@ -1,6 +1,7 @@
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using SMS_Domain.Events;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -14,6 +15,7 @@ public partial class HazardMitigation : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
+    [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private ILogger<HazardMitigation> _logger { get; set; } = default!;
 
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
@@ -125,7 +127,7 @@ public partial class HazardMitigation : ComponentBase
             {
                 await _notificationHelper.ShowErrorAsync($"Hazard mitigation '{MitigationCode}' not found");
                 _logger.LogError("Failed to load hazard mitigation {Code}: {Error}", MitigationCode, mitigationResult.Error?.Message);
-                _navigation.NavigateToSecure("/Listings/Mitigations");
+                _navigation.NavigateToSecure("/SMSListings/Mitigations");
                 return;
             }
         }
@@ -133,7 +135,7 @@ public partial class HazardMitigation : ComponentBase
         {
             _logger.LogError(ex, "Error loading existing hazard mitigation: {Code}", MitigationCode);
             await _notificationHelper.ShowErrorAsync("Error loading existing hazard mitigation");
-            _navigation.NavigateToSecure("/Listings/Mitigations");
+            _navigation.NavigateToSecure("/SMSListings/Mitigations");
         }
     }
     #endregion
@@ -165,9 +167,6 @@ public partial class HazardMitigation : ComponentBase
             {
                 await CreateNewMitigation();
             }
-
-            // Navigate back to listings
-            _navigation.NavigateToSecure("/Listings/Mitigations");
         }
         catch (Exception ex)
         {
@@ -200,6 +199,7 @@ public partial class HazardMitigation : ComponentBase
             await _notificationHelper.ShowSuccessAsync($"Hazard mitigation {CurrentMitigation.Code} created successfully!");
             _logger.LogInformation("Created hazard mitigation: {Code} by user: {UserId}",
                 CurrentMitigation.Code, GetCurrentUserId());
+            _navigation.NavigateToSecure("/SMSListings/Mitigations");
         }
         else
         {
@@ -221,13 +221,14 @@ public partial class HazardMitigation : ComponentBase
 
         if (result.IsSuccess)
         {
-            await _notificationHelper.ShowSuccessAsync($"Hazard mitigation {CurrentMitigation.Code} updated successfully!");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Hazard mitigation {CurrentMitigation.Code} updated successfully!"));
             _logger.LogInformation("Updated hazard mitigation: {Code} by user: {UserId}",
                 CurrentMitigation.Code, GetCurrentUserId());
+            _navigation.NavigateToSecure("/SMSListings/Mitigations");
         }
         else
         {
-            await _notificationHelper.ShowErrorAsync($"Failed to update hazard mitigation: {result.Error?.Message}");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Failed to update hazard mitigation: {result.Error?.Message}"));
             _logger.LogError("Failed to update hazard mitigation {Code}: {Error} by user: {UserId}",
                 CurrentMitigation.Code, result.Error?.Message, GetCurrentUserId());
         }
@@ -235,7 +236,7 @@ public partial class HazardMitigation : ComponentBase
 
     private async Task CancelAndReturn()
     {
-        _navigation.NavigateToSecure("/Listings/Mitigations");
+        _navigation.NavigateToSecure("/SMSListings/Mitigations");
     }
     #endregion
 

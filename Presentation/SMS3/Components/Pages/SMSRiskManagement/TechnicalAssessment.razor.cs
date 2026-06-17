@@ -602,6 +602,8 @@ public partial class TechnicalAssessment : ComponentBase
                 }
             }
 
+            await LoadHazardLocationsAsync(allHazards);
+
             // Update source and UI snapshot collections
             ReportHazards = allHazards;
             RefreshHazardUiSnapshot();
@@ -613,6 +615,32 @@ public partial class TechnicalAssessment : ComponentBase
             _logger.LogError(ex, "Error loading report hazards");
             ReportHazards = new List<Hazard>();
             RefreshHazardUiSnapshot();
+        }
+    }
+
+    private async Task LoadHazardLocationsAsync(IEnumerable<Hazard> hazards)
+    {
+        foreach (var hazard in hazards)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(hazard.Code))
+                {
+                    continue;
+                }
+
+                var locationQuery = new GetHazardLocationsByHazardCodeQuery(hazard.Code);
+                var locationResult = await _mediator.SendAsync(locationQuery, CancellationToken.None);
+
+                if (locationResult.IsSuccess && locationResult.Value?.Any() == true)
+                {
+                    hazard.HazardLocation = locationResult.Value.First();
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to load hazard location for {HazardCode}", hazard.Code);
+            }
         }
     }
 
@@ -1803,6 +1831,8 @@ public partial class TechnicalAssessment : ComponentBase
             // The hazard was already created in the modal - we just need to add it to our collections
             _logger.LogInformation("Hazard {HazardCode} was successfully created in modal, adding to collections", newHazard.Code);
 
+            await LoadHazardLocationsAsync(new[] { newHazard });
+
             // Add to collections (no database call needed here - already done in modal)
             ReportHazards.Add(newHazard);
 
@@ -1857,6 +1887,8 @@ public partial class TechnicalAssessment : ComponentBase
 
             if (result.IsSuccess && result.Value is not null)
             {
+                await LoadHazardLocationsAsync(new[] { result.Value });
+
                 // Update local collection
                 var existingIndex = ReportHazards.FindIndex(h => h.Code == updatedHazard.Code);
                 if (existingIndex >= 0)

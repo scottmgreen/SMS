@@ -407,11 +407,12 @@ else if (ReportDetails != null)
                         <div class="mt-3">
                             <ReadOnlyLocationMap Latitude="@HazardLocation.Latitude.Value"
                                                Longitude="@HazardLocation.Longitude.Value"
+                                               LocationId="@HazardLocation.Code"
                                                LocationDescription="@(HazardLocation.Description ?? ReportDetails?.HazardCode ?? "Location")"
                                                MapHeight="200px"
                                                ShowZoomControls="false"
                                                ShowCoordinates="false"
-                                               ShowLocationDetails="false"
+                                               ShowLocationDetails="true"
                                                ZoomLevel="16" />
                         </div>
                     }

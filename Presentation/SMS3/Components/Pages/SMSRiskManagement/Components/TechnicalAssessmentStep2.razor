@@ -20,19 +20,20 @@
                         System Context (From Step 1)
                     </RadzenText>
                     <RadzenRow Gap="1rem">
-                        <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenColumn Size="12" SizeMD="8">
                             <RadzenText TextStyle="TextStyle.Body2">
-                                <strong>System Description:</strong> @Step1.SystemDescription
+                                <strong>Description:</strong> @Step1.SystemDescription
                             </RadzenText>
                             <RadzenText TextStyle="TextStyle.Body2">
-                                <strong>System Boundaries:</strong> @Step1.SystemBoundaries
+                                <strong>Boundaries:</strong> @Step1.SystemBoundaries
                             </RadzenText>
-                        </RadzenColumn>
-                        <RadzenColumn Size="12" SizeMD="6">
                             <RadzenText TextStyle="TextStyle.Body2">
-                                <strong>System Purpose and Objectives:</strong> @Step1.SystemPurpose
+                                <strong>Purpose and Objectives:</strong> @Step1.SystemPurpose
                             </RadzenText>
                         </RadzenColumn>
+                        @* <RadzenColumn Size="12" SizeMD="6">
+                            
+                        </RadzenColumn> *@
                     </RadzenRow>
                 </RadzenStack>
             </RadzenCard>
@@ -60,36 +61,40 @@
                     {
                         <RadzenDataGrid Data="@Step2Hazards" TItem="Hazard" AllowFiltering="true" AllowPaging="true" PageSize="10">
                             <Columns>
-                                <RadzenDataGridColumn TItem="Hazard" Property="Code" Title="Hazard ID">
+                                <RadzenDataGridColumn TItem="Hazard" Property="Code" Title="Hazard ID" Width="125px">
                                     <Template Context="hazard">
-                                        <RadzenBadge Text="@hazard.Code" BadgeStyle="BadgeStyle.Base" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Text=@hazard.Code/>
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="Hazard" Property="Description" Title="Description" />
+                                <RadzenDataGridColumn TItem="Hazard" Title="Description" Width="100px" Sortable="false" Filterable="false">
+                                    <Template Context="hazard">
+                                        <RadzenButton Text=""
+                                                      Icon="description"
+                                                      ButtonStyle="ButtonStyle.Base"
+                                                      Variant="Variant.Text"
+                                                      Size="ButtonSize.ExtraSmall"
+                                                      Title="Click to view full description"
+                                                      Class="description-button"
+                                                      Click="@(() => ShowDescriptionDialog(hazard))" />
+                                    </Template>
+                                </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Hazard" Property="Category" Title="Category">
                                     <Template Context="hazard">
-                                        <RadzenBadge Text="@(hazard.HazardCategory ?? "Not specified")" BadgeStyle="BadgeStyle.Base" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Text="@(hazard.HazardCategory ?? "Not specified")"  />
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Hazard" Property="Type" Title="Type">
                                     <Template Context="hazard">
-                                        <RadzenBadge Text="@(hazard.HazardType ?? "Not specified")" BadgeStyle="BadgeStyle.Base" />
+                                        <RadzenText TextStyle="TextStyle.Caption" Text=@(hazard.HazardType ?? "Not specified")" />
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="Hazard" Property="Location" Title="Location">
+                                <RadzenDataGridColumn TItem="Hazard" Property="HazardLocation" Title="Location">
                                     <Template Context="hazard">
-                                        @if (hazard.HazardLocation?.Description != null)
+                                        @if (hazard.HazardLocation is not null && hazard.HazardLocation.Latitude.HasValue && hazard.HazardLocation.Longitude.HasValue)
                                         {
-                                            <RadzenText TextStyle="TextStyle.Caption" Text="@hazard.HazardLocation.Description" />
+                                            <RadzenText TextStyle="TextStyle.Caption" Text="@($"{hazard.HazardLocation.Latitude.Value}, {hazard.HazardLocation.Longitude.Value}")" />
                                         }
-                                        else if (!string.IsNullOrEmpty(hazard.LocationArea))
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Caption" Text="@hazard.LocationArea" />
-                                        }
-                                        else
-                                        {
-                                            <RadzenText TextStyle="TextStyle.Caption" Text="No location specified" Style="color: var(--rz-text-secondary-color);" />
-                                        }
+                                        
                                     </Template>
                                 </RadzenDataGridColumn>
                                 <RadzenDataGridColumn TItem="Hazard" Title="Actions">
@@ -132,6 +137,46 @@
     </RadzenColumn>
 </RadzenRow>
 
+@if (_showDescriptionModal)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-md">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-file-alt"></i> Hazard Description - @_selectedHazardId
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Text"
+                                      Icon="close"
+                                      Size="ButtonSize.Small"
+                                      Click="@CloseDescriptionModal" />
+                    </div>
+                </div>
+                <div class="sms-modal-body">
+                    <RadzenCard Variant="Variant.Outlined">
+                        <div class="p-3">
+                            <div style="line-height: 1.6; white-space: normal;">
+                                @((MarkupString)(_selectedDescription ?? "No description available"))
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end">
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                      Text="Close"
+                                      Icon="close"
+                                      Click="@CloseDescriptionModal"
+                                      Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <!-- Add Hazard Modal -->
 <AddHazardDialog IsVisible="@ShowAddHazardDialog" 
                 IsVisibleChanged="@OnModalVisibilityChanged"
@@ -158,6 +203,23 @@
     private bool ShowAddHazardDialog { get; set; } = false;
     private bool IsEditMode { get; set; } = false; // NEW: Track if we're in edit mode
     private Hazard? EditingHazard { get; set; } = null; // NEW: Hazard being edited
+    private bool _showDescriptionModal = false;
+    private string _selectedDescription = string.Empty;
+    private string _selectedHazardId = string.Empty;
+
+    private void ShowDescriptionDialog(Hazard hazard)
+    {
+        _selectedDescription = hazard.Description ?? "No description available";
+        _selectedHazardId = hazard.Code;
+        _showDescriptionModal = true;
+    }
+
+    private void CloseDescriptionModal()
+    {
+        _showDescriptionModal = false;
+        _selectedDescription = string.Empty;
+        _selectedHazardId = string.Empty;
+    }
 
     private void OpenAddHazardDialog()
     {
