@@ -23,7 +23,7 @@ public class MitigationCompletedEvent : BaseDomainEvent, IEventSource
     /// <summary>
     /// Category for grouping in UI
     /// </summary>
-    public string EventSourceCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string EventSourceCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
     #region IEventDataSource Implementation
 

@@ -100,7 +100,7 @@ public class StandardDropdowns
 
 public class SPIDropdowns
 {
-    public List<SPIType> SPITypes { get; set; } = new();
+    public List<SMSSafetyPerformanceIndicatorType> SPITypes { get; set; } = new();
     public List<SPIStatus> SPIStatuses { get; set; } = new();
     public List<SPIMeasurementFrequency> SPIFrequencies { get; set; } = new();
     public List<string> Departments { get; set; } = new();
@@ -206,9 +206,9 @@ public static class DropdownHelper
             .ToList();
     }
 
-    public static List<SPIType> GetSPITypeOptions()
+    public static List<SMSSafetyPerformanceIndicatorType> GetSPITypeOptions()
     {
-        return SPIType.GetAllValues().ToList();
+        return SMSSafetyPerformanceIndicatorType.GetAllValues().ToList();
     }
 
     public static List<SPIStatus> GetSPIStatusOptions()

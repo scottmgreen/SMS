@@ -221,8 +221,12 @@
                 }
                 else
                 {
-                    <!-- Only show menu items if NOT on PDX or Login pages -->
-                    @if (!IsOnRestrictedPage)
+                    <!-- Only show menu items if NOT on PDX or Login pages 
+                        IT APPEARS THIS WHOLE THING MIGHT NOT BE NEEDED , 
+                        KEEPING THIS LOGIC IN PLACE IN CASE WE WANT TO SHOW LIMITED NAVIGATION ON THE LOGIN PAGE OR OTHER PUBLIC PAGES IN THE FUTURE
+
+                    -->
+                   @*  @if (!IsOnRestrictedPage)
                     {
                         <!-- RIGHT SIDE RADZEN MENU -->
                         <div style="display: flex; gap: 1rem; align-items: center;">
@@ -238,7 +242,7 @@
                                 </RadzenMenu>
                             </div>
                         </div>
-                    }
+                    } *@
                 }
             }
         

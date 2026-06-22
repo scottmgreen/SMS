@@ -16,9 +16,8 @@ namespace SMS_Domain.Events;
 public class HazardUpdatedEvent : BaseDomainEvent
 {
     public override string EventType => SMS_Domain.Enums.EventType.HazardUpdated.Value;
-    public string EventCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string EventCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
-    public string EventId { get; set; }
     public string HazardId { get; set; }
     
     public HazardUpdatedEvent(SMSEventID id):base(id)

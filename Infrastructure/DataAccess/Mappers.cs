@@ -900,7 +900,7 @@ public static partial class Mappers
         SafetyPerformanceIndicator spi = new(spiID,
             reader.GetValue<string>(FieldNames.fSPIName) ?? string.Empty,
             reader.GetValue<string>(FieldNames.fSPIDescription) ?? string.Empty,
-            SPIType.GetAllValues().FirstOrDefault(t => t.Value == reader.GetValue<string>(FieldNames.fSPIIndicatorType)) ?? SPIType.IncidentRate,
+            SMSSafetyPerformanceIndicatorType.GetAllValues().FirstOrDefault(t => t.Value == reader.GetValue<string>(FieldNames.fSPIIndicatorType)) ?? SMSSafetyPerformanceIndicatorType.IncidentRate,
             reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM");
 
         // Set the code property

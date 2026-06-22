@@ -18,19 +18,34 @@ namespace SMS_Domain.Events;
 /// Domain event triggered when SPI compliance status changes
 /// Supports regulatory reporting and compliance monitoring workflows
 /// </summary>
-public class SPIComplianceChangedEvent : BaseDomainEvent
+public class SPIComplianceChangedEvent : BaseDomainEvent, IEventSource
 {
-    public override string EventType => "SPI_Compliance_Changed";
+    public override string EventType => SMS_Domain.Enums.EventType.SPIComplianceChanged.Value;
 
     /// <summary>
     /// Display name for SPI configuration dropdowns
     /// </summary>
-    public string DataSourceDisplayName => "SMS Event Bus";
+    public string EventSourceDisplayName => SMS_Domain.Enums.EventType.SPIComplianceChanged;
 
     /// <summary>
     /// Category for grouping in UI
     /// </summary>
-    public string DataSourceCategory => "SMS Domain Event";
+    public string EventSourceCategory => "SMS Domain Event";
+
+    /// <summary>
+    /// Description of data provided for SPI calculations
+    /// </summary>
+    public string EventSourceDescription => "Provides SPI compliance transitions for threshold, at-risk, and regulatory monitoring metrics";
+
+    /// <summary>
+    /// Indicates this event is automatically generated from SPI compliance evaluation
+    /// </summary>
+    public bool IsAutomaticDataSource => true;
+
+    /// <summary>
+    /// Display ordering priority in SPI source selection
+    /// </summary>
+    public int DisplayPriority => 5;
 
     public string SPICode { get; private set; }
     public string SPIName { get; private set; }

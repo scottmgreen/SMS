@@ -16,7 +16,7 @@ namespace SMS_Domain.Entities;
 public class SafetyPerformanceIndicator : BaseAuditableEntity
 {
     public SafetyPerformanceIndicator(SafetyPerformanceIndicatorID id, string name, string description,
-        SPIType indicatorType, string createdBy)
+        SMSSafetyPerformanceIndicatorType indicatorType, string createdBy)
         : base(id, createdBy, DateTime.UtcNow)
     {
         Name = name ?? throw new ArgumentNullException(nameof(name));
@@ -31,7 +31,7 @@ public class SafetyPerformanceIndicator : BaseAuditableEntity
     public string Code { get; set; } = string.Empty;
     public string Name { get; set; }
     public string Description { get; set; }
-    public SPIType IndicatorType { get; set; }
+    public SMSSafetyPerformanceIndicatorType IndicatorType { get; set; }
     public SPIStatus Status { get; set; }
 
     // Measurement Configuration
@@ -65,7 +65,7 @@ public class SafetyPerformanceIndicator : BaseAuditableEntity
     public List<SPIDataPoint> DataPoints { get; set; }
 
     // Business Methods
-    public Result UpdateConfiguration(string name, string description, SPIType indicatorType,
+    public Result UpdateConfiguration(string name, string description, SMSSafetyPerformanceIndicatorType indicatorType,
         string measurementUnit, SPIMeasurementFrequency frequency, string updatedBy)
     {
         try

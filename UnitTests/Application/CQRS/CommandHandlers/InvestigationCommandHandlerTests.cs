@@ -92,7 +92,7 @@ public class ApplicationConfigurationTests : ApplicationTestBase
     public void ServiceProvider_ShouldRegisterMediator()
     {
         // Arrange & Act
-        var mediator = ServiceProvider.GetService<IMediator>();
+        var mediator = ServiceProvider.GetService<IBaseMediator>();
 
         // Assert
         mediator.Should().NotBeNull();
@@ -118,8 +118,8 @@ public class ApplicationConfigurationTests : ApplicationTestBase
     public void DependencyInjection_ShouldResolveTransientServices()
     {
         // Arrange & Act
-        var service1 = ServiceProvider.GetService<IMediator>();
-        var service2 = ServiceProvider.GetService<IMediator>();
+        var service1 = ServiceProvider.GetService<IBaseMediator>();
+        var service2 = ServiceProvider.GetService<IBaseMediator>();
 
         // Assert
         service1.Should().NotBeNull();
@@ -144,7 +144,7 @@ public class ApplicationConfigurationTests : ApplicationTestBase
     public void DependencyInjection_ShouldHandleNestedDependencies()
     {
         // Arrange & Act
-        var mediator = ServiceProvider.GetService<IMediator>();
+        var mediator = ServiceProvider.GetService<IBaseMediator>();
 
         // Assert
         mediator.Should().NotBeNull();
@@ -164,7 +164,7 @@ public class ApplicationConfigurationTests : ApplicationTestBase
             typeof(IConfiguration),
             typeof(ILoggerFactory),
             typeof(ILogger<ApplicationConfigurationTests>),
-            typeof(IMediator)
+            typeof(IBaseMediator)
         };
 
         // Act & Assert
@@ -221,8 +221,8 @@ public class ApplicationConfigurationTests : ApplicationTestBase
     public void ServiceLifetime_TransientServices_ShouldCreateNewInstances()
     {
         // Arrange & Act
-        var mediator1 = ServiceProvider.GetService<IMediator>();
-        var mediator2 = ServiceProvider.GetService<IMediator>();
+        var mediator1 = ServiceProvider.GetService<IBaseMediator>();
+        var mediator2 = ServiceProvider.GetService<IBaseMediator>();
 
         // Assert
         mediator1.Should().NotBeNull();
@@ -277,7 +277,7 @@ public class ApplicationConfigurationTests : ApplicationTestBase
         
         for (int i = 0; i < 100; i++)
         {
-            var mediator = ServiceProvider.GetService<IMediator>();
+            var mediator = ServiceProvider.GetService<IBaseMediator>();
             mediator.Should().NotBeNull();
         }
         

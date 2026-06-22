@@ -40,9 +40,11 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
                 CommandType = CommandType.StoredProcedure
             };
 
+            var createdBy = ResolveCreatedBy(queuedEvent);
+
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queuedEvent.Id.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queuedEvent.Id.ToString()));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventCategory, (int)queuedEvent.EventCategory));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventCategory, queuedEvent.EventCategory.Id));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventType, queuedEvent.EventType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventData, queuedEvent.EventData));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueReportCode, string.IsNullOrWhiteSpace(queuedEvent.ReportId) ? DBNull.Value : queuedEvent.ReportId));
@@ -50,7 +52,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventPriority, (int)queuedEvent.Priority));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMaxAttempts, 5));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmQueuedBy, queuedEvent.QueuedBy ?? "SYSTEM"));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCreatedBy, queuedEvent.QueuedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCreatedBy, createdBy));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -170,7 +172,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMaxResults, maxResults));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventCategory, eventCategory.HasValue ? (object)(int)eventCategory.Value : DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventCategory, eventCategory is not null ? eventCategory.Id : DBNull.Value));
 
             List<QueuedEvent> response = new();
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -209,7 +211,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventStatus, (int)status));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMaxResults, maxResults));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventCategory, eventCategory.HasValue ? (object)(int)eventCategory.Value : DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventCategory, eventCategory is not null ? eventCategory.Id : DBNull.Value));
 
             List<QueuedEvent> response = new();
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -495,17 +497,27 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             {
                 while (await reader.ReadAsync(ct).ConfigureAwait(false))
                 {
-                    EventCategory category;
+                    EventCategory? category;
                     if (reader.HasColumn(FieldNames.fEventQueueEventCategory))
                     {
-                        category = (EventCategory)reader.GetValue<int>(FieldNames.fEventQueueEventCategory);
+                        category = EventCategory.FromId(reader.GetValue<int>(FieldNames.fEventQueueEventCategory));
                     }
                     else if (reader.HasColumn(FieldNames.fEventQueueEventType)
-                             && Enum.TryParse<EventCategory>(reader.GetValue<string>(FieldNames.fEventQueueEventType), true, out var parsedCategory))
+                             && EventCategory.FromValue(reader.GetValue<string>(FieldNames.fEventQueueEventType)) is { } parsedCategory)
                     {
                         category = parsedCategory;
                     }
+                    else if (reader.HasColumn(FieldNames.fEventQueueEventType)
+                             && EventCategory.FromName(reader.GetValue<string>(FieldNames.fEventQueueEventType)) is { } parsedByNameCategory)
+                    {
+                        category = parsedByNameCategory;
+                    }
                     else
+                    {
+                        continue;
+                    }
+
+                    if (category is null)
                     {
                         continue;
                     }
@@ -556,7 +568,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             Id = Guid.TryParse(reader.GetValue<string>(FieldNames.fEventQueueGuid), out var queueGuid)
                 ? queueGuid
                 : Guid.NewGuid(),
-            EventCategory = (EventCategory)reader.GetValue<int>(FieldNames.fEventQueueEventCategory),
+            EventCategory = EventCategory.FromId(reader.GetValue<int>(FieldNames.fEventQueueEventCategory)) ?? EventCategory.DomainEvent,
             EventType = reader.GetValue<string>(FieldNames.fEventQueueEventType) ?? string.Empty,
             EventData = reader.GetValue<string>(FieldNames.fEventQueueEventData) ?? string.Empty,
             ReportId = reader.GetValue<string>(FieldNames.fEventQueueReportCode) ?? string.Empty,
@@ -569,5 +581,60 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             TargetSystem = reader.GetValue<string>(FieldNames.fEventQueueTargetSystem),
             QueuedBy = reader.GetValue<string>(FieldNames.fEventQueueQueuedBy)
         };
+    }
+
+    private static string ResolveCreatedBy(QueuedEvent queuedEvent)
+    {
+        if (string.IsNullOrWhiteSpace(queuedEvent.EventData))
+        {
+            return queuedEvent.QueuedBy ?? "SYSTEM";
+        }
+
+        try
+        {
+            using var json = System.Text.Json.JsonDocument.Parse(queuedEvent.EventData);
+            var root = json.RootElement;
+
+            if (root.ValueKind == System.Text.Json.JsonValueKind.Object)
+            {
+                if (root.TryGetProperty("CreatedBy", out var createdBy) && createdBy.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    var value = createdBy.GetString();
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+
+                if (root.TryGetProperty("EmailMetadata", out var emailMetadata) &&
+                    emailMetadata.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                    emailMetadata.TryGetProperty("CreatedBy", out var emailCreatedBy) &&
+                    emailCreatedBy.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    var value = emailCreatedBy.GetString();
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+
+                if (root.TryGetProperty("Metadata", out var metadata) &&
+                    metadata.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                    metadata.TryGetProperty("CreatedBy", out var metadataCreatedBy) &&
+                    metadataCreatedBy.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    var value = metadataCreatedBy.GetString();
+                    if (!string.IsNullOrWhiteSpace(value))
+                    {
+                        return value;
+                    }
+                }
+            }
+        }
+        catch
+        {
+        }
+
+        return queuedEvent.QueuedBy ?? "SYSTEM";
     }
 }

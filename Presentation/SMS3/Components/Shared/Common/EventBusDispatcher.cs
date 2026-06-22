@@ -18,6 +18,7 @@ namespace SMS3.Components.Shared;
 public static class EventBusDispatcher
 {
     private static readonly List<IEventReceiver> _receivers = new();
+    private static readonly List<ISPIDashboardRefreshReceiver> _spiDashboardRefreshReceivers = new();
     private static readonly object _lock = new();
 
     /// <summary>
@@ -43,6 +44,28 @@ public static class EventBusDispatcher
     }
 
     /// <summary>
+    /// Register a component to receive SPI dashboard refresh events.
+    /// </summary>
+    public static void RegisterSPIDashboardRefresh(ISPIDashboardRefreshReceiver receiver)
+    {
+        lock (_lock)
+        {
+            _spiDashboardRefreshReceivers.Add(receiver);
+        }
+    }
+
+    /// <summary>
+    /// Unregister a component from SPI dashboard refresh events.
+    /// </summary>
+    public static void UnregisterSPIDashboardRefresh(ISPIDashboardRefreshReceiver receiver)
+    {
+        lock (_lock)
+        {
+            _spiDashboardRefreshReceivers.Remove(receiver);
+        }
+    }
+
+    /// <summary>
     /// Dispatch notification to all registered components
     /// This can be called from any thread (including EventBus background threads)
     /// </summary>
@@ -60,6 +83,24 @@ public static class EventBusDispatcher
 
         await Task.WhenAll(tasks);
     }
+
+    /// <summary>
+    /// Dispatch SPI dashboard refresh event to all registered dashboard receivers.
+    /// </summary>
+    public static async Task DispatchSPIDashboardRefreshAsync(SMS_Domain.Events.SPIDashboardRefreshEvent refreshEvent)
+    {
+        List<ISPIDashboardRefreshReceiver> currentReceivers;
+
+        lock (_lock)
+        {
+            currentReceivers = new List<ISPIDashboardRefreshReceiver>(_spiDashboardRefreshReceivers);
+        }
+
+        var tasks = currentReceivers.Select(receiver =>
+            receiver.HandleSPIDashboardRefreshAsync(refreshEvent));
+
+        await Task.WhenAll(tasks);
+    }
 }
 
 /// <summary>
@@ -68,4 +109,12 @@ public static class EventBusDispatcher
 public interface IEventReceiver
 {
     Task HandleEventAsync(NotificationSeverity severity, string title, string message, int duration);
+}
+
+/// <summary>
+/// Interface for components that react to SPI dashboard refresh events.
+/// </summary>
+public interface ISPIDashboardRefreshReceiver
+{
+    Task HandleSPIDashboardRefreshAsync(SMS_Domain.Events.SPIDashboardRefreshEvent refreshEvent);
 }

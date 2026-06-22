@@ -25,7 +25,7 @@ public class MitigationApprovalRequestedEvent : BaseDomainEvent
     /// <summary>
     /// Category for grouping in UI
     /// </summary>
-    public string DataSourceCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string DataSourceCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
     /// <summary>
     /// Category for grouping in UI

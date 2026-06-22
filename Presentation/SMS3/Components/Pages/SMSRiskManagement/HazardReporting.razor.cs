@@ -119,7 +119,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     public decimal SelectedLatitude { get; set; }
     public decimal SelectedLongitude { get; set; }
-    public string LocationDescription { get; set; } = string.Empty;
+    public string SelectedLocationDescription { get; set; } = string.Empty;
 
     /// <summary>
     /// Hazard category dropdown options
@@ -173,7 +173,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
     public string SelectedLatitudeText => SelectedLatitude != 0 ? SelectedLatitude.ToString("F6") : "";
     public string SelectedLongitudeText => SelectedLongitude != 0 ? SelectedLongitude.ToString("F6") : "";
     public string LocationDisplayText => HasGeoLocation ? GetSelectedLocationText() : "No location selected";
-    public bool HasGeoLocation => SelectedGeoLocation?.IsValid == true;
+    public bool HasGeoLocation =>
+        SelectedGeoLocation is not null &&
+        SelectedGeoLocation.Latitude.HasValue &&
+        SelectedGeoLocation.Longitude.HasValue &&
+        SelectedGeoLocation.IsValidated;
     private bool HasSelectedCoordinates => SelectedLatitude != 0 && SelectedLongitude != 0;
     private bool HasEditingCoordinates =>
         (EditingHazard?.HazardLocation?.Latitude ?? 0) != 0 &&
@@ -310,6 +314,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
     private IJSObjectReference? _mapModule;
     private DotNetObjectReference<HazardReporting>? _dotNetRef;
     private bool _isMapEditModeEnabled;
+    private decimal _mapOriginalLatitude;
+    private decimal _mapOriginalLongitude;
+    private string _mapOriginalLocationDescription = string.Empty;
+    private HazardLocation _mapOriginalGeoLocation = new() { IsValid = false, IsValidated = false };
+    private bool _mapSelectionConfirmed;
+    private bool _mapSelectionCleared;
 
     #endregion
 
@@ -561,7 +571,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
                     SelectedLatitude = SelectedGeoLocation.Latitude ?? 0;
                     SelectedLongitude = SelectedGeoLocation.Longitude ?? 0;
-                    LocationDescription = SelectedGeoLocation.Description ?? "";
+                    SelectedLocationDescription = SelectedGeoLocation.Description ?? "";
 
                     HazardReport.Location = "MAP_LOCATION";
 
@@ -755,11 +765,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 // Keep scalar UI fields in sync before first render-dependent validations
                 SelectedLatitude = SelectedGeoLocation.Latitude ?? 0;
                 SelectedLongitude = SelectedGeoLocation.Longitude ?? 0;
-                LocationDescription = SelectedGeoLocation.Description ?? string.Empty;
+                SelectedLocationDescription = SelectedGeoLocation.Description ?? string.Empty;
 
                 SelectedLatitude = SelectedGeoLocation.Latitude ?? 0;
                 SelectedLongitude = SelectedGeoLocation.Longitude ?? 0;
-                LocationDescription = SelectedGeoLocation.Description ?? "";
+                SelectedLocationDescription = SelectedGeoLocation.Description ?? "";
 
                 HazardReport.Location = "MAP_LOCATION";
 
@@ -974,6 +984,23 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     public async Task OpenMapSelector()
     {
+        _mapOriginalLatitude = SelectedLatitude;
+        _mapOriginalLongitude = SelectedLongitude;
+        _mapOriginalLocationDescription = SelectedLocationDescription;
+        _mapOriginalGeoLocation = new HazardLocation
+        {
+            Code = SelectedGeoLocation?.Code ?? string.Empty,
+            HazardCode = SelectedGeoLocation?.HazardCode ?? string.Empty,
+            Latitude = SelectedGeoLocation?.Latitude,
+            Longitude = SelectedGeoLocation?.Longitude,
+            Description = SelectedGeoLocation?.Description,
+            IsValidated = SelectedGeoLocation?.IsValidated ?? false,
+            IsValid = SelectedGeoLocation?.IsValid ?? false,
+            DateSelected = SelectedGeoLocation?.DateSelected ?? DateTime.UtcNow
+        };
+        _mapSelectionConfirmed = false;
+        _mapSelectionCleared = false;
+
         _isMapEditModeEnabled = false;
         ShowMapModal = true;
         StateHasChanged();
@@ -1001,7 +1028,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     // Update the form fields to match the restored location
                     SelectedLatitude = SelectedGeoLocation.Latitude ?? 0;
                     SelectedLongitude = SelectedGeoLocation.Longitude ?? 0;
-                    LocationDescription = SelectedGeoLocation.Description ?? "";
+                    SelectedLocationDescription = SelectedGeoLocation.Description ?? "";
 
                     _logger.LogInformation("Existing location restored: {Lat}, {Lng}", SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
 
@@ -1035,6 +1062,24 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     public void CloseMapSelector()
     {
+        if (!_mapSelectionConfirmed && !_mapSelectionCleared)
+        {
+            SelectedLatitude = _mapOriginalLatitude;
+            SelectedLongitude = _mapOriginalLongitude;
+            SelectedLocationDescription = _mapOriginalLocationDescription;
+            SelectedGeoLocation = new HazardLocation
+            {
+                Code = _mapOriginalGeoLocation.Code,
+                HazardCode = _mapOriginalGeoLocation.HazardCode,
+                Latitude = _mapOriginalGeoLocation.Latitude,
+                Longitude = _mapOriginalGeoLocation.Longitude,
+                Description = _mapOriginalGeoLocation.Description,
+                IsValidated = _mapOriginalGeoLocation.IsValidated,
+                IsValid = _mapOriginalGeoLocation.IsValid,
+                DateSelected = _mapOriginalGeoLocation.DateSelected
+            };
+        }
+
         ShowMapModal = false;
         _isMapEditModeEnabled = false;
         // Don't reset map initialization state here to preserve the pin
@@ -1063,12 +1108,14 @@ public partial class HazardReporting : ComponentBase, IDisposable
             HazardCode = SelectedGeoLocation.HazardCode,
             Latitude = SelectedLatitude,
             Longitude = SelectedLongitude,
-            Description = LocationDescription,// string.IsNullOrEmpty(LocationDescription) ? 
-                                              //$"Map Location ({SelectedLatitude:F6}, {SelectedLongitude:F6})" : LocationDescription,
+            Description = SelectedLocationDescription,// string.IsNullOrEmpty(SelectedLocationDescription) ? 
+                                              //$"Map Location ({SelectedLatitude:F6}, {SelectedLongitude:F6})" : SelectedLocationDescription,
             DateSelected = DateTime.UtcNow,
             IsValidated = locationWasModified ? false : SelectedGeoLocation.IsValidated,
             IsValid = true
         };
+
+        _mapSelectionConfirmed = true;
 
         if (!SelectedGeoLocation.IsValidated)
         {
@@ -1138,9 +1185,15 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
         SelectedLatitude = 0;
         SelectedLongitude = 0;
-        LocationDescription = string.Empty;
-        SelectedGeoLocation = new HazardLocation();
+        SelectedLocationDescription = string.Empty;
+        SelectedGeoLocation = new HazardLocation
+        {
+            IsValid = false,
+            IsValidated = false
+        };
         HazardReport.Location = "";
+        _mapSelectionCleared = true;
+        _mapSelectionConfirmed = false;
 
         if (_mapModule is not null)
         {
@@ -1169,7 +1222,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
         SelectedLatitude = (decimal)latitude;
         SelectedLongitude = (decimal)longitude;
-        LocationDescription = description; // This will set the description automatically!
+        SelectedLocationDescription = description; // This will set the description automatically!
 
         // Validate that we received proper coordinates
         if (latitude == 0 && longitude == 0)
@@ -1195,7 +1248,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         var activeLatitude = activeLocation.Latitude ?? 0;
         var activeLongitude = activeLocation.Longitude ?? 0;
         var activeDescription = activeLocation.Description?.Trim() ?? string.Empty;
-        var selectedDescription = LocationDescription?.Trim() ?? string.Empty;
+        var selectedDescription = SelectedLocationDescription?.Trim() ?? string.Empty;
 
         return activeLatitude != SelectedLatitude ||
                activeLongitude != SelectedLongitude ||
@@ -1280,7 +1333,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             // Reset coordinates
             SelectedLatitude = 0;
             SelectedLongitude = 0;
-            LocationDescription = string.Empty;
+            SelectedLocationDescription = string.Empty;
 
             // Reset category selection
             SelectedHazardCategory = null;
@@ -1368,6 +1421,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     public async Task SubmitReportConfirmed()
     {
+        if (IsLoading)
+        {
+            _logger.LogWarning("SubmitReportConfirmed ignored because a submission is already in progress.");
+            return;
+        }
+
         try
         {
             // Validation
@@ -2123,7 +2182,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             // Reset coordinates
             SelectedLatitude = 0;
             SelectedLongitude = 0;
-            LocationDescription = string.Empty;
+            SelectedLocationDescription = string.Empty;
 
             // Reset category selection
             SelectedHazardCategory = null;

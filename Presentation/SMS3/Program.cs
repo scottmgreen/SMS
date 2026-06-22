@@ -200,6 +200,7 @@ public class Program
         {
             var eventBus = scope.ServiceProvider.GetRequiredService<IBaseEventBus>();
             eventBus.SubscribeUI<UINotificationEvent, UIEventHandler>();
+            eventBus.SubscribeUI<SPIDashboardRefreshEvent, SPIDashboardRefreshEventHandler>();
         }
 
         app.Run();

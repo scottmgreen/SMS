@@ -17,7 +17,7 @@ namespace SMS_Domain.Events;
 public class MitigationStatusChangedEvent : BaseDomainEvent
 {
     public override string EventType => SMS_Domain.Enums.EventType.MitigationStatusChanged.Value;
-    public string EventCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string EventCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
     public string MitigationId { get; private set; }
     public string Status { get; private set; }

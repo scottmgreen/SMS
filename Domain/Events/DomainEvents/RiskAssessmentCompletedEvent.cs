@@ -19,12 +19,12 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class RiskAssessmentCompletedEvent : BaseDomainEvent, IEventSource
 {
-    public override string EventType => "RiskAssessment_Completed";
+    public override string EventType => SMS_Domain.Enums.EventType.RiskAssessmentCompleted.Value;
 
     /// <summary>
     /// Display name for SPI configuration dropdowns
     /// </summary>
-    public string EventSourceDisplayName => "SMS Event Bus - Risk Assesment";
+    public string EventSourceDisplayName => SMS_Domain.Enums.EventType.RiskAssessmentCompleted;
 
     /// <summary>
     /// Category for grouping in UI

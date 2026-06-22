@@ -41,7 +41,7 @@ public class HazardCreatedEvent : BaseDomainEvent, IEventSource
     /// <summary>
     /// Category for grouping in UI
     /// </summary>
-    public string EventSourceCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string EventSourceCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
     /// <summary>
     /// Description of data provided for SPI calculations
@@ -61,7 +61,6 @@ public class HazardCreatedEvent : BaseDomainEvent, IEventSource
     #endregion
 
     #region Event Properties
-    public string EventId { get;  set; }
     public string HazardId { get;  set; }
     public string HazardCode { get;  set; }
     public string HazardName { get;  set; }

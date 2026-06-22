@@ -219,21 +219,9 @@ public static class SPIConstants
                     return Activator.CreateInstance(eventType) as SMS_Domain.Interfaces.IEventSource;
                 }
 
-                // For events with required parameters, use test/default values
-                if (eventType.Name == "HazardCreatedEvent")
-                {
-                    // Create with minimal test data to get metadata
-                    return Activator.CreateInstance(eventType, 
-                        "TEST-ID", "TEST-CODE", "Test Hazard", "Test Type", "Test Category",
-                        "Test Description", "Test Location", "TEST-REPORT", "System",
-                        DateTime.UtcNow, true, SMS_Domain.Enums.HazardPriority.Medium, null, null) as SMS_Domain.Interfaces.IEventSource;
-                }
-
-                // For other events, try to create with minimal parameters
+                // For events with required parameters, try constructors in order of least parameters
                 var constructors = eventType.GetConstructors();
-                var constructor = constructors.OrderBy(c => c.GetParameters().Length).FirstOrDefault();
-
-                if (constructor != null)
+                foreach (var constructor in constructors.OrderBy(c => c.GetParameters().Length))
                 {
                     var parameters = constructor.GetParameters();
                     var args = new object[parameters.Length];
@@ -243,7 +231,14 @@ public static class SPIConstants
                         args[i] = GetDefaultValue(parameters[i].ParameterType);
                     }
 
-                    return Activator.CreateInstance(eventType, args) as SMS_Domain.Interfaces.IEventSource;
+                    try
+                    {
+                        return Activator.CreateInstance(eventType, args) as SMS_Domain.Interfaces.IEventSource;
+                    }
+                    catch
+                    {
+                        // Try next constructor if this signature cannot be created with default values
+                    }
                 }
             }
             catch (Exception ex)
@@ -267,6 +262,20 @@ public static class SPIConstants
                 return false;
             if (parameterType.IsEnum)
                 return Enum.GetValues(parameterType).GetValue(0);
+
+            // Handle strongly typed identifiers and other types that can be built from a string
+            var stringConstructor = parameterType.GetConstructor(new[] { typeof(string) });
+            if (stringConstructor != null)
+                return Activator.CreateInstance(parameterType, "Test")!;
+
+            // Handle classes that support parameterless construction
+            if (!parameterType.IsValueType)
+            {
+                var parameterlessConstructor = parameterType.GetConstructor(Type.EmptyTypes);
+                if (parameterlessConstructor != null)
+                    return Activator.CreateInstance(parameterType)!;
+            }
+
             if (parameterType.IsValueType)
                 return Activator.CreateInstance(parameterType);
 

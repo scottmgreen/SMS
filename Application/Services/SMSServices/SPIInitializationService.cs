@@ -98,7 +98,7 @@ public class SPIInitializationService
             new SafetyPerformanceIndicatorID("HAZARD_REPORT_RATE"),
             "Hazard Report Rate",
             "Number of hazard reports submitted per day (automated from External Reporting and Hazard Reporting)",
-            SPIType.HazardReportRate,
+            SMSSafetyPerformanceIndicatorType.HazardReportRate,
             "SPI_SYSTEM")
         {
             Code = "HAZARD_REPORT_RATE",
@@ -124,7 +124,7 @@ public class SPIInitializationService
             new SafetyPerformanceIndicatorID("RISK_ASSESSMENT_COMPLETION"),
             "Risk Assessment Completion Rate",
             "Percentage of risk assessments completed within target timeline (automated from Technical Assessment)",
-            SPIType.RiskAssessmentCompletion,
+            SMSSafetyPerformanceIndicatorType.RiskAssessmentCompletion,
             "SPI_SYSTEM")
         {
             Code = "RISK_ASSESSMENT_COMPLETION",
@@ -150,7 +150,7 @@ public class SPIInitializationService
             new SafetyPerformanceIndicatorID("MITIGATION_IMPLEMENTATION_RATE"),
             "Mitigation Implementation Rate",
             "Effectiveness score of mitigation implementations based on completion timing (automated from Mitigation Management)",
-            SPIType.MitigationImplementationRate,
+            SMSSafetyPerformanceIndicatorType.MitigationImplementationRate,
             "SPI_SYSTEM")
         {
             Code = "MITIGATION_IMPLEMENTATION_RATE",
@@ -176,7 +176,7 @@ public class SPIInitializationService
             new SafetyPerformanceIndicatorID("CORRECTIVE_ACTION_CLOSURE"),
             "Corrective Action Closure Rate",
             "Percentage of corrective actions closed on time (automated from daily overdue checks)",
-            SPIType.CorrectiveActionClosure,
+            SMSSafetyPerformanceIndicatorType.CorrectiveActionClosure,
             "SPI_SYSTEM")
         {
             Code = "CORRECTIVE_ACTION_CLOSURE",
@@ -202,7 +202,7 @@ public class SPIInitializationService
             new SafetyPerformanceIndicatorID("HIGH_RISK_EXPOSURE"),
             "High Risk Exposure Count",
             "Daily count of Critical and High risk conditions identified (automated from Risk Assessment completion)",
-            SPIType.SystemEffectiveness, // Using closest available type
+            SMSSafetyPerformanceIndicatorType.SystemEffectiveness, // Using closest available type
             "SPI_SYSTEM")
         {
             Code = "HIGH_RISK_EXPOSURE",
@@ -228,7 +228,7 @@ public class SPIInitializationService
             new SafetyPerformanceIndicatorID("HAZARD_CLOSURE_TIME"),
             "Average Hazard Closure Time",
             "Average days to close hazards from submission to resolution (automated from hazard closure events)",
-            SPIType.InvestigationTimeliness, // Using closest available type
+            SMSSafetyPerformanceIndicatorType.InvestigationTimeliness, // Using closest available type
             "SPI_SYSTEM")
         {
             Code = "HAZARD_CLOSURE_TIME",

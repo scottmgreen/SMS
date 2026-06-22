@@ -13,6 +13,8 @@ using SMS_Application.Interfaces;
 using SMS_Application.Queries;
 using SMS_Application.Commands;
 using SMS_Domain.ValueObjects;
+using SMS_Domain.Events;
+using SMS_Domain.Enums;
 
 namespace SMS_Application.Services;
 
@@ -23,15 +25,18 @@ public sealed class MitigationService : IMitigationService
 {
     private readonly MitigationDataService _dataService;
     private readonly IBaseMediator _mediator;
+    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<MitigationService> _logger;
 
     public MitigationService(
         MitigationDataService dataService,
         IBaseMediator mediator,
+        IBaseEventBus eventBus,
         ILogger<MitigationService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -54,6 +59,46 @@ public sealed class MitigationService : IMitigationService
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation("Successfully created mitigation with Code: {Code}", result.Value?.Code);
+
+                if (result.Value is not null)
+                {
+                    var reportId = string.Empty;
+                    if (!string.IsNullOrWhiteSpace(result.Value.HazardCode))
+                    {
+                        var hazardResult = await _mediator.SendAsync(new GetHazardByCodeQuery(new HazardID(result.Value.HazardCode)), ct).ConfigureAwait(false);
+                        if (hazardResult.IsSuccess)
+                        {
+                            reportId = hazardResult.Value?.ReportCode ?? string.Empty;
+                        }
+                    }
+
+                    var approvalEvent = new MitigationApprovalRequestedEvent(
+                        id: new SMSEventID(Guid.NewGuid().ToString()),
+                        mitigationId: result.Value.Id.Value,
+                        mitigationCode: result.Value.Code,
+                        hazardId: result.Value.HazardCode,
+                        hazardCode: result.Value.HazardCode,
+                        mitigationDescription: result.Value.Description ?? result.Value.Name ?? "Mitigation requires approval",
+                        priority: MapPriority(result.Value),
+                        requestedBy: result.Value.CreatedBy ?? "SYSTEM",
+                        requestDate: result.Value.CreatedDate ?? DateTime.UtcNow,
+                        proposedImplementationDate: result.Value.TargetDate ?? DateTime.UtcNow.AddDays(14),
+                        requiredApprovers: new List<string> { "safety.manager" },
+                        approvalJustification: "New mitigation created and queued for approval.",
+                        estimatedCost: result.Value.EstimatedCost,
+                        resourceRequirements: result.Value.ResourceRequirements ?? string.Empty,
+                        estimatedImplementationTime: result.Value.EstimatedHours.HasValue ? TimeSpan.FromHours(result.Value.EstimatedHours.Value) : null,
+                        requiresExecutiveApproval: (result.Value.EstimatedCost ?? 0m) >= 25000m,
+                        escalationPath: "SafetyManager->SafetyDirector");
+
+                    approvalEvent.ReportId = reportId;
+
+                    var publishResult = await _eventBus.PublishDomainEventAsync(approvalEvent, EventExecutionMode.Immediate, ct).ConfigureAwait(false);
+                    if (publishResult.IsFailure)
+                    {
+                        _logger.LogApplicationWarning("Failed to publish mitigation approval requested event for {MitigationCode}: {Error}", result.Value.Code, publishResult.Error?.Message);
+                    }
+                }
             }
             else
             {
@@ -67,6 +112,34 @@ public sealed class MitigationService : IMitigationService
             _logger.LogApplicationError(ex, "Unexpected error creating mitigation");
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.CreateFailed);
         }
+    }
+
+    private static SMS_Domain.Events.MitigationPriority MapPriority(Mitigation mitigation)
+    {
+        var progress = mitigation.Progress;
+        var cost = mitigation.EstimatedCost ?? 0m;
+
+        if (cost >= 100000m)
+        {
+            return SMS_Domain.Events.MitigationPriority.Emergency;
+        }
+
+        if (cost >= 50000m)
+        {
+            return SMS_Domain.Events.MitigationPriority.Critical;
+        }
+
+        if (cost >= 25000m || progress > 50)
+        {
+            return SMS_Domain.Events.MitigationPriority.High;
+        }
+
+        if (cost >= 10000m)
+        {
+            return SMS_Domain.Events.MitigationPriority.Medium;
+        }
+
+        return SMS_Domain.Events.MitigationPriority.Low;
     }
 
     public async Task<Result<Mitigation>> GetMitigationByCodeAsync(MitigationID code, CancellationToken ct = default)
@@ -142,6 +215,16 @@ public sealed class MitigationService : IMitigationService
     {
         try
         {
+            MitigationStatus? previousStatus = null;
+            if (mitigation is not null && !string.IsNullOrWhiteSpace(mitigation.Code))
+            {
+                var existingResult = await _dataService.GetMitigationByCodeAsync(new MitigationID(mitigation.Code), ct).ConfigureAwait(false);
+                if (existingResult.IsSuccess && existingResult.Value is not null)
+                {
+                    previousStatus = existingResult.Value.Status;
+                }
+            }
+
             _logger.LogApplicationInformation("Updating mitigation with Code: {Code}", mitigation?.Code);
 
             if (mitigation is not null)
@@ -171,6 +254,21 @@ public sealed class MitigationService : IMitigationService
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation("Successfully updated mitigation with Code: {Code}", mitigation?.Code);
+
+                if (mitigation is not null)
+                {
+                    await TransitionEventPublisher.PublishIfChangedAsync(
+                        _eventBus,
+                        previousStatus,
+                        mitigation.Status,
+                        () => new MitigationStatusChangedEvent(
+                            id: new SMSEventID(Guid.NewGuid().ToString()),
+                            mitigationId: mitigation.Id.Value,
+                            status: mitigation.Status.Value,
+                            changedBy: mitigation.UpdatedBy ?? "SYSTEM",
+                            changedDate: mitigation.UpdatedDate ?? DateTime.UtcNow),
+                        ct).ConfigureAwait(false);
+                }
 
                 if (mitigation is not null && mitigation.Progress >= 100 && !string.IsNullOrWhiteSpace(mitigation.HazardCode))
                 {

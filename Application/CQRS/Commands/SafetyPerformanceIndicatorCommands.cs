@@ -20,7 +20,7 @@ public class CreateSafetyPerformanceIndicatorCommand : BaseCommandBundle, IReque
 {
     public string Name { get; set; }
     public string Description { get; set; }
-    public SPIType IndicatorType { get; set; }
+    public SMSSafetyPerformanceIndicatorType IndicatorType { get; set; }
     public string MeasurementUnit { get; set; }
     public SPIMeasurementFrequency MeasurementFrequency { get; set; }
     public string CalculationMethod { get; set; }
@@ -38,7 +38,7 @@ public class CreateSafetyPerformanceIndicatorCommand : BaseCommandBundle, IReque
     public string CreatedBy { get; set; }
 
     public CreateSafetyPerformanceIndicatorCommand(
-        string name, string description, SPIType indicatorType, string measurementUnit,
+        string name, string description, SMSSafetyPerformanceIndicatorType indicatorType, string measurementUnit,
         SPIMeasurementFrequency frequency, string calculationMethod, string dataSource,
         decimal? targetValue, decimal? acceptableRange, decimal? warningThreshold, decimal? criticalThreshold,
         string responsibleDepartment, string dataOwner, string reviewAuthority, DateTime? nextReviewDate,
@@ -81,7 +81,7 @@ public class UpdateSafetyPerformanceIndicatorCommand : BaseCommandBundle, IReque
     public string Code { get; set; }
     public string Name { get; set; }
     public string Description { get; set; }
-    public SPIType IndicatorType { get; set; }
+    public SMSSafetyPerformanceIndicatorType IndicatorType { get; set; }
     public SPIStatus Status { get; set; }
     public string MeasurementUnit { get; set; }
     public SPIMeasurementFrequency MeasurementFrequency { get; set; }
@@ -102,7 +102,7 @@ public class UpdateSafetyPerformanceIndicatorCommand : BaseCommandBundle, IReque
     public string UpdatedBy { get; set; }
 
     public UpdateSafetyPerformanceIndicatorCommand(
-        SafetyPerformanceIndicatorID id, string code, string name, string description, SPIType indicatorType, SPIStatus status,
+        SafetyPerformanceIndicatorID id, string code, string name, string description, SMSSafetyPerformanceIndicatorType indicatorType, SPIStatus status,
         string measurementUnit, SPIMeasurementFrequency frequency, string calculationMethod, string dataSource,
         decimal? targetValue, decimal? acceptableRange, decimal? warningThreshold, decimal? criticalThreshold,
         string responsibleDepartment, string dataOwner, string reviewAuthority, DateTime? nextReviewDate,

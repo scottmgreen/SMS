@@ -101,27 +101,19 @@ namespace SMS_Application.Configuration
 
             // NEW: SPI Automation Services - Event-driven safety performance indicators
             services.AddScoped<ISPIAutomationService, SPIAutomationService>();
-            services.AddScoped<SPIEventCoordinator>();
 
             // NEW: EventBus Services - Phase 1: SINGLETON for consistent handler registration
             services.AddSingleton<IBaseEventBus, EventDispatchService>();
 
             // NEW: EventBus Queue Service - Scoped because it depends on scoped infrastructure services
             services.AddScoped<IEventQueueService, EventQueueService>();
-
-            // NEW: SPI Event Handlers - Automated SPI calculations from SMS events
-            services.AddScoped<HazardEventSPIHandler>();
-            services.AddScoped<RiskAssessmentEventSPIHandler>();
-            services.AddScoped<MitigationEventSPIHandler>();
+            services.AddSingleton<QueuedEventTypeRegistry>();
 
             // NEW: Email Services - SMTP (real email delivery)
             services.AddTransient<IEmailService, SmtpEmailService>();
 
             // NEW: EventBus Event Handlers - SPI threshold and workflow notifications
             services.AddTransient<SPIThresholdEventHandler>();
-
-            // NEW: EventBus SPI Automation Handler - Unified pub/sub SPI processing
-            services.AddTransient<SPIAutomationEventHandler>();
 
             // NEW: Phase 3 - Domain Event Handlers for complete workflow automation
             services.AddTransient<HazardCreatedEventHandler>();

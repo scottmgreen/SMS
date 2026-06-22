@@ -12,6 +12,8 @@
 
 ## Service Organization
 - All EventBus services must stay together in `Application/Services/EventBusServices`; files have been moved accordingly.
+- IMediator is a custom interface in the Application Services layer, not a NuGet/MediatR dependency.
+- Actively work through a concrete hardening plan for EventBus/SPI/SMS Assurance: complete SPIEventCoordinator orchestration, wire SPIDashboardRefreshEvent consumption, reduce replay-map maintenance, standardize event contracts, and add architecture tests.
 
 ## Database Naming Conventions
 - Field names should use typed prefixes like `fldi_`, `fldv_`, `fldd_` (and similar) consistently in SQL/stored procedures.
@@ -37,3 +39,4 @@
 ## Code Style
 - Private variables in SMS3 code-behind files must consistently follow the _variableName naming convention (e.g., _memberName). 
 - Cleanup should continue in targeted batches with build validation.
+- Use enums only for display styles; do not use hard-coded strings for event source display naming.

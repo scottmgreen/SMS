@@ -17,19 +17,34 @@ namespace SMS_Domain.Events;
 /// Event triggered when an SPI threshold is exceeded
 /// Initiates workflow notifications and potential escalation processes
 /// </summary>
-public class SPIThresholdExceededEvent : BaseDomainEvent
+public class SPIThresholdExceededEvent : BaseDomainEvent, IEventSource
 {
     public override string EventType => "SPI_Threshold_Exceeded";
 
     /// <summary>
     /// Display name for SPI configuration dropdowns
     /// </summary>
-    public string DataSourceDisplayName => "SMS Event Bus - SPI Threshold Exceeded";
+    public string EventSourceDisplayName => "SMS Event Bus - SPI Threshold Exceeded";
 
     /// <summary>
     /// Category for grouping in UI
     /// </summary>
-    public string DataSourceCategory => "SMS Domain Event";
+    public string EventSourceCategory => "SMS Domain Event";
+
+    /// <summary>
+    /// Description of data provided for SPI calculations
+    /// </summary>
+    public string EventSourceDescription => "Provides SPI threshold breach signals for alerting, escalation, and dashboard compliance visualization";
+
+    /// <summary>
+    /// Indicates this event is automatically generated from SPI threshold evaluation
+    /// </summary>
+    public bool IsAutomaticDataSource => true;
+
+    /// <summary>
+    /// Display ordering priority in SPI source selection
+    /// </summary>
+    public int DisplayPriority => 7;
 
     public string SPICode { get; private set; }
     public string SPIName { get; private set; }

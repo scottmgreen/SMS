@@ -4,7 +4,7 @@ using SMS_Domain.Entities; // Add explicit domain entities
 
 namespace SMS3.Components.Pages.SMSAssurance;
 
-public partial class SPIDashboard : ComponentBase
+public partial class SPIDashboard : ComponentBase, SMS3.Components.Shared.ISPIDashboardRefreshReceiver, IDisposable
 {
     #region Injected Services
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
@@ -51,6 +51,7 @@ public partial class SPIDashboard : ComponentBase
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
+        SMS3.Components.Shared.EventBusDispatcher.RegisterSPIDashboardRefresh(this);
         await LoadDashboardDataAsync();
     }
     #endregion
@@ -223,6 +224,34 @@ public partial class SPIDashboard : ComponentBase
     {
         await LoadDashboardDataAsync();
         await _notificationHelper.ShowSuccessAsync("SPI Dashboard refreshed successfully");
+    }
+
+    public async Task HandleSPIDashboardRefreshAsync(SMS_Domain.Events.SPIDashboardRefreshEvent refreshEvent)
+    {
+        try
+        {
+            // Targeted to this dashboard, or broad refresh
+            if (!refreshEvent.RefreshEntireDashboard &&
+                !string.Equals(refreshEvent.TargetComponent, "SPIDashboard", StringComparison.OrdinalIgnoreCase))
+            {
+                return;
+            }
+
+            await InvokeAsync(async () =>
+            {
+                await LoadDashboardDataAsync();
+                StateHasChanged();
+            });
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error handling SPIDashboardRefreshEvent in SPIDashboard component");
+        }
+    }
+
+    public void Dispose()
+    {
+        SMS3.Components.Shared.EventBusDispatcher.UnregisterSPIDashboardRefresh(this);
     }
     #endregion
 

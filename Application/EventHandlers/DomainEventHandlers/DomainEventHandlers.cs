@@ -9,6 +9,9 @@
 
 
 using SMS_Domain.Events;
+using SMS_Application.Common;
+using SMS_Domain.Entities;
+using SMS_Application.Queries;
 
 namespace SMS_Application.EventHandlers
 {
@@ -16,18 +19,25 @@ namespace SMS_Application.EventHandlers
 
 
 
+/// <summary>
+/// Handles hazard creation through the unified flow: domain acknowledgement, SPI automation,
+/// integration notification, and UI notification.
+/// </summary>
 public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domain.Events.HazardCreatedEvent>
 {
     private readonly IBaseEventBus _eventBus;
+    private readonly ISPIAutomationService _spiAutomationService;
     private readonly ILogger<HazardCreatedEventHandler> _logger;
 
     public HazardCreatedEventHandler(
         ILogger<HazardCreatedEventHandler> logger,
-        IBaseEventBus eventBus)
+        IBaseEventBus eventBus,
+        ISPIAutomationService spiAutomationService)
         : base(logger, eventBus)
     {
         _logger = logger;
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _spiAutomationService = spiAutomationService ?? throw new ArgumentNullException(nameof(spiAutomationService));
     }
 
     protected override async Task<Result> ProcessEventAsync(SMS_Domain.Events.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
@@ -36,10 +46,17 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
         {
             _logger.LogApplicationInformation("[HAZARD HANDLER] Processing hazard creation for {HazardCode} (Type: {HazardType}, Priority: {Priority})", domainEvent.HazardCode, domainEvent.HazardType, domainEvent.Priority);
 
+            // Unified execution order: domain -> SPI -> integration -> UI.
             var domainResult = await HandleDomainEventAsync(domainEvent, cancellationToken);
             if (domainResult.IsFailure)
             {
                 return domainResult;
+            }
+
+            var spiAutomationResult = await HandleSPIAutomationAsync(domainEvent, cancellationToken);
+            if (spiAutomationResult.IsFailure)
+            {
+                return spiAutomationResult;
             }
 
             var integrationResult = await HandleIntegrationEventAsync(domainEvent, cancellationToken);
@@ -68,6 +85,41 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
     {
         _logger.LogApplicationInformation("[DOMAIN EVENT] HazardCreatedEvent received for {HazardCode}", domainEvent.HazardCode);
         return Task.FromResult(Result.Success());
+    }
+
+    private async Task<Result> HandleSPIAutomationAsync(SMS_Domain.Events.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var hazardRateResult = await _spiAutomationService.UpdateHazardReportRateAsync(domainEvent.CreatedDate, cancellationToken);
+            if (hazardRateResult.IsFailure)
+            {
+                _logger.LogApplicationWarning(
+                    "[SPI AUTOMATION] Failed to update Hazard Report Rate SPI for {HazardCode}: {Error}",
+                    ApplicationEventIds.Warning,
+                    domainEvent.HazardCode,
+                    hazardRateResult.Error?.Message ?? "Unknown SPI automation error");
+
+                return Result.Failure(hazardRateResult.Error ?? new Error("SPI_AUTOMATION_FAILED", "Failed to update Hazard Report Rate SPI"));
+            }
+
+            _logger.LogApplicationInformation(
+                "[SPI AUTOMATION] Successfully updated Hazard Report Rate SPI for {HazardCode}",
+                ApplicationEventIds.Information,
+                domainEvent.HazardCode);
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError(
+                ex,
+                "[SPI AUTOMATION] Error updating Hazard Report Rate SPI for {HazardCode}",
+                ApplicationEventIds.Error,
+                domainEvent.HazardCode);
+
+            return Result.Failure(new Error("SPI_AUTOMATION_FAILED", $"Hazard SPI automation failed: {ex.Message}"));
+        }
     }
 
     private async Task<Result> HandleIntegrationEventAsync(SMS_Domain.Events.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
@@ -284,6 +336,9 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
         };
     }
 }
+/// <summary>
+/// Handles hazard update notifications for domain logging and UI feedback.
+/// </summary>
 public sealed class HazardUpdatedEventHandler : BaseDomainEventHandler<HazardUpdatedEvent>
 {
     public HazardUpdatedEventHandler(ILogger<HazardUpdatedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
@@ -345,16 +400,83 @@ public sealed class HazardUpdatedEventHandler : BaseDomainEventHandler<HazardUpd
     
 }
 
+/// <summary>
+/// Reserved handler for hazard deletion events.
+/// Intentionally minimal while deletion side-effects are not required.
+/// </summary>
 public sealed class HazardDeletedEventHandler : BaseDomainEventHandler<HazardDeletedEvent>
 {
     public HazardDeletedEventHandler(ILogger<HazardDeletedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
 }
 
+/// <summary>
+/// Handles hazard status transitions and triggers SPI closure-time automation when status moves to closed.
+/// </summary>
 public sealed class HazardStatusChangedEventHandler : BaseDomainEventHandler<HazardStatusChangedEvent>
 {
-    public HazardStatusChangedEventHandler(ILogger<HazardStatusChangedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
+    private readonly ISPIAutomationService _spiAutomationService;
+    private readonly ILogger<HazardStatusChangedEventHandler> _logger;
+
+    public HazardStatusChangedEventHandler(
+        ILogger<HazardStatusChangedEventHandler> logger,
+        IBaseEventBus eventBus,
+        ISPIAutomationService spiAutomationService) : base(logger, eventBus)
+    {
+        _logger = logger;
+        _spiAutomationService = spiAutomationService ?? throw new ArgumentNullException(nameof(spiAutomationService));
+    }
+
+    protected override async Task<Result> HandleDomainEventAsync(HazardStatusChangedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var newStatusValue = domainEvent.NewStatus?.Value ?? string.Empty;
+        var newStatusName = domainEvent.NewStatus?.Name ?? string.Empty;
+
+        var isClosedStatus =
+            newStatusValue.Contains("CLOSED", StringComparison.OrdinalIgnoreCase) ||
+            newStatusName.Contains("Closed", StringComparison.OrdinalIgnoreCase);
+
+        if (!isClosedStatus)
+        {
+            _logger.LogApplicationInformation(
+                "[SPI AUTOMATION] Hazard status change for {HazardCode} does not indicate closure. Status: {Status}",
+                domainEvent.HazardCode,
+                string.IsNullOrWhiteSpace(newStatusName) ? newStatusValue : newStatusName);
+
+            return Result.Success();
+        }
+
+        var closureDate = domainEvent.StatusChangeDate == default ? DateTime.UtcNow : domainEvent.StatusChangeDate;
+        var submittedDate = domainEvent.TimeInCurrentStatus.HasValue
+            ? closureDate.Subtract(domainEvent.TimeInCurrentStatus.Value)
+            : closureDate;
+
+        var hazardIdentifier = !string.IsNullOrWhiteSpace(domainEvent.HazardId)
+            ? domainEvent.HazardId
+            : domainEvent.HazardCode;
+
+        var result = await _spiAutomationService.UpdateHazardClosureTimeAsync(
+            hazardIdentifier,
+            submittedDate,
+            closureDate,
+            cancellationToken);
+
+        if (result.IsFailure)
+        {
+            _logger.LogApplicationWarning(
+                "SPI automation failed for hazard status changed event {HazardCode}: {Error}",
+                domainEvent.HazardCode,
+                result.Error?.Message);
+
+            return Result.Failure(result.Error ?? new Error("HAZARD_STATUS_SPI_FAILED", "Failed to update hazard closure SPI"));
+        }
+
+        return Result.Success();
+    }
 }
 
+/// <summary>
+/// Handles high-risk identification events and updates high-risk exposure SPI metrics.
+/// </summary>
 public sealed class HighRiskIdentifiedEventHandler : BaseDomainEventHandler<HighRiskIdentifiedEvent>
 {
     private readonly ISPIAutomationService _spiAutomationService;
@@ -382,16 +504,99 @@ public sealed class HighRiskIdentifiedEventHandler : BaseDomainEventHandler<High
     }
 }
 
+/// <summary>
+/// Reserved handler for mitigation approval confirmations.
+/// </summary>
 public sealed class MitigationApprovalApprovedEventHandler : BaseDomainEventHandler<MitigationApprovalApprovedEvent>
 {
     public MitigationApprovalApprovedEventHandler(ILogger<MitigationApprovalApprovedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
 }
 
+/// <summary>
+/// Reserved handler for mitigation approval requests.
+/// </summary>
 public sealed class MitigationApprovalRequestedEventHandler : BaseDomainEventHandler<MitigationApprovalRequestedEvent>
 {
-    public MitigationApprovalRequestedEventHandler(ILogger<MitigationApprovalRequestedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
+    private readonly ILogger<MitigationApprovalRequestedEventHandler> _logger;
+
+    public MitigationApprovalRequestedEventHandler(ILogger<MitigationApprovalRequestedEventHandler> logger, IBaseEventBus eventBus)
+        : base(logger, eventBus)
+    {
+        _logger = logger;
+    }
+
+    protected override Task<Result> HandleDomainEventAsync(MitigationApprovalRequestedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        _logger.LogApplicationInformation(
+            "[MITIGATION APPROVAL] Approval requested for mitigation {MitigationCode} (Priority: {Priority}, Deadline: {Deadline})",
+            domainEvent.MitigationCode,
+            domainEvent.Priority,
+            domainEvent.ApprovalDeadline);
+
+        return Task.FromResult(Result.Success());
+    }
+
+    protected override async Task<Result> HandleIntegrationEventAsync(MitigationApprovalRequestedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var recipients = (domainEvent.RequiredApprovers ?? new List<string>())
+            .Where(v => !string.IsNullOrWhiteSpace(v))
+            .Select(v => v.Trim())
+            .Select(v => v.Contains('@') ? v : $"{v}@pdxairport.com")
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (recipients.Count == 0)
+        {
+            recipients.Add("safety.manager@pdxairport.com");
+        }
+
+        var emailEvent = new EmailNotificationEvent(
+            toRecipients: recipients,
+            subject: $"Mitigation Approval Required: {domainEvent.MitigationCode}",
+            body: $"Mitigation {domainEvent.MitigationCode} requires approval. Priority: {domainEvent.Priority}. Deadline: {domainEvent.ApprovalDeadline:yyyy-MM-dd HH:mm} UTC.",
+            isHtmlContent: false,
+            priority: EmailPriority.High,
+            deliveryMode: IntegrationDeliveryMode.BestEffort,
+            reportId: domainEvent.ReportId,
+            workflowType: "MitigationApproval",
+            relatedEntityType: "Mitigation",
+            relatedEntityId: domainEvent.MitigationId,
+            emailMetadata: new Dictionary<string, object>
+            {
+                { "MitigationCode", domainEvent.MitigationCode },
+                { "Priority", domainEvent.Priority.ToString() },
+                { "RequestedBy", domainEvent.RequestedBy }
+            });
+
+        return await EventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Queued, cancellationToken);
+    }
+
+    protected override async Task<Result> HandleUIEventAsync(MitigationApprovalRequestedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var uiEvent = new UINotificationEvent(
+            severity: UINotificationSeverity.Warning,
+            title: "Mitigation Approval Requested",
+            message: $"Mitigation {domainEvent.MitigationCode} is awaiting approval.",
+            duration: 7000,
+            category: "Mitigation",
+            sourceLayer: nameof(MitigationApprovalRequestedEventHandler),
+            reportId: domainEvent.ReportId,
+            targetComponent: "NotificationCenter",
+            priority: UIEventPriority.High,
+            metadata: new Dictionary<string, object>
+            {
+                { "MitigationId", domainEvent.MitigationId },
+                { "MitigationCode", domainEvent.MitigationCode },
+                { "RequestedBy", domainEvent.RequestedBy }
+            });
+
+        return await EventBus.PublishUIEventAsync(uiEvent, EventExecutionMode.Manual, cancellationToken);
+    }
 }
 
+/// <summary>
+/// Handles mitigation completion and updates mitigation implementation SPI metrics.
+/// </summary>
 public sealed class MitigationCompletedEventHandler : BaseDomainEventHandler<MitigationCompletedEvent>
 {
     private readonly ISPIAutomationService _spiAutomationService;
@@ -424,36 +629,291 @@ public sealed class MitigationCompletedEventHandler : BaseDomainEventHandler<Mit
     }
 }
 
+/// <summary>
+/// Reserved handler for mitigation creation events.
+/// </summary>
 public sealed class MitigationCreatedEventHandler : BaseDomainEventHandler<MitigationCreatedEvent>
 {
     public MitigationCreatedEventHandler(ILogger<MitigationCreatedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
 }
 
+/// <summary>
+/// Handles mitigation overdue events and updates corrective-action closure SPI metrics.
+/// </summary>
 public sealed class MitigationOverdueEventHandler : BaseDomainEventHandler<MitigationOverdueEvent>
 {
-    public MitigationOverdueEventHandler(ILogger<MitigationOverdueEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
+    private readonly ISPIAutomationService _spiAutomationService;
+    private readonly ILogger<MitigationOverdueEventHandler> _logger;
+
+    public MitigationOverdueEventHandler(
+        ILogger<MitigationOverdueEventHandler> logger,
+        IBaseEventBus eventBus,
+        ISPIAutomationService spiAutomationService) : base(logger, eventBus)
+    {
+        _logger = logger;
+        _spiAutomationService = spiAutomationService ?? throw new ArgumentNullException(nameof(spiAutomationService));
+    }
+
+    protected override async Task<Result> HandleDomainEventAsync(MitigationOverdueEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var calculationDate = domainEvent.DueDate == default ? DateTime.UtcNow : domainEvent.DueDate;
+
+        var result = await _spiAutomationService.UpdateCorrectiveActionClosureAsync(calculationDate, cancellationToken);
+        if (result.IsFailure)
+        {
+            _logger.LogApplicationWarning(
+                "SPI automation failed for mitigation overdue event {MitigationId}: {Error}",
+                domainEvent.MitigationId,
+                result.Error?.Message);
+
+            return Result.Failure(result.Error ?? new Error("MITIGATION_OVERDUE_SPI_FAILED", "Failed to update corrective action closure SPI"));
+        }
+
+        return Result.Success();
+    }
 }
 
+/// <summary>
+/// Reserved handler for mitigation status transitions.
+/// Transition publication is centralized in application services.
+/// </summary>
 public sealed class MitigationStatusChangedEventHandler : BaseDomainEventHandler<MitigationStatusChangedEvent>
 {
-    public MitigationStatusChangedEventHandler(ILogger<MitigationStatusChangedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
+    private readonly IBaseMediator _mediator;
+    private readonly ISPIAutomationService _spiAutomationService;
+    private readonly ILogger<MitigationStatusChangedEventHandler> _logger;
+
+    public MitigationStatusChangedEventHandler(
+        ILogger<MitigationStatusChangedEventHandler> logger,
+        IBaseEventBus eventBus,
+        IBaseMediator mediator,
+        ISPIAutomationService spiAutomationService) : base(logger, eventBus)
+    {
+        _logger = logger;
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _spiAutomationService = spiAutomationService ?? throw new ArgumentNullException(nameof(spiAutomationService));
+    }
+
+    protected override async Task<Result> HandleDomainEventAsync(MitigationStatusChangedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        _logger.LogApplicationInformation(
+            "[MITIGATION STATUS] Mitigation {MitigationId} changed to {Status} by {ChangedBy}",
+            domainEvent.MitigationId,
+            domainEvent.Status,
+            domainEvent.ChangedBy);
+
+        if (string.Equals(domainEvent.Status, SMS_Domain.Enums.MitigationStatus.PastExpectedTargetDate.Value, StringComparison.OrdinalIgnoreCase))
+        {
+            var overdueResult = await _spiAutomationService.UpdateCorrectiveActionClosureAsync(domainEvent.ChangedDate, cancellationToken);
+            if (overdueResult.IsFailure)
+            {
+                _logger.LogApplicationWarning("Failed to update corrective action closure SPI for mitigation {MitigationId}: {Error}", domainEvent.MitigationId, overdueResult.Error?.Message);
+                return Result.Failure(overdueResult.Error ?? new Error("MITIGATION_OVERDUE_SPI_FAILED", "Failed to update corrective action closure SPI"));
+            }
+        }
+
+        return Result.Success();
+    }
+
+    protected override async Task<Result> HandleUIEventAsync(MitigationStatusChangedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var severity = string.Equals(domainEvent.Status, SMS_Domain.Enums.MitigationStatus.PastExpectedTargetDate.Value, StringComparison.OrdinalIgnoreCase)
+            ? UINotificationSeverity.Warning
+            : UINotificationSeverity.Info;
+
+        var priority = severity == UINotificationSeverity.Warning ? UIEventPriority.High : UIEventPriority.Normal;
+
+        var reportId = string.Empty;
+        var mitigationResult = await _mediator.SendAsync(new GetMitigationByCodeQuery(new MitigationID(domainEvent.MitigationId)), cancellationToken);
+        if (mitigationResult.IsSuccess && mitigationResult.Value is not null && !string.IsNullOrWhiteSpace(mitigationResult.Value.HazardCode))
+        {
+            var hazardResult = await _mediator.SendAsync(new GetHazardByCodeQuery(new HazardID(mitigationResult.Value.HazardCode)), cancellationToken);
+            if (hazardResult.IsSuccess)
+            {
+                reportId = hazardResult.Value?.ReportCode ?? string.Empty;
+            }
+        }
+
+        var uiEvent = new UINotificationEvent(
+            severity: severity,
+            title: "Mitigation Status Updated",
+            message: $"Mitigation {domainEvent.MitigationId} moved to {domainEvent.Status}.",
+            duration: 5000,
+            category: "Mitigation",
+            sourceLayer: nameof(MitigationStatusChangedEventHandler),
+            reportId: reportId,
+            targetComponent: "NotificationCenter",
+            priority: priority,
+            metadata: new Dictionary<string, object>
+            {
+                { "MitigationId", domainEvent.MitigationId },
+                { "Status", domainEvent.Status },
+                { "ChangedBy", domainEvent.ChangedBy },
+                { "ChangedDate", domainEvent.ChangedDate }
+            });
+
+        return await EventBus.PublishUIEventAsync(uiEvent, EventExecutionMode.Manual, cancellationToken);
+    }
 }
 
+/// <summary>
+/// Handles report closure logging and UI notification.
+/// </summary>
 public sealed class ReportClosedEventHandler : BaseDomainEventHandler<ReportClosedEvent>
 {
-    public ReportClosedEventHandler(ILogger<ReportClosedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
+    private readonly ILogger<ReportClosedEventHandler> _logger;
+
+    public ReportClosedEventHandler(ILogger<ReportClosedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus)
+    {
+        _logger = logger;
+    }
+
+    protected override Task<Result> HandleDomainEventAsync(ReportClosedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        _logger.LogApplicationInformation(
+            "[REPORT EVENT] Report closed. ReportId: {ReportId}, ClosedBy: {ClosedBy}, ClosedDate: {ClosedDate}",
+            domainEvent.ReportId,
+            domainEvent.ClosedBy,
+            domainEvent.ClosedDate);
+
+        return Task.FromResult(Result.Success());
+    }
+
+    protected override async Task<Result> HandleUIEventAsync(ReportClosedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var uiEvent = new UINotificationEvent(
+            severity: UINotificationSeverity.Success,
+            title: "Report Closed",
+            message: $"Report {domainEvent.ReportId} was closed.",
+            duration: 5000,
+            category: "Report",
+            sourceLayer: nameof(ReportClosedEventHandler),
+            reportId: domainEvent.ReportId,
+            targetComponent: "NotificationCenter",
+            priority: UIEventPriority.Low,
+            metadata: new Dictionary<string, object>
+            {
+                { "ReportId", domainEvent.ReportId },
+                { "ClosedBy", domainEvent.ClosedBy },
+                { "ClosedDate", domainEvent.ClosedDate }
+            });
+
+        return await EventBus.PublishUIEventAsync(uiEvent, EventExecutionMode.Manual, cancellationToken);
+    }
 }
 
+/// <summary>
+/// Reserved handler for report creation events.
+/// </summary>
 public sealed class ReportCreatedEventHandler : BaseDomainEventHandler<ReportCreatedEvent>
 {
-    public ReportCreatedEventHandler(ILogger<ReportCreatedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
+    private readonly ILogger<ReportCreatedEventHandler> _logger;
+
+    public ReportCreatedEventHandler(ILogger<ReportCreatedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus)
+    {
+        _logger = logger;
+    }
+
+    protected override Task<Result> HandleDomainEventAsync(ReportCreatedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        _logger.LogApplicationInformation("[REPORT EVENT] Report created. ReportId: {ReportId}, CreatedBy: {CreatedBy}", domainEvent.ReportId, domainEvent.CreatedBy);
+        return Task.FromResult(Result.Success());
+    }
+
+    protected override async Task<Result> HandleIntegrationEventAsync(ReportCreatedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var emailEvent = new EmailNotificationEvent(
+            toRecipients: new List<string> { "safety.team@pdxairport.com" },
+            subject: $"New Report Created: {domainEvent.ReportId}",
+            body: $"Report {domainEvent.ReportId} was created by {domainEvent.CreatedBy} on {domainEvent.CreatedDate:yyyy-MM-dd HH:mm} UTC.",
+            isHtmlContent: false,
+            priority: EmailPriority.Normal,
+            deliveryMode: IntegrationDeliveryMode.BestEffort,
+            reportId: domainEvent.ReportId,
+            workflowType: "ReportCreated",
+            relatedEntityType: "Report",
+            relatedEntityId: domainEvent.ReportId,
+            emailMetadata: new Dictionary<string, object>
+            {
+                { "Source", nameof(ReportCreatedEventHandler) },
+                { "CreatedBy", domainEvent.CreatedBy }
+            });
+
+        return await EventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Queued, cancellationToken);
+    }
+
+    protected override async Task<Result> HandleUIEventAsync(ReportCreatedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var uiEvent = new UINotificationEvent(
+            severity: UINotificationSeverity.Info,
+            title: "Report Created",
+            message: $"Report {domainEvent.ReportId} was created.",
+            duration: 5000,
+            category: "Report",
+            sourceLayer: nameof(ReportCreatedEventHandler),
+            reportId: domainEvent.ReportId,
+            targetComponent: "NotificationCenter",
+            priority: UIEventPriority.Normal,
+            metadata: new Dictionary<string, object>
+            {
+                { "ReportId", domainEvent.ReportId },
+                { "CreatedBy", domainEvent.CreatedBy },
+                { "CreatedDate", domainEvent.CreatedDate }
+            });
+
+        return await EventBus.PublishUIEventAsync(uiEvent, EventExecutionMode.Manual, cancellationToken);
+    }
 }
 
+/// <summary>
+/// Handles report update logging and UI notification.
+/// </summary>
 public sealed class ReportUpdatedEventHandler : BaseDomainEventHandler<ReportUpdatedEvent>
 {
-    public ReportUpdatedEventHandler(ILogger<ReportUpdatedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
+    private readonly ILogger<ReportUpdatedEventHandler> _logger;
+
+    public ReportUpdatedEventHandler(ILogger<ReportUpdatedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus)
+    {
+        _logger = logger;
+    }
+
+    protected override Task<Result> HandleDomainEventAsync(ReportUpdatedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        _logger.LogApplicationInformation(
+            "[REPORT EVENT] Report updated. ReportId: {ReportId}, UpdatedBy: {UpdatedBy}, UpdatedDate: {UpdatedDate}",
+            domainEvent.ReportId,
+            domainEvent.UpdatedBy,
+            domainEvent.UpdatedDate);
+
+        return Task.FromResult(Result.Success());
+    }
+
+    protected override async Task<Result> HandleUIEventAsync(ReportUpdatedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var uiEvent = new UINotificationEvent(
+            severity: UINotificationSeverity.Info,
+            title: "Report Updated",
+            message: $"Report {domainEvent.ReportId} was updated.",
+            duration: 4000,
+            category: "Report",
+            sourceLayer: nameof(ReportUpdatedEventHandler),
+            reportId: domainEvent.ReportId,
+            targetComponent: "NotificationCenter",
+            priority: UIEventPriority.Normal,
+            metadata: new Dictionary<string, object>
+            {
+                { "ReportId", domainEvent.ReportId },
+                { "UpdatedBy", domainEvent.UpdatedBy },
+                { "UpdatedDate", domainEvent.UpdatedDate }
+            });
+
+        return await EventBus.PublishUIEventAsync(uiEvent, EventExecutionMode.Manual, cancellationToken);
+    }
 }
 
+/// <summary>
+/// Handles risk assessment completion and updates completion SPI metrics.
+/// </summary>
 public sealed class RiskAssessmentCompletedEventHandler : BaseDomainEventHandler<RiskAssessmentCompletedEvent>
 {
     private readonly ISPIAutomationService _spiAutomationService;
@@ -489,6 +949,9 @@ public sealed class RiskAssessmentCompletedEventHandler : BaseDomainEventHandler
     }
 }
 
+/// <summary>
+/// Handles validation decisions and updates risk-identification effectiveness SPI metrics.
+/// </summary>
 public sealed class ValidationDecisionMadeEventHandler : BaseDomainEventHandler<ValidationDecisionMadeEvent>
 {
     private readonly ISPIAutomationService _spiAutomationService;
@@ -521,198 +984,146 @@ public sealed class ValidationDecisionMadeEventHandler : BaseDomainEventHandler<
     }
 }
 
+/// <summary>
+/// Reserved handler for risk-assessment creation events.
+/// </summary>
 public sealed class RiskAssessmentCreatedEventHandler : BaseDomainEventHandler<RiskAssessmentCreatedEvent>
 {
     public RiskAssessmentCreatedEventHandler(ILogger<RiskAssessmentCreatedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
 }
 
+/// <summary>
+/// Reserved handler for risk-assessment update events.
+/// </summary>
 public sealed class RiskAssessmentUpdatedEventHandler : BaseDomainEventHandler<RiskAssessmentUpdatedEvent>
 {
-    public RiskAssessmentUpdatedEventHandler(ILogger<RiskAssessmentUpdatedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
-}
+    private readonly ILogger<RiskAssessmentUpdatedEventHandler> _logger;
 
-public sealed class SPIComplianceChangedEventHandler : BaseDomainEventHandler<SPIComplianceChangedEvent>
-{
-    public SPIComplianceChangedEventHandler(ILogger<SPIComplianceChangedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus) { }
-}
-public class HazardEventSPIHandler
-{
-    private readonly ISPIAutomationService _spiAutomationService;
-    private readonly ILogger<HazardEventSPIHandler> _logger;
-
-    public HazardEventSPIHandler(
-        ISPIAutomationService spiAutomationService,
-        ILogger<HazardEventSPIHandler> logger)
+    public RiskAssessmentUpdatedEventHandler(ILogger<RiskAssessmentUpdatedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus)
     {
-        _spiAutomationService = spiAutomationService ?? throw new ArgumentNullException(nameof(spiAutomationService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task HandleHazardCreated(HazardCreatedEvent evt)
-    {
-        try
-        {
-            var result = await _spiAutomationService.UpdateHazardReportRateAsync(evt.CreatedDate, CancellationToken.None);
-
-            if (result.IsFailure)
-            {
-                _logger.LogApplicationWarning("SPI Event: Failed to process HazardCreated event for hazard {HazardCode}: {Error}", evt.HazardCode, result.Error.Message);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError(ex, "SPI Event: Error processing HazardCreated event for hazard {HazardCode}", evt.HazardCode);
-        }
-    }
-}
-
-public class MitigationEventSPIHandler
-{
-    private readonly ISPIAutomationService _spiAutomationService;
-    private readonly ILogger<MitigationEventSPIHandler> _logger;
-
-    public MitigationEventSPIHandler(
-        ISPIAutomationService spiAutomationService,
-        ILogger<MitigationEventSPIHandler> logger)
-    {
-        _spiAutomationService = spiAutomationService ?? throw new ArgumentNullException(nameof(spiAutomationService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task HandleMitigationCompleted(MitigationCompletedEvent evt)
-    {
-        try
-        {
-            var result = await _spiAutomationService.UpdateMitigationImplementationRateAsync(
-                evt.MitigationId,
-                evt.TargetCompletionDate,
-                evt.CompletedDate,
-                CancellationToken.None);
-
-            if (result.IsFailure)
-            {
-                _logger.LogApplicationWarning("SPI Event: Failed to process MitigationCompleted event for mitigation {MitigationId}: {Error}", evt.MitigationId, result.Error.Message);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError(ex, "SPI Event: Error processing MitigationCompleted event for mitigation {MitigationId}", evt.MitigationId);
-        }
-    }
-
-    public async Task HandleMitigationOverdue(MitigationOverdueEvent evt)
-    {
-        try
-        {
-            await Task.CompletedTask;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError(ex, "SPI Event: Error processing MitigationOverdue event for mitigation {MitigationId}", evt.MitigationId);
-        }
-    }
-}
-
-public class RiskAssessmentEventSPIHandler
-{
-    private readonly ISPIAutomationService _spiAutomationService;
-    private readonly ILogger<RiskAssessmentEventSPIHandler> _logger;
-
-    public RiskAssessmentEventSPIHandler(
-        ISPIAutomationService spiAutomationService,
-        ILogger<RiskAssessmentEventSPIHandler> logger)
-    {
-        _spiAutomationService = spiAutomationService ?? throw new ArgumentNullException(nameof(spiAutomationService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task HandleRiskAssessmentCompleted(RiskAssessmentCompletedEvent evt)
-    {
-        try
-        {
-            var isOnTime = evt.CompletedDate <= evt.TargetCompletionDate;
-
-            var result = await _spiAutomationService.UpdateRiskAssessmentCompletionAsync(
-                evt.AssessmentId,
-                evt.TargetCompletionDate,
-                evt.CompletedDate,
-                isOnTime,
-                CancellationToken.None);
-
-            if (result.IsFailure)
-            {
-                _logger.LogApplicationWarning("SPI Event: Failed to process RiskAssessmentCompleted event for assessment {AssessmentId}: {Error}", evt.AssessmentId, result.Error.Message);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError(ex, "SPI Event: Error processing RiskAssessmentCompleted event for assessment {AssessmentId}", evt.AssessmentId);
-        }
-    }
-}
-
-public class SPIAutomationEventHandler : BaseDomainEventHandler<SMS_Domain.Events.HazardCreatedEvent>
-{
-    private readonly IServiceProvider _serviceProvider;
-    private readonly ILogger<SPIAutomationEventHandler> _logger;
-
-    public SPIAutomationEventHandler(
-        IServiceProvider serviceProvider,
-        ILogger<SPIAutomationEventHandler> logger,
-        IBaseEventBus eventBus)
-        : base(logger, eventBus)
-    {
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
         _logger = logger;
     }
 
-    protected override async Task<Result> ProcessEventAsync(SMS_Domain.Events.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
+    protected override Task<Result> HandleDomainEventAsync(RiskAssessmentUpdatedEvent domainEvent, CancellationToken cancellationToken)
     {
-        try
-        {
-            using var scope = _serviceProvider.CreateScope();
-            var spiAutomationService = scope.ServiceProvider.GetRequiredService<ISPIAutomationService>();
+        _logger.LogApplicationInformation(
+            "[RISK ASSESSMENT EVENT] Risk assessment updated. AssessmentId: {AssessmentId}, UpdatedBy: {UpdatedBy}, UpdatedDate: {UpdatedDate}",
+            domainEvent.RiskAssessmentId,
+            domainEvent.UpdatedBy,
+            domainEvent.UpdatedDate);
 
-            var hazardRateResult = await spiAutomationService.UpdateHazardReportRateAsync(domainEvent.CreatedDate, cancellationToken);
+        return Task.FromResult(Result.Success());
+    }
 
-            if (hazardRateResult.IsFailure)
+    protected override async Task<Result> HandleUIEventAsync(RiskAssessmentUpdatedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var uiEvent = new UINotificationEvent(
+            severity: UINotificationSeverity.Info,
+            title: "Risk Assessment Updated",
+            message: $"Risk assessment {domainEvent.RiskAssessmentId} was updated.",
+            duration: 4000,
+            category: "RiskAssessment",
+            sourceLayer: nameof(RiskAssessmentUpdatedEventHandler),
+            reportId: string.Empty,
+            targetComponent: "NotificationCenter",
+            priority: UIEventPriority.Normal,
+            metadata: new Dictionary<string, object>
             {
-                _logger.LogApplicationWarning("[SPI AUTOMATION] Failed to update Hazard Report Rate SPI for {HazardCode}: {Error}", domainEvent.HazardCode, hazardRateResult.Error.Message);
-            }
+                { "RiskAssessmentId", domainEvent.RiskAssessmentId },
+                { "UpdatedBy", domainEvent.UpdatedBy },
+                { "UpdatedDate", domainEvent.UpdatedDate }
+            });
 
-            return Result.Success();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError(ex, "[SPI AUTOMATION] SPI automation failed for hazard {HazardCode}", domainEvent.HazardCode);
-            return Result.Failure(new Error("SPI_AUTOMATION_FAILED", $"SPI automation failed: {ex.Message}"));
-        }
+        return await EventBus.PublishUIEventAsync(uiEvent, EventExecutionMode.Manual, cancellationToken);
     }
 }
 
+/// <summary>
+/// Handles SPI compliance transitions for logging and user-facing notifications.
+/// </summary>
+public sealed class SPIComplianceChangedEventHandler : BaseDomainEventHandler<SPIComplianceChangedEvent>
+{
+    private readonly ILogger<SPIComplianceChangedEventHandler> _logger;
+
+    public SPIComplianceChangedEventHandler(ILogger<SPIComplianceChangedEventHandler> logger, IBaseEventBus eventBus) : base(logger, eventBus)
+    {
+        _logger = logger;
+    }
+
+    protected override Task<Result> HandleDomainEventAsync(SPIComplianceChangedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        _logger.LogApplicationInformation(
+            "[SPI COMPLIANCE] SPI {SPICode} compliance changed from {PreviousStatus} to {NewStatus}. Current: {CurrentValue}, Threshold: {Threshold}",
+            domainEvent.SPICode,
+            domainEvent.PreviousStatus,
+            domainEvent.NewStatus,
+            domainEvent.CurrentValue,
+            domainEvent.ComplianceThreshold);
+
+        if (domainEvent.NewStatus == SMS_Domain.Events.SPIComplianceStatus.NonCompliant || domainEvent.NewStatus == SMS_Domain.Events.SPIComplianceStatus.AtRisk)
+        {
+            _logger.LogApplicationWarning(
+                "[SPI COMPLIANCE] SPI {SPICode} is {Status}. Regulatory reporting required: {RequiresRegulatoryReporting}",
+                domainEvent.SPICode,
+                domainEvent.NewStatus,
+                domainEvent.RequiresRegulatoryReporting);
+        }
+
+        return Task.FromResult(Result.Success());
+    }
+
+    protected override async Task<Result> HandleUIEventAsync(SPIComplianceChangedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        var (severity, priority, title) = domainEvent.NewStatus switch
+        {
+            SMS_Domain.Events.SPIComplianceStatus.NonCompliant => (UINotificationSeverity.Error, UIEventPriority.Critical, "SPI Non-Compliant"),
+            SMS_Domain.Events.SPIComplianceStatus.AtRisk => (UINotificationSeverity.Warning, UIEventPriority.High, "SPI At Risk"),
+            SMS_Domain.Events.SPIComplianceStatus.Compliant => (UINotificationSeverity.Success, UIEventPriority.Low, "SPI Compliant"),
+            _ => (UINotificationSeverity.Info, UIEventPriority.Normal, "SPI Compliance Updated")
+        };
+
+        var uiEvent = new UINotificationEvent(
+            severity: severity,
+            title: title,
+            message: $"{domainEvent.SPICode} moved to {domainEvent.NewStatus}. Current value {domainEvent.CurrentValue:F2} (threshold {domainEvent.ComplianceThreshold:F2}).",
+            duration: 6000,
+            category: "SPI",
+            sourceLayer: nameof(SPIComplianceChangedEventHandler),
+            reportId: HandlerHelpers.ResolveReportId(domainEvent),
+            targetComponent: "NotificationCenter",
+            priority: priority,
+            metadata: new Dictionary<string, object>
+            {
+                { "SPICode", domainEvent.SPICode },
+                { "SPIName", domainEvent.SPIName },
+                { "PreviousStatus", domainEvent.PreviousStatus.ToString() },
+                { "NewStatus", domainEvent.NewStatus.ToString() },
+                { "RegulatoryBody", domainEvent.RegulatoryBody },
+                { "RequiresRegulatoryReporting", domainEvent.RequiresRegulatoryReporting }
+            });
+
+        return await EventBus.PublishUIEventAsync(uiEvent, EventExecutionMode.Manual, cancellationToken);
+    }
+}
+/// <summary>
+/// Handles SPI threshold exceeded events and records threshold processing outcomes.
+/// </summary>
 public class SPIThresholdEventHandler : BaseDomainEventHandler<SPIThresholdExceededEvent>
 {
-    private readonly IServiceProvider _serviceProvider;
     private readonly ILogger<SPIThresholdEventHandler> _logger;
 
     public SPIThresholdEventHandler(
         ILogger<SPIThresholdEventHandler> logger,
-        IServiceProvider serviceProvider,
         IBaseEventBus eventBus)
         : base(logger, eventBus)
     {
         _logger = logger;
-        _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     }
 
     protected override async Task<Result> ProcessEventAsync(SPIThresholdExceededEvent domainEvent, CancellationToken cancellationToken)
     {
         try
         {
-            using var scope = _serviceProvider.CreateScope();
-            _ = scope.ServiceProvider.GetRequiredService<SMSStakeholderGroupService>();
-            _ = scope.ServiceProvider.GetRequiredService<SPIEventCoordinator>();
-
             _logger.LogApplicationInformation("[SPI THRESHOLD] Processed SPI threshold exceeded for {SPICode}: {CurrentValue} > {Threshold} (Severity: {Severity})",
                 domainEvent.SPICode, domainEvent.CurrentValue, domainEvent.ThresholdValue, domainEvent.Severity);
 

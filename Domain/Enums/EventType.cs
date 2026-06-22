@@ -1,50 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿namespace SMS_Domain.Enums;
 
-namespace SMS_Domain.Enums;
-
-public abstract class EventCategogy : BaseEnum<EventCategogy>
-{
-    protected EventCategogy(string value, string name) : base(value, name)
-    {
-       
-    }
-
-    
-
-    // Leading Indicators (Proactive)
-    public static readonly EventCategogy DomainEvent = new DomainEventCategogy();
-    public static readonly EventCategogy IntegrationEvent = new IntegrationEventCategogy();
-    public static readonly EventCategogy UIEvent = new UIEventCategogy();
-    
-    
-
-   
-
-    // Leading Indicators
-    private sealed class DomainEventCategogy : EventCategogy
-    {
-        public DomainEventCategogy() : base("DOMAIN_EVENT", "DOMAIN_EVENT")
-        { }
-    }
-
-    private sealed class IntegrationEventCategogy : EventCategogy
-    {
-        public IntegrationEventCategogy() : base("INTEGRATION_EVENT", "INTEGRATION_EVENT")
-        { }
-    }
-
-    private sealed class UIEventCategogy : EventCategogy
-    {
-        public UIEventCategogy() : base("UI_EVENT", "UI_EVENT")
-        { }
-    }
-
-   
-}
 public abstract class EventType : BaseEnum<EventType>
 {
     protected EventType(string value, string name) : base(value, name) { }
@@ -53,18 +8,32 @@ public abstract class EventType : BaseEnum<EventType>
     public static readonly EventType ReportCreated = new ReportCreatedEventType();
     public static readonly EventType ReportUpdated = new ReportUpdatedEventType();
     public static readonly EventType ReportClosed = new ReportClosedEventType();
+    public static readonly EventType ReportStatusChanged = new ReportStatusChangedEventType();
+    public static readonly EventType ReportStageChanged = new ReportStageChangedEventType();
+
+    public static readonly EventType InvestigationCreated = new InvestigationCreatedEventType();
+    public static readonly EventType InvestigationUpdated = new InvestigationUpdatedEventType();
+    public static readonly EventType InvestigationStatusChanged = new InvestigationStatusChangedEventType();
 
     public static readonly EventType HazardCreated = new HazardCreatedEventType();
     public static readonly EventType HazardUpdated = new HazardUpdatedEventType();
     public static readonly EventType HazardDeleted = new HazardDeletedEventType();
+    public static readonly EventType HazardStatusChanged = new HazardStatusChangedEventType();
+    public static readonly EventType HighRiskIdentified = new HighRiskIdentifiedEventType();
 
     public static readonly EventType RiskAssessmentCreated = new RiskAssessmentCreatedEventType();
     public static readonly EventType RiskAssessmentUpdated = new RiskAssessmentUpdatedEventType();
+    public static readonly EventType RiskAssessmentStatusChanged = new RiskAssessmentStatusChangedEventType();
+    public static readonly EventType RiskAssessmentStageChanged = new RiskAssessmentStageChangedEventType();
+    public static readonly EventType RiskAssessmentCompleted = new RiskAssessmentCompletedEventType();
 
     public static readonly EventType MitigationCreated = new MitigationCreatedEventType();
     public static readonly EventType MitigationApprovalRequested = new MitigationApprovalRequestedEventType();
     public static readonly EventType MitigationApprovalApproved = new MitigationApprovalApprovedEventType();
     public static readonly EventType MitigationStatusChanged = new MitigationStatusChangedEventType();
+    public static readonly EventType MitigationOverdue = new MitigationOverdueEventType();
+    public static readonly EventType ValidationDecisionMade = new ValidationDecisionMadeEventType();
+    public static readonly EventType SPIComplianceChanged = new SPIComplianceChangedEventType();
     #endregion
 
     #region Integration Events
@@ -118,6 +87,27 @@ public abstract class EventType : BaseEnum<EventType>
     {
         public ReportClosedEventType() : base("REPORT_CLOSED", "REPORT_CLOSED") { }
     }
+    private sealed class ReportStatusChangedEventType : EventType
+    {
+        public ReportStatusChangedEventType() : base("REPORT_STATUS_CHANGED", "REPORT_STATUS_CHANGED") { }
+    }
+    private sealed class ReportStageChangedEventType : EventType
+    {
+        public ReportStageChangedEventType() : base("REPORT_STAGE_CHANGED", "REPORT_STAGE_CHANGED") { }
+    }
+
+    private sealed class InvestigationCreatedEventType : EventType
+    {
+        public InvestigationCreatedEventType() : base("INVESTIGATION_CREATED", "INVESTIGATION_CREATED") { }
+    }
+    private sealed class InvestigationUpdatedEventType : EventType
+    {
+        public InvestigationUpdatedEventType() : base("INVESTIGATION_UPDATED", "INVESTIGATION_UPDATED") { }
+    }
+    private sealed class InvestigationStatusChangedEventType : EventType
+    {
+        public InvestigationStatusChangedEventType() : base("INVESTIGATION_STATUS_CHANGED", "INVESTIGATION_STATUS_CHANGED") { }
+    }
 
     private sealed class HazardCreatedEventType : EventType
     {
@@ -131,6 +121,14 @@ public abstract class EventType : BaseEnum<EventType>
     {
         public HazardDeletedEventType() : base("HAZARD_DELETED", "HAZARD_DELETED") { }
     }
+    private sealed class HazardStatusChangedEventType : EventType
+    {
+        public HazardStatusChangedEventType() : base("HAZARD_STATUS_CHANGED", "HAZARD_STATUS_CHANGED") { }
+    }
+    private sealed class HighRiskIdentifiedEventType : EventType
+    {
+        public HighRiskIdentifiedEventType() : base("HIGH_RISK_IDENTIFIED", "HIGH_RISK_IDENTIFIED") { }
+    }
 
     private sealed class RiskAssessmentCreatedEventType : EventType
     {
@@ -140,82 +138,28 @@ public abstract class EventType : BaseEnum<EventType>
     {
         public RiskAssessmentUpdatedEventType() : base("RISKASSESSMENT_UPDATED", "RISKASSESSMENT_UPDATED") { }
     }
-}
-
-/// <summary>
-/// Status of a queued event
-/// </summary>
-public enum QueuedEventStatus
-{
-    /// <summary>
-    /// Event is waiting to be processed
-    /// </summary>
-    Pending = 0,
-
-    /// <summary>
-    /// Event is currently being processed
-    /// </summary>
-    Processing = 1,
-
-    /// <summary>
-    /// Event was processed successfully
-    /// </summary>
-    Processed = 2,
-
-    /// <summary>
-    /// Event processing failed
-    /// </summary>
-    Failed = 3,
-
-    /// <summary>
-    /// Event was cancelled
-    /// </summary>
-    Cancelled = 4
-}
-
-/// <summary>
-/// Priority level for event processing
-/// </summary>
-public enum EventPriority
-{
-    /// <summary>
-    /// Low priority - UI updates, non-critical notifications
-    /// </summary>
-    Low = 0,
-
-    /// <summary>
-    /// Normal priority - Standard business events
-    /// </summary>
-    Normal = 1,
-
-    /// <summary>
-    /// High priority - Integration events, critical notifications
-    /// </summary>
-    High = 2,
-
-    /// <summary>
-    /// Critical priority - Security alerts, system failures
-    /// </summary>
-    Critical = 3
-}
-
-/// <summary>
-/// Type of event for categorization
-/// </summary>
-public enum EventCategory
-{
-    /// <summary>
-    /// Domain business logic events
-    /// </summary>
-    DomainEvent = 0,
-
-    /// <summary>
-    /// User interface events
-    /// </summary>
-    UIEvent = 1,
-
-    /// <summary>
-    /// External system integration events
-    /// </summary>
-    IntegrationEvent = 2
+    private sealed class RiskAssessmentStatusChangedEventType : EventType
+    {
+        public RiskAssessmentStatusChangedEventType() : base("RISKASSESSMENT_STATUS_CHANGED", "RISKASSESSMENT_STATUS_CHANGED") { }
+    }
+    private sealed class RiskAssessmentStageChangedEventType : EventType
+    {
+        public RiskAssessmentStageChangedEventType() : base("RISKASSESSMENT_STAGE_CHANGED", "RISKASSESSMENT_STAGE_CHANGED") { }
+    }
+    private sealed class RiskAssessmentCompletedEventType : EventType
+    {
+        public RiskAssessmentCompletedEventType() : base("RISKASSESSMENT_COMPLETED", "RISKASSESSMENT_COMPLETED") { }
+    }
+    private sealed class MitigationOverdueEventType : EventType
+    {
+        public MitigationOverdueEventType() : base("MITIGATION_OVERDUE", "MITIGATION_OVERDUE") { }
+    }
+    private sealed class ValidationDecisionMadeEventType : EventType
+    {
+        public ValidationDecisionMadeEventType() : base("VALIDATION_DECISION_MADE", "VALIDATION_DECISION_MADE") { }
+    }
+    private sealed class SPIComplianceChangedEventType : EventType
+    {
+        public SPIComplianceChangedEventType() : base("SPI_COMPLIANCE_CHANGED", "SPI_COMPLIANCE_CHANGED") { }
+    }
 }

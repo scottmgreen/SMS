@@ -68,7 +68,7 @@ public abstract class DatabaseTestBase : IDisposable
     protected RiskAnalysisRepository GetRiskAnalysisRepository() => GetService<RiskAnalysisRepository>();
     protected RiskAssessmentRepository GetRiskAssessmentRepository() => GetService<RiskAssessmentRepository>();
     protected ScoringPanelRepository GetScoringPanelRepository() => GetService<ScoringPanelRepository>();
-    protected SystemRepository GetSystemRepository() => GetService<SystemRepository>();
+    protected SMSSystemRepository GetSystemRepository() => GetService<SMSSystemRepository>();
 
     #endregion
 
@@ -308,7 +308,7 @@ public abstract class DatabaseTestBase : IDisposable
         {
             Code = testId,
             HazardCode = GenerateTestId("HZ"),
-            AssessmentType = RiskAssessmentType.Initial, // Use actual enum value
+            AssessmentType = RiskAssessmentType.Technical, // Use actual enum value
             Status = RiskAssessmentStatus.AssessmentComplete, // Use actual enum value
             Stage = RiskAssessmentStage.DescribingSystem, // Use actual enum value
             CreatedBy = "INTEGRATION_TEST",

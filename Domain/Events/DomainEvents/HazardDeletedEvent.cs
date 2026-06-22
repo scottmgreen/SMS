@@ -16,7 +16,7 @@ namespace SMS_Domain.Events;
 public class HazardDeletedEvent : BaseDomainEvent, IEventSource
 {
     public override string EventType => SMS_Domain.Enums.EventType.HazardDeleted.Value;
-    public string EventCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string EventCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
     public string HazardId { get; set; }
     
@@ -25,12 +25,12 @@ public class HazardDeletedEvent : BaseDomainEvent, IEventSource
     /// <summary>
     /// Display name for SPI configuration dropdowns
     /// </summary>
-    public string EventSourceDisplayName => SMS_Domain.Enums.EventType.HazardCreated;
+    public string EventSourceDisplayName => SMS_Domain.Enums.EventType.HazardDeleted;
 
     /// <summary>
     /// Category for grouping in UI
     /// </summary>
-    public string EventSourceCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string EventSourceCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
     /// <summary>
     /// Description of data provided for SPI calculations

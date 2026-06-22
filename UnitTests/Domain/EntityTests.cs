@@ -172,12 +172,12 @@ public class EntityTests
         var riskAssessment = new RiskAssessment(id);
 
         // Act - Using actual enum values
-        riskAssessment.AssessmentType = RiskAssessmentType.Initial;
+        riskAssessment.AssessmentType = RiskAssessmentType.Technical;
         riskAssessment.Status = RiskAssessmentStatus.AssessmentComplete;
         riskAssessment.Stage = RiskAssessmentStage.DescribingSystem; // Use actual enum value
 
         // Assert
-        riskAssessment.AssessmentType.Should().Be(RiskAssessmentType.Initial);
+        riskAssessment.AssessmentType.Should().Be(RiskAssessmentType.Technical);
         riskAssessment.Status.Should().Be(RiskAssessmentStatus.AssessmentComplete);
         riskAssessment.Stage.Should().Be(RiskAssessmentStage.DescribingSystem); // Use actual enum value
     }

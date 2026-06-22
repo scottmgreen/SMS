@@ -60,7 +60,7 @@ public class SPIAutomationService : ISPIAutomationService
             var todaysHazardCount = await GetHazardCountForDate(reportDate, ct);
 
             // Create data point using the actual SPI code from database
-            var dataPoint = new SPIDataPoint(new SPIDataPointID($"DP-0000"))
+            var dataPoint = new SPIDataPoint(new SPIDataPointID($"HRR-{reportDate:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8]}"))
             {
                 SPIId = spi.Code, // Use actual SPI code from database
                 Value = todaysHazardCount,

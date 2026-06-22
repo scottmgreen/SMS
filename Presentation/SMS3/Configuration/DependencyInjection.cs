@@ -106,6 +106,7 @@ public static class DependencyInjection
 
         // EventBus UI Event Handlers
         services.AddScoped<UIEventHandler>();
+        services.AddScoped<SPIDashboardRefreshEventHandler>();
 
         // Add any additional UI helper services here
         // services.AddScoped<IDialogService, DialogService>();

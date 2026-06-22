@@ -16,7 +16,7 @@ namespace SMS_Domain.Events;
 public class MitigationApprovalApprovedEvent : BaseDomainEvent
 {
     public override string EventType => SMS_Domain.Enums.EventType.MitigationApprovalApproved.Value;
-    public string EventCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string EventCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
     public string MitigationId { get; private set; }
     public string ApprovedBy { get; private set; }

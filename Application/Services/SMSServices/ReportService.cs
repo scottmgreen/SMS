@@ -12,6 +12,7 @@ using SMS_Application.Interfaces;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
+using SMS_Domain.Events;
 
 using Microsoft.Extensions.Logging;
 
@@ -20,11 +21,16 @@ namespace SMS_Application.Services;
 public sealed class ReportService : IReportService
 {
     private readonly ReportDataService _dataService;
+    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<ReportService> _logger;
 
-    public ReportService(ReportDataService dataService, ILogger<ReportService> logger)
+    public ReportService(
+        ReportDataService dataService,
+        IBaseEventBus eventBus,
+        ILogger<ReportService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -38,6 +44,21 @@ public sealed class ReportService : IReportService
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation("Successfully created report with ID: {Id}", result.Value?.Id);
+
+                if (result.Value is not null)
+                {
+                    var reportCreatedEvent = new ReportCreatedEvent(
+                        id: new SMSEventID(Guid.NewGuid().ToString()),
+                        reportId: result.Value.Code,
+                        createdBy: result.Value.CreatedBy ?? "SYSTEM",
+                        createdDate: result.Value.CreatedDate ?? DateTime.UtcNow);
+
+                    var eventResult = await _eventBus.PublishDomainEventAsync(reportCreatedEvent, EventExecutionMode.Immediate, ct).ConfigureAwait(false);
+                    if (eventResult.IsFailure)
+                    {
+                        _logger.LogApplicationWarning("Failed to publish report created event for report {ReportCode}: {Error}", result.Value.Code, eventResult.Error?.Message);
+                    }
+                }
             }
             else
             {
@@ -99,12 +120,62 @@ public sealed class ReportService : IReportService
     {
         try
         {
+            ReportStatus? previousStatus = null;
+            string? previousStage = null;
+            if (report is not null && !string.IsNullOrWhiteSpace(report.Code))
+            {
+                var existingResult = await _dataService.GetReportByCodeAsync(new ReportID(report.Code), ct).ConfigureAwait(false);
+                if (existingResult.IsSuccess && existingResult.Value is not null)
+                {
+                    if (ReportStatus.TryFromValue(existingResult.Value.Status, out var existingStatus))
+                    {
+                        previousStatus = existingStatus;
+                    }
+
+                    previousStage = existingResult.Value.Stage;
+                }
+            }
+
             _logger.LogApplicationInformation("Updating report with ID: {Id}", report?.Id);
             var result = await _dataService.UpdateReportAsync(report, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation("Successfully updated report with ID: {Id}", report?.Id);
+
+                if (report is not null)
+                {
+                    if (ReportStatus.TryFromValue(report.Status, out var currentStatus))
+                    {
+                        await TransitionEventPublisher.PublishIfChangedAsync(
+                            _eventBus,
+                            previousStatus,
+                            currentStatus,
+                            () => new ReportStatusChangedEvent(
+                                id: new SMSEventID(Guid.NewGuid().ToString()),
+                                reportId: report.Id.Value,
+                                reportCode: report.Code,
+                                previousStatus: previousStatus!,
+                                newStatus: currentStatus!,
+                                changedBy: report.UpdatedBy ?? "SYSTEM",
+                                changedDate: report.UpdatedDate ?? DateTime.UtcNow),
+                            ct).ConfigureAwait(false);
+                    }
+
+                    await TransitionEventPublisher.PublishIfChangedAsync(
+                        _eventBus,
+                        previousStage,
+                        report.Stage,
+                        () => new ReportStageChangedEvent(
+                            id: new SMSEventID(Guid.NewGuid().ToString()),
+                            reportId: report.Id.Value,
+                            reportCode: report.Code,
+                            previousStage: previousStage ?? string.Empty,
+                            newStage: report.Stage ?? string.Empty,
+                            changedBy: report.UpdatedBy ?? "SYSTEM",
+                            changedDate: report.UpdatedDate ?? DateTime.UtcNow),
+                        ct).ConfigureAwait(false);
+                }
             }
             else
             {

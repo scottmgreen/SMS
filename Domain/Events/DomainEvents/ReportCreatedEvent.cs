@@ -15,12 +15,16 @@ namespace SMS_Domain.Events;
 public class ReportCreatedEvent : BaseDomainEvent
 {
     public override string EventType => SMS_Domain.Enums.EventType.ReportCreated.Value;
-    public string EventCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string EventCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
     // Example properties (expand as needed)
-    public string ReportId { get; private set; }
-    public string CreatedBy { get; private set; }
-    public DateTime CreatedDate { get; private set; }
+    public string ReportId { get; set; } = string.Empty;
+    public string CreatedBy { get; set; } = "SYSTEM";
+    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+
+    public ReportCreatedEvent(SMSEventID id) : base(id)
+    {
+    }
 
     public ReportCreatedEvent(SMSEventID id,string reportId, string createdBy, DateTime createdDate) : base(id)
     {

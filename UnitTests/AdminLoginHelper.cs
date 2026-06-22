@@ -1,10 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
-using Xunit;
-using Xunit.Abstractions;
-using SMS_Application.Interfaces;
-using SMS_Application.Messaging.Queries;
 using SMS_Domain.ValueObjects;
-using SMS_Domain.Entities;
+
+using Xunit.Abstractions;
 
 namespace PDXSMS_UnitTests;
 

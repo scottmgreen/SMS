@@ -15,7 +15,7 @@ namespace SMS_Domain.Events;
 public class ReportClosedEvent : BaseDomainEvent
 {
     public override string EventType => SMS_Domain.Enums.EventType.ReportClosed.Value;
-    public string EventCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string EventCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
     public string ReportId { get; private set; }
     public string ClosedBy { get; private set; }

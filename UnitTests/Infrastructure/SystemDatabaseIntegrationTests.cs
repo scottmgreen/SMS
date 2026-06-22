@@ -14,7 +14,7 @@ namespace PDXSMS_UnitTests.Infrastructure;
 [Collection("Database Integration Tests")]
 public class SystemDatabaseIntegrationTests : DatabaseTestBase
 {
-    private readonly SystemRepository _systemRepository;
+    private readonly SMSSystemRepository _systemRepository;
     private readonly SystemDataService _systemDataService;
 
     public SystemDatabaseIntegrationTests()
@@ -568,7 +568,7 @@ public class SystemDatabaseIntegrationTests : DatabaseTestBase
     /// <summary>
     /// Get SystemRepository from DI container
     /// </summary>
-    private SystemRepository GetSystemRepository() => GetService<SystemRepository>();
+    private SMSSystemRepository GetSystemRepository() => GetService<SMSSystemRepository>();
 
     /// <summary>
     /// Get SystemDataService from DI container

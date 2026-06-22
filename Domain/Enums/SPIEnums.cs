@@ -13,9 +13,9 @@ namespace SMS_Domain.Enums;
 /// <summary>
 /// Safety Performance Indicator types based on SMS requirements
 /// </summary>
-public abstract class SPIType : BaseEnum<SPIType>
+public abstract class SMSSafetyPerformanceIndicatorType : BaseEnum<SMSSafetyPerformanceIndicatorType>
 {
-    protected SPIType(string value, string name, string description, string category) : base(value, name)
+    protected SMSSafetyPerformanceIndicatorType(string value, string name, string description, string category) : base(value, name)
     {
         Description = description;
         Category = category;
@@ -27,64 +27,64 @@ public abstract class SPIType : BaseEnum<SPIType>
     #region SPI Types
 
     // Leading Indicators (Proactive)
-    public static readonly SPIType HazardReportRate = new HazardReportRateType();
-    public static readonly SPIType TrainingCompletionRate = new TrainingCompletionRateType();
-    public static readonly SPIType AuditComplianceRate = new AuditComplianceRateType();
-    public static readonly SPIType SafetyMeetingAttendance = new SafetyMeetingAttendanceType();
-    public static readonly SPIType MitigationImplementationRate = new MitigationImplementationRateType();
+    public static readonly SMSSafetyPerformanceIndicatorType HazardReportRate = new HazardReportRateType();
+    public static readonly SMSSafetyPerformanceIndicatorType TrainingCompletionRate = new TrainingCompletionRateType();
+    public static readonly SMSSafetyPerformanceIndicatorType AuditComplianceRate = new AuditComplianceRateType();
+    public static readonly SMSSafetyPerformanceIndicatorType SafetyMeetingAttendance = new SafetyMeetingAttendanceType();
+    public static readonly SMSSafetyPerformanceIndicatorType MitigationImplementationRate = new MitigationImplementationRateType();
 
     // Lagging Indicators (Reactive)
-    public static readonly SPIType IncidentRate = new IncidentRateType();
-    public static readonly SPIType AccidentRate = new AccidentRateType();
-    public static readonly SPIType NearMissRate = new NearMissRateType();
-    public static readonly SPIType RegulatoryViolations = new RegulatoryViolationsType();
-    public static readonly SPIType WorkplaceSafetyIncidents = new WorkplaceSafetyIncidentsType();
+    public static readonly SMSSafetyPerformanceIndicatorType IncidentRate = new IncidentRateType();
+    public static readonly SMSSafetyPerformanceIndicatorType AccidentRate = new AccidentRateType();
+    public static readonly SMSSafetyPerformanceIndicatorType NearMissRate = new NearMissRateType();
+    public static readonly SMSSafetyPerformanceIndicatorType RegulatoryViolations = new RegulatoryViolationsType();
+    public static readonly SMSSafetyPerformanceIndicatorType WorkplaceSafetyIncidents = new WorkplaceSafetyIncidentsType();
 
     // Process Indicators
-    public static readonly SPIType CorrectiveActionClosure = new CorrectiveActionClosureType();
-    public static readonly SPIType RiskAssessmentCompletion = new RiskAssessmentCompletionType();
-    public static readonly SPIType InvestigationTimeliness = new InvestigationTimelinessType();
-    public static readonly SPIType SystemEffectiveness = new SystemEffectivenessType();
+    public static readonly SMSSafetyPerformanceIndicatorType CorrectiveActionClosure = new CorrectiveActionClosureType();
+    public static readonly SMSSafetyPerformanceIndicatorType RiskAssessmentCompletion = new RiskAssessmentCompletionType();
+    public static readonly SMSSafetyPerformanceIndicatorType InvestigationTimeliness = new InvestigationTimelinessType();
+    public static readonly SMSSafetyPerformanceIndicatorType SystemEffectiveness = new SystemEffectivenessType();
 
     // Compliance Indicators
-    public static readonly SPIType RegulatoryCompliance = new RegulatoryComplianceType();
-    public static readonly SPIType PolicyAdherence = new PolicyAdherenceType();
-    public static readonly SPIType DocumentationCurrency = new DocumentationCurrencyType();
+    public static readonly SMSSafetyPerformanceIndicatorType RegulatoryCompliance = new RegulatoryComplianceType();
+    public static readonly SMSSafetyPerformanceIndicatorType PolicyAdherence = new PolicyAdherenceType();
+    public static readonly SMSSafetyPerformanceIndicatorType DocumentationCurrency = new DocumentationCurrencyType();
 
     #endregion
 
     #region Implementations
 
     // Leading Indicators
-    private sealed class HazardReportRateType : SPIType
+    private sealed class HazardReportRateType : SMSSafetyPerformanceIndicatorType
     {
         public HazardReportRateType() : base("HAZARD_REPORT_RATE", "Hazard Report Rate",
             "Number of hazard reports submitted per period", "Leading")
         { }
     }
 
-    private sealed class TrainingCompletionRateType : SPIType
+    private sealed class TrainingCompletionRateType : SMSSafetyPerformanceIndicatorType
     {
         public TrainingCompletionRateType() : base("TRAINING_COMPLETION_RATE", "Training Completion Rate",
             "Percentage of required safety training completed on time", "Leading")
         { }
     }
 
-    private sealed class AuditComplianceRateType : SPIType
+    private sealed class AuditComplianceRateType : SMSSafetyPerformanceIndicatorType
     {
         public AuditComplianceRateType() : base("AUDIT_COMPLIANCE_RATE", "Audit Compliance Rate",
             "Percentage of audit requirements met during inspections", "Leading")
         { }
     }
 
-    private sealed class SafetyMeetingAttendanceType : SPIType
+    private sealed class SafetyMeetingAttendanceType : SMSSafetyPerformanceIndicatorType
     {
         public SafetyMeetingAttendanceType() : base("SAFETY_MEETING_ATTENDANCE", "Safety Meeting Attendance",
             "Percentage attendance at safety committee meetings", "Leading")
         { }
     }
 
-    private sealed class MitigationImplementationRateType : SPIType
+    private sealed class MitigationImplementationRateType : SMSSafetyPerformanceIndicatorType
     {
         public MitigationImplementationRateType() : base("MITIGATION_IMPLEMENTATION_RATE", "Mitigation Implementation Rate",
             "Percentage of planned mitigations implemented on schedule", "Leading")
@@ -92,35 +92,35 @@ public abstract class SPIType : BaseEnum<SPIType>
     }
 
     // Lagging Indicators
-    private sealed class IncidentRateType : SPIType
+    private sealed class IncidentRateType : SMSSafetyPerformanceIndicatorType
     {
         public IncidentRateType() : base("INCIDENT_RATE", "Incident Rate",
             "Number of safety incidents per period", "Lagging")
         { }
     }
 
-    private sealed class AccidentRateType : SPIType
+    private sealed class AccidentRateType : SMSSafetyPerformanceIndicatorType
     {
         public AccidentRateType() : base("ACCIDENT_RATE", "Accident Rate",
             "Number of accidents per period", "Lagging")
         { }
     }
 
-    private sealed class NearMissRateType : SPIType
+    private sealed class NearMissRateType : SMSSafetyPerformanceIndicatorType
     {
         public NearMissRateType() : base("NEAR_MISS_RATE", "Near Miss Rate",
             "Number of near miss events per period", "Lagging")
         { }
     }
 
-    private sealed class RegulatoryViolationsType : SPIType
+    private sealed class RegulatoryViolationsType : SMSSafetyPerformanceIndicatorType
     {
         public RegulatoryViolationsType() : base("REGULATORY_VIOLATIONS", "Regulatory Violations",
             "Number of regulatory violations identified", "Lagging")
         { }
     }
 
-    private sealed class WorkplaceSafetyIncidentsType : SPIType
+    private sealed class WorkplaceSafetyIncidentsType : SMSSafetyPerformanceIndicatorType
     {
         public WorkplaceSafetyIncidentsType() : base("WORKPLACE_SAFETY_INCIDENTS", "Workplace Safety Incidents",
             "Number of workplace safety incidents", "Lagging")
@@ -128,28 +128,28 @@ public abstract class SPIType : BaseEnum<SPIType>
     }
 
     // Process Indicators
-    private sealed class CorrectiveActionClosureType : SPIType
+    private sealed class CorrectiveActionClosureType : SMSSafetyPerformanceIndicatorType
     {
         public CorrectiveActionClosureType() : base("CORRECTIVE_ACTION_CLOSURE", "Corrective Action Closure Rate",
             "Percentage of corrective actions closed on time", "Process")
         { }
     }
 
-    private sealed class RiskAssessmentCompletionType : SPIType
+    private sealed class RiskAssessmentCompletionType : SMSSafetyPerformanceIndicatorType
     {
         public RiskAssessmentCompletionType() : base("RISK_ASSESSMENT_COMPLETION", "Risk Assessment Completion Rate",
             "Percentage of risk assessments completed within timeline", "Process")
         { }
     }
 
-    private sealed class InvestigationTimelinessType : SPIType
+    private sealed class InvestigationTimelinessType : SMSSafetyPerformanceIndicatorType
     {
         public InvestigationTimelinessType() : base("INVESTIGATION_TIMELINESS", "Investigation Timeliness",
             "Average days to complete safety investigations", "Process")
         { }
     }
 
-    private sealed class SystemEffectivenessType : SPIType
+    private sealed class SystemEffectivenessType : SMSSafetyPerformanceIndicatorType
     {
         public SystemEffectivenessType() : base("SYSTEM_EFFECTIVENESS", "System Effectiveness Score",
             "Overall effectiveness rating of SMS implementation", "Process")
@@ -157,21 +157,21 @@ public abstract class SPIType : BaseEnum<SPIType>
     }
 
     // Compliance Indicators
-    private sealed class RegulatoryComplianceType : SPIType
+    private sealed class RegulatoryComplianceType : SMSSafetyPerformanceIndicatorType
     {
         public RegulatoryComplianceType() : base("REGULATORY_COMPLIANCE", "Regulatory Compliance Rate",
             "Percentage compliance with 14 CFR Part 139 requirements", "Compliance")
         { }
     }
 
-    private sealed class PolicyAdherenceType : SPIType
+    private sealed class PolicyAdherenceType : SMSSafetyPerformanceIndicatorType
     {
         public PolicyAdherenceType() : base("POLICY_ADHERENCE", "Policy Adherence Rate",
             "Percentage adherence to safety policies and procedures", "Compliance")
         { }
     }
 
-    private sealed class DocumentationCurrencyType : SPIType
+    private sealed class DocumentationCurrencyType : SMSSafetyPerformanceIndicatorType
     {
         public DocumentationCurrencyType() : base("DOCUMENTATION_CURRENCY", "Documentation Currency Rate",
             "Percentage of safety documentation that is current", "Compliance")
@@ -180,17 +180,17 @@ public abstract class SPIType : BaseEnum<SPIType>
 
     #endregion
 
-    public static IEnumerable<SPIType> GetByCategory(string category)
+    public static IEnumerable<SMSSafetyPerformanceIndicatorType> GetByCategory(string category)
     {
         return GetAllValues().Where(spi => string.Equals(spi.Category, category, StringComparison.OrdinalIgnoreCase));
     }
 
-    public static IEnumerable<SPIType> GetAllValues()
+    public static IEnumerable<SMSSafetyPerformanceIndicatorType> GetAllValues()
     {
-        return typeof(SPIType)
+        return typeof(SMSSafetyPerformanceIndicatorType)
             .GetFields(BindingFlags.Public | BindingFlags.Static | BindingFlags.DeclaredOnly)
-            .Where(f => f.FieldType == typeof(SPIType))
-            .Select(f => (SPIType)f.GetValue(null)!)
+            .Where(f => f.FieldType == typeof(SMSSafetyPerformanceIndicatorType))
+            .Select(f => (SMSSafetyPerformanceIndicatorType)f.GetValue(null)!)
             .Where(spi => spi != null);
     }
 

@@ -343,8 +343,8 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
             var spi = existingResult.Value;
 
             // Map string values to enum types
-            var spiType = SPIType.GetAllValues().FirstOrDefault(t =>
-                t.Value.Equals(indicatorType, StringComparison.OrdinalIgnoreCase)) ?? SPIType.IncidentRate;
+            var spiType = SMSSafetyPerformanceIndicatorType.GetAllValues().FirstOrDefault(t =>
+                t.Value.Equals(indicatorType, StringComparison.OrdinalIgnoreCase)) ?? SMSSafetyPerformanceIndicatorType.IncidentRate;
 
             var frequency = SPIMeasurementFrequency.GetAllValues().FirstOrDefault(f =>
                 f.Value.Equals(measurementFrequency, StringComparison.OrdinalIgnoreCase)) ?? SPIMeasurementFrequency.Monthly;

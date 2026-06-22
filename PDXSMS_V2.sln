@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 18
-VisualStudioVersion = 18.6.11819.183 stable
+VisualStudioVersion = 18.6.11819.183
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Application", "Application", "{657FA252-A813-4096-B5BC-736EAB9E1D57}"
 EndProject
@@ -45,6 +45,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Documentation", "Documentat
 		Documentation\PDXSMS_Technical_Architecture_Analysis_Complete_V1.txt = Documentation\PDXSMS_Technical_Architecture_Analysis_Complete_V1.txt
 	EndProjectSection
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{6E2561A6-A9A0-8B76-749F-D9DB18D15A3F}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -71,6 +73,10 @@ Global
 		{6C97EC26-5E32-48D6-8AF0-11D25218BAAB}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6C97EC26-5E32-48D6-8AF0-11D25218BAAB}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6C97EC26-5E32-48D6-8AF0-11D25218BAAB}.Release|Any CPU.Build.0 = Release|Any CPU
+		{6E2561A6-A9A0-8B76-749F-D9DB18D15A3F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{6E2561A6-A9A0-8B76-749F-D9DB18D15A3F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{6E2561A6-A9A0-8B76-749F-D9DB18D15A3F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{6E2561A6-A9A0-8B76-749F-D9DB18D15A3F}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -88,6 +94,7 @@ Global
 		{6C97EC26-5E32-48D6-8AF0-11D25218BAAB} = {67E0A2F5-DB99-49DA-98DF-49247404EB91}
 		{AE0EC883-6738-4E77-A41B-FA0E5DBF469C} = {67E0A2F5-DB99-49DA-98DF-49247404EB91}
 		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {69E1C783-EE49-4422-B627-0B542F4508D8}
+		{6E2561A6-A9A0-8B76-749F-D9DB18D15A3F} = {CB63A337-2B2D-4C14-9BE8-C62B3E52089D}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {FA00CD6C-50A6-478F-927F-B9E1A96A2D14}

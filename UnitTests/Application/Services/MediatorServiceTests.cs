@@ -55,7 +55,7 @@ public class MediatorServiceTests : ApplicationTestBase
     public void ServiceProvider_ShouldResolveMediator()
     {
         // Arrange & Act
-        var mediator = ServiceProvider.GetService<IMediator>();
+        var mediator = ServiceProvider.GetService<IBaseMediator>();
 
         // Assert
         mediator.Should().NotBeNull();
@@ -65,8 +65,8 @@ public class MediatorServiceTests : ApplicationTestBase
     public void ServiceProvider_ShouldProvideConsistentMediatorInstance()
     {
         // Arrange
-        var mediator1 = ServiceProvider.GetService<IMediator>();
-        var mediator2 = ServiceProvider.GetService<IMediator>();
+        var mediator1 = ServiceProvider.GetService<IBaseMediator>();
+        var mediator2 = ServiceProvider.GetService<IBaseMediator>();
 
         // Act & Assert
         mediator1.Should().NotBeNull();
@@ -83,7 +83,7 @@ public class MediatorServiceTests : ApplicationTestBase
     {
         // Arrange & Act
         var stopwatch = Stopwatch.StartNew();
-        var mediator = ServiceProvider.GetService<IMediator>();
+        var mediator = ServiceProvider.GetService<IBaseMediator>();
         stopwatch.Stop();
 
         // Assert
@@ -99,7 +99,7 @@ public class MediatorServiceTests : ApplicationTestBase
     public void Mediator_ShouldImplementIMediator()
     {
         // Act & Assert
-        Mediator.Should().BeAssignableTo<IMediator>();
+        Mediator.Should().BeAssignableTo<IBaseMediator>();
     }
 
     [Fact]

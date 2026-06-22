@@ -73,7 +73,7 @@ public class BasicServiceTests : ApplicationTestBase
     public void MediatorService_ShouldImplementInterface()
     {
         // Act & Assert
-        Mediator.Should().BeAssignableTo<IMediator>();
+        Mediator.Should().BeAssignableTo<IBaseMediator>();
     }
 
     #endregion
@@ -221,7 +221,7 @@ public class BasicServiceTests : ApplicationTestBase
         // Act & Assert - These operations should not throw
         var config = ServiceProvider.GetService<Microsoft.Extensions.Configuration.IConfiguration>();
         var logger = ServiceProvider.GetService<ILogger<BasicServiceTests>>();
-        var mediator = ServiceProvider.GetService<IMediator>();
+        var mediator = ServiceProvider.GetService<IBaseMediator>();
 
         config.Should().NotBeNull();
         logger.Should().NotBeNull();
@@ -242,7 +242,7 @@ public class BasicServiceTests : ApplicationTestBase
         {
             var config = ServiceProvider.GetService<Microsoft.Extensions.Configuration.IConfiguration>();
             var logger = ServiceProvider.GetService<ILogger<BasicServiceTests>>();
-            var mediator = ServiceProvider.GetService<IMediator>();
+            var mediator = ServiceProvider.GetService<IBaseMediator>();
             
             config.Should().NotBeNull();
             logger.Should().NotBeNull();

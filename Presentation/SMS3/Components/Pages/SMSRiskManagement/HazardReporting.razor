@@ -361,29 +361,32 @@ else
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             <RadzenColumn Size="12" class="rz-col-2">
                                 
-                                <RadzenCard >
-                                    <RadzenFormField Text="Hazard Description *" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                        <RadzenHtmlEditor @bind-Value="@HazardReport.Description" Class="hazard-description-editor" Style="width: 900px; height: 260px;" >
-                                            <RadzenHtmlEditorUndo />
-                                            <RadzenHtmlEditorRedo />
-                                            <RadzenHtmlEditorSeparator />
-                                            <RadzenHtmlEditorBold />
-                                            <RadzenHtmlEditorItalic />
-                                            <RadzenHtmlEditorUnderline />
-                                            <RadzenHtmlEditorStrikeThrough />
-                                            <RadzenHtmlEditorSeparator />
-                                            <RadzenHtmlEditorColor />
-                                            <RadzenHtmlEditorBackground />
-                                            <RadzenHtmlEditorRemoveFormat />
-                                        </RadzenHtmlEditor>
+                                <RadzenCard>
+                                    <RadzenFormField Text="Hazard Description *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                        <RadzenStack Gap="0.75rem" Class="rz-py-2 rz-px-2 rz-pb-2">
+                                            <RadzenHtmlEditor @bind-Value="@HazardReport.Description" Class="hazard-description-editor" Style="width: 100%; height: 260px;">
+                                                <RadzenHtmlEditorUndo />
+                                                <RadzenHtmlEditorRedo />
+                                                <RadzenHtmlEditorSeparator />
+                                                <RadzenHtmlEditorBold />
+                                                <RadzenHtmlEditorItalic />
+                                                <RadzenHtmlEditorUnderline />
+                                                <RadzenHtmlEditorStrikeThrough />
+                                                <RadzenHtmlEditorSeparator />
+                                                <RadzenHtmlEditorColor />
+                                                <RadzenHtmlEditorBackground />
+                                                <RadzenHtmlEditorRemoveFormat />
+                                            </RadzenHtmlEditor>
+
+                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Class="rz-mt-1">
+                                                <RadzenRequiredValidator Component="Description" Text="Description is required" />
+                                                <RadzenText TextStyle="TextStyle.Caption"
+                                                            Class="@(DescriptionCharacterCount > 1950 ? "rz-color-danger" : DescriptionCharacterCount > 1800 ? "rz-color-warning" : "rz-color-base-500")">
+                                                    @DescriptionCharacterCount/2000 characters
+                                                </RadzenText>
+                                            </RadzenStack>
+                                        </RadzenStack>
                                     </RadzenFormField>
-                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Class="rz-mt-1">
-                                        <RadzenRequiredValidator Component="Description" Text="Description is required" />
-                                        <RadzenText TextStyle="TextStyle.Caption" 
-                                                  Class="@(DescriptionCharacterCount > 1950 ? "rz-color-danger" : DescriptionCharacterCount > 1800 ? "rz-color-warning" : "rz-color-base-500")">
-                                            @DescriptionCharacterCount/2000 characters
-                                        </RadzenText>
-                                    </RadzenStack>
                                 </RadzenCard>
                             </RadzenColumn>
                         </RadzenRow>
@@ -393,56 +396,50 @@ else
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             <RadzenColumn Size="12" class="rz-col-2">
                                 <RadzenCard class="@((IsEditMode && RequiresLocationValidation) ? "default-validation-alert" : string.Empty)">
-                                    <RadzenFieldset Text="" Style="margin-bottom: 1rem;" >
-                            <div class="location-row rz-mt-1">
-                                <div class="location-button">
-                                    <RadzenButton ButtonStyle="@(IsEditMode && RequiresLocationValidation ? ButtonStyle.Danger : ButtonStyle.Primary)"
-                                                  Click="OpenMapSelector"
-                                                  Text="@LocationSelectionButtonText"
-                                                  Icon="map"
-                                                  Size="ButtonSize.Small"
-                                                  Style="width: 100%; height: 42px;" 
-                                                  class="@(RequiresLocationValidation ? "default-validation-dropdown" : string.Empty)"
-                                                  />
-                                </div>
+                                    <RadzenFormField Text="Hazard Location" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                        <RadzenStack Gap="0.75rem" Class="rz-py-2 rz-px-2 rz-pb-2 hazard-location-grid">
+                                        <RadzenRow Gap="1rem" AlignItems="AlignItems.End">
+                                            <RadzenColumn Size="12" SizeMD="3" Class="location-action-col">
+                                                <RadzenButton ButtonStyle="@(IsEditMode && RequiresLocationValidation ? ButtonStyle.Danger : ButtonStyle.Primary)"
+                                                              Click="OpenMapSelector"
+                                                              Text="@LocationSelectionButtonText"
+                                                              Icon="map"
+                                                              Size="ButtonSize.Medium"
+                                                              Style="width: 100%; height: 42px;"
+                                                              class="@(RequiresLocationValidation ? "default-validation-dropdown" : string.Empty)" />
+                                            </RadzenColumn>
 
-                                <div class="location-coordinate">
-                                    <RadzenFormField Text="Latitude" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                        <div class="@(RequiresLocationValidation ? "default-validation-dropdown" : string.Empty)">
-                                        
-                                        <RadzenTextBox Value="@SelectedLatitudeText"
-                                                       ReadOnly="true"
-                                                       Placeholder="Select location"
-                                                       Style="width: 100%;" />
-                                        </div>
+                                            <RadzenColumn Size="12" SizeMD="2" Class="location-field-col">
+                                                <RadzenFormField Text="Latitude" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                                    <RadzenTextBox Value="@SelectedLatitudeText"
+                                                                   ReadOnly="true"
+                                                                   Placeholder=""
+                                                                   class="@(RequiresLocationValidation ? "default-validation-dropdown" : string.Empty)"
+                                                                   Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
 
+                                            <RadzenColumn Size="12" SizeMD="2" Class="location-field-col">
+                                                <RadzenFormField Text="Longitude" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                                    <RadzenTextBox Value="@SelectedLongitudeText"
+                                                                   ReadOnly="true"
+                                                                   Placeholder=""
+                                                                   class="@(RequiresLocationValidation ? "default-validation-dropdown" : string.Empty)"
+                                                                   Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+
+                                            <RadzenColumn Size="12" SizeMD="5" Class="location-field-col">
+                                                <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                                    <RadzenTextBox @bind-Value="@SelectedLocationDescription"
+                                                                   Placeholder="Optional description (e.g., 'Terminal A, Gate 5, near security checkpoint')"
+                                                                   class="@(RequiresLocationValidation ? "default-validation-dropdown" : string.Empty)"
+                                                                   Style="width: 100%;" />
+                                                </RadzenFormField>
+                                            </RadzenColumn>
+                                        </RadzenRow>
+                                        </RadzenStack>
                                     </RadzenFormField>
-                                </div>
-
-                                <div class="location-coordinate">
-                                    <RadzenFormField Text="Longitude" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                        <div class="@(RequiresLocationValidation ? "default-validation-dropdown" : string.Empty)">
-                                            <RadzenTextBox Value="@SelectedLongitudeText"
-                                                       ReadOnly="true"
-                                                       Placeholder="Select location"
-                                                       Style="width: 100%;" />
-                                        </div> 
-                                        
-                                        
-                                    </RadzenFormField>
-                                </div>
-
-                                <div class="location-description">
-                                    <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
-                                        <div class="@(RequiresLocationValidation ? "default-validation-dropdown" : string.Empty)">
-                                        <RadzenTextBox @bind-Value="@LocationDescription"
-                                                       Placeholder="Optional description (e.g., 'Terminal A, Gate 5, near security checkpoint')"
-                                                       Style="width: 100%;" />
-                                        </div>
-                                    </RadzenFormField>
-                                </div>
-                            </div>
-                        </RadzenFieldset>
                                 </RadzenCard>
                             </RadzenColumn>
                         </RadzenRow>
@@ -451,59 +448,64 @@ else
                         <!-- Row 5: Supporting Documents @* Change=@OnInputFileChange  *@-->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             <RadzenColumn Size="12">
-                                <RadzenFormField Text="Supporting Documents" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
-                                    <RadzenUpload Multiple="true"
-                                                  Change=@OnInputFileChange
-                                        Style="width: 100%;padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;"
-                                        Accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
-                                        MaxFileSize="10485760"/>
-                                            
-                                </RadzenFormField>
-                                <br />
-                                <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-base-500 rz-mt-1">
-                                    <RadzenIcon Icon="attach_file" Style="font-size: 0.9rem;" /> 
-                                    Supported: JPG, PNG, PDF, DOC, DOCX, TXT (Max 10MB per file)
-                                    
-                                </RadzenText>
-                                @if (AttachedFiles.Any())
-                                {
-                                    
-                                    <RadzenStack Gap="1rem">
-                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                                <strong>Queued files (@AttachedFiles.Count):</strong>
-                                                <RadzenButton ButtonStyle="ButtonStyle.Base" 
-                                                            Variant="Variant.Text"
-                                                            Icon="clear_all" 
-                                                            Text="Clear All"
-                                                            Size="ButtonSize.ExtraSmall"
-                                                            Click="ClearAllFiles" />
-                                            </RadzenStack>
-                                            
-                                            <RadzenStack Gap="0.5rem">
-                                                @for (int i = 0; i < AttachedFiles.Count; i++)
-                                                {
-                                                    var file = AttachedFiles[i];
-                                                    var fileIndex = i;
-                                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" 
-                                                               Style="padding: 0.25rem 0.5rem; border: 1px solid #dee2e6; border-radius: 0.25rem; background-color: #f8f9fa;">
-                                                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                                                            <RadzenIcon Icon="attach_file" Style="color: var(--sms-blue-dark-bold); font-size: 0.9rem;" />
-                                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                                                @file.FileName (@file.SizeDisplay)
-                                                            </RadzenText>
-                                                        </RadzenStack>
-                                                        <RadzenButton ButtonStyle="ButtonStyle.Danger" 
-                                                                    Variant="Variant.Text"
-                                                                    Icon="close" 
-                                                                    Size="ButtonSize.ExtraSmall"
-                                                                    Click="@(() => RemoveFile(fileIndex))"
-                                                                    Text="" />
+                                <RadzenCard>
+                                    <RadzenFormField Text="Supporting Documents" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                        <RadzenStack Gap="0.75rem" Class="rz-py-2 rz-px-2 rz-pb-2">
+                                            <RadzenUpload Multiple="true"
+                                                          Change=@OnInputFileChange
+                                                          ChooseText="📄 Choose Files"
+                                                          Class="hazard-upload"
+                                                          Style="width: 100%;padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;"
+                                                          Accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
+                                                          MaxFileSize="10485760" />
+
+                                            <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-base-500">
+                                                <RadzenIcon Icon="attach_file" Style="font-size: 0.9rem;" />
+                                                Supported: JPG, PNG, PDF, DOC, DOCX, TXT (Max 10MB per file)
+                                            </RadzenText>
+                                            <!--Supporting Documents Queue-->
+                                            @if (AttachedFiles.Any())
+                                            {
+                                                <RadzenStack Gap="1rem" Class="rz-px-2 rz-pb-2">
+                                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                                        <strong>Queued files (@AttachedFiles.Count):</strong>
+                                                        <RadzenButton ButtonStyle="ButtonStyle.Base"
+                                                                      Variant="Variant.Text"
+                                                                      Icon="clear_all"
+                                                                      Text="Clear All"
+                                                                      Size="ButtonSize.ExtraSmall"
+                                                                      Click="ClearAllFiles" />
                                                     </RadzenStack>
-                                                }
-                                            </RadzenStack>
+
+                                                    <RadzenStack Gap="0.5rem">
+                                                        @for (int i = 0; i < AttachedFiles.Count; i++)
+                                                        {
+                                                            var file = AttachedFiles[i];
+                                                            var fileIndex = i;
+                                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center"
+                                                                         Style="padding: 0.25rem 0.5rem; border: 1px solid #dee2e6; border-radius: 0.25rem; background-color: #f8f9fa;">
+                                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                                                    <RadzenIcon Icon="attach_file" Style="color: var(--sms-blue-dark-bold); font-size: 0.9rem;" />
+                                                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                                                        @file.FileName (@file.SizeDisplay)
+                                                                    </RadzenText>
+                                                                </RadzenStack>
+                                                                <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                                                              Variant="Variant.Text"
+                                                                              Icon="close"
+                                                                              Size="ButtonSize.ExtraSmall"
+                                                                              Click="@(() => RemoveFile(fileIndex))"
+                                                                              Text="" />
+                                                            </RadzenStack>
+                                                        }
+                                                    </RadzenStack>
+                                                </RadzenStack>
+                                            }
                                         </RadzenStack>
-                                    
-                                }
+                                    </RadzenFormField>
+                                </RadzenCard>
+                                
+                                
                             </RadzenColumn>
                         </RadzenRow>
 
@@ -685,7 +687,7 @@ else
 
                                 <div class="location-description">
                                 <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
-                                        <RadzenTextBox @bind-Value="@LocationDescription"
+                                        <RadzenTextBox @bind-Value="@SelectedLocationDescription"
                                                        Placeholder="Optional description (e.g., 'Terminal A, Gate 5, near security checkpoint')"
                                                        ReadOnly="@IsMapReadOnlyMode"
                                                        Style="width: 100%;" />
@@ -696,7 +698,7 @@ else
                         <!-- Current Selection Display -->
                                                 
                         <div class="d-flex justify-content-end gap-2">
-                            <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger" 
                                         Text="Cancel" 
                                         Icon="close"
                                         Size="ButtonSize.Medium"
@@ -748,23 +750,13 @@ else
                             </h6> 
                             <hr />*@
                                 <RadzenRow Gap="1rem">
-                                    @* <RadzenColumn Size="5" SizeLG="5">
-                                        <RadzenStack Gap="0.25rem" AlignItems="AlignItems.Start">
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Submitted By: </strong>@(HazardReport.SubmittedBy ?? "N/A")</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Submitting Department: </strong>@GetDepartmentDisplay(HazardReport.SubmittingDepartment ?? "N/A")</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Submitted On: </strong>@HazardReport.SubmittedDate.ToString("MM/dd/yyyy h:mm tt")</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Incident Date: </strong>@(HazardReport.IncidentDateTime.ToString("MM/dd/yyyy h:mm tt") ?? "N/A")</RadzenText>
-                                        </RadzenStack>
-                                    </RadzenColumn> *@
-
-                                    <RadzenColumn Size="6" SizeLG="6">
+                                   <RadzenColumn Size="6" SizeLG="6">
                                         <RadzenStack Gap="0.25rem">
                                             <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Hazard Category: </strong>@GetHazardCategoryDisplay(HazardReport.HazardCategory)</RadzenText>
                                             <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Hazard Type: </strong>@GetHazardTypeDisplay(HazardReport.HazardType)</RadzenText>
-                                            @* <RadzenText TextStyle="TextStyle.Body2"> <strong>Anonymous: </strong>@(HazardReport.IsAnonymous ? "Yes" : "No")</RadzenText> *@
                                             <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Hazard Latitude: </strong>@GetHazardTypeDisplay(SelectedLatitudeText)</RadzenText>
                                             <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Hazard Longitude: </strong>@GetHazardTypeDisplay(SelectedLongitudeText)</RadzenText>
-
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Hazard Longitude: </strong>@GetHazardTypeDisplay(SelectedLocationDescription)</RadzenText>
 
                                         </RadzenStack>
                                     </RadzenColumn>
@@ -964,9 +956,9 @@ else
 
 /* Hazard description editor sizing/scroll behavior */
 .hazard-description-editor {
-    width: 900px !important;
-    min-width: 900px !important;
-    max-width: 900px !important;
+    width: 100% !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
     height: 260px !important;
 }
 
@@ -1071,6 +1063,51 @@ else
         flex: 1 !important;
         min-width: 0 !important;
     }
+
+/* Supporting Documents upload button sizing */
+.hazard-upload .rz-fileupload-choose {
+    min-height: 42px !important;
+    padding: 0.5rem 1rem !important;
+    font-size: 0.875rem !important;
+    font-weight: 500 !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.4rem !important;
+    text-align: center !important;
+    background-color: var(--rz-primary) !important;
+    border-color: var(--rz-primary) !important;
+    color: #fff !important;
+}
+
+
+.hazard-upload .rz-fileupload-choose:hover,
+.hazard-upload .rz-fileupload-choose:focus {
+    background-color: var(--rz-primary-dark) !important;
+    border-color: var(--rz-primary-dark) !important;
+}
+
+/* Hide Radzen's built-in selected file display; queue list below is the single source of truth */
+.hazard-upload .rz-fileupload-content,
+.hazard-upload .rz-fileupload-files {
+    display: none !important;
+}
+
+/* Keep in-form Hazard Location row aligned with map modal field sizing */
+.hazard-location-grid .rz-textbox,
+.hazard-location-grid .rz-button {
+    height: 42px !important;
+}
+
+.hazard-location-grid .location-action-col,
+.hazard-location-grid .location-field-col {
+    display: flex;
+    align-items: flex-end;
+}
+
+.hazard-location-grid .location-action-col {
+    padding-left: 0.5rem;
+}
 </style>
 
 <!-- Leaflet.js CSS -->

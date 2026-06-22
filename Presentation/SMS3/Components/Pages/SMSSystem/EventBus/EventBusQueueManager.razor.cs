@@ -628,9 +628,9 @@ public partial class EventBusQueueManager
     {
         return category switch
         {
-            EventCategory.DomainEvent => BadgeStyle.Primary,
-            EventCategory.IntegrationEvent => BadgeStyle.Warning,
-            EventCategory.UIEvent => BadgeStyle.Base,
+            var c when c == EventCategory.DomainEvent => BadgeStyle.Primary,
+            var c when c == EventCategory.IntegrationEvent => BadgeStyle.Warning,
+            var c when c == EventCategory.UIEvent => BadgeStyle.Base,
             _ => BadgeStyle.Light
         };
     }

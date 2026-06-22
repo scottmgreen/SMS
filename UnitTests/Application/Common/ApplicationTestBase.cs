@@ -25,13 +25,13 @@ namespace PDXSMS_UnitTests.Application.Common;
 public abstract class ApplicationTestBase : IDisposable
 {
     protected readonly ServiceProvider ServiceProvider;
-    protected readonly IMediator Mediator;
+    protected readonly IBaseMediator Mediator;
     protected readonly ILogger<ApplicationTestBase> Logger;
 
     protected ApplicationTestBase()
     {
         ServiceProvider = BuildServiceProvider();
-        Mediator = ServiceProvider.GetRequiredService<IMediator>();
+        Mediator = ServiceProvider.GetRequiredService<IBaseMediator>();
         Logger = ServiceProvider.GetRequiredService<ILogger<ApplicationTestBase>>();
     }
 
@@ -95,7 +95,7 @@ public abstract class ApplicationTestBase : IDisposable
     private static void RegisterCoreApplicationServices(IServiceCollection services)
     {
         // Register the core mediator service
-        services.AddTransient<IMediator, SMS_Application.Services.Mediator>();
+        services.AddTransient<IBaseMediator, SMS_Application.Services.Mediator>();
     }
 
     #region Mock Service Factories

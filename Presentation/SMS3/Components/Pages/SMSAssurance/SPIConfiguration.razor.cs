@@ -35,7 +35,7 @@ public partial class SPIConfiguration
     private bool _isLoading = true;
 
     // Dropdown data
-    private List<SPIType> _availableTypes = new();
+    private List<SMSSafetyPerformanceIndicatorType> _availableTypes = new();
     private List<SPIStatus> _availableStatuses = new();
     private List<SPIMeasurementFrequency> _availableFrequencies = new();
     private List<string> _availableDepartments = new();
@@ -72,7 +72,7 @@ public partial class SPIConfiguration
     private async Task LoadDropdownData()
     {
         // Load SPI types
-        _availableTypes = SPIType.GetAllValues().ToList();
+        _availableTypes = SMSSafetyPerformanceIndicatorType.GetAllValues().ToList();
 
         // Load statuses using centralized helper
         _availableStatuses = DropdownHelper.GetSPIStatusOptions();
@@ -166,7 +166,7 @@ public partial class SPIConfiguration
             new SafetyPerformanceIndicatorID("PI-0000"),
             "New SPI",
             "Safety Performance Indicator",
-            SPIType.IncidentRate,
+            SMSSafetyPerformanceIndicatorType.IncidentRate,
             "SYSTEM"
         );
 
@@ -451,7 +451,7 @@ public partial class SPIConfiguration
         };
     }
 
-    private BadgeStyle GetTypeBadgeStyle(SPIType type)
+    private BadgeStyle GetTypeBadgeStyle(SMSSafetyPerformanceIndicatorType type)
     {
         return type.Category switch
         {
@@ -463,7 +463,7 @@ public partial class SPIConfiguration
         };
     }
 
-    private string GetTypeDisplayName(SPIType type)
+    private string GetTypeDisplayName(SMSSafetyPerformanceIndicatorType type)
     {
         return $"{type.Name} ({type.Category})";
     }

@@ -34,6 +34,7 @@ public class EventQueueService : IEventQueueService
     private readonly ILogger<EventQueueService> _logger;
     private readonly IBaseEventBus _eventBus;
     private readonly IEventQueueDataService _eventQueueDataService;
+    private readonly QueuedEventTypeRegistry _queuedEventTypeRegistry;
     private static readonly JsonSerializerOptions EventJsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
@@ -42,11 +43,13 @@ public class EventQueueService : IEventQueueService
     public EventQueueService(
         ILogger<EventQueueService> logger,
         IBaseEventBus eventBus,
-        IEventQueueDataService eventQueueDataService)
+        IEventQueueDataService eventQueueDataService,
+        QueuedEventTypeRegistry queuedEventTypeRegistry)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _eventQueueDataService = eventQueueDataService ?? throw new ArgumentNullException(nameof(eventQueueDataService));
+        _queuedEventTypeRegistry = queuedEventTypeRegistry ?? throw new ArgumentNullException(nameof(queuedEventTypeRegistry));
     }
 
     /// <summary>
@@ -280,23 +283,21 @@ public class EventQueueService : IEventQueueService
             Result executionResult;
 
             // Execute based on event category
-            switch (queuedEvent.EventCategory)
+            if (queuedEvent.EventCategory == EventCategory.DomainEvent)
             {
-                case EventCategory.DomainEvent:
-                    executionResult = await ExecuteDomainEvent(queuedEvent);
-                    break;
-
-                case EventCategory.IntegrationEvent:
-                    executionResult = await ExecuteIntegrationEvent(queuedEvent);
-                    break;
-
-                case EventCategory.UIEvent:
-                    executionResult = await ExecuteUIEvent(queuedEvent);
-                    break;
-
-                default:
-                    executionResult = Result.Failure(new Error("QUEUE_UNKNOWN_TYPE", $"Unknown event type: {queuedEvent.EventCategory}"));
-                    break;
+                executionResult = await ExecuteDomainEvent(queuedEvent);
+            }
+            else if (queuedEvent.EventCategory == EventCategory.IntegrationEvent)
+            {
+                executionResult = await ExecuteIntegrationEvent(queuedEvent);
+            }
+            else if (queuedEvent.EventCategory == EventCategory.UIEvent)
+            {
+                executionResult = await ExecuteUIEvent(queuedEvent);
+            }
+            else
+            {
+                executionResult = Result.Failure(new Error("QUEUE_UNKNOWN_TYPE", $"Unknown event type: {queuedEvent.EventCategory}"));
             }
 
             // Update event status based on execution result
@@ -480,31 +481,16 @@ public class EventQueueService : IEventQueueService
     /// <summary>
     /// Executes a domain event by reconstructing it from the queued event data and publishing it immediately
     /// </summary>
-    // Generic map from EventType.Value to .NET event type for domain events
-    private static readonly Dictionary<string, Type> DomainEventTypeMap = new()
-    {
-        { SMS_Domain.Enums.EventType.HazardCreated.Value, typeof(SMS_Domain.Events.HazardCreatedEvent) },
-        { SMS_Domain.Enums.EventType.HazardUpdated.Value, typeof(SMS_Domain.Events.HazardUpdatedEvent) },
-        { SMS_Domain.Enums.EventType.HazardDeleted.Value, typeof(SMS_Domain.Events.HazardDeletedEvent) },
-        { SMS_Domain.Enums.EventType.ReportCreated.Value, typeof(SMS_Domain.Events.ReportCreatedEvent) },
-        { SMS_Domain.Enums.EventType.ReportUpdated.Value, typeof(SMS_Domain.Events.ReportUpdatedEvent) },
-        { SMS_Domain.Enums.EventType.ReportClosed.Value, typeof(SMS_Domain.Events.ReportClosedEvent) },
-        { SMS_Domain.Enums.EventType.RiskAssessmentCreated.Value, typeof(SMS_Domain.Events.RiskAssessmentCreatedEvent) },
-        { SMS_Domain.Enums.EventType.RiskAssessmentUpdated.Value, typeof(SMS_Domain.Events.RiskAssessmentUpdatedEvent) },
-        { SMS_Domain.Enums.EventType.MitigationCreated.Value, typeof(SMS_Domain.Events.MitigationCreatedEvent) },
-        { SMS_Domain.Enums.EventType.MitigationApprovalRequested.Value, typeof(SMS_Domain.Events.MitigationApprovalRequestedEvent) },
-        { SMS_Domain.Enums.EventType.MitigationApprovalApproved.Value, typeof(SMS_Domain.Events.MitigationApprovalApprovedEvent) },
-        { SMS_Domain.Enums.EventType.MitigationStatusChanged.Value, typeof(SMS_Domain.Events.MitigationStatusChangedEvent) },
-        // Add more as needed
-    };
     private async Task<Result> ExecuteDomainEvent(QueuedEvent queuedEvent)
     {
         try
         {
             _logger.LogApplicationInformation("[QUEUE] Executing domain event {EventType} (Queue ID: {QueueId})", queuedEvent.EventType, queuedEvent.Id);
 
-            if (!DomainEventTypeMap.TryGetValue(queuedEvent.EventType, out var eventType))
+            if (!_queuedEventTypeRegistry.TryResolveDomainEventType(queuedEvent.EventType, out var eventType))
             {
+                var knownTypes = string.Join(", ", _queuedEventTypeRegistry.GetKnownTypes(EventCategory.DomainEvent).OrderBy(x => x));
+                _logger.LogApplicationWarning("[QUEUE] Unknown domain event type {EventType}. Known domain types: {KnownTypes}", queuedEvent.EventType, knownTypes);
                 return Result.Failure(new Error("UNKNOWN_EVENT_TYPE", $"Unknown domain event type: {queuedEvent.EventType}"));
             }
 
@@ -527,7 +513,8 @@ public class EventQueueService : IEventQueueService
             // 2. Make the generic method for the concrete event type
             var publishMethod = publishMethodDef.MakeGenericMethod(eventType);
 
-            // 3. Invoke with the correct parameters
+            // 3. Invoke with the correct parameters (suppress audit re-persist during replay)
+            using var replayScope = EventDispatchService.BeginQueueReplayScope();
             var task = (Task<Result>)publishMethod.Invoke(_eventBus, new object[] { domainEvent, EventExecutionMode.Immediate, CancellationToken.None });
             var executionResult = await task;
 
@@ -698,26 +685,14 @@ public class EventQueueService : IEventQueueService
     /// <summary>
     /// Executes an integration event by reconstructing it and publishing it immediately
     /// </summary>
-    // Generic map from EventType.Value to .NET event type for integration events
-    private static readonly Dictionary<string, Type> IntegrationEventTypeMap = new()
-    {
-        { SMS_Domain.Enums.EventType.EmailNotification.Value, typeof(SMS_Domain.Events.EmailNotificationEvent) },
-        // Add more integration event types as needed
-    };
-
-    private static readonly Dictionary<string, Type> UIEventTypeMap = new()
-    {
-        { SMS_Domain.Enums.EventType.UINotification.Value, typeof(SMS_Domain.Events.UINotificationEvent) },
-        { SMS_Domain.Events.SPIDashboardRefreshEvent.TypeValue, typeof(SMS_Domain.Events.SPIDashboardRefreshEvent) },
-        { SMS_Domain.Events.Test.TestUIEvent.TypeValue, typeof(SMS_Domain.Events.Test.TestUIEvent) },
-    };
-
     private async Task<Result> ExecuteIntegrationEvent(QueuedEvent queuedEvent)
     {
         try
         {
-            if (!IntegrationEventTypeMap.TryGetValue(queuedEvent.EventType, out var eventType))
+            if (!_queuedEventTypeRegistry.TryResolveIntegrationEventType(queuedEvent.EventType, out var eventType))
             {
+                var knownTypes = string.Join(", ", _queuedEventTypeRegistry.GetKnownTypes(EventCategory.IntegrationEvent).OrderBy(x => x));
+                _logger.LogApplicationWarning("[QUEUE] Unknown integration event type {EventType}. Known integration types: {KnownTypes}", queuedEvent.EventType, knownTypes);
                 return Result.Failure(new Error("UNKNOWN_INTEGRATION_EVENT_TYPE", $"Unknown integration event type: {queuedEvent.EventType}"));
             }
 
@@ -751,8 +726,10 @@ public class EventQueueService : IEventQueueService
     {
         try
         {
-            if (!UIEventTypeMap.TryGetValue(queuedEvent.EventType, out var eventType))
+            if (!_queuedEventTypeRegistry.TryResolveUIEventType(queuedEvent.EventType, out var eventType))
             {
+                var knownTypes = string.Join(", ", _queuedEventTypeRegistry.GetKnownTypes(EventCategory.UIEvent).OrderBy(x => x));
+                _logger.LogApplicationWarning("[QUEUE] Unknown UI event type {EventType}. Known UI types: {KnownTypes}", queuedEvent.EventType, knownTypes);
                 return Result.Failure(new Error("UNKNOWN_UI_EVENT_TYPE", $"Unknown UI event type: {queuedEvent.EventType}"));
             }
 

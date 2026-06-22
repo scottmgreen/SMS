@@ -188,38 +188,36 @@
             {
                 Result result;
 
-                switch (_selectedEventCategory)
+                if (_selectedEventCategory == EventCategory.DomainEvent)
                 {
-                    case EventCategory.DomainEvent:
-                        var domainEvent = new TestDomainEvent(new SMSEventID(Guid.NewGuid().ToString()));
-                        domainEvent.SetEventType(_selectedEventType);
-                        domainEvent.Message = $"{_testMessage} (#{i})";
-                        domainEvent.TestData = new { Index = i, Timestamp = DateTime.UtcNow, Mode = _selectedExecutionMode.ToString() };
-                        result = await EventBus.PublishDomainEventAsync(domainEvent, _selectedExecutionMode);
-                        break;
-
-                    case EventCategory.IntegrationEvent:
-                        var integrationEvent = new TestIntegrationEvent();
-                        integrationEvent.SetEventType(_selectedEventType);
-                        integrationEvent.SetTargetSystem(_targetSystem);
-                        integrationEvent.Message = $"{_testMessage} (#{i})";
-                        integrationEvent.TestData = new { Index = i, Timestamp = DateTime.UtcNow, Mode = _selectedExecutionMode.ToString() };
-                        result = await EventBus.PublishIntegrationEventAsync(integrationEvent, _selectedExecutionMode);
-                        break;
-
-                    case EventCategory.UIEvent:
-                        var uiEvent = new TestUIEvent();
-                        uiEvent.SetEventType(_selectedEventType);
-                        uiEvent.SetTargetComponent(_targetSystem);
-                        uiEvent.Message = $"{_testMessage} (#{i})";
-                        uiEvent.TestData = new { Index = i, Timestamp = DateTime.UtcNow, Mode = _selectedExecutionMode.ToString() };
-                        result = await EventBus.PublishUIEventAsync(uiEvent, _selectedExecutionMode);
-                        break;
-
-                    default:
-                        Logger.LogWarning("Unknown event category: {Category}", _selectedEventCategory);
-                        result = Result.Failure(new SMS_Domain.Common.Error("UNKNOWN_CATEGORY", $"Unknown event category: {_selectedEventCategory}"));
-                        break;
+                    var domainEvent = new TestDomainEvent(new SMSEventID(Guid.NewGuid().ToString()));
+                    domainEvent.SetEventType(_selectedEventType);
+                    domainEvent.Message = $"{_testMessage} (#{i})";
+                    domainEvent.TestData = new { Index = i, Timestamp = DateTime.UtcNow, Mode = _selectedExecutionMode.ToString() };
+                    result = await EventBus.PublishDomainEventAsync(domainEvent, _selectedExecutionMode);
+                }
+                else if (_selectedEventCategory == EventCategory.IntegrationEvent)
+                {
+                    var integrationEvent = new TestIntegrationEvent();
+                    integrationEvent.SetEventType(_selectedEventType);
+                    integrationEvent.SetTargetSystem(_targetSystem);
+                    integrationEvent.Message = $"{_testMessage} (#{i})";
+                    integrationEvent.TestData = new { Index = i, Timestamp = DateTime.UtcNow, Mode = _selectedExecutionMode.ToString() };
+                    result = await EventBus.PublishIntegrationEventAsync(integrationEvent, _selectedExecutionMode);
+                }
+                else if (_selectedEventCategory == EventCategory.UIEvent)
+                {
+                    var uiEvent = new TestUIEvent();
+                    uiEvent.SetEventType(_selectedEventType);
+                    uiEvent.SetTargetComponent(_targetSystem);
+                    uiEvent.Message = $"{_testMessage} (#{i})";
+                    uiEvent.TestData = new { Index = i, Timestamp = DateTime.UtcNow, Mode = _selectedExecutionMode.ToString() };
+                    result = await EventBus.PublishUIEventAsync(uiEvent, _selectedExecutionMode);
+                }
+                else
+                {
+                    Logger.LogWarning("Unknown event category: {Category}", _selectedEventCategory);
+                    result = Result.Failure(new SMS_Domain.Common.Error("UNKNOWN_CATEGORY", $"Unknown event category: {_selectedEventCategory}"));
                 }
 
                 if (result.IsSuccess)
@@ -268,25 +266,38 @@
             _isGenerating = true;
             StateHasChanged();
 
-            var events = category switch
+            (string eventType, string target)[] events;
+            if (category == EventCategory.DomainEvent)
             {
-                EventCategory.DomainEvent => new[] { 
-                    ("UserCreated", "System"), 
-                    ("HazardReported", "System"), 
-                    ("RiskAssessmentCompleted", "System") 
-                },
-                EventCategory.IntegrationEvent => new[] { 
-                    ("EmailNotification", "Email"), 
-                    ("SMSAlert", "SMS"), 
-                    ("ExternalReportSubmission", "ExternalAPI") 
-                },
-                EventCategory.UIEvent => new[] { 
-                    ("DashboardUpdate", "Dashboard"), 
-                    ("NotificationBadgeUpdate", "NotificationCenter"), 
-                    ("TableRefresh", "DataGrid") 
-                },
-                _ => new[] { ("UnknownEvent", "Unknown") }
-            };
+                events =
+                [
+                    ("UserCreated", "System"),
+                    ("HazardReported", "System"),
+                    ("RiskAssessmentCompleted", "System")
+                ];
+            }
+            else if (category == EventCategory.IntegrationEvent)
+            {
+                events =
+                [
+                    ("EmailNotification", "Email"),
+                    ("SMSAlert", "SMS"),
+                    ("ExternalReportSubmission", "ExternalAPI")
+                ];
+            }
+            else if (category == EventCategory.UIEvent)
+            {
+                events =
+                [
+                    ("DashboardUpdate", "Dashboard"),
+                    ("NotificationBadgeUpdate", "NotificationCenter"),
+                    ("TableRefresh", "DataGrid")
+                ];
+            }
+            else
+            {
+                events = [("UnknownEvent", "Unknown")];
+            }
 
             var successCount = 0;
 
@@ -294,37 +305,35 @@
             {
                 Result result;
 
-                switch (category)
+                if (category == EventCategory.DomainEvent)
                 {
-                    case EventCategory.DomainEvent:
-                        var domainEvent = new TestDomainEvent(new SMSEventID(Guid.NewGuid().ToString()));
-                        domainEvent.SetEventType(eventType);
-                        domainEvent.Message = $"Sample {category} event: {eventType}";
-                        domainEvent.TestData = new { Category = category.ToString(), SampleData = true, Generated = DateTime.UtcNow };
-                        result = await EventBus.PublishDomainEventAsync(domainEvent, EventExecutionMode.Manual);
-                        break;
-
-                    case EventCategory.IntegrationEvent:
-                        var integrationEvent = new TestIntegrationEvent();
-                        integrationEvent.SetEventType(eventType);
-                        integrationEvent.SetTargetSystem(target);
-                        integrationEvent.Message = $"Sample {category} event: {eventType}";
-                        integrationEvent.TestData = new { Category = category.ToString(), SampleData = true, Generated = DateTime.UtcNow };
-                        result = await EventBus.PublishIntegrationEventAsync(integrationEvent, EventExecutionMode.Manual);
-                        break;
-
-                    case EventCategory.UIEvent:
-                        var uiEvent = new TestUIEvent();
-                        uiEvent.SetEventType(eventType);
-                        uiEvent.SetTargetComponent(target);
-                        uiEvent.Message = $"Sample {category} event: {eventType}";
-                        uiEvent.TestData = new { Category = category.ToString(), SampleData = true, Generated = DateTime.UtcNow };
-                        result = await EventBus.PublishUIEventAsync(uiEvent, EventExecutionMode.Manual);
-                        break;
-
-                    default:
-                        result = Result.Failure(new SMS_Domain.Common.Error("UNKNOWN_CATEGORY", $"Unknown event category: {category}"));
-                        break;
+                    var domainEvent = new TestDomainEvent(new SMSEventID(Guid.NewGuid().ToString()));
+                    domainEvent.SetEventType(eventType);
+                    domainEvent.Message = $"Sample {category} event: {eventType}";
+                    domainEvent.TestData = new { Category = category.ToString(), SampleData = true, Generated = DateTime.UtcNow };
+                    result = await EventBus.PublishDomainEventAsync(domainEvent, EventExecutionMode.Manual);
+                }
+                else if (category == EventCategory.IntegrationEvent)
+                {
+                    var integrationEvent = new TestIntegrationEvent();
+                    integrationEvent.SetEventType(eventType);
+                    integrationEvent.SetTargetSystem(target);
+                    integrationEvent.Message = $"Sample {category} event: {eventType}";
+                    integrationEvent.TestData = new { Category = category.ToString(), SampleData = true, Generated = DateTime.UtcNow };
+                    result = await EventBus.PublishIntegrationEventAsync(integrationEvent, EventExecutionMode.Manual);
+                }
+                else if (category == EventCategory.UIEvent)
+                {
+                    var uiEvent = new TestUIEvent();
+                    uiEvent.SetEventType(eventType);
+                    uiEvent.SetTargetComponent(target);
+                    uiEvent.Message = $"Sample {category} event: {eventType}";
+                    uiEvent.TestData = new { Category = category.ToString(), SampleData = true, Generated = DateTime.UtcNow };
+                    result = await EventBus.PublishUIEventAsync(uiEvent, EventExecutionMode.Manual);
+                }
+                else
+                {
+                    result = Result.Failure(new SMS_Domain.Common.Error("UNKNOWN_CATEGORY", $"Unknown event category: {category}"));
                 }
 
                 if (result.IsSuccess)

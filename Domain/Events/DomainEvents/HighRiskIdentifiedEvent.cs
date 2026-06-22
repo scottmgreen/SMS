@@ -16,19 +16,35 @@ namespace SMS_Domain.Events;
 /// <summary>
 /// Domain event triggered when high risk is identified
 /// </summary>
-public class HighRiskIdentifiedEvent : BaseDomainEvent
+public class HighRiskIdentifiedEvent : BaseDomainEvent, IEventSource
 {
-    public override string EventType => "Risk_HighRisk_Identified";
+    public override string EventType => SMS_Domain.Enums.EventType.HighRiskIdentified.Value;
 
     /// <summary>
     /// Display name for SPI configuration dropdowns
     /// </summary>
-    public string EventSourceDisplayName => "SMS Event Bus - High Risk Identified";
+    public string EventSourceDisplayName => SMS_Domain.Enums.EventType.HighRiskIdentified;
 
     /// <summary>
     /// Category for grouping in UI
     /// </summary>
     public string EventSourceCategory => "SMS Domain Event";
+
+    /// <summary>
+    /// Description of data provided for SPI calculations
+    /// </summary>
+    public string EventSourceDescription => "Provides high-risk identification signals for risk exposure and trend SPI metrics";
+
+    /// <summary>
+    /// Indicates this event is automatically generated from risk analysis workflow
+    /// </summary>
+    public bool IsAutomaticDataSource => true;
+
+    /// <summary>
+    /// Display ordering priority in SPI source selection
+    /// </summary>
+    public int DisplayPriority => 3;
+
     public string AssessmentId { get; set; } = string.Empty;
     public RiskLevel RiskLevel { get; set; }
     public DateTime IdentifiedDate { get; set; }

@@ -75,8 +75,10 @@ namespace SMS_Application.CommandHandlers
                 // =============================================
                 try
                 {
-                    await HazardEventPublisher.PublishHazardEventAsync(_eventBus, _logger, EventType.HazardCreated, hazard,HazardPriority.Low);
-
+                    if (!hazard.IsInitialHazard)
+                    {
+                        await HazardEventPublisher.PublishHazardEventAsync(_eventBus, _logger, EventType.HazardCreated, hazard, HazardPriority.Low);
+                    }
                 }
                 catch (Exception eventEx)
                 {
@@ -360,7 +362,7 @@ namespace SMS_Application.CommandHandlers
                     created.Description = hazard.Description ?? "No description";
                     created.LocationArea = hazard.LocationArea ?? "Unknown Location";
                     created.ReportCode = hazard.ReportCode ?? "Unknown Report";
-                    created.CreatedBy = hazard.CreatedBy ?? "System";
+                    created.CreatedBy = !string.IsNullOrWhiteSpace(hazard.CreatedBy) ? hazard.CreatedBy : "System";
                     created.CreatedDate = hazard.CreatedDate ?? DateTime.UtcNow;
                     created.IsInitialHazard = hazard.IsInitialHazard;
                     created.Priority = hazardPriority;

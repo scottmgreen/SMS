@@ -24,10 +24,41 @@ namespace SMS_Application.Services;
 /// </summary>
 public sealed class EventDispatchService : IBaseEventBus
 {
+    private static readonly AsyncLocal<bool> SuppressDomainAuditPersistence = new();
+
     private readonly ILogger<EventDispatchService> _logger;
     private readonly IServiceProvider _serviceProvider;
     private readonly Dictionary<Type, List<Type>> _eventHandlerMappings = new();
     private readonly object _lock = new object();
+
+    public static IDisposable BeginQueueReplayScope()
+    {
+        var previous = SuppressDomainAuditPersistence.Value;
+        SuppressDomainAuditPersistence.Value = true;
+        return new ReplayScope(() => SuppressDomainAuditPersistence.Value = previous);
+    }
+
+    private sealed class ReplayScope : IDisposable
+    {
+        private readonly Action _onDispose;
+        private bool _disposed;
+
+        public ReplayScope(Action onDispose)
+        {
+            _onDispose = onDispose;
+        }
+
+        public void Dispose()
+        {
+            if (_disposed)
+            {
+                return;
+            }
+
+            _disposed = true;
+            _onDispose();
+        }
+    }
 
     public EventDispatchService(
         ILogger<EventDispatchService> logger,
@@ -35,6 +66,18 @@ public sealed class EventDispatchService : IBaseEventBus
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+    }
+
+    private async Task PersistDomainAuditEventAsync<T>(T domainEvent, string queuedBy) where T : IBaseDomainEvent
+    {
+        try
+        {
+            await ExecuteWithQueueServiceAsync(queueService => queueService.QueueDomainEventAsync(domainEvent, queuedBy)).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex, "Failed to persist domain event audit record for {EventType} (ID: {EventId})", domainEvent.EventType, domainEvent.EventId);
+        }
     }
 
     private async Task<Result> ExecuteWithQueueServiceAsync(Func<IEventQueueService, Task<Result>> operation)
@@ -112,6 +155,20 @@ public sealed class EventDispatchService : IBaseEventBus
     {
         // Route to existing domain event implementation
         _logger.LogApplicationDebug("PublishDomainEventAsync called for {EventType} with mode {Mode}", typeof(T).FullName, mode);
+
+        var queuedBy = mode switch
+        {
+            EventExecutionMode.Immediate => "EventBus-Immediate",
+            EventExecutionMode.Queued => "EventBus",
+            EventExecutionMode.Manual => "ManualExecution",
+            _ => "EventBus"
+        };
+
+        if (!SuppressDomainAuditPersistence.Value)
+        {
+            await PersistDomainAuditEventAsync(domainEvent, queuedBy).ConfigureAwait(false);
+        }
+
         var result = await PublishAsync(domainEvent, mode, cancellationToken);
         _logger.LogApplicationDebug("PublishDomainEventAsync result: {IsSuccess}", result.IsSuccess);
         return result;

@@ -18,7 +18,7 @@ namespace SMS_Domain.Events;
 public class RiskAssessmentUpdatedEvent : BaseDomainEvent
 {
     public override string EventType => SMS_Domain.Enums.EventType.RiskAssessmentUpdated.Value;
-    public string EventCategory => SMS_Domain.Enums.EventCategogy.DomainEvent.Value;
+    public string EventCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
     public string RiskAssessmentId { get; private set; }
     public string UpdatedBy { get; private set; }
