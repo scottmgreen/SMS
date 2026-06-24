@@ -2104,11 +2104,6 @@ public partial class ReportProcessing : ComponentBase
                                 {
                                     successCount++;
                                     _logger.LogInformation("Approved mitigation: {Code} for hazard {HazardCode}", mitigation.Code, hazard.Code);
-
-                                    await PublishEmailNotification(reportId, mitigation);
-
-                                    // NEW: SPI AUTOMATION - Trigger mitigation completion SPI ??
-                                    await TriggerMitigationApprovalSPIAutomation(mitigation, approverCode);
                                 }
                                 else
                                 {
@@ -2164,35 +2159,6 @@ public partial class ReportProcessing : ComponentBase
         {
             _isProcessingApproval = false;
             StateHasChanged();
-        }
-    }
-
-    private async Task PublishEmailNotification(string reportId, Mitigation mitigation)
-    {
-        var assignedTo = mitigation.AssignedTo?.Trim();
-        if (!string.IsNullOrWhiteSpace(assignedTo))
-        {
-            var assigneeEmail = $"{assignedTo}@flypdx.com";
-            var emailEvent = new EmailNotificationEvent(
-                toRecipients: new List<string> { assigneeEmail },
-                subject: $"Mitigation Assignment: {mitigation.Code}",
-                body: $"{mitigation.Code} has been assigned to you.",
-                isHtmlContent: false,
-                reportId: reportId,
-                workflowType: "MitigationApproval",
-                relatedEntityType: "Mitigation",
-                relatedEntityId: mitigation.Code);
-
-            var emailResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, CancellationToken.None);
-            if (!emailResult.IsSuccess)
-            {
-                _logger.LogWarning("Failed to publish mitigation assignment email event for mitigation {MitigationCode} to {AssigneeEmail}: {Error}",
-                    mitigation.Code, assigneeEmail, emailResult.Error?.Message);
-            }
-        }
-        else
-        {
-            _logger.LogWarning("Skipping mitigation assignment email event for mitigation {MitigationCode} because AssignedTo is empty", mitigation.Code);
         }
     }
 
@@ -2419,55 +2385,6 @@ public partial class ReportProcessing : ComponentBase
         _selectedDescription = string.Empty;
         _selectedReportId = string.Empty;
         StateHasChanged();
-    }
-
-    #endregion
-
-    #region SPI Automation Integration
-
-    /// <summary>
-    /// Triggers SPI automation when mitigations are approved
-    /// Updates Mitigation Implementation Rate SPI based on completion timing
-    /// </summary>
-    private async Task TriggerMitigationApprovalSPIAutomation(Mitigation mitigation, string approverCode)
-    {
-        try
-        {
-            _logger.LogInformation("SPI Automation: Triggering mitigation approval events for {MitigationCode}", mitigation.Code);
-
-            // Determine target completion date and actual completion date  
-            var targetDate = mitigation.TargetDate ?? DateTime.UtcNow.AddDays(30); // Default 30 days if no target
-            var completedDate = DateTime.UtcNow; // Approval date = completion date
-            var completedBy = approverCode ?? _currentUserService?.UserDisplayName ?? "Unknown";
-
-            var mitigationCompletedEvent = new MitigationCompletedEvent(
-                new SMSEventID($"EVT-{Guid.NewGuid():N}"),
-                mitigation.Code,
-                mitigation.Code,
-                mitigation.HazardCode ?? string.Empty,
-                targetDate,
-                completedDate,
-                string.Empty)
-            {
-                ReportId = string.Empty,
-                CompletionNotes = $"Bulk approved by {completedBy}",
-                EffectivenessRating = "Approved"
-            };
-
-            var publishResult = await _eventBus.PublishDomainEventAsync(mitigationCompletedEvent, CancellationToken.None);
-            if (publishResult.IsFailure)
-            {
-                _logger.LogWarning("SPI Automation: Mitigation completed event publish failed for {MitigationCode}: {Error}",
-                    mitigation.Code, publishResult.Error?.Message);
-            }
-
-            _logger.LogInformation("SPI Automation: Successfully processed mitigation approval events for {MitigationCode}", mitigation.Code);
-        }
-        catch (Exception spiEx)
-        {
-            // Don't fail the mitigation approval if SPI automation fails
-            _logger.LogWarning(spiEx, "SPI Automation: Failed to process mitigation approval events for {MitigationCode} - continuing with approval", mitigation.Code);
-        }
     }
 
     #endregion

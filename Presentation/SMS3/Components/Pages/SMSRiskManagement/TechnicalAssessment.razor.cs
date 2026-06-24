@@ -1709,12 +1709,9 @@ public partial class TechnicalAssessment : ComponentBase
         // Apply all steps to ensure everything is saved - ENHANCED: Use async method
         await ApplyCurrentStepToAssessmentAsync();
 
-        // Capture completion details for SPI automation
+        // Capture completion details
         var completedDate = DateTime.UtcNow;
-        var assessmentStartDate = TechRiskAssessment.CreatedDate ?? DateTime.UtcNow.AddDays(-7); // Default to 7 days ago if no start date
-        var targetCompletionDate = assessmentStartDate.AddDays(14); // Assume 14-day target for technical assessments
         var completedBy = _currentUserService?.UserDisplayName ?? "Unknown User";
-        var finalRiskLevel = GetAssessmentFinalRiskLevel(); // Get the determined risk level
 
         // Explicitly mark assessment completed on submit.
         TechRiskAssessment.CurrentStep = MaxAssessmentStep;
@@ -1733,14 +1730,7 @@ public partial class TechnicalAssessment : ComponentBase
         var cmd = new UpdateReportStatusCommand(ReportId ?? "", reportCompletionStatus, _currentUserService?.UserDisplayName ?? "System");
         var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
 
-        // NEW: SPI AUTOMATION - Trigger risk assessment completion event ??
-        await TriggerRiskAssessmentSPIAutomation(
-            TechRiskAssessment?.Code ?? "",
-            assessmentStartDate,
-            completedDate,
-            targetCompletionDate,
-            completedBy,
-            finalRiskLevel);
+        // Domain event publishing for assessment completion is handled in UpdateRiskAssessmentCommandHandler.
     }
 
    
@@ -2023,85 +2013,6 @@ public partial class TechnicalAssessment : ComponentBase
     #endregion
 
     #region SPI Automation Integration
-
-    /// <summary>
-    /// Triggers SPI automation when risk assessment is completed
-    /// Updates Risk Assessment Completion Rate and High Risk Exposure SPIs
-    /// </summary>
-    private async Task TriggerRiskAssessmentSPIAutomation(string assessmentCode, DateTime startDate, 
-        DateTime completedDate, DateTime targetDate, string completedBy, string riskLevel)
-    {
-        try
-        {
-            _logger.LogInformation("SPI Automation: Triggering risk assessment completion events for {AssessmentCode}", assessmentCode);
-
-            var resolvedRiskLevel = RiskLevel.GetAllValues().FirstOrDefault(level =>
-                    level.Value.Equals(riskLevel, StringComparison.OrdinalIgnoreCase) ||
-                    level.Name.Equals(riskLevel, StringComparison.OrdinalIgnoreCase))
-                ?? RiskLevel.Low;
-
-            var completionEvent = new RiskAssessmentCompletedEvent(
-                new SMSEventID($"EVT-0000"),
-                TechRiskAssessment?.Id?.Value ?? assessmentCode,
-                assessmentCode,
-                startDate,
-                targetDate,
-                completedDate,
-                ReportId ?? string.Empty)
-            {
-                HazardId = HazardId ?? string.Empty,
-                ReportId = ReportId ?? string.Empty,
-                RiskLevel = resolvedRiskLevel,
-                RiskScore = GetAssessmentRiskScore(),
-                AssessmentType = "Technical"
-            };
-
-            var completionPublishResult = await _eventBus.PublishDomainEventAsync(completionEvent, CancellationToken.None);
-            if (completionPublishResult.IsFailure)
-            {
-                _logger.LogWarning("SPI Automation: Failed to publish RiskAssessmentCompleted event for {AssessmentCode}: {Error}",
-                    assessmentCode, completionPublishResult.Error?.Message);
-            }
-
-            // If this is a high risk assessment, also trigger High Risk Exposure SPI
-            _logger.LogInformation("Checking if {RiskLevel} is high risk for SPI automation", riskLevel);
-            if (IsHighRiskLevel(riskLevel))
-            {
-                _logger.LogInformation("HIGH RISK DETECTED! Triggering High Risk Exposure SPI for {RiskLevel}", riskLevel);
-
-                var highRiskEvent = new HighRiskIdentifiedEvent(new SMSEventID($"EVT-{Guid.NewGuid():N}"))
-                {
-                    AssessmentId = assessmentCode,
-                    ReportId = ReportId ?? string.Empty,
-                    RiskLevel = resolvedRiskLevel,
-                    RiskScore = GetAssessmentRiskScore(),
-                    IdentifiedDate = completedDate,
-                    RiskDescription = $"Technical assessment identified {riskLevel} risk level"
-                };
-
-                var highRiskPublishResult = await _eventBus.PublishDomainEventAsync(highRiskEvent, CancellationToken.None);
-                if (highRiskPublishResult.IsFailure)
-                {
-                    _logger.LogWarning("SPI Automation: Failed to publish HighRiskIdentified event for {AssessmentCode}: {Error}",
-                        assessmentCode, highRiskPublishResult.Error?.Message);
-                }
-
-                _logger.LogInformation("SPI Automation: High risk SPI automation completed for {AssessmentCode} - Level: {RiskLevel}", 
-                    assessmentCode, riskLevel);
-            }
-            else
-            {
-                _logger.LogInformation("Risk level {RiskLevel} is not considered high risk - skipping High Risk Exposure SPI", riskLevel);
-            }
-
-            _logger.LogInformation("SPI Automation: Successfully processed risk assessment completion events for {AssessmentCode}", assessmentCode);
-        }
-        catch (Exception spiEx)
-        {
-            // Don't fail the assessment completion if SPI automation fails
-            _logger.LogWarning(spiEx, "? SPI Automation: Failed to process risk assessment completion events for {AssessmentCode} - continuing with assessment", assessmentCode);
-        }
-    }
 
     /// <summary>
     /// Gets the final risk level determined by the assessment

@@ -191,6 +191,16 @@ namespace SMS_Application.CommandHandlers
                 Hazard hazard = request.Hazard;
                 hazard.ReportCode = request.Hazard.ReportCode;
 
+                HazardStatus? previousStatus = null;
+                if (!string.IsNullOrWhiteSpace(hazard.Code))
+                {
+                    var existingHazardResult = await _hazardService.GetHazardByCodeAsync(new HazardID(hazard.Code), ct);
+                    if (existingHazardResult.IsSuccess && existingHazardResult.Value is not null)
+                    {
+                        previousStatus = existingHazardResult.Value.Status;
+                    }
+                }
+
                 var hazardResult = await _hazardService.UpdateHazardAsync(hazard, ct);
                 if (hazardResult.IsFailure)
                 {
@@ -207,6 +217,21 @@ namespace SMS_Application.CommandHandlers
                 try
                 {
                     await HazardEventPublisher.PublishHazardEventAsync(_eventBus, _logger, EventType.HazardUpdated, hazard, HazardPriority.Low);
+
+                    await TransitionEventPublisher.PublishIfChangedAsync(
+                        _eventBus,
+                        previousStatus,
+                        hazard.Status,
+                        () => new HazardStatusChangedEvent(
+                            id: new SMSEventID("EV-0000"),
+                            hazardId: hazard.Id.Value,
+                            hazardCode: hazard.Code,
+                            previousStatus: previousStatus!,
+                            newStatus: hazard.Status,
+                            statusChangeReason: "Hazard status updated",
+                            changedBy: hazard.UpdatedBy ?? "SYSTEM",
+                            statusChangeDate: hazard.UpdatedDate ?? DateTime.UtcNow),
+                        ct).ConfigureAwait(false);
 
                 }
                 catch (Exception eventEx)
@@ -340,7 +365,7 @@ namespace SMS_Application.CommandHandlers
         {
             // Determine hazard priority based on type/category
             hazardPriority = HazardPriority.Low; // Or your logic
-            var eventid = new SMSEventID(Guid.NewGuid().ToString());
+            var eventid = new SMSEventID("EV-0000");
             BaseDomainEvent? hazardEvent = eventtype switch
             {
                 var t when t == EventType.HazardCreated => CreateHazardEvent(new HazardCreatedEvent(eventid)),
@@ -384,7 +409,7 @@ namespace SMS_Application.CommandHandlers
                 return evt;
             }
 
-            var eventResult = await eventBus.PublishDomainEventAsync(hazardEvent, EventExecutionMode.Manual);
+            var eventResult = await eventBus.PublishDomainEventAsync(hazardEvent, EventExecutionMode.Immediate); // changed from Manual to Imediate 06_24_2026
 
             if (!eventResult.IsSuccess)
             {

@@ -387,8 +387,7 @@ public partial class ReportValidation : ComponentBase
                 _logger.LogInformation("Successfully updated existing ReportValidation: {ValidationCode}", ExistingValidation.Code);
                 await _notificationHelper.ShowSuccessAsync($"Validation updated successfully. Decision: {_selectedValidationDecision?.Name}");
 
-                // NEW: SPI AUTOMATION - Trigger validation decision event ??
-                await TriggerValidationSPIAutomation(ExistingValidation.Code, ValidationDecisionValue, ExistingValidation.ValidatedDate ?? DateTime.UtcNow);
+                // ValidationDecisionMade domain event is published by CQRS command handlers.
             }
             else
             {
@@ -426,8 +425,7 @@ public partial class ReportValidation : ComponentBase
                 _logger.LogInformation("Successfully created new ReportValidation: {ValidationCode}", result.Value.Code);
                 await _notificationHelper.ShowSuccessAsync($"Validation recorded successfully. Decision: {_selectedValidationDecision?.Name}");
 
-                // NEW: SPI AUTOMATION - Trigger validation decision event ??
-                await TriggerValidationSPIAutomation(result.Value.Code, ValidationDecisionValue, validation.ValidatedDate ?? DateTime.UtcNow);
+                // ValidationDecisionMade domain event is published by CQRS command handlers.
             }
 
             
@@ -437,42 +435,6 @@ public partial class ReportValidation : ComponentBase
         {
             _logger.LogError(ex, "Error in smart validation record processing for ReportId: {ReportId}", ReportId);
             throw; // Re-throw to be handled by HandleSubmit
-        }
-    }
-
-    /// <summary>
-    /// Triggers SPI automation when validation decision is made
-    /// Updates risk identification effectiveness and validation-related SPIs
-    /// </summary>
-    private async Task TriggerValidationSPIAutomation(string validationCode, string validationDecision, DateTime validatedDate)
-    {
-        try
-        {
-            _logger.LogInformation("SPI Automation: Triggering validation decision event for {ValidationCode} - Decision: {Decision}", 
-                validationCode, validationDecision);
-
-            var validationEvent = new ValidationDecisionMadeEvent(
-                new SMSEventID($"EVT-{Guid.NewGuid():N}"),
-                ReportId,
-                validationDecision,
-                validatedDate)
-            {
-                ValidatedBy = _validatedBy,
-                ValidationComments = _validationComments
-            };
-
-            var publishResult = await _eventBus.PublishDomainEventAsync(validationEvent, CancellationToken.None);
-            if (publishResult.IsFailure)
-            {
-                _logger.LogWarning("SPI Automation: Validation event publish failed for {ValidationCode}: {Error}", validationCode, publishResult.Error?.Message);
-            }
-
-            _logger.LogInformation("SPI Automation: Successfully processed validation decision event for {ValidationCode}", validationCode);
-        }
-        catch (Exception spiEx)
-        {
-            // Don't fail the validation process if SPI automation fails
-            _logger.LogWarning(spiEx, "SPI Automation: Failed to process validation decision event for {ValidationCode} - continuing with validation", validationCode);
         }
     }
 

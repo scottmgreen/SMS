@@ -7,12 +7,16 @@ public sealed class RiskAssessmentStageChangedEvent : BaseDomainEvent
 {
     public override string EventType => SMS_Domain.Enums.EventType.RiskAssessmentStageChanged.Value;
 
-    public string RiskAssessmentId { get; }
-    public string? RiskAssessmentCode { get; }
-    public RiskAssessmentStage PreviousStage { get; }
-    public RiskAssessmentStage NewStage { get; }
-    public string ChangedBy { get; }
-    public DateTime ChangedDate { get; }
+    public string RiskAssessmentId { get; set; } = string.Empty;
+    public string? RiskAssessmentCode { get; set; }
+    public RiskAssessmentStage PreviousStage { get; set; } = RiskAssessmentStage.DescribingSystem;
+    public RiskAssessmentStage NewStage { get; set; } = RiskAssessmentStage.DescribingSystem;
+    public string ChangedBy { get; set; } = "SYSTEM";
+    public DateTime ChangedDate { get; set; }
+
+    public RiskAssessmentStageChangedEvent(SMSEventID id) : base(id)
+    {
+    }
 
     public RiskAssessmentStageChangedEvent(
         SMSEventID id,

@@ -388,12 +388,13 @@ public class SPIAutomationService : ISPIAutomationService
             // This could feed into a new SPI that tracks validation effectiveness
             // For example: "SMS Risk Identification Rate" = (SMS_RISK decisions / Total validations) * 100
 
-            // Dynamic SPI lookup - find "Risk Identification Effectiveness" SPI (if it exists)
-            var spi = await FindSPIByDescription("risk identification", ct);
+            // Dynamic SPI lookup - use stable indicator type key (description text is not durable)
+            var riskIdentificationIndicatorType = SMSSafetyPerformanceIndicatorType.RiskIdentificationEffectiveness.Value;
+            var spi = await FindSPIByIndicatorType(riskIdentificationIndicatorType, ct);
 
             if (spi == null)
             {
-                _logger.LogApplicationInformation("SPI Automation: No Risk Identification Effectiveness SPI found - this is optional");
+                _logger.LogApplicationInformation("SPI Automation: No SPI configured for indicator type {IndicatorType} - skipping optional update", riskIdentificationIndicatorType);
                 return Result<bool>.Success(true); // Not an error, just not implemented yet
             }
 
@@ -459,6 +460,45 @@ public class SPIAutomationService : ISPIAutomationService
     #endregion
 
     #region Helper Methods - Dynamic SPI Lookup
+
+    /// <summary>
+    /// Finds SPI by indicator type value using CQRS query to avoid brittle text matching.
+    /// </summary>
+    private async Task<SafetyPerformanceIndicator?> FindSPIByIndicatorType(string indicatorTypeValue, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogApplicationInformation("SPI Automation: Looking up SPI by indicator type: {IndicatorType}", indicatorTypeValue);
+
+            var getAllQuery = new GetAllSafetyPerformanceIndicatorsQuery();
+            var result = await _mediator.SendAsync(getAllQuery, ct);
+
+            if (result.IsSuccess && result.Value?.Any() == true)
+            {
+                var spi = result.Value.FirstOrDefault(s =>
+                    string.Equals(s.IndicatorType?.Value, indicatorTypeValue, StringComparison.OrdinalIgnoreCase));
+
+                if (spi != null)
+                {
+                    _logger.LogApplicationInformation("SPI Automation: Found SPI for indicator type {IndicatorType} with Code: {Code}", indicatorTypeValue, spi.Code);
+                    return spi;
+                }
+
+                _logger.LogApplicationWarning("SPI Automation: SPI not found by indicator type: {IndicatorType}", indicatorTypeValue);
+            }
+            else
+            {
+                _logger.LogApplicationError("SPI Automation: Failed to retrieve SPIs for indicator type lookup");
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError(ex, "SPI Automation: Error looking up SPI by indicator type: {IndicatorType}", indicatorTypeValue);
+            return null;
+        }
+    }
 
     /// <summary>
     /// Finds SPI by name using CQRS query to avoid hardcoded dependencies

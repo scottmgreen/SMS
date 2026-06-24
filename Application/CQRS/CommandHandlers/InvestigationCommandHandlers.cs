@@ -9,6 +9,8 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Domain.Events;
 
 using Microsoft.Extensions.Logging;
 
@@ -72,11 +74,16 @@ public class CreateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
 public class UpdateInvestigationCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateInvestigationCommand, Result<Investigation>>
 {
     private readonly InvestigationService _investigationService;
+    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<UpdateInvestigationCommandHandler> _logger;
 
-    public UpdateInvestigationCommandHandler(InvestigationService investigationService, ILogger<UpdateInvestigationCommandHandler> logger)
+    public UpdateInvestigationCommandHandler(
+        InvestigationService investigationService,
+        IBaseEventBus eventBus,
+        ILogger<UpdateInvestigationCommandHandler> logger)
     {
         _investigationService = investigationService ?? throw new ArgumentNullException(nameof(investigationService));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -93,11 +100,42 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
             _logger.LogApplicationInformation(" Processing UpdateInvestigationCommand for ID: {Id}, Code: {Code}",
                 request.Investigation.Id, request.Investigation.Code);
 
+            InvestigationStatus? previousStatus = null;
+            if (!string.IsNullOrWhiteSpace(request.Investigation.Code))
+            {
+                var existingInvestigationResult = await _investigationService
+                    .GetInvestigationByCodeAsync(new InvestigationID(request.Investigation.Code), ct)
+                    .ConfigureAwait(false);
+
+                if (existingInvestigationResult.IsSuccess && existingInvestigationResult.Value is not null)
+                {
+                    previousStatus = existingInvestigationResult.Value.Status;
+                }
+            }
+
             var result = await _investigationService.UpdateInvestigationAsync(request.Investigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation(" Successfully updated Investigation with ID: {Id}", request.Investigation.Id);
+
+                var updatedInvestigation = result.Value;
+                if (updatedInvestigation is not null)
+                {
+                    await TransitionEventPublisher.PublishIfChangedAsync(
+                        _eventBus,
+                        previousStatus,
+                        updatedInvestigation.Status,
+                        () => new InvestigationStatusChangedEvent(
+                            id: new SMSEventID("EV-0000"),
+                            investigationId: updatedInvestigation.Id.Value,
+                            investigationCode: updatedInvestigation.Code,
+                            previousStatus: previousStatus!,
+                            newStatus: updatedInvestigation.Status,
+                            changedBy: updatedInvestigation.UpdatedBy ?? "SYSTEM",
+                            changedDate: updatedInvestigation.UpdatedDate ?? DateTime.UtcNow),
+                        ct).ConfigureAwait(false);
+                }
             }
             else
             {

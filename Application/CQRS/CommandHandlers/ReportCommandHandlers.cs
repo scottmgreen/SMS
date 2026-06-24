@@ -9,6 +9,8 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Domain.Events;
 
 using Microsoft.Extensions.Logging;
 
@@ -21,11 +23,13 @@ namespace SMS_Application.CommandHandlers;
 public class CreateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateReportCommand, Result<Report>>
 {
     private readonly ReportService _reportService;
+    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<CreateReportCommandHandler> _logger;
 
-    public CreateReportCommandHandler(ReportService reportService, ILogger<CreateReportCommandHandler> logger)
+    public CreateReportCommandHandler(ReportService reportService, IBaseEventBus eventBus, ILogger<CreateReportCommandHandler> logger)
     {
         _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -47,6 +51,21 @@ public class CreateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
             {
                 _logger.LogApplicationInformation(" Successfully created Report with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
+
+                var createdReport = result.Value!;
+                var reportCreatedEvent = new ReportCreatedEvent(
+                    id: new SMSEventID("EV-0000"),
+                    reportId: createdReport.Code,
+                    createdBy: createdReport.CreatedBy ?? "SYSTEM",
+                    createdDate: createdReport.CreatedDate ?? DateTime.UtcNow);
+
+                //var publishResult = await _eventBus.PublishDomainEventAsync(reportCreatedEvent, cancellationToken);
+                //if (publishResult.IsFailure)
+                //{
+                //    _logger.LogApplicationWarning("Failed to publish ReportCreatedEvent for report {ReportCode}: {Error}",
+                //        createdReport.Code,
+                //        publishResult.Error?.Message ?? "Unknown publish error");
+                //}
             }
             else
             {
@@ -72,11 +91,13 @@ public class CreateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
 public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateReportCommand, Result<Report>>
 {
     private readonly ReportService _reportService;
+    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<UpdateReportCommandHandler> _logger;
 
-    public UpdateReportCommandHandler(ReportService reportService, ILogger<UpdateReportCommandHandler> logger)
+    public UpdateReportCommandHandler(ReportService reportService, IBaseEventBus eventBus, ILogger<UpdateReportCommandHandler> logger)
     {
         _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -90,6 +111,19 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                 return Result<Report>.Failure<Report>(DomainErrors.ReportError.NullOrEmpty);
             }
 
+            ReportStatus? previousStatus = null;
+            string previousStage = string.Empty;
+            var existingReportResult = await _reportService.GetReportByCodeAsync(new ReportID(request.Report.Code), cancellationToken);
+            if (existingReportResult.IsSuccess && existingReportResult.Value is not null)
+            {
+                if (ReportStatus.TryFromValue(existingReportResult.Value.Status, out var existingStatus))
+                {
+                    previousStatus = existingStatus;
+                }
+
+                previousStage = existingReportResult.Value.Stage ?? string.Empty;
+            }
+
             _logger.LogApplicationInformation(" Processing UpdateReportCommand for ID: {Id}", request.Report.Id);
 
             var result = await _reportService.UpdateReportAsync(request.Report, cancellationToken);
@@ -97,6 +131,47 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation(" Successfully updated Report with ID: {Id}", request.Report.Id);
+
+                var updatedReport = result.Value!;
+
+                if (previousStatus is not null &&
+                    ReportStatus.TryFromValue(updatedReport.Status, out var currentStatus) &&
+                    !previousStatus.Equals(currentStatus))
+                {
+                    await TransitionEventPublisher.PublishIfChangedAsync(
+                        _eventBus,
+                        previousStatus,
+                        currentStatus,
+                        () => new ReportStatusChangedEvent(
+                            id: new SMSEventID("EV-0000"),
+                            reportId: updatedReport.Id.Value,
+                            reportCode: updatedReport.Code,
+                            previousStatus: previousStatus!,
+                            newStatus: currentStatus!,
+                            changedBy: updatedReport.UpdatedBy ?? "SYSTEM",
+                            changedDate: updatedReport.UpdatedDate ?? DateTime.UtcNow),
+                        cancellationToken).ConfigureAwait(false);
+                }
+
+                var normalizedPreviousStage = previousStage.Trim();
+                var normalizedCurrentStage = (updatedReport.Stage ?? string.Empty).Trim();
+
+                if (!string.Equals(normalizedPreviousStage, normalizedCurrentStage, StringComparison.OrdinalIgnoreCase))
+                {
+                    await TransitionEventPublisher.PublishIfChangedAsync(
+                        _eventBus,
+                        normalizedPreviousStage,
+                        normalizedCurrentStage,
+                        () => new ReportStageChangedEvent(
+                            id: new SMSEventID("EV-0000"),
+                            reportId: updatedReport.Id.Value,
+                            reportCode: updatedReport.Code,
+                            previousStage: normalizedPreviousStage,
+                            newStage: normalizedCurrentStage,
+                            changedBy: updatedReport.UpdatedBy ?? "SYSTEM",
+                            changedDate: updatedReport.UpdatedDate ?? DateTime.UtcNow),
+                        cancellationToken).ConfigureAwait(false);
+                }
             }
             else
             {

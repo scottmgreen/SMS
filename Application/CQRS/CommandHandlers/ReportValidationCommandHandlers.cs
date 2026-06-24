@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Entities;
+using SMS_Domain.Events;
 
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
@@ -22,11 +23,13 @@ namespace SMS_Application.CommandHandlers;
 public class CreateReportValidationCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateReportValidationCommand, Result<ReportValidation>>
 {
     private readonly ReportValidationService _reportValidationService;
+    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<CreateReportValidationCommandHandler> _logger;
 
-    public CreateReportValidationCommandHandler(ReportValidationService reportValidationService, ILogger<CreateReportValidationCommandHandler> logger)
+    public CreateReportValidationCommandHandler(ReportValidationService reportValidationService, IBaseEventBus eventBus, ILogger<CreateReportValidationCommandHandler> logger)
     {
         _reportValidationService = reportValidationService ?? throw new ArgumentNullException(nameof(reportValidationService));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -98,6 +101,24 @@ public class ResetReportValidationCommandHandler : BaseCommandBundle, IBaseReque
             {
                 _logger.LogApplicationInformation(" Successfully created Report Validation with ID: {Id}, Code: {Code}",
                     result.Value?.Id, result.Value?.Code);
+
+                var validationEvent = new ValidationDecisionMadeEvent(
+                    new SMSEventID("EV-0000"),
+                    result.Value?.ReportCode ?? request.ReportValidation.ReportCode,
+                    result.Value?.ValidationDecision ?? request.ReportValidation.ValidationDecision,
+                    result.Value?.ValidatedDate ?? request.ReportValidation.ValidatedDate ?? DateTime.UtcNow)
+                {
+                    ValidatedBy = result.Value?.ValidatedBy ?? request.ReportValidation.ValidatedBy ?? string.Empty,
+                    ValidationComments = result.Value?.ValidationComments ?? request.ReportValidation.ValidationComments ?? string.Empty
+                };
+
+                var publishResult = await _eventBus.PublishDomainEventAsync(validationEvent, cancellationToken);
+                if (publishResult.IsFailure)
+                {
+                    _logger.LogApplicationWarning("Validation decision event publish failed for validation {ValidationCode}: {Error}",
+                        result.Value?.Code ?? request.ReportValidation.Code,
+                        publishResult.Error?.Message ?? "Unknown publish error");
+                }
             }
             else
             {
@@ -123,11 +144,13 @@ public class ResetReportValidationCommandHandler : BaseCommandBundle, IBaseReque
 public class UpdateReportValidationCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateReportValidationCommand, Result<ReportValidation>>
 {
     private readonly ReportValidationService _reportValidationService;
+    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<UpdateReportValidationCommandHandler> _logger;
 
-    public UpdateReportValidationCommandHandler(ReportValidationService reportValidationService, ILogger<UpdateReportValidationCommandHandler> logger)
+    public UpdateReportValidationCommandHandler(ReportValidationService reportValidationService, IBaseEventBus eventBus, ILogger<UpdateReportValidationCommandHandler> logger)
     {
         _reportValidationService = reportValidationService ?? throw new ArgumentNullException(nameof(reportValidationService));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -148,6 +171,24 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation(" Successfully updated Report Validation with ID: {Id}", request.ReportValidation.Id);
+
+                var validationEvent = new ValidationDecisionMadeEvent(
+                    new SMSEventID("EV-0000"),
+                    result.Value?.ReportCode ?? request.ReportValidation.ReportCode,
+                    result.Value?.ValidationDecision ?? request.ReportValidation.ValidationDecision,
+                    result.Value?.ValidatedDate ?? request.ReportValidation.ValidatedDate ?? DateTime.UtcNow)
+                {
+                    ValidatedBy = result.Value?.ValidatedBy ?? request.ReportValidation.ValidatedBy ?? string.Empty,
+                    ValidationComments = result.Value?.ValidationComments ?? request.ReportValidation.ValidationComments ?? string.Empty
+                };
+
+                var publishResult = await _eventBus.PublishDomainEventAsync(validationEvent, cancellationToken);
+                if (publishResult.IsFailure)
+                {
+                    _logger.LogApplicationWarning("Validation decision event publish failed for validation {ValidationCode}: {Error}",
+                        result.Value?.Code ?? request.ReportValidation.Code,
+                        publishResult.Error?.Message ?? "Unknown publish error");
+                }
             }
             else
             {

@@ -9,6 +9,9 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Entities;
+using SMS_Domain.Enums;
+using SMS_Domain.Events;
+using SMS_Application.Queries;
 
 using Microsoft.Extensions.Logging;
 
@@ -23,7 +26,9 @@ public class CreateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
     private readonly IMitigationService _mitigationService;
     private readonly ILogger<CreateMitigationCommandHandler> _logger;
 
-    public CreateMitigationCommandHandler(IMitigationService mitigationService, ILogger<CreateMitigationCommandHandler> logger)
+    public CreateMitigationCommandHandler(
+        IMitigationService mitigationService,
+        ILogger<CreateMitigationCommandHandler> logger)
     {
         _mitigationService = mitigationService ?? throw new ArgumentNullException(nameof(mitigationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -67,16 +72,25 @@ public class CreateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.CreateFailed);
         }
     }
+
 }
 
 public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateMitigationCommand, Result<Mitigation>>
 {
     private readonly IMitigationService _mitigationService;
+    private readonly IBaseMediator _mediator;
+    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<UpdateMitigationCommandHandler> _logger;
 
-    public UpdateMitigationCommandHandler(IMitigationService mitigationService, ILogger<UpdateMitigationCommandHandler> logger)
+    public UpdateMitigationCommandHandler(
+        IMitigationService mitigationService,
+        IBaseMediator mediator,
+        IBaseEventBus eventBus,
+        ILogger<UpdateMitigationCommandHandler> logger)
     {
         _mitigationService = mitigationService ?? throw new ArgumentNullException(nameof(mitigationService));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -92,11 +106,89 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
 
             _logger.LogApplicationInformation(" Processing UpdateMitigationCommand for ID: {Id}", request.Mitigation.Id);
 
+            MitigationStatus? previousStatus = null;
+            if (!string.IsNullOrWhiteSpace(request.Mitigation.Code))
+            {
+                var existingMitigationResult = await _mitigationService
+                    .GetMitigationByCodeAsync(new MitigationID(request.Mitigation.Code), cancellationToken)
+                    .ConfigureAwait(false);
+
+                if (existingMitigationResult.IsSuccess && existingMitigationResult.Value is not null)
+                {
+                    previousStatus = existingMitigationResult.Value.Status;
+                }
+            }
+
             var result = await _mitigationService.UpdateMitigationAsync(request.Mitigation, cancellationToken);
 
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation(" Successfully updated Mitigation with ID: {Id}", request.Mitigation.Id);
+
+                var updatedMitigation = result.Value;
+                var reportId = string.Empty;
+
+                if (updatedMitigation is not null && !string.IsNullOrWhiteSpace(updatedMitigation.HazardCode))
+                {
+                    var hazardResult = await _mediator
+                        .SendAsync(new GetHazardByCodeQuery(new HazardID(updatedMitigation.HazardCode)), cancellationToken)
+                        .ConfigureAwait(false);
+
+                    if (hazardResult.IsSuccess && hazardResult.Value is not null)
+                    {
+                        reportId = hazardResult.Value.ReportCode ?? string.Empty;
+                    }
+                }
+
+                if (updatedMitigation is not null
+                    && previousStatus == MitigationStatus.PendingApproval
+                    && updatedMitigation.Status == MitigationStatus.Approved)
+                {
+                    var completedDate = updatedMitigation.UpdatedDate ?? DateTime.UtcNow;
+                    var completedBy = updatedMitigation.ApprovedBy ?? updatedMitigation.UpdatedBy ?? "SYSTEM";
+
+                    var mitigationCompletedEvent = new MitigationCompletedEvent(
+                        new SMSEventID("EV-0000"),
+                        updatedMitigation.Code,
+                        updatedMitigation.Code,
+                        updatedMitigation.HazardCode ?? string.Empty,
+                        updatedMitigation.TargetDate ?? completedDate.AddDays(30),
+                        completedDate,
+                        string.Empty)
+                    {
+                        ReportId = reportId,
+                        CompletionNotes = $"Approved by {completedBy}",
+                        EffectivenessRating = "Approved"
+                    };
+
+                    var publishResult = await _eventBus.PublishDomainEventAsync(mitigationCompletedEvent, cancellationToken).ConfigureAwait(false);
+                    if (publishResult.IsFailure)
+                    {
+                        _logger.LogApplicationWarning(
+                            "Failed to publish MitigationCompleted event for {MitigationCode}: {Error}",
+                            updatedMitigation.Code,
+                            publishResult.Error?.Message ?? "Unknown publish error");
+                    }
+
+                }
+
+                if (updatedMitigation is not null)
+                {
+                    await TransitionEventPublisher.PublishIfChangedAsync(
+                        _eventBus,
+                        previousStatus,
+                        updatedMitigation.Status,
+                        () => new MitigationStatusChangedEvent(
+                            id: new SMSEventID("EV-0000"),
+                            mitigationId: updatedMitigation.Id.Value,
+                            status: updatedMitigation.Status.Value,
+                            changedBy: updatedMitigation.UpdatedBy ?? "SYSTEM",
+                            changedDate: updatedMitigation.UpdatedDate ?? DateTime.UtcNow)
+                        {
+                            ReportId = reportId
+                        },
+                        cancellationToken).ConfigureAwait(false);
+                }
             }
             else
             {

@@ -10,8 +10,6 @@
 
 using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
-using SMS_Domain.Enums;
-using SMS_Domain.Events;
 
 namespace SMS_Application.Services;
 
@@ -23,18 +21,15 @@ public sealed class RiskAssessmentService : IRiskAssessmentService
 {
     private readonly RiskAssessmentDataService _dataService;
     private readonly IBaseMediator _mediator;
-    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<RiskAssessmentService> _logger;
 
     public RiskAssessmentService(
         RiskAssessmentDataService dataService,
         IBaseMediator mediator,
-        IBaseEventBus eventBus,
         ILogger<RiskAssessmentService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
-        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -98,70 +93,12 @@ public sealed class RiskAssessmentService : IRiskAssessmentService
     {
         try
         {
-            RiskAssessmentStatus? previousStatus = null;
-            RiskAssessmentStage? previousStage = null;
-            if (assessment is not null)
-            {
-                var existingResult = await _dataService.GetRiskAssessmentByCodeAsync(new RiskAssessmentID(assessment.Id.Value), ct).ConfigureAwait(false);
-                if (existingResult.IsSuccess && existingResult.Value is not null)
-                {
-                    previousStatus = existingResult.Value.Status;
-                    previousStage = existingResult.Value.Stage;
-                }
-            }
-
             _logger.LogApplicationInformation("Updating risk assessment with ID: {Id}", assessment?.Id);
             var result = await _dataService.UpdateRiskAssessmentAsync(assessment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation("Successfully updated risk assessment with ID: {Id}", assessment?.Id);
-
-                if (assessment is not null)
-                {
-                    var updatedEvent = new RiskAssessmentUpdatedEvent(
-                        id: new SMSEventID(Guid.NewGuid().ToString()),
-                        riskAssessmentId: assessment.Id.Value,
-                        updatedBy: assessment.UpdatedBy ?? "SYSTEM",
-                        updatedDate: assessment.UpdatedDate ?? DateTime.UtcNow)
-                    {
-                        ReportId = assessment.ReportCode ?? string.Empty
-                    };
-
-                    var updatePublishResult = await _eventBus.PublishDomainEventAsync(updatedEvent, EventExecutionMode.Immediate, ct).ConfigureAwait(false);
-                    if (updatePublishResult.IsFailure)
-                    {
-                        _logger.LogApplicationWarning("Failed to publish risk assessment updated event for {AssessmentCode}: {Error}", assessment.Code, updatePublishResult.Error?.Message);
-                    }
-
-                    await TransitionEventPublisher.PublishIfChangedAsync(
-                        _eventBus,
-                        previousStatus,
-                        assessment.Status,
-                        () => new RiskAssessmentStatusChangedEvent(
-                            id: new SMSEventID(Guid.NewGuid().ToString()),
-                            riskAssessmentId: assessment.Id.Value,
-                            riskAssessmentCode: assessment.Code,
-                            previousStatus: previousStatus!,
-                            newStatus: assessment.Status,
-                            changedBy: assessment.UpdatedBy ?? "SYSTEM",
-                            changedDate: assessment.UpdatedDate ?? DateTime.UtcNow),
-                        ct).ConfigureAwait(false);
-
-                    await TransitionEventPublisher.PublishIfChangedAsync(
-                        _eventBus,
-                        previousStage,
-                        assessment.Stage,
-                        () => new RiskAssessmentStageChangedEvent(
-                            id: new SMSEventID(Guid.NewGuid().ToString()),
-                            riskAssessmentId: assessment.Id.Value,
-                            riskAssessmentCode: assessment.Code,
-                            previousStage: previousStage!,
-                            newStage: assessment.Stage,
-                            changedBy: assessment.UpdatedBy ?? "SYSTEM",
-                            changedDate: assessment.UpdatedDate ?? DateTime.UtcNow),
-                        ct).ConfigureAwait(false);
-                }
             }
             else
             {

@@ -18,7 +18,6 @@ public class ReportCreatedEvent : BaseDomainEvent
     public string EventCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
     // Example properties (expand as needed)
-    public string ReportId { get; set; } = string.Empty;
     public string CreatedBy { get; set; } = "SYSTEM";
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 

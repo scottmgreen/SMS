@@ -11,24 +11,19 @@
 using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
 using SMS_Application.Interfaces;
-using SMS_Domain.Events;
-using SMS_Domain.Enums;
 
 namespace SMS_Application.Services;
 
 public sealed class InvestigationService
 {
     private readonly InvestigationDataService _dataService;
-    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<InvestigationService> _logger;
 
     public InvestigationService(
         InvestigationDataService dataService,
-        IBaseEventBus eventBus,
         ILogger<InvestigationService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
-        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -89,39 +84,12 @@ public sealed class InvestigationService
     {
         try
         {
-            InvestigationStatus? previousStatus = null;
-            if (investigation is not null && !string.IsNullOrWhiteSpace(investigation.Code))
-            {
-                var existingResult = await _dataService.GetInvestigationByCodeAsync(investigation.Code, ct).ConfigureAwait(false);
-                if (existingResult.IsSuccess && existingResult.Value is not null)
-                {
-                    previousStatus = existingResult.Value.Status;
-                }
-            }
-
             _logger.LogApplicationInformation("Updating investigation with ID: {Id}", investigation?.Id);
             var result = await _dataService.UpdateInvestigationAsync(investigation, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation("Successfully updated investigation with ID: {Id}", investigation?.Id);
-
-                if (investigation is not null)
-                {
-                    await TransitionEventPublisher.PublishIfChangedAsync(
-                        _eventBus,
-                        previousStatus,
-                        investigation.Status,
-                        () => new InvestigationStatusChangedEvent(
-                            id: new SMSEventID(Guid.NewGuid().ToString()),
-                            investigationId: investigation.Id.Value,
-                            investigationCode: investigation.Code,
-                            previousStatus: previousStatus!,
-                            newStatus: investigation.Status,
-                            changedBy: investigation.UpdatedBy ?? "SYSTEM",
-                            changedDate: investigation.UpdatedDate ?? DateTime.UtcNow),
-                        ct).ConfigureAwait(false);
-                }
             }
             else
             {

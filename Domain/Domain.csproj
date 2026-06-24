@@ -54,8 +54,4 @@
     <Using Include="System.Reflection" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Entities\SPIManagementSupport\" />
-  </ItemGroup>
-
 </Project>

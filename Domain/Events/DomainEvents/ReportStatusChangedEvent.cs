@@ -7,7 +7,6 @@ public sealed class ReportStatusChangedEvent : BaseDomainEvent
 {
     public override string EventType => SMS_Domain.Enums.EventType.ReportStatusChanged.Value;
 
-    public string ReportId { get; }
     public string? ReportCode { get; }
     public ReportStatus PreviousStatus { get; }
     public ReportStatus NewStatus { get; }

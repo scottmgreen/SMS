@@ -11,7 +11,6 @@
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
-using SMS_Domain.Events;
 using SMS_Domain.Enums;
 
 namespace SMS_Application.Services;
@@ -23,18 +22,15 @@ public sealed class HazardService : IHazardService
 {
     private readonly HazardDataService _dataService;
     private readonly HazardLocationService _hazardLocationService;
-    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<HazardService> _logger;
 
     public HazardService(
         HazardDataService dataService,
         HazardLocationService hazardLocationService,
-        IBaseEventBus eventBus,
         ILogger<HazardService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _hazardLocationService = hazardLocationService ?? throw new ArgumentNullException(nameof(hazardLocationService));
-        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -111,40 +107,12 @@ public sealed class HazardService : IHazardService
     {
         try
         {
-            HazardStatus? previousStatus = null;
-            if (hazard is not null && !string.IsNullOrWhiteSpace(hazard.Code))
-            {
-                var existingResult = await _dataService.GetHazardByCodeAsync(new HazardID(hazard.Code), ct).ConfigureAwait(false);
-                if (existingResult.IsSuccess && existingResult.Value is not null)
-                {
-                    previousStatus = existingResult.Value.Status;
-                }
-            }
-
             _logger.LogApplicationInformation("Updating hazard with ID: {Id}", hazard?.Id);
             var result = await _dataService.UpdateHazardAsync(hazard, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation("Successfully updated hazard with ID: {Id}", hazard?.Id);
-
-                if (hazard is not null)
-                {
-                    await TransitionEventPublisher.PublishIfChangedAsync(
-                        _eventBus,
-                        previousStatus,
-                        hazard.Status,
-                        () => new HazardStatusChangedEvent(
-                            id: new SMSEventID(Guid.NewGuid().ToString()),
-                            hazardId: hazard.Id.Value,
-                            hazardCode: hazard.Code,
-                            previousStatus: previousStatus!,
-                            newStatus: hazard.Status,
-                            statusChangeReason: "Hazard status updated",
-                            changedBy: hazard.UpdatedBy ?? "SYSTEM",
-                            statusChangeDate: hazard.UpdatedDate ?? DateTime.UtcNow),
-                        ct).ConfigureAwait(false);
-                }
             }
             else
             {

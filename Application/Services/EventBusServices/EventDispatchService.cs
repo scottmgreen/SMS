@@ -12,6 +12,7 @@ using SMS_Application.Interfaces;
 using SMS_Application.Interfaces;
 using SMS_Domain.Common;
 using SMS_Domain.Interfaces;
+using SMS_Infrastructure.Interfaces;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -68,15 +69,62 @@ public sealed class EventDispatchService : IBaseEventBus
         _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
     }
 
-    private async Task PersistDomainAuditEventAsync<T>(T domainEvent, string queuedBy) where T : IBaseDomainEvent
+    private async Task<Guid?> PersistDomainAuditEventAsync<T>(T domainEvent, string queuedBy) where T : IBaseDomainEvent
     {
         try
         {
-            await ExecuteWithQueueServiceAsync(queueService => queueService.QueueDomainEventAsync(domainEvent, queuedBy)).ConfigureAwait(false);
+            using var scope = _serviceProvider.CreateScope();
+            var queueDataService = scope.ServiceProvider.GetRequiredService<IEventQueueDataService>();
+            var enqueueResult = await queueDataService.EnqueueDomainEventAsync(domainEvent, queuedBy).ConfigureAwait(false);
+            if (enqueueResult.IsSuccess)
+            {
+                return enqueueResult.Value.Id;
+            }
+
+            _logger.LogApplicationWarning("Failed to persist domain event audit record for {EventType} (ID: {EventId}): {Error}",
+                domainEvent.EventType,
+                domainEvent.EventId,
+                enqueueResult.Error?.Message);
         }
         catch (Exception ex)
         {
             _logger.LogApplicationWarning(ex, "Failed to persist domain event audit record for {EventType} (ID: {EventId})", domainEvent.EventType, domainEvent.EventId);
+        }
+
+        return null;
+    }
+
+    private async Task MarkDomainAuditEventProcessedAsync(Guid queueId)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var queueDataService = scope.ServiceProvider.GetRequiredService<IEventQueueDataService>();
+
+            // Align with repository lifecycle: lease (Pending -> Processing) before mark processed.
+            await queueDataService.LeaseQueuedEventAsync(queueId, "EventBus-Immediate", 60).ConfigureAwait(false);
+            await queueDataService.MarkProcessedAsync(queueId, "EventBus-Immediate").ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex, "Failed to mark immediate domain audit event as processed for QueueId {QueueId}", queueId);
+        }
+    }
+
+    private async Task MarkDomainAuditEventFailedAsync(Guid queueId, string errorMessage)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var queueDataService = scope.ServiceProvider.GetRequiredService<IEventQueueDataService>();
+
+            // Align with repository lifecycle: lease (Pending -> Processing) before mark failed.
+            await queueDataService.LeaseQueuedEventAsync(queueId, "EventBus-Immediate", 60).ConfigureAwait(false);
+            await queueDataService.MarkFailedAsync(queueId, "EventBus-Immediate", errorMessage).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex, "Failed to mark immediate domain audit event as failed for QueueId {QueueId}", queueId);
         }
     }
 
@@ -164,12 +212,26 @@ public sealed class EventDispatchService : IBaseEventBus
             _ => "EventBus"
         };
 
-        if (!SuppressDomainAuditPersistence.Value)
+        Guid? auditQueueId = null;
+        if (!SuppressDomainAuditPersistence.Value && mode == EventExecutionMode.Immediate)
         {
-            await PersistDomainAuditEventAsync(domainEvent, queuedBy).ConfigureAwait(false);
+            auditQueueId = await PersistDomainAuditEventAsync(domainEvent, queuedBy).ConfigureAwait(false);
         }
 
         var result = await PublishAsync(domainEvent, mode, cancellationToken);
+
+        if (mode == EventExecutionMode.Immediate && auditQueueId.HasValue)
+        {
+            if (result.IsSuccess)
+            {
+                await MarkDomainAuditEventProcessedAsync(auditQueueId.Value).ConfigureAwait(false);
+            }
+            else
+            {
+                await MarkDomainAuditEventFailedAsync(auditQueueId.Value, result.Error?.Message ?? "Immediate execution failed").ConfigureAwait(false);
+            }
+        }
+
         _logger.LogApplicationDebug("PublishDomainEventAsync result: {IsSuccess}", result.IsSuccess);
         return result;
     }

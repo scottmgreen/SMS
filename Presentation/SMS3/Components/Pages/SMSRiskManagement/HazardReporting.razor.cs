@@ -1018,19 +1018,27 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
                 _logger.LogInformation("Map reinitialized for modal opening");
 
-                // Restore existing location if we have one
-                if (HasGeoLocation)
+                // Restore existing location pin for both validated and pending-validation locations
+                var locationForMap = ActiveLocationForValidation;
+                if (locationForMap?.Latitude is decimal mapLat &&
+                    locationForMap.Longitude is decimal mapLng &&
+                    mapLat != 0 &&
+                    mapLng != 0)
                 {
                     await Task.Delay(500); // Give map time to initialize
 
-                    await _mapModule.InvokeVoidAsync("setLocationFromCoordinates",(double)SelectedGeoLocation.Latitude, (double)SelectedGeoLocation.Longitude,SelectedGeoLocation.Description);
+                    await _mapModule.InvokeVoidAsync(
+                        "setLocationFromCoordinates",
+                        (double)mapLat,
+                        (double)mapLng,
+                        locationForMap.Description ?? string.Empty);
 
                     // Update the form fields to match the restored location
-                    SelectedLatitude = SelectedGeoLocation.Latitude ?? 0;
-                    SelectedLongitude = SelectedGeoLocation.Longitude ?? 0;
-                    SelectedLocationDescription = SelectedGeoLocation.Description ?? "";
+                    SelectedLatitude = mapLat;
+                    SelectedLongitude = mapLng;
+                    SelectedLocationDescription = locationForMap.Description ?? string.Empty;
 
-                    _logger.LogInformation("Existing location restored: {Lat}, {Lng}", SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
+                    _logger.LogInformation("Existing location restored: {Lat}, {Lng}", mapLat, mapLng);
 
                     StateHasChanged();
                 }

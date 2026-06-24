@@ -43,6 +43,7 @@ public abstract class SMSSafetyPerformanceIndicatorType : BaseEnum<SMSSafetyPerf
     // Process Indicators
     public static readonly SMSSafetyPerformanceIndicatorType CorrectiveActionClosure = new CorrectiveActionClosureType();
     public static readonly SMSSafetyPerformanceIndicatorType RiskAssessmentCompletion = new RiskAssessmentCompletionType();
+    public static readonly SMSSafetyPerformanceIndicatorType RiskIdentificationEffectiveness = new RiskIdentificationEffectivenessType();
     public static readonly SMSSafetyPerformanceIndicatorType InvestigationTimeliness = new InvestigationTimelinessType();
     public static readonly SMSSafetyPerformanceIndicatorType SystemEffectiveness = new SystemEffectivenessType();
 
@@ -139,6 +140,13 @@ public abstract class SMSSafetyPerformanceIndicatorType : BaseEnum<SMSSafetyPerf
     {
         public RiskAssessmentCompletionType() : base("RISK_ASSESSMENT_COMPLETION", "Risk Assessment Completion Rate",
             "Percentage of risk assessments completed within timeline", "Process")
+        { }
+    }
+
+    private sealed class RiskIdentificationEffectivenessType : SMSSafetyPerformanceIndicatorType
+    {
+        public RiskIdentificationEffectivenessType() : base("RISK_IDENTIFICATION_EFFECTIVENESS", "Risk Identification Effectiveness",
+            "Effectiveness of validation decisions in identifying true SMS risks", "Process")
         { }
     }
 

@@ -349,55 +349,6 @@ public sealed class HazardUpdatedEventHandler : BaseDomainEventHandler<HazardUpd
 
         return Task.FromResult(Result.Success());
     }
-
-    //protected override async Task<Result> HandleIntegrationEventAsync(HazardUpdatedEvent domainEvent, CancellationToken cancellationToken)
-    //{
-    //    var reportId = HandlerHelpers.ResolveReportId(domainEvent);
-
-    //    var emailEvent = new EmailNotificationEvent(
-    //        toRecipients: new List<string> { "safety.team@pdxairport.com" },
-    //        subject: $"Hazard Updated: {domainEvent.HazardId}",
-    //        body: $"Hazard '{domainEvent.HazardId}' was updated. Report: {reportId}",
-    //        isHtmlContent: false,
-    //        priority: EmailPriority.Normal,
-    //        deliveryMode: IntegrationDeliveryMode.BestEffort,
-    //        reportId: reportId,
-    //        workflowType: "HazardUpdateNotification",
-    //        relatedEntityType: "Hazard",
-    //        relatedEntityId: domainEvent.HazardId,
-    //        emailMetadata: new Dictionary<string, object>
-    //        {
-    //            { "Source", nameof(HazardUpdatedEventHandler) },
-    //            { "HazardId", domainEvent.HazardId ?? string.Empty }
-    //        });
-
-    //    //return await EventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Manual, cancellationToken);
-    //}
-
-    protected override async Task<Result> HandleUIEventAsync(HazardUpdatedEvent domainEvent, CancellationToken cancellationToken)
-    {
-        var reportId = HandlerHelpers.ResolveReportId(domainEvent);
-
-        var uiEvent = new UINotificationEvent(
-            severity: UINotificationSeverity.Info,
-            title: "Hazard Updated",
-            message: $"Hazard {domainEvent.HazardId} was updated" + (string.IsNullOrWhiteSpace(reportId) ? string.Empty : $" (Report: {reportId})"),
-            duration: 5000,
-            category: "Hazard",
-            sourceLayer: nameof(HazardUpdatedEventHandler),
-            reportId: reportId,
-            targetComponent: "NotificationCenter",
-            priority: UIEventPriority.Normal,
-            metadata: new Dictionary<string, object>
-            {
-                { "HazardId", domainEvent.HazardId ?? string.Empty },
-                { "ReportId", reportId }
-            });
-
-        return await EventBus.PublishUIEventAsync(uiEvent, EventExecutionMode.Manual, cancellationToken);
-    }
-
-    
 }
 
 /// <summary>
@@ -541,13 +492,13 @@ public sealed class MitigationApprovalRequestedEventHandler : BaseDomainEventHan
         var recipients = (domainEvent.RequiredApprovers ?? new List<string>())
             .Where(v => !string.IsNullOrWhiteSpace(v))
             .Select(v => v.Trim())
-            .Select(v => v.Contains('@') ? v : $"{v}@pdxairport.com")
+            .Select(v => v.Contains('@') ? v : $"{v}@flypdx.com")
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         if (recipients.Count == 0)
         {
-            recipients.Add("safety.manager@pdxairport.com");
+            recipients.Add("sms.manager@flypdx.com");
         }
 
         var emailEvent = new EmailNotificationEvent(
@@ -713,6 +664,60 @@ public sealed class MitigationStatusChangedEventHandler : BaseDomainEventHandler
         }
 
         return Result.Success();
+    }
+
+    protected override async Task<Result> HandleIntegrationEventAsync(MitigationStatusChangedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        if (!string.Equals(domainEvent.Status, SMS_Domain.Enums.MitigationStatus.Approved.Value, StringComparison.OrdinalIgnoreCase))
+        {
+            return Result.Success();
+        }
+
+        var mitigationResult = await _mediator.SendAsync(new GetMitigationByCodeQuery(new MitigationID(domainEvent.MitigationId)), cancellationToken);
+        if (mitigationResult.IsFailure || mitigationResult.Value is null)
+        {
+            _logger.LogApplicationWarning(
+                "Unable to resolve mitigation {MitigationId} for approved notification email.",
+                domainEvent.MitigationId);
+            return Result.Success();
+        }
+
+        var mitigation = mitigationResult.Value;
+        var recipient = mitigation.AssignedTo?.Trim();
+
+        if (string.IsNullOrWhiteSpace(recipient))
+        {
+            _logger.LogApplicationInformation(
+                "Skipping approved notification email for mitigation {MitigationId} because AssignedTo is empty.",
+                domainEvent.MitigationId);
+            return Result.Success();
+        }
+
+        if (!recipient.Contains('@'))
+        {
+            recipient = $"{recipient}@flypdx.com";
+        }
+
+        var emailEvent = new EmailNotificationEvent(
+            toRecipients: new List<string> { recipient },
+            subject: $"Mitigation Approved: {mitigation.Code}",
+            body: $"Mitigation {mitigation.Code} has been approved and is assigned to you ({mitigation.AssignedTo}).",
+            isHtmlContent: false,
+            priority: EmailPriority.Normal,
+            deliveryMode: IntegrationDeliveryMode.BestEffort,
+            reportId: domainEvent.ReportId,
+            workflowType: "MitigationApproved",
+            relatedEntityType: "Mitigation",
+            relatedEntityId: mitigation.Code,
+            emailMetadata: new Dictionary<string, object>
+            {
+                { "MitigationId", domainEvent.MitigationId },
+                { "Status", domainEvent.Status },
+                { "ChangedBy", domainEvent.ChangedBy },
+                { "ChangedDate", domainEvent.ChangedDate }
+            });
+
+        return await EventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Queued, cancellationToken);
     }
 
     protected override async Task<Result> HandleUIEventAsync(MitigationStatusChangedEvent domainEvent, CancellationToken cancellationToken)
@@ -974,7 +979,7 @@ public sealed class ValidationDecisionMadeEventHandler : BaseDomainEventHandler<
             domainEvent.ValidationDecision,
             cancellationToken);
 
-        if (result.IsFailure)
+            if (result.IsFailure)
         {
             _logger.LogApplicationWarning("SPI automation failed for validation decision event {ReportCode}: {Error}", domainEvent.ReportCode, result.Error?.Message);
             return Result.Failure(result.Error ?? new Error("VALIDATION_SPI_FAILED", "Failed to update validation SPI metrics"));
