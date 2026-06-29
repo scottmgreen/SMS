@@ -9,6 +9,7 @@
 
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Logging;
+using System.Text;
 using Radzen;
 using Radzen.Blazor;
 using SMS_Application.Interfaces;
@@ -39,7 +40,7 @@ public partial class EventBusQueueManager
     private bool _isProcessing = false;
 
     private QueuedEventStatus? _statusFilter;
-    private EventCategory? _eventTypeFilter;
+    private EventCategory? _eventTypeFilter = EventCategory.IntegrationEvent;
 
     #endregion
     // Helper to extract ReportId from any event type
@@ -240,30 +241,58 @@ public partial class EventBusQueueManager
             }
 
             var queuedEvent = eventResult.Value;
+            var isEmailPreviewEvent = queuedEvent.EventCategory == EventCategory.IntegrationEvent
+                && queuedEvent.EventType == SMS_Domain.Enums.EventType.EmailNotification.Value;
 
             // Check for IntegrationEvent and Email Notification
-            if (queuedEvent.EventCategory == EventCategory.IntegrationEvent && queuedEvent.EventType == SMS_Domain.Enums.EventType.EmailNotification.Value)
+            if (isEmailPreviewEvent)
             {
                 try
                 {
                     var emailEvent = System.Text.Json.JsonSerializer.Deserialize<SMS_Domain.Events.EmailNotificationEvent>(queuedEvent.EventData);
                     if (emailEvent != null)
                     {
+                        var subject = emailEvent.Subject ?? string.Empty;
+                        var body = emailEvent.Body ?? string.Empty;
+
+                        AppendEmailPreviewDetails(queuedEvent, emailEvent, ref subject, ref body);
+
                         var model = new SMS3.Components.Pages.SMSSystem.Models.EmailComposeModel
                         {
                             To = emailEvent.ToRecipients ?? new List<string>(),
                             Cc = emailEvent.CcRecipients ?? new List<string>(),
                             Bcc = emailEvent.BccRecipients ?? new List<string>(),
-                            Subject = emailEvent.Subject,
-                            BodyHtml = emailEvent.IsHtmlContent ? emailEvent.Body : null
+                            Subject = subject,
+                            BodyHtml = emailEvent.IsHtmlContent ? ((MarkupString)body).Value : body.Replace("\n", "<br />")
                         };
 
-                        await DialogService.OpenAsync<Components.EmailComposeDialog>(
-                            "Test Email Notification",
+                        var dialogResult = await DialogService.OpenAsync<Components.EmailComposeDialog>(
+                            "SMS Notification",
                             new Dictionary<string, object?> { { "InitialModel", model } },
-                            new DialogOptions { Width = "900px", Height = "600px", Resizable = true, Draggable = true }
+                            new DialogOptions { Width = "950px", Height = "700px", Resizable = true, Draggable = true, ShowClose = false }
                         );
-                        // Continue to persisted execution after preview so queue status is updated
+
+                        var emailSent = dialogResult is bool sent && sent;
+
+                        if (!emailSent)
+                        {
+                            Logger.LogInformation("Email dialog cancelled for event {EventId}; queue status remains unchanged.", eventId);
+                            return;
+                        }
+
+                        if (queuedEvent.Status != QueuedEventStatus.Pending)
+                        {
+                            NotificationService.Notify(new NotificationMessage
+                            {
+                                Severity = NotificationSeverity.Success,
+                                Summary = "Email Re-Sent",
+                                Detail = "Email was sent again without changing the original queue record.",
+                                Duration = 3000
+                            });
+
+                            Logger.LogInformation("Email event {EventId} re-sent from queue manager for status {Status}", eventId, queuedEvent.Status);
+                            return;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -322,6 +351,184 @@ public partial class EventBusQueueManager
             _isProcessing = false;
             StateHasChanged();
         }
+    }
+
+    private static void AppendEmailPreviewDetails(QueuedEvent queuedEvent, EmailNotificationEvent emailEvent, ref string subject, ref string body)
+    {
+        if (string.IsNullOrWhiteSpace(queuedEvent.EventData))
+        {
+            return;
+        }
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(queuedEvent.EventData);
+            var root = doc.RootElement;
+
+            if (IsHazardEmail(emailEvent))
+            {
+                var reportCode = FirstString(root, "ReportId", "reportId", "ReportCode", "reportCode");
+                var hazardCode = FirstString(root, "RelatedEntityId", "relatedEntityId", "HazardCode", "hazardCode");
+                var hazardCategory = FirstString(root, "HazardCategory", "hazardCategory", "Category", "category");
+                var hazardType = FirstString(root, "HazardType", "hazardType", "Type", "type");
+
+                if (!string.IsNullOrWhiteSpace(reportCode))
+                {
+                    subject = EnsureToken(subject, reportCode.Trim());
+                }
+
+                if (!string.IsNullOrWhiteSpace(hazardCode))
+                {
+                    subject = EnsureToken(subject, hazardCode.Trim());
+                }
+
+                var details = new StringBuilder();
+                if (!string.IsNullOrWhiteSpace(hazardCategory))
+                {
+                    details.AppendLine($"Hazard Category: {hazardCategory}");
+                }
+
+                if (!string.IsNullOrWhiteSpace(hazardType))
+                {
+                    details.AppendLine($"Hazard Type: {hazardType}");
+                }
+
+                if (details.Length > 0)
+                {
+                    body = AppendTextBlock(body, details.ToString().TrimEnd());
+                }
+            }
+            else if (IsMitigationEmail(emailEvent))
+            {
+                var mitigationCode = FirstString(root, "RelatedEntityId", "relatedEntityId", "MitigationCode", "mitigationCode");
+                var mitigationName = FirstString(root, "MitigationName", "mitigationName", "Name", "name");
+
+                if (!string.IsNullOrWhiteSpace(mitigationCode))
+                {
+                    subject = EnsureToken(subject, mitigationCode.Trim());
+                }
+
+                if (!string.IsNullOrWhiteSpace(mitigationName))
+                {
+                    body = AppendTextBlock(body, $"Mitigation Name: {mitigationName}");
+                }
+            }
+        }
+        catch
+        {
+            // Leave original preview content unchanged if payload parsing fails.
+        }
+    }
+
+    private static bool IsHazardEmail(EmailNotificationEvent emailEvent)
+    {
+        return string.Equals(emailEvent.RelatedEntityType, "Hazard", StringComparison.OrdinalIgnoreCase)
+               || string.Equals(emailEvent.WorkflowType, "HazardNotification", StringComparison.OrdinalIgnoreCase)
+               || (emailEvent.Subject?.Contains("Hazard", StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+
+    private static bool IsMitigationEmail(EmailNotificationEvent emailEvent)
+    {
+        return string.Equals(emailEvent.RelatedEntityType, "Mitigation", StringComparison.OrdinalIgnoreCase)
+               || (emailEvent.WorkflowType?.Contains("Mitigation", StringComparison.OrdinalIgnoreCase) ?? false)
+               || (emailEvent.Subject?.Contains("Mitigation", StringComparison.OrdinalIgnoreCase) ?? false);
+    }
+
+    private static string FirstString(System.Text.Json.JsonElement root, params string[] names)
+    {
+        foreach (var name in names)
+        {
+            if (TryGetStringValue(root, name, out var value) && !string.IsNullOrWhiteSpace(value))
+            {
+                return value.Trim();
+            }
+        }
+
+        return string.Empty;
+    }
+
+    private static bool TryGetStringValue(System.Text.Json.JsonElement element, string propertyName, out string value)
+    {
+        value = string.Empty;
+
+        if (element.ValueKind != System.Text.Json.JsonValueKind.Object)
+        {
+            return false;
+        }
+
+        foreach (var property in element.EnumerateObject())
+        {
+            if (string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase))
+            {
+                if (property.Value.ValueKind == System.Text.Json.JsonValueKind.String)
+                {
+                    value = property.Value.GetString() ?? string.Empty;
+                    return true;
+                }
+
+                if (property.Value.ValueKind == System.Text.Json.JsonValueKind.Object)
+                {
+                    if (TryGetStringValue(property.Value, "Value", out var nested))
+                    {
+                        value = nested;
+                        return true;
+                    }
+
+                    if (TryGetStringValue(property.Value, "Name", out nested))
+                    {
+                        value = nested;
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            if (property.Value.ValueKind == System.Text.Json.JsonValueKind.Object
+                && TryGetStringValue(property.Value, propertyName, out value))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string EnsureToken(string subject, string token)
+    {
+        if (string.IsNullOrWhiteSpace(token))
+        {
+            return subject;
+        }
+
+        if (subject.Contains(token, StringComparison.OrdinalIgnoreCase))
+        {
+            return subject;
+        }
+
+        return string.IsNullOrWhiteSpace(subject)
+            ? token
+            : $"{subject} - {token}";
+    }
+
+    private static string AppendTextBlock(string existingBody, string details)
+    {
+        if (string.IsNullOrWhiteSpace(details))
+        {
+            return existingBody;
+        }
+
+        if (string.IsNullOrWhiteSpace(existingBody))
+        {
+            return details;
+        }
+
+        if (existingBody.Contains(details, StringComparison.OrdinalIgnoreCase))
+        {
+            return existingBody;
+        }
+
+        return $"{existingBody}\n\n{details}";
     }
 
     private async Task CancelEvent(Guid eventId)

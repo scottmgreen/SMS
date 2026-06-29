@@ -13,30 +13,34 @@
 
     <!-- Title bar -->
     <div class="compose-titlebar">
-        <div class="compose-title">New message</div>
-        <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@Close" />
+        <div class="compose-title">@DialogTitle</div>
     </div>
 
     <!-- Header fields (Outlook-like) -->
     <div class="compose-header">
         <!-- TO -->
-        <div class="compose-row">
-            <label class="compose-label">To</label>
-            <div class="compose-field">
-                <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.Center" class="rz-p-12" Gap="2rem">
-                @foreach (string recipient in Model.To)
-                {
-                    <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@recipient"  />
-                }
-                </RadzenStack>
-            </div>
-        </div>
+        
+            <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center">
+                <RadzenColumn Size="1" class="text-end">
+                    <RadzenLabel>To:</RadzenLabel>
+                </RadzenColumn>
+                <RadzenColumn Size="11" class="text-start">
+                    @* <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.Start" class="rz-p-12" Gap="1rem"> *@
+                    @foreach (string recipient in Model.To)
+                    {
+                        <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@recipient" class="me-2" /> 
+                        
+                    }
+                    @* </RadzenStack> *@
+                </RadzenColumn>
+            </RadzenRow>
+        
 
         <!-- CC (toggleable) -->
-        <div class="compose-row cc-toggle">
+        @* <div class="compose-row cc-toggle">
             <RadzenLink Click="@ToggleCc" class="toggle-link">Cc</RadzenLink>
             <RadzenLink Click="@ToggleBcc" class="toggle-link">Bcc</RadzenLink>
-        </div>
+        </div> *@
 
         @if (ShowCc)
         {
@@ -59,12 +63,24 @@
         }
 
         <!-- Subject -->
-        <div class="compose-row">
+        <br />
+        <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center">
+            <RadzenColumn Size="1" class="text-end">
+                <RadzenLabel>Subject</RadzenLabel>
+            </RadzenColumn>
+            <RadzenColumn Size="11" class="text-start">
+                @* <RadzenStack Orientation="Orientation.Horizontal" Wrap="FlexWrap.Wrap" JustifyContent="JustifyContent.Start" class="rz-p-12" Gap=".5rem"> *@
+                    <RadzenTextBox @bind-Value="Model.Subject" Placeholder="Add a subject" class="subject-input" />
+                @* </RadzenStack> *@
+            </RadzenColumn>
+        </RadzenRow>
+
+        @* <div class="compose-row">
             <label class="compose-label">Subject</label>
             <div class="compose-field">
                 <RadzenTextBox @bind-Value="Model.Subject" Placeholder="Add a subject" class="subject-input" />
             </div>
-        </div>
+        </div> *@
     </div>
 
     <!-- Editor (Outlook-style compact) -->

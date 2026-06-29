@@ -19,6 +19,7 @@ public class EmailComposeDialogBase : ComponentBase
     protected bool ShowCc { get; set; }
     protected bool ShowBcc { get; set; }
     protected bool IsSending { get; set; }
+    protected string DialogTitle { get; set; } = "New message";
 
     
 
@@ -41,6 +42,12 @@ public class EmailComposeDialogBase : ComponentBase
 
             ShowCc = (Model.Cc?.Count ?? 0) > 0;
             ShowBcc = (Model.Bcc?.Count ?? 0) > 0;
+
+            if (!string.IsNullOrWhiteSpace(Model.Subject)
+                && Model.Subject.Contains("Mitigation Approval Required", StringComparison.OrdinalIgnoreCase))
+            {
+                DialogTitle = "Mitigation Approval Request";
+            }
         }
     }
 
@@ -118,7 +125,7 @@ public class EmailComposeDialogBase : ComponentBase
                 Detail = "Your email has been sent."
             });
 
-            Close();
+            DialogService.Close(true);
         }
         catch (Exception ex)
         {
@@ -137,7 +144,7 @@ public class EmailComposeDialogBase : ComponentBase
 
     protected void Close()
     {
-        DialogService.Close(true);
+        DialogService.Close(false);
     }
 
     private static System.Collections.Generic.List<string> ValidateModel(EmailComposeModel m)

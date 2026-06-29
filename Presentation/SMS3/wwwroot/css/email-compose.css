@@ -33,6 +33,7 @@
 }
 .compose-field {
     flex: 1;
+    text-align:left;
 }
 .compose-actions {
     display: flex;

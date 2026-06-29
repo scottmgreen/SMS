@@ -107,10 +107,14 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
             _logger.LogApplicationInformation(" Processing UpdateMitigationCommand for ID: {Id}", request.Mitigation.Id);
 
             MitigationStatus? previousStatus = null;
-            if (!string.IsNullOrWhiteSpace(request.Mitigation.Code))
+            var mitigationLookupCode = !string.IsNullOrWhiteSpace(request.Mitigation.Code)
+                ? request.Mitigation.Code.Trim()
+                : request.Mitigation.Id?.Value?.Trim();
+
+            if (!string.IsNullOrWhiteSpace(mitigationLookupCode))
             {
                 var existingMitigationResult = await _mitigationService
-                    .GetMitigationByCodeAsync(new MitigationID(request.Mitigation.Code), cancellationToken)
+                    .GetMitigationByCodeAsync(new MitigationID(mitigationLookupCode), cancellationToken)
                     .ConfigureAwait(false);
 
                 if (existingMitigationResult.IsSuccess && existingMitigationResult.Value is not null)
@@ -144,13 +148,14 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                     && previousStatus == MitigationStatus.PendingApproval
                     && updatedMitigation.Status == MitigationStatus.Approved)
                 {
+                    var mitigationCode = (updatedMitigation.Code ?? updatedMitigation.Id.Value ?? string.Empty).Trim();
                     var completedDate = updatedMitigation.UpdatedDate ?? DateTime.UtcNow;
                     var completedBy = updatedMitigation.ApprovedBy ?? updatedMitigation.UpdatedBy ?? "SYSTEM";
 
                     var mitigationCompletedEvent = new MitigationCompletedEvent(
                         new SMSEventID("EV-0000"),
-                        updatedMitigation.Code,
-                        updatedMitigation.Code,
+                        mitigationCode,
+                        mitigationCode,
                         updatedMitigation.HazardCode ?? string.Empty,
                         updatedMitigation.TargetDate ?? completedDate.AddDays(30),
                         completedDate,
@@ -174,20 +179,32 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
 
                 if (updatedMitigation is not null)
                 {
-                    await TransitionEventPublisher.PublishIfChangedAsync(
-                        _eventBus,
-                        previousStatus,
-                        updatedMitigation.Status,
-                        () => new MitigationStatusChangedEvent(
+                    var previousStatusValue = previousStatus?.Value?.Trim() ?? string.Empty;
+                    var currentStatusValue = updatedMitigation.Status.Value?.Trim() ?? string.Empty;
+                    var statusChanged = !string.IsNullOrWhiteSpace(currentStatusValue)
+                        && !string.Equals(previousStatusValue, currentStatusValue, StringComparison.OrdinalIgnoreCase);
+
+                    if (statusChanged)
+                    {
+                        var statusChangedEvent = new MitigationStatusChangedEvent(
                             id: new SMSEventID("EV-0000"),
-                            mitigationId: updatedMitigation.Id.Value,
-                            status: updatedMitigation.Status.Value,
+                            mitigationId: (updatedMitigation.Code ?? updatedMitigation.Id.Value ?? string.Empty).Trim(),
+                            status: currentStatusValue,
                             changedBy: updatedMitigation.UpdatedBy ?? "SYSTEM",
                             changedDate: updatedMitigation.UpdatedDate ?? DateTime.UtcNow)
                         {
                             ReportId = reportId
-                        },
-                        cancellationToken).ConfigureAwait(false);
+                        };
+
+                        var statusPublishResult = await _eventBus.PublishDomainEventAsync(statusChangedEvent, cancellationToken).ConfigureAwait(false);
+                        if (statusPublishResult.IsFailure)
+                        {
+                            _logger.LogApplicationWarning(
+                                "Failed to publish MitigationStatusChanged event for {MitigationCode}: {Error}",
+                                updatedMitigation.Code,
+                                statusPublishResult.Error?.Message ?? "Unknown publish error");
+                        }
+                    }
                 }
             }
             else

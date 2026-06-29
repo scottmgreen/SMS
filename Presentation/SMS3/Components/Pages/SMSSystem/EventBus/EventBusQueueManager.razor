@@ -7,10 +7,10 @@
 @inject NotificationService NotificationService
 @inject DialogService DialogService
 
-<PageTitle>EventBus Queue Manager - SMS3</PageTitle>
+<PageTitle>SMS Notifications Manager - SMS3</PageTitle>
 
-<PageHeader Title="EventBus Queue Manager" 
-            Subtitle="Monitor and Control Queued Events"
+<PageHeader Title="SMS Notifications Manager" 
+            Subtitle="Monitor and Control SMS Notifications"
             Icon="fas fa-layer-group">
 </PageHeader>
 
@@ -213,6 +213,18 @@
                                              Click="@(() => CancelEvent(queuedEvent.Id))"
                                              Disabled="@_isProcessing"
                                              Title="Cancel Event"
+                                             class="me-1" />
+                            }
+                            else if (queuedEvent.Status == QueuedEventStatus.Processed
+                                && queuedEvent.EventCategory == EventCategory.IntegrationEvent
+                                && queuedEvent.EventType == SMS_Domain.Enums.EventType.EmailNotification.Value)
+                            {
+                                <RadzenButton Icon="replay" 
+                                             Size="ButtonSize.Small" 
+                                             ButtonStyle="ButtonStyle.Base" 
+                                             Click="@(() => ExecuteEvent(queuedEvent.Id))"
+                                             Disabled="@_isProcessing"
+                                             Title="Re-send Email"
                                              class="me-1" />
                             }
 

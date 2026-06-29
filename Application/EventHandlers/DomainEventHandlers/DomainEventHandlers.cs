@@ -504,7 +504,7 @@ public sealed class MitigationApprovalRequestedEventHandler : BaseDomainEventHan
         var emailEvent = new EmailNotificationEvent(
             toRecipients: recipients,
             subject: $"Mitigation Approval Required: {domainEvent.MitigationCode}",
-            body: $"Mitigation {domainEvent.MitigationCode} requires approval. Priority: {domainEvent.Priority}. Deadline: {domainEvent.ApprovalDeadline:yyyy-MM-dd HH:mm} UTC.",
+            body: $"Mitigation {domainEvent.MitigationCode}, related to Hazard - {domainEvent.HazardCode}, requires approval. Priority: {domainEvent.Priority}. Deadline: {domainEvent.ApprovalDeadline:yyyy-MM-dd HH:mm} UTC.",
             isHtmlContent: false,
             priority: EmailPriority.High,
             deliveryMode: IntegrationDeliveryMode.BestEffort,
@@ -701,7 +701,7 @@ public sealed class MitigationStatusChangedEventHandler : BaseDomainEventHandler
         var emailEvent = new EmailNotificationEvent(
             toRecipients: new List<string> { recipient },
             subject: $"Mitigation Approved: {mitigation.Code}",
-            body: $"Mitigation {mitigation.Code} has been approved and is assigned to you ({mitigation.AssignedTo}).",
+            body: $"Mitigation {mitigation.Code} has been approved and targeted for {(mitigation.TargetDate.HasValue ? mitigation.TargetDate.Value.ToString("yyyy-MM-dd") : "the planned target date")} completion.",
             isHtmlContent: false,
             priority: EmailPriority.Normal,
             deliveryMode: IntegrationDeliveryMode.BestEffort,
