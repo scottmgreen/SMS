@@ -25,6 +25,9 @@ public class HazardReportForm
     public string? ReportContactEmail { get; set; }
 
     public string? ReportContactCompany { get; set; }
+
+    public string? HazardTitle { get; set; }
+
     public string? Description { get; set; }
     public bool IsAnonymous { get; set; } = false;
 }

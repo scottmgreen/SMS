@@ -123,10 +123,27 @@ namespace SMS3.Api.Endpoints
 
                 var validatedLocations = result.Value
                     .Where(l => l.IsValidated)
+                    .ToList();
+
+                var hazardsResult = await mediator.SendAsync(new GetAllHazardsQuery(), CancellationToken.None);
+                var hazardTitleByCode = hazardsResult.IsSuccess && hazardsResult.Value is not null
+                    ? hazardsResult.Value
+                        .Where(h => !string.IsNullOrWhiteSpace(h.Code))
+                        .GroupBy(h => h.Code.Trim(), StringComparer.OrdinalIgnoreCase)
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.FirstOrDefault()?.HazardTitle ?? string.Empty,
+                            StringComparer.OrdinalIgnoreCase)
+                    : new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+                var response = validatedLocations
                     .Select(l => new
                     {
                         l.Code,
                         l.HazardCode,
+                        HazardTitle = hazardTitleByCode.TryGetValue(l.HazardCode?.Trim() ?? string.Empty, out var hazardTitle)
+                            ? hazardTitle
+                            : string.Empty,
                         l.Latitude,
                         l.Longitude,
                         l.Description,
@@ -140,8 +157,8 @@ namespace SMS3.Api.Endpoints
                 return Results.Ok(new
                 {
                     message = "Validated hazard locations retrieved successfully",
-                    totalCount = validatedLocations.Count,
-                    hazardLocations = validatedLocations
+                    totalCount = response.Count,
+                    hazardLocations = response
                 });
             }
             catch (Exception ex)

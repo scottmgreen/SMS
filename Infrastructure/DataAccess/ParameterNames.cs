@@ -361,6 +361,9 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmHazardName = new Lazy<string>(() => "@pHazardName");
     public static string pmHazardName => _pmHazardName.Value;
 
+    private static readonly Lazy<string> _pmHazardTitle = new Lazy<string>(() => "@pHazardTitle");
+    public static string pmHazardTitle => _pmHazardTitle.Value;
+
     private static readonly Lazy<string> _pmHazardDescription = new Lazy<string>(() => "@pHazardDescription");
     public static string pmHazardDescription => _pmHazardDescription.Value;
 

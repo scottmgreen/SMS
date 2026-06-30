@@ -178,6 +178,7 @@ namespace SMS3.Api.Services
                 {
                     Code = "HZ-0000",
                     Name = $"EXTERNAL_API_SOURCE",
+                    HazardTitle = string.Empty,
                     Description = request.HazardDescription ?? string.Empty,
                     HazardCategory = HazardCategory.Default.Value,
                     HazardType = HazardType.Default.Value,

@@ -358,6 +358,33 @@ else
                         </RadzenColumn>
                         </RadzenRow>
                         <!-- Row 3: Hazard Description  -->
+
+                        <RadzenRow Gap="1rem" Class="rz-mb-3">
+                            <RadzenColumn Size="12" class="rz-col-2">
+                                
+                                <RadzenCard class="@(IsHazardTitleValidationAlert ? "default-validation-alert" : string.Empty)">
+                                    <RadzenFormField Text="Hazard Title *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;" class="@(IsHazardTitleValidationAlert ? "validation-error-field" : string.Empty)">
+                                        <RadzenTextBox @bind-Value="HazardReport.HazardTitle"
+                                                           Name="HazardTitle"
+                                                           MaxLength="60"
+                                                           class="@(IsHazardTitleValidationAlert ? "default-validation-dropdown" : string.Empty)"
+                                                           Placeholder="Enter a short hazard title (5-6 words)..."
+                                                           Style="width: 50%; min-width: 50%;" />
+                                        
+                                    </RadzenFormField>
+                                    <RadzenRequiredValidator Component="HazardTitle" Text="Hazard title is required" />
+                                        <RadzenText TextStyle="TextStyle.Caption"
+                                                    Class="@($"rz-mt-1 {(HazardTitleCharacterCount > 55 ? "rz-color-danger" : HazardTitleCharacterCount > 45 ? "rz-color-warning" : "rz-color-base-500")}")">
+                                            @HazardTitleCharacterCount/60 characters
+                                        </RadzenText>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+
+
+
+
+
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             <RadzenColumn Size="12" class="rz-col-2">
                                 
@@ -896,6 +923,13 @@ else
 /* Form field error state enhancement */
 .validation-error-field .rz-dropdown {
     border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+}
+
+.validation-error-field .rz-textbox,
+.default-validation-textbox {
+    border: 2px solid #dc3545 !important;
+    background-color: #fff5f5 !important;
     box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
 }
 

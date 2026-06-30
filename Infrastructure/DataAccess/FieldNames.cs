@@ -415,6 +415,9 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardName = new Lazy<string>(() => "fldv_Name");
     public static string fHazardName => _fHazardName.Value;
 
+    private static readonly Lazy<string> _fHazardTitle = new Lazy<string>(() => "fldv_HazardTitle");
+    public static string fHazardTitle => _fHazardTitle.Value;
+
     private static readonly Lazy<string> _fHazardDescription = new Lazy<string>(() => "fldv_Description");
     public static string fHazardDescription => _fHazardDescription.Value;
 

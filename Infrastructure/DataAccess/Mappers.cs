@@ -278,6 +278,7 @@ public static partial class Mappers
         hazard.Code = reader.GetValue<string>(FieldNames.fHazardCode) ?? string.Empty;
         hazard.Name = reader.GetValue<string>(FieldNames.fHazardName);
         hazard.IsInitialHazard = reader.GetValue<bool>(FieldNames.fIsInitialHazard);
+        hazard.HazardTitle = reader.GetValue<string>(FieldNames.fHazardTitle);
         hazard.Description = reader.GetValue<string>(FieldNames.fHazardDescription).Trim() ?? string.Empty;
         hazard.HazardCategory = reader.GetValue<string>(FieldNames.fHazardCategory).Trim();
         hazard.HazardType = reader.GetValue<string>(FieldNames.fHazardType).Trim() ?? string.Empty;

@@ -204,12 +204,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     {
         get
         {
-            //var locationId = ActiveLocationForValidation?.Code;
-            //if (!string.IsNullOrWhiteSpace(locationId))
-            //{
-            //    return $"HazardLocation ID: {locationId}";
-            //}
-
+            
             var locationCode = ActiveLocationForValidation?.Code;
             return !string.IsNullOrWhiteSpace(locationCode)
                 ? $"Hazard Location: {locationCode}"
@@ -218,12 +213,14 @@ public partial class HazardReporting : ComponentBase, IDisposable
     }
     public bool HasValidCoordinates => SelectedLatitude != 0 && SelectedLongitude != 0;
     public string GeoLocationDisplay => HasGeoLocation ? $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" : "No coordinates selected";
+    public int HazardTitleCharacterCount => HazardReport?.HazardTitle?.Length ?? 0;
     public int DescriptionCharacterCount => HazardReport?.Description?.Length ?? 0;
         
     
     public bool IsFormValidForPreview =>
         !string.IsNullOrEmpty(HazardReport.HazardType) && !string.IsNullOrEmpty(HazardReport.HazardCategory) &&
         !string.IsNullOrEmpty(HazardReport.SubmittedBy) &&
+        !string.IsNullOrWhiteSpace(HazardReport.HazardTitle) &&
         !string.IsNullOrEmpty(HazardReport.Description) && !string.IsNullOrEmpty(HazardReport.IncidentDateTime.ToString());
 
     public bool IsFormValidForSubmission ()
@@ -289,21 +286,39 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     public bool IsHazardCategoryDefault => HazardReport?.HazardCategory == HazardCategory.Default.Value;
     public bool IsHazardTypeDefault => HazardReport?.HazardType == HazardType.Default.Value;
+    public bool IsHazardTitleMissing => string.IsNullOrWhiteSpace(HazardReport?.HazardTitle);
+    public bool IsHazardTitleValidationAlert => IsEditMode && IsHazardTitleMissing;
     public bool HasDefaultHazardClassification => IsHazardCategoryDefault || IsHazardTypeDefault;
-    public bool IsUpdateBlockedByValidation => IsEditMode && (RequiresLocationValidation || HasDefaultHazardClassification);
-    public bool ShowEditValidationAlert => IsEditMode && (HasDefaultHazardClassification || RequiresLocationValidation);
+    public bool IsUpdateBlockedByValidation => IsEditMode && (RequiresLocationValidation || HasDefaultHazardClassification || IsHazardTitleMissing);
+    public bool ShowEditValidationAlert => IsEditMode && (HasDefaultHazardClassification || RequiresLocationValidation || IsHazardTitleMissing);
     public string EditValidationAlertTitle =>
-        HasDefaultHazardClassification && RequiresLocationValidation
-            ? "⚠️ HAZARD CLASSIFICATION + LOCATION VALIDATION REQUIRED"
-            : HasDefaultHazardClassification
-                ? "⚠️ DEFAULT HAZARD CLASSIFICATION DETECTED"
-                : "⚠️ LOCATION VALIDATION REQUIRED";
+        HasDefaultHazardClassification && RequiresLocationValidation && IsHazardTitleMissing
+            ? "⚠️ HAZARD CLASSIFICATION + LOCATION + TITLE VALIDATION REQUIRED"
+            : HasDefaultHazardClassification && RequiresLocationValidation
+                ? "⚠️ HAZARD CLASSIFICATION + LOCATION VALIDATION REQUIRED"
+                : HasDefaultHazardClassification && IsHazardTitleMissing
+                    ? "⚠️ HAZARD CLASSIFICATION + TITLE VALIDATION REQUIRED"
+                    : RequiresLocationValidation && IsHazardTitleMissing
+                        ? "⚠️ LOCATION + TITLE VALIDATION REQUIRED"
+                        : HasDefaultHazardClassification
+                            ? "⚠️ DEFAULT HAZARD CLASSIFICATION DETECTED"
+                            : IsHazardTitleMissing
+                                ? "⚠️ HAZARD TITLE REQUIRED"
+                                : "⚠️ LOCATION VALIDATION REQUIRED";
     public string EditValidationAlertMessage =>
-        HasDefaultHazardClassification && RequiresLocationValidation
-            ? "Update Hazard Category/Type from defaults and validate the selected location before updating this report."
-            : HasDefaultHazardClassification
-                ? "Please update the Hazard Category and Type to proper values before proceeding."
-                : "The selected map location is not validated yet. Click Validate Location and confirm to continue.";
+        HasDefaultHazardClassification && RequiresLocationValidation && IsHazardTitleMissing
+            ? "Update Hazard Category/Type from defaults, provide a Hazard Title, and validate the selected location before updating this report."
+            : HasDefaultHazardClassification && RequiresLocationValidation
+                ? "Update Hazard Category/Type from defaults and validate the selected location before updating this report."
+                : HasDefaultHazardClassification && IsHazardTitleMissing
+                    ? "Update Hazard Category/Type from defaults and provide a Hazard Title before proceeding."
+                    : RequiresLocationValidation && IsHazardTitleMissing
+                        ? "Provide a Hazard Title and validate the selected location before updating this report."
+                        : HasDefaultHazardClassification
+                            ? "Please update the Hazard Category and Type to proper values before proceeding."
+                            : IsHazardTitleMissing
+                                ? "Please provide a Hazard Title before proceeding."
+                                : "The selected map location is not validated yet. Click Validate Location and confirm to continue.";
     public bool IsExternalSystemSubmittedReport => IsEditMode && string.Equals(HazardReport?.SubmittedBy?.Trim(), "EXTERNAL_API_SOURCE", StringComparison.OrdinalIgnoreCase);
 
     // Airport coordinates //GOLDKEY
@@ -1525,6 +1540,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         // STEP 2: Update the existing Hazard
         // ===============================
         EditingHazard!.Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}";
+        EditingHazard.HazardTitle = $"{HazardReport.HazardTitle}";
         EditingHazard.Description = HazardReport.Description ?? string.Empty;
         EditingHazard.HazardCategory = HazardReport.HazardCategory ?? string.Empty;
         EditingHazard.HazardType = HazardReport.HazardType; // This is the actual selected hazard type, not "Technical"

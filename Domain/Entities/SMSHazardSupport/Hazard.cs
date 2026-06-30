@@ -23,6 +23,8 @@ public sealed class Hazard : BaseAuditableEntity
 
     public string Code { get; set; } = string.Empty;
     public string? Name { get; set; }
+
+    public string? HazardTitle { get; set; }
     public string Description { get; set; } = string.Empty;
 
     public RiskLevel HazardRiskLevel { get; set; } = RiskLevel.Unkonwn;

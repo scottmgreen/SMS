@@ -113,6 +113,7 @@ function Create-ApiRequest {
 
     $reportIsAnonymous = [string]::IsNullOrWhiteSpace($fullName)
     
+    
     $apiRequest = @{
         hazardDescription =  $CsvRow."Detailed Description"
         reportSubmittedBy = $fullName
