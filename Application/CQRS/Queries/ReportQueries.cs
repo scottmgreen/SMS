@@ -47,6 +47,35 @@ public class GetReportByCodeQuery : BaseQueryBundle, IRequest<Result<Report>>, I
     }
 }
 
+public class GetTrackingIDByReportCodeQuery : BaseQueryBundle, IRequest<Result<string>>, IReadQuery
+{
+    public ReportID ReportCode { get; set; }
+
+    public string AccessedBy { get; private set; } = string.Empty;
+    public DateTime? AccessedDate { get; private set; }
+
+    public GetTrackingIDByReportCodeQuery(ReportID reportCode)
+    {
+        ReportCode = reportCode ?? throw new ArgumentNullException(nameof(reportCode));
+    }
+
+    public void SetAccessedBy(string userId, DateTime timestamp)
+    {
+        AccessedBy = userId;
+        AccessedDate = timestamp;
+    }
+
+    public string GetResourceIdentifier()
+    {
+        return $"ReportTracking:{ReportCode?.Value ?? "Unknown"}";
+    }
+
+    public string GetAccessType()
+    {
+        return this.GetType().Name.Replace("Query", string.Empty);
+    }
+}
+
 public class GetAllReportsQuery : BaseQueryBundle, IRequest<Result<List<Report>>>, IReadQuery
 {
     // Audit properties for query tracking

@@ -6,6 +6,7 @@ public partial class UploadEvidenceDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
+    [Inject] private IConfiguration Configuration { get; set; } = default!;
     [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<UploadEvidenceDialog> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
@@ -262,6 +263,8 @@ public partial class UploadEvidenceDialog : ComponentBase
             var uploadedFileIds = new List<string>();
             var totalFiles = AttachedFiles.Count;
             var currentUser = SessionService.GetCurrentUserDisplayName() ?? "Unknown User";
+            var useMockCloudStorage = Configuration.GetValue<bool>("HazardFileCloudStorage:EnableMockCloudStorage", true);
+            var uploadSessionFolder = Guid.NewGuid().ToString("D");
 
             for (int i = 0; i < totalFiles; i++)
             {
@@ -286,19 +289,41 @@ public partial class UploadEvidenceDialog : ComponentBase
                     // Generate unique file code
                     var fileCode = "HF-0000";
 
+                    string storedFileName;
+                    string? filePath;
+                    string storageType;
+                    byte[]? fileData;
+
+                    if (useMockCloudStorage)
+                    {
+                        var mockCloudUpload = SimulateCloudUpload(file, uploadSessionFolder);
+                        storedFileName = mockCloudUpload.StoredFileName;
+                        filePath = mockCloudUpload.FileUri;
+                        storageType = "Cloud";
+                        fileData = null;
+                    }
+                    else
+                    {
+                        storedFileName = file.FileName;
+                        filePath = null;
+                        storageType = "Database";
+                        fileData = file.Data;
+                    }
+
                     // Create HazardFile entity using only existing properties
                     var hazardFile = new HazardFile(new HazardFileID(fileCode))
                     {
                         Code = fileCode,
                         HazardCode = HazardCode,
                         ReportCode = string.Empty,
-                        FileName = file.FileName,
+                        FileName = storedFileName,
                         FileType = GetFileTypeFromExtension(file.FileName),
                         ContentType = file.ContentType ?? "application/octet-stream",
                         FileSizeBytes = file.Size,
                         FileSize = FormatFileSize(file.Size),
-                        StorageType = "Database",
-                        FileData = file.Data,
+                        StorageType = storageType,
+                        FilePath = filePath,
+                        FileData = fileData,
                         UploadedBy = currentUser,
                         UploadedDate = DateTime.UtcNow,
                         IsActive = true,
@@ -504,6 +529,24 @@ public partial class UploadEvidenceDialog : ComponentBase
             max /= scale;
         }
         return "0 Bytes";
+    }
+
+    private (string StoredFileName, string FileUri) SimulateCloudUpload(AttachedFile file, string uploadSessionFolder)
+    {
+        var baseUri = Configuration.GetValue<string>("HazardFileCloudStorage:BaseUri")
+            ?? "https://contoso-sms.blob.core.windows.net/pre-submit";
+
+        var originalName = Path.GetFileName(file.FileName);
+        var safeOriginalName = string.Concat(originalName.Where(ch => !Path.GetInvalidFileNameChars().Contains(ch))).Trim();
+        if (string.IsNullOrWhiteSpace(safeOriginalName))
+        {
+            safeOriginalName = "hazard-file.bin";
+        }
+
+        var guidPrefixedFileName = $"{Guid.NewGuid():D}-{safeOriginalName}";
+        var fileUri = $"{baseUri.TrimEnd('/')}/{DateTime.UtcNow:yyyy/MM/dd}/{uploadSessionFolder}/{guidPrefixedFileName}";
+
+        return (guidPrefixedFileName, fileUri);
     }
     #endregion
 

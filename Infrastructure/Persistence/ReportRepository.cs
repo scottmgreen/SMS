@@ -94,6 +94,62 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
         }
     }
 
+    public async Task<Result<string>> GetTrackingIDByReportCodeAsync(ReportID code, CancellationToken ct = default)
+    {
+        try
+        {
+            if (code is null)
+            {
+                return Result<string>.Failure<string>(DomainErrors.ReportError.NullOrEmpty);
+            }
+
+            _logger.LogInfrastructureGetItem($"{_logheader} {StoredProcs.pr_Tracking_GetByReportCode} {code}", null);
+
+            using SqlConnection sql = new(_connectionString);
+            using SqlCommand cmd = new(StoredProcs.pr_Tracking_GetByReportCode, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
+
+            string? trackingCode = null;
+
+            await sql.OpenAsync(ct).ConfigureAwait(false);
+            using (SqlDataReader reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
+            {
+                if (await reader.ReadAsync().ConfigureAwait(false))
+                {
+                    trackingCode = reader["fldv_TrackingCode"]?.ToString().Trim();
+                }
+            }
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            if (!string.IsNullOrWhiteSpace(trackingCode))
+            {
+                return Result<string>.Success(trackingCode);
+            }
+            else
+            {
+                return Result<string>.Failure<string>(DomainErrors.ReportError.NotFound);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemError($"{_logheader} {ex.Message}", null);
+            return Result<string>.Failure<string>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+
+
+
+
+
+
+
+
+
     public async Task<Result<Report>> GetReportByCodeAsync(ReportID code, CancellationToken ct = default)
     {
         try

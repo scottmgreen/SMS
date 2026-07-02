@@ -7,12 +7,12 @@ using Radzen;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
-public partial class ViewFileDialog : ComponentBase
+public partial class _ViewFileDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
-    [Inject] private ILogger<ViewFileDialog> Logger { get; set; } = default!;
+    [Inject] private ILogger<_ViewFileDialog> Logger { get; set; } = default!;
     #endregion
 
     #region Parameters

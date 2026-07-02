@@ -1,8 +1,11 @@
 
 using Microsoft.JSInterop;
+using System.Net;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Commands;
+using SMS_Application.Queries;
+using SMS_Application.Common;
 using SMS_Domain.Entities;
 using SMS_Domain.Events;
 using SMS_Domain.Errors;
@@ -10,6 +13,8 @@ using SMS_Domain.Errors;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Pages.SMSRiskManagement.Models;
+using SMS3.Components.Pages.SMSSystem.Components;
+using SMS3.Components.Pages.SMSSystem.Models;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 using Microsoft.AspNetCore.WebUtilities;
@@ -31,6 +36,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private IConfiguration _configuration { get; set; } = default!;
     #endregion
 
     #region Route Parameters
@@ -594,6 +600,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
                         SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
                 }
 
+                await LoadExistingHazardFilesAsync(primaryHazard.Code);
+
                 _logger.LogInformation("Successfully loaded report {ReportCode} with hazard {HazardCode} - Category: {Category}, Type: {Type}",
                     reportCode, primaryHazard.Code, SelectedHazardCategory, HazardReport.HazardType);
             }
@@ -733,7 +741,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 HazardType = hazardType?.Value,
                 Description = EditingHazard.Description,
                 Location = EditingHazard.LocationArea,
-
+                HazardTitle = EditingHazard.HazardTitle,
                 // Use report data if available, otherwise use defaults
                 IncidentDateTime = EditingReport?.IncidentDateTime ?? DateTime.Now,
                 SubmittedBy = EditingReport?.SubmittedBy ?? _currentUserService?.UserDisplayName ?? "Unknown User",
@@ -790,6 +798,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
                 _logger.LogInformation("Loaded geographic location: {Lat}, {Lng}",SelectedGeoLocation.Latitude, SelectedGeoLocation.Longitude);
             }
+
+            await LoadExistingHazardFilesAsync(EditingHazard.Code);
 
             _logger.LogInformation("Successfully loaded hazard {HazardCode} for editing - Category: {Category}, Type: {Type}",
                 hazardCode, SelectedHazardCategory, HazardReport.HazardType);
@@ -863,6 +873,47 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadExistingHazardFilesAsync(string hazardCode)
+    {
+        if (string.IsNullOrWhiteSpace(hazardCode))
+        {
+            AttachedFiles = new List<AttachedFile>();
+            return;
+        }
+
+        try
+        {
+            var filesResult = await _mediator.SendAsync(new GetHazardFilesByHazardCodeQuery(hazardCode, includeFileData: false), CancellationToken.None);
+
+            if (filesResult.IsSuccess && filesResult.Value is not null)
+            {
+                AttachedFiles = filesResult.Value
+                    .Where(f => !string.IsNullOrWhiteSpace(f.FileName))
+                    .Select(f => new AttachedFile
+                    {
+                        FileName = f.FileName,
+                        FileSizeBytes = f.FileSizeBytes,
+                        Size = f.FileSizeBytes,
+                        SizeDisplay = FormatFileSize(f.FileSizeBytes),
+                        ContentType = f.ContentType ?? "application/octet-stream",
+                        Data = Array.Empty<byte>()
+                    })
+                    .ToList();
+
+                _logger.LogInformation("Loaded {Count} existing hazard files for hazard {HazardCode}", AttachedFiles.Count, hazardCode);
+            }
+            else
+            {
+                AttachedFiles = new List<AttachedFile>();
+            }
+        }
+        catch (Exception ex)
+        {
+            AttachedFiles = new List<AttachedFile>();
+            _logger.LogWarning(ex, "Failed to load hazard files for hazard {HazardCode}", hazardCode);
+        }
     }
 
     #endregion
@@ -1567,21 +1618,75 @@ public partial class HazardReporting : ComponentBase, IDisposable
         // ===============================
         await ProcessFileUpdates(updatedHazard);
 
+        var trackingCode = await ResolveTrackingCodeForHazardAsync(updatedHazard);
+
+        if (!string.IsNullOrWhiteSpace(trackingCode))
+        {
+            GeneratedTrackingId = trackingCode;
+        }
+
         // ===============================
-        // SUCCESS - Show completion message for EDIT
+        // SUCCESS - EDIT MODE returns to origin page (no modal/email flow)
         // ===============================
         GeneratedHazardId = updatedHazard.Code;
         GeneratedReportId = updatedHazard.ReportCode;
         SubmissionDateTime = DateTime.Now;
         ShowSubmissionConfirmation = false;
-        ShowFinalSuccessConfirmation = true;
+        ShowFinalSuccessConfirmation = false;
 
         _logger.LogInformation("EDIT mode completed - Report: {ReportCode}, Hazard: {HazardCode}",
             updatedHazard.ReportCode, updatedHazard.Code);
 
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Report {updatedHazard.ReportCode} and hazard {updatedHazard.Code} have been updated."));
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success(
+            "Success",
+            $"Report {updatedHazard.ReportCode} and hazard {updatedHazard.Code} have been updated."));
+
+        CancelEdit();
 
         
+    }
+
+    private async Task<string?> ResolveTrackingCodeForHazardAsync(Hazard hazard)
+    {
+        try
+        {
+            if (!string.IsNullOrWhiteSpace(hazard.Code))
+            {
+                var byHazardResult = await _mediator.SendAsync(new GetHazardReportTrackingByHazardCodeQuery(hazard.Code), CancellationToken.None);
+                if (byHazardResult.IsSuccess && byHazardResult.Value?.Any() == true)
+                {
+                    var byHazardTrackingCode = byHazardResult.Value
+                        .Where(x => !string.IsNullOrWhiteSpace(x.TrackingCode))
+                        .OrderByDescending(x => x.UpdatedDate ?? x.CreatedDate)
+                        .Select(x => x.TrackingCode)
+                        .FirstOrDefault();
+
+                    if (!string.IsNullOrWhiteSpace(byHazardTrackingCode))
+                    {
+                        return byHazardTrackingCode;
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(hazard.ReportCode))
+            {
+                var byReportResult = await _mediator.SendAsync(new GetHazardReportTrackingByReportCodeQuery(hazard.ReportCode), CancellationToken.None);
+                if (byReportResult.IsSuccess && byReportResult.Value?.Any() == true)
+                {
+                    return byReportResult.Value
+                        .Where(x => !string.IsNullOrWhiteSpace(x.TrackingCode))
+                        .OrderByDescending(x => x.UpdatedDate ?? x.CreatedDate)
+                        .Select(x => x.TrackingCode)
+                        .FirstOrDefault();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to resolve tracking code for hazard {HazardCode}", hazard.Code);
+        }
+
+        return null;
     }
 
     /// <summary>
@@ -1631,6 +1736,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             Code = "HZ-0000",
             Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}",
+            HazardTitle = HazardReport.HazardTitle ?? string.Empty,
             Description = HazardReport.Description ?? string.Empty,
             HazardCategory = HazardReport.HazardCategory ?? string.Empty,
             HazardType = HazardReport.HazardType,
@@ -1669,6 +1775,10 @@ public partial class HazardReporting : ComponentBase, IDisposable
         var createdTracking = createdtrackingcodeResult.Value;
         GeneratedTrackingId = createdTracking.TrackingCode;
 
+        var hasContactEmail = !HazardReport.IsAnonymous && !string.IsNullOrWhiteSpace(HazardReport.ReportContactEmail);
+
+        await SendSubmissionConfirmationEmailIfApplicable(createdHazard, createdTracking.TrackingCode);
+
         // ===============================
         // STEP 3: Process files for new hazard
         // ===============================
@@ -1682,12 +1792,142 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
         SubmissionDateTime = DateTime.Now;
         ShowSubmissionConfirmation = false;
-        ShowFinalSuccessConfirmation = true;
+        ShowFinalSuccessConfirmation = !hasContactEmail;
+
+        await ShowSubmissionEmailComposeDialogIfApplicable(createdHazard, createdTracking.TrackingCode);
 
         _logger.LogInformation("CREATE mode completed - Report: {ReportCode}, Hazard: {HazardCode} Tracking: { TrackingCode} ", createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
-        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}."));
+        await _eventBus.PublishUIEventAsync(UINotificationEvent.Success(
+            "Success",
+            hasContactEmail
+                ? $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}. A confirmation email was sent to {HazardReport.ReportContactEmail}."
+                : $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}."));
 
+    }
+
+    private async Task SendSubmissionConfirmationEmailIfApplicable(Hazard createdHazard, string trackingCode)
+    {
+        if (HazardReport.IsAnonymous || string.IsNullOrWhiteSpace(HazardReport.ReportContactEmail))
+        {
+            return;
+        }
+
+        var subject = $"PDX Hazard Report Submission Confirmation - {createdHazard.ReportCode} / {createdHazard.Code}";
+        var body = BuildHazardSubmissionConfirmationEmailHtml(createdHazard, trackingCode.Trim());
+
+        var emailEvent = new EmailNotificationEvent(
+            toRecipients: new List<string> { HazardReport.ReportContactEmail.Trim() },
+            subject: subject,
+            body: body,
+            isHtmlContent: true,
+            priority: EmailPriority.Normal,
+            reportId: createdHazard.ReportCode,
+            workflowType: "HazardSubmissionConfirmation",
+            relatedEntityType: "Report",
+            relatedEntityId: createdHazard.ReportCode,
+            emailMetadata: new Dictionary<string, object>
+            {
+                { "HazardCode", createdHazard.Code },
+                { "TrackingCode", trackingCode },
+                { "SubmittedBy", HazardReport.ReportContactName ?? string.Empty }
+            });
+
+        var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Queued);
+        if (publishResult.IsFailure)
+        {
+            _logger.LogWarning("Failed to queue hazard submission confirmation email for report {ReportCode}: {Error}",
+                createdHazard.ReportCode,
+                publishResult.Error?.Message ?? "Unknown publish error");
+        }
+    }
+
+    private async Task ShowSubmissionEmailComposeDialogIfApplicable(Hazard hazard, string trackingCode)
+    {
+        if (HazardReport.IsAnonymous || string.IsNullOrWhiteSpace(HazardReport.ReportContactEmail))
+        {
+            return;
+        }
+
+        IsLoading = false;
+        await InvokeAsync(StateHasChanged);
+
+        var emailModel = new EmailComposeModel
+        {
+            To = new List<string> { HazardReport.ReportContactEmail.Trim() },
+            Subject = $"PDX Hazard Report Submission Confirmation - {hazard.ReportCode} / {hazard.Code}",
+            BodyHtml = BuildHazardSubmissionConfirmationEmailHtml(hazard, trackingCode)
+        };
+
+        var dialogResult = await _dialogService.OpenAsync<EmailComposeDialog>(
+            "",
+            new Dictionary<string, object?>
+            {
+                { "InitialModel", emailModel },
+                { "DialogTitleOverride", "Hazard Submission Email Preview" }
+            },
+            new DialogOptions
+            {
+                Width = "1200px",
+                Height = "760px",
+                Resizable = true,
+                Draggable = true,
+                CloseDialogOnOverlayClick = false,
+                CloseDialogOnEsc = true,
+                ShowClose = true
+            });
+
+        if (dialogResult is bool sent && sent)
+        {
+            CloseFinalConfirmation();
+        }
+    }
+
+    private string BuildHazardSubmissionConfirmationEmailHtml(Hazard createdHazard, string trackingCode)
+    {
+        var trackingUrl = GetTrackingUrl();
+        var logoUrl = $"{_navigation.BaseUri.TrimEnd('/')}/images/PDX_SMSEmailLogo.png";
+
+        return SMSEmailTemplateBuilder.BuildStandardEmail(
+            title: "Hazard Report Confirmation",
+            introHtml: "Thank you for submitting a hazard report. A copy of your report details is included below for your records.",
+            summaryFields:
+            [
+                new SMSEmailField { Label = "Tracking Link", Value = $"<a href='{WebUtility.HtmlEncode(trackingUrl)}'>{WebUtility.HtmlEncode(trackingUrl)}</a>", ValueIsHtml = true },
+                new SMSEmailField { Label = "PIN / Tracking ID", Value = trackingCode },
+                new SMSEmailField { Label = "Report ID", Value = createdHazard.ReportCode },
+                new SMSEmailField { Label = "Hazard ID", Value = createdHazard.Code }
+            ],
+            sections:
+            [
+                new SMSEmailSection
+                {
+                    Title = "Reporter Information",
+                    Fields =
+                    [
+                        new SMSEmailField { Label = "Date Submitted", Value = HazardReport.SubmittedDate.ToString("MMMM dd, yyyy h:mm tt") },
+                        new SMSEmailField { Label = "Name", Value = HazardReport.ReportContactName ?? string.Empty },
+                        new SMSEmailField { Label = "Email", Value = HazardReport.ReportContactEmail ?? string.Empty },
+                        new SMSEmailField { Label = "Phone", Value = HazardReport.ReportContactCell ?? string.Empty },
+                        new SMSEmailField { Label = "Company", Value = HazardReport.ReportContactCompany ?? string.Empty }
+                    ]
+                },
+                new SMSEmailSection
+                {
+                    Title = "Hazard Information",
+                    Fields =
+                    [
+                        new SMSEmailField { Label = "Hazard Title", Value = HazardReport.HazardTitle ?? string.Empty },
+                        new SMSEmailField { Label = "Hazard Category", Value = HazardReport.HazardCategory ?? string.Empty },
+                        new SMSEmailField { Label = "Hazard Type", Value = HazardReport.HazardType ?? string.Empty },
+                        new SMSEmailField { Label = "Date and Time of Event", Value = HazardReport.IncidentDateTime.ToString("MMMM dd, yyyy h:mm tt") },
+                        new SMSEmailField { Label = "Location Description", Value = SelectedLocationDescription ?? HazardReport.Location ?? string.Empty },
+                        new SMSEmailField { Label = "Hazard Description", Value = HazardReport.Description ?? string.Empty, IsFullWidth = true }
+                    ]
+                }
+            ],
+            footerHtml: "If any information is missing or incorrect, please reply to this message or contact <a href='mailto:SMS@flypdx.com'>SMS@flypdx.com</a>.",
+            logoUrl: logoUrl);
     }
 
 
@@ -1869,24 +2109,48 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 _logger.LogInformation("Processing {Count} cached files for Hazard: {HazardCode}",
                     AttachedFiles.Count, hazard.Code);
 
+                var useMockCloudStorage = _configuration.GetValue<bool>("HazardFileCloudStorage:EnableMockCloudStorage", true);
+                var uploadSessionFolder = Guid.NewGuid().ToString("D");
+
                 foreach (var attachedFile in AttachedFiles.Where(f => f?.Data?.Length > 0))
                 {
                     try
                     {
-                        var fileData = attachedFile.Data;
                         var fileCode = "HF-0000";
+
+                        string fileNameToStore;
+                        string? filePathToStore;
+                        string storageType;
+                        byte[]? fileDataToStore;
+
+                        if (useMockCloudStorage)
+                        {
+                            var uploadResult = await SimulateCloudUploadAsync(attachedFile, uploadSessionFolder);
+                            fileNameToStore = uploadResult.StoredFileName;
+                            filePathToStore = uploadResult.FileUri;
+                            storageType = "Cloud";
+                            fileDataToStore = null;
+                        }
+                        else
+                        {
+                            fileNameToStore = attachedFile.FileName;
+                            filePathToStore = null;
+                            storageType = "Database";
+                            fileDataToStore = attachedFile.Data;
+                        }
 
                         var hazardFile = new HazardFile(new HazardFileID(fileCode))
                         {
                             Code = fileCode,
                             HazardCode = hazard.Code,
                             ReportCode = hazard.ReportCode ?? string.Empty,
-                            FileName = attachedFile.FileName,
+                            FileName = fileNameToStore,
                             FileType = Path.GetExtension(attachedFile.FileName)?.TrimStart('.') ?? "unknown",
                             ContentType = attachedFile.ContentType ?? "application/octet-stream",
                             FileSizeBytes = attachedFile.Size,
-                            StorageType = "Database",
-                            FileData = fileData,
+                            StorageType = storageType,
+                            FilePath = filePathToStore,
+                            FileData = fileDataToStore,
                             UploadedBy = HazardReport.SubmittedBy ?? _currentUserService?.UserDisplayName ?? "SYSTEM",
                             UploadedDate = DateTime.UtcNow,
                             IsActive = true,
@@ -1901,8 +2165,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             var createdFileId = hazardFileResult.Value.Code;
                             hazard.AddHazardFile(new HazardFileID(createdFileId));
 
-                            _logger.LogInformation("Created HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}",
-                                attachedFile.FileName, createdFileId, hazard.Code);
+                            _logger.LogInformation("Created {StorageType} HazardFile: {FileName} with ID: {FileId} for Hazard: {HazardCode}. FileUri: {FileUri}",
+                                storageType, fileNameToStore, createdFileId, hazard.Code, filePathToStore);
                         }
                         else
                         {
@@ -1926,6 +2190,24 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             _logger.LogError(fileEx, "Error processing files, but continuing with hazard operation");
         }
+    }
+
+    private Task<(string StoredFileName, string FileUri)> SimulateCloudUploadAsync(AttachedFile attachedFile, string uploadSessionFolder)
+    {
+        var baseUri = _configuration.GetValue<string>("HazardFileCloudStorage:BaseUri")
+            ?? "https://contoso-sms.blob.core.windows.net/pre-submit";
+
+        var originalName = Path.GetFileName(attachedFile.FileName);
+        var safeOriginalName = string.Concat(originalName.Where(ch => !Path.GetInvalidFileNameChars().Contains(ch))).Trim();
+        if (string.IsNullOrWhiteSpace(safeOriginalName))
+        {
+            safeOriginalName = "hazard-file.bin";
+        }
+
+        var guidPrefixedFileName = $"{Guid.NewGuid():D}-{safeOriginalName}";
+        var uri = $"{baseUri.TrimEnd('/')}/{DateTime.UtcNow:yyyy/MM/dd}/{uploadSessionFolder}/{guidPrefixedFileName}";
+
+        return Task.FromResult((guidPrefixedFileName, uri));
     }
 
 

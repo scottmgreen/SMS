@@ -98,6 +98,20 @@ public sealed class ReportService : IReportService
         }
     }
 
+    public async Task<Result<string>> GetTrackingIDByReportCodeAsync(ReportID code, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogApplicationInformation("Retrieving tracking code for report: {Id}", code);
+            return await _dataService.GetTrackingIDByReportCodeAsync(code, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError(ex, "Unexpected error retrieving tracking code for report: {Id}", code);
+            return Result<string>.Failure<string>(DomainErrors.ReportError.NotFound);
+        }
+    }
+
     public async Task<Result<List<Report>>> GetAllReportsAsync(CancellationToken ct = default)
     {
         try

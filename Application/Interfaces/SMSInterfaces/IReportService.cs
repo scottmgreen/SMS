@@ -18,5 +18,6 @@ public interface IReportService
     Task<Result<bool>> DeleteReportAsync(ReportID id, CancellationToken ct = default);
     Task<Result<List<Report>>> GetAllReportsAsync(CancellationToken ct = default);
     Task<Result<Report>> GetReportByCodeAsync(ReportID id, CancellationToken ct = default);
+    Task<Result<string>> GetTrackingIDByReportCodeAsync(ReportID id, CancellationToken ct = default);
     Task<Result<Report>> UpdateReportAsync(Report report, CancellationToken ct = default);
 }

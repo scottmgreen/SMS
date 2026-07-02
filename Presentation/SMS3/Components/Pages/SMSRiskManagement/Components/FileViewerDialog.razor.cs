@@ -3,6 +3,7 @@ using System.Text;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 
+using SMS_Application.Queries;
 using SMS_Application.Interfaces;
 using SMS_Domain.Events;
 using SMS_Shared.Configuration;
@@ -15,6 +16,7 @@ public partial class FileViewerDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<FileViewerDialog> Logger { get; set; } = default!;
     [Inject] private IBaseEventBus EventBus { get; set; } = default!;
     #endregion
@@ -43,9 +45,48 @@ public partial class FileViewerDialog : ComponentBase
     #region File Loading
     private async Task LoadFileForViewing()
     {
-        if (ViewingFile?.FileData is null || ViewingFile.FileData.Length == 0)
+        if (ViewingFile is null)
         {
-            Logger.LogWarning("File data is null or empty for file: {FileName}", ViewingFile?.FileName);
+            await ShowErrorAsyncNotification("File is not available for viewing");
+            return;
+        }
+
+        TextContent = null;
+        FileDataUrl = null;
+
+        var isCloudSource = string.Equals(ViewingFile.StorageType, "Cloud", StringComparison.OrdinalIgnoreCase)
+                            && !string.IsNullOrWhiteSpace(ViewingFile.FilePath);
+
+        if (isCloudSource)
+        {
+            FileDataUrl = ViewingFile.FilePath;
+            Logger.LogInformation("Using cloud file path for viewing: {FileName} => {FilePath}", ViewingFile.FileName, ViewingFile.FilePath);
+            IsLoading = false;
+            StateHasChanged();
+            return;
+        }
+
+        var fileData = ViewingFile.FileData;
+        if (fileData is null || fileData.Length == 0)
+        {
+            try
+            {
+                var fileDataResult = await Mediator.SendAsync(new GetHazardFileDataQuery(ViewingFile.Code), CancellationToken.None);
+                if (fileDataResult.IsSuccess && fileDataResult.Value?.FileData is { Length: > 0 })
+                {
+                    ViewingFile.FileData = fileDataResult.Value.FileData;
+                    fileData = ViewingFile.FileData;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Unable to fetch file data for file: {FileName}", ViewingFile.FileName);
+            }
+        }
+
+        if (fileData is null || fileData.Length == 0)
+        {
+            Logger.LogWarning("File data is null or empty for file: {FileName}", ViewingFile.FileName);
             await ShowErrorAsyncNotification("File data is not available for viewing");
             return;
         }
@@ -56,28 +97,28 @@ public partial class FileViewerDialog : ComponentBase
             StateHasChanged();
 
             Logger.LogInformation("Loading file for viewing: {FileName} ({Size} bytes)",
-                ViewingFile.FileName, ViewingFile.FileData.Length);
+                ViewingFile.FileName, fileData.Length);
 
             // For text files, decode the content
             if (IsTextFile(ViewingFile))
             {
                 try
                 {
-                    TextContent = Encoding.UTF8.GetString(ViewingFile.FileData);
+                    TextContent = Encoding.UTF8.GetString(fileData);
                     Logger.LogInformation("Loaded text content for file: {FileName} ({Length} characters)",
                         ViewingFile.FileName, TextContent.Length);
                 }
                 catch (Exception ex)
                 {
                     Logger.LogWarning(ex, "Failed to decode text file as UTF-8: {FileName}", ViewingFile.FileName);
-                    TextContent = Encoding.Default.GetString(ViewingFile.FileData);
+                    TextContent = Encoding.Default.GetString(fileData);
                 }
             }
             else
             {
                 // For binary files, create data URL
                 var mimeType = GetMimeType(ViewingFile);
-                var base64 = Convert.ToBase64String(ViewingFile.FileData);
+                var base64 = Convert.ToBase64String(fileData);
                 FileDataUrl = $"data:{mimeType};base64,{base64}";
 
                 Logger.LogInformation("Created data URL for file: {FileName} with MIME type: {MimeType}",
@@ -265,7 +306,47 @@ public partial class FileViewerDialog : ComponentBase
 
     private async Task DownloadFile()
     {
-        if (ViewingFile is null || ViewingFile.FileData is null)
+        if (ViewingFile is null)
+        {
+            await ShowErrorAsyncNotification("File is not available for download");
+            return;
+        }
+
+        var isCloudSource = string.Equals(ViewingFile.StorageType, "Cloud", StringComparison.OrdinalIgnoreCase)
+                            && !string.IsNullOrWhiteSpace(ViewingFile.FilePath);
+
+        if (isCloudSource)
+        {
+            try
+            {
+                await JSRuntime.InvokeVoidAsync("open", ViewingFile.FilePath, "_blank");
+                await ShowSuccessAsyncNotification($"Opened '{ViewingFile.FileName}' in a new tab");
+            }
+            catch (Exception ex)
+            {
+                Logger.LogError(ex, "Error opening cloud file for download: {FileName}", ViewingFile.FileName);
+                await ShowErrorAsyncNotification("Unable to open cloud file");
+            }
+            return;
+        }
+
+        if (ViewingFile.FileData is null || ViewingFile.FileData.Length == 0)
+        {
+            try
+            {
+                var fileDataResult = await Mediator.SendAsync(new GetHazardFileDataQuery(ViewingFile.Code), CancellationToken.None);
+                if (fileDataResult.IsSuccess && fileDataResult.Value?.FileData is { Length: > 0 })
+                {
+                    ViewingFile.FileData = fileDataResult.Value.FileData;
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Unable to fetch file data for download: {FileName}", ViewingFile.FileName);
+            }
+        }
+
+        if (ViewingFile.FileData is null || ViewingFile.FileData.Length == 0)
         {
             await ShowErrorAsyncNotification("File is not available for download");
             return;

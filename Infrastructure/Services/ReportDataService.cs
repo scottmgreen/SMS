@@ -42,6 +42,11 @@ public class ReportDataService : BaseDataService<ReportDataService>, IReportData
         return _repo.GetReportByCodeAsync(code, ct);
     }
 
+    public Task<Result<string>> GetTrackingIDByReportCodeAsync(ReportID code, CancellationToken ct = default)
+    {
+        return _repo.GetTrackingIDByReportCodeAsync(code, ct);
+    }
+
     public Task<Result<List<Report>>> GetAllReportsAsync(CancellationToken ct = default)
     {
         return _repo.GetAllReportsAsync(ct);

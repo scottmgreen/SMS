@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------
 // <copyright file="Mappers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -31,23 +31,23 @@ public static partial class Mappers
         try
         {
             // Extract database values
-            SMSApplicationUserID applicationuserId = new SMSApplicationUserID(reader.GetString(FieldNames.fSMSApplicationUserCode));
+            SMSApplicationUserID applicationuserId = new SMSApplicationUserID(reader.GetValue<string>(FieldNames.fSMSApplicationUserCode));
             SMSApplicationUser applicationUser = new SMSApplicationUser(applicationuserId);
 
-            applicationUser.Code = reader.GetString(FieldNames.fSMSApplicationUserCode);
-            applicationUser.FirstName = FirstName.Create(reader.GetString(FieldNames.fSMSApplicationUserFirstName)).Value;
-            applicationUser.LastName = LastName.Create(reader.GetString(FieldNames.fSMSApplicationUserLastName)).Value;
-            applicationUser.UserName = UserName.Create(reader.GetString(FieldNames.fSMSApplicationUserUserName)).Value;
-            applicationUser.Password = Password.FromHash(reader.GetString(FieldNames.fSMSApplicationUserPassword), reader.GetDateTime(FieldNames.fCreatedDate), false);
-            applicationUser.SMSUserType = SMSUserType.FromValue(reader.GetString(FieldNames.fSMSApplicationUserTypeCode));
-            applicationUser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetString(FieldNames.fSMSUserRoleCode)));
+            applicationUser.Code = reader.GetValue<string>(FieldNames.fSMSApplicationUserCode);
+            applicationUser.FirstName = FirstName.Create(reader.GetValue<string>(FieldNames.fSMSApplicationUserFirstName)).Value;
+            applicationUser.LastName = LastName.Create(reader.GetValue<string>(FieldNames.fSMSApplicationUserLastName)).Value;
+            applicationUser.UserName = UserName.Create(reader.GetValue<string>(FieldNames.fSMSApplicationUserUserName)).Value;
+            applicationUser.Password = Password.FromHash(reader.GetValue<string>(FieldNames.fSMSApplicationUserPassword), reader.GetDateTime(FieldNames.fCreatedDate), false);
+            applicationUser.SMSUserType = SMSUserType.FromValue(reader.GetValue<string>(FieldNames.fSMSApplicationUserTypeCode));
+            applicationUser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetValue<string>(FieldNames.fSMSUserRoleCode)));
             applicationUser.IsActive = reader.GetBoolean(FieldNames.fSMSApplicationUserIsActive);
             applicationUser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSApplicationUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSApplicationUserLastLoginDate);
             
             // ?? Two-Factor Authentication Properties - FIXED: Safe NULL handling
             applicationUser.TwoFactorSecretKey = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorSecretKey) ? 
                 string.Empty : 
-                reader.GetString(FieldNames.fSMSApplicationUserTwoFactorSecretKey) ?? string.Empty;
+                reader.GetValue<string>(FieldNames.fSMSApplicationUserTwoFactorSecretKey) ?? string.Empty;
                 
             applicationUser.TwoFactorEnabled = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorEnabled) ? 
                 false : 
@@ -55,7 +55,7 @@ public static partial class Mappers
                 
             applicationUser.BackupCodes = reader.IsDBNull(FieldNames.fSMSApplicationUserBackupCodes) ? 
                 string.Empty : 
-                reader.GetString(FieldNames.fSMSApplicationUserBackupCodes) ?? string.Empty;
+                reader.GetValue<string>(FieldNames.fSMSApplicationUserBackupCodes) ?? string.Empty;
                 
             applicationUser.TwoFactorSetupDate = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorSetupDate) ? 
                 (DateTime?)null : 
@@ -89,25 +89,25 @@ public static partial class Mappers
     {
         try
         {
-            SMSOrganizationalUserID userId = reader.GetString(FieldNames.fSMSOrganizationalUserCode);
+            SMSOrganizationalUserID userId = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserCode);
             SMSOrganizationalUser orgUser = new SMSOrganizationalUser(userId);
             var createdDate = reader.GetDateTime(FieldNames.fCreatedDate);
-            orgUser.Code = reader.GetString(FieldNames.fSMSOrganizationalUserCode);
-            orgUser.FirstName = FirstName.Create(reader.GetString(FieldNames.fSMSOrganizationalUserFirstName)).Value;
-            orgUser.LastName = LastName.Create(reader.GetString(FieldNames.fSMSOrganizationalUserLastName)).Value;
-            orgUser.UserName = UserName.Create(reader.GetString(FieldNames.fSMSOrganizationalUserUserName)).Value;
-            orgUser.Password = Password.FromHash(reader.GetString(FieldNames.fSMSOrganizationalUserPassword), createdDate);
+            orgUser.Code = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserCode);
+            orgUser.FirstName = FirstName.Create(reader.GetValue<string>(FieldNames.fSMSOrganizationalUserFirstName)).Value;
+            orgUser.LastName = LastName.Create(reader.GetValue<string>(FieldNames.fSMSOrganizationalUserLastName)).Value;
+            orgUser.UserName = UserName.Create(reader.GetValue<string>(FieldNames.fSMSOrganizationalUserUserName)).Value;
+            orgUser.Password = Password.FromHash(reader.GetValue<string>(FieldNames.fSMSOrganizationalUserPassword), createdDate);
 
-            orgUser.Department = SMSDepartment.FromValue(reader.GetString(FieldNames.fSMSOrganizationalUserDepartment));
-            orgUser.Position = reader.GetString(FieldNames.fSMSOrganizationalUserPosition);
+            orgUser.Department = SMSDepartment.FromValue(reader.GetValue<string>(FieldNames.fSMSOrganizationalUserDepartment));
+            orgUser.Position = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserPosition);
 
             
 
-            orgUser.OrganizationLevel = SMSOrganizationalLevel.FromValue(reader.GetString(FieldNames.fSMSOrganizationalUserOrganizationLevel));
+            orgUser.OrganizationLevel = SMSOrganizationalLevel.FromValue(reader.GetValue<string>(FieldNames.fSMSOrganizationalUserOrganizationLevel));
             orgUser.AuthorityLevel = orgUser.OrganizationLevel.AuthorityLevel;
             orgUser.RiskApprovalAuthority = orgUser.OrganizationLevel.Value;
 
-            orgUser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetString(FieldNames.fSMSUserRoleCode)));
+            orgUser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetValue<string>(FieldNames.fSMSUserRoleCode)));
             
 
             if (reader.HasColumn(FieldNames.fSMSOrganizationalUserRiskApprovalAuthority))
@@ -126,7 +126,7 @@ public static partial class Mappers
             orgUser.FailedTwoFactorAttempts = reader.IsDBNull(FieldNames.fSMSOrganizationalUserFailedTwoFactorAttempts) ? 0 : reader.GetInt32(FieldNames.fSMSOrganizationalUserFailedTwoFactorAttempts);
             orgUser.TwoFactorLockedUntil = reader.IsDBNull(FieldNames.fSMSOrganizationalUserTwoFactorLockedUntil) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSOrganizationalUserTwoFactorLockedUntil);
             
-            orgUser.CreatedBy = reader.GetString(FieldNames.fCreatedBy);
+            orgUser.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy);
             orgUser.CreatedDate = createdDate;
             orgUser.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
             orgUser.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fUpdatedDate);
@@ -143,11 +143,11 @@ public static partial class Mappers
     /// </summary>
     public static SMSUserRole MapToSMSUserRole(SqlDataReader reader)
     {
-        SMSUserRoleID userRoleId = new(reader.GetValue<string>(FieldNames.fSMSRoleCode)?.Trim() ?? string.Empty);
+        SMSUserRoleID userRoleId = new(reader.GetValue<string>(FieldNames.fSMSRoleCode) ?? string.Empty);
         SMSUserRole userRole = new(userRoleId);
 
-        userRole.Code = reader.GetValue<string>(FieldNames.fSMSRoleCode)?.Trim() ?? string.Empty;
-        userRole.Name = reader.GetValue<string>(FieldNames.fSMSUserRoleName)?.Trim();
+        userRole.Code = reader.GetValue<string>(FieldNames.fSMSRoleCode) ?? string.Empty;
+        userRole.Name = reader.GetValue<string>(FieldNames.fSMSUserRoleName);
 
         return userRole;
     }
@@ -160,9 +160,9 @@ public static partial class Mappers
         SMSUserRolePermissionID permissionId = new(reader.GetValue<string>(FieldNames.fSMSUserRolePermissionCode));
         SMSUserRolePermission permission = new(permissionId);
 
-        permission.Code = reader.GetValue<string>(FieldNames.fSMSUserRolePermissionCode)?.Trim() ?? string.Empty;
-        permission.SMSUserRoleCode = reader.GetValue<string>(FieldNames.fSMSUserRolePermissionSMSUserRoleCode)?.Trim();
-        permission.SMSModule = reader.GetValue<string>(FieldNames.fSMSUserRolePermissionModule)?.Trim();
+        permission.Code = reader.GetValue<string>(FieldNames.fSMSUserRolePermissionCode) ?? string.Empty;
+        permission.SMSUserRoleCode = reader.GetValue<string>(FieldNames.fSMSUserRolePermissionSMSUserRoleCode);
+        permission.SMSModule = reader.GetValue<string>(FieldNames.fSMSUserRolePermissionModule);
         permission.Create = reader.GetValue<bool>(FieldNames.fSMSUserRolePermissionCreate);
         permission.Read = reader.GetValue<bool>(FieldNames.fSMSUserRolePermissionRead);
         permission.Update = reader.GetValue<bool>(FieldNames.fSMSUserRolePermissionUpdate);
@@ -177,24 +177,24 @@ public static partial class Mappers
     {
         try
         {
-            SMSStakeholderUserID stakeholderid = new SMSStakeholderUserID(reader.GetString(FieldNames.fSMSStakeholderUserCode));
+            SMSStakeholderUserID stakeholderid = new SMSStakeholderUserID(reader.GetValue<string>(FieldNames.fSMSStakeholderUserCode));
             SMSStakeholderUser stakeholderuser = new SMSStakeholderUser(stakeholderid);
             // Extract database values
-            FirstName firstName = FirstName.Create(reader.GetString(FieldNames.fSMSStakeholderUserFirstName)).Value;
-            LastName lastName = LastName.Create(reader.GetString(FieldNames.fSMSStakeholderUserLastName)).Value;
-            UserName userName = UserName.Create(reader.GetString(FieldNames.fSMSStakeholderUserUserName)).Value;
-            Password password = Password.FromHash(reader.GetString(FieldNames.fSMSStakeholderUserPassword), reader.GetDateTime(FieldNames.fCreatedDate));
-            stakeholderuser.Code = reader.GetString(FieldNames.fSMSStakeholderUserCode);
+            FirstName firstName = FirstName.Create(reader.GetValue<string>(FieldNames.fSMSStakeholderUserFirstName)).Value;
+            LastName lastName = LastName.Create(reader.GetValue<string>(FieldNames.fSMSStakeholderUserLastName)).Value;
+            UserName userName = UserName.Create(reader.GetValue<string>(FieldNames.fSMSStakeholderUserUserName)).Value;
+            Password password = Password.FromHash(reader.GetValue<string>(FieldNames.fSMSStakeholderUserPassword), reader.GetDateTime(FieldNames.fCreatedDate));
+            stakeholderuser.Code = reader.GetValue<string>(FieldNames.fSMSStakeholderUserCode);
             stakeholderuser.FirstName = firstName;
             stakeholderuser.LastName = lastName;
             stakeholderuser.UserName = userName;
             stakeholderuser.Password = password;
 
-            stakeholderuser.StakeholderType = reader.GetString(FieldNames.fSMSStakeholderUserStakeholderTypeCode);
-            stakeholderuser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetString(FieldNames.fSMSUserRoleCode)));
-            stakeholderuser.Organization = reader.GetString(FieldNames.fSMSStakeholderUserOrganization);
+            stakeholderuser.StakeholderType = reader.GetValue<string>(FieldNames.fSMSStakeholderUserStakeholderTypeCode);
+            stakeholderuser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetValue<string>(FieldNames.fSMSUserRoleCode)));
+            stakeholderuser.Organization = reader.GetValue<string>(FieldNames.fSMSStakeholderUserOrganization);
 
-            var smsUserRole = reader.GetString(FieldNames.fSMSUserRoleCode);
+            var smsUserRole = reader.GetValue<string>(FieldNames.fSMSUserRoleCode);
             stakeholderuser.IsActive = reader.GetBoolean(FieldNames.fSMSStakeholderUserIsActive);
             stakeholderuser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSStakeholderUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSStakeholderUserLastLoginDate);
             stakeholderuser.IsPOPEmployee = reader.GetBoolean(FieldNames.fSMSStakeholderIsPOPEmployee);
@@ -207,7 +207,7 @@ public static partial class Mappers
             stakeholderuser.FailedTwoFactorAttempts = reader.IsDBNull(FieldNames.fSMSStakeholderUserFailedTwoFactorAttempts) ? 0 : reader.GetInt32(FieldNames.fSMSStakeholderUserFailedTwoFactorAttempts);
             stakeholderuser.TwoFactorLockedUntil = reader.IsDBNull(FieldNames.fSMSStakeholderUserTwoFactorLockedUntil) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSStakeholderUserTwoFactorLockedUntil);
             
-            stakeholderuser.CreatedBy = reader.GetString(FieldNames.fCreatedBy);
+            stakeholderuser.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy);
             stakeholderuser.CreatedDate = reader.GetDateTime(FieldNames.fCreatedDate);
 
             return stakeholderuser;
@@ -279,9 +279,9 @@ public static partial class Mappers
         hazard.Name = reader.GetValue<string>(FieldNames.fHazardName);
         hazard.IsInitialHazard = reader.GetValue<bool>(FieldNames.fIsInitialHazard);
         hazard.HazardTitle = reader.GetValue<string>(FieldNames.fHazardTitle);
-        hazard.Description = reader.GetValue<string>(FieldNames.fHazardDescription).Trim() ?? string.Empty;
-        hazard.HazardCategory = reader.GetValue<string>(FieldNames.fHazardCategory).Trim();
-        hazard.HazardType = reader.GetValue<string>(FieldNames.fHazardType).Trim() ?? string.Empty;
+        hazard.Description = reader.GetValue<string>(FieldNames.fHazardDescription) ?? string.Empty;
+        hazard.HazardCategory = reader.GetValue<string>(FieldNames.fHazardCategory);
+        hazard.HazardType = reader.GetValue<string>(FieldNames.fHazardType) ?? string.Empty;
         hazard.ReportCode = reader.GetValue<string>(FieldNames.fHazardReportCode) ?? string.Empty;
         
         hazard.InitialRiskMatrixCode = reader.GetValue<string>(FieldNames.fHazardInitialRiskMatrixCode);
@@ -292,7 +292,7 @@ public static partial class Mappers
         var residualaverageScore = reader.IsDBNull(FieldNames.fHazardResidualAverageScore) ? (decimal?)null : reader.GetDecimal(FieldNames.fHazardResidualAverageScore);
         hazard.ResidualAverageScore = residualaverageScore ?? 0;
         
-        hazard.HazardRiskLevel = RiskLevel.FromValue(reader.GetValue<string>(FieldNames.fHazardRiskLevel).Trim()) ?? RiskLevel.Unkonwn;
+        hazard.HazardRiskLevel = RiskLevel.FromValue(reader.GetValue<string>(FieldNames.fHazardRiskLevel)) ?? RiskLevel.Unkonwn;
 
         try
         {
@@ -406,7 +406,7 @@ public static partial class Mappers
         report.ReportContactEmail = reader.GetValue<string>(FieldNames.fReportContactEmail);
         report.ReportContactCompany = reader.GetValue<string>(FieldNames.fReportContactCompany);
         report.Description = reader.GetValue<string>(FieldNames.fReportDescription);
-        report.Status = ReportStatus.FromValue(reader.GetValue<string>(FieldNames.fReportStatus)?.Trim());
+        report.Status = ReportStatus.FromValue(reader.GetValue<string>(FieldNames.fReportStatus));
         report.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
         report.CreatedDate = reader.GetValue<DateTime>(FieldNames.fCreatedDate);
         report.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
@@ -517,14 +517,14 @@ public static partial class Mappers
         RiskAnalysisID riskAnalysisID = new(reader.GetValue<string>(FieldNames.fRiskAnalysisCode).ToString());
         RiskAnalysis riskAnalysis = new(riskAnalysisID);
 
-        riskAnalysis.Code = reader.GetValue<string>(FieldNames.fRiskAnalysisCode).Trim();
-        var assessmentTypeValue = reader.GetValue<string>(FieldNames.fRiskAnalysisType)?.Trim();
+        riskAnalysis.Code = reader.GetValue<string>(FieldNames.fRiskAnalysisCode);
+        var assessmentTypeValue = reader.GetValue<string>(FieldNames.fRiskAnalysisType);
         if (!string.IsNullOrEmpty(assessmentTypeValue))
         {
             riskAnalysis.AssessmentType = RiskAnalysisType.FromValue(assessmentTypeValue) ?? RiskAnalysisType.Initial;
         }
-        riskAnalysis.HazardCode = reader.GetValue<string>(FieldNames.fRiskAnalysisHazardCode).Trim();
-        riskAnalysis.RiskAssessmentCode = reader.GetValue<string>(FieldNames.fRiskAnalysisRiskAssessmentCode).Trim();
+        riskAnalysis.HazardCode = reader.GetValue<string>(FieldNames.fRiskAnalysisHazardCode);
+        riskAnalysis.RiskAssessmentCode = reader.GetValue<string>(FieldNames.fRiskAnalysisRiskAssessmentCode);
         riskAnalysis.InitialWorstCredibleOutcome = reader.GetValue<string>(FieldNames.fRiskAnalysisInitialWorstCredibleOutcome);
         riskAnalysis.InitialRootCause = reader.GetValue<string>(FieldNames.fRiskAnalysisInitialRootCause);
         riskAnalysis.InitialAdditionalComments = reader.GetValue<string>(FieldNames.fRiskAnalysisInitialAdditionalComments);
@@ -561,21 +561,21 @@ public static partial class Mappers
         riskAssessment.Code = code;
 
         // SmartEnum parsing for AssessmentType
-        var assessmentTypeValue = reader.GetValue<string>(FieldNames.fRiskAssessmentType)?.Trim();
+        var assessmentTypeValue = reader.GetValue<string>(FieldNames.fRiskAssessmentType);
         if (!string.IsNullOrEmpty(assessmentTypeValue))
         {
             riskAssessment.AssessmentType = RiskAssessmentType.FromValue(assessmentTypeValue) ?? RiskAssessmentType.Technical;
         }
 
         // SmartEnum parsing for Status
-        var statusValue = reader.GetValue<string>(FieldNames.fRiskAssessmentStatus)?.Trim();
+        var statusValue = reader.GetValue<string>(FieldNames.fRiskAssessmentStatus);
         if (!string.IsNullOrEmpty(statusValue))
         {
             riskAssessment.Status = RiskAssessmentStatus.FromValue(statusValue) ?? RiskAssessmentStatus.AssessmentCreate;
         }
 
         // Direct assignment for simple properties
-        var stageValue = reader.GetValue<string>(FieldNames.fRiskAssessmentStage)?.Trim();
+        var stageValue = reader.GetValue<string>(FieldNames.fRiskAssessmentStage);
         if (!string.IsNullOrEmpty(stageValue))
         {
             riskAssessment.Stage = RiskAssessmentStage.FromValue(stageValue) ?? RiskAssessmentStage.DescribingSystem;
@@ -587,7 +587,7 @@ public static partial class Mappers
 
 
         
-        var categoryValue = reader.GetValue<string>(FieldNames.fRiskAssessmentCategory)?.Trim();
+        var categoryValue = reader.GetValue<string>(FieldNames.fRiskAssessmentCategory);
         if (!string.IsNullOrEmpty(categoryValue))
         {
             riskAssessment.RiskAssessmentCategory = RiskAssessmentCategory.FromValue(categoryValue) ?? RiskAssessmentCategory.Technical;
@@ -715,7 +715,7 @@ public static partial class Mappers
             reportValidation.Stage = reader.GetValue<string>(FieldNames.fReportValidationStage);
             reportValidation.ValidationType = reader.GetValue<string>(FieldNames.fReportValidationType);
 
-            var assessmentTypeValue = reader.GetValue<string>(FieldNames.fReportValidationType)?.Trim();
+            var assessmentTypeValue = reader.GetValue<string>(FieldNames.fReportValidationType);
             if (!string.IsNullOrEmpty(assessmentTypeValue))
             {
                 reportValidation.ValidationType = RiskAssessmentCategory.FromValue(assessmentTypeValue) ?? RiskAssessmentCategory.Technical;
@@ -1153,4 +1153,5 @@ public static partial class Mappers
 
     #endregion
 }
+
 

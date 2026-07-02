@@ -16,9 +16,9 @@ namespace SMS_Domain.Events;
 /// </summary>
 public class MitigationCompletedEvent : BaseDomainEvent, IEventSource
 {
-    public override string EventType => SMS_Domain.Enums.EventType.MitigationStatusChanged.Value;
+    public override string EventType => SMS_Domain.Enums.EventType.MitigationCompleted.Value;
 
-    public string EventSourceDisplayName => SMS_Domain.Enums.EventType.MitigationStatusChanged;
+    public string EventSourceDisplayName => SMS_Domain.Enums.EventType.MitigationCompleted;
 
     /// <summary>
     /// Category for grouping in UI

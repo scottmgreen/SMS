@@ -1,14 +1,37 @@
+using System.Threading;
 using System.Threading.Tasks;
+
+using SMS_Application.Interfaces;
+using SMS_Domain.Events;
 using SMS3.Components.Pages.SMSSystem.Models;
 
 namespace SMS3.Components.Pages.SMSSystem.Services
 {
     public class MockEmailSender : IEmailSender
     {
-        public Task SendAsync(MailRequest request)
+        private readonly IEmailService _emailService;
+
+        public MockEmailSender(IEmailService emailService)
         {
-            // Simulate sending email (no-op)
-            return Task.CompletedTask;
+            _emailService = emailService;
+        }
+
+        public async Task SendAsync(MailRequest request)
+        {
+            var emailEvent = new EmailNotificationEvent(
+                toRecipients: request.To,
+                subject: request.Subject,
+                body: request.BodyHtml,
+                isHtmlContent: true,
+                priority: EmailPriority.Normal,
+                workflowType: "ManualComposeDialog",
+                relatedEntityType: "EmailComposeDialog");
+
+            var result = await _emailService.SendEmailAsync(emailEvent, CancellationToken.None).ConfigureAwait(false);
+            if (result.IsFailure)
+            {
+                throw new InvalidOperationException(result.Error?.Message ?? "Email send failed.");
+            }
         }
     }
 }

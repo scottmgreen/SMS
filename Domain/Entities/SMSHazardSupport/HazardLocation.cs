@@ -37,6 +37,8 @@ public sealed class HazardLocation : BaseAuditableEntity
     public decimal? Latitude { get; set; }          // Decimal degrees (e.g., 45.52345678)
     public decimal? Longitude { get; set; }         // Decimal degrees (e.g., -122.67890123)
     public string? Description { get; set; }        // Location description
+
+
     public DateTime DateSelected { get; set; } = DateTime.UtcNow;
 
     #endregion
@@ -47,51 +49,10 @@ public sealed class HazardLocation : BaseAuditableEntity
 
     #endregion
 
-    /// <summary>
-    /// Check if location has coordinates
-    /// </summary>
-    public bool HasCoordinates()
-    {
-        return Latitude.HasValue && Longitude.HasValue;
-    }
+    
 
 
-
-
-    /// <summary>
-    /// Calculate approximate distance to another location in meters
-    /// </summary>
-    public double? CalculateDistanceTo(decimal otherLat, decimal otherLon)
-    {
-        if (!HasCoordinates()) return null;
-
-        // Haversine formula for great circle distance
-        const double earthRadius = 6371000; // meters
-
-        var lat1Rad = (double)(Latitude!.Value * (decimal)Math.PI / 180);
-        var lat2Rad = (double)(otherLat * (decimal)Math.PI / 180);
-        var deltaLatRad = (double)((otherLat - Latitude.Value) * (decimal)Math.PI / 180);
-        var deltaLonRad = (double)((otherLon - Longitude!.Value) * (decimal)Math.PI / 180);
-
-        var a = Math.Sin(deltaLatRad / 2) * Math.Sin(deltaLatRad / 2) +
-                Math.Cos(lat1Rad) * Math.Cos(lat2Rad) *
-                Math.Sin(deltaLonRad / 2) * Math.Sin(deltaLonRad / 2);
-
-        var c = 2 * Math.Atan2(Math.Sqrt(a), Math.Sqrt(1 - a));
-
-        return earthRadius * c;
-    }
-
-    /// <summary>
-    /// Get formatted coordinate string
-    /// </summary>
-    public string GetFormattedCoordinates()
-    {
-        if (!HasCoordinates()) return "No coordinates";
-
-        return $"{Latitude:F6}°, {Longitude:F6}°";
-    }
-
+    
   
 }
 

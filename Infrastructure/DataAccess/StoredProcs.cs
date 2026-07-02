@@ -255,7 +255,8 @@ namespace SMS_Infrastructure.Common
         #endregion
 
         #region SMS Application Groups Stored Procedures
-
+        private static readonly Lazy<string> _pr_Tracking_GetByReportCode = new(() => "pr_Tracking_GetByReportCode");
+        public static string pr_Tracking_GetByReportCode => _pr_Tracking_GetByReportCode.Value;
         /// <summary>
         /// Stored procedures for SMS Application Groups operations
         /// </summary>

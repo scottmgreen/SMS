@@ -1,5 +1,6 @@
 
 using Microsoft.JSInterop;
+using System.Net;
 
 using SMS_Application.Interfaces;
 using SMS_Domain.Entities;
@@ -725,6 +726,7 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             {
                 Code = "HZ-0000",
                 Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}",
+                HazardTitle = HazardReport.HazardTitle ?? string.Empty,
                 Description = HazardReport.Description ?? string.Empty,
                 HazardCategory = HazardReport.HazardCategory ?? string.Empty,
                 HazardType = HazardReport.HazardType,
@@ -765,6 +767,10 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             GeneratedTrackingId = createdTracking.TrackingCode;
             _logger.LogInformation("Tracking code created: {TrackingCode}", createdTracking.TrackingCode);
 
+            var hasContactEmail = !HazardReport.IsAnonymous && !string.IsNullOrWhiteSpace(HazardReport.ReportContactEmail);
+
+            await SendSubmissionConfirmationEmailIfApplicable(createdHazard, createdTracking.TrackingCode);
+
             // ===============================
             // STEP 4: Process files for confidential hazard
             // ===============================
@@ -775,12 +781,16 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             // ===============================
             SubmissionDateTime = DateTime.Now;
             ShowSubmissionConfirmation = false;
-            ShowFinalSuccessConfirmation = true;
+            ShowFinalSuccessConfirmation = !hasContactEmail;
 
             _logger.LogInformation("External report submission completed - Report: {ReportCode}, Hazard: {HazardCode}, Tracking: {TrackingCode}",
                 createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Your external report has been securely submitted with tracking ID: {createdTracking.TrackingCode}"));
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success(
+                "Success",
+                hasContactEmail
+                    ? $"Your external report has been securely submitted with tracking ID: {createdTracking.TrackingCode}. A confirmation email was sent to {HazardReport.ReportContactEmail}."
+                    : $"Your external report has been securely submitted with tracking ID: {createdTracking.TrackingCode}"));
         }
         catch (Exception ex)
         {
@@ -795,6 +805,107 @@ public partial class ExternalReporting : ComponentBase, IDisposable
             IsLoading = false;
             StateHasChanged();
         }
+    }
+
+    private async Task SendSubmissionConfirmationEmailIfApplicable(Hazard createdHazard, string trackingCode)
+    {
+        if (HazardReport.IsAnonymous || string.IsNullOrWhiteSpace(HazardReport.ReportContactEmail))
+        {
+            return;
+        }
+
+        var subject = $"PDX Hazard Report Submission Confirmation - {createdHazard.ReportCode} / {createdHazard.Code}";
+        var body = BuildHazardSubmissionConfirmationEmailHtml(createdHazard, trackingCode);
+
+        var emailEvent = new EmailNotificationEvent(
+            toRecipients: new List<string> { HazardReport.ReportContactEmail.Trim() },
+            subject: subject,
+            body: body,
+            isHtmlContent: true,
+            priority: EmailPriority.Normal,
+            reportId: createdHazard.ReportCode,
+            workflowType: "HazardSubmissionConfirmation",
+            relatedEntityType: "Report",
+            relatedEntityId: createdHazard.ReportCode,
+            emailMetadata: new Dictionary<string, object>
+            {
+                { "HazardCode", createdHazard.Code },
+                { "TrackingCode", trackingCode },
+                { "SubmittedBy", HazardReport.ReportContactName ?? string.Empty }
+            });
+
+        var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Queued);
+        if (publishResult.IsFailure)
+        {
+            _logger.LogWarning("Failed to queue external submission confirmation email for report {ReportCode}: {Error}",
+                createdHazard.ReportCode,
+                publishResult.Error?.Message ?? "Unknown publish error");
+        }
+    }
+
+    private string BuildHazardSubmissionConfirmationEmailHtml(Hazard createdHazard, string trackingCode)
+    {
+        var trackingUrl = GetTrackingUrl();
+        var logoUrl = $"{_navigation.BaseUri.TrimEnd('/')}/images/PDX_SMSEmailLogo.png";
+        var hazardTitle = WebUtility.HtmlEncode(HazardReport.HazardTitle ?? string.Empty);
+        var hazardCategory = WebUtility.HtmlEncode(HazardReport.HazardCategory ?? string.Empty);
+        var hazardType = WebUtility.HtmlEncode(HazardReport.HazardType ?? string.Empty);
+        var hazardDescription = WebUtility.HtmlEncode(HazardReport.Description ?? string.Empty).Replace("\n", "<br/>");
+        var locationDescription = WebUtility.HtmlEncode(LocationDescription ?? HazardReport.Location ?? string.Empty);
+        var contactName = WebUtility.HtmlEncode(HazardReport.ReportContactName ?? string.Empty);
+        var contactEmail = WebUtility.HtmlEncode(HazardReport.ReportContactEmail ?? string.Empty);
+        var contactCell = WebUtility.HtmlEncode(HazardReport.ReportContactCell ?? string.Empty);
+        var contactCompany = WebUtility.HtmlEncode(HazardReport.ReportContactCompany ?? string.Empty);
+        var submittedDate = WebUtility.HtmlEncode(HazardReport.SubmittedDate.ToString("MMMM dd, yyyy h:mm tt"));
+        var eventDate = WebUtility.HtmlEncode(HazardReport.IncidentDateTime.ToString("MMMM dd, yyyy h:mm tt"));
+        var safeTrackingUrl = WebUtility.HtmlEncode(trackingUrl);
+        var safeTrackingCode = WebUtility.HtmlEncode(trackingCode);
+        var safeReportCode = WebUtility.HtmlEncode(createdHazard.ReportCode);
+        var safeHazardCode = WebUtility.HtmlEncode(createdHazard.Code);
+        var safeLogoUrl = WebUtility.HtmlEncode(logoUrl);
+
+        return $@"<html><body style='margin:0;padding:0;background:#f7f7f7;font-family:Arial,sans-serif;color:#111;'>
+<table role='presentation' width='100%' cellspacing='0' cellpadding='0' style='background:#f7f7f7;padding:24px 0;'>
+  <tr><td align='center'>
+    <table role='presentation' width='720' cellspacing='0' cellpadding='0' style='max-width:720px;background:#ffffff;border:1px solid #e6e6e6;'>
+      <tr>
+        <td style='background:#111111;padding:16px 24px;text-align:left;'>
+          <img src='{safeLogoUrl}' alt='PDX SMS Safety Management System' style='display:block;max-width:320px;width:100%;height:auto;' />
+        </td>
+      </tr>
+      <tr><td style='background:#003F40;color:#ffffff;padding:12px 24px;font-size:20px;font-weight:bold;'>Hazard Report Confirmation</td></tr>
+      <tr><td style='padding:20px 24px;font-size:14px;line-height:1.6;'>
+        Thank you for submitting a hazard report. A copy of your report details is included below for your records.<br/><br/>
+        <strong>Tracking Link:</strong> <a href='{safeTrackingUrl}'>{safeTrackingUrl}</a><br/>
+        <strong>PIN / Tracking ID:</strong> {safeTrackingCode}<br/>
+        <strong>Report ID:</strong> {safeReportCode}<br/>
+        <strong>Hazard ID:</strong> {safeHazardCode}
+      </td></tr>
+      <tr><td style='padding:0 24px 24px 24px;'>
+        <table role='presentation' width='100%' cellspacing='0' cellpadding='0' style='border-collapse:collapse;font-size:13px;'>
+          <tr><td colspan='2' style='background:#00AF9B;padding:10px;font-weight:bold;'>Reporter Information</td></tr>
+          <tr><td style='width:35%;padding:10px;border:1px solid #e6e6e6;background:#fafafa;'>Date Submitted</td><td style='padding:10px;border:1px solid #e6e6e6;'>{submittedDate}</td></tr>
+          <tr><td style='padding:10px;border:1px solid #e6e6e6;background:#fafafa;'>Name</td><td style='padding:10px;border:1px solid #e6e6e6;'>{contactName}</td></tr>
+          <tr><td style='padding:10px;border:1px solid #e6e6e6;background:#fafafa;'>Email</td><td style='padding:10px;border:1px solid #e6e6e6;'>{contactEmail}</td></tr>
+          <tr><td style='padding:10px;border:1px solid #e6e6e6;background:#fafafa;'>Phone</td><td style='padding:10px;border:1px solid #e6e6e6;'>{contactCell}</td></tr>
+          <tr><td style='padding:10px;border:1px solid #e6e6e6;background:#fafafa;'>Company</td><td style='padding:10px;border:1px solid #e6e6e6;'>{contactCompany}</td></tr>
+
+          <tr><td colspan='2' style='background:#00AF9B;padding:10px;font-weight:bold;'>Hazard Information</td></tr>
+          <tr><td style='padding:10px;border:1px solid #e6e6e6;background:#fafafa;'>Hazard Title</td><td style='padding:10px;border:1px solid #e6e6e6;'>{hazardTitle}</td></tr>
+          <tr><td style='padding:10px;border:1px solid #e6e6e6;background:#fafafa;'>Hazard Category</td><td style='padding:10px;border:1px solid #e6e6e6;'>{hazardCategory}</td></tr>
+          <tr><td style='padding:10px;border:1px solid #e6e6e6;background:#fafafa;'>Hazard Type</td><td style='padding:10px;border:1px solid #e6e6e6;'>{hazardType}</td></tr>
+          <tr><td style='padding:10px;border:1px solid #e6e6e6;background:#fafafa;'>Date and Time of Event</td><td style='padding:10px;border:1px solid #e6e6e6;'>{eventDate}</td></tr>
+          <tr><td style='padding:10px;border:1px solid #e6e6e6;background:#fafafa;'>Location Description</td><td style='padding:10px;border:1px solid #e6e6e6;'>{locationDescription}</td></tr>
+          <tr><td colspan='2' style='padding:10px;border:1px solid #e6e6e6;'><strong>Hazard Description</strong><br/>{hazardDescription}</td></tr>
+        </table>
+      </td></tr>
+      <tr><td style='padding:0 24px 24px 24px;font-size:12px;color:#444;'>
+        If any information is missing or incorrect, please reply to this message or contact <a href='mailto:SMS@flypdx.com'>SMS@flypdx.com</a>.
+      </td></tr>
+    </table>
+  </td></tr>
+</table>
+</body></html>";
     }
 
     private async Task<Result<HazardReportTracking>> GenerateTracking(Hazard createdHazard)

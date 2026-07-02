@@ -16,6 +16,7 @@ using SMS_Application.Commands;
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.ValueObjects;
+using SMS_Application.Queries;
 
 using SMS_Shared.Common;
 
@@ -37,6 +38,128 @@ namespace SMS3.Api.Services
         {
             _mediator = mediator;
             _logger = logger;
+        }
+
+        public async Task<Result<PDXSMSReportStatusApiResponseV2>> GetReportStatusByTrackingIdAsync(string trackingId, HttpContext httpContext)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(trackingId))
+                {
+                    return Result<PDXSMSReportStatusApiResponseV2>.Failure<PDXSMSReportStatusApiResponseV2>(
+                        new Error("PDXSMS.ValidationFailed", "trackingId is required"));
+                }
+
+                var trackingQuery = new GetHazardReportTrackingByTrackingCodeQuery(trackingId.Trim());
+                var trackingResult = await _mediator.SendAsync(trackingQuery, CancellationToken.None);
+                if (trackingResult.IsFailure || trackingResult.Value is null)
+                {
+                    return Result<PDXSMSReportStatusApiResponseV2>.Failure<PDXSMSReportStatusApiResponseV2>(
+                        new Error("PDXSMS.NotFound", $"No report found for trackingId: {trackingId}"));
+                }
+
+                var tracking = trackingResult.Value;
+
+                var hazardResult = await _mediator.SendAsync(new GetHazardByCodeQuery(new HazardID(tracking.HazardCode)), CancellationToken.None);
+                var reportResult = await _mediator.SendAsync(new GetReportByCodeQuery(new ReportID(tracking.ReportCode)), CancellationToken.None);
+
+                var reportValidationResult = await _mediator.SendAsync(new GetReportValidationByReportIdQuery(new ReportID(tracking.ReportCode)), CancellationToken.None);
+                var hazardLocationsResult = await _mediator.SendAsync(new GetHazardLocationsByHazardCodeQuery(tracking.HazardCode), CancellationToken.None);
+                var filesResult = await _mediator.SendAsync(new GetHazardFilesByHazardCodeQuery(tracking.HazardCode), CancellationToken.None);
+                var riskAssessmentsResult = await _mediator.SendAsync(new GetRiskAssessmentsByHazardCodeQuery(new HazardID(tracking.HazardCode)), CancellationToken.None);
+                var mitigationsResult = await _mediator.SendAsync(new GetMitigationsByHazardCodeQuery(tracking.HazardCode), CancellationToken.None);
+
+                var hazard = hazardResult.IsSuccess ? hazardResult.Value : null;
+                var report = reportResult.IsSuccess ? reportResult.Value : null;
+                var reportValidation = reportValidationResult.IsSuccess ? reportValidationResult.Value : null;
+
+                var latestLocation = hazardLocationsResult.IsSuccess && hazardLocationsResult.Value?.Any() == true
+                    ? hazardLocationsResult.Value
+                        .OrderByDescending(l => l.UpdatedDate ?? DateTime.MinValue)
+                        .ThenByDescending(l => l.DateSelected)
+                        .ThenByDescending(l => l.CreatedDate ?? DateTime.MinValue)
+                        .FirstOrDefault()
+                    : null;
+
+                var assessments = riskAssessmentsResult.IsSuccess && riskAssessmentsResult.Value is not null
+                    ? riskAssessmentsResult.Value.ToList()
+                    : new List<RiskAssessment>();
+
+                var currentRiskAssessment = assessments.FirstOrDefault(ra => ra.RiskAssessmentCategory == RiskAssessmentCategory.Technical)
+                                          ?? assessments.FirstOrDefault();
+
+                var mitigations = mitigationsResult.IsSuccess && mitigationsResult.Value is not null
+                    ? mitigationsResult.Value.ToList()
+                    : new List<Mitigation>();
+
+                var currentMitigation = mitigations.FirstOrDefault();
+
+                var hazardCategoryValue = hazard?.HazardCategory ?? string.Empty;
+                var hazardTypeValue = hazard?.HazardType ?? string.Empty;
+                var isHazardCategoryValidated = !string.IsNullOrWhiteSpace(hazardCategoryValue) && !string.Equals(hazardCategoryValue, HazardCategory.Default.Value, StringComparison.OrdinalIgnoreCase);
+                var isHazardTypeValidated = !string.IsNullOrWhiteSpace(hazardTypeValue) && !string.Equals(hazardTypeValue, HazardType.Default.Value, StringComparison.OrdinalIgnoreCase);
+                var isHazardLocationValidated = latestLocation?.IsValidated == true;
+
+                var validationDecisionDisplay = string.Empty;
+                if (!string.IsNullOrWhiteSpace(reportValidation?.ValidationDecision) && ValidationDecision.TryFromValue(reportValidation.ValidationDecision, out var validationDecision))
+                {
+                    validationDecisionDisplay = validationDecision?.Name ?? string.Empty;
+                }
+
+                var response = new PDXSMSReportStatusApiResponseV2
+                {
+                    TrackingId = tracking.TrackingCode,
+                    ReportId = tracking.ReportCode,
+                    HazardId = tracking.HazardCode,
+                    IsAnonymous = report?.IsAnonymous ?? true,
+                    SubmittedBy = report?.SubmittedBy ?? string.Empty,
+                    SubmittedDate = report?.SubmittedDate,
+                    SubmittingDepartment = report?.SubmittingDepartment ?? string.Empty,
+                    SubmittingDepartmentJobFunction = report?.SubmittingDepartmentJobFunction ?? string.Empty,
+                    HazardCategory = hazardCategoryValue,
+                    HazardType = hazardTypeValue,
+                    HazardDescription = hazard?.Description ?? report?.Description ?? string.Empty,
+                    ReportStatus = report?.Status ?? string.Empty,
+                    HazardStatus = hazard?.Status ?? report?.Status ?? string.Empty,
+                    ContactName = report?.ReportContactName ?? string.Empty,
+                    ContactCell = report?.ReportContactCell ?? string.Empty,
+                    ContactEmail = report?.ReportContactEmail ?? string.Empty,
+                    ReportValidationCode = reportValidation?.Code ?? string.Empty,
+                    ReportValidationDecision = reportValidation?.ValidationDecision ?? string.Empty,
+                    ReportValidationDecisionDisplay = validationDecisionDisplay,
+                    ReportValidationDate = reportValidation?.CreatedDate,
+                    IsHazardCategoryValidated = isHazardCategoryValidated,
+                    IsHazardTypeValidated = isHazardTypeValidated,
+                    IsHazardLocationValidated = isHazardLocationValidated,
+                    HazardLocationValidationText = latestLocation is null ? "No mapped location" : (latestLocation.IsValidated ? "Validated" : "Validation Required"),
+                    RiskAssessmentCode = currentRiskAssessment?.Code ?? string.Empty,
+                    RiskAssessmentAssessmentType = currentRiskAssessment?.AssessmentType ?? string.Empty,
+                    RiskAssessmentStatus = currentRiskAssessment?.Status ?? string.Empty,
+                    RiskAssessmentStage = currentRiskAssessment?.Stage ?? string.Empty,
+                    RiskAssessmentCurrentStep = currentRiskAssessment?.CurrentStep,
+                    RiskAssessmentUpdatedDate = currentRiskAssessment?.UpdatedDate,
+                    MitigationCode = currentMitigation?.Code ?? string.Empty,
+                    MitigationStatus = currentMitigation?.Status ?? string.Empty,
+                    MitigationProgress = currentMitigation?.Progress,
+                    MitigationUpdatedDate = currentMitigation?.UpdatedDate,
+                    LocationCode = latestLocation?.Code ?? string.Empty,
+                    LocationLatitude = latestLocation?.Latitude,
+                    LocationLongitude = latestLocation?.Longitude,
+                    LocationDescription = latestLocation?.Description ?? hazard?.LocationSubArea ?? hazard?.LocationArea ?? string.Empty,
+                    LocationDateSelected = latestLocation?.DateSelected,
+                    SubmittedFileCount = filesResult.IsSuccess && filesResult.Value is not null
+                        ? filesResult.Value.Count()
+                        : 0
+                };
+
+                return Result<PDXSMSReportStatusApiResponseV2>.Success(response);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error retrieving report status by tracking id: {TrackingId}", trackingId);
+                return Result<PDXSMSReportStatusApiResponseV2>.Failure<PDXSMSReportStatusApiResponseV2>(
+                    new Error("PDXSMS.ProcessingFailed", "An unexpected error occurred while retrieving report status."));
+            }
         }
 
         public async Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsync(
@@ -102,7 +225,6 @@ namespace SMS3.Api.Services
                     ReportSubmissionDateTime = DateTime.UtcNow,
                     Status = "Submitted",
                     Message = $"Confidential report submitted successfully. Tracking ID: {actualTrackingCode}",
-                    TrackingUrl = $"https://{httpContext.Request.Host}/ExternalReporting/TrackStatus/{actualTrackingCode}",
                     ProcessedFiles = processedFiles,
                     FailedFiles = failedFiles
                 };
@@ -205,6 +327,7 @@ namespace SMS3.Api.Services
                         Latitude = request.LocationLatitude ?? 0,
                         Longitude = request.LocationLongitude ?? 0,
                         Description = request.LocationDescription
+                        
                     };
                     await _mediator.SendAsync(new CreateHazardLocationCommand(hazardLocation), CancellationToken.None);
                 }
@@ -230,7 +353,6 @@ namespace SMS3.Api.Services
                     ReportSubmissionDateTime = DateTime.UtcNow,
                     Status = "Submitted",
                     Message = $"Confidential report submitted successfully. Tracking ID: {actualTrackingCode}",
-                    TrackingUrl = $"https://{httpContext.Request.Host}/ExternalReporting/TrackStatus/{actualTrackingCode}",
                     ProcessedFiles = processedFiles,
                     FailedFiles = failedFiles
                 };
@@ -315,40 +437,65 @@ namespace SMS3.Api.Services
             if (attachments?.Any() != true)
                 return (processedFiles, failedFiles);
 
-            _logger.LogInformation("Processing {Count} attachments for external hazard {HazardCode}", 
-                attachments.Count, hazardCode);
+            _logger.LogInformation("Processing {Count} attachments for external hazard {HazardCode}", attachments.Count, hazardCode);
 
             foreach (var attachment in attachments)
             {
                 try
                 {
-                    // Validate attachment
-                    if (string.IsNullOrEmpty(attachment.Base64Content))
+                    var hasBase64Content = !string.IsNullOrWhiteSpace(attachment.Base64Content);
+                    var hasFileUri = !string.IsNullOrWhiteSpace(attachment.FileUri);
+
+                    // Must provide either uploaded bytes (base64) or a cloud/file URI
+                    if (!hasBase64Content && !hasFileUri)
                     {
-                        _logger.LogWarning("Skipping empty attachment: {FileName}", attachment.FileName);
+                        _logger.LogWarning("Skipping attachment with no Base64Content or FileUri: {FileName}", attachment.FileName);
                         failedFiles++;
                         continue;
                     }
 
-                    // Convert and validate base64
-                    byte[] fileData;
-                    try
-                    {
-                        fileData = Convert.FromBase64String(attachment.Base64Content);
-                    }
-                    catch (FormatException)
-                    {
-                        _logger.LogWarning("Invalid base64 content for attachment: {FileName}", attachment.FileName);
-                        failedFiles++;
-                        continue;
-                    }
+                    byte[]? fileData = null;
+                    string storageType;
+                    string? filePath = null;
+                    long fileSizeBytes = 0;
 
-                    // Check file size (10MB limit)
-                    if (fileData.Length > 10 * 1024 * 1024)
+                    // If bytes are present, treat as direct upload fallback and persist in Database storage.
+                    if (hasBase64Content)
                     {
-                        _logger.LogWarning("File too large (>10MB): {FileName}", attachment.FileName);
-                        failedFiles++;
-                        continue;
+                        try
+                        {
+                            fileData = Convert.FromBase64String(attachment.Base64Content);
+                        }
+                        catch (FormatException)
+                        {
+                            _logger.LogWarning("Invalid base64 content for attachment: {FileName}", attachment.FileName);
+                            failedFiles++;
+                            continue;
+                        }
+
+                        // Check file size (10MB limit)
+                        if (fileData.Length > 10 * 1024 * 1024)
+                        {
+                            _logger.LogWarning("File too large (>10MB): {FileName}", attachment.FileName);
+                            failedFiles++;
+                            continue;
+                        }
+
+                        storageType = "Database";
+                        fileSizeBytes = fileData.Length;
+                    }
+                    else
+                    {
+                        // URI-only mode (e.g., Azure blob upload succeeded prior to API submit)
+                        if (!Uri.TryCreate(attachment.FileUri, UriKind.Absolute, out _))
+                        {
+                            _logger.LogWarning("Invalid FileUri for attachment: {FileName} - {FileUri}", attachment.FileName, attachment.FileUri);
+                            failedFiles++;
+                            continue;
+                        }
+
+                        storageType = "Cloud";
+                        filePath = attachment.FileUri;
                     }
 
                     // Create hazard file entity
@@ -360,8 +507,9 @@ namespace SMS3.Api.Services
                         FileName = attachment.FileName,
                         FileType = Path.GetExtension(attachment.FileName)?.TrimStart('.') ?? "unknown",
                         ContentType = attachment.ContentType ?? "application/octet-stream",
-                        FileSizeBytes = fileData.Length,
-                        StorageType = "Database",
+                        FileSizeBytes = fileSizeBytes,
+                        StorageType = storageType,
+                        FilePath = filePath,
                         FileData = fileData,
                         UploadedBy = "EXTERNAL_API_SOURCE",
                         UploadedDate = DateTime.UtcNow,
@@ -377,8 +525,8 @@ namespace SMS3.Api.Services
                     if (fileResult.IsSuccess)
                     {
                         processedFiles++;
-                        _logger.LogInformation("Processed attachment: {FileName} ({Size} bytes)", 
-                            attachment.FileName, fileData.Length);
+                        _logger.LogInformation("Processed attachment: {FileName} (StorageType={StorageType}, Size={Size} bytes)",
+                            attachment.FileName, storageType, fileSizeBytes);
                     }
                     else
                     {

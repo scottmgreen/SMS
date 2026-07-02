@@ -151,13 +151,26 @@ public class SmtpEmailService : IEmailService
         var smtpClient = new SmtpClient(_config.SmtpHost, _config.SmtpPort)
         {
             EnableSsl = _config.EnableSsl,
-            DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory,
-            UseDefaultCredentials = false,
-            PickupDirectoryLocation = @"C:\temp\sms_emails"
+            UseDefaultCredentials = false
         };
 
-        // Create directory if it doesn't exist
-        Directory.CreateDirectory(@"C:\temp\sms_emails");
+        if (_config.UseSimulation)
+        {
+            smtpClient.DeliveryMethod = SmtpDeliveryMethod.SpecifiedPickupDirectory;
+            smtpClient.PickupDirectoryLocation = @"C:\temp\sms_emails";
+
+            // Create directory if it doesn't exist
+            Directory.CreateDirectory(@"C:\temp\sms_emails");
+        }
+        else
+        {
+            smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
+
+            if (!string.IsNullOrWhiteSpace(_config.Username))
+            {
+                smtpClient.Credentials = new NetworkCredential(_config.Username, _config.Password ?? string.Empty);
+            }
+        }
 
         return smtpClient;
     }

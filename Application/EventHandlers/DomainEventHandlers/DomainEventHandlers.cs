@@ -469,11 +469,13 @@ public sealed class MitigationApprovalApprovedEventHandler : BaseDomainEventHand
 public sealed class MitigationApprovalRequestedEventHandler : BaseDomainEventHandler<MitigationApprovalRequestedEvent>
 {
     private readonly ILogger<MitigationApprovalRequestedEventHandler> _logger;
+    private readonly IBaseMediator _mediator;
 
-    public MitigationApprovalRequestedEventHandler(ILogger<MitigationApprovalRequestedEventHandler> logger, IBaseEventBus eventBus)
+    public MitigationApprovalRequestedEventHandler(ILogger<MitigationApprovalRequestedEventHandler> logger, IBaseEventBus eventBus, IBaseMediator mediator)
         : base(logger, eventBus)
     {
         _logger = logger;
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
     }
 
     protected override Task<Result> HandleDomainEventAsync(MitigationApprovalRequestedEvent domainEvent, CancellationToken cancellationToken)
@@ -504,8 +506,8 @@ public sealed class MitigationApprovalRequestedEventHandler : BaseDomainEventHan
         var emailEvent = new EmailNotificationEvent(
             toRecipients: recipients,
             subject: $"Mitigation Approval Required: {domainEvent.MitigationCode}",
-            body: $"Mitigation {domainEvent.MitigationCode}, related to Hazard - {domainEvent.HazardCode}, requires approval. Priority: {domainEvent.Priority}. Deadline: {domainEvent.ApprovalDeadline:yyyy-MM-dd HH:mm} UTC.",
-            isHtmlContent: false,
+            body: await BuildMitigationApprovalRequestedEmailHtmlAsync(domainEvent, cancellationToken),
+            isHtmlContent: true,
             priority: EmailPriority.High,
             deliveryMode: IntegrationDeliveryMode.BestEffort,
             reportId: domainEvent.ReportId,
@@ -520,6 +522,140 @@ public sealed class MitigationApprovalRequestedEventHandler : BaseDomainEventHan
             });
 
         return await EventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Queued, cancellationToken);
+    }
+
+    private async Task<string> BuildMitigationApprovalRequestedEmailHtmlAsync(MitigationApprovalRequestedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        Hazard? hazard = null;
+        Report? report = null;
+        ReportValidation? reportValidation = null;
+        HazardLocation? latestLocation = null;
+        RiskAssessment? currentRiskAssessment = null;
+        Mitigation? currentMitigation = null;
+        HazardReportTracking? tracking = null;
+
+        if (!string.IsNullOrWhiteSpace(domainEvent.HazardCode))
+        {
+            var hazardResult = await _mediator.SendAsync(new GetHazardByCodeQuery(new HazardID(domainEvent.HazardCode)), cancellationToken);
+            if (hazardResult.IsSuccess)
+            {
+                hazard = hazardResult.Value;
+            }
+
+            var trackingResult = await _mediator.SendAsync(new GetHazardReportTrackingByHazardCodeQuery(domainEvent.HazardCode), cancellationToken);
+            if (trackingResult.IsSuccess && trackingResult.Value?.Any() == true)
+            {
+                tracking = trackingResult.Value
+                    .OrderByDescending(t => t.UpdatedDate ?? t.CreatedDate)
+                    .FirstOrDefault();
+            }
+
+            var locationResult = await _mediator.SendAsync(new GetHazardLocationsByHazardCodeQuery(domainEvent.HazardCode), cancellationToken);
+            if (locationResult.IsSuccess && locationResult.Value?.Any() == true)
+            {
+                latestLocation = locationResult.Value
+                    .OrderByDescending(l => l.UpdatedDate ?? l.CreatedDate ?? DateTime.MinValue)
+                    .ThenByDescending(l => l.DateSelected)
+                    .FirstOrDefault();
+            }
+
+            var assessmentsResult = await _mediator.SendAsync(new GetRiskAssessmentsByHazardCodeQuery(new HazardID(domainEvent.HazardCode)), cancellationToken);
+            if (assessmentsResult.IsSuccess && assessmentsResult.Value?.Any() == true)
+            {
+                currentRiskAssessment = assessmentsResult.Value.FirstOrDefault(ra => ra.RiskAssessmentCategory == RiskAssessmentCategory.Technical)
+                                     ?? assessmentsResult.Value.FirstOrDefault();
+            }
+
+            var mitigationsResult = await _mediator.SendAsync(new GetMitigationsByHazardCodeQuery(domainEvent.HazardCode), cancellationToken);
+            if (mitigationsResult.IsSuccess && mitigationsResult.Value?.Any() == true)
+            {
+                currentMitigation = mitigationsResult.Value.FirstOrDefault(m => string.Equals(m.Code, domainEvent.MitigationCode, StringComparison.OrdinalIgnoreCase))
+                                 ?? mitigationsResult.Value.FirstOrDefault();
+            }
+        }
+
+        var reportCode = hazard?.ReportCode;
+        if (!string.IsNullOrWhiteSpace(reportCode))
+        {
+            var reportResult = await _mediator.SendAsync(new GetReportByCodeQuery(new ReportID(reportCode)), cancellationToken);
+            if (reportResult.IsSuccess)
+            {
+                report = reportResult.Value;
+            }
+
+            var validationResult = await _mediator.SendAsync(new GetReportValidationByReportIdQuery(new ReportID(reportCode)), cancellationToken);
+            if (validationResult.IsSuccess)
+            {
+                reportValidation = validationResult.Value;
+            }
+        }
+
+        var summaryFields = new List<SMSEmailField>
+        {
+            new() { Label = "Mitigation Code", Value = domainEvent.MitigationCode },
+            new() { Label = "Mitigation ID", Value = domainEvent.MitigationId },
+            new() { Label = "Hazard ID", Value = domainEvent.HazardCode },
+            new() { Label = "Priority", Value = domainEvent.Priority.ToString() },
+            new() { Label = "Requested By", Value = domainEvent.RequestedBy },
+            new() { Label = "Requested Date", Value = domainEvent.RequestDate.ToString("MMMM dd, yyyy h:mm tt") },
+            new() { Label = "Approval Deadline", Value = domainEvent.ApprovalDeadline.ToString("MMMM dd, yyyy h:mm tt") }
+        };
+
+        if (!string.IsNullOrWhiteSpace(tracking?.TrackingCode))
+        {
+            summaryFields.Add(new SMSEmailField { Label = "Tracking ID", Value = tracking.TrackingCode });
+        }
+
+        var sections = new List<SMSEmailSection>
+        {
+            new()
+            {
+                Title = "Mitigation Details",
+                Fields =
+                [
+                    new SMSEmailField { Label = "Description", Value = domainEvent.MitigationDescription ?? string.Empty, IsFullWidth = true }
+                ]
+            },
+            new()
+            {
+                Title = "Hazard Context",
+                Fields =
+                [
+                    new SMSEmailField { Label = "Hazard Category", Value = hazard?.HazardCategory ?? string.Empty },
+                    new SMSEmailField { Label = "Hazard Type", Value = hazard?.HazardType ?? string.Empty },
+                    new SMSEmailField { Label = "Hazard Risk Level", Value = hazard?.HazardRiskLevel?.Name ?? hazard?.HazardRiskLevel?.Value ?? "Unknown" },
+                    new SMSEmailField { Label = "Initial Average Score", Value = hazard?.InitialAverageScore?.ToString("0.##") ?? "N/A" },
+                    new SMSEmailField { Label = "Residual Average Score", Value = hazard?.ResidualAverageScore?.ToString("0.##") ?? "N/A" },
+                    new SMSEmailField { Label = "Hazard Description", Value = hazard?.Description ?? string.Empty, IsFullWidth = true }
+                ]
+            },
+            new()
+            {
+                Title = "Report Status Context",
+                Fields =
+                [
+                    new SMSEmailField { Label = "Report ID", Value = reportCode ?? string.Empty },
+                    new SMSEmailField { Label = "Validation Decision", Value = reportValidation?.ValidationDecision ?? string.Empty },
+                    new SMSEmailField { Label = "Validation Date", Value = reportValidation?.CreatedDate?.ToString("MMMM dd, yyyy h:mm tt") ?? string.Empty },
+                    new SMSEmailField { Label = "Location", Value = latestLocation?.Description ?? string.Empty },
+                    new SMSEmailField { Label = "Location Validation", Value = latestLocation is null ? "No mapped location" : (latestLocation.IsValidated ? "Validated" : "Validation Required") },
+                    new SMSEmailField { Label = "Risk Assessment", Value = currentRiskAssessment?.Code ?? string.Empty },
+                    new SMSEmailField { Label = "Risk Assessment Status", Value = currentRiskAssessment?.Status ?? string.Empty },
+                    new SMSEmailField { Label = "Risk Assessment Stage", Value = currentRiskAssessment?.Stage ?? string.Empty },
+                    new SMSEmailField { Label = "Mitigation Status", Value = currentMitigation?.Status ?? string.Empty },
+                    new SMSEmailField { Label = "Mitigation Progress", Value = currentMitigation?.Progress is null ? string.Empty : $"{currentMitigation.Progress}%" },
+                    new SMSEmailField { Label = "Contact Email", Value = report?.ReportContactEmail ?? string.Empty }
+                ]
+            }
+        };
+
+        return SMSEmailTemplateBuilder.BuildStandardEmail(
+            title: "Mitigation Approval Request",
+            introHtml: "A mitigation approval request has been submitted and requires your review.",
+            summaryFields: summaryFields,
+            sections: sections,
+            footerHtml: "Please review this mitigation in SMS and take the appropriate approval action.",
+            logoUrl: SMSEmailTemplateBuilder.DefaultLogoUrl);
     }
 
     protected override async Task<Result> HandleUIEventAsync(MitigationApprovalRequestedEvent domainEvent, CancellationToken cancellationToken)
@@ -701,8 +837,8 @@ public sealed class MitigationStatusChangedEventHandler : BaseDomainEventHandler
         var emailEvent = new EmailNotificationEvent(
             toRecipients: new List<string> { recipient },
             subject: $"Mitigation Approved: {mitigation.Code}",
-            body: $"Mitigation {mitigation.Code} has been approved and targeted for {(mitigation.TargetDate.HasValue ? mitigation.TargetDate.Value.ToString("yyyy-MM-dd") : "the planned target date")} completion.",
-            isHtmlContent: false,
+            body: await BuildMitigationApprovedEmailHtmlAsync(mitigation, domainEvent, cancellationToken),
+            isHtmlContent: true,
             priority: EmailPriority.Normal,
             deliveryMode: IntegrationDeliveryMode.BestEffort,
             reportId: domainEvent.ReportId,
@@ -718,6 +854,123 @@ public sealed class MitigationStatusChangedEventHandler : BaseDomainEventHandler
             });
 
         return await EventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Queued, cancellationToken);
+    }
+
+    private async Task<string> BuildMitigationApprovedEmailHtmlAsync(Mitigation mitigation, MitigationStatusChangedEvent domainEvent, CancellationToken cancellationToken)
+    {
+        Hazard? hazard = null;
+        Report? report = null;
+        ReportValidation? reportValidation = null;
+        HazardLocation? latestLocation = null;
+        RiskAssessment? currentRiskAssessment = null;
+        HazardReportTracking? tracking = null;
+
+        if (!string.IsNullOrWhiteSpace(mitigation.HazardCode))
+        {
+            var hazardResult = await _mediator.SendAsync(new GetHazardByCodeQuery(new HazardID(mitigation.HazardCode)), cancellationToken);
+            if (hazardResult.IsSuccess)
+            {
+                hazard = hazardResult.Value;
+            }
+
+            var trackingResult = await _mediator.SendAsync(new GetHazardReportTrackingByHazardCodeQuery(mitigation.HazardCode), cancellationToken);
+            if (trackingResult.IsSuccess && trackingResult.Value?.Any() == true)
+            {
+                tracking = trackingResult.Value
+                    .OrderByDescending(t => t.UpdatedDate ?? t.CreatedDate)
+                    .FirstOrDefault();
+            }
+
+            var locationResult = await _mediator.SendAsync(new GetHazardLocationsByHazardCodeQuery(mitigation.HazardCode), cancellationToken);
+            if (locationResult.IsSuccess && locationResult.Value?.Any() == true)
+            {
+                latestLocation = locationResult.Value
+                    .OrderByDescending(l => l.UpdatedDate ?? l.CreatedDate ?? DateTime.MinValue)
+                    .ThenByDescending(l => l.DateSelected)
+                    .FirstOrDefault();
+            }
+
+            var assessmentsResult = await _mediator.SendAsync(new GetRiskAssessmentsByHazardCodeQuery(new HazardID(mitigation.HazardCode)), cancellationToken);
+            if (assessmentsResult.IsSuccess && assessmentsResult.Value?.Any() == true)
+            {
+                currentRiskAssessment = assessmentsResult.Value.FirstOrDefault(ra => ra.RiskAssessmentCategory == RiskAssessmentCategory.Technical)
+                                     ?? assessmentsResult.Value.FirstOrDefault();
+            }
+        }
+
+        var reportCode = hazard?.ReportCode;
+        if (!string.IsNullOrWhiteSpace(reportCode))
+        {
+            var reportResult = await _mediator.SendAsync(new GetReportByCodeQuery(new ReportID(reportCode)), cancellationToken);
+            if (reportResult.IsSuccess)
+            {
+                report = reportResult.Value;
+            }
+
+            var validationResult = await _mediator.SendAsync(new GetReportValidationByReportIdQuery(new ReportID(reportCode)), cancellationToken);
+            if (validationResult.IsSuccess)
+            {
+                reportValidation = validationResult.Value;
+            }
+        }
+
+        var summaryFields = new List<SMSEmailField>
+        {
+            new() { Label = "Mitigation Code", Value = mitigation.Code },
+            new() { Label = "Mitigation ID", Value = domainEvent.MitigationId },
+            new() { Label = "Hazard ID", Value = mitigation.HazardCode },
+            new() { Label = "Status", Value = domainEvent.Status },
+            new() { Label = "Approved/Updated By", Value = domainEvent.ChangedBy },
+            new() { Label = "Date", Value = domainEvent.ChangedDate.ToString("MMMM dd, yyyy h:mm tt") },
+            new() { Label = "Target Completion", Value = mitigation.TargetDate?.ToString("MMMM dd, yyyy") ?? "Planned target date" }
+        };
+
+        if (!string.IsNullOrWhiteSpace(tracking?.TrackingCode))
+        {
+            summaryFields.Add(new SMSEmailField { Label = "Tracking ID", Value = tracking.TrackingCode });
+        }
+
+        var sections = new List<SMSEmailSection>
+        {
+            new()
+            {
+                Title = "Hazard Context",
+                Fields =
+                [
+                    new SMSEmailField { Label = "Hazard Category", Value = hazard?.HazardCategory ?? string.Empty },
+                    new SMSEmailField { Label = "Hazard Type", Value = hazard?.HazardType ?? string.Empty },
+                    new SMSEmailField { Label = "Hazard Risk Level", Value = hazard?.HazardRiskLevel?.Name ?? hazard?.HazardRiskLevel?.Value ?? "Unknown" },
+                    new SMSEmailField { Label = "Initial Average Score", Value = hazard?.InitialAverageScore?.ToString("0.##") ?? "N/A" },
+                    new SMSEmailField { Label = "Residual Average Score", Value = hazard?.ResidualAverageScore?.ToString("0.##") ?? "N/A" },
+                    new SMSEmailField { Label = "Hazard Description", Value = hazard?.Description ?? string.Empty, IsFullWidth = true }
+                ]
+            },
+            new()
+            {
+                Title = "Report Status Context",
+                Fields =
+                [
+                    new SMSEmailField { Label = "Report ID", Value = reportCode ?? string.Empty },
+                    new SMSEmailField { Label = "Validation Decision", Value = reportValidation?.ValidationDecision ?? string.Empty },
+                    new SMSEmailField { Label = "Validation Date", Value = reportValidation?.CreatedDate?.ToString("MMMM dd, yyyy h:mm tt") ?? string.Empty },
+                    new SMSEmailField { Label = "Location", Value = latestLocation?.Description ?? string.Empty },
+                    new SMSEmailField { Label = "Location Validation", Value = latestLocation is null ? "No mapped location" : (latestLocation.IsValidated ? "Validated" : "Validation Required") },
+                    new SMSEmailField { Label = "Risk Assessment", Value = currentRiskAssessment?.Code ?? string.Empty },
+                    new SMSEmailField { Label = "Risk Assessment Status", Value = currentRiskAssessment?.Status ?? string.Empty },
+                    new SMSEmailField { Label = "Risk Assessment Stage", Value = currentRiskAssessment?.Stage ?? string.Empty },
+                    new SMSEmailField { Label = "Mitigation Progress", Value = $"{mitigation.Progress}%" },
+                    new SMSEmailField { Label = "Contact Email", Value = report?.ReportContactEmail ?? string.Empty }
+                ]
+            }
+        };
+
+        return SMSEmailTemplateBuilder.BuildStandardEmail(
+            title: "Mitigation Approved",
+            introHtml: "Your mitigation has been approved and is ready for implementation tracking.",
+            summaryFields: summaryFields,
+            sections: sections,
+            footerHtml: "Please proceed with mitigation implementation and status updates in SMS.",
+            logoUrl: SMSEmailTemplateBuilder.DefaultLogoUrl);
     }
 
     protected override async Task<Result> HandleUIEventAsync(MitigationStatusChangedEvent domainEvent, CancellationToken cancellationToken)

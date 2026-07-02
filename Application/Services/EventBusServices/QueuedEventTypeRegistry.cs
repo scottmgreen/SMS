@@ -103,18 +103,30 @@ public sealed class QueuedEventTypeRegistry
         {
             if (existing != eventClrType)
             {
+                var winner = ChooseDeterministicType(existing, eventClrType);
+                targetMap[eventTypeValue] = winner;
+                var loser = winner == existing ? eventClrType : existing;
+
                 _logger.LogWarning(
-                    "QueuedEventTypeRegistry duplicate EventType '{EventType}' for {Category}. Keeping {ExistingType}, skipping {NewType}.",
+                    "QueuedEventTypeRegistry duplicate EventType '{EventType}' for {Category}. Deterministically selected {WinnerType}, skipped {LoserType}.",
                     eventTypeValue,
                     categoryName,
-                    existing.FullName,
-                    eventClrType.FullName);
+                    winner.FullName,
+                    loser.FullName);
             }
 
             return;
         }
 
         targetMap[eventTypeValue] = eventClrType;
+    }
+
+    private static Type ChooseDeterministicType(Type left, Type right)
+    {
+        var leftName = left.FullName ?? left.Name;
+        var rightName = right.FullName ?? right.Name;
+
+        return string.CompareOrdinal(leftName, rightName) <= 0 ? left : right;
     }
 
     private string? ResolveEventTypeValue(Type eventClrType)

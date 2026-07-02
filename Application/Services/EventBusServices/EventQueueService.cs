@@ -559,27 +559,37 @@ public class EventQueueService : IEventQueueService
     {
         using var doc = JsonDocument.Parse(eventData);
         var root = doc.RootElement;
+        var idValue = TryGetIdValue(root) ?? Guid.NewGuid().ToString();
 
-        var ctor = eventType
+        var constructors = eventType
             .GetConstructors(BindingFlags.Public | BindingFlags.Instance)
-            .FirstOrDefault(c =>
-            {
-                var parameters = c.GetParameters();
-                return parameters.Length == 1 &&
-                       (parameters[0].ParameterType == typeof(SMSEventID) || parameters[0].ParameterType == typeof(string));
-            });
+            .OrderBy(c => c.GetParameters().Length)
+            .ToList();
 
-        if (ctor == null)
+        object? instance = null;
+        foreach (var ctor in constructors)
+        {
+            if (!TryBuildConstructorArgs(ctor, root, idValue, out var args))
+            {
+                continue;
+            }
+
+            try
+            {
+                instance = ctor.Invoke(args);
+                break;
+            }
+            catch
+            {
+                // try next candidate ctor
+            }
+        }
+
+        if (instance == null)
         {
             _logger.LogApplicationWarning("[QUEUE] No compatible constructor found for fallback on {EventType}", eventType.Name);
             return null;
         }
-
-        var idValue = TryGetIdValue(root) ?? Guid.NewGuid().ToString();
-
-        object? instance = ctor.GetParameters()[0].ParameterType == typeof(SMSEventID)
-            ? ctor.Invoke(new object[] { new SMSEventID(idValue) })
-            : ctor.Invoke(new object[] { idValue });
 
         if (instance == null)
         {
@@ -590,6 +600,118 @@ public class EventQueueService : IEventQueueService
         MapNestedIdToHazardId(instance, root);
 
         return instance;
+    }
+
+    private static bool TryBuildConstructorArgs(ConstructorInfo ctor, JsonElement root, string idValue, out object?[] args)
+    {
+        var parameters = ctor.GetParameters();
+        args = new object?[parameters.Length];
+
+        for (var i = 0; i < parameters.Length; i++)
+        {
+            var parameter = parameters[i];
+
+            if (parameter.ParameterType == typeof(SMSEventID))
+            {
+                args[i] = new SMSEventID(idValue);
+                continue;
+            }
+
+            if (parameter.ParameterType == typeof(string) &&
+                (string.Equals(parameter.Name, "id", StringComparison.OrdinalIgnoreCase)
+                || string.Equals(parameter.Name, "eventId", StringComparison.OrdinalIgnoreCase)))
+            {
+                args[i] = idValue;
+                continue;
+            }
+
+            if (TryGetJsonProperty(root, parameter.Name ?? string.Empty, out var jsonProperty) &&
+                TryDeserializePropertyValue(jsonProperty, parameter.ParameterType, out var value))
+            {
+                args[i] = value;
+                continue;
+            }
+
+            if (TryGetLegacyMitigationStatusChangedCtorValue(parameter, root, out var legacyValue))
+            {
+                args[i] = legacyValue;
+                continue;
+            }
+
+            if (parameter.HasDefaultValue)
+            {
+                args[i] = parameter.DefaultValue;
+                continue;
+            }
+
+            return false;
+        }
+
+        return true;
+    }
+
+    private static bool TryGetLegacyMitigationStatusChangedCtorValue(ParameterInfo parameter, JsonElement root, out object? value)
+    {
+        value = null;
+
+        var name = parameter.Name ?? string.Empty;
+
+        // Backward compatibility for older queued MITIGATION_STATUS_CHANGED payloads
+        // that were produced by MitigationCompletedEvent shape.
+        if (parameter.ParameterType == typeof(string) && string.Equals(name, "status", StringComparison.OrdinalIgnoreCase))
+        {
+            if (TryGetJsonProperty(root, "Status", out var statusProp) && statusProp.ValueKind == JsonValueKind.String)
+            {
+                value = statusProp.GetString() ?? string.Empty;
+                return true;
+            }
+
+            value = "COMPLETED";
+            return true;
+        }
+
+        if (parameter.ParameterType == typeof(string) && string.Equals(name, "changedBy", StringComparison.OrdinalIgnoreCase))
+        {
+            if (TryGetJsonProperty(root, "ChangedBy", out var changedByProp) && changedByProp.ValueKind == JsonValueKind.String)
+            {
+                value = changedByProp.GetString() ?? "SYSTEM";
+                return true;
+            }
+
+            if (TryGetJsonProperty(root, "CompletionNotes", out var notesProp) && notesProp.ValueKind == JsonValueKind.String)
+            {
+                var notes = notesProp.GetString();
+                value = string.IsNullOrWhiteSpace(notes) ? "SYSTEM" : notes;
+                return true;
+            }
+
+            value = "SYSTEM";
+            return true;
+        }
+
+        if (parameter.ParameterType == typeof(DateTime) && string.Equals(name, "changedDate", StringComparison.OrdinalIgnoreCase))
+        {
+            if (TryGetJsonProperty(root, "ChangedDate", out var changedDateProp) &&
+                TryDeserializePropertyValue(changedDateProp, typeof(DateTime), out var changedDateValue) &&
+                changedDateValue is DateTime changedDate)
+            {
+                value = changedDate;
+                return true;
+            }
+
+            if (TryGetJsonProperty(root, "CompletedDate", out var completedDateProp) &&
+                TryDeserializePropertyValue(completedDateProp, typeof(DateTime), out var completedDateValue) &&
+                completedDateValue is DateTime completedDate)
+            {
+                value = completedDate;
+                return true;
+            }
+
+            value = DateTime.UtcNow;
+            return true;
+        }
+
+        return false;
     }
 
     private static string? TryGetIdValue(JsonElement root)
@@ -631,14 +753,92 @@ public class EventQueueService : IEventQueueService
 
             try
             {
-                var value = jsonProperty.Deserialize(property.PropertyType, EventJsonOptions);
-                property.SetValue(instance, value);
+                if (TryDeserializePropertyValue(jsonProperty, property.PropertyType, out var value))
+                {
+                    property.SetValue(instance, value);
+                }
             }
             catch
             {
                 // best-effort hydration for replayed events
             }
         }
+    }
+
+    private static bool TryDeserializePropertyValue(JsonElement jsonProperty, Type propertyType, out object? value)
+    {
+        value = null;
+
+        if (jsonProperty.ValueKind == JsonValueKind.Null)
+        {
+            return true;
+        }
+
+        if (TryDeserializeBaseEnumLike(jsonProperty, propertyType, out value))
+        {
+            return true;
+        }
+
+        try
+        {
+            value = jsonProperty.Deserialize(propertyType, EventJsonOptions);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
+    }
+
+    private static bool TryDeserializeBaseEnumLike(JsonElement jsonProperty, Type propertyType, out object? value)
+    {
+        value = null;
+
+        if (!propertyType.IsAbstract && !propertyType.IsInterface)
+        {
+            return false;
+        }
+
+        string? rawValue = jsonProperty.ValueKind switch
+        {
+            JsonValueKind.String => jsonProperty.GetString(),
+            JsonValueKind.Object when TryGetJsonProperty(jsonProperty, "Value", out var v) && v.ValueKind == JsonValueKind.String => v.GetString(),
+            JsonValueKind.Object when TryGetJsonProperty(jsonProperty, "Name", out var n) && n.ValueKind == JsonValueKind.String => n.GetString(),
+            _ => null
+        };
+
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return false;
+        }
+
+        var fromValueMethod = propertyType.GetMethod(
+            "FromValue",
+            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy,
+            new[] { typeof(string) });
+        if (fromValueMethod is not null)
+        {
+            value = fromValueMethod.Invoke(null, new object[] { rawValue });
+            if (value is not null)
+            {
+                return true;
+            }
+        }
+
+        var fromNameMethod = propertyType.GetMethod(
+            "FromName",
+            BindingFlags.Public | BindingFlags.Static | BindingFlags.FlattenHierarchy,
+            new[] { typeof(string) });
+        if (fromNameMethod is not null)
+        {
+            value = fromNameMethod.Invoke(null, new object[] { rawValue });
+            if (value is not null)
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static void MapNestedIdToHazardId(object instance, JsonElement root)

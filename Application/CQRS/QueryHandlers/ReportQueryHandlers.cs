@@ -44,6 +44,32 @@ public class GetReportByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.NotFound);
         }
     }
+
+public class GetTrackingIDByReportCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetTrackingIDByReportCodeQuery, Result<string>>
+{
+    private readonly ReportService _reportService;
+    private readonly ILogger<GetTrackingIDByReportCodeQueryHandler> _logger;
+
+    public GetTrackingIDByReportCodeQueryHandler(ReportService reportService, ILogger<GetTrackingIDByReportCodeQueryHandler> logger)
+    {
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<string>> HandleAsync(GetTrackingIDByReportCodeQuery request, CancellationToken ct = default)
+    {
+        try
+        {
+            _logger.LogApplicationInformation("Processing GetTrackingIDByReportCodeQuery for Code: {Code}", request.ReportCode);
+            return await _reportService.GetTrackingIDByReportCodeAsync(request.ReportCode, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Error processing GetTrackingIDByReportCodeQuery for Code: {Code}", ApplicationEventIds.Error, ex);
+            return Result<string>.Failure<string>(DomainErrors.ReportError.NotFound);
+        }
+    }
+}
 }
 
 public class GetAllReportsQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetAllReportsQuery, Result<List<Report>>>

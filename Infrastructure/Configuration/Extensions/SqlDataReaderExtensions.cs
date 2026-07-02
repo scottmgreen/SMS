@@ -53,7 +53,18 @@ public static class SqlDataReaderExtensions
     public static T GetValue<T>(this IDataReader reader, string columnName)
     {
         object value = reader[columnName];
-        return value == DBNull.Value ? default : (T)value;
+        if (value == DBNull.Value)
+        {
+            return default;
+        }
+
+        if (typeof(T) == typeof(string))
+        {
+            var trimmed = (value?.ToString() ?? string.Empty).Trim();
+            return (T)(object)trimmed;
+        }
+
+        return (T)value;
     }
     /// <summary>
     /// Checks if a column exists in the SqlDataReader

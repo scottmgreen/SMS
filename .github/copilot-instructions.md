@@ -40,3 +40,4 @@
 - Private variables in SMS3 code-behind files must consistently follow the _variableName naming convention (e.g., _memberName). 
 - Cleanup should continue in targeted batches with build validation.
 - Use enums only for display styles; do not use hard-coded strings for event source display naming.
+- Standardize data-reader string mapping to `GetValue<string>` with trimming handled in the extension method rather than direct `GetString` calls.

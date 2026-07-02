@@ -28,6 +28,7 @@ public abstract class EventType : BaseEnum<EventType>
     public static readonly EventType RiskAssessmentCompleted = new RiskAssessmentCompletedEventType();
 
     public static readonly EventType MitigationCreated = new MitigationCreatedEventType();
+    public static readonly EventType MitigationCompleted = new MitigationCompletedEventType();
     public static readonly EventType MitigationApprovalRequested = new MitigationApprovalRequestedEventType();
     public static readonly EventType MitigationApprovalApproved = new MitigationApprovalApprovedEventType();
     public static readonly EventType MitigationStatusChanged = new MitigationStatusChangedEventType();
@@ -53,6 +54,10 @@ public abstract class EventType : BaseEnum<EventType>
     private sealed class MitigationCreatedEventType : EventType
     {
         public MitigationCreatedEventType() : base("MITIGATION_CREATED", "MITIGATION_CREATED") { }
+    }
+    private sealed class MitigationCompletedEventType : EventType
+    {
+        public MitigationCompletedEventType() : base("MITIGATION_COMPLETED", "MITIGATION_COMPLETED") { }
     }
     private sealed class MitigationApprovalRequestedEventType : EventType
     {

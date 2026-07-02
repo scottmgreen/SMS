@@ -52,5 +52,13 @@ namespace SMS3.Api.Services
         /// <param name="httpContext">HTTP context for additional processing info</param>
         /// <returns>Result containing the API response or error</returns>
         Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsyncV2(PDXSMSReportApiRequestV2 request, HttpContext httpContext);
+
+        /// <summary>
+        /// Get full report status/details by tracking ID (v2)
+        /// </summary>
+        /// <param name="trackingId">Tracking ID code</param>
+        /// <param name="httpContext">HTTP context</param>
+        /// <returns>Comprehensive report status/details response</returns>
+        Task<Result<PDXSMSReportStatusApiResponseV2>> GetReportStatusByTrackingIdAsync(string trackingId, HttpContext httpContext);
     }
 }

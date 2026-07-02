@@ -14,6 +14,8 @@ public class EmailComposeDialogBase : ComponentBase
     [Inject] protected IEmailSender EmailSender { get; set; } = default!;
 
     [Parameter] public EmailComposeModel? InitialModel { get; set; }
+    [Parameter] public bool PreviewOnly { get; set; }
+    [Parameter] public string? DialogTitleOverride { get; set; }
 
     protected EmailComposeModel Model { get; private set; } = new();
     protected bool ShowCc { get; set; }
@@ -48,6 +50,11 @@ public class EmailComposeDialogBase : ComponentBase
             {
                 DialogTitle = "Mitigation Approval Request";
             }
+        }
+
+        if (!string.IsNullOrWhiteSpace(DialogTitleOverride))
+        {
+            DialogTitle = DialogTitleOverride;
         }
     }
 

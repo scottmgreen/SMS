@@ -54,10 +54,10 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Hazard" Property="Name" Title="Name" Width="350px" >
+        <RadzenDataGridColumn TItem="Hazard" Property="Name" Title="Title" Width="350px" >
             <Template Context="hazard">
-                <div title="@hazard.Name" style="@_basicTextStyle">
-                    @(hazard.Name)
+                <div title="@hazard.HazardTitle" style="@_basicTextStyle">
+                    @(hazard.HazardTitle)
                 </div>
             </Template>
         </RadzenDataGridColumn>

@@ -9,6 +9,8 @@
 //-----------------------------------------------------------------------
 
 using System.ComponentModel.DataAnnotations;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 
 using SMS_Domain.Enums;
 
@@ -38,6 +40,7 @@ namespace SMS3.Api.Models;
         public decimal? LocationLatitude { get; init; }
         public decimal? LocationLongitude { get; init; }
         public DateTime? HazardIncidentDateTime { get; init; }
+        [JsonConverter(typeof(SingleOrArrayConverter<FileAttachment>))]
         public List<FileAttachment>? ReportAttachments { get; init; }
     }
 
@@ -109,6 +112,7 @@ namespace SMS3.Api.Models;
         /// <summary>
         /// Optional file attachments as base64 encoded strings (max 10MB per file)
         /// </summary>
+        [JsonConverter(typeof(SingleOrArrayConverter<FileAttachment>))]
         public List<FileAttachment>? ReportAttachments { get; init; }
     }
 
@@ -154,8 +158,8 @@ namespace SMS3.Api.Models;
         /// <summary>
         /// Direct URL to track the status of this report
         /// </summary>
-        /// <example>https://your-sms-domain.com/ConfidentialReporting/TrackStatus/HT-2024-001234</example>
-        public string TrackingUrl { get; init; } = string.Empty;
+        /// <example></example>
+        
         
         /// <summary>
         /// Number of files successfully processed
@@ -169,15 +173,83 @@ namespace SMS3.Api.Models;
     }
 
     /// <summary>
+    /// Response model for report status/details by tracking id (API v2)
+    /// Mirrors data shown in HazardReportSearchResult for external consumers.
+    /// </summary>
+    public record PDXSMSReportStatusApiResponseV2
+    {
+        public string TrackingId { get; init; } = string.Empty;
+        public string ReportId { get; init; } = string.Empty;
+        public string HazardId { get; init; } = string.Empty;
+        public bool IsAnonymous { get; init; }
+
+        public string SubmittedBy { get; init; } = string.Empty;
+        public DateTime? SubmittedDate { get; init; }
+        public string SubmittingDepartment { get; init; } = string.Empty;
+        public string SubmittingDepartmentJobFunction { get; init; } = string.Empty;
+
+        public string HazardCategory { get; init; } = string.Empty;
+        public string HazardType { get; init; } = string.Empty;
+        public string HazardDescription { get; init; } = string.Empty;
+        public string ReportStatus { get; init; } = string.Empty;
+        public string HazardStatus { get; init; } = string.Empty;
+
+        public string ContactName { get; init; } = string.Empty;
+        public string ContactCell { get; init; } = string.Empty;
+        public string ContactEmail { get; init; } = string.Empty;
+
+        public string ReportValidationCode { get; init; } = string.Empty;
+        public string ReportValidationDecision { get; init; } = string.Empty;
+        public string ReportValidationDecisionDisplay { get; init; } = string.Empty;
+        public DateTime? ReportValidationDate { get; init; }
+
+        public bool IsHazardCategoryValidated { get; init; }
+        public bool IsHazardTypeValidated { get; init; }
+        public bool IsHazardLocationValidated { get; init; }
+        public string HazardLocationValidationText { get; init; } = string.Empty;
+
+        public string RiskAssessmentCode { get; init; } = string.Empty;
+        public string RiskAssessmentAssessmentType { get; init; } = string.Empty;
+        public string RiskAssessmentStatus { get; init; } = string.Empty;
+        public string RiskAssessmentStage { get; init; } = string.Empty;
+        public int? RiskAssessmentCurrentStep { get; init; }
+        public DateTime? RiskAssessmentUpdatedDate { get; init; }
+
+        public string MitigationCode { get; init; } = string.Empty;
+        public string MitigationStatus { get; init; } = string.Empty;
+        public decimal? MitigationProgress { get; init; }
+        public DateTime? MitigationUpdatedDate { get; init; }
+
+        public string LocationCode { get; init; } = string.Empty;
+        public decimal? LocationLatitude { get; init; }
+        public decimal? LocationLongitude { get; init; }
+        public string LocationDescription { get; init; } = string.Empty;
+        public DateTime? LocationDateSelected { get; init; }
+
+        public int SubmittedFileCount { get; init; }
+    }
+
+    public record PDXSMSAttachmentSummary
+    {
+        public string FileId { get; init; } = string.Empty;
+        public string FileName { get; init; } = string.Empty;
+        public string FileType { get; init; } = string.Empty;
+        public long FileSizeBytes { get; init; }
+        public bool IsConfidential { get; init; }
+        public DateTime? UploadedDate { get; init; }
+    }
+
+    /// <summary>
     /// File attachment model for API submissions
     /// </summary>
     public record FileAttachment
     {
+        public string? FileUri { get; init; }
+
         [Required]
         public string FileName { get; init; } = string.Empty;
         
-        [Required]
-        public string Base64Content { get; init; } = string.Empty;
+        public string? Base64Content { get; init; }
         
         public string? ContentType { get; init; }
     }
@@ -212,4 +284,33 @@ namespace SMS3.Api.Models;
         public string Category { get; init; } = string.Empty;
         public string GuidanceText { get; init; } = string.Empty;
         public bool RequiresRegulatoryReporting { get; init; }
+    }
+
+    public sealed class SingleOrArrayConverter<TItem> : JsonConverter<List<TItem>>
+    {
+        public override List<TItem> Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+        {
+            if (reader.TokenType == JsonTokenType.StartArray)
+            {
+                return JsonSerializer.Deserialize<List<TItem>>(ref reader, options) ?? new List<TItem>();
+            }
+
+            if (reader.TokenType == JsonTokenType.StartObject)
+            {
+                var item = JsonSerializer.Deserialize<TItem>(ref reader, options);
+                return item is null ? new List<TItem>() : new List<TItem> { item };
+            }
+
+            if (reader.TokenType == JsonTokenType.Null)
+            {
+                return new List<TItem>();
+            }
+
+            throw new JsonException($"Unexpected token {reader.TokenType} when parsing {typeof(TItem).Name} list.");
+        }
+
+        public override void Write(Utf8JsonWriter writer, List<TItem> value, JsonSerializerOptions options)
+        {
+            JsonSerializer.Serialize(writer, value, options);
+        }
     }

@@ -1339,8 +1339,7 @@ public partial class TechnicalAssessment : ComponentBase
                 MapScoringPanelPropertiesBasedOnStep(panel, currentStep);
             }
 
-            _logger.LogInformation("Loaded {Count} scoring panels for hazard {HazardCode}, Step {CurrentStep}", 
-                filteredPanels.Count, hazardCode, currentStep);
+            _logger.LogInformation("Loaded {Count} scoring panels for hazard {HazardCode}, Step {CurrentStep}", filteredPanels.Count, hazardCode, currentStep);
 
             return filteredPanels;
         }

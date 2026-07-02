@@ -110,7 +110,11 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileFileHash, hazardFile.FileHash ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileStorageType, hazardFile.StorageType ?? "Database"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileFilePath, hazardFile.FilePath ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileFileData, hazardFile.FileData ?? (object)DBNull.Value));
+            var fileDataParameter = new SqlParameter(ParameterNames.pmHazardFileFileData, SqlDbType.VarBinary)
+            {
+                Value = hazardFile.FileData is { Length: > 0 } ? hazardFile.FileData : DBNull.Value
+            };
+            cmd.Parameters.Add(fileDataParameter);
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileDescription, hazardFile.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileCategory, hazardFile.Category ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileIsConfidential, hazardFile.IsConfidential));

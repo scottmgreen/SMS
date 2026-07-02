@@ -75,6 +75,17 @@ namespace SMS3.Api.Endpoints
                 .Produces<object>(StatusCodes.Status200OK)
                 .Produces<ApiErrorResponse>(StatusCodes.Status500InternalServerError);
 
+            // Get comprehensive report status/details by tracking id
+            group.MapGet("/report-status/{trackingId}", GetReportStatusByTrackingId)
+                .AddEndpointFilter<ApiKeyAuthenticationFilter>()
+                .WithName("GetReportStatusByTrackingIdV2")
+                .WithSummary("Get full report status/details by tracking id (v2)")
+                .WithDescription("Returns report, hazard, validation, risk assessment, mitigation, location, and submitted file count for a tracking id (API v2). Example response: { \"trackingId\": \"HT-000123\", \"reportId\": \"RP-000456\", \"hazardId\": \"HZ-000789\", \"hazardCategory\": \"INCIDENT\", \"hazardType\": \"AIRCRAFT_INCIDENT\", \"reportStatus\": \"READY_FOR_PROCESSING\", \"riskAssessmentAssessmentType\": \"TECHNICAL\", \"reportValidationDecisionDisplay\": \"SMS Risk\", \"hazardLocationValidationText\": \"Validated\", \"submittedFileCount\": 2 }")
+                .Produces<PDXSMSReportStatusApiResponseV2>(StatusCodes.Status200OK)
+                .Produces<ApiErrorResponse>(StatusCodes.Status400BadRequest)
+                .Produces<ApiErrorResponse>(StatusCodes.Status404NotFound)
+                .Produces<ApiErrorResponse>(StatusCodes.Status500InternalServerError);
+
             // Get hazard categories
             //group.MapGet("/hazard-categories", GetHazardCategories)
             //    .AddEndpointFilter<ApiKeyAuthenticationFilter>()
@@ -100,6 +111,45 @@ namespace SMS3.Api.Endpoints
             //    .Produces<object>(StatusCodes.Status200OK);
 
             return app;
+        }
+
+        private static async Task<IResult> GetReportStatusByTrackingId(
+            string trackingId,
+            IPDXSMSApiService apiService,
+            ILogger<Program> logger,
+            HttpContext httpContext)
+        {
+            try
+            {
+                var result = await apiService.GetReportStatusByTrackingIdAsync(trackingId, httpContext);
+                if (result.IsFailure)
+                {
+                    var isNotFound = string.Equals(result.Error?.Code, "PDXSMS.NotFound", StringComparison.OrdinalIgnoreCase);
+                    return isNotFound
+                        ? Results.NotFound(new ApiErrorResponse
+                        {
+                            Error = "Not Found",
+                            Details = new List<string> { result.Error?.Message ?? "Tracking ID not found." },
+                            RequestId = httpContext.TraceIdentifier
+                        })
+                        : Results.BadRequest(new ApiErrorResponse
+                        {
+                            Error = "Request failed",
+                            Details = new List<string> { result.Error?.Message ?? "Invalid request." },
+                            RequestId = httpContext.TraceIdentifier
+                        });
+                }
+
+                return Results.Ok(result.Value);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Unexpected error retrieving report status by tracking id: {TrackingId}", trackingId);
+                return Results.Problem(
+                    detail: "An unexpected error occurred while retrieving report status.",
+                    title: "Internal Server Error",
+                    statusCode: StatusCodes.Status500InternalServerError);
+            }
         }
 
         private static async Task<IResult> GetHazardLocations(

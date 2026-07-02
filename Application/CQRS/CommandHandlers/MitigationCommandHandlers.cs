@@ -143,40 +143,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                         reportId = hazardResult.Value.ReportCode ?? string.Empty;
                     }
                 }
-
-                if (updatedMitigation is not null
-                    && previousStatus == MitigationStatus.PendingApproval
-                    && updatedMitigation.Status == MitigationStatus.Approved)
-                {
-                    var mitigationCode = (updatedMitigation.Code ?? updatedMitigation.Id.Value ?? string.Empty).Trim();
-                    var completedDate = updatedMitigation.UpdatedDate ?? DateTime.UtcNow;
-                    var completedBy = updatedMitigation.ApprovedBy ?? updatedMitigation.UpdatedBy ?? "SYSTEM";
-
-                    var mitigationCompletedEvent = new MitigationCompletedEvent(
-                        new SMSEventID("EV-0000"),
-                        mitigationCode,
-                        mitigationCode,
-                        updatedMitigation.HazardCode ?? string.Empty,
-                        updatedMitigation.TargetDate ?? completedDate.AddDays(30),
-                        completedDate,
-                        string.Empty)
-                    {
-                        ReportId = reportId,
-                        CompletionNotes = $"Approved by {completedBy}",
-                        EffectivenessRating = "Approved"
-                    };
-
-                    var publishResult = await _eventBus.PublishDomainEventAsync(mitigationCompletedEvent, cancellationToken).ConfigureAwait(false);
-                    if (publishResult.IsFailure)
-                    {
-                        _logger.LogApplicationWarning(
-                            "Failed to publish MitigationCompleted event for {MitigationCode}: {Error}",
-                            updatedMitigation.Code,
-                            publishResult.Error?.Message ?? "Unknown publish error");
-                    }
-
-                }
-
+                
                 if (updatedMitigation is not null)
                 {
                     var previousStatusValue = previousStatus?.Value?.Trim() ?? string.Empty;
@@ -203,6 +170,36 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                                 "Failed to publish MitigationStatusChanged event for {MitigationCode}: {Error}",
                                 updatedMitigation.Code,
                                 statusPublishResult.Error?.Message ?? "Unknown publish error");
+                        }
+
+                        if (string.Equals(currentStatusValue, MitigationStatus.Complete.Value, StringComparison.OrdinalIgnoreCase))
+                        {
+                            var mitigationCode = (updatedMitigation.Code ?? updatedMitigation.Id.Value ?? string.Empty).Trim();
+                            var completedDate = updatedMitigation.UpdatedDate ?? DateTime.UtcNow;
+                            var completedBy = updatedMitigation.ApprovedBy ?? updatedMitigation.UpdatedBy ?? "SYSTEM";
+
+                            var mitigationCompletedEvent = new MitigationCompletedEvent(
+                                new SMSEventID("EV-0000"),
+                                mitigationCode,
+                                mitigationCode,
+                                updatedMitigation.HazardCode ?? string.Empty,
+                                updatedMitigation.TargetDate ?? completedDate.AddDays(30),
+                                completedDate,
+                                string.Empty)
+                            {
+                                ReportId = reportId,
+                                CompletionNotes = $"Completed by {completedBy}",
+                                EffectivenessRating = "Approved"
+                            };
+
+                            var completedPublishResult = await _eventBus.PublishDomainEventAsync(mitigationCompletedEvent, cancellationToken).ConfigureAwait(false);
+                            if (completedPublishResult.IsFailure)
+                            {
+                                _logger.LogApplicationWarning(
+                                    "Failed to publish MitigationCompleted event for {MitigationCode}: {Error}",
+                                    updatedMitigation.Code,
+                                    completedPublishResult.Error?.Message ?? "Unknown publish error");
+                            }
                         }
                     }
                 }

@@ -493,33 +493,7 @@ else if (ReportDetails is not null)
                 </div>
             </RadzenCard>
 
-            <!-- Additional Guidance Cards -->
-            @* <RadzenCard class="guidance-card mb-4">
-                <h6 class="mb-3">
-                    <RadzenIcon Icon="info" class="me-2" />
-                    Report Status Guide
-                </h6>
-                
-                <RadzenStack Gap="0.5rem">
-                    <div class="status-guide-item">
-                        <RadzenBadge Text="Submitted" BadgeStyle="BadgeStyle.Info" class="me-2" />
-                        <small>Report received and awaiting validation</small>
-                    </div>
-                    <div class="status-guide-item">
-                        <RadzenBadge Text="Validated" BadgeStyle="BadgeStyle.Success" class="me-2" />
-                        <small>Report reviewed and accepted for processing</small>
-                    </div>
-                    <div class="status-guide-item">
-                        <RadzenBadge Text="In Progress" BadgeStyle="BadgeStyle.Warning" class="me-2" />
-                        <small>Report is being actively investigated</small>
-                    </div>
-                    <div class="status-guide-item">
-                        <RadzenBadge Text="Completed" BadgeStyle="BadgeStyle.Primary" class="me-2" />
-                        <small>Investigation completed and closed</small>
-                    </div>
-                </RadzenStack>
-            </RadzenCard> *@
-
+           
             @if (ReportDetails.IsAnonymous)
             {
                 <RadzenCard class="guidance-card mb-4">

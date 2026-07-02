@@ -34,6 +34,14 @@ public interface IReportDataService
     Task<Result<Report>> GetReportByCodeAsync(ReportID id, CancellationToken ct = default);
 
     /// <summary>
+    /// Retrieves the original tracking code for a report asynchronously.
+    /// </summary>
+    /// <param name="id">The report identifier</param>
+    /// <param name="ct">Cancellation token</param>
+    /// <returns>Result containing tracking code or error</returns>
+    Task<Result<string>> GetTrackingIDByReportCodeAsync(ReportID id, CancellationToken ct = default);
+
+    /// <summary>
     /// Retrieves all reports asynchronously
     /// </summary>
     /// <param name="ct">Cancellation token</param>
