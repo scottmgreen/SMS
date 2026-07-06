@@ -7,6 +7,7 @@
 - Swagger configuration must present both API endpoint definitions (v1 and v2) in .NET 10.
 - Do not recommend running `dotnet run`; validate manually from the IDE.
 - Implement configuration tasks as a single page based on appsettings; do not change any other pages.
+- Use a single shared appsettings approach across dev, test, and production instead of environment-specific appsettings overrides.
 - Large refactors must be done in batches with a QA build run between batches.
 - Batch cleanup must proceed directly without asking for confirmation before running scripts/commands.
 

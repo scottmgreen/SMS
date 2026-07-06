@@ -507,7 +507,7 @@ public partial class HazardReportSearchResult : ComponentBase
     public string HazardLocationValidationText =>
         HazardLocation is null
             ? "No mapped location"
-            : (HazardLocation.IsValidated ? "Validated" : "Validation Required");
+            : (HazardLocation.IsValidated ? "Hazard Location Validated" : "Hazard Location Validation Required");
 
     public string GetBooleanValidationIcon(bool isValid) => isValid ? "check_circle" : "cancel";
 
@@ -517,7 +517,7 @@ public partial class HazardReportSearchResult : ComponentBase
     {
         if (ReportValidation is null)
         {
-            return "schedule";
+            return "cancel";
         }
 
         if (ValidationDecision.TryFromValue(ReportValidation.ValidationDecision, out var validationDecision))
@@ -537,7 +537,7 @@ public partial class HazardReportSearchResult : ComponentBase
     {
         if (ReportValidation is null)
         {
-            return "text-muted";
+            return "text-danger";
         }
 
         if (ValidationDecision.TryFromValue(ReportValidation.ValidationDecision, out var validationDecision))

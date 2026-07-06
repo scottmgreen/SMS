@@ -75,9 +75,9 @@ public class ApiKeyAuthenticationFilter : IEndpointFilter
                     // Handle "Bearer {token}" format
                     if (value.StartsWith("Bearer ", StringComparison.OrdinalIgnoreCase))
                     {
-                        return value["Bearer ".Length..].Trim();
+                        return NormalizeApiKey(value["Bearer ".Length..]);
                     }
-                    return value;
+                    return NormalizeApiKey(value);
                 }
             }
         }
@@ -86,7 +86,7 @@ public class ApiKeyAuthenticationFilter : IEndpointFilter
         if (request.Query.TryGetValue("apikey", out var queryValues) ||
             request.Query.TryGetValue("api_key", out queryValues))
         {
-            return queryValues.FirstOrDefault();
+            return NormalizeApiKey(queryValues.FirstOrDefault());
         }
 
         return null;
@@ -149,7 +149,7 @@ public class ApiKeyAuthenticationFilter : IEndpointFilter
     /// </summary>
     private HashSet<string> GetValidApiKeysFromConfiguration()
     {
-        var apiKeys = new HashSet<string>();
+        var apiKeys = new HashSet<string>(StringComparer.Ordinal);
 
         // Read from appsettings.json
         var configKeys = _configuration.GetSection("ApiAuthentication:ValidApiKeys").Get<string[]>();
@@ -157,9 +157,26 @@ public class ApiKeyAuthenticationFilter : IEndpointFilter
         {
             foreach (var key in configKeys)
             {
-                if (!string.IsNullOrEmpty(key))
+                var normalized = NormalizeApiKey(key);
+                if (!string.IsNullOrEmpty(normalized))
                 {
-                    apiKeys.Add(key);
+                    apiKeys.Add(normalized);
+                }
+            }
+        }
+
+        // Read from a single secret value (CSV/semicolon/newline separated),
+        // typically injected via environment variable or secret store.
+        var csvKeys = _configuration["ApiAuthentication:ValidApiKeysCsv"];
+        if (!string.IsNullOrWhiteSpace(csvKeys))
+        {
+            var splitKeys = csvKeys.Split([',', ';', '\n', '\r'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var key in splitKeys)
+            {
+                var normalized = NormalizeApiKey(key);
+                if (!string.IsNullOrWhiteSpace(normalized))
+                {
+                    apiKeys.Add(normalized);
                 }
             }
         }
@@ -169,9 +186,10 @@ public class ApiKeyAuthenticationFilter : IEndpointFilter
         foreach (var system in namedKeys)
         {
             var key = system["ApiKey"];
-            if (!string.IsNullOrEmpty(key))
+            var normalized = NormalizeApiKey(key);
+            if (!string.IsNullOrEmpty(normalized))
             {
-                apiKeys.Add(key);
+                apiKeys.Add(normalized);
             }
         }
 
@@ -211,6 +229,16 @@ public class ApiKeyAuthenticationFilter : IEndpointFilter
     private string GetSourceSystemFromContext(HttpContext context)
     {
         return context.Items["SourceSystem"]?.ToString() ?? "Unknown";
+    }
+
+    private static string? NormalizeApiKey(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return value.Trim().Trim('"');
     }
 }
 

@@ -370,6 +370,7 @@ public partial class RiskRegistry : ComponentBase
             ReportStatus = report.Status ?? ReportStatus.Unknown,
             ReportCode = hazard.ReportCode ?? "N/A",
             HazardCode = hazard.Code,
+            HazardTitle = hazard.HazardTitle ?? string.Empty,
             HazardDescription = hazard.Description ?? "No description available",
             InitialHazardRiskLevel = initialRiskLevel,
             InitialRiskMatrixCode  = initialMatrixCode,
@@ -487,6 +488,7 @@ public partial class RiskRegistry : ComponentBase
             filtered = filtered.Where(e =>
                 e.ReportCode.ToLowerInvariant().Contains(searchLower) ||
                 e.HazardCode.ToLowerInvariant().Contains(searchLower) ||
+                (e.HazardTitle?.ToLowerInvariant().Contains(searchLower) ?? false) ||
                 (e.HazardDescription?.ToLowerInvariant().Contains(searchLower) ?? false) ||
                 (e.MitigationDescription?.ToLowerInvariant().Contains(searchLower) ?? false) ||
                 (e.AssignedTo?.ToLowerInvariant().Contains(searchLower) ?? false));
@@ -557,6 +559,7 @@ public partial class RiskRegistry : ComponentBase
         public string ReportCode { get; set; } = string.Empty;
 
         public string HazardCode { get; set; } = string.Empty;
+        public string HazardTitle { get; set; } = string.Empty;
         public string HazardDescription { get; set; } = string.Empty;
         public string InitialRiskMatrixCode { get; set; } = string.Empty;
 

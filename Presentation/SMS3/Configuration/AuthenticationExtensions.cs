@@ -216,6 +216,7 @@ public static class AuthenticationExtensions
                 options.SlidingExpiration = sessionConfig.SlidingExpiration;
                 options.Cookie.Name = "SMS_Auth";
                 options.Cookie.HttpOnly = sessionConfig.HttpOnly;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.Cookie.SameSite = sessionConfig.SameSiteMode;
             });
 
@@ -243,7 +244,6 @@ public static class AuthenticationExtensions
         // Authentication strategy implementations
         services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, SessionBasedAuthenticationStrategy>();
         services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, CircuitBasedAuthenticationStrategy>();
-        services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategy, ContextBasedAuthenticationStrategy>();
         
         // Authentication strategy manager (orchestrator)
         services.AddScoped<SMS_Application.Interfaces.IAuthenticationStrategyManager, SMS_Application.Services.AuthenticationStrategyManager>();

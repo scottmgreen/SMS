@@ -1,6 +1,10 @@
 @page "/auth-debug"
 @using SMS_Application.Interfaces
+@using SMS_Application.Configuration
 @inject ICurrentUserService _currentUserService
+@inject IAuthenticationStrategyManager _strategyManager
+@inject IProtocolDetectionService _protocolDetectionService
+@inject IConfiguration _configuration
 @inject ILogger<AuthDebug> Logger
 
 <PageTitle>Authentication Debug</PageTitle>
@@ -59,6 +63,10 @@
                                         <td><strong>Permission Count:</strong></td>
                                         <td><span class="badge bg-info">@_currentUserService.Permissions.Count</span></td>
                                     </tr>
+                                    <tr>
+                                        <td><strong>ICurrentUserService Type:</strong></td>
+                                        <td><code>@_currentUserService.GetType().Name</code></td>
+                                    </tr>
                                 }
                             </table>
                         </div>
@@ -92,6 +100,133 @@
                             </div>
                         </div>
                     </div>
+
+                    <hr />
+
+                    <div class="row mt-2">
+                        <div class="col-md-6">
+                            <h5>Authentication Mechanism (Effective)</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Configured Primary:</strong></td>
+                                    <td><code>@_configuredPrimaryMethod</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Configured Fallback:</strong></td>
+                                    <td><code>@_configuredFallbackMethod</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fallback Chain:</strong></td>
+                                    <td><span class="badge @(_configuredFallbackEnabled ? "bg-success" : "bg-secondary")">@_configuredFallbackEnabled</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Primary Strategy (DI):</strong></td>
+                                    <td><code>@_strategyManager.PrimaryStrategy.StrategyName</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fallback Strategy (DI):</strong></td>
+                                    <td><code>@(_strategyManager.FallbackStrategy?.StrategyName ?? "None")</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Current Protocol:</strong></td>
+                                    <td><code>@_protocolDetectionService.GetCurrentProtocol()</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Effective Protocol:</strong></td>
+                                    <td><code>@_protocolDetectionService.GetEffectiveProtocol()</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Protocol Compatible:</strong></td>
+                                    <td><span class="badge @(_protocolDetectionService.IsProtocolCompatible() ? "bg-success" : "bg-danger")">@_protocolDetectionService.IsProtocolCompatible()</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Authorization Mechanism (Effective)</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>Role-based:</strong></td>
+                                    <td><span class="badge bg-success">Enabled</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Permission-based:</strong></td>
+                                    <td><span class="badge bg-success">Enabled</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Role Code:</strong></td>
+                                    <td><code>@_currentUserService.UserRoleCode</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Can Read SMS_RiskManagement:</strong></td>
+                                    <td><span class="badge @(_currentUserService.CanRead("SMS_RiskManagement") ? "bg-success" : "bg-secondary")">@_currentUserService.CanRead("SMS_RiskManagement")</span></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Can Read SMS_Assurance:</strong></td>
+                                    <td><span class="badge @(_currentUserService.CanRead("SMS_Assurance") ? "bg-success" : "bg-secondary")">@_currentUserService.CanRead("SMS_Assurance")</span></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <h5>Registered Authentication Strategies</h5>
+                            <table class="table table-sm table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Method</th>
+                                        <th>Name</th>
+                                        <th>Available</th>
+                                        <th>Configured</th>
+                                        <th>Has Stored Auth Data</th>
+                                        <th>Authenticated Now</th>
+                                        <th>Current User Id</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var strategy in _strategySnapshot)
+                                    {
+                                        <tr>
+                                            <td><code>@strategy.Method</code></td>
+                                            <td>@strategy.Name</td>
+                                            <td><span class="badge @(strategy.IsAvailable ? "bg-success" : "bg-danger")">@strategy.IsAvailable</span></td>
+                                            <td>@strategy.ConfigurationRole</td>
+                                            <td><span class="badge @(strategy.HasStoredAuthData ? "bg-success" : "bg-warning")">@strategy.HasStoredAuthData</span></td>
+                                            <td><span class="badge @(strategy.IsAuthenticated ? "bg-success" : "bg-secondary")">@strategy.IsAuthenticated</span></td>
+                                            <td><code>@(string.IsNullOrWhiteSpace(strategy.CurrentUserId) ? "(none)" : strategy.CurrentUserId)</code></td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                            <div class="alert alert-info mt-2 mb-0 py-2">
+                                <strong>Note:</strong> <em>Has Stored Auth Data</em> means strategy-level persisted payload validation. It can be <code>false</code> even after login if another strategy currently holds the active authenticated state.
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row mt-2">
+                        <div class="col-12">
+                            <h5>Legacy Feature Flags (Candidate Decommission Review)</h5>
+                            <table class="table table-sm">
+                                <tr>
+                                    <td><strong>FeatureManagement:EnableSessionBasedAuth</strong></td>
+                                    <td><code>@GetConfigValue("FeatureManagement:EnableSessionBasedAuth")</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>FeatureManagement:EnableCircuitBasedAuth</strong></td>
+                                    <td><code>@GetConfigValue("FeatureManagement:EnableCircuitBasedAuth")</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>FeatureManagement:EnableContextBasedAuth</strong></td>
+                                    <td><code>@GetConfigValue("FeatureManagement:EnableContextBasedAuth")</code></td>
+                                </tr>
+                                <tr>
+                                    <td><strong>FeatureManagement:EnableHybridAuth</strong></td>
+                                    <td><code>@GetConfigValue("FeatureManagement:EnableHybridAuth")</code></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
                     
                     <div class="row mt-3">
                         <div class="col-12">
@@ -107,10 +242,15 @@
 
 @code {
     [Inject] private NavigationManager _navigation { get; set; } = default!;
+    private string _configuredPrimaryMethod = "SessionBased";
+    private string _configuredFallbackMethod = "CircuitBased";
+    private bool _configuredFallbackEnabled = true;
+    private List<AuthStrategySnapshot> _strategySnapshot = new();
     
     private async Task RefreshData()
     {
-        Logger.LogInformation("?? Refreshing authentication debug data");
+        Logger.LogInformation("Refreshing authentication debug data");
+        await LoadAuthDiagnostics();
         StateHasChanged();
     }
     
@@ -121,6 +261,66 @@
     
     protected override async Task OnInitializedAsync()
     {
-        Logger.LogInformation("?? AuthDebug page loaded");
+        Logger.LogInformation("AuthDebug page loaded");
+        await LoadAuthDiagnostics();
+    }
+
+    private async Task LoadAuthDiagnostics()
+    {
+        _configuredPrimaryMethod = _configuration["Authentication:PreferredMethod"] ?? "SessionBased";
+        _configuredFallbackMethod = _configuration["Authentication:FallbackMethod"] ?? "CircuitBased";
+        _configuredFallbackEnabled = _configuration.GetValue("Authentication:EnableFallbackChain", true);
+
+        var validation = await _strategyManager.ValidateAllStrategiesAsync();
+        var primaryMethod = ParseMethod(_configuredPrimaryMethod);
+        var fallbackMethod = ParseMethod(_configuredFallbackMethod);
+
+        var strategyTasks = _strategyManager.GetAllStrategies()
+            .Select(async s =>
+            {
+                var isAuthenticated = await s.IsUserAuthenticatedAsync();
+                var currentUserId = await s.GetCurrentUserIdAsync();
+
+                return new AuthStrategySnapshot
+                {
+                    Method = s.Method.ToString(),
+                    Name = s.StrategyName,
+                    IsAvailable = s.IsAvailable,
+                    HasStoredAuthData = validation.TryGetValue(s.Method, out var isValid) && isValid,
+                    IsAuthenticated = isAuthenticated,
+                    CurrentUserId = currentUserId,
+                    ConfigurationRole = s.Method == primaryMethod
+                        ? "Primary"
+                        : (s.Method == fallbackMethod ? "Fallback" : "Registered")
+                };
+            });
+
+        var strategyResults = await Task.WhenAll(strategyTasks);
+
+        _strategySnapshot = strategyResults
+            .OrderByDescending(x => x.ConfigurationRole == "Primary")
+            .ThenByDescending(x => x.ConfigurationRole == "Fallback")
+            .ThenBy(x => x.Method)
+            .ToList();
+    }
+
+    private string GetConfigValue(string key) => _configuration[key] ?? "(not set)";
+
+    private static AuthenticationMethod ParseMethod(string configuredValue)
+    {
+        return Enum.TryParse<AuthenticationMethod>(configuredValue, ignoreCase: true, out var parsed)
+            ? parsed
+            : AuthenticationMethod.SessionBased;
+    }
+
+    private sealed class AuthStrategySnapshot
+    {
+        public string Method { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public bool IsAvailable { get; set; }
+        public bool HasStoredAuthData { get; set; }
+        public bool IsAuthenticated { get; set; }
+        public string? CurrentUserId { get; set; }
+        public string ConfigurationRole { get; set; } = "Registered";
     }
 }

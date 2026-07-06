@@ -198,7 +198,7 @@ else if (ReportDetails is not null)
                             <label class="info-label">Hazard Category</label>
                             <div class="info-value">
                                 <RadzenIcon Icon="@GetBooleanValidationIcon(IsHazardCategoryValidated)" class="@($"me-2 {GetBooleanValidationIconClass(IsHazardCategoryValidated)}")" />
-                                @(IsHazardCategoryValidated ? "Validated" : "Default/Invalid")
+                                @(IsHazardCategoryValidated ? "Hazard Category Validated" : "Default/Hazard Category Required")
                             </div>
                         </div>
                     </RadzenColumn>
@@ -207,7 +207,7 @@ else if (ReportDetails is not null)
                             <label class="info-label">Hazard Type</label>
                             <div class="info-value">
                                 <RadzenIcon Icon="@GetBooleanValidationIcon(IsHazardTypeValidated)" class="@($"me-2 {GetBooleanValidationIconClass(IsHazardTypeValidated)}")" />
-                                @(IsHazardTypeValidated ? "Validated" : "Default/Invalid")
+                                @(IsHazardTypeValidated ? "Hazard Type Validated" : "Default/Hazard Type Required")
                             </div>
                         </div>
                     </RadzenColumn>
@@ -225,7 +225,7 @@ else if (ReportDetails is not null)
                             <label class="info-label">Report Validation</label>
                             <div class="info-value">
                                 <RadzenIcon Icon="@GetReportValidationIcon()" class="@($"me-2 {GetReportValidationIconClass()}")" />
-                                @(ReportValidation is null ? "Pending" : GetValidationDecisionDisplay(ReportValidation.ValidationDecision))
+                                @(ReportValidation is null ? "Report Validation Required" : GetValidationDecisionDisplay(ReportValidation.ValidationDecision))
                             </div>
                         </div>
                     </RadzenColumn>

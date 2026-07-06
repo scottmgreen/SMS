@@ -80,11 +80,10 @@
             <RadzenDataGrid @ref="_riskRegistryGrid"
                             Data="@FilteredRiskRegistryEntries"
                             Count="@FilteredRiskRegistryEntries.Count"
-                            LoadData="@LoadRiskRegistryData"
                             AllowPaging="true" 
                             AllowSorting="true" 
                             AllowFiltering="true"
-                            PageSize="25"
+                            PageSize="15"
                             PagerHorizontalAlign="HorizontalAlign.Left"
                             ShowPagingSummary="true"
                             FilterMode="FilterMode.Advanced"
@@ -92,14 +91,14 @@
                             Style="height: calc(100vh - 200px)" >
     
             <Columns>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="ReportCode" Title="Report ID" Width="100px">
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="ReportCode" Title="Report ID" Width="100px" HeaderCssClass="custom-header-highlight">
                         <Template Context="registry">
                             <div style="@_basicTextStyle">
                                 @registry.ReportCode
                             </div>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="ReportStatus" Title="Report Status" Width="290px">
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="ReportStatus" Title="Report Status" Width="150px" HeaderCssClass="custom-header-highlight">
                         <Template Context="registry">
                             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.35rem" Style="@_basicTextStyle">
                                 <span>@registry.ReportStatus</span>
@@ -112,7 +111,7 @@
                             </RadzenStack>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="HazardCode" Title="Hazard ID" Width="100px" >
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="HazardCode" Title="Hazard ID" Width="90px" HeaderCssClass="custom-header-highlight">
                         <Template Context="registry">
                             <div style="@_basicTextStyle">
                                 @if (!string.IsNullOrWhiteSpace(registry.HazardCode))
@@ -126,7 +125,26 @@
                             </div>
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="EffectiveRiskMatrixCode" Title="Risk Score" Width="110px">
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="HazardTitle" Title="Hazard Title" Width="210px" HeaderCssClass="custom-header-highlight" >
+                        <Template Context="registry">
+                            <div style="@_basicTextStyle">
+                                @registry.HazardTitle
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="HazardDescription" Title="Hazard Description" Width="120px" HeaderCssClass="custom-header-highlight">
+                        <Template Context="registry">
+                            <RadzenButton Text="Description"
+                                          Icon="description"
+                                          ButtonStyle="ButtonStyle.Base"
+                                          Variant="Variant.Text"
+                                          Size="ButtonSize.ExtraSmall"
+                                          Title="Click to view full description"
+                                          Class="description-button"
+                                          Click="@(() => ShowDescriptionDialog(registry))" />
+                        </Template>
+                    </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="EffectiveRiskMatrixCode" Title="Risk Score (RS)" Width="120px" HeaderCssClass="custom-header-highlight">
                         <Template Context="registry">
                             <div style="@GetAviationMatrixCellStyle(registry.EffectiveRiskMatrixCode?.Trim() ?? string.Empty)" class="text-center fw-bold">
                                 @if (!string.IsNullOrEmpty(registry.EffectiveRiskMatrixCode) && registry.EffectiveRiskMatrixCode != "-" && registry.EffectiveRiskMatrixCode != "TBD")
@@ -151,7 +169,7 @@
                         </Template>
                     
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="InitialRiskMatrixCode" Title="Initial RS" Width="110px">
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="InitialRiskMatrixCode" Title="Initial RS" Width="110px" HeaderCssClass="custom-header-highlight">
                         <Template Context="registry">
                             <div style="@GetAviationMatrixCellStyle(registry.InitialRiskMatrixCode?.Trim() ?? string.Empty)" class="text-center fw-bold">
                                 @if (!string.IsNullOrEmpty(registry.InitialRiskMatrixCode) && registry.InitialRiskMatrixCode != "-" && registry.InitialRiskMatrixCode != "TBD")
@@ -175,7 +193,7 @@
                         </Template>
 
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="ResidualRiskMatrixCode" Title="Residual RS" Width="110px">
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="ResidualRiskMatrixCode" Title="Residual RS" Width="110px" HeaderCssClass="custom-header-highlight">
                         <Template Context="registry">
                             <div style="@GetAviationMatrixCellStyle(registry.ResidualRiskMatrixCode?.Trim() ?? string.Empty)" class="text-center fw-bold">
                                 @if (!string.IsNullOrEmpty(registry.ResidualRiskMatrixCode) && registry.ResidualRiskMatrixCode != "-" && registry.ResidualRiskMatrixCode != "TBD")
@@ -199,19 +217,8 @@
                         </Template>
 
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="HazardDescription" Title="Hazard Description" Width="120px">
-                        <Template Context="registry">
-                            <RadzenButton Text="Description"
-                                          Icon="description"
-                                          ButtonStyle="ButtonStyle.Base"
-                                          Variant="Variant.Text"
-                                          Size="ButtonSize.ExtraSmall"
-                                          Title="Click to view full description"
-                                          Class="description-button"
-                                          Click="@(() => ShowDescriptionDialog(registry))" />
-                        </Template>
-                    </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="MitigationStatus" Title="Mitigation Status" Width="150px">
+                   
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="MitigationStatus" Title="Mitigation Status" Width="150px" HeaderCssClass="custom-header-highlight">
                         <Template Context="registry">
                             @if (registry.MitigationStatus !=null)
                             {
@@ -221,7 +228,7 @@
                             }
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="TargetDate" Title="Target Date" Width="150px">
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="TargetDate" Title="Target Date" Width="150px" HeaderCssClass="custom-header-highlight">
                         <Template Context="registry">
                             @if (registry.TargetDate.HasValue)
                             {
@@ -232,7 +239,7 @@
                             
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="AssignedTo" Title="Owner" Width="120px">
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="AssignedTo" Title="Owner" Width="120px" HeaderCssClass="custom-header-highlight">
                         <Template Context="registry">
                             <div style="@_basicTextStyle">
                                 @registry.AssignedTo
@@ -241,7 +248,7 @@
                         
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="LastUpdated" Title="Owner" Width="110px">
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="LastUpdated" Title="Last Updated" Width="110px" HeaderCssClass="custom-header-highlight">
                         <Template Context="registry">
                             @if (registry.LastUpdated.HasValue)
                             {
@@ -301,6 +308,11 @@
 }
 
 <style>
+    .custom-header-highlight {
+        background-color: lightgray !important;
+        font-weight: bold;
+        text-align: center;
+    }
     .sms-modal-xxl {
         max-width: 1400px;
         width: 95%;

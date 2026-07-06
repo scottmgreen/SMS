@@ -1,4 +1,5 @@
 ﻿using SMS_Application.Configuration;
+using System.Net;
 
 using SMS_Infrastructure.Configuration;
 using SMS_Infrastructure.Configuration.Extensions;
@@ -82,14 +83,58 @@ public class Program
 
         // Ensure original scheme/protocol is honored when running behind IIS/reverse proxies
         // to avoid HTTPS redirection loops (ERR_TOO_MANY_REDIRECTS).
+        var forwardedHeadersConfig = app.Configuration.GetSection("ForwardedHeaders");
+        var trustAllForwarders = forwardedHeadersConfig.GetValue<bool>("TrustAllProxies", false);
+        var configuredForwardLimit = forwardedHeadersConfig.GetValue<int?>("ForwardLimit");
+
         var forwardedHeadersOptions = new ForwardedHeadersOptions
         {
             ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
-            ForwardLimit = null,
-            RequireHeaderSymmetry = false
+            ForwardLimit = configuredForwardLimit.HasValue && configuredForwardLimit.Value > 0
+                ? configuredForwardLimit.Value
+                : 1,
+            RequireHeaderSymmetry = forwardedHeadersConfig.GetValue<bool>("RequireHeaderSymmetry", true)
         };
+
         forwardedHeadersOptions.KnownNetworks.Clear();
         forwardedHeadersOptions.KnownProxies.Clear();
+
+        if (trustAllForwarders)
+        {
+            forwardedHeadersOptions.ForwardLimit = null;
+            forwardedHeadersOptions.RequireHeaderSymmetry = false;
+        }
+        else
+        {
+            var knownProxies = forwardedHeadersConfig.GetSection("KnownProxies").Get<string[]>() ?? [];
+            var knownNetworks = forwardedHeadersConfig.GetSection("KnownNetworks").Get<string[]>() ?? [];
+
+            foreach (var proxy in knownProxies)
+            {
+                if (IPAddress.TryParse(proxy, out var proxyIp))
+                {
+                    forwardedHeadersOptions.KnownProxies.Add(proxyIp);
+                }
+            }
+
+            foreach (var cidr in knownNetworks)
+            {
+                var parts = cidr.Split('/', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+                if (parts.Length == 2 &&
+                    IPAddress.TryParse(parts[0], out var networkIp) &&
+                    int.TryParse(parts[1], out var prefixLength))
+                {
+                    forwardedHeadersOptions.KnownNetworks.Add(new Microsoft.AspNetCore.HttpOverrides.IPNetwork(networkIp, prefixLength));
+                }
+            }
+
+            if (forwardedHeadersOptions.KnownProxies.Count == 0 && forwardedHeadersOptions.KnownNetworks.Count == 0)
+            {
+                forwardedHeadersOptions.KnownProxies.Add(IPAddress.Loopback);
+                forwardedHeadersOptions.KnownProxies.Add(IPAddress.IPv6Loopback);
+            }
+        }
+
         app.UseForwardedHeaders(forwardedHeadersOptions);
 
         // Emergency scheme normalization for IIS/ARR reverse-proxy environments.

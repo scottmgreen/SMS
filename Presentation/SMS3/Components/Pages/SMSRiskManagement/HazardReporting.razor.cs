@@ -1794,6 +1794,9 @@ public partial class HazardReporting : ComponentBase, IDisposable
         ShowSubmissionConfirmation = false;
         ShowFinalSuccessConfirmation = !hasContactEmail;
 
+        //This is the point where we can show the email compose dialog if applicable, but only if the user has provided a contact email and is not anonymous
+        //additionally, this replicates the workflow when the report is submitted from the FlyPDX website using the API submission.
+
         await ShowSubmissionEmailComposeDialogIfApplicable(createdHazard, createdTracking.TrackingCode);
 
         _logger.LogInformation("CREATE mode completed - Report: {ReportCode}, Hazard: {HazardCode} Tracking: { TrackingCode} ", createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);

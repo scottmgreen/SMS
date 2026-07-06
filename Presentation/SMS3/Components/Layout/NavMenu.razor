@@ -29,8 +29,7 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             @if (_currentUserService?.IsFullyAuthenticated == true)
             {
-                <!-- All menu items should be right-justified for authenticated users -->
-                <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                <div class="navbar-nav d-flex flex-row align-items-center me-auto">
                     
                     <!-- 🔐 SESSION TIMER - Hidden but still functional for modal trigger -->
                     <SessionTimer OnSessionExpired="@OnSessionTimerExpired" 
@@ -124,8 +123,8 @@
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                                 <RadzenMenuItem Text="Assurance" Icon="verified_user" class="sms-menu-item">
                                     <RadzenMenuItem Text="Risk Registry" Value='"/SMSAssurance/RiskRegistry"' Icon="assignment"></RadzenMenuItem>
-                                    <RadzenMenuItem Text="SPI Dashboard" Value='"/SMSAssurance/SPIDashboard"' Icon="dashboard"></RadzenMenuItem>
-                                    <RadzenMenuItem Text="SPI Configuration" Value='"/SMSAssurance/SPIConfiguration"' Icon="settings"></RadzenMenuItem>
+                                    @* <RadzenMenuItem Text="SPI Dashboard" Value='"/SMSAssurance/SPIDashboard"' Icon="dashboard"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="SPI Configuration" Value='"/SMSAssurance/SPIConfiguration"' Icon="settings"></RadzenMenuItem> *@
                                     <RadzenMenuItem Text="Audit Management" Value='"/SMSAssurance/AuditManagement"' Icon="assignment"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Audit Calendar" Value='"/SMSAssurance/AuditCalendar"' Icon="event"></RadzenMenuItem>
                                     @* <RadzenMenuItem Text="Audit Workflow Demo" Value='"/SMSAssurance/AuditWorkflowDemo"' Icon="trending_up"></RadzenMenuItem> *@
@@ -148,7 +147,7 @@
                     }
 
                     <!-- SMS Promotion Menu -->
-                    @if (_currentUserService.CanRead("SMS_Promotion"))
+                    @* @if (_currentUserService.CanRead("SMS_Promotion"))
                     {
                         <div class="nav-item me-3">
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -157,7 +156,7 @@
                                 </RadzenMenuItem>
                             </RadzenMenu>
                         </div>
-                    }
+                    } *@
 
                     <!-- System Administration Menu -->
                     @if (_currentUserService.CanRead("SMS_System"))
@@ -195,6 +194,9 @@
                     }
 
                    
+                </div>
+
+                <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
                     <!-- User Profile Menu -->
                     <div class="nav-item">
                         <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
