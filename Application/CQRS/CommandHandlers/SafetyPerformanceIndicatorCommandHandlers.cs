@@ -100,6 +100,8 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
         }
     }
 
+}
+
 public class UpdateSPIConfigurationCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSPIConfigurationCommand, Result<SafetyPerformanceIndicator>>
 {
     private readonly SafetyPerformanceIndicatorService _spiService;
@@ -139,6 +141,99 @@ public class UpdateSPIConfigurationCommandHandler : BaseCommandBundle, IBaseRequ
         {
             _logger.LogApplicationError("Unexpected error while updating SPI configuration", ApplicationEventIds.Error, ex);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
+        }
+    }
+
+}
+
+public class ArchiveOldSPIDataCommandHandler : BaseCommandBundle, IBaseRequestHandler<ArchiveOldSPIDataCommand, Result<int>>
+{
+    private readonly ISafetyPerformanceIndicatorService _spiService;
+    private readonly IBaseEventBus _eventBus;
+    private readonly ILogger<ArchiveOldSPIDataCommandHandler> _logger;
+
+    public ArchiveOldSPIDataCommandHandler(
+        ISafetyPerformanceIndicatorService spiService,
+        IBaseEventBus eventBus,
+        ILogger<ArchiveOldSPIDataCommandHandler> logger)
+    {
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<int>> HandleAsync(ArchiveOldSPIDataCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogApplicationError("ArchiveOldSPIDataCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<int>.Failure<int>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            var allSpisResult = await _spiService.GetAllSafetyPerformanceIndicatorsAsync(cancellationToken);
+            if (allSpisResult.IsFailure)
+            {
+                return Result<int>.Failure<int>(allSpisResult.Error);
+            }
+
+            var spis = allSpisResult.Value?.ToList() ?? new List<SafetyPerformanceIndicator>();
+            if (request.SPIIds?.Any() == true)
+            {
+                var requestedIds = new HashSet<string>(request.SPIIds, StringComparer.OrdinalIgnoreCase);
+                spis = spis.Where(spi => requestedIds.Contains(spi.Code)).ToList();
+            }
+
+            var archivedCount = 0;
+            var affectedSPICodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            foreach (var spi in spis)
+            {
+                var oldDataPoints = spi.DataPoints?
+                    .Where(dp => dp.MeasurementDate < request.CutoffDate && !string.IsNullOrWhiteSpace(dp.Code))
+                    .ToList() ?? new List<SPIDataPoint>();
+
+                foreach (var dataPoint in oldDataPoints)
+                {
+                    var deleteResult = await _spiService.DeleteSPIDataPointAsync(dataPoint.Code, cancellationToken);
+                    if (deleteResult.IsSuccess)
+                    {
+                        archivedCount++;
+                        affectedSPICodes.Add(spi.Code);
+                    }
+                }
+            }
+
+            if (affectedSPICodes.Count > 0)
+            {
+                var refreshEvent = new SPIDashboardRefreshEvent(
+                    affectedSPICodes: affectedSPICodes.ToList(),
+                    refreshReason: "SPI data archival completed",
+                    dashboardSection: SPIDashboardSection.All,
+                    refreshEntireDashboard: true,
+                    userId: request.RequestedBy,
+                    priority: UIEventPriority.Normal,
+                    refreshMetadata: new Dictionary<string, object>
+                    {
+                        { "CutoffDate", request.CutoffDate },
+                        { "ArchivedCount", archivedCount },
+                        { "Source", nameof(ArchiveOldSPIDataCommandHandler) }
+                    });
+
+                var refreshResult = await _eventBus.PublishUIEventAsync(refreshEvent, EventExecutionMode.Manual, cancellationToken);
+                if (refreshResult.IsFailure)
+                {
+                    _logger.LogApplicationWarning("Archive completed but SPI dashboard refresh publish failed: {Error}", refreshResult.Error?.Message);
+                }
+            }
+
+            return Result<int>.Success(archivedCount);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error while archiving old SPI data", ApplicationEventIds.Error, ex);
+            return Result<int>.Failure<int>(DomainErrors.SPIError.DeleteFailed);
         }
     }
 }
@@ -401,7 +496,6 @@ public class GenerateSPIAlertsCommandHandler : BaseCommandBundle, IBaseRequestHa
             return Result<List<SPIAlertResult>>.Failure<List<SPIAlertResult>>(DomainErrors.SPIError.AlertConfigurationFailed);
         }
     }
-}
 }
 
 public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSafetyPerformanceIndicatorCommand, Result<SafetyPerformanceIndicator>>

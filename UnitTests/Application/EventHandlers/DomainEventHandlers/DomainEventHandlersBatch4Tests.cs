@@ -1,5 +1,7 @@
 using Microsoft.Extensions.Logging;
 using Moq;
+using SMS_Application.CommandHandlers;
+using SMS_Application.Commands;
 using SMS_Application.EventHandlers;
 using SMS_Application.Interfaces;
 using SMS_Domain.Common;
@@ -181,5 +183,128 @@ public class DomainEventHandlersBatch4Tests
 
         result.IsSuccess.Should().BeTrue();
         eventBus.Verify(x => x.PublishUIEventAsync(It.IsAny<UINotificationEvent>(), EventExecutionMode.Manual, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task AddSPIDataPointCommandHandler_Should_PublishComplianceThresholdAndRefreshEvents()
+    {
+        var logger = new Mock<ILogger<AddSPIDataPointCommandHandler>>();
+        var eventBus = new Mock<IBaseEventBus>();
+        var spiService = new Mock<ISafetyPerformanceIndicatorService>();
+
+        var spi = new SafetyPerformanceIndicator(
+            new SafetyPerformanceIndicatorID("PI-0001"),
+            "Hazard Rate",
+            "Hazard reporting rate",
+            SMSSafetyPerformanceIndicatorType.IncidentRate,
+            "tester")
+        {
+            Code = "SPI-001",
+            TargetValue = 90m,
+            WarningThreshold = 75m,
+            CriticalThreshold = 95m
+        };
+
+        var dataPoint = new SPIDataPoint(new SPIDataPointID("DP-0001"))
+        {
+            Code = "DP-0001",
+            SPIId = "SPI-001",
+            Value = 96m,
+            MeasurementDate = DateTime.UtcNow,
+            Period = "2026-Q3",
+            DataSource = "UnitTest"
+        };
+
+        spi.DataPoints.Add(dataPoint);
+
+        spiService
+            .Setup(x => x.AddSPIDataPointAsync(dataPoint.SPIId, dataPoint, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<SafetyPerformanceIndicator>.Success(spi));
+
+        eventBus
+            .Setup(x => x.PublishDomainEventAsync(It.IsAny<SPIComplianceChangedEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+        eventBus
+            .Setup(x => x.PublishDomainEventAsync(It.IsAny<SPIThresholdExceededEvent>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+        eventBus
+            .Setup(x => x.PublishUIEventAsync(It.IsAny<SPIDashboardRefreshEvent>(), EventExecutionMode.Manual, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+        var handler = new AddSPIDataPointCommandHandler(spiService.Object, eventBus.Object, logger.Object);
+        var command = new AddSPIDataPointCommand(dataPoint);
+
+        var result = await handler.HandleAsync(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        eventBus.Verify(x => x.PublishDomainEventAsync(It.IsAny<SPIComplianceChangedEvent>(), It.IsAny<CancellationToken>()), Times.Once);
+        eventBus.Verify(x => x.PublishDomainEventAsync(It.IsAny<SPIThresholdExceededEvent>(), It.IsAny<CancellationToken>()), Times.Once);
+        eventBus.Verify(x => x.PublishUIEventAsync(It.IsAny<SPIDashboardRefreshEvent>(), EventExecutionMode.Manual, It.IsAny<CancellationToken>()), Times.Once);
+    }
+
+    [Fact]
+    public async Task ArchiveOldSPIDataCommandHandler_Should_DeleteOldDataPoints_AndPublishRefresh()
+    {
+        var logger = new Mock<ILogger<ArchiveOldSPIDataCommandHandler>>();
+        var eventBus = new Mock<IBaseEventBus>();
+        var spiService = new Mock<ISafetyPerformanceIndicatorService>();
+
+        var spi = new SafetyPerformanceIndicator(
+            new SafetyPerformanceIndicatorID("PI-0002"),
+            "Corrective Action Closure",
+            "Closure metric",
+            SMSSafetyPerformanceIndicatorType.CorrectiveActionClosure,
+            "tester")
+        {
+            Code = "SPI-ARCHIVE"
+        };
+
+        var oldPoint = new SPIDataPoint(new SPIDataPointID("DP-OLD"))
+        {
+            Code = "DP-OLD",
+            SPIId = "SPI-ARCHIVE",
+            Value = 10m,
+            MeasurementDate = new DateTime(2025, 1, 1),
+            Period = "2025-Q1",
+            DataSource = "UnitTest"
+        };
+
+        var recentPoint = new SPIDataPoint(new SPIDataPointID("DP-NEW"))
+        {
+            Code = "DP-NEW",
+            SPIId = "SPI-ARCHIVE",
+            Value = 15m,
+            MeasurementDate = new DateTime(2026, 1, 1),
+            Period = "2026-Q1",
+            DataSource = "UnitTest"
+        };
+
+        spi.DataPoints.Add(oldPoint);
+        spi.DataPoints.Add(recentPoint);
+
+        spiService
+            .Setup(x => x.GetAllSafetyPerformanceIndicatorsAsync(It.IsAny<CancellationToken>()))
+            .Returns(Task.FromResult(Result<IEnumerable<SafetyPerformanceIndicator>>.Success(new List<SafetyPerformanceIndicator> { spi }.AsEnumerable())));
+
+        spiService
+            .Setup(x => x.DeleteSPIDataPointAsync(oldPoint.Code, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result<SafetyPerformanceIndicator>.Success(spi));
+
+        eventBus
+            .Setup(x => x.PublishUIEventAsync(It.IsAny<SPIDashboardRefreshEvent>(), EventExecutionMode.Manual, It.IsAny<CancellationToken>()))
+            .ReturnsAsync(Result.Success());
+
+        var handler = new ArchiveOldSPIDataCommandHandler(spiService.Object, eventBus.Object, logger.Object);
+        var command = new ArchiveOldSPIDataCommand(new DateTime(2025, 12, 31), "tester", new List<string> { "SPI-ARCHIVE" });
+
+        var result = await handler.HandleAsync(command, CancellationToken.None);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value.Should().Be(1);
+        spiService.Verify(x => x.DeleteSPIDataPointAsync(oldPoint.Code, It.IsAny<CancellationToken>()), Times.Once);
+        spiService.Verify(x => x.DeleteSPIDataPointAsync(recentPoint.Code, It.IsAny<CancellationToken>()), Times.Never);
+        eventBus.Verify(x => x.PublishUIEventAsync(It.IsAny<SPIDashboardRefreshEvent>(), EventExecutionMode.Manual, It.IsAny<CancellationToken>()), Times.Once);
     }
 }

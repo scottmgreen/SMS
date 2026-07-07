@@ -119,9 +119,11 @@ File: `Application/CQRS/CommandHandlers/SafetyPerformanceIndicatorCommandHandler
 - `CompleteSPIReviewCommandHandler`
 - `RecalculateSPIDashboardCommandHandler`
 - `GenerateSPIAlertsCommandHandler`
+- `ArchiveOldSPIDataCommandHandler`
 
-## 3.3 Coverage gaps (defined command type, no matching handler class found in workspace scan)
-- `ArchiveOldSPIDataCommand`
+## 3.3 Coverage status update
+- Previous hardening gap for `ArchiveOldSPIDataCommand` has been closed with `ArchiveOldSPIDataCommandHandler`.
+- Archive behavior is currently implemented as retention cleanup by deleting datapoints older than cutoff and publishing `SPIDashboardRefreshEvent` for impacted SPIs.
 
 ---
 
@@ -266,8 +268,8 @@ Supports:
 ---
 
 ## Appendix C: Open Gaps / Hardening Targets
-1. `ArchiveOldSPIDataCommand` still has no implementation.
-2. Alert/trend generation service methods (`GenerateAlertsAsync`, `GenerateTrendAnalysisAsync`) remain stubbed and should be implemented for full operational coverage.
+1. Add repository-level archival persistence (archive table / archival stored proc path) if hard-delete is not the desired long-term retention model.
+2. Add/expand command-handler unit tests for recalculation and alert generation paths to complement current datapoint/archive coverage.
 3. Consolidated `DomainEventHandlers.cs` mixes many domains; traceability is good but maintainability can degrade as event count grows.
 
 ---
@@ -275,9 +277,9 @@ Supports:
 ## Appendix D: Phase 2 Readiness Checklist (Short)
 
 1. Keep SPI routes and components behind a feature flag (not just hidden nav links).
-2. Implement `ArchiveOldSPIDataCommandHandler` or remove/defer command contract explicitly.
-3. Implement `GenerateAlertsAsync` and `GenerateTrendAnalysisAsync` in `SafetyPerformanceIndicatorService`.
-4. Add focused tests for datapoint command handlers to validate publication of:
+2. Validate whether archive should remain hard-delete retention cleanup or move to dedicated archive persistence before UI re-enable.
+3. `GenerateAlertsAsync` and `GenerateTrendAnalysisAsync` are now implemented in `SafetyPerformanceIndicatorService`; validate KPI semantics with operational owners.
+4. Focused tests for datapoint/archive command handlers now validate publication/refresh behavior for:
    - `SPIComplianceChangedEvent`
    - `SPIThresholdExceededEvent`
    - `SPIDashboardRefreshEvent`

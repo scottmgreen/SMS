@@ -71,7 +71,7 @@
             </Template>
             </RadzenDataGridColumn>
         <!-- Validation Status Column -->
-        <RadzenDataGridColumn TItem="RiskAssessment" Title="Validation" Width="110px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
+        <RadzenDataGridColumn TItem="RiskAssessment" Title="Complete" Width="110px" Sortable="false" Filterable="false" TextAlign="TextAlign.Center">
             <Template Context="assessment">
                 @{
                     var validation = GetValidationSnapshot(assessment);
@@ -88,7 +88,7 @@
         </RadzenDataGridColumn>
 
         <!-- Progress Column -->
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="CurrentStep" Title="Validation %" Width="150px" Sortable="true">
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="CurrentStep" Title="% Complete" Width="150px" Sortable="true">
             <Template Context="assessment">
                 @{
                     var validation = GetValidationSnapshot(assessment);

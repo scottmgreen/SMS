@@ -586,7 +586,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
                 spis = spis.Where(spi => spiIds.Contains(spi.Code)).ToList();
             }
 
-            return Result<List<SPITrendAnalysis>>.Success(await GenerateTrendAnalysisAsync(spis, ct));
+            return Result<List<SPITrendAnalysis>>.Success(await GenerateTrendAnalysisAsync(spis, periods, endDate, ct));
         }
         catch (Exception ex)
         {
@@ -647,7 +647,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
                 spis = spis.Where(spi => spi.Status == SPIStatus.Active).ToList();
             }
 
-            return Result<List<SPIAlert>>.Success(await GenerateAlertsAsync(spis, ct));
+            return Result<List<SPIAlert>>.Success(await GenerateAlertsAsync(spis, startDate, endDate, ct));
         }
         catch (Exception ex)
         {
@@ -772,30 +772,166 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
 
     #region Private Helper Methods
 
-    private async Task<List<SPIAlert>> GenerateAlertsAsync(List<SafetyPerformanceIndicator> spis, CancellationToken ct = default)
+    private async Task<List<SPIAlert>> GenerateAlertsAsync(List<SafetyPerformanceIndicator> spis, DateTime? startDate = null, DateTime? endDate = null, CancellationToken ct = default)
     {
         var alerts = new List<SPIAlert>();
 
-        // TODO: Implement alert generation logic using domain entities
-        // This is temporarily stubbed since we're migrating to CQRS
+        foreach (var spi in spis.Where(s => s.AlertsEnabled))
+        {
+            var latestDataPoint = spi.DataPoints?
+                .OrderByDescending(dp => dp.MeasurementDate)
+                .FirstOrDefault();
+
+            if (latestDataPoint is null)
+            {
+                continue;
+            }
+
+            if (startDate.HasValue && latestDataPoint.MeasurementDate < startDate.Value)
+            {
+                continue;
+            }
+
+            if (endDate.HasValue && latestDataPoint.MeasurementDate > endDate.Value)
+            {
+                continue;
+            }
+
+            var currentValue = latestDataPoint.Value;
+            var isCritical = spi.CriticalThreshold.HasValue && currentValue >= spi.CriticalThreshold.Value;
+            var isWarning = spi.WarningThreshold.HasValue && currentValue >= spi.WarningThreshold.Value;
+
+            if (!isCritical && !isWarning)
+            {
+                continue;
+            }
+
+            alerts.Add(new SPIAlert
+            {
+                SPIId = spi.Code,
+                SPIName = spi.Name,
+                AlertType = isCritical ? "Critical Threshold Exceeded" : "Warning Threshold Exceeded",
+                AlertMessage = $"{spi.Name} exceeded {(isCritical ? "critical" : "warning")} threshold",
+                AlertDate = latestDataPoint.MeasurementDate,
+                CurrentValue = currentValue,
+                ThresholdValue = isCritical
+                    ? spi.CriticalThreshold ?? currentValue
+                    : spi.WarningThreshold ?? currentValue,
+                Severity = isCritical ? "Critical" : "Medium",
+                TrendDirection = spi.GetTrendDirection().Name,
+                IsAcknowledged = false
+            });
+        }
+
+        alerts = alerts
+            .OrderByDescending(a => a.AlertDate)
+            .ToList();
 
         return alerts;
     }
 
-    private async Task<List<SPITrendAnalysis>> GenerateTrendAnalysisAsync(List<SafetyPerformanceIndicator> spis, CancellationToken ct = default)
+    private async Task<List<SPITrendAnalysis>> GenerateTrendAnalysisAsync(List<SafetyPerformanceIndicator> spis, int periods = 12, DateTime? endDate = null, CancellationToken ct = default)
     {
         var trendAnalysis = new List<SPITrendAnalysis>();
 
-        // TODO: Implement trend analysis logic using domain entities
-        // This is temporarily stubbed since we're migrating to CQRS
+        var effectiveEndDate = endDate ?? DateTime.UtcNow;
+
+        foreach (var spi in spis)
+        {
+            var relevantData = spi.DataPoints?
+                .Where(dp => dp.MeasurementDate <= effectiveEndDate)
+                .OrderBy(dp => dp.MeasurementDate)
+                .TakeLast(Math.Max(2, periods))
+                .ToList() ?? new List<SPIDataPoint>();
+
+            if (relevantData.Count < 2)
+            {
+                continue;
+            }
+
+            var first = relevantData.First().Value;
+            var last = relevantData.Last().Value;
+            var slope = relevantData.Count > 1
+                ? (last - first) / (relevantData.Count - 1)
+                : 0m;
+
+            var summaries = relevantData.Select(dp => new SPIDataPointSummary
+            {
+                Period = dp.Period,
+                MeasurementDate = dp.MeasurementDate,
+                Value = dp.Value,
+                Target = spi.TargetValue,
+                DataSource = dp.DataSource,
+                IsVerified = dp.IsVerified,
+                Notes = dp.Notes ?? string.Empty,
+                VerifiedBy = dp.VerifiedBy,
+                VerifiedDate = dp.VerifiedDate
+            }).ToList();
+
+            var trend = new SPITrendAnalysis
+            {
+                SPIId = spi.Code,
+                SPIName = spi.Name,
+                DataPoints = summaries,
+                TrendDirection = spi.GetTrendDirection().Name,
+                TrendSlope = slope,
+                TrendAnalysisPeriod = $"{relevantData.First().MeasurementDate:yyyy-MM-dd} to {relevantData.Last().MeasurementDate:yyyy-MM-dd}",
+                TrendConfidence = CalculateTrendConfidence(summaries, slope)
+            };
+
+            trend.ProjectedValue = trend.PredictFutureValue(1);
+            trendAnalysis.Add(trend);
+        }
+
+        trendAnalysis = trendAnalysis
+            .OrderBy(t => t.SPIName)
+            .ToList();
 
         return trendAnalysis;
     }
 
     private string GetComplianceStatusText(SafetyPerformanceIndicator spi)
     {
-        // TODO: Implement compliance status logic using domain entities
-        return "Unknown";
+        var currentValue = spi.GetCurrentValue();
+        if (!currentValue.HasValue)
+        {
+            return "No Data";
+        }
+
+        if (spi.TargetValue.HasValue && currentValue.Value >= spi.TargetValue.Value)
+        {
+            return "Compliant";
+        }
+
+        if (spi.WarningThreshold.HasValue && currentValue.Value >= spi.WarningThreshold.Value)
+        {
+            return "At Risk";
+        }
+
+        if (spi.CriticalThreshold.HasValue && currentValue.Value >= spi.CriticalThreshold.Value)
+        {
+            return "Critical";
+        }
+
+        return "Non-Compliant";
+    }
+
+    private static decimal CalculateTrendConfidence(List<SPIDataPointSummary> dataPoints, decimal slope)
+    {
+        if (dataPoints.Count < 2)
+        {
+            return 0m;
+        }
+
+        var absSlope = Math.Abs(slope);
+        var average = dataPoints.Average(dp => dp.Value);
+        if (average == 0)
+        {
+            return 50m;
+        }
+
+        var normalized = Math.Min(1m, absSlope / Math.Abs(average));
+        return Math.Round((0.5m + (normalized * 0.5m)) * 100m, 1);
     }
 
     private string GetReviewPriority(int daysOverdue, bool isOverThreshold)

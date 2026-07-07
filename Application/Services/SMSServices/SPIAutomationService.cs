@@ -48,46 +48,51 @@ public class SPIAutomationService : ISPIAutomationService
         {
             _logger.LogApplicationInformation("SPI Automation: Updating Hazard Report Rate for date {Date}", reportDate);
 
-            // Dynamic SPI lookup - find by name
-            var spi = await FindSPIByName("Hazard Report Rate", ct);
-            if (spi == null)
+            var hazardCreatedDataSource = EventType.HazardCreated.Value;
+            var targetSpis = await FindSPIsByDataSource(hazardCreatedDataSource, ct);
+            if (!targetSpis.Any())
             {
-                _logger.LogApplicationError("SPI Automation: Could not find 'Hazard Report Rate' SPI in database");
+                _logger.LogApplicationError("SPI Automation: No SPI configured with data source {DataSource}", hazardCreatedDataSource);
                 return Result<bool>.Failure<bool>(DomainErrors.SPIError.NotFound);
             }
 
             // Get count of hazards reported today
             var todaysHazardCount = await GetHazardCountForDate(reportDate, ct);
 
-            // Create data point using the actual SPI code from database
-            var dataPoint = new SPIDataPoint(new SPIDataPointID($"HRR-{reportDate:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8]}"))
-            {
-                SPIId = spi.Code, // Use actual SPI code from database
-                Value = todaysHazardCount,
-                MeasurementDate = reportDate,
-                Period = reportDate.ToString("yyyy-MM-dd"),
-                DataSource = "SMS Event Bus - Hazard Created",
-                Notes = $"Daily hazard submissions: {todaysHazardCount} (raw hazard creation count)",
-                IsVerified = true, // Auto-verified for system calculations
-                VerifiedBy = "SYSTEM",
-                VerifiedDate = DateTime.UtcNow,
-                CreatedBy = "SPI_AUTOMATION"
-            };
+            var successfulUpdates = 0;
+            Error? lastError = null;
 
-            // Add data point to SPI using actual SPI code
-            var result = await _spiService.AddSPIDataPointAsync(spi.Code, dataPoint, ct);
+            foreach (var spi in targetSpis)
+            {
+                var dataPoint = new SPIDataPoint(new SPIDataPointID($"HRR-{spi.Code}-{reportDate:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8]}"))
+                {
+                    SPIId = spi.Code,
+                    Value = todaysHazardCount,
+                    MeasurementDate = reportDate,
+                    Period = reportDate.ToString("yyyy-MM-dd"),
+                    DataSource = hazardCreatedDataSource,
+                    Notes = $"Daily hazard submissions: {todaysHazardCount} (raw hazard creation count)",
+                    IsVerified = true,
+                    VerifiedBy = "SYSTEM",
+                    VerifiedDate = DateTime.UtcNow,
+                    CreatedBy = "SPI_AUTOMATION"
+                };
 
-            if (result.IsSuccess)
-            {
-                _logger.LogApplicationInformation("SPI Automation: Successfully updated Hazard Report Rate - Count: {Count}, SPI Code: {Code}", 
-                    todaysHazardCount, spi.Code);
-                return Result<bool>.Success(true);
+                var result = await _spiService.AddSPIDataPointAsync(spi.Code, dataPoint, ct);
+                if (result.IsSuccess)
+                {
+                    successfulUpdates++;
+                }
+                else
+                {
+                    lastError = result.Error;
+                    _logger.LogApplicationWarning("SPI Automation: Failed to update hazard report datapoint for SPI {SPICode}. Error: {Error}", spi.Code, result.Error?.Message);
+                }
             }
-            else
-            {
-                _logger.LogApplicationError("SPI Automation: Failed to update Hazard Report Rate - Error: {Error}", result.Error?.Message);
-                return Result<bool>.Failure<bool>(result.Error);
-            }
+
+            return successfulUpdates > 0
+                ? Result<bool>.Success(true)
+                : Result<bool>.Failure<bool>(lastError ?? DomainErrors.SPIError.AutomationFailed);
         }
         catch (Exception ex)
         {
@@ -105,34 +110,50 @@ public class SPIAutomationService : ISPIAutomationService
         {
             _logger.LogApplicationInformation("SPI Automation: Updating Hazard Closure Time for hazard {HazardId}", hazardId);
 
+            var hazardStatusChangedDataSource = EventType.HazardStatusChanged.Value;
+            var targetSpis = await FindSPIsByDataSource(hazardStatusChangedDataSource, ct);
+            if (!targetSpis.Any())
+            {
+                _logger.LogApplicationError("SPI Automation: No SPI configured with data source {DataSource}", hazardStatusChangedDataSource);
+                return Result<bool>.Failure<bool>(DomainErrors.SPIError.NotFound);
+            }
+
             var daysToClose = (closedDate - submittedDate).TotalDays;
 
-            var dataPoint = new SPIDataPoint(new SPIDataPointID($"HCT-{hazardId}-{closedDate:yyyyMMdd}"))
-            {
-                SPIId = "HAZARD_CLOSURE_TIME", // Custom SPI (may need to create)
-                Value = (decimal)daysToClose,
-                MeasurementDate = closedDate,
-                Period = closedDate.ToString("yyyy-MM-dd"),
-                DataSource = "SMS Event Bus - Hazard Status Changed",
-                Notes = $"Hazard {hazardId} closed in {daysToClose:F1} days",
-                IsVerified = true,
-                VerifiedBy = "SYSTEM",
-                VerifiedDate = DateTime.UtcNow,
-                CreatedBy = "SPI_AUTOMATION"
-            };
+            var successfulUpdates = 0;
+            Error? lastError = null;
 
-            var result = await _spiService.AddSPIDataPointAsync("HAZARD_CLOSURE_TIME", dataPoint, ct);
+            foreach (var spi in targetSpis)
+            {
+                var dataPoint = new SPIDataPoint(new SPIDataPointID($"HCT-{spi.Code}-{hazardId}-{closedDate:yyyyMMdd}"))
+                {
+                    SPIId = spi.Code,
+                    Value = (decimal)daysToClose,
+                    MeasurementDate = closedDate,
+                    Period = closedDate.ToString("yyyy-MM-dd"),
+                    DataSource = hazardStatusChangedDataSource,
+                    Notes = $"Hazard {hazardId} closed in {daysToClose:F1} days",
+                    IsVerified = true,
+                    VerifiedBy = "SYSTEM",
+                    VerifiedDate = DateTime.UtcNow,
+                    CreatedBy = "SPI_AUTOMATION"
+                };
 
-            if (result.IsSuccess)
-            {
-                _logger.LogApplicationInformation("SPI Automation: Successfully updated Hazard Closure Time - Days: {Days}", daysToClose);
-                return Result<bool>.Success(true);
+                var result = await _spiService.AddSPIDataPointAsync(spi.Code, dataPoint, ct);
+                if (result.IsSuccess)
+                {
+                    successfulUpdates++;
+                }
+                else
+                {
+                    lastError = result.Error;
+                    _logger.LogApplicationWarning("SPI Automation: Failed to update hazard closure datapoint for SPI {SPICode}. Error: {Error}", spi.Code, result.Error?.Message);
+                }
             }
-            else
-            {
-                _logger.LogApplicationError("SPI Automation: Failed to update Hazard Closure Time - Error: {Error}", result.Error?.Message);
-                return Result<bool>.Failure<bool>(result.Error);
-            }
+
+            return successfulUpdates > 0
+                ? Result<bool>.Success(true)
+                : Result<bool>.Failure<bool>(lastError ?? DomainErrors.SPIError.AutomationFailed);
         }
         catch (Exception ex)
         {
@@ -154,11 +175,11 @@ public class SPIAutomationService : ISPIAutomationService
         {
             _logger.LogApplicationInformation("SPI Automation: Updating Risk Assessment Completion for assessment {AssessmentId}", assessmentId);
 
-            // Dynamic SPI lookup
-            var spi = await FindSPIByName("Risk Assessment Completion Rate", ct);
-            if (spi == null)
+            var riskAssessmentCompletedDataSource = EventType.RiskAssessmentCompleted.Value;
+            var targetSpis = await FindSPIsByDataSource(riskAssessmentCompletedDataSource, ct);
+            if (!targetSpis.Any())
             {
-                _logger.LogApplicationError("SPI Automation: Could not find 'Risk Assessment Completion Rate' SPI in database");
+                _logger.LogApplicationError("SPI Automation: No SPI configured with data source {DataSource}", riskAssessmentCompletedDataSource);
                 return Result<bool>.Failure<bool>(DomainErrors.SPIError.NotFound);
             }
 
@@ -166,33 +187,40 @@ public class SPIAutomationService : ISPIAutomationService
             var completionScore = isOnTime ? 100m : 0m;
             var daysToComplete = (completedDate - startDate).TotalDays;
 
-            var dataPoint = new SPIDataPoint(new SPIDataPointID($"RAC-{assessmentId}-{completedDate:yyyyMMdd}"))
-            {
-                SPIId = spi.Code, // Use actual SPI code from database
-                Value = completionScore,
-                MeasurementDate = completedDate,
-                Period = completedDate.ToString("yyyy-MM-dd"),
-                DataSource = "Automated-RiskAssessment",
-                Notes = $"Assessment {assessmentId} completed in {daysToComplete:F1} days - {(isOnTime ? "On Time" : "Late")}",
-                IsVerified = true,
-                VerifiedBy = "SYSTEM",
-                VerifiedDate = DateTime.UtcNow,
-                CreatedBy = "SPI_AUTOMATION"
-            };
+            var successfulUpdates = 0;
+            Error? lastError = null;
 
-            var result = await _spiService.AddSPIDataPointAsync(spi.Code, dataPoint, ct);
+            foreach (var spi in targetSpis)
+            {
+                var dataPoint = new SPIDataPoint(new SPIDataPointID($"RAC-{spi.Code}-{assessmentId}-{completedDate:yyyyMMdd}"))
+                {
+                    SPIId = spi.Code,
+                    Value = completionScore,
+                    MeasurementDate = completedDate,
+                    Period = completedDate.ToString("yyyy-MM-dd"),
+                    DataSource = riskAssessmentCompletedDataSource,
+                    Notes = $"Assessment {assessmentId} completed in {daysToComplete:F1} days - {(isOnTime ? "On Time" : "Late")}",
+                    IsVerified = true,
+                    VerifiedBy = "SYSTEM",
+                    VerifiedDate = DateTime.UtcNow,
+                    CreatedBy = "SPI_AUTOMATION"
+                };
 
-            if (result.IsSuccess)
-            {
-                _logger.LogApplicationInformation("SPI Automation: Successfully updated Risk Assessment Completion - Score: {Score}%, SPI Code: {Code}", 
-                    completionScore, spi.Code);
-                return Result<bool>.Success(true);
+                var result = await _spiService.AddSPIDataPointAsync(spi.Code, dataPoint, ct);
+                if (result.IsSuccess)
+                {
+                    successfulUpdates++;
+                }
+                else
+                {
+                    lastError = result.Error;
+                    _logger.LogApplicationWarning("SPI Automation: Failed to update risk assessment completion datapoint for SPI {SPICode}. Error: {Error}", spi.Code, result.Error?.Message);
+                }
             }
-            else
-            {
-                _logger.LogApplicationError("SPI Automation: Failed to update Risk Assessment Completion - Error: {Error}", result.Error?.Message);
-                return Result<bool>.Failure<bool>(result.Error);
-            }
+
+            return successfulUpdates > 0
+                ? Result<bool>.Success(true)
+                : Result<bool>.Failure<bool>(lastError ?? DomainErrors.SPIError.AutomationFailed);
         }
         catch (Exception ex)
         {
@@ -217,44 +245,51 @@ public class SPIAutomationService : ISPIAutomationService
                 return Result<bool>.Success(true);
             }
 
-            // Dynamic SPI lookup - find "High Risk Exposure Count" SPI
-            var spi = await FindSPIByName("High Risk Exposure Count", ct);
-            if (spi == null)
+            var highRiskIdentifiedDataSource = EventType.HighRiskIdentified.Value;
+            var targetSpis = await FindSPIsByDataSource(highRiskIdentifiedDataSource, ct);
+            if (!targetSpis.Any())
             {
-                _logger.LogApplicationError("SPI Automation: Could not find 'High Risk Exposure Count' SPI in database");
+                _logger.LogApplicationError("SPI Automation: No SPI configured with data source {DataSource}", highRiskIdentifiedDataSource);
                 return Result<bool>.Failure<bool>(DomainErrors.SPIError.NotFound);
             }
 
             // Get current high-risk count for the day
             var highRiskCount = await GetHighRiskCountForDate(identifiedDate, ct);
 
-            var dataPoint = new SPIDataPoint(new SPIDataPointID($"HRE-{identifiedDate:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8]}"))
-            {
-                SPIId = spi.Code, // Use actual SPI code from database
-                Value = highRiskCount,
-                MeasurementDate = identifiedDate,
-                Period = identifiedDate.ToString("yyyy-MM-dd"),
-                DataSource = "Automated-RiskAssessment",
-                Notes = $"High risk exposure count: {highRiskCount} (Latest: {riskLevel})",
-                IsVerified = true,
-                VerifiedBy = "SYSTEM",
-                VerifiedDate = DateTime.UtcNow,
-                CreatedBy = "SPI_AUTOMATION"
-            };
+            var successfulUpdates = 0;
+            Error? lastError = null;
 
-            var result = await _spiService.AddSPIDataPointAsync(spi.Code, dataPoint, ct);
+            foreach (var spi in targetSpis)
+            {
+                var dataPoint = new SPIDataPoint(new SPIDataPointID($"HRE-{spi.Code}-{identifiedDate:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8]}"))
+                {
+                    SPIId = spi.Code,
+                    Value = highRiskCount,
+                    MeasurementDate = identifiedDate,
+                    Period = identifiedDate.ToString("yyyy-MM-dd"),
+                    DataSource = highRiskIdentifiedDataSource,
+                    Notes = $"High risk exposure count: {highRiskCount} (Latest: {riskLevel})",
+                    IsVerified = true,
+                    VerifiedBy = "SYSTEM",
+                    VerifiedDate = DateTime.UtcNow,
+                    CreatedBy = "SPI_AUTOMATION"
+                };
 
-            if (result.IsSuccess)
-            {
-                _logger.LogApplicationInformation("SPI Automation: Successfully updated High Risk Exposure - Count: {Count}, SPI Code: {Code}", 
-                    highRiskCount, spi.Code);
-                return Result<bool>.Success(true);
+                var result = await _spiService.AddSPIDataPointAsync(spi.Code, dataPoint, ct);
+                if (result.IsSuccess)
+                {
+                    successfulUpdates++;
+                }
+                else
+                {
+                    lastError = result.Error;
+                    _logger.LogApplicationWarning("SPI Automation: Failed to update high risk exposure datapoint for SPI {SPICode}. Error: {Error}", spi.Code, result.Error?.Message);
+                }
             }
-            else
-            {
-                _logger.LogApplicationError("SPI Automation: Failed to update High Risk Exposure - Error: {Error}", result.Error?.Message);
-                return Result<bool>.Failure<bool>(result.Error);
-            }
+
+            return successfulUpdates > 0
+                ? Result<bool>.Success(true)
+                : Result<bool>.Failure<bool>(lastError ?? DomainErrors.SPIError.AutomationFailed);
         }
         catch (Exception ex)
         {
@@ -276,41 +311,99 @@ public class SPIAutomationService : ISPIAutomationService
         {
             _logger.LogApplicationInformation("SPI Automation: Updating Mitigation Implementation Rate for mitigation {MitigationId}", mitigationId);
 
+            var mitigationCompletedDataSource = EventType.MitigationCompleted.Value;
+            var targetSpis = await FindSPIsByDataSource(mitigationCompletedDataSource, ct);
+            if (!targetSpis.Any())
+            {
+                _logger.LogApplicationWarning(
+                    "SPI Automation: No SPI configured with data source {DataSource} for mitigation {MitigationId}",
+                    mitigationCompletedDataSource,
+                    mitigationId);
+                return Result<bool>.Failure<bool>(DomainErrors.SPIError.NotFound);
+            }
+
             // Calculate implementation score based on timeliness
             var daysFromTarget = (completedDate - targetDate).TotalDays;
             var implementationScore = CalculateMitigationScore(daysFromTarget);
 
-            var dataPoint = new SPIDataPoint(new SPIDataPointID($"MIR-{mitigationId}-{completedDate:yyyyMMdd}"))
-            {
-                SPIId = "MITIGATION_IMPLEMENTATION_RATE", // Use hardcoded SPI code directly
-                Value = implementationScore,
-                MeasurementDate = completedDate,
-                Period = completedDate.ToString("yyyy-MM-dd"),
-                DataSource = "Automated-MitigationCompletion",
-                Notes = $"Mitigation {mitigationId} completed {daysFromTarget:F1} days from target - Score: {implementationScore}%",
-                IsVerified = true,
-                VerifiedBy = "SYSTEM",
-                VerifiedDate = DateTime.UtcNow,
-                CreatedBy = "SPI_AUTOMATION"
-            };
+            var successfulUpdates = 0;
+            Error? lastError = null;
 
-            var result = await _spiService.AddSPIDataPointAsync("MITIGATION_IMPLEMENTATION_RATE", dataPoint, ct);
-
-            if (result.IsSuccess)
+            foreach (var spi in targetSpis)
             {
-                _logger.LogApplicationInformation("SPI Automation: Successfully updated Mitigation Implementation Rate - Score: {Score}%", implementationScore);
+                var dataPoint = new SPIDataPoint(new SPIDataPointID($"MIR-{spi.Code}-{mitigationId}-{completedDate:yyyyMMdd}"))
+                {
+                    SPIId = spi.Code,
+                    Value = implementationScore,
+                    MeasurementDate = completedDate,
+                    Period = completedDate.ToString("yyyy-MM-dd"),
+                    DataSource = mitigationCompletedDataSource,
+                    Notes = $"Mitigation {mitigationId} completed {daysFromTarget:F1} days from target - Score: {implementationScore}%",
+                    IsVerified = true,
+                    VerifiedBy = "SYSTEM",
+                    VerifiedDate = DateTime.UtcNow,
+                    CreatedBy = "SPI_AUTOMATION"
+                };
+
+                var result = await _spiService.AddSPIDataPointAsync(spi.Code, dataPoint, ct);
+                if (result.IsSuccess)
+                {
+                    successfulUpdates++;
+                }
+                else
+                {
+                    lastError = result.Error;
+                    _logger.LogApplicationWarning(
+                        "SPI Automation: Failed mitigation datapoint insert for SPI {SPICode}. Error: {Error}",
+                        spi.Code,
+                        result.Error?.Message);
+                }
+            }
+
+            if (successfulUpdates > 0)
+            {
+                _logger.LogApplicationInformation(
+                    "SPI Automation: Successfully updated {Count} SPI(s) for mitigation completion {MitigationId} (Score: {Score}%)",
+                    successfulUpdates,
+                    mitigationId,
+                    implementationScore);
                 return Result<bool>.Success(true);
             }
-            else
-            {
-                _logger.LogApplicationError("SPI Automation: Failed to update Mitigation Implementation Rate - Error: {Error}", result.Error?.Message);
-                return Result<bool>.Failure<bool>(result.Error);
-            }
+
+            return Result<bool>.Failure<bool>(lastError ?? DomainErrors.SPIError.AutomationFailed);
         }
         catch (Exception ex)
         {
             _logger.LogApplicationError(ex, "SPI Automation: Exception updating Mitigation Implementation Rate for mitigation {MitigationId}", mitigationId);
             return Result<bool>.Failure<bool>(DomainErrors.SPIError.AutomationFailed);
+        }
+    }
+
+    /// <summary>
+    /// Finds all SPIs bound to a specific data source token/event type.
+    /// </summary>
+    private async Task<List<SafetyPerformanceIndicator>> FindSPIsByDataSource(string dataSource, CancellationToken ct = default)
+    {
+        try
+        {
+            var getAllQuery = new GetAllSafetyPerformanceIndicatorsQuery();
+            var result = await _mediator.SendAsync(getAllQuery, ct);
+
+            if (result.IsFailure || result.Value is null)
+            {
+                _logger.LogApplicationWarning("SPI Automation: Failed to retrieve SPIs for data source lookup {DataSource}", dataSource);
+                return new List<SafetyPerformanceIndicator>();
+            }
+
+            return result.Value
+                .Where(s => !string.IsNullOrWhiteSpace(s.DataSource) &&
+                            string.Equals(s.DataSource.Trim(), dataSource, StringComparison.OrdinalIgnoreCase))
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError(ex, "SPI Automation: Error looking up SPIs by data source {DataSource}", dataSource);
+            return new List<SafetyPerformanceIndicator>();
         }
     }
 
@@ -323,11 +416,11 @@ public class SPIAutomationService : ISPIAutomationService
         {
             _logger.LogApplicationInformation("SPI Automation: Updating Corrective Action Closure Rate for date {Date}", calculationDate);
 
-            // Dynamic SPI lookup
-            var spi = await FindSPIByName("Corrective Action Closure Rate", ct);
-            if (spi == null)
+            var mitigationOverdueDataSource = EventType.MitigationOverdue.Value;
+            var targetSpis = await FindSPIsByDataSource(mitigationOverdueDataSource, ct);
+            if (!targetSpis.Any())
             {
-                _logger.LogApplicationError("SPI Automation: Could not find 'Corrective Action Closure Rate' SPI in database");
+                _logger.LogApplicationError("SPI Automation: No SPI configured with data source {DataSource}", mitigationOverdueDataSource);
                 return Result<bool>.Failure<bool>(DomainErrors.SPIError.NotFound);
             }
 
@@ -336,33 +429,40 @@ public class SPIAutomationService : ISPIAutomationService
             var totalActiveCount = await GetActiveMitigationCount(calculationDate, ct);
             var closureRate = totalActiveCount > 0 ? ((totalActiveCount - overdueCount) / (decimal)totalActiveCount) * 100 : 100m;
 
-            var dataPoint = new SPIDataPoint(new SPIDataPointID($"CAC-{calculationDate:yyyyMMdd}"))
-            {
-                SPIId = spi.Code, // Use actual SPI code from database
-                Value = closureRate,
-                MeasurementDate = calculationDate,
-                Period = calculationDate.ToString("yyyy-MM-dd"),
-                DataSource = "Automated-ScheduledCalculation",
-                Notes = $"Closure rate: {closureRate:F1}% ({totalActiveCount - overdueCount}/{totalActiveCount} on time)",
-                IsVerified = true,
-                VerifiedBy = "SYSTEM",
-                VerifiedDate = DateTime.UtcNow,
-                CreatedBy = "SPI_AUTOMATION"
-            };
+            var successfulUpdates = 0;
+            Error? lastError = null;
 
-            var result = await _spiService.AddSPIDataPointAsync(spi.Code, dataPoint, ct);
+            foreach (var spi in targetSpis)
+            {
+                var dataPoint = new SPIDataPoint(new SPIDataPointID($"CAC-{spi.Code}-{calculationDate:yyyyMMdd}"))
+                {
+                    SPIId = spi.Code,
+                    Value = closureRate,
+                    MeasurementDate = calculationDate,
+                    Period = calculationDate.ToString("yyyy-MM-dd"),
+                    DataSource = mitigationOverdueDataSource,
+                    Notes = $"Closure rate: {closureRate:F1}% ({totalActiveCount - overdueCount}/{totalActiveCount} on time)",
+                    IsVerified = true,
+                    VerifiedBy = "SYSTEM",
+                    VerifiedDate = DateTime.UtcNow,
+                    CreatedBy = "SPI_AUTOMATION"
+                };
 
-            if (result.IsSuccess)
-            {
-                _logger.LogApplicationInformation("SPI Automation: Successfully updated Corrective Action Closure Rate - Rate: {Rate}%, SPI Code: {Code}", 
-                    closureRate, spi.Code);
-                return Result<bool>.Success(true);
+                var result = await _spiService.AddSPIDataPointAsync(spi.Code, dataPoint, ct);
+                if (result.IsSuccess)
+                {
+                    successfulUpdates++;
+                }
+                else
+                {
+                    lastError = result.Error;
+                    _logger.LogApplicationWarning("SPI Automation: Failed to update corrective-action-closure datapoint for SPI {SPICode}. Error: {Error}", spi.Code, result.Error?.Message);
+                }
             }
-            else
-            {
-                _logger.LogApplicationError("SPI Automation: Failed to update Corrective Action Closure Rate - Error: {Error}", result.Error?.Message);
-                return Result<bool>.Failure<bool>(result.Error);
-            }
+
+            return successfulUpdates > 0
+                ? Result<bool>.Success(true)
+                : Result<bool>.Failure<bool>(lastError ?? DomainErrors.SPIError.AutomationFailed);
         }
         catch (Exception ex)
         {
@@ -385,49 +485,65 @@ public class SPIAutomationService : ISPIAutomationService
         {
             _logger.LogApplicationInformation("SPI Automation: Updating Risk Identification Effectiveness for report {ReportCode}, Decision: {Decision}", reportCode, validationDecision);
 
+            if (!string.Equals(validationDecision?.Trim(), ValidationDecision.SmsRisk.Value, StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogApplicationInformation(
+                    "SPI Automation: Skipping risk-identification datapoint for report {ReportCode}. Decision {Decision} is not {RequiredDecision}",
+                    reportCode,
+                    validationDecision,
+                    ValidationDecision.SmsRisk.Value);
+
+                return Result<bool>.Success(true);
+            }
+
             // This could feed into a new SPI that tracks validation effectiveness
             // For example: "SMS Risk Identification Rate" = (SMS_RISK decisions / Total validations) * 100
 
-            // Dynamic SPI lookup - use stable indicator type key (description text is not durable)
-            var riskIdentificationIndicatorType = SMSSafetyPerformanceIndicatorType.RiskIdentificationEffectiveness.Value;
-            var spi = await FindSPIByIndicatorType(riskIdentificationIndicatorType, ct);
-
-            if (spi == null)
+            var validationDecisionDataSource = EventType.ValidationDecisionMade.Value;
+            var targetSpis = await FindSPIsByDataSource(validationDecisionDataSource, ct);
+            if (!targetSpis.Any())
             {
-                _logger.LogApplicationInformation("SPI Automation: No SPI configured for indicator type {IndicatorType} - skipping optional update", riskIdentificationIndicatorType);
-                return Result<bool>.Success(true); // Not an error, just not implemented yet
+                _logger.LogApplicationError("SPI Automation: No SPI configured with data source {DataSource}", validationDecisionDataSource);
+                return Result<bool>.Failure<bool>(DomainErrors.SPIError.NotFound);
             }
 
             // Calculate daily effectiveness rate using validated decisions
             var effectivenessRate = await CalculateRiskIdentificationRate(validatedDate, ct);
 
-            var dataPoint = new SPIDataPoint(new SPIDataPointID($"DP-0000"))
-            {
-                SPIId = spi.Code,
-                Value = effectivenessRate,
-                MeasurementDate = validatedDate,
-                Period = validatedDate.ToString("yyyy-MM-dd"),
-                DataSource = "Automated-ValidationDecision",
-                Notes = $"Risk identification effectiveness: {effectivenessRate:F1}% (Decision: {validationDecision})",
-                IsVerified = true,
-                VerifiedBy = "SYSTEM",
-                VerifiedDate = DateTime.UtcNow,
-                CreatedBy = "SPI_AUTOMATION"
-            };
+            var successfulUpdates = 0;
+            Error? lastError = null;
 
-            var result = await _spiService.AddSPIDataPointAsync(spi.Code, dataPoint, ct);
+            foreach (var spi in targetSpis)
+            {
+                var dataPoint = new SPIDataPoint(new SPIDataPointID($"RIE-{spi.Code}-{validatedDate:yyyyMMdd}-{Guid.NewGuid().ToString("N")[..8]}"))
+                {
+                    SPIId = spi.Code,
+                    Value = effectivenessRate,
+                    MeasurementDate = validatedDate,
+                    Period = validatedDate.ToString("yyyy-MM-dd"),
+                    DataSource = validationDecisionDataSource,
+                    Notes = $"Risk identification effectiveness: {effectivenessRate:F1}% (Decision: {validationDecision})",
+                    IsVerified = true,
+                    VerifiedBy = "SYSTEM",
+                    VerifiedDate = DateTime.UtcNow,
+                    CreatedBy = "SPI_AUTOMATION"
+                };
 
-            if (result.IsSuccess)
-            {
-                _logger.LogApplicationInformation("SPI Automation: Successfully updated Risk Identification Effectiveness - Rate: {Rate}%, SPI Code: {Code}", 
-                    effectivenessRate, spi.Code);
-                return Result<bool>.Success(true);
+                var result = await _spiService.AddSPIDataPointAsync(spi.Code, dataPoint, ct);
+                if (result.IsSuccess)
+                {
+                    successfulUpdates++;
+                }
+                else
+                {
+                    lastError = result.Error;
+                    _logger.LogApplicationWarning("SPI Automation: Failed to update risk-identification-effectiveness datapoint for SPI {SPICode}. Error: {Error}", spi.Code, result.Error?.Message);
+                }
             }
-            else
-            {
-                _logger.LogApplicationError("SPI Automation: Failed to update Risk Identification Effectiveness - Error: {Error}", result.Error?.Message);
-                return Result<bool>.Failure<bool>(result.Error);
-            }
+
+            return successfulUpdates > 0
+                ? Result<bool>.Success(true)
+                : Result<bool>.Failure<bool>(lastError ?? DomainErrors.SPIError.AutomationFailed);
         }
         catch (Exception ex)
         {
@@ -459,119 +575,7 @@ public class SPIAutomationService : ISPIAutomationService
 
     #endregion
 
-    #region Helper Methods - Dynamic SPI Lookup
-
-    /// <summary>
-    /// Finds SPI by indicator type value using CQRS query to avoid brittle text matching.
-    /// </summary>
-    private async Task<SafetyPerformanceIndicator?> FindSPIByIndicatorType(string indicatorTypeValue, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogApplicationInformation("SPI Automation: Looking up SPI by indicator type: {IndicatorType}", indicatorTypeValue);
-
-            var getAllQuery = new GetAllSafetyPerformanceIndicatorsQuery();
-            var result = await _mediator.SendAsync(getAllQuery, ct);
-
-            if (result.IsSuccess && result.Value?.Any() == true)
-            {
-                var spi = result.Value.FirstOrDefault(s =>
-                    string.Equals(s.IndicatorType?.Value, indicatorTypeValue, StringComparison.OrdinalIgnoreCase));
-
-                if (spi != null)
-                {
-                    _logger.LogApplicationInformation("SPI Automation: Found SPI for indicator type {IndicatorType} with Code: {Code}", indicatorTypeValue, spi.Code);
-                    return spi;
-                }
-
-                _logger.LogApplicationWarning("SPI Automation: SPI not found by indicator type: {IndicatorType}", indicatorTypeValue);
-            }
-            else
-            {
-                _logger.LogApplicationError("SPI Automation: Failed to retrieve SPIs for indicator type lookup");
-            }
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError(ex, "SPI Automation: Error looking up SPI by indicator type: {IndicatorType}", indicatorTypeValue);
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Finds SPI by name using CQRS query to avoid hardcoded dependencies
-    /// </summary>
-    private async Task<SafetyPerformanceIndicator?> FindSPIByName(string spiName, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogApplicationInformation("SPI Automation: Looking up SPI by name: {SPIName}", spiName);
-
-            // Use CQRS to get all SPIs and find by name
-            var getAllQuery = new GetAllSafetyPerformanceIndicatorsQuery();
-            var result = await _mediator.SendAsync(getAllQuery, ct);
-
-            if (result.IsSuccess && result.Value?.Any() == true)
-            {
-                var spi = result.Value.FirstOrDefault(s => s.Name.Equals(spiName, StringComparison.OrdinalIgnoreCase));
-
-                if (spi != null)
-                {
-                    _logger.LogApplicationInformation("SPI Automation: Found SPI {SPIName} with Code: {Code}", spiName, spi.Code);
-                    return spi;
-                }
-                else
-                {
-                    _logger.LogApplicationWarning("SPI Automation: SPI not found by name: {SPIName}", spiName);
-                }
-            }
-            else
-            {
-                _logger.LogApplicationError("SPI Automation: Failed to retrieve SPIs for lookup");
-            }
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError(ex, "SPI Automation: Error looking up SPI by name: {SPIName}", spiName);
-            return null;
-        }
-    }
-
-    /// <summary>
-    /// Finds SPI by description pattern (for legacy type matching)
-    /// </summary>
-    private async Task<SafetyPerformanceIndicator?> FindSPIByDescription(string descriptionPattern, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogApplicationInformation("SPI Automation: Looking up SPI by description pattern: {Pattern}", descriptionPattern);
-
-            var getAllQuery = new GetAllSafetyPerformanceIndicatorsQuery();
-            var result = await _mediator.SendAsync(getAllQuery, ct);
-
-            if (result.IsSuccess && result.Value?.Any() == true)
-            {
-                var spi = result.Value.FirstOrDefault(s => s.Description.Contains(descriptionPattern, StringComparison.OrdinalIgnoreCase));
-
-                if (spi != null)
-                {
-                    _logger.LogApplicationInformation("SPI Automation: Found SPI by description with Code: {Code}", spi.Code);
-                    return spi;
-                }
-            }
-
-            return null;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError(ex, "SPI Automation: Error looking up SPI by description: {Pattern}", descriptionPattern);
-            return null;
-        }
-    }
+    #region Helper Methods - Datasource Routed Lookup
 
     /// <summary>
     /// Gets count of hazards submitted (created) on a specific date

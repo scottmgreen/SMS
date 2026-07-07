@@ -77,7 +77,7 @@ public partial class SPIDataPointDialog : ComponentBase
             {
                 SPIId = SPI?.Code ?? string.Empty,
                 MeasurementDate = DateTime.Today,
-                DataSource = SPI?.DataSource ?? SPIConstants.SPIDataSources.ManualEntry,
+                DataSource = SPI?.DataSource ?? string.Empty,
                 Period = string.Empty
             };
         }
@@ -207,17 +207,12 @@ public partial class SPIDataPointDialog : ComponentBase
             var eventDrivenSources = SPIConstants.SPIDataSources.GetEventDrivenSourceNames();
             dataSources.AddRange(eventDrivenSources);
 
-            // Add manual data sources
-            var manualSources = SPIConstants.SPIDataSources.GetManualSources();
-            dataSources.AddRange(manualSources);
-
             return dataSources.OrderBy(ds => ds).ToList();
         }
         catch (Exception ex)
         {
-            // Fallback to manual sources only if reflection fails
-            _logger.LogWarning(ex, "Failed to get dynamic data sources, falling back to manual sources");
-            return SPIConstants.SPIDataSources.GetManualSources();
+            _logger.LogWarning(ex, "Failed to get dynamic data sources");
+            return new List<string>();
         }
     }
 
@@ -237,14 +232,11 @@ public partial class SPIDataPointDialog : ComponentBase
                 var sourceNames = eventSources[category].Select(eds => eds.DisplayName).ToList();
                 grouped[$"{category}"] = sourceNames;
             }
-
-            // Manual sources as a separate group
-            grouped["Manual Sources"] = SPIConstants.SPIDataSources.GetManualSources();
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "Failed to get grouped data sources");
-            grouped["Data Sources"] = SPIConstants.SPIDataSources.GetManualSources();
+            grouped["Data Sources"] = new List<string>();
         }
 
         return grouped;

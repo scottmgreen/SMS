@@ -526,7 +526,7 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_Investigation_GetByStatus = new Lazy<string>(() => "pr_Investigation_GetByStatus");
         public static string pr_Investigation_GetByStatus => _pr_Investigation_GetByStatus.Value;
 
-        private static readonly Lazy<string> _pr_Investigation_Update = new Lazy<string>(() => "pr_Investigation_Update");
+        private static readonly Lazy<string> _pr_Investigation_Update = new Lazy<string>(() => "pr_Investigation_Update_Enhanced");
         public static string pr_Investigation_Update => _pr_Investigation_Update.Value;
 
         private static readonly Lazy<string> _pr_Investigation_Delete = new Lazy<string>(() => "pr_Investigation_Delete");
