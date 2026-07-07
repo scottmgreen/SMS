@@ -583,21 +583,27 @@ public class SPIAutomationService : ISPIAutomationService
         {
             _logger.LogApplicationInformation("SPI Automation: Querying hazard submissions for {Date}", date.ToString("yyyy-MM-dd"));
 
-            // Query hazards created on the specific date
-            // TODO: When hazard CQRS queries are available, use GetHazardsByDateQuery
-            // For now, use a simple incremental counter based on external reporting events
-
-            // Since we trigger this from hazard creation events, each call = 1 new hazard
-            // This gives us the actual count of hazards submitted today
-            var todaysKey = date.ToString("yyyy-MM-dd");
-
-            if (!_dailyHazardCounts.ContainsKey(todaysKey))
+            var hazardsResult = await _mediator.SendAsync(new GetAllHazardsQuery(), ct);
+            if (hazardsResult.IsFailure || hazardsResult.Value is null)
             {
-                _dailyHazardCounts[todaysKey] = 0;
+                _logger.LogApplicationWarning("SPI Automation: Failed to query hazards for {Date}: {Error}", date.ToString("yyyy-MM-dd"), hazardsResult.Error?.Message);
+                return 1;
             }
 
-            _dailyHazardCounts[todaysKey]++;
-            var actualCount = _dailyHazardCounts[todaysKey];
+            var startOfDay = date.Date;
+            var endOfDay = startOfDay.AddDays(1);
+
+            var actualCount = hazardsResult.Value.Count(h =>
+            {
+                var createdDate = h.CreatedDate ?? DateTime.MinValue;
+                return createdDate >= startOfDay && createdDate < endOfDay;
+            });
+
+            if (actualCount <= 0)
+            {
+                // Event-driven caller indicates at least one hazard activity occurred.
+                actualCount = 1;
+            }
 
             _logger.LogApplicationInformation("SPI Automation: Found {Count} hazard submissions on {Date}", actualCount, date.ToString("yyyy-MM-dd"));
 
@@ -652,10 +658,6 @@ public class SPIAutomationService : ISPIAutomationService
         }
     }
 
-    // Static dictionary to track daily hazard submission counts
-    // In production, this would be replaced with: SELECT COUNT(*) FROM Hazards WHERE CAST(CreatedDate AS DATE) = @date
-    private static readonly Dictionary<string, int> _dailyHazardCounts = new();
-
     /// <summary>
     /// Gets count of high-risk assessments for a specific date
     /// </summary>
@@ -663,9 +665,31 @@ public class SPIAutomationService : ISPIAutomationService
     {
         try
         {
-            // TODO: Implement query to get high-risk count for specific date
-            _logger.LogApplicationWarning("SPI Automation: GetHighRiskCountForDate not yet implemented - using placeholder");
-            return 1; // Placeholder - implement actual query
+            _logger.LogApplicationInformation("SPI Automation: Querying high-risk assessments for {Date}", date.ToString("yyyy-MM-dd"));
+
+            var assessmentsResult = await _mediator.SendAsync(new GetAllRiskAssessmentsQuery(), ct);
+            if (assessmentsResult.IsFailure || assessmentsResult.Value is null)
+            {
+                _logger.LogApplicationWarning("SPI Automation: Failed to query risk assessments for {Date}: {Error}", date.ToString("yyyy-MM-dd"), assessmentsResult.Error?.Message);
+                return 0;
+            }
+
+            var startOfDay = date.Date;
+            var endOfDay = startOfDay.AddDays(1);
+
+            var highRiskCount = assessmentsResult.Value.Count(ra =>
+            {
+                var evaluatedDate = ra.CompletedDate ?? ra.UpdatedDate ?? ra.CreatedDate ?? DateTime.MinValue;
+                var riskLevel = ra.FinalRiskLevel ?? string.Empty;
+
+                return evaluatedDate >= startOfDay &&
+                       evaluatedDate < endOfDay &&
+                       (string.Equals(riskLevel, RiskLevel.Critical.Value, StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(riskLevel, RiskLevel.High.Value, StringComparison.OrdinalIgnoreCase));
+            });
+
+            _logger.LogApplicationInformation("SPI Automation: Found {Count} high-risk assessments on {Date}", highRiskCount, date.ToString("yyyy-MM-dd"));
+            return highRiskCount;
         }
         catch (Exception ex)
         {
@@ -681,9 +705,22 @@ public class SPIAutomationService : ISPIAutomationService
     {
         try
         {
-            // TODO: Implement query to get overdue mitigation count
-            _logger.LogApplicationWarning("SPI Automation: GetOverdueMitigationCount not yet implemented - using placeholder");
-            return 0; // Placeholder - implement actual query
+            _logger.LogApplicationInformation("SPI Automation: Querying overdue mitigations as of {Date}", asOfDate.ToString("yyyy-MM-dd"));
+
+            var mitigationsResult = await _mediator.SendAsync(new GetAllMitigationsQuery(), ct);
+            if (mitigationsResult.IsFailure || mitigationsResult.Value is null)
+            {
+                _logger.LogApplicationWarning("SPI Automation: Failed to query mitigations for overdue count on {Date}: {Error}", asOfDate.ToString("yyyy-MM-dd"), mitigationsResult.Error?.Message);
+                return 0;
+            }
+
+            var overdueCount = mitigationsResult.Value.Count(m =>
+                m.TargetDate.HasValue &&
+                m.TargetDate.Value.Date < asOfDate.Date &&
+                m.Status != MitigationStatus.Complete);
+
+            _logger.LogApplicationInformation("SPI Automation: Found {Count} overdue mitigations as of {Date}", overdueCount, asOfDate.ToString("yyyy-MM-dd"));
+            return overdueCount;
         }
         catch (Exception ex)
         {
@@ -699,9 +736,23 @@ public class SPIAutomationService : ISPIAutomationService
     {
         try
         {
-            // TODO: Implement query to get active mitigation count
-            _logger.LogApplicationWarning("SPI Automation: GetActiveMitigationCount not yet implemented - using placeholder");
-            return 1; // Placeholder - implement actual query
+            _logger.LogApplicationInformation("SPI Automation: Querying active mitigations as of {Date}", asOfDate.ToString("yyyy-MM-dd"));
+
+            var mitigationsResult = await _mediator.SendAsync(new GetAllMitigationsQuery(), ct);
+            if (mitigationsResult.IsFailure || mitigationsResult.Value is null)
+            {
+                _logger.LogApplicationWarning("SPI Automation: Failed to query mitigations for active count on {Date}: {Error}", asOfDate.ToString("yyyy-MM-dd"), mitigationsResult.Error?.Message);
+                return 1;
+            }
+
+            var activeCount = mitigationsResult.Value.Count(m => m.Status != MitigationStatus.Complete);
+            if (activeCount <= 0)
+            {
+                activeCount = 1;
+            }
+
+            _logger.LogApplicationInformation("SPI Automation: Found {Count} active mitigations as of {Date}", activeCount, asOfDate.ToString("yyyy-MM-dd"));
+            return activeCount;
         }
         catch (Exception ex)
         {

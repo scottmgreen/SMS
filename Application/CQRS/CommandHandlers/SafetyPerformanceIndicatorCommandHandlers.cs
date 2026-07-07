@@ -9,6 +9,8 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Entities;
+using SMS_Domain.Events;
+using SMS_Application.Queries;
 
 using Microsoft.Extensions.Logging;
 
@@ -97,6 +99,309 @@ public class CreateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.CreateFailed);
         }
     }
+
+public class UpdateSPIConfigurationCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSPIConfigurationCommand, Result<SafetyPerformanceIndicator>>
+{
+    private readonly SafetyPerformanceIndicatorService _spiService;
+    private readonly ILogger<UpdateSPIConfigurationCommandHandler> _logger;
+
+    public UpdateSPIConfigurationCommandHandler(
+        SafetyPerformanceIndicatorService spiService,
+        ILogger<UpdateSPIConfigurationCommandHandler> logger)
+    {
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(UpdateSPIConfigurationCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogApplicationError("UpdateSPIConfigurationCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            return await _spiService.UpdateConfigurationAsync(
+                request.SPIId,
+                request.Name,
+                request.Description,
+                request.IndicatorType,
+                request.MeasurementUnit,
+                request.MeasurementFrequency,
+                request.CalculationMethod,
+                request.DataSource,
+                request.UpdatedBy,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error while updating SPI configuration", ApplicationEventIds.Error, ex);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
+        }
+    }
+}
+
+public class SetSPITargetsCommandHandler : BaseCommandBundle, IBaseRequestHandler<SetSPITargetsCommand, Result<SafetyPerformanceIndicator>>
+{
+    private readonly SafetyPerformanceIndicatorService _spiService;
+    private readonly ILogger<SetSPITargetsCommandHandler> _logger;
+
+    public SetSPITargetsCommandHandler(
+        SafetyPerformanceIndicatorService spiService,
+        ILogger<SetSPITargetsCommandHandler> logger)
+    {
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(SetSPITargetsCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogApplicationError("SetSPITargetsCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            return await _spiService.SetTargetsAsync(
+                request.SPIId,
+                request.TargetValue,
+                request.AcceptableRange,
+                request.WarningThreshold,
+                request.CriticalThreshold,
+                request.UpdatedBy,
+                cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error while setting SPI targets", ApplicationEventIds.Error, ex);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.TargetUpdateFailed);
+        }
+    }
+}
+
+public class UpdateSPIStatusCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSPIStatusCommand, Result<SafetyPerformanceIndicator>>
+{
+    private readonly SafetyPerformanceIndicatorService _spiService;
+    private readonly ILogger<UpdateSPIStatusCommandHandler> _logger;
+
+    public UpdateSPIStatusCommandHandler(
+        SafetyPerformanceIndicatorService spiService,
+        ILogger<UpdateSPIStatusCommandHandler> logger)
+    {
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(UpdateSPIStatusCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogApplicationError("UpdateSPIStatusCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            return await _spiService.UpdateStatusAsync(request.SPIId, request.Status, request.UpdatedBy, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error while updating SPI status", ApplicationEventIds.Error, ex);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.StatusUpdateFailed);
+        }
+    }
+}
+
+public class ScheduleSPIReviewCommandHandler : BaseCommandBundle, IBaseRequestHandler<ScheduleSPIReviewCommand, Result<SafetyPerformanceIndicator>>
+{
+    private readonly SafetyPerformanceIndicatorService _spiService;
+    private readonly ILogger<ScheduleSPIReviewCommandHandler> _logger;
+
+    public ScheduleSPIReviewCommandHandler(
+        SafetyPerformanceIndicatorService spiService,
+        ILogger<ScheduleSPIReviewCommandHandler> logger)
+    {
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(ScheduleSPIReviewCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogApplicationError("ScheduleSPIReviewCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            return await _spiService.ScheduleReviewAsync(request.SPIId, request.ReviewDate, request.ScheduledBy, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error while scheduling SPI review", ApplicationEventIds.Error, ex);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.ReviewScheduleFailed);
+        }
+    }
+}
+
+public class CompleteSPIReviewCommandHandler : BaseCommandBundle, IBaseRequestHandler<CompleteSPIReviewCommand, Result<SafetyPerformanceIndicator>>
+{
+    private readonly SafetyPerformanceIndicatorService _spiService;
+    private readonly ILogger<CompleteSPIReviewCommandHandler> _logger;
+
+    public CompleteSPIReviewCommandHandler(
+        SafetyPerformanceIndicatorService spiService,
+        ILogger<CompleteSPIReviewCommandHandler> logger)
+    {
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(CompleteSPIReviewCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogApplicationError("CompleteSPIReviewCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            return await _spiService.CompleteReviewAsync(request.SPIId, request.ReviewNotes, request.NextReviewDate, request.ReviewedBy, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error while completing SPI review", ApplicationEventIds.Error, ex);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.ReviewCompletionFailed);
+        }
+    }
+}
+
+public class RecalculateSPIDashboardCommandHandler : BaseCommandBundle, IBaseRequestHandler<RecalculateSPIDashboardCommand, Result<bool>>
+{
+    private readonly IBaseMediator _mediator;
+    private readonly IBaseEventBus _eventBus;
+    private readonly ILogger<RecalculateSPIDashboardCommandHandler> _logger;
+
+    public RecalculateSPIDashboardCommandHandler(
+        IBaseMediator mediator,
+        IBaseEventBus eventBus,
+        ILogger<RecalculateSPIDashboardCommandHandler> logger)
+    {
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(RecalculateSPIDashboardCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogApplicationError("RecalculateSPIDashboardCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            var calculationDate = request.CalculationDate ?? DateTime.UtcNow;
+            var query = new GetSPIDashboardDataQuery(
+                startDate: calculationDate.AddMonths(-12),
+                endDate: calculationDate,
+                spiIds: request.SPIIds,
+                includeTrends: true,
+                includeAlerts: true);
+
+            var dashboardResult = await _mediator.SendAsync(query, cancellationToken);
+            if (dashboardResult.IsFailure)
+            {
+                return Result<bool>.Failure<bool>(dashboardResult.Error);
+            }
+
+            var refreshEvent = new SPIDashboardRefreshEvent(
+                affectedSPICodes: request.SPIIds ?? new List<string>(),
+                refreshReason: "SPI dashboard recalculated",
+                dashboardSection: SPIDashboardSection.All,
+                refreshEntireDashboard: true,
+                userId: request.RequestedBy,
+                priority: UIEventPriority.Normal);
+
+            var refreshResult = await _eventBus.PublishUIEventAsync(refreshEvent, EventExecutionMode.Manual, cancellationToken);
+            if (refreshResult.IsFailure)
+            {
+                _logger.LogApplicationWarning("SPI dashboard recalculation completed but refresh publish failed: {Error}", refreshResult.Error?.Message);
+            }
+
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error while recalculating SPI dashboard", ApplicationEventIds.Error, ex);
+            return Result<bool>.Failure<bool>(DomainErrors.SPIError.UpdateFailed);
+        }
+    }
+}
+
+public class GenerateSPIAlertsCommandHandler : BaseCommandBundle, IBaseRequestHandler<GenerateSPIAlertsCommand, Result<List<SPIAlertResult>>>
+{
+    private readonly SafetyPerformanceIndicatorService _spiService;
+    private readonly ILogger<GenerateSPIAlertsCommandHandler> _logger;
+
+    public GenerateSPIAlertsCommandHandler(
+        SafetyPerformanceIndicatorService spiService,
+        ILogger<GenerateSPIAlertsCommandHandler> logger)
+    {
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<List<SPIAlertResult>>> HandleAsync(GenerateSPIAlertsCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null)
+            {
+                _logger.LogApplicationError("GenerateSPIAlertsCommand received with null request", ApplicationEventIds.Error, null);
+                return Result<List<SPIAlertResult>>.Failure<List<SPIAlertResult>>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            var alertsResult = await _spiService.GetAlertsAsync(
+                spiIds: request.SPIIds,
+                activeAlertsOnly: true,
+                startDate: request.CheckDate?.Date,
+                endDate: request.CheckDate?.Date.AddDays(1).AddTicks(-1),
+                ct: cancellationToken);
+
+            if (alertsResult.IsFailure)
+            {
+                return Result<List<SPIAlertResult>>.Failure<List<SPIAlertResult>>(alertsResult.Error);
+            }
+
+            var mappedAlerts = alertsResult.Value.Select(alert => new SPIAlertResult
+            {
+                SPIId = alert.SPIId,
+                SPIName = alert.SPIName,
+                AlertType = alert.AlertType,
+                CurrentValue = alert.CurrentValue,
+                ThresholdValue = alert.ThresholdValue,
+                AlertMessage = alert.AlertMessage,
+                AlertDate = alert.AlertDate,
+                TrendDirection = alert.TrendDirection
+            }).ToList();
+
+            return Result<List<SPIAlertResult>>.Success(mappedAlerts);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error while generating SPI alerts", ApplicationEventIds.Error, ex);
+            return Result<List<SPIAlertResult>>.Failure<List<SPIAlertResult>>(DomainErrors.SPIError.AlertConfigurationFailed);
+        }
+    }
+}
 }
 
 public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSafetyPerformanceIndicatorCommand, Result<SafetyPerformanceIndicator>>
@@ -193,13 +498,16 @@ public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
 public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateSPIDataPointCommand, Result<SafetyPerformanceIndicator>>
 {
     private readonly ISafetyPerformanceIndicatorService _spiService;
+    private readonly IBaseEventBus _eventBus;
     private readonly ILogger<UpdateSPIDataPointCommandHandler> _logger;
 
     public UpdateSPIDataPointCommandHandler(
         ISafetyPerformanceIndicatorService spiService,
+        IBaseEventBus eventBus,
         ILogger<UpdateSPIDataPointCommandHandler> logger)
     {
         _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -239,6 +547,8 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IBaseRequestH
                     new Error("DATAPOINT_NOT_FOUND", "Data point not found"));
             }
 
+            var previousValue = dataPointToUpdate.Value;
+
             // Update the data point properties
             dataPointToUpdate.Value = request.DataPoint.Value;
             dataPointToUpdate.MeasurementDate = request.DataPoint.MeasurementDate;
@@ -258,6 +568,8 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IBaseRequestH
             {
                 _logger.LogApplicationInformation("Successfully updated SPI data point for SPI: {SPIId}, DataPoint: {DataPointId}",
                     request.DataPoint.SPIId, request.DataPoint.Id?.Value);
+
+                await SPIDataPointEventPublisher.PublishAsync(_eventBus, _logger, updateResult.Value, request.DataPoint, previousValue, nameof(UpdateSPIDataPointCommandHandler), cancellationToken);
             }
             else
             {
@@ -277,6 +589,235 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IBaseRequestH
             _logger.LogApplicationError("Unexpected error occurred while updating SPI data point", ApplicationEventIds.Error, ex);
             return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.UpdateFailed);
         }
+    }
+}
+
+public class AddSPIDataPointCommandHandler : BaseCommandBundle, IBaseRequestHandler<AddSPIDataPointCommand, Result<SafetyPerformanceIndicator>>
+{
+    private readonly ISafetyPerformanceIndicatorService _spiService;
+    private readonly IBaseEventBus _eventBus;
+    private readonly ILogger<AddSPIDataPointCommandHandler> _logger;
+
+    public AddSPIDataPointCommandHandler(
+        ISafetyPerformanceIndicatorService spiService,
+        IBaseEventBus eventBus,
+        ILogger<AddSPIDataPointCommandHandler> logger)
+    {
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(AddSPIDataPointCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request?.DataPoint is null || string.IsNullOrWhiteSpace(request.DataPoint.SPIId))
+            {
+                _logger.LogApplicationError("AddSPIDataPointCommand received with invalid request", ApplicationEventIds.Error, null);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            var result = await _spiService.AddSPIDataPointAsync(request.DataPoint.SPIId, request.DataPoint, cancellationToken);
+            if (result.IsFailure || result.Value is null)
+            {
+                return result;
+            }
+
+            await SPIDataPointEventPublisher.PublishAsync(_eventBus, _logger, result.Value, request.DataPoint, null, nameof(AddSPIDataPointCommandHandler), cancellationToken);
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogApplicationWarning("AddSPIDataPointCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error while adding SPI data point", ApplicationEventIds.Error, ex);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.DataPointAddFailed);
+        }
+    }
+}
+
+public class DeleteSPIDataPointCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteSPIDataPointCommand, Result<SafetyPerformanceIndicator>>
+{
+    private readonly ISafetyPerformanceIndicatorService _spiService;
+    private readonly IBaseEventBus _eventBus;
+    private readonly ILogger<DeleteSPIDataPointCommandHandler> _logger;
+
+    public DeleteSPIDataPointCommandHandler(
+        ISafetyPerformanceIndicatorService spiService,
+        IBaseEventBus eventBus,
+        ILogger<DeleteSPIDataPointCommandHandler> logger)
+    {
+        _spiService = spiService ?? throw new ArgumentNullException(nameof(spiService));
+        _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<SafetyPerformanceIndicator>> HandleAsync(DeleteSPIDataPointCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request?.DataPoint is null || string.IsNullOrWhiteSpace(request.DataPoint.Code))
+            {
+                _logger.LogApplicationError("DeleteSPIDataPointCommand received with invalid request", ApplicationEventIds.Error, null);
+                return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.NullOrEmpty);
+            }
+
+            var deleteResult = await _spiService.DeleteSPIDataPointAsync(request.DataPoint.Code, cancellationToken);
+            if (deleteResult.IsFailure || deleteResult.Value is null)
+            {
+                return deleteResult;
+            }
+
+            var refreshEvent = new SPIDashboardRefreshEvent(
+                affectedSPICodes: new List<string> { deleteResult.Value.Code },
+                refreshReason: "SPI data point deleted",
+                dashboardSection: SPIDashboardSection.All,
+                refreshEntireDashboard: true,
+                priority: UIEventPriority.Normal,
+                refreshMetadata: new Dictionary<string, object>
+                {
+                    { "SPICode", deleteResult.Value.Code },
+                    { "Source", nameof(DeleteSPIDataPointCommandHandler) }
+                });
+
+            var refreshResult = await _eventBus.PublishUIEventAsync(refreshEvent, EventExecutionMode.Manual, cancellationToken);
+            if (refreshResult.IsFailure)
+            {
+                _logger.LogApplicationWarning("Failed to publish SPIDashboardRefreshEvent after delete for SPI {SPICode}: {Error}",
+                    deleteResult.Value.Code,
+                    refreshResult.Error?.Message);
+            }
+
+            return deleteResult;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogApplicationWarning("DeleteSPIDataPointCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error while deleting SPI data point", ApplicationEventIds.Error, ex);
+            return Result<SafetyPerformanceIndicator>.Failure<SafetyPerformanceIndicator>(DomainErrors.SPIError.DeleteFailed);
+        }
+    }
+}
+
+internal static class SPIDataPointEventPublisher
+{
+    public static async Task PublishAsync(
+        IBaseEventBus eventBus,
+        ILogger logger,
+        SafetyPerformanceIndicator spi,
+        SPIDataPoint currentDataPoint,
+        decimal? previousValue,
+        string source,
+        CancellationToken cancellationToken)
+    {
+        var currentValue = currentDataPoint.Value;
+        var previousStatus = ResolveComplianceStatus(previousValue, spi);
+        var newStatus = ResolveComplianceStatus(currentValue, spi);
+
+        if (previousStatus != newStatus)
+        {
+            var complianceThreshold = spi.TargetValue ?? spi.WarningThreshold ?? spi.CriticalThreshold ?? currentValue;
+            var complianceEvent = new SPIComplianceChangedEvent(
+                id: new SMSEventID("EV-0000"),
+                spiCode: spi.Code,
+                spiName: spi.Name,
+                previousStatus: previousStatus,
+                newStatus: newStatus,
+                currentValue: currentValue,
+                complianceThreshold: complianceThreshold,
+                complianceStandard: "TARGET_ALIGNMENT",
+                reportingPeriod: currentDataPoint.Period,
+                complianceCheckDate: DateTime.UtcNow,
+                requiresRegulatoryReporting: newStatus is SMS_Domain.Events.SPIComplianceStatus.NonCompliant or SMS_Domain.Events.SPIComplianceStatus.AtRisk,
+                regulatoryBody: "FAA");
+
+            var compliancePublishResult = await eventBus.PublishDomainEventAsync(complianceEvent, cancellationToken);
+            if (compliancePublishResult.IsFailure)
+            {
+                logger.LogApplicationWarning("Failed to publish SPIComplianceChangedEvent for SPI {SPICode}: {Error}",
+                    spi.Code,
+                    compliancePublishResult.Error?.Message);
+            }
+        }
+
+        if ((spi.CriticalThreshold.HasValue && currentValue >= spi.CriticalThreshold.Value) ||
+            (spi.WarningThreshold.HasValue && currentValue >= spi.WarningThreshold.Value))
+        {
+            var threshold = spi.CriticalThreshold.HasValue && currentValue >= spi.CriticalThreshold.Value
+                ? spi.CriticalThreshold.Value
+                : spi.WarningThreshold!.Value;
+
+            var severity = spi.CriticalThreshold.HasValue && currentValue >= spi.CriticalThreshold.Value
+                ? SPISeverityLevel.Critical
+                : SPISeverityLevel.High;
+
+            var thresholdEvent = new SPIThresholdExceededEvent(
+                id: new SMSEventID("EV-0000"),
+                spiCode: spi.Code,
+                spiName: spi.Name,
+                currentValue: currentValue,
+                thresholdValue: threshold,
+                severity: severity,
+                stakeholderGroups: new List<string>(),
+                reportingPeriod: currentDataPoint.Period,
+                aggregateId: spi.Id.Value);
+
+            var thresholdPublishResult = await eventBus.PublishDomainEventAsync(thresholdEvent, cancellationToken);
+            if (thresholdPublishResult.IsFailure)
+            {
+                logger.LogApplicationWarning("Failed to publish SPIThresholdExceededEvent for SPI {SPICode}: {Error}",
+                    spi.Code,
+                    thresholdPublishResult.Error?.Message);
+            }
+        }
+
+        var refreshEvent = new SPIDashboardRefreshEvent(
+            affectedSPICodes: new List<string> { spi.Code },
+            refreshReason: "SPI data point updated",
+            dashboardSection: SPIDashboardSection.All,
+            refreshEntireDashboard: true,
+            priority: UIEventPriority.Normal,
+            refreshMetadata: new Dictionary<string, object>
+            {
+                { "SPICode", spi.Code },
+                { "Source", source }
+            });
+
+        var refreshResult = await eventBus.PublishUIEventAsync(refreshEvent, EventExecutionMode.Manual, cancellationToken);
+        if (refreshResult.IsFailure)
+        {
+            logger.LogApplicationWarning("Failed to publish SPIDashboardRefreshEvent for SPI {SPICode}: {Error}",
+                spi.Code,
+                refreshResult.Error?.Message);
+        }
+    }
+
+    private static SMS_Domain.Events.SPIComplianceStatus ResolveComplianceStatus(decimal? value, SafetyPerformanceIndicator spi)
+    {
+        if (!value.HasValue)
+        {
+            return SMS_Domain.Events.SPIComplianceStatus.Unknown;
+        }
+
+        if (spi.TargetValue.HasValue && value.Value >= spi.TargetValue.Value)
+        {
+            return SMS_Domain.Events.SPIComplianceStatus.Compliant;
+        }
+
+        if (spi.WarningThreshold.HasValue && value.Value >= spi.WarningThreshold.Value)
+        {
+            return SMS_Domain.Events.SPIComplianceStatus.AtRisk;
+        }
+
+        return SMS_Domain.Events.SPIComplianceStatus.NonCompliant;
     }
 }
 

@@ -110,17 +110,17 @@ File: `Application/CQRS/CommandHandlers/SafetyPerformanceIndicatorCommandHandler
 - `UpdateSafetyPerformanceIndicatorCommandHandler`
 - `DeleteSafetyPerformanceIndicatorCommandHandler`
 - `UpdateSPIDataPointCommandHandler`
+- `AddSPIDataPointCommandHandler`
+- `DeleteSPIDataPointCommandHandler`
+- `UpdateSPIConfigurationCommandHandler`
+- `SetSPITargetsCommandHandler`
+- `UpdateSPIStatusCommandHandler`
+- `ScheduleSPIReviewCommandHandler`
+- `CompleteSPIReviewCommandHandler`
+- `RecalculateSPIDashboardCommandHandler`
+- `GenerateSPIAlertsCommandHandler`
 
 ## 3.3 Coverage gaps (defined command type, no matching handler class found in workspace scan)
-- `UpdateSPIConfigurationCommand`
-- `SetSPITargetsCommand`
-- `UpdateSPIStatusCommand`
-- `AddSPIDataPointCommand`
-- `DeleteSPIDataPointCommand`
-- `ScheduleSPIReviewCommand`
-- `CompleteSPIReviewCommand`
-- `RecalculateSPIDashboardCommand`
-- `GenerateSPIAlertsCommand`
 - `ArchiveOldSPIDataCommand`
 
 ---
@@ -173,8 +173,8 @@ Supports:
 | `MitigationCompletedEvent` | `MitigationCommandHandlers.cs:181` | `MitigationCompletedEventHandler` | `UpdateMitigationImplementationRateAsync` |
 | `MitigationOverdueEvent` | Publisher not identified in runtime scan | `MitigationOverdueEventHandler` | `UpdateCorrectiveActionClosureAsync` |
 | `MitigationStatusChangedEvent` | `MitigationCommandHandlers.cs:156` | `MitigationStatusChangedEventHandler` | Overdue status path updates corrective action closure SPI |
-| `SPIComplianceChangedEvent` | No production instantiation found (tests only) | `SPIComplianceChangedEventHandler` | Logs compliance transition + publishes UI notification |
-| `SPIThresholdExceededEvent` | No production instantiation found (tests only) | `SPIThresholdEventHandler` | Logs threshold-exceeded processing |
+| `SPIComplianceChangedEvent` | `SafetyPerformanceIndicatorCommandHandlers.cs` datapoint add/update flows | `SPIComplianceChangedEventHandler` | Logs compliance transition + publishes UI notification |
+| `SPIThresholdExceededEvent` | `SafetyPerformanceIndicatorCommandHandlers.cs` datapoint add/update flows | `SPIThresholdEventHandler` | Logs threshold-exceeded processing |
 
 ### 5.1 SPI compliance handler details
 - File: `Application/EventHandlers/DomainEventHandlers/DomainEventHandlers.cs` around `line 1302`
@@ -216,7 +216,7 @@ Supports:
   - Unregisters in `Dispose`
 
 ## 6.4 Current-state finding
-- No runtime instantiation site of `new SPIDashboardRefreshEvent(...)` was found in production code scan.
+- Runtime publication now exists from SPI datapoint command handlers and dashboard recalculation command handler.
 
 ---
 
@@ -242,8 +242,8 @@ Supports:
 4. Log success/failure outcomes with application log methods.
 
 ## 7.4 Implementation observations
-- Some methods still contain placeholder query logic and TODO notes for robust counting/aggregation.
-- Both dynamic SPI lookup and some hardcoded SPI IDs/codes exist, indicating mixed maturity.
+- Placeholder counter logic for hazards, high-risk assessments, and mitigation overdue/active counts has been replaced with query-backed calculations.
+- Dynamic SPI lookup is still mixed with some hardcoded SPI codes, which remains a Phase 2 cleanup opportunity.
 
 ---
 
@@ -266,13 +266,23 @@ Supports:
 ---
 
 ## Appendix C: Open Gaps / Hardening Targets
-1. Missing runtime publishers for:
+1. `ArchiveOldSPIDataCommand` still has no implementation.
+2. Alert/trend generation service methods (`GenerateAlertsAsync`, `GenerateTrendAnalysisAsync`) remain stubbed and should be implemented for full operational coverage.
+3. Consolidated `DomainEventHandlers.cs` mixes many domains; traceability is good but maintainability can degrade as event count grows.
+
+---
+
+## Appendix D: Phase 2 Readiness Checklist (Short)
+
+1. Keep SPI routes and components behind a feature flag (not just hidden nav links).
+2. Implement `ArchiveOldSPIDataCommandHandler` or remove/defer command contract explicitly.
+3. Implement `GenerateAlertsAsync` and `GenerateTrendAnalysisAsync` in `SafetyPerformanceIndicatorService`.
+4. Add focused tests for datapoint command handlers to validate publication of:
    - `SPIComplianceChangedEvent`
    - `SPIThresholdExceededEvent`
    - `SPIDashboardRefreshEvent`
-2. Missing handler implementations for multiple defined SPI commands (see Section 3.3).
-3. SPIAutomationService contains placeholder counter logic that should be replaced with persisted query-backed metrics.
-4. Consolidated `DomainEventHandlers.cs` mixes many domains; traceability is good but maintainability can degrade as event count grows.
+5. Add a smoke test for `RecalculateSPIDashboardCommand` to ensure query + UI refresh publication remains intact.
+6. Validate Power BI coexistence strategy (ownership of KPI definitions and source-of-truth semantics) before feature re-enable.
 
 ---
 
