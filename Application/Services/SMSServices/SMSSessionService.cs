@@ -8,11 +8,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using Microsoft.Extensions.Logging;
 using SMS_Application.Configuration;
-using SMS_Application.Interfaces;
-using Microsoft.AspNetCore.Http;
-using SMS_Domain.Entities;
 
 namespace SMS_Application.Services;
 
@@ -51,31 +47,25 @@ public class SMSSessionService : ISMSSessionService
     {
         try
         {
-            _logger.LogApplicationInformation("Creating SMS session for user {UserCode} ({UserType}) using strategy manager", 
-                user.Code, userType.Value);
+            _logger.LogApplicationInformation("Creating SMS session for user {UserCode} ({UserType}) using strategy manager", user.Code, userType.Value);
 
-            // ?? CRITICAL FIX: Always ensure user completeness - the user may not have complete role/permission data
-            // This is especially important after 2FA verification where the stored user may be incomplete
             _logger.LogApplicationInformation("Ensuring user completeness before session creation...");
             
             var completeUserResult = await _userInstantiationService.EnsureUserCompletenessAsync(user, userType);
             if (completeUserResult.IsFailure)
             {
-                _logger.LogApplicationError("Failed to ensure user completeness: {UserCode}: {Error}", 
-                    user.Code, completeUserResult.Error?.Message);
+                _logger.LogApplicationError("Failed to ensure user completeness: {UserCode}: {Error}", user.Code, completeUserResult.Error?.Message);
                 throw new InvalidOperationException($"User {user.Code} could not be fully instantiated: {completeUserResult.Error?.Message}");
             }
 
             var completeUser = completeUserResult.Value;
-            _logger.LogApplicationInformation("User completeness ensured - Role: {RoleCode}, Permissions: {PermissionCount}", 
-                completeUser.UserRole?.Code ?? "None", completeUser.UserRole?.Permissions?.Count ?? 0);
+            _logger.LogApplicationInformation("User completeness ensured - Role: {RoleCode}, Permissions: {PermissionCount}", completeUser.UserRole?.Code ?? "None", completeUser.UserRole?.Permissions?.Count ?? 0);
 
             // Final validation of user completeness
             if (!_userInstantiationService.IsUserComplete(completeUser))
             {
                 var missing = _userInstantiationService.GetMissingComponents(completeUser);
-                _logger.LogApplicationError("User {UserCode} is incomplete - Missing: {MissingComponents}", 
-                    user.Code, string.Join(", ", missing));
+                _logger.LogApplicationError("User {UserCode} is incomplete - Missing: {MissingComponents}", user.Code, string.Join(", ", missing));
                 throw new InvalidOperationException($"User {user.Code} is incomplete - missing: {string.Join(", ", missing)}");
             }
 
@@ -83,8 +73,7 @@ public class SMSSessionService : ISMSSessionService
             var storeResult = await _strategyManager.StoreUserAsync(completeUser, userType);
             if (storeResult.IsFailure)
             {
-                _logger.LogApplicationError("Failed to store user {UserCode} via strategy manager: {Error}", 
-                    user.Code, storeResult.Error?.Message);
+                _logger.LogApplicationError("Failed to store user {UserCode} via strategy manager: {Error}", user.Code, storeResult.Error?.Message);
                 throw new InvalidOperationException($"Failed to store user {user.Code}: {storeResult.Error?.Message}");
             }
 
@@ -94,13 +83,11 @@ public class SMSSessionService : ISMSSessionService
 
             if (_sessionConfig.LogSessionActivity)
             {
-                _logger.LogApplicationInformation("SMS Session created successfully for user {UserCode} ({UserType}) - Primary: {PrimaryStrategy}, Fallback: {FallbackStrategy}, Completeness: 100%", 
-                    user.Code, userType.Value, primaryStrategy.StrategyName, fallbackStrategy?.StrategyName ?? "None");
+                _logger.LogApplicationInformation("SMS Session created successfully for user {UserCode} ({UserType}) - Primary: {PrimaryStrategy}, Fallback: {FallbackStrategy}, Completeness: 100%", user.Code, userType.Value, primaryStrategy.StrategyName, fallbackStrategy?.StrategyName ?? "None");
             }
             else
             {
-                _logger.LogApplicationInformation("SMS Session created successfully for user {UserCode} ({UserType})", 
-                    user.Code, userType.Value);
+                _logger.LogApplicationInformation("SMS Session created successfully for user {UserCode} ({UserType})", user.Code, userType.Value);
             }
         }
         catch (Exception ex)
