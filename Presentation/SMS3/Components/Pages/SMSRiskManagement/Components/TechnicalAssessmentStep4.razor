@@ -21,11 +21,13 @@
                     <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
                     Hazard Risk Scoring (@Step4Hazards.Count Hazards)
                 </RadzenText>
-                <RadzenFormField Text="Additional Comments" Variant="Variant.Outlined" AllowFloatingLabel ="false">
+                <RadzenFormField Text="Additional Comments *" Variant="Variant.Outlined" AllowFloatingLabel ="false">
                     <RadzenTextArea @bind-Value="@Step4.AdditionalComments"
+                                    Name="AdditionalComments"
                                     @oninput="OnAdditionalCommentsChanged"
                                     Rows="4" Placeholder="Provide additional comments..." Style="width: 100%;"
                                     title="Additional Comments" />
+                    <RadzenRequiredValidator Component="AdditionalComments" Text="Additional Comments is required." Popup="false" Style="position: static; display: block;" />
                 </RadzenFormField>
                 <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step4.AdditionalComments, 10)" />
                 @foreach (var hazard in Step4Hazards)

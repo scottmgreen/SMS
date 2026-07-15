@@ -54,6 +54,14 @@ public partial class UserRoles : ComponentBase
     private bool _showPermissionsModal { get; set; }
     private SMSUserRole? _viewRole { get; set; }
 
+    // Assigned Users Modal Properties
+    private bool _showAssignedUsersModal { get; set; }
+    private SMSUserRole? _assignmentViewRole { get; set; }
+    private List<RoleAssignedUserView> _assignmentViewUsers { get; set; } = new();
+
+    // Role assignment cache
+    private Dictionary<string, List<RoleAssignedUserView>> _assignedUsersByRoleCode { get; set; } = new(StringComparer.OrdinalIgnoreCase);
+
     // Edit Role Modal Properties
     private bool _showEditModal { get; set; }
     private SMSUserRole? _currentEditRole { get; set; }
@@ -81,6 +89,8 @@ public partial class UserRoles : ComponentBase
                 userRolesResult.Value?.ToList() ?? new List<SMSUserRole>() :
                 new List<SMSUserRole>();
 
+            await LoadRoleAssignmentsAsync();
+
             _logger.LogInformation("Loaded {RoleCount} user roles", UserRolesList.Count);
 
             StateHasChanged();
@@ -89,6 +99,70 @@ public partial class UserRoles : ComponentBase
         {
             _logger.LogError(ex, "Error loading user roles data");
             await _notificationHelper.ShowErrorAsync("Error loading data. Please refresh the page.");
+        }
+    }
+
+    private async Task LoadRoleAssignmentsAsync()
+    {
+        try
+        {
+            _assignedUsersByRoleCode = new Dictionary<string, List<RoleAssignedUserView>>(StringComparer.OrdinalIgnoreCase);
+
+            var applicationUsersResult = await _mediator.SendAsync(new GetAllSMSApplicationUsersQuery(), CancellationToken.None);
+            if (applicationUsersResult.IsSuccess)
+            {
+                AddRoleAssignments(
+                    applicationUsersResult.Value ?? Enumerable.Empty<SMSApplicationUser>(),
+                    "Application");
+            }
+
+            var organizationalUsersResult = await _mediator.SendAsync(new GetAllSMSOrganizationalUsersQuery(), CancellationToken.None);
+            if (organizationalUsersResult.IsSuccess)
+            {
+                AddRoleAssignments(
+                    organizationalUsersResult.Value ?? Enumerable.Empty<SMSOrganizationalUser>(),
+                    "Organizational");
+            }
+
+            var stakeholderUsersResult = await _mediator.SendAsync(new GetAllSMSStakeholderUsersQuery(), CancellationToken.None);
+            if (stakeholderUsersResult.IsSuccess)
+            {
+                AddRoleAssignments(
+                    stakeholderUsersResult.Value ?? Enumerable.Empty<SMSStakeholderUser>(),
+                    "Stakeholder");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading role assignments");
+            _assignedUsersByRoleCode = new Dictionary<string, List<RoleAssignedUserView>>(StringComparer.OrdinalIgnoreCase);
+        }
+    }
+
+    private void AddRoleAssignments<TUser>(IEnumerable<TUser> users, string userType)
+        where TUser : BaseUser
+    {
+        foreach (var user in users)
+        {
+            var roleCode = user.UserRole?.Code?.Trim();
+            if (string.IsNullOrWhiteSpace(roleCode))
+            {
+                continue;
+            }
+
+            if (!_assignedUsersByRoleCode.TryGetValue(roleCode, out var assignedUsers))
+            {
+                assignedUsers = new List<RoleAssignedUserView>();
+                _assignedUsersByRoleCode[roleCode] = assignedUsers;
+            }
+
+            assignedUsers.Add(new RoleAssignedUserView
+            {
+                UserCode = user.Code ?? string.Empty,
+                DisplayName = user.DisplayName,
+                UserName = user.UserName?.Value ?? string.Empty,
+                UserType = userType
+            });
         }
     }
 
@@ -375,6 +449,12 @@ public partial class UserRoles : ComponentBase
 
     private async Task ShowDeleteDialog(string roleCode, string roleName)
     {
+        if (HasAssignedUsers(roleCode))
+        {
+            await _notificationHelper.ShowErrorAsync($"Role '{roleName}' cannot be deleted while users are assigned.");
+            return;
+        }
+
         var result = await _dialogService.Confirm($"Are you sure you want to delete the role '{roleName}'?\n\nThis action cannot be undone and may affect users assigned to this role.",
             "Confirm Delete",
             new ConfirmOptions
@@ -418,6 +498,70 @@ public partial class UserRoles : ComponentBase
     #endregion
 
     #region Permission Management
+
+    private async Task ShowAssignedUsersDialog(SMSUserRole role)
+    {
+        _assignmentViewRole = role;
+        _assignmentViewUsers = GetAssignedUsers(role.Code)
+            .OrderBy(u => u.UserType)
+            .ThenBy(u => u.DisplayName)
+            .ToList();
+
+        _showAssignedUsersModal = true;
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private void CloseAssignedUsersModal()
+    {
+        _showAssignedUsersModal = false;
+        _assignmentViewRole = null;
+        _assignmentViewUsers = new List<RoleAssignedUserView>();
+        StateHasChanged();
+    }
+
+    private bool IsRoleDeleteDisabled(SMSUserRole role)
+    {
+        return HasAssignedUsers(role.Code);
+    }
+
+    private bool HasAssignedUsers(string? roleCode)
+    {
+        if (string.IsNullOrWhiteSpace(roleCode))
+        {
+            return false;
+        }
+
+        return _assignedUsersByRoleCode.TryGetValue(roleCode.Trim(), out var assignedUsers) && assignedUsers.Count > 0;
+    }
+
+    private int GetAssignedUsersCount(string? roleCode)
+    {
+        if (string.IsNullOrWhiteSpace(roleCode))
+        {
+            return 0;
+        }
+
+        return _assignedUsersByRoleCode.TryGetValue(roleCode.Trim(), out var assignedUsers)
+            ? assignedUsers.Count
+            : 0;
+    }
+
+    private IEnumerable<RoleAssignedUserView> GetAssignedUsers(string? roleCode)
+    {
+        if (string.IsNullOrWhiteSpace(roleCode))
+        {
+            return Enumerable.Empty<RoleAssignedUserView>();
+        }
+
+        return _assignedUsersByRoleCode.TryGetValue(roleCode.Trim(), out var assignedUsers)
+            ? assignedUsers
+            : Enumerable.Empty<RoleAssignedUserView>();
+    }
+
+    private int GetAssignedUsersCountByType(string userType)
+    {
+        return _assignmentViewUsers.Count(u => string.Equals(u.UserType, userType, StringComparison.OrdinalIgnoreCase));
+    }
 
     private async Task ShowPermissionsDialog(SMSUserRole role)
     {
@@ -502,6 +646,14 @@ public partial class UserRoles : ComponentBase
         public Dictionary<string, bool> ReadPermissions { get; set; } = new();
         public Dictionary<string, bool> UpdatePermissions { get; set; } = new();
         public Dictionary<string, bool> DeletePermissions { get; set; } = new();
+    }
+
+    private sealed class RoleAssignedUserView
+    {
+        public string UserCode { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+        public string UserType { get; set; } = string.Empty;
     }
 
     #endregion

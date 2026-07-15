@@ -1,6 +1,7 @@
 using SMS_Domain.Enums;
 using Radzen;
 using Microsoft.FeatureManagement;
+using System.Text.RegularExpressions;
 
 namespace SMS3.Components.Shared.UIHelpers;
 
@@ -352,6 +353,61 @@ public static class DropdownHelper
             new("CONTINUE_LATER", "Continue Later"),
             new("RETURN_TO_VALIDATION", "Return to Validation")
         };
+    }
+}
+
+public static class EntityDisplayNameHelper
+{
+    public static string GetPluralEntityName<T>()
+    {
+        return GetPluralEntityName(typeof(T));
+    }
+
+    public static string GetPluralEntityName(Type type)
+    {
+        var typeName = type.Name;
+
+        if (typeName.StartsWith("SMS", StringComparison.Ordinal))
+        {
+            typeName = typeName[3..];
+        }
+
+        var spacedName = Regex.Replace(typeName, "([a-z0-9])([A-Z])", "$1 $2");
+        var parts = spacedName.Split(' ', StringSplitOptions.RemoveEmptyEntries).ToList();
+
+        if (!parts.Any())
+        {
+            return "Items";
+        }
+
+        var lastIndex = parts.Count - 1;
+        parts[lastIndex] = PluralizeWord(parts[lastIndex]);
+
+        return string.Join(" ", parts);
+    }
+
+    private static string PluralizeWord(string word)
+    {
+        if (string.IsNullOrWhiteSpace(word))
+        {
+            return "Items";
+        }
+
+        if (word.EndsWith("y", StringComparison.OrdinalIgnoreCase) && word.Length > 1 && !"aeiou".Contains(char.ToLowerInvariant(word[^2])))
+        {
+            return word[..^1] + "ies";
+        }
+
+        if (word.EndsWith("s", StringComparison.OrdinalIgnoreCase)
+            || word.EndsWith("x", StringComparison.OrdinalIgnoreCase)
+            || word.EndsWith("z", StringComparison.OrdinalIgnoreCase)
+            || word.EndsWith("ch", StringComparison.OrdinalIgnoreCase)
+            || word.EndsWith("sh", StringComparison.OrdinalIgnoreCase))
+        {
+            return word + "es";
+        }
+
+        return word + "s";
     }
 }
 

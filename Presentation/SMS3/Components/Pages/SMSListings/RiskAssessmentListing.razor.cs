@@ -462,8 +462,8 @@ public partial class RiskAssessmentListing : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
-                args.Skip, args.Top, args.OrderBy, args.Filter);
+            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filters={FiltersCount}", 
+                args.Skip, args.Top, args.OrderBy, args.Filters?.Count() ?? 0);
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error loading data: {ex.Message}"));
             
             // Fallback to show all data without filtering/sorting
@@ -493,25 +493,7 @@ public partial class RiskAssessmentListing : ComponentBase
     {
         try
         {
-            _logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
-                args.Filter, args.Filters?.Count() ?? 0);
-
-            // Handle simple string filter (when user types in the general filter)
-            if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
-            {
-                var filterValue = args.Filter.ToLower();
-                _logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
-                
-                query = query.Where(a => 
-                    (!string.IsNullOrEmpty(a.Code) && a.Code.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(a.Name) && a.Name.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(a.Description) && a.Description.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(a.ReportCode) && a.ReportCode.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(a.HazardCode) && a.HazardCode.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(a.LeadAssessorId) && a.LeadAssessorId.ToLower().Contains(filterValue))
-                );
-                return query;
-            }
+            _logger.LogInformation("ApplyFiltering called with Filters count: {FilterCount}", args.Filters?.Count() ?? 0);
 
             // Handle advanced column-specific filters
             if (args.Filters is not null && args.Filters.Any())
@@ -590,8 +572,8 @@ public partial class RiskAssessmentListing : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
-                args.Filter, args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
+            _logger.LogError(ex, "Error applying filters - Filters: {@Filters}", 
+                args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
             return query; // Return unfiltered query if filtering fails
         }
     }

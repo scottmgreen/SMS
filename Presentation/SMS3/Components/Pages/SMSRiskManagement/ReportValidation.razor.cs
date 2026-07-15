@@ -724,18 +724,95 @@ public partial class ReportValidation : ComponentBase
         if (string.IsNullOrEmpty(_reportHazard?.Code))
             return null;
 
-        var expectedAssessmentType = _riskRegistryOnly ? RiskAssessmentType.RiskRegistryOnly : RiskAssessmentType.Technical;
-
         var query = new GetAllRiskAssessmentsQuery();
         var result = await _mediator.SendAsync(query, CancellationToken.None);
 
         if (!result.IsSuccess || result.Value is null || result.Value.Count == 0)
             return null;
 
-        return result.Value.FirstOrDefault(ra => 
-            !string.IsNullOrWhiteSpace(ra.HazardCode) && 
-            ra.HazardCode.Equals(_reportHazard.Code, StringComparison.OrdinalIgnoreCase) &&
-            ra.AssessmentType == expectedAssessmentType);
+        var existingAssessment = result.Value
+            .Where(ra => !string.IsNullOrWhiteSpace(ra.HazardCode)
+                         && ra.HazardCode.Equals(_reportHazard.Code, StringComparison.OrdinalIgnoreCase))
+            .OrderByDescending(ra => ra.UpdatedDate ?? ra.CreatedDate ?? DateTime.MinValue)
+            .FirstOrDefault();
+
+        if (existingAssessment is null)
+        {
+            return null;
+        }
+
+        if (!_riskRegistryOnly && existingAssessment.AssessmentType == RiskAssessmentType.RiskRegistryOnly)
+        {
+            _logger.LogInformation(
+                "Converting existing RiskAssessment {RiskAssessmentCode} from {CurrentType} to {TargetType} for hazard {HazardCode}",
+                existingAssessment.Code,
+                existingAssessment.AssessmentType.Value,
+                RiskAssessmentType.Technical.Value,
+                _reportHazard.Code);
+
+            existingAssessment.AssessmentType = RiskAssessmentType.Technical;
+            existingAssessment.CurrentStep = 1;
+            existingAssessment.Stage = RiskAssessmentStage.DescribingSystem;
+            existingAssessment.Status = RiskAssessmentStatus.AssessmentCreate;
+            existingAssessment.CompletedDate = null;
+            existingAssessment.CompletedBy = null;
+            if (!string.IsNullOrWhiteSpace(_leadAssessor))
+            {
+                existingAssessment.LeadAssessorId = _leadAssessor;
+            }
+
+            existingAssessment.UpdatedBy = _currentUserService?.UserDisplayName ?? "SYSTEM";
+            existingAssessment.UpdatedDate = DateTime.UtcNow;
+
+            var updateCmd = new UpdateRiskAssessmentCommand(existingAssessment);
+            var updateResult = await _mediator.SendAsync(updateCmd, CancellationToken.None);
+            if (updateResult.IsSuccess && updateResult.Value is not null)
+            {
+                return updateResult.Value;
+            }
+
+            _logger.LogWarning(
+                "Failed to convert existing RiskAssessment {RiskAssessmentCode} to Technical. Reusing existing assessment without type change. Error: {Error}",
+                existingAssessment.Code,
+                updateResult.Error?.Message ?? "Unknown error");
+        }
+        else if (_riskRegistryOnly && existingAssessment.AssessmentType == RiskAssessmentType.Technical)
+        {
+            _logger.LogInformation(
+                "Converting existing RiskAssessment {RiskAssessmentCode} from {CurrentType} to {TargetType} for hazard {HazardCode}",
+                existingAssessment.Code,
+                existingAssessment.AssessmentType.Value,
+                RiskAssessmentType.RiskRegistryOnly.Value,
+                _reportHazard.Code);
+
+            existingAssessment.AssessmentType = RiskAssessmentType.RiskRegistryOnly;
+            existingAssessment.CurrentStep = 4;
+            existingAssessment.Stage = RiskAssessmentStage.AssessingRisk;
+            existingAssessment.Status = RiskAssessmentStatus.AssessmentUnderway;
+            existingAssessment.CompletedDate = null;
+            existingAssessment.CompletedBy = null;
+            if (!string.IsNullOrWhiteSpace(_leadAssessor))
+            {
+                existingAssessment.LeadAssessorId = _leadAssessor;
+            }
+
+            existingAssessment.UpdatedBy = _currentUserService?.UserDisplayName ?? "SYSTEM";
+            existingAssessment.UpdatedDate = DateTime.UtcNow;
+
+            var updateCmd = new UpdateRiskAssessmentCommand(existingAssessment);
+            var updateResult = await _mediator.SendAsync(updateCmd, CancellationToken.None);
+            if (updateResult.IsSuccess && updateResult.Value is not null)
+            {
+                return updateResult.Value;
+            }
+
+            _logger.LogWarning(
+                "Failed to convert existing RiskAssessment {RiskAssessmentCode} to RiskRegistryOnly. Reusing existing assessment without type change. Error: {Error}",
+                existingAssessment.Code,
+                updateResult.Error?.Message ?? "Unknown error");
+        }
+
+        return existingAssessment;
     }
 
     /// <summary>

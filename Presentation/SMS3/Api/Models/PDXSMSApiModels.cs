@@ -198,7 +198,9 @@ namespace SMS3.Api.Models;
         public string ContactCell { get; init; } = string.Empty;
         public string ContactEmail { get; init; } = string.Empty;
 
-        public string ReportValidationCode { get; init; } = string.Empty;
+        public string ContactCompany { get; init; } = string.Empty;
+
+    public string ReportValidationCode { get; init; } = string.Empty;
         public string ReportValidationDecision { get; init; } = string.Empty;
         public string ReportValidationDecisionDisplay { get; init; } = string.Empty;
         public DateTime? ReportValidationDate { get; init; }

@@ -24,6 +24,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     [Inject] private ILogger<AddHazardDialog>? _logger { get; set; }
 
     // Form properties
+    private string NewHazardTitle { get; set; } = string.Empty;
     private string NewHazardDescription { get; set; } = string.Empty;
     private string NewHazardCategory { get; set; } = string.Empty;
     private string NewHazardType { get; set; } = string.Empty;
@@ -65,12 +66,17 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
     // Form validation - UPDATED to be more lenient for debugging
     private bool IsFormValid =>
+        !string.IsNullOrWhiteSpace(NewHazardTitle?.Trim()) &&
         !string.IsNullOrWhiteSpace(NewHazardDescription?.Trim()) &&
         NewHazardDescription.Trim().Length >= 10 &&
         !string.IsNullOrWhiteSpace(NewHazardCategory) &&
         !string.Equals(NewHazardCategory, HazardCategory.Default.Value, StringComparison.OrdinalIgnoreCase) &&
         !string.IsNullOrWhiteSpace(NewHazardType) &&
         !string.Equals(NewHazardType, HazardType.Default.Value, StringComparison.OrdinalIgnoreCase) && HasGeoLocation && !IsSubmitting;
+
+    private int HazardTitleCharacterCount => NewHazardTitle?.Length ?? 0;
+    private bool IsHazardTitleMissing => string.IsNullOrWhiteSpace(NewHazardTitle?.Trim());
+    private bool IsHazardTitleValidationAlert => IsHazardTitleMissing;
 
     private bool IsHazardCategoryDefault =>
         string.IsNullOrWhiteSpace(NewHazardCategory) ||
@@ -163,6 +169,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         _logger?.LogInformation("Populating form for editing hazard: {HazardCode}", EditingHazard.Code);
 
         // Populate basic fields
+        NewHazardTitle = EditingHazard.HazardTitle ?? string.Empty;
         NewHazardDescription = EditingHazard.Description ?? string.Empty;
         NewHazardCategory = EditingHazard.HazardCategory ?? string.Empty;
         NewHazardType = EditingHazard.HazardType ?? string.Empty;
@@ -393,6 +400,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
         // Update the existing hazard properties
         EditingHazard.Name = NewHazardDescription.Trim();
+        EditingHazard.HazardTitle = NewHazardTitle.Trim();
         EditingHazard.Description = NewHazardDescription.Trim();
         EditingHazard.HazardCategory = NewHazardCategory;
         EditingHazard.HazardType = NewHazardType;
@@ -445,6 +453,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         // Set properties using the selected category and type
         hazard.Code = "HZ-0000";
         hazard.Name = $"{NewHazardCategory} - {NewHazardType}";
+        hazard.HazardTitle = NewHazardTitle.Trim();
         hazard.Description = NewHazardDescription?.Trim() ?? "";
         hazard.HazardCategory = NewHazardCategory;
         hazard.HazardType = NewHazardType;
@@ -646,6 +655,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
 
     private void ResetForm()
     {
+        NewHazardTitle = string.Empty;
         NewHazardDescription = string.Empty;
         NewHazardCategory = string.Empty;
         NewHazardType = string.Empty;

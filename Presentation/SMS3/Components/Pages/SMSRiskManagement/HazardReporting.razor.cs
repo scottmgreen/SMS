@@ -1,23 +1,19 @@
 
+using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.JSInterop;
-using System.Net;
 
-using SMS_Application.Interfaces;
-using SMS_Application.Commands;
-using SMS_Application.Queries;
 using SMS_Application.Common;
-using SMS_Domain.Entities;
-using SMS_Domain.Events;
-using SMS_Domain.Errors;
 
-using SMS_Shared.Configuration;
+using SMS_Domain.Errors;
+using SMS_Domain.Events;
 
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Pages.SMSSystem.Components;
 using SMS3.Components.Pages.SMSSystem.Models;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
-using Microsoft.AspNetCore.WebUtilities;
+
+using System.Net;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -751,6 +747,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 ReportContactName = EditingReport?.ReportContactName ?? "",
                 ReportContactCell = EditingReport?.ReportContactCell ?? "",
                 ReportContactEmail = EditingReport?.ReportContactEmail ?? "",
+                ReportContactCompany = EditingReport?.ReportContactCompany ?? "",
                 IsAnonymous = EditingReport?.IsAnonymous ?? false
             };
 

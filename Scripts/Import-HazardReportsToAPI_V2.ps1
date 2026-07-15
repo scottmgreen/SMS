@@ -229,11 +229,11 @@ function Create-ApiRequest {
         reportSubmittedDate = $submittedDate
         reportSubmittingDepartment = "EXTERNAL_API_SOURCE"
         reportSubmittingDepartmentJobFunction = "EXTERNAL_API_SOURCE"
-        reportIsAnonymous = $true
-        reportContactName = ""
-        reportContactCell = ""
-        reportContactEmail = ""
-        reportContactCompany = ""
+        reportIsAnonymous = $false
+        reportContactName = "Scott Green"
+        reportContactCell = "36082398359"
+        reportContactEmail = "scott.green@portofportland.com"
+        reportContactCompany = "Port Of Portland"
         locationDescription = $locationDescription
         locationLatitude = [decimal]::Round([decimal]$lat, 8)
         locationLongitude = [decimal]::Round([decimal]$lon, 8)

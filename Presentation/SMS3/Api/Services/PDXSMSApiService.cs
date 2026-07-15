@@ -124,6 +124,7 @@ namespace SMS3.Api.Services
                     ContactName = report?.ReportContactName ?? string.Empty,
                     ContactCell = report?.ReportContactCell ?? string.Empty,
                     ContactEmail = report?.ReportContactEmail ?? string.Empty,
+                    ContactCompany = report?.ReportContactCompany ?? string.Empty,
                     ReportValidationCode = reportValidation?.Code ?? string.Empty,
                     ReportValidationDecision = reportValidation?.ValidationDecision ?? string.Empty,
                     ReportValidationDecisionDisplay = validationDecisionDisplay,
@@ -162,7 +163,7 @@ namespace SMS3.Api.Services
             }
         }
 
-        public async Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsync(
+        public async Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsyncV1(
             PDXSMSReportApiRequestV1 request, 
             HttpContext httpContext)
         {
@@ -283,6 +284,7 @@ namespace SMS3.Api.Services
                     ReportContactName = request.ReportContactName ?? string.Empty,
                     ReportContactCell = request.ReportContactCell ?? string.Empty,
                     ReportContactEmail = request.ReportContactEmail ?? string.Empty,
+                    ReportContactCompany = request.ReportContactCompany ?? string.Empty,
                     Stage = "INITIAL",
                     Status = ReportStatus.NeedsValidation,
                     CreatedBy = "EXTERNAL_API_SOURCE",
@@ -566,6 +568,7 @@ namespace SMS3.Api.Services
                 ReportContactName = request.ReportContactName ?? string.Empty,
                 ReportContactCell = request.ReportContactCell ?? string.Empty,
                 ReportContactEmail = request.ReportContactEmail ?? string.Empty,
+                ReportContactCompany = request.ReportContactCompany ?? string.Empty,
                 Stage = "INITIAL",
                 Status = ReportStatus.NeedsValidation,
                 CreatedBy = "EXTERNAL_API_SOURCE",

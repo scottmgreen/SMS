@@ -209,7 +209,7 @@
                                 <RadzenButton Text="@GetFinalActionButtonText()" 
                                              Icon="@GetFinalActionButtonIcon()" 
                                              ButtonStyle="ButtonStyle.Success"
-                                             Disabled="IsSaving"
+                                             Disabled="@IsFinalActionDisabled()"
                                              Click="@NextStep" />
                             }
                             else
@@ -217,7 +217,7 @@
                                 <RadzenButton Text="@GetFinalActionButtonText()" 
                                              Icon="@GetFinalActionButtonIcon()" 
                                              ButtonStyle="ButtonStyle.Primary"
-                                             Disabled="IsSaving"
+                                             Disabled="@IsFinalActionDisabled()"
                                              Click="@SubmitAssessment" />
                             }
                         }

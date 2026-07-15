@@ -182,20 +182,15 @@ public partial class MitigationListing : ComponentBase
             _mitigationModels = _allMitigationModels;
             _totalCount = _allMitigationModels.Count();
 
-            // Show success notification if we have data
+            // Show success/info notification based on loaded row count
             if (_totalCount > 0)
             {
                 await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {_totalCount} mitigations"));
-
-                if (_totalCount == 0)
-                {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No mitigations found"));
-                }
             }
             else
             {
-                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load mitigations"));
-                _logger.LogError("Error loading mitigations");
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No mitigations found"));
+                _logger.LogInformation("No mitigations found for current listing context");
             }
         }
         catch (Exception ex)
@@ -217,8 +212,8 @@ public partial class MitigationListing : ComponentBase
             _isLoading = true;
             StateHasChanged();
 
-            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
-                args.Skip, args.Top, args.OrderBy, args.Filter);
+            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filters: {FiltersCount}", 
+                args.Skip, args.Top, args.OrderBy, args.Filters?.Count() ?? 0);
 
             // If we don't have all mitigation models yet, load them first
             if (_allMitigationModels is null || !_allMitigationModels.Any())
@@ -233,9 +228,8 @@ public partial class MitigationListing : ComponentBase
             _logger.LogInformation("Starting with {Count} total mitigation models", query.Count());
 
             // Apply filtering
-            if (!string.IsNullOrEmpty(args.Filter))
+            if (args.Filters is not null && args.Filters.Any())
             {
-                _logger.LogInformation("Applying filter: {Filter}", args.Filter);
                 query = ApplyFiltering(query, args);
                 _logger.LogInformation("After filtering: {Count} mitigations", query.Count());
             }
@@ -278,8 +272,8 @@ public partial class MitigationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
-                args.Skip, args.Top, args.OrderBy, args.Filter);
+            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filters={FiltersCount}", 
+                args.Skip, args.Top, args.OrderBy, args.Filters?.Count() ?? 0);
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error loading data: {ex.Message}"));
             
             // Fallback to show all data without filtering/sorting
@@ -310,19 +304,6 @@ public partial class MitigationListing : ComponentBase
     {
         try
         {
-            // Handle simple string filter (when user types in the general filter)
-            if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
-            {
-                var filterValue = args.Filter.ToLower();
-                query = query.Where(m => 
-                    (!string.IsNullOrEmpty(m.Code) && m.Code.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(m.Description) && m.Description.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(m.HazardCode) && m.HazardCode.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(m.ReportCode) && m.ReportCode.ToLower().Contains(filterValue))
-                );
-                return query;
-            }
-
             // Handle advanced column-specific filters
             if (args.Filters is not null && args.Filters.Any())
             {

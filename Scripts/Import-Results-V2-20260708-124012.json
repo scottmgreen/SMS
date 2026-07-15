@@ -1,0 +1,1235 @@
+﻿[
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3251",
+        "HazardId":  "HZ-2026-036",
+        "Row":  1,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3251",
+                            "hazardId":  "HZ-2026-4078",
+                            "reportId":  "HR-2026-3772",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:36.6048129Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3251",
+                            "processedFiles":  1,
+                            "failedFiles":  0
+                        },
+        "PinConcat":  "052720264000",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-05-27T17:28:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.5887,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.595,
+                           "locationDescription":  "Bag Road or Baggage Make-Up Area",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+                                                     "base64Content":  null,
+                                                     "fileUri":  "https://contoso-sms.blob.core.windows.net/pre-submit/2026/07/02/9b4f7f5d-3c83-4d2a-9e17-2f0a8e3d4d91/2f8c0b57-02a0-4af6-bf55-7f4f6b3f1301-photo.jpg",
+                                                     "contentType":  "image/jpeg",
+                                                     "fileName":  "2f8c0b57-02a0-4af6-bf55-7f4f6b3f1301-photo.jpg"
+                                                 },
+                           "reportSubmittedDate":  "2026-05-27T17:37:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Ran stop sign, exceeded speed limit with electric tug."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3252",
+        "HazardId":  "HZ-2026-035",
+        "Row":  2,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3252",
+                            "hazardId":  "HZ-2026-4079",
+                            "reportId":  "HR-2026-3773",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:36.6876632Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3252",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "052620264476",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-05-22T16:42:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59091068,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59908915,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-05-26T16:46:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "We\u0027ve had 2 aircraft cutoff this week and identified that the stopbar is placed too far back from making the turn to cross over to D Gates. Exploring the idea of moving it closer."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3253",
+        "HazardId":  "HZ-2026-034",
+        "Row":  3,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3253",
+                            "hazardId":  "HZ-2026-4080",
+                            "reportId":  "HR-2026-3774",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:38.7587479Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3253",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "052320263202",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-05-23T14:39:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.58925598,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59781926,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-05-23T14:42:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "There is a rat that was seen running around in the classroom."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3254",
+        "HazardId":  "HZ-2026-033",
+        "Row":  4,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3254",
+                            "hazardId":  "HZ-2026-4081",
+                            "reportId":  "HR-2026-3775",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:38.8163697Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3254",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "052220264735",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-05-23T01:42:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59058784,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59476185,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-05-23T01:55:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Choice Aero called again to let me know of McGee leaving equipment behind and a FOD bucket overflowing at ramp D4. This is a common occurrence at least once a week just at this gate. Will be issuing a citation. More probably for tracking but it’s a huge unnecessary hassle."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3255",
+        "HazardId":  "HZ-2026-032",
+        "Row":  5,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3255",
+                            "hazardId":  "HZ-2026-4082",
+                            "reportId":  "HR-2026-3776",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:40.8817197Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3255",
+                            "processedFiles":  1,
+                            "failedFiles":  0
+                        },
+        "PinConcat":  "051920263671",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-05-20T02:01:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.5887,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.595,
+                           "locationDescription":  "Bag Road or Baggage Make-Up Area",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+                                                     "base64Content":  null,
+                                                     "fileUri":  "https://contoso-sms.blob.core.windows.net/pre-submit/2026/07/02/9b4f7f5d-3c83-4d2a-9e17-2f0a8e3d4d91/8c2b5b84-d7a4-4a9a-b9ea-6f0e1f9bb6d2-report.pdf",
+                                                     "contentType":  "application/pdf",
+                                                     "fileName":  "8c2b5b84-d7a4-4a9a-b9ea-6f0e1f9bb6d2-report.pdf"
+                                                 },
+                           "reportSubmittedDate":  "2026-05-20T02:04:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Alaska is blocking the pedestrian walkway with a cart. This happens often."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3256",
+        "HazardId":  "HZ-2026-031",
+        "Row":  6,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3256",
+                            "hazardId":  "HZ-2026-4083",
+                            "reportId":  "HR-2026-3777",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:40.9213262Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3256",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "051720263300",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-05-17T04:30:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.58725990,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59585083,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-05-17T12:06:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Delta aircraft maintenance personnel had a oxygen cart trailer come off the hitch of their truck when driving over a steel plate on the VSR. This incident was recorded in Veoci log at the following link. https://veoci.com/v/c/25982/form/7291364/entry/1737298409 This was also caught on camera T4_2003 \u0026 T4_2004 at time stamp 21:27:30."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3257",
+        "HazardId":  "HZ-2026-030",
+        "Row":  7,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3257",
+                            "hazardId":  "HZ-2026-4084",
+                            "reportId":  "HR-2026-3778",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:43.0470337Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3257",
+                            "processedFiles":  1,
+                            "failedFiles":  0
+                        },
+        "PinConcat":  "051420261731",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-14T21:26:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.5887,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.595,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+                                                     "base64Content":  null,
+                                                     "fileUri":  "https://contoso-sms.blob.core.windows.net/intake/0f2b3a9c-7e34-45c0-bd96-8a4a9f73f3d8/a7f4a4f9-17d3-44d7-b2d3-c7036b478f7a-video.mp4",
+                                                     "contentType":  "video/mp4",
+                                                     "fileName":  "a7f4a4f9-17d3-44d7-b2d3-c7036b478f7a-video.mp4"
+                                                 },
+                           "reportSubmittedDate":  "2026-05-14T21:34:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "25 feet of the curb on the road next to the drainage ditch is falling off. Someone is going to drive their car off in it if it continues into the drainage state"
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3258",
+        "HazardId":  "HZ-2026-029",
+        "Row":  8,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3258",
+                            "hazardId":  "HZ-2026-4085",
+                            "reportId":  "HR-2026-3779",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:43.090411Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3258",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "051220261133",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-05-12T17:53:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.5887,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.595,
+                           "locationDescription":  "Bag Road or Baggage Make-Up Area",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-05-12T18:04:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Driving past delta’s bag well and a delta agent started pulling out as I was approaching and he was looking at me as I was driving in my lane and kept pulling out while staring at me the whole time and did not stop to let me pass. As we exit out of the tunnel by D4 this agent continued to look back at me and stare at me while turning corners. Drove through the tunnel breeze way by D8 North bound and he turned into their gate area to the left and still continued to stare at me. To me he knew he had done wrong. He should have stopped. He was driving tug 171113 pulling 2 carts last cart number was 111282. I have pictures but they won’t go through."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3259",
+        "HazardId":  "HZ-2026-028",
+        "Row":  9,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3259",
+                            "hazardId":  "HZ-2026-4086",
+                            "reportId":  "HR-2026-3780",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:45.1812335Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3259",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "05072026124",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-05-07T20:25:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.5887,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.595,
+                           "locationDescription":  "Bag Road or Baggage Make-Up Area",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-05-07T20:27:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "AS driver texting while driving. Cart number 10401. About 1:24 pm"
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3260",
+        "HazardId":  "HZ-2026-027",
+        "Row":  10,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3260",
+                            "hazardId":  "HZ-2026-4087",
+                            "reportId":  "HR-2026-3781",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:45.2231548Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3260",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "050620262173",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-02-18T22:13:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.58979801,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.60020137,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-05-07T02:12:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "I am formally escalating a safety concern raised by American Airlines Safety Chair regarding repeated operational risk exposure at Gate C21. Over the past couple of days, during active pushback operations on AA2496 and AA2798, roadway vehicles proceeded past aircraft while pushback was in progress. The recurring nature of these events indicates elevated exposure that warrants coordinated intervention. Key Risk Factors Identified: •\tVisibility constraints caused by equipment staging supporting widebody operations at C23 •\tRoadway curvature limiting driver sightlines and reaction time •\tWingwalkers positioned in accordance with our ROM pushback requirements but not readily visible to roadway traffic •\tRepeated encroachment into the established aircraft safety envelope As outlined in our JCBA, both the Company and the Union share a responsibility to cooperate fully in furthering the safety of air transportation operations . This concern has been formally elevated by Union safety leadership, and it is appropriate that we address it collaboratively and proactively. I am requesting a joint safety review including: •\tAmerican Airlines Safety and Station Leadership •\tPort of Portland Safety •\tAlaska Airlines operational leadership •\tBusiness partners (including McGee and Sky Chefs) •\tTWU-IAM Union Safety representation Proposed focus areas: •\tEquipment staging boundaries at C23 during widebody operations •\tTemporary or permanent roadway speed mitigation at the end of Concourse C •\tEnhanced hazard recognition controls during pushback operations •\tClear delineation and enforcement of safety envelope protection We have avoided a serious event to date. The pattern, however, suggests increasing risk exposure if mitigation is not implemented. The Leadership Team and I are available to coordinate an in-person walkthrough to review sightline staging practices, and roadway dynamics in real time. Thank you in advance for your partnership in addressing this before an incident occurs."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3261",
+        "HazardId":  "HZ-2026-026",
+        "Row":  11,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3261",
+                            "hazardId":  "HZ-2026-4088",
+                            "reportId":  "HR-2026-3782",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:47.3439767Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3261",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "05022026723",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-05-01T10:15:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.5887,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.595,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-05-02T21:41:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "I’m an airline employee in Portland. I have to access an office on the bottom floor in Portland through the C8 elevator. On Friday I went down the elevator to find the strong smell of rotten food, broken pallets and no clear paths. This is a hazard and will be contacting the fire marshal if this place is not cleaned up. Employees have no clear access to the to offices. This hallway should be not be used as a storage area."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3262",
+        "HazardId":  "HZ-2026-025",
+        "Row":  12,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3262",
+                            "hazardId":  "HZ-2026-4089",
+                            "reportId":  "HR-2026-3783",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:47.3897038Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3262",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "042920262729",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-30T00:17:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.58021106,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.60651663,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-30T00:45:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Port fire called AF1 and was concerned about the parking of the carts on the airfield inside of gate SA 45. Upon review it is indeed a restrictive area for port fire and for any vehicle to get around the carts that are parked in what looks like an apron for spot 11 at south cargo. There is no painted line for parking so they have them spread across the ramp area."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3263",
+        "HazardId":  "HZ-2026-024",
+        "Row":  13,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3263",
+                            "hazardId":  "HZ-2026-4090",
+                            "reportId":  "HR-2026-3784",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:49.438659Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3263",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "04292026863",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-29T00:55:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.5887,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.595,
+                           "locationDescription":  "Not Provided",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-29T15:50:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "I got a call from Doug Kohler, a manager with UA, and he had concern with the chairs at the south end of the bag road. On camera T1_150 at 17:55:10 on April 28 you can see the people in the chairs and the United folks driving the tug. He said per his employees the people sitting in the chairs looked right at him almost daring him to hit them. I can’t say that is accurate, but we have heard that same accusation in the past. It doesn’t appear that they made any attempt to move over as the tug went by. I’m fairly certain this is McGee. As you know this had been a thing with them and the chairs for some time. Doug didn’t call me until 2254 so there was no opportunity to go and talk to the folks in the tunnel. I briefly explained what SMS is and that I would forward the concern to you. It’s bad enough to have the chairs but now they are sitting on the west wall where there is absolutely no room. Side note as I was looking on the cameras there is a bunch of junk between carousel 4 and 5. A couple of chairs and a random backpack and just junk. To me the tunnel is not a break area the same as the stairways are supposed to be used as break areas. Leaving it for you as the complaint came to me and I’m just passing it on…Thanks!"
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3264",
+        "HazardId":  "HZ-2026-023",
+        "Row":  14,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3264",
+                            "hazardId":  "HZ-2026-4091",
+                            "reportId":  "HR-2026-3785",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:49.4966473Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3264",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "042520264563",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-25T20:06:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.5887,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.595,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-25T20:17:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "The ULD transport carts are consistently parked outside of the marked area. The tenant is asked to move them back into the area, but after a period of time, the carts continue to encroach towards the VSR zipper divider. This is impacting the bus driver’s ability to safely navigate the VSR around that corner."
+                       }
+    },
+    {
+        "Message":  "Exception processing row 15 : The remote server returned an error: (400) Bad Request.",
+        "HazardId":  "HZ-2026-022",
+        "Row":  15,
+        "Success":  false,
+        "ApiResponse":  null,
+        "PinConcat":  "042120263659",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-21T21:36:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.57823235,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.57708073,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-21T21:42:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "I wanted to ask if anyone has brought up possibly moving the shipping containers at the runway far extended overrun area of runway 10-R further out of the path? While I understand that the current configuration is likely ICAO compliment, it does not cost us “anything” to keep the area beyond the required overrun clean is my thought. With our runway 10s being our normal poor weather season config, it only takes once with an unstable approach with a sudden tail wind on final for this to pay off. I think of the recent Jeju crash often when I drive past this and think of what if something similar happened here. In lieu of having EMAS, you never really know if it happens once. v/r -Garrett Vrieze (does not need to be confidential, this site only offers anonymous or confidential)"
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3265",
+        "HazardId":  "HZ-2026-021",
+        "Row":  16,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3265",
+                            "hazardId":  "HZ-2026-4092",
+                            "reportId":  "HR-2026-3786",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:51.6280749Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3265",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "041920264070",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-19T03:10:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59163330,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59691566,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-19T09:54:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "While Airfield 1 was conducting the Ramp inspection, it was observed several Alaska planes backed up in sequence on taxiway T. Approaching Gate D14, Airfield 1 noticed the Ramp crew attempting to reposition the jetway for the arriving Aircraft. In doing so it was observed that they were doing this with the cable down and on the ground. Pre-staging the gate in this manner and attempting to drive the jetway with the cable down, creates a risk of the jetway, running over the cable or causing other abrasive damage. In addition, it also runs the risk of dislodging the cable should the jetway be moving while the cable cannot."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3266",
+        "HazardId":  "HZ-2026-020",
+        "Row":  17,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3266",
+                            "hazardId":  "HZ-2026-4093",
+                            "reportId":  "HR-2026-3787",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:53.6957487Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3266",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "041620261123",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-16T20:43:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59187872,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59680586,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-16T20:50:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "The bogey box for D15 is too small, resulting in the PBB operating beyond the box during movement between the aircraft and stow positions. This has resulted in multiple incidents where portions of the PBB (i.e. slide or stairs) impact GSE parked in the area (adjacent to the bogey box). DAL requested the bogey box be enlarged last year. This work was not complete and since that time, we\u0027ve had multiple incidents."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3267",
+        "HazardId":  "HZ-2026-019",
+        "Row":  18,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3267",
+                            "hazardId":  "HZ-2026-4094",
+                            "reportId":  "HR-2026-3788",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:53.7384479Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3267",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "041620262807",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-16T18:30:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59165115,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59691298,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-16T19:54:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "While i was on the ramp at D15, I observed the D14 being pulled-back from an AS aircraft and the D14 PBB entered the aircraft envelope for D15. Port has been aware of the tight spacing between these two gates, but I was not aware that the PBB would enter the D15 envelope when disconnecting from an aircraft and moving to the stow position. It is not clear whether this was due to operator technique or if it\u0027s unavoidable due to the gate layout (D14 and/or D15). I\u0027ve attached a photo showing the D14 PBB location relative to the D15 envelop when stowed."
+                       }
+    },
+    {
+        "Message":  "Exception processing row 19 : The remote server returned an error: (400) Bad Request.",
+        "HazardId":  "HZ-2026-017",
+        "Row":  19,
+        "Success":  false,
+        "ApiResponse":  null,
+        "PinConcat":  "041520262976",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-16T00:25:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.58703465,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59481281,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-16T00:28:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Black foam pipe insulation, aprox 6” long, clearly washed onto surface of Tango by water channel flowing from work site."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3268",
+        "HazardId":  "HZ-2026-016",
+        "Row":  20,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3268",
+                            "hazardId":  "HZ-2026-4095",
+                            "reportId":  "HR-2026-3789",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:55.8874145Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3268",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "041320262205",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-13T15:36:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.58110747,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.57936329,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-13T21:06:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "At approximately 0830 Scott Huntley with LSG Sky Chefs exited the VSR at the east end of the southeast cargo ramp. After exiting the pavement Mr. Huntley struck a sign."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3269",
+        "HazardId":  "HZ-2026-015",
+        "Row":  21,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3269",
+                            "hazardId":  "HZ-2026-4096",
+                            "reportId":  "HR-2026-3790",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:57.9355337Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3269",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "041320264210",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-13T11:30:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.58055648,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.58420467,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-13T13:01:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "At 0430 AF1 was notified by Tower that there was a white transit van on the runway 28L and it was headed towards maintenance off of 28L at C8. When I was on the VSR trying to find the van, tower notified me to turn into the sky chef\u0027s area. Once I got into the sky chefs parking, I was approached by Teresa. At that point I asked Teresa if she was the one who was driving the van that was on 28L and she confirmed that it was her and that she got lost and didn\u0027t know where she was at. She apologizes several times and I asked her if she was ok and if there was anything that made her feel confused. She told me that it was the rain and lighting that got here confused where she was at. I notified her and her supervisor that her driving privileges on the airfield were suspended until further notice"
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3270",
+        "HazardId":  "HZ-2026-014",
+        "Row":  22,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3270",
+                            "hazardId":  "HZ-2026-4097",
+                            "reportId":  "HR-2026-3791",
+                            "reportSubmissionDateTime":  "2026-07-08T19:39:57.9797971Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3270",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "041220263442",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-12T17:11:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.5887,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.595,
+                           "locationDescription":  "Bag Road or Baggage Make-Up Area",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-12T17:11:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "I was honking and turning the cart around before Alaska/Horizon Tug driver turned the corner in a fast speed. He was impatience and I was rushing to turn. I backed up twice becuase he moved forward after barely stopping to even give me a chance to turn. I was concerned I was going to get hit as he kept moving forward. This Happened at around 0837 to 0840 am on April12th Sunday"
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3271",
+        "HazardId":  "HZ-2026-013",
+        "Row":  23,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3271",
+                            "hazardId":  "HZ-2026-4098",
+                            "reportId":  "HR-2026-3792",
+                            "reportSubmissionDateTime":  "2026-07-08T19:40:00.0634389Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3271",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "041220261891",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-12T17:05:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.5887,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.595,
+                           "locationDescription":  "Bag Road or Baggage Make-Up Area",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-12T17:05:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "I was honking and turning the cart around before Alaska/Horizon Tug driver turned the corner in a fast speed. He was impatience and I was rushing to turn. I backed up twice becuase he moved forward after barely stopping to even give me a chance to turn. I was concerned I was going to get hit as he kept moving forward."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3272",
+        "HazardId":  "HZ-2026-012",
+        "Row":  24,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3272",
+                            "hazardId":  "HZ-2026-4099",
+                            "reportId":  "HR-2026-3793",
+                            "reportSubmissionDateTime":  "2026-07-08T19:40:00.1082086Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3272",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "041120262667",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-11T18:34:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.58931934,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59842295,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-11T18:34:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "The power cord on the jetway for gate C15 is stowed yet resting on the ground."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3273",
+        "HazardId":  "HZ-2026-011",
+        "Row":  25,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3273",
+                            "hazardId":  "HZ-2026-4100",
+                            "reportId":  "HR-2026-3794",
+                            "reportSubmissionDateTime":  "2026-07-08T19:40:02.1708581Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3273",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "041020262728",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-10T23:26:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59000927,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59549007,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-10T23:30:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Half of a broken black and silver pen with metal components. Note: phone images not supported. Cannot attch."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3274",
+        "HazardId":  "HZ-2026-010",
+        "Row":  26,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3274",
+                            "hazardId":  "HZ-2026-4101",
+                            "reportId":  "HR-2026-3795",
+                            "reportSubmissionDateTime":  "2026-07-08T19:40:02.2210424Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3274",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "040920262271",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-09T20:30:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59018711,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.60009408,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-09T20:30:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "At this flex gate, the safety envelope markings currently show a solid line for narrow-body aircraft and a dotted line for widebody aircraft. This setup has led to confusion among ground handlers, with some positioning equipment outside the narrow-body safety line when a widebody is expected. This inconsistency has already resulted in damage to both an aircraft and a belt loader. To eliminate ambiguity and improve safety, it is recommended to remove the narrow-body safety line and designate the widebody envelope as the single solid reference line. This approach ensures that all ground equipment remains clear of the largest required safety envelope, regardless of whether a narrow-body or widebody aircraft is assigned to the gate. Implementing this change will standardize positioning practices and reduce the risk of future incidents. Sincerely, Danger"
+                       }
+    },
+    {
+        "Message":  "Exception processing row 27 : The remote server returned an error: (400) Bad Request.",
+        "HazardId":  "HZ-2026-009",
+        "Row":  27,
+        "Success":  false,
+        "ApiResponse":  null,
+        "PinConcat":  "04092026918",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-09T19:45:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59038044,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59511653,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-09T19:45:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Power cable on gate D6 has 2 loops unattached. The mechanism is in the “up” position and the rest of the cable is on the ground"
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3275",
+        "HazardId":  "HZ-2026-008",
+        "Row":  28,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3275",
+                            "hazardId":  "HZ-2026-4102",
+                            "reportId":  "HR-2026-3796",
+                            "reportSubmissionDateTime":  "2026-07-08T19:40:04.3832482Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3275",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "040920263617",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-09T17:18:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.58985207,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59433270,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-09T17:18:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Was taking the Fire Walk last week and noticed the large hole in the drainage grates. I\u0027m sure they we\u0027re purpose built with this design in mind, but it seems to present a significant subsurface tripping hazard."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3276",
+        "HazardId":  "HZ-2026-007",
+        "Row":  29,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3276",
+                            "hazardId":  "HZ-2026-4103",
+                            "reportId":  "HR-2026-3797",
+                            "reportSubmissionDateTime":  "2026-07-08T19:40:06.566021Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3276",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "040920263225",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-03-09T02:52:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59175905,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59712219,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-09T14:50:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Additional damage occurred on D15 jetbridge on 4/8/26 at 1952. From camera D3_683, The jetbridge can be seen being lowered to accommodate the E175 aircraft type. During the process, the wheel and castor at the bottom right hand side of the stair can be seen shearing/bending prior to aircraft arrival. 4/9/26, building maintenance has taken it out of service for repair. 2 aircraft were serviced while the wheel was broken. Maintenance had mentioned that it was damaged previously but was still functional."
+                       }
+    },
+    {
+        "Message":  "Exception processing row 30 : The remote server returned an error: (400) Bad Request.",
+        "HazardId":  "HZ-2026-006",
+        "Row":  30,
+        "Success":  false,
+        "ApiResponse":  null,
+        "PinConcat":  "0405202649",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-03-31T15:20:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59180410,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.58772373,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-05T12:55:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "This morning at 0819L AF1 (Danny Gilliland) was conducting a runway inspection on runway 28R. He was cleared onto the runway by ATC and began the inspection. Approximately 1 minute later ATC cleared a Pilatus PC12 to take off on runway 28R. AF1 informed ATC he was still on the runway while simultaneously exiting at the closest taxiway, A3. ATC canceled the takeoff clearance and the PC-12 held short of the runway. It does not appear that an actual incursion occurred, but this was a serious situation that could have had tragic consequences. A factor that may have contributed: It appears aircraft on the same runway were using both 118.7 and 123.775. A challenger that departed prior to AF1 requesting the runway was on 118.7 the Pilatus was on 123.775. AF1 switched from 123.775 to 118.7 since the challengers was on that frequency and believed split runway frequencies were being used. ATC was simulcasting on both frequencies so they may not have been aware that AF1 and the Pilatus could not here each other. On 118.7: AF1 requests clearance to inspect 28R from K1; file 081830DA at 00:19 (time: 0819L) On 118.7/123.775: Tower clears AF1 onto 28R, file 081830DA at 00:24 (time: 0819L) On 118.7/123.775: Tower clears Pilatus N726KP to take off on 28R; file 081958DA (time: 0820L) On 118.7 AF1 informs Tower (twice) he is still on the runway; file 081958DA at 00:16 (time: 0820L) On 118.7/123.775: Tower cancels takeoff clearance for Pilatus N726KP; file 081958DA at 00:20 (time: 0820L) On 123.775: Pilatus N726KP acknowledges canceled take off clearance; file 081958DA (time: 0820L) Statement from Danny Gilliliand: “This morning, during my inspection of RWY 10L/28R (around 0818 to 0821), the Tower controller cleared an aircraft to take off while I was on the runway. Prior to my inspection, I monitored tower frequency 123.775 to discern if we were using combined tower frequency or if I should switch to 118.7. A departing aircraft was told by ATC to contact departure, and I did not hear it respond on 123.775, leading me to switch to 118.7 to contact tower for my inspection clearance. Tower cleared me onto the runway for inspection at roughly 0818 or 0819. While halfway down the runway, I heard the controller clear an aircraft for takeoff. I immediately broadcast my position on frequency and began heading for the exit at TWY A3. Due to no response from ATC (likely stepped on by the aircraft responding to the takeoff clearance), I broadcasted my location on the runway a second time before exiting the runway. The controller cancelled the aircraft’s takeoff clearance prior to it entering the runway and cleared me back onto the runway to continue my inspection. I had the controller confirm the instruction before acknowledging and proceeding back on. I do not believe that any actual runway incursion occurred, but due to the nature of the incident I believe it is worth investigating.” Although the situation was corrected quickly, this situation had the serious potential for a terrible outcome. In light of that and to avoid a reoccurrence this should be reviewed with a safety lens."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3277",
+        "HazardId":  "HZ-2026-005",
+        "Row":  31,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3277",
+                            "hazardId":  "HZ-2026-4104",
+                            "reportId":  "HR-2026-3798",
+                            "reportSubmissionDateTime":  "2026-07-08T19:40:08.641074Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3277",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "040320261221",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-03-31T21:09:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59199630,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59702563,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-03T21:28:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "ADM received a call from DL Ops with a safety concern at gate D15. While DL was preparing to push their RON aircraft for departure, McGee/AS personnel showed up on the ramp. As soon as the aircraft was moving the AS/McGee individuals started moving equipment on the ramp. As the DL tug and wing walkers were returning to the gate the AS personnel were already marshalling the AS aircraft into the gate. This rush to use the gate before personnel and equipment are out of the way appears unsafe. Especially so because they are creating pressure on another carrier to changes their procedures. Although the DL aircraft was late, it was only 7 minutes late. The rushed actions of AS do not seem justified with such a short delay and when other gates could have been used such as D10. AS taxied an aircraft from RON to D10 at 0555. Camera D3_683 – FIS at 0558 shows the DL aircraft push and subsequent actions."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3278",
+        "HazardId":  "HZ-2026-004",
+        "Row":  32,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3278",
+                            "hazardId":  "HZ-2026-4105",
+                            "reportId":  "HR-2026-3799",
+                            "reportSubmissionDateTime":  "2026-07-08T19:40:08.7301527Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3278",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "040320263271",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-03T20:56:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59037162,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59098530,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-03T20:56:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Need to evaluate the feasibility of closing four E gates for TWY K Project in 2027. United is being asked if they can accommodate the change by modifying the way they taxi in and out of the gate. Safety assessment is being requested by airside planning and United. •\tClosure of four gates (E3 – E6) •\tThe tow-in / push-back operation on gate E2 •\tRe-positioning of aircraft to/from remote RON at the North Ramp."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3279",
+        "HazardId":  "HZ-2026-003",
+        "Row":  33,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3279",
+                            "hazardId":  "HZ-2026-4106",
+                            "reportId":  "HR-2026-3800",
+                            "reportSubmissionDateTime":  "2026-07-08T19:40:10.831663Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3279",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "040320262866",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-03T13:21:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59027101,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.60071635,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-03T20:33:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "Wide vehicle accident. It appears the Menzies tanker is wider than the VSR and ends up clipping the Alaska lav truck as there was traffic coming at him in the other lane. This occurred at 06:21:28 on the C23 apron cam."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3280",
+        "HazardId":  "HZ-2026-002",
+        "Row":  34,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3280",
+                            "hazardId":  "HZ-2026-4107",
+                            "reportId":  "HR-2026-3801",
+                            "reportSubmissionDateTime":  "2026-07-08T19:40:10.8782615Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3280",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "04032026564",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-03-31T15:18:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.58622112,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.57373333,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-03T20:12:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "During a RWY inspection of RWY 10L/28R (around 0818 to 0821) by AOS, the Tower controller cleared an aircraft to take off while he was on the runway. Prior to his inspection, he monitored tower frequency 123.775 to discern if they were using combined tower frequency or if he should switch to 118.7. A departing aircraft was told by ATC to contact departure, and he did not hear it respond on 123.775, leading him to switch to 118.7 to contact tower for his inspection clearance. Tower cleared him onto the runway for inspection at roughly 0818 or 0819. While halfway down the runway, he heard the controller clear an aircraft for takeoff. He immediately broadcast his position on frequency and began heading for the exit at TWY A3. Due to no response from ATC (likely stepped on by the aircraft responding to the takeoff clearance), he broadcasted his location on the runway a second time before exiting the runway. The controller cancelled the aircraft’s takeoff clearance prior to it entering the runway and cleared him back onto the runway to continue his inspection. He had the controller confirm the instruction before acknowledging and proceeding back on. He does not believe that any actual runway incursion occurred. Follow-up statement from supervisor: This morning at 0819L AF1 was conducting a runway inspection on runway 28R. He was cleared onto the runway by ATC and began the inspection. Approximately 1 minute later ATC cleared a Pilatus PC12 to take off on runway 28R. AF1 informed ATC he was still on the runway while simultaneously exiting at the closest taxiway, A3. ATC canceled the takeoff clearance and the PC-12 held short of the runway. It does not appear that an actual incursion occurred, but this was a serious situation that could have had tragic consequences. A factor that may have contributed: It appears aircraft on the same runway were using both 118.7 and 123.775. A challenger that departed prior to AF1 requesting the runway was on 118.7 the Pilatus was on 123.775. AF1 switched from 123.775 to 118.7 since the challengers was on that frequency and believed split runway frequencies were being used. ATC was simulcasting on both frequencies so they may not have been aware that AF1 and the Pilatus could not here each other. On 118.7: AF1 requests clearance to inspect 28R from K1; file 081830DA at 00:19 (time: 0819L) On 118.7/123.775: Tower clears AF1 onto 28R, file 081830DA at 00:24 (time: 0819L) On 118.7/123.775: Tower clears Pilatus N726KP to take off on 28R; file 081958DA (time: 0820L) On 118.7 AF1 informs Tower (twice) he is still on the runway; file 081958DA at 00:16 (time: 0820L) On 118.7/123.775: Tower cancels takeoff clearance for Pilatus N726KP; file 081958DA at 00:20 (time: 0820L) On 123.775: Pilatus N726KP acknowledges canceled take off clearance; file 081958DA (time: 0820L) Although the situation was corrected quickly, this situation had the serious potential for a terrible outcome. In light of that and to avoid a reoccurrence this should be reviewed with a safety lens."
+                       }
+    },
+    {
+        "Message":  "Successfully submitted - Tracking ID: HT-2026-3281",
+        "HazardId":  "HZ-2026-001",
+        "Row":  35,
+        "Success":  true,
+        "ApiResponse":  {
+                            "trackingId":  "HT-2026-3281",
+                            "hazardId":  "HZ-2026-4108",
+                            "reportId":  "HR-2026-3802",
+                            "reportSubmissionDateTime":  "2026-07-08T19:40:12.9624917Z",
+                            "status":  "Submitted",
+                            "message":  "Confidential report submitted successfully. Tracking ID: HT-2026-3281",
+                            "processedFiles":  0,
+                            "failedFiles":  1
+                        },
+        "PinConcat":  "040120262940",
+        "ApiRequest":  {
+                           "hazardIncidentDateTime":  "2026-04-02T00:24:00Z",
+                           "reportContactEmail":  "scott.green@portofportland.com",
+                           "reportSubmittedBy":  "EXTERNAL_API_SOURCE",
+                           "reportIsAnonymous":  false,
+                           "locationLatitude":  45.59401632,
+                           "reportSubmittingDepartment":  "EXTERNAL_API_SOURCE",
+                           "reportContactName":  "Scott Green",
+                           "reportContactCompany":  "Port Of Portland",
+                           "locationLongitude":  -122.59798050,
+                           "locationDescription":  "Air Operations Area (AOA)",
+                           "reportContactCell":  "36082398359",
+                           "reportAttachments":  {
+
+                                                 },
+                           "reportSubmittedDate":  "2026-04-02T00:24:00Z",
+                           "reportSubmittingDepartmentJobFunction":  "EXTERNAL_API_SOURCE",
+                           "hazardDescription":  "The TWY K/A contractor is requesting to operate a UAS on a weekly/bi-weekly frequency in support of the project. I am waiting for a workplan and schedule of the project. I am recommending an SRA to investigate the risks and determine whether or not this permit request should be approved. The attached map shows the general location of where the contractor is requesting to fly. (Depicted by the red polygon). A full mission plan may be required in preparation for an SRA."
+                       }
+    }
+]

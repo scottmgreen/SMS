@@ -57,10 +57,16 @@ public partial class ReportValidationListing : ComponentBase
 
             if (!string.IsNullOrEmpty(args.OrderBy))
             {
-                query = args.OrderBy.Contains("desc")
-                    ? query.OrderByDescending(GetPropertyExpression(args.OrderBy.Replace(" desc", "")))
-                    : query.OrderBy(GetPropertyExpression(args.OrderBy));
+                var (propertyName, isDescending) = ParseOrderBy(args.OrderBy);
+                if (!string.IsNullOrWhiteSpace(propertyName))
+                {
+                    query = isDescending
+                        ? query.OrderByDescending(GetPropertyExpression(propertyName))
+                        : query.OrderBy(GetPropertyExpression(propertyName));
+                }
             }
+
+            _totalCount = query.Count();
 
             if (args.Skip.HasValue)
             {
@@ -73,7 +79,6 @@ public partial class ReportValidationListing : ComponentBase
             }
 
             _validations = query.ToList();
-            _totalCount = _validations.Count();
         }
         catch (Exception ex)
         {
@@ -88,6 +93,19 @@ public partial class ReportValidationListing : ComponentBase
         var property = Expression.Property(parameter, propertyName);
         var conversion = Expression.Convert(property, typeof(object));
         return Expression.Lambda<Func<ReportValidation, object>>(conversion, parameter);
+    }
+
+    private static (string propertyName, bool isDescending) ParseOrderBy(string orderBy)
+    {
+        if (string.IsNullOrWhiteSpace(orderBy))
+        {
+            return (string.Empty, false);
+        }
+
+        var parts = orderBy.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var propertyName = parts[0];
+        var isDescending = parts.Length > 1 && string.Equals(parts[1], "desc", StringComparison.OrdinalIgnoreCase);
+        return (propertyName, isDescending);
     }
 
     private void ShowActions(ReportValidation validation)

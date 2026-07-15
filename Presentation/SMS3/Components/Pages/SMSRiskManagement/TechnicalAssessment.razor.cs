@@ -1600,6 +1600,22 @@ public partial class TechnicalAssessment : ComponentBase
         return CurrentStep < MaxAssessmentStep || IsAssessmentReadyForCompletion();
     }
 
+    private bool IsFinalActionDisabled()
+    {
+        if (IsSaving)
+        {
+            return true;
+        }
+
+        // In Risk Registry Only mode, don't allow final action until Step 4 requirements are valid.
+        if (IsRiskRegistryOnly)
+        {
+            return !ValidateRiskRegistryOnlyStep4().isValid;
+        }
+
+        return false;
+    }
+
     private string GetFinalActionButtonText()
     {
         if (CurrentStep < MaxAssessmentStep)
@@ -1676,6 +1692,16 @@ public partial class TechnicalAssessment : ComponentBase
 
     private (bool isValid, string message) ValidateRiskRegistryOnlyStep4()
     {
+        if (string.IsNullOrWhiteSpace(Step4.AdditionalComments))
+        {
+            return (false, "Additional Comments is required");
+        }
+
+        if (Step4.AdditionalComments.Trim().Length < 10)
+        {
+            return (false, "Additional Comments must be at least 10 characters");
+        }
+
         if (ReportHazards is null || !ReportHazards.Any())
         {
             return (false, "No hazards available for scoring");

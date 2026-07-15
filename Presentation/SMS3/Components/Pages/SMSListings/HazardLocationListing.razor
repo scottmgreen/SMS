@@ -18,6 +18,7 @@
 <RadzenDataGrid @ref="_locationsGrid" 
                 Data="@_locations" 
                 Count="@_totalCount" 
+                LoadData="@LoadData"
                 AllowPaging="true" 
                 AllowSorting="true" 
                 AllowFiltering="true"
@@ -38,6 +39,13 @@
                 <input type="checkbox" @onclick:stopPropagation="true" />
             </Template>
         </RadzenDataGridColumn> *@
+        <RadzenDataGridColumn TItem="HazardLocation" Property="HazardCode" FilterProperty="ReportCode" SortProperty="ReportCode" Type="typeof(string)" FilterOperator="FilterOperator.Contains" Title="Report ID" Width="100px">
+            <Template Context="location">
+                <div title="@GetReportCodeForLocation(location)" style="@_basicTextStyle">
+                    @GetReportCodeForLocation(location)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardLocation" Property="Code" Title="Location ID" Width="100px">
             <Template Context="location">
                                                 <div title="@location.Code" style="@_basicTextStyle">

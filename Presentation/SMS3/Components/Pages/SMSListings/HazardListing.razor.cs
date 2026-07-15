@@ -120,8 +120,8 @@ public partial class HazardListing : ComponentBase
             _isLoading = true;
             StateHasChanged();
 
-            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
-                args.Skip, args.Top, args.OrderBy, args.Filter);
+            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filters: {FiltersCount}", 
+                args.Skip, args.Top, args.OrderBy, args.Filters?.Count() ?? 0);
 
             // If we don't have all hazards yet, load them first
             if (_allHazards is null || !_allHazards.Any())
@@ -134,7 +134,7 @@ public partial class HazardListing : ComponentBase
             var query = _allHazards.AsQueryable();
 
             // Apply filtering
-            if (!string.IsNullOrEmpty(args.Filter))
+            if (args.Filters is not null && args.Filters.Any())
             {
                 query = ApplyFiltering(query, args);
             }
@@ -188,21 +188,6 @@ public partial class HazardListing : ComponentBase
     {
         try
         {
-            // Handle simple string filter (when user types in the general filter)
-            if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
-            {
-                var filterValue = args.Filter.ToLower();
-                query = query.Where(h => 
-                    (!string.IsNullOrEmpty(h.Code) && h.Code.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(h.Name) && h.Name.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(h.Description) && h.Description.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(h.ReportCode) && h.ReportCode.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(h.HazardCategory) && h.HazardCategory.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(h.LocationArea) && h.LocationArea.ToLower().Contains(filterValue))
-                );
-                return query;
-            }
-
             // Handle advanced column-specific filters
             if (args.Filters is not null && args.Filters.Any())
             {
@@ -224,6 +209,9 @@ public partial class HazardListing : ComponentBase
                             break;
                         case "name":
                             query = ApplyStringFilter(query, h => h.Name, filterValue, filterOperator);
+                            break;
+                        case "hazardtitle":
+                            query = ApplyStringFilter(query, h => h.HazardTitle, filterValue, filterOperator);
                             break;
                         case "description":
                             query = ApplyStringFilter(query, h => h.Description, filterValue, filterOperator);
@@ -329,18 +317,24 @@ public partial class HazardListing : ComponentBase
         {
             if (string.IsNullOrEmpty(orderBy)) return query;
 
-            var parts = orderBy.Split(' ');
-            var propertyName = parts[0].ToLower();
-            var isDescending = parts.Length > 1 && parts[1].ToLower() == "desc";
+            var (propertyName, isDescending) = ParseOrderBy(orderBy);
+            if (string.IsNullOrWhiteSpace(propertyName))
+            {
+                return query.OrderByDescending(h => h.CreatedDate);
+            }
+
+            propertyName = propertyName.ToLower();
 
             return propertyName switch
             {
                 "reportcode" => isDescending ? query.OrderByDescending(h => h.ReportCode) : query.OrderBy(h => h.ReportCode),
                 "code" => isDescending ? query.OrderByDescending(h => h.Code) : query.OrderBy(h => h.Code),
                 "name" => isDescending ? query.OrderByDescending(h => h.Name) : query.OrderBy(h => h.Name),
+                "hazardtitle" => isDescending ? query.OrderByDescending(h => h.HazardTitle) : query.OrderBy(h => h.HazardTitle),
                 "description" => isDescending ? query.OrderByDescending(h => h.Description) : query.OrderBy(h => h.Description),
                 "hazardcategory" => isDescending ? query.OrderByDescending(h => h.HazardCategory) : query.OrderBy(h => h.HazardCategory),
                 "hazardrisklevel" => isDescending ? query.OrderByDescending(h => h.HazardRiskLevel.Value) : query.OrderBy(h => h.HazardRiskLevel.Value),
+                "isinitialhazard" => isDescending ? query.OrderByDescending(h => h.IsInitialHazard) : query.OrderBy(h => h.IsInitialHazard),
                 "locationarea" => isDescending ? query.OrderByDescending(h => h.LocationArea) : query.OrderBy(h => h.LocationArea),
                 "createddate" => isDescending ? query.OrderByDescending(h => h.CreatedDate) : query.OrderBy(h => h.CreatedDate),
                 "updateddate" => isDescending ? query.OrderByDescending(h => h.UpdatedDate) : query.OrderBy(h => h.UpdatedDate),
@@ -352,6 +346,19 @@ public partial class HazardListing : ComponentBase
             _logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
             return query.OrderByDescending(h => h.CreatedDate); // Fallback to default sort
         }
+    }
+
+    private static (string propertyName, bool isDescending) ParseOrderBy(string orderBy)
+    {
+        if (string.IsNullOrWhiteSpace(orderBy))
+        {
+            return (string.Empty, false);
+        }
+
+        var parts = orderBy.Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var propertyName = parts[0];
+        var isDescending = parts.Length > 1 && string.Equals(parts[1], "desc", StringComparison.OrdinalIgnoreCase);
+        return (propertyName, isDescending);
     }
     #endregion
 

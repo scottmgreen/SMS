@@ -379,8 +379,79 @@ public sealed class ReportValidationService : IReportValidationService
 
                 if (allAssessments.Any())
                 {
-                    var initialAssessment = allAssessments.FirstOrDefault(x => x.AssessmentType == expectedAssessmentType)
-                                           ?? allAssessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Technical);
+                    var uniqueAssessments = allAssessments
+                        .Where(x => x is not null && !string.IsNullOrWhiteSpace(x.Code))
+                        .GroupBy(x => x.Code, StringComparer.OrdinalIgnoreCase)
+                        .Select(g => g.OrderByDescending(x => x.UpdatedDate ?? x.CreatedDate ?? DateTime.MinValue).First())
+                        .ToList();
+
+                    var initialAssessment = uniqueAssessments.FirstOrDefault(x => x.AssessmentType == expectedAssessmentType)
+                        ?? (!isRiskRegistryOnly
+                            ? uniqueAssessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.RiskRegistryOnly)
+                            : uniqueAssessments.FirstOrDefault(x => x.AssessmentType == RiskAssessmentType.Technical))
+                        ?? uniqueAssessments.FirstOrDefault();
+
+                    if (!isRiskRegistryOnly &&
+                        initialAssessment is not null &&
+                        initialAssessment.AssessmentType == RiskAssessmentType.RiskRegistryOnly)
+                    {
+                        _logger.LogApplicationInformation(
+                            "Reusing existing Risk Registry Only assessment {AssessmentCode} for report {ReportCode} by converting AssessmentType to Technical",
+                            initialAssessment.Code,
+                            reportCode);
+
+                        initialAssessment.AssessmentType = RiskAssessmentType.Technical;
+                        initialAssessment.CurrentStep = 1;
+                        initialAssessment.Stage = RiskAssessmentStage.DescribingSystem;
+                        initialAssessment.Status = RiskAssessmentStatus.AssessmentCreate;
+                        initialAssessment.CompletedDate = null;
+                        initialAssessment.CompletedBy = null;
+                        initialAssessment.UpdatedDate = DateTime.UtcNow;
+                        var updateAssessmentResult = await _riskAssessmentService.UpdateRiskAssessmentAsync(initialAssessment, ct);
+                        if (updateAssessmentResult.IsSuccess && updateAssessmentResult.Value is not null)
+                        {
+                            initialAssessment = updateAssessmentResult.Value;
+                        }
+                        else
+                        {
+                            _logger.LogApplicationWarning(
+                                "Failed to convert assessment {AssessmentCode} to Technical for report {ReportCode}. Continuing with existing assessment type. Error: {Error}",
+                                initialAssessment.Code,
+                                reportCode,
+                                updateAssessmentResult.Error?.Message ?? "Unknown error");
+                        }
+                    }
+                    else if (isRiskRegistryOnly &&
+                             initialAssessment is not null &&
+                             initialAssessment.AssessmentType == RiskAssessmentType.Technical)
+                    {
+                        _logger.LogApplicationInformation(
+                            "Reusing existing Technical assessment {AssessmentCode} for report {ReportCode} by converting AssessmentType to RiskRegistryOnly",
+                            initialAssessment.Code,
+                            reportCode);
+
+                        initialAssessment.AssessmentType = RiskAssessmentType.RiskRegistryOnly;
+                        initialAssessment.CurrentStep = 4;
+                        initialAssessment.Stage = RiskAssessmentStage.AssessingRisk;
+                        initialAssessment.Status = RiskAssessmentStatus.AssessmentUnderway;
+                        initialAssessment.CompletedDate = null;
+                        initialAssessment.CompletedBy = null;
+                        initialAssessment.UpdatedDate = DateTime.UtcNow;
+
+                        var updateAssessmentResult = await _riskAssessmentService.UpdateRiskAssessmentAsync(initialAssessment, ct);
+                        if (updateAssessmentResult.IsSuccess && updateAssessmentResult.Value is not null)
+                        {
+                            initialAssessment = updateAssessmentResult.Value;
+                        }
+                        else
+                        {
+                            _logger.LogApplicationWarning(
+                                "Failed to convert assessment {AssessmentCode} to RiskRegistryOnly for report {ReportCode}. Continuing with existing assessment type. Error: {Error}",
+                                initialAssessment.Code,
+                                reportCode,
+                                updateAssessmentResult.Error?.Message ?? "Unknown error");
+                        }
+                    }
                     
                     _logger.LogApplicationInformation("Found existing assessments: Technical={Technical}", 
                         initialAssessment?.Code ?? "None");

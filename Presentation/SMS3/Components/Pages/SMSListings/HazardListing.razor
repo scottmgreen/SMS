@@ -19,6 +19,7 @@
 <RadzenDataGrid @ref="_hazardsGrid" 
                 Data="@_hazards" 
                 Count="@_totalCount" 
+                LoadData="@LoadData"
                 AllowPaging="true" 
                 AllowSorting="true" 
                 AllowFiltering="true"
@@ -26,19 +27,10 @@
                 PagerHorizontalAlign="HorizontalAlign.Left"
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
-                SelectionMode="DataGridSelectionMode.Multiple"
                 Style="height: calc(100vh - 200px)"
                 IsLoading="@_isLoading">
     
     <Columns>
-        <RadzenDataGridColumn TItem="Hazard" Width="60px" Sortable="false" Filterable="false">
-            <HeaderTemplate>
-                <input type="checkbox" />
-            </HeaderTemplate>
-            <Template Context="hazard">
-                <input type="checkbox" @onclick:stopPropagation="true" />
-            </Template>
-        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="Hazard" Property="ReportCode" Title="Report ID" Width="150px">
             <Template Context="hazard">
                 <div title="@hazard.ReportCode" style="@_basicTextStyle">
@@ -53,14 +45,14 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Hazard" Property="Name" Title="Title" Width="350px" >
+        <RadzenDataGridColumn TItem="Hazard" Property="HazardTitle" FilterProperty="HazardTitle" SortProperty="HazardTitle" Title="Title" Width="350px" >
             <Template Context="hazard">
                 <div title="@hazard.HazardTitle" style="@_basicTextStyle">
                     @(hazard.HazardTitle)
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Hazard" Title="Description" Width="100px" Sortable="false">
+        <RadzenDataGridColumn TItem="Hazard" Title="Description" Width="100px" Sortable="false" Filterable="false">
             <Template Context="hazard">
                 <RadzenButton Text="Description"
                               Icon="description"

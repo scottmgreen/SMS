@@ -37,6 +37,7 @@ public partial class InvestigationListing : ComponentBase
     private IEnumerable<Investigation> _investigations = new List<Investigation>();
     private List<Investigation> _allInvestigations = new List<Investigation>(); // Store all investigations for client-side filtering
     private int _totalCount;
+    private bool _isLoading = false;
     #endregion
     
     #region Lifecycle Methods
@@ -51,6 +52,9 @@ public partial class InvestigationListing : ComponentBase
     {
         try
         {
+            _isLoading = true;
+            StateHasChanged();
+
             _logger.LogInformation("Loading investigations for listing view");
 
             var query = new GetAllInvestigationsQuery();
@@ -92,6 +96,7 @@ public partial class InvestigationListing : ComponentBase
         }
         finally
         {
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -100,6 +105,9 @@ public partial class InvestigationListing : ComponentBase
     {
         try
         {
+            _isLoading = true;
+            StateHasChanged();
+
             _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
                 args.Skip, args.Top, args.OrderBy, args.Filter);
 
@@ -116,9 +124,8 @@ public partial class InvestigationListing : ComponentBase
             _logger.LogInformation("Starting with {Count} total investigations", query.Count());
 
             // Apply filtering
-            if (!string.IsNullOrEmpty(args.Filter))
+            if (args.Filters is not null && args.Filters.Any())
             {
-                _logger.LogInformation("Applying filter: {Filter}", args.Filter);
                 query = ApplyFiltering(query, args);
                 _logger.LogInformation("After filtering: {Count} investigations", query.Count());
             }
@@ -160,8 +167,8 @@ public partial class InvestigationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
-                args.Skip, args.Top, args.OrderBy, args.Filter);
+            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filters={FiltersCount}", 
+                args.Skip, args.Top, args.OrderBy, args.Filters?.Count() ?? 0);
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Error loading data: {ex.Message}"));
             
             // Fallback to show all data without filtering/sorting
@@ -179,6 +186,7 @@ public partial class InvestigationListing : ComponentBase
         }
         finally
         {
+            _isLoading = false;
             StateHasChanged();
         }
     }
@@ -190,25 +198,7 @@ public partial class InvestigationListing : ComponentBase
     {
         try
         {
-            _logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
-                args.Filter, args.Filters?.Count() ?? 0);
-
-            // Handle simple string filter (when user types in the general filter)
-            if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
-            {
-                var filterValue = args.Filter.ToLower();
-                _logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
-                
-                query = query.Where(i => 
-                    (!string.IsNullOrEmpty(i.Code) && i.Code.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(i.ReportCode) && i.ReportCode.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(i.HazardCode) && i.HazardCode.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(i.InvestigationNotes) && i.InvestigationNotes.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(i.AssignedInvestigatorId) && i.AssignedInvestigatorId.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(i.CreatedBy) && i.CreatedBy.ToLower().Contains(filterValue))
-                );
-                return query;
-            }
+            _logger.LogInformation("ApplyFiltering called with Filters count: {FilterCount}", args.Filters?.Count() ?? 0);
 
             // Handle advanced column-specific filters
             if (args.Filters is not null && args.Filters.Any())
@@ -278,8 +268,8 @@ public partial class InvestigationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
-                args.Filter, args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
+            _logger.LogError(ex, "Error applying filters - Filters: {@Filters}", 
+                args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
             return query; // Return unfiltered query if filtering fails
         }
     }

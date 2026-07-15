@@ -55,6 +55,7 @@
 <RadzenDataGrid @ref="_mitigationsGrid"
                 Data="@_mitigationModels"
                 Count="@_totalCount"
+                LoadData="@LoadData"
                 AllowPaging="true"
                 AllowSorting="true"
                 AllowFiltering="true"
@@ -62,19 +63,10 @@
                 PagerHorizontalAlign="HorizontalAlign.Left"
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
-                SelectionMode="DataGridSelectionMode.Multiple"
                 Style="height: calc(100vh - 300px)"
                 IsLoading="@_isLoading">
 
     <Columns>
-        <RadzenDataGridColumn TItem="MitigationModel" Width="60px" Sortable="false" Filterable="false">
-            <HeaderTemplate>
-                <input type="checkbox" />
-            </HeaderTemplate>
-            <Template Context="mitigation">
-                <input type="checkbox" @onclick:stopPropagation="true" />
-            </Template>
-        </RadzenDataGridColumn>
         <!-- Report ID Column -->
         <RadzenDataGridColumn TItem="MitigationModel" Property="ReportCode" Title="Report ID" Width="120px">
             <Template Context="mitigation">

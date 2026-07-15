@@ -2,6 +2,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using SMS3.Components.Shared
+@using SMS3.Components.Shared.UIHelpers
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 
@@ -69,7 +70,7 @@
                         </Template>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Department" Title="Department" Width="150px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Department.Name" Title="Department" Width="150px" Sortable="true" Filterable="true" SortProperty="Department.Name" FilterProperty="Department.Name">
                         <Template Context="user">
                             @user.Department.Name.ToUpper()
                         </Template>
@@ -88,7 +89,7 @@
                         </Template>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="OrganizationLevel" Title="SMS Organization Level" Width="250px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="OrganizationLevel.Name" Title="SMS Organization Level" Width="250px" Sortable="true" Filterable="true" SortProperty="OrganizationLevel.Name" FilterProperty="OrganizationLevel.Name">
                         <Template Context="user">
                             @if (user.OrganizationLevel !=null)
                             {
@@ -487,7 +488,7 @@
                                 <RadzenCard Style="background-color: #e8f5e8; margin: -0.5rem -0.5rem 1rem -0.5rem; padding: 0.5rem;">
                                     <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #28a745;">
                                         <RadzenIcon Icon="groups" Style="margin-right: 0.5rem;" />
-                                        Current Groups 
+                                        @($"Currently Assigned {EntityDisplayNameHelper.GetPluralEntityName<SMSOrganizationalGroup>()}")
                                     </RadzenText>
                                 </RadzenCard>
                                 <div style="height: 400px; overflow-y: auto;">
@@ -535,7 +536,7 @@
                                     <div class="d-flex justify-content-between align-items-center">
                                         <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; color: #007bff;">
                                             <RadzenIcon Icon="group_add" Style="margin-right: 0.5rem;" />
-                                            Available Groups 
+                                            @($"Available {EntityDisplayNameHelper.GetPluralEntityName<SMSOrganizationalGroup>()}")
                                         </RadzenText>
                                         <RadzenButton Text="Assign Selected" Icon="group_add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                                       Click="@AssignMultipleGroups" Disabled="@(!SelectedGroups.Any(s => s.Value))" />

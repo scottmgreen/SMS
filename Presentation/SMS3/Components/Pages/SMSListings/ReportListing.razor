@@ -22,7 +22,7 @@
                       Icon="download"
                       ButtonStyle="ButtonStyle.Light"
                       Click="@OnExportSelectedReportsAsync"
-                      Disabled="@(!_selectedReports.Any())" />
+                      Disabled="@(!HasExportableSelection())" />
     </AdditionalContent>
 </PageHeader>
 
@@ -32,6 +32,7 @@
                 Data="@_reports" 
                 @bind-Value="@_selectedReports"
                 Count="@_totalCount" 
+                LoadData="@LoadData"
                 AllowPaging="true" 
                 AllowSorting="true" 
                 AllowFiltering="true"
@@ -56,6 +57,7 @@
                                 TriState="false"
                                 Value="@IsReportSelected(report)"
                                 Change="@(isChecked => OnReportSelectionChanged(report, (bool)isChecked))"
+                                Disabled="@(!IsReportExportEligible(report))"
                                 @onclick:stopPropagation="true" />
             </Template>
         </RadzenDataGridColumn>
@@ -73,7 +75,7 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Report" Title="Description" Width="100px" Sortable="false">
+        <RadzenDataGridColumn TItem="Report" Title="Description" Width="100px" Sortable="false" Filterable="false">
             <Template Context="report">
                 <RadzenButton Text="Description"
                               Icon="description"

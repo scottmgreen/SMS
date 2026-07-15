@@ -38,6 +38,7 @@ public partial class ApplicationGroups : ComponentBase
 
     private List<SMSApplicationGroup> SMSApplicationGroups { get; set; } = new();
     private List<SMSApplicationUser> SMSApplicationUsers { get; set; } = new();
+    private Dictionary<string, int> GroupMemberCounts { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     private List<SMSApplicationUser> GroupMembers { get; set; } = new();
     private List<SMSApplicationUser> AvailableUsers { get; set; } = new();
     private SMSApplicationGroup? _currentGroup { get; set; }
@@ -114,6 +115,8 @@ public partial class ApplicationGroups : ComponentBase
                 usersResult.Value?.ToList() ?? new List<SMSApplicationUser>() :
                 new List<SMSApplicationUser>();
 
+            await LoadGroupMemberCountsAsync();
+
             _logger.LogInformation("Loaded {GroupCount} application groups and {UserCount} application users",
                 SMSApplicationGroups.Count, SMSApplicationUsers.Count);
         }
@@ -125,6 +128,48 @@ public partial class ApplicationGroups : ComponentBase
     }
 
     #endregion
+
+    private async Task LoadGroupMemberCountsAsync()
+    {
+        GroupMemberCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var group in SMSApplicationGroups)
+        {
+            if (string.IsNullOrWhiteSpace(group.Code))
+            {
+                continue;
+            }
+
+            var groupMembersQuery = new GetUsersByApplicationGroupCodeQuery(group.Code);
+            var membersResult = await _mediator.SendAsync(groupMembersQuery, CancellationToken.None);
+            GroupMemberCounts[group.Code] = membersResult.IsSuccess
+                ? membersResult.Value?.Count() ?? 0
+                : 0;
+        }
+    }
+
+    private int GetAssignedUsersCount(string? groupCode)
+    {
+        if (string.IsNullOrWhiteSpace(groupCode))
+        {
+            return 0;
+        }
+
+        return GroupMemberCounts.TryGetValue(groupCode, out var count) ? count : 0;
+    }
+
+    private bool IsGroupDeleteDisabled(string? groupCode)
+    {
+        return GetAssignedUsersCount(groupCode) > 0;
+    }
+
+    private string GetDeleteTooltip(string? groupCode)
+    {
+        var assignedCount = GetAssignedUsersCount(groupCode);
+        return assignedCount > 0
+            ? $"Cannot delete. {assignedCount} user(s) assigned."
+            : "Delete Group";
+    }
 
     #region Edit Operations
 
@@ -293,6 +338,12 @@ public partial class ApplicationGroups : ComponentBase
             return;
         }
 
+        if (IsGroupDeleteDisabled(_deleteGroupCode))
+        {
+            await ShowErrorAsyncNotification($"Group '{_deleteGroupName}' cannot be deleted while users are assigned.");
+            return;
+        }
+
         try
         {
             _isSaving = true;
@@ -350,8 +401,14 @@ public partial class ApplicationGroups : ComponentBase
         _newDescription = string.Empty;
     }
 
-    private void ConfirmDelete(string groupCode, string groupName)
+    private async Task ConfirmDelete(string groupCode, string groupName)
     {
+        if (IsGroupDeleteDisabled(groupCode))
+        {
+            await ShowErrorAsyncNotification($"Group '{groupName}' cannot be deleted while users are assigned.");
+            return;
+        }
+
         _deleteGroupCode = groupCode;
         _deleteGroupName = groupName;
         _showDeleteModal = true;
@@ -439,6 +496,8 @@ public partial class ApplicationGroups : ComponentBase
 
             _logger.LogInformation("Loaded {MemberCount} group members and {AvailableCount} available users for group {GroupCode}",
                 GroupMembers.Count, AvailableUsers.Count, groupCode);
+
+            GroupMemberCounts[groupCode] = GroupMembers.Count;
         }
         catch (Exception ex)
         {
@@ -447,6 +506,7 @@ public partial class ApplicationGroups : ComponentBase
             // For now, if the query fails, just load empty collections
             GroupMembers = new List<SMSApplicationUser>();
             AvailableUsers = SMSApplicationUsers?.ToList() ?? new List<SMSApplicationUser>();
+            GroupMemberCounts[groupCode] = 0;
         }
     }
 

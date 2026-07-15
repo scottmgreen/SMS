@@ -47,6 +47,7 @@ public partial class OrganizationalGroups : ComponentBase
 
     private List<SMSOrganizationalGroup> SMSOrganizationalGroups { get; set; } = new();
     private List<SMSOrganizationalUser> SMSOrganizationalUsers { get; set; } = new();
+    private Dictionary<string, int> GroupMemberCounts { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     private List<SMSOrganizationalUser> GroupMembers { get; set; } = new();
     private List<SMSOrganizationalUser> AvailableUsers { get; set; } = new();
     private SMSOrganizationalGroup? _currentGroup { get; set; }
@@ -137,6 +138,8 @@ public partial class OrganizationalGroups : ComponentBase
                 usersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() :
                 new List<SMSOrganizationalUser>();
 
+            await LoadGroupMemberCountsAsync();
+
             _logger.LogInformation("Loaded {GroupCount} organizational groups and {UserCount} organizational users",
                 SMSOrganizationalGroups.Count, SMSOrganizationalUsers.Count);
         }
@@ -148,6 +151,48 @@ public partial class OrganizationalGroups : ComponentBase
     }
 
     #endregion
+
+    private async Task LoadGroupMemberCountsAsync()
+    {
+        GroupMemberCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var group in SMSOrganizationalGroups)
+        {
+            if (string.IsNullOrWhiteSpace(group.Code))
+            {
+                continue;
+            }
+
+            var groupMembersQuery = new GetUsersByOrganizationalGroupCodeQuery(group.Code);
+            var membersResult = await _mediator.SendAsync(groupMembersQuery, CancellationToken.None);
+            GroupMemberCounts[group.Code] = membersResult.IsSuccess
+                ? membersResult.Value?.Count() ?? 0
+                : 0;
+        }
+    }
+
+    private int GetAssignedUsersCount(string? groupCode)
+    {
+        if (string.IsNullOrWhiteSpace(groupCode))
+        {
+            return 0;
+        }
+
+        return GroupMemberCounts.TryGetValue(groupCode, out var count) ? count : 0;
+    }
+
+    private bool IsGroupDeleteDisabled(string? groupCode)
+    {
+        return GetAssignedUsersCount(groupCode) > 0;
+    }
+
+    private string GetDeleteTooltip(string? groupCode)
+    {
+        var assignedCount = GetAssignedUsersCount(groupCode);
+        return assignedCount > 0
+            ? $"Cannot delete. {assignedCount} user(s) assigned."
+            : "Delete Group";
+    }
 
     #region Edit Operations
 
@@ -331,6 +376,12 @@ public partial class OrganizationalGroups : ComponentBase
             return;
         }
 
+        if (IsGroupDeleteDisabled(_deleteGroupCode))
+        {
+            await ShowErrorAsyncNotification($"Group '{_deleteGroupName}' cannot be deleted while users are assigned.");
+            return;
+        }
+
         try
         {
             _isSaving = true;
@@ -402,8 +453,14 @@ public partial class OrganizationalGroups : ComponentBase
         _newAuthorityLevel = string.Empty;
     }
 
-    private void ConfirmDelete(string groupCode, string groupName)
+    private async Task ConfirmDelete(string groupCode, string groupName)
     {
+        if (IsGroupDeleteDisabled(groupCode))
+        {
+            await ShowErrorAsyncNotification($"Group '{groupName}' cannot be deleted while users are assigned.");
+            return;
+        }
+
         _deleteGroupCode = groupCode;
         _deleteGroupName = groupName;
         _showDeleteModal = true;
@@ -496,6 +553,8 @@ public partial class OrganizationalGroups : ComponentBase
 
             _logger.LogInformation("Loaded {MemberCount} group members and {AvailableCount} available users for group {GroupCode}",
                 GroupMembers.Count, AvailableUsers.Count, groupCode);
+
+            GroupMemberCounts[groupCode] = GroupMembers.Count;
         }
         catch (Exception ex)
         {
@@ -504,6 +563,7 @@ public partial class OrganizationalGroups : ComponentBase
             // For now, if the query fails, just load empty collections
             GroupMembers = new List<SMSOrganizationalUser>();
             AvailableUsers = SMSOrganizationalUsers?.ToList() ?? new List<SMSOrganizationalUser>();
+            GroupMemberCounts[groupCode] = 0;
         }
     }
 

@@ -125,8 +125,8 @@ public partial class HazardFileListing : ComponentBase
             _isLoading = true;
             StateHasChanged();
 
-            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
-                args.Skip, args.Top, args.OrderBy, args.Filter);
+            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filters: {FiltersCount}", 
+                args.Skip, args.Top, args.OrderBy, args.Filters?.Count() ?? 0);
 
             // If we don't have all files yet, load them first
             if (_allFiles is null || !_allFiles.Any())
@@ -141,9 +141,8 @@ public partial class HazardFileListing : ComponentBase
             _logger.LogInformation("Starting with {Count} total files", query.Count());
 
             // Apply filtering
-            if (!string.IsNullOrEmpty(args.Filter))
+            if (args.Filters is not null && args.Filters.Any())
             {
-                _logger.LogInformation("Applying filter: {Filter}", args.Filter);
                 query = ApplyFiltering(query, args);
                 _logger.LogInformation("After filtering: {Count} files", query.Count());
             }
@@ -185,8 +184,8 @@ public partial class HazardFileListing : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
-                args.Skip, args.Top, args.OrderBy, args.Filter);
+            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filters={FiltersCount}", 
+                args.Skip, args.Top, args.OrderBy, args.Filters?.Count() ?? 0);
             await ShowErrorAsyncNotification($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
@@ -216,27 +215,7 @@ public partial class HazardFileListing : ComponentBase
     {
         try
         {
-            _logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
-                args.Filter, args.Filters?.Count() ?? 0);
-
-            // Handle simple string filter (when user types in the general filter)
-            if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
-            {
-                var filterValue = args.Filter.ToLower();
-                _logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
-                
-                query = query.Where(f => 
-                    (!string.IsNullOrEmpty(f.Code) && f.Code.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(f.HazardCode) && f.HazardCode.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(f.ReportCode) && f.ReportCode.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(f.FileName) && f.FileName.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(f.FileType) && f.FileType.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(f.Description) && f.Description.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(f.UploadedBy) && f.UploadedBy.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(f.Category) && f.Category.ToLower().Contains(filterValue))
-                );
-                return query;
-            }
+            _logger.LogInformation("ApplyFiltering called with Filters count: {FilterCount}", args.Filters?.Count() ?? 0);
 
             // Handle advanced column-specific filters
             if (args.Filters is not null && args.Filters.Any())
@@ -309,8 +288,8 @@ public partial class HazardFileListing : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
-                args.Filter, args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
+            _logger.LogError(ex, "Error applying filters - Filters: {@Filters}", 
+                args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
             return query; // Return unfiltered query if filtering fails
         }
     }

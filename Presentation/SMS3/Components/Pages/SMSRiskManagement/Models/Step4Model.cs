@@ -19,6 +19,7 @@ public class Step4Model
         _currentUserService = _currentUserService;
     }
 
+    [Required(ErrorMessage = "Additional Comments is required.")]
     [StringLength(2000, MinimumLength = 10, ErrorMessage = "Additional Comments must be between 10 and 2000 characters.")]
     [Display(Name = "Additional Comments")]
     public string AdditionalComments { get; set; } = string.Empty;
@@ -76,6 +77,16 @@ public class Step4Model
 
     public (bool isValid, string message) Validate()
     {
+        if (string.IsNullOrWhiteSpace(AdditionalComments))
+        {
+            return (false, "Additional Comments is required");
+        }
+
+        if (AdditionalComments.Trim().Length < 10)
+        {
+            return (false, "Additional Comments must be at least 10 characters");
+        }
+
         if (!HazardAverageScores.Any())
         {
             return (false, "No hazards have completed scoring");

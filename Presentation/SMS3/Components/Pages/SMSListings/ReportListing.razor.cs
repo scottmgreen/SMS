@@ -2,6 +2,8 @@ using System.Linq.Expressions;
 using System.Reflection;
 using System.Text;
 using System.IO.Compression;
+using System.Globalization;
+using System.Net.Http;
 
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
@@ -116,6 +118,41 @@ public partial class ReportListing : ComponentBase
         .ToArray();
 
     private static readonly PropertyInfo[] RiskAssessmentExportProperties = typeof(RiskAssessment)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null)
+        .ToArray();
+
+    private static readonly PropertyInfo[] RiskAnalysisExportProperties = typeof(RiskAnalysis)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null)
+        .ToArray();
+
+    private static readonly PropertyInfo[] ScoringPanelExportProperties = typeof(ScoringPanel)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null)
+        .ToArray();
+
+    private static readonly PropertyInfo[] MitigationExportProperties = typeof(Mitigation)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null)
+        .ToArray();
+
+    private static readonly PropertyInfo[] HazardFileExportProperties = typeof(HazardFile)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null)
+        .ToArray();
+
+    private static readonly PropertyInfo[] InvestigationExportProperties = typeof(Investigation)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null)
+        .ToArray();
+
+    private static readonly PropertyInfo[] InterviewExportProperties = typeof(Interview)
+        .GetProperties(BindingFlags.Public | BindingFlags.Instance)
+        .Where(p => p.GetMethod is not null)
+        .ToArray();
+
+    private static readonly PropertyInfo[] ReportValidationExportProperties = typeof(SMS_Domain.Entities.ReportValidation)
         .GetProperties(BindingFlags.Public | BindingFlags.Instance)
         .Where(p => p.GetMethod is not null)
         .ToArray();
@@ -405,11 +442,31 @@ public partial class ReportListing : ComponentBase
 
     private bool IsReportSelected(Report report)
     {
+        if (!IsReportExportEligible(report))
+        {
+            return false;
+        }
+
         return _selectedReports.Any(r => r.Code == report.Code);
+    }
+
+    private static bool IsReportExportEligible(Report report)
+    {
+        return !string.Equals(report.Status?.Trim(), ReportStatus.NeedsValidation.Value, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool HasExportableSelection()
+    {
+        return _selectedReports.Any(IsReportExportEligible);
     }
 
     private void OnReportSelectionChanged(Report report, bool isSelected)
     {
+        if (!IsReportExportEligible(report))
+        {
+            return;
+        }
+
         if (isSelected)
         {
             if (!_selectedReports.Any(r => r.Code == report.Code))
@@ -429,7 +486,7 @@ public partial class ReportListing : ComponentBase
 
     private bool IsAllVisibleReportsSelected()
     {
-        var visibleReports = _reports.ToList();
+        var visibleReports = _reports.Where(IsReportExportEligible).ToList();
         if (!visibleReports.Any())
         {
             return false;
@@ -441,7 +498,7 @@ public partial class ReportListing : ComponentBase
 
     private void OnSelectAllVisibleReportsChanged(bool isSelected)
     {
-        var visibleReports = _reports.ToList();
+        var visibleReports = _reports.Where(IsReportExportEligible).ToList();
         if (!visibleReports.Any())
         {
             return;
@@ -469,21 +526,33 @@ public partial class ReportListing : ComponentBase
 
     private async Task OnExportSelectedReportsAsync()
     {
-        if (!_selectedReports.Any())
+        var exportableReports = _selectedReports
+            .Where(IsReportExportEligible)
+            .GroupBy(r => r.Code, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .ToList();
+
+        if (!exportableReports.Any())
         {
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Please select at least one report to export"));
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Select at least one report that is not REPORT_NEEDS_VALIDATION to export."));
             return;
         }
 
         try
         {
-            var zipBytes = await BuildExportPackageAsync(_selectedReports);
+            var excludedCount = _selectedReports.Count - exportableReports.Count;
+            if (excludedCount > 0)
+            {
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", $"{excludedCount} selected report(s) were skipped because status is REPORT_NEEDS_VALIDATION."));
+            }
+
+            var zipBytes = await BuildExportPackageAsync(exportableReports);
             var base64 = Convert.ToBase64String(zipBytes);
             var fileName = $"reports-export-package-{DateTime.UtcNow:yyyyMMdd-HHmmss}.zip";
 
             await _jsRuntime.InvokeVoidAsync("downloadFile", fileName, "application/zip", base64);
-            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Exported {_selectedReports.Count} report package(s)"));
-            _logger.LogInformation("Exported package for {Count} selected reports", _selectedReports.Count);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Exported {exportableReports.Count} report package(s)"));
+            _logger.LogInformation("Exported package for {Count} selected reports", exportableReports.Count);
         }
         catch (Exception ex)
         {
@@ -494,6 +563,11 @@ public partial class ReportListing : ComponentBase
 
     private async Task<byte[]> BuildExportPackageAsync(IEnumerable<Report> reportsToExport)
     {
+        using var httpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(20)
+        };
+
         using var memoryStream = new MemoryStream();
         using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, leaveOpen: true))
         {
@@ -504,14 +578,14 @@ public partial class ReportListing : ComponentBase
                     continue;
                 }
 
-                await AddReportFolderToArchiveAsync(archive, report);
+                await AddReportFolderToArchiveAsync(archive, report, httpClient);
             }
         }
 
         return memoryStream.ToArray();
     }
 
-    private async Task AddReportFolderToArchiveAsync(ZipArchive archive, Report report)
+    private async Task AddReportFolderToArchiveAsync(ZipArchive archive, Report report, HttpClient httpClient)
     {
         var folderName = $"Report_{SanitizeFileNamePart(report.Code)}";
 
@@ -526,6 +600,12 @@ public partial class ReportListing : ComponentBase
             ? hazardsResult.Value.ToList()
             : new List<Hazard>();
 
+        var hazardCodes = hazards
+            .Where(h => !string.IsNullOrWhiteSpace(h.Code))
+            .Select(h => h.Code)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
         AddCsvEntry(
             archive,
             $"{folderName}/Hazards_{SanitizeFileNamePart(report.Code)}.csv",
@@ -533,6 +613,9 @@ public partial class ReportListing : ComponentBase
 
         var hazardLocations = new List<HazardLocation>();
         var riskAssessments = new List<RiskAssessment>();
+        var scoringPanels = new List<ScoringPanel>();
+        var mitigations = new List<Mitigation>();
+        var hazardFiles = new List<HazardFile>();
 
         foreach (var hazard in hazards)
         {
@@ -557,6 +640,39 @@ public partial class ReportListing : ComponentBase
                     riskAssessments.AddRange(riskAssessmentResult.Value);
                 }
             }
+
+            if (!string.IsNullOrWhiteSpace(hazard.Code))
+            {
+                var scoringPanelQuery = new GetScoringPanelsByHazardCodeQuery(hazard.Code);
+                var scoringPanelResult = await _mediator.SendAsync(scoringPanelQuery, CancellationToken.None);
+
+                if (scoringPanelResult.IsSuccess && scoringPanelResult.Value is not null)
+                {
+                    scoringPanels.AddRange(scoringPanelResult.Value);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(hazard.Code))
+            {
+                var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
+                var mitigationResult = await _mediator.SendAsync(mitigationQuery, CancellationToken.None);
+
+                if (mitigationResult.IsSuccess && mitigationResult.Value is not null)
+                {
+                    mitigations.AddRange(mitigationResult.Value);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(hazard.Code))
+            {
+                var hazardFilesQuery = new GetHazardFilesByHazardCodeQuery(hazard.Code, includeFileData: true);
+                var hazardFilesResult = await _mediator.SendAsync(hazardFilesQuery, CancellationToken.None);
+
+                if (hazardFilesResult.IsSuccess && hazardFilesResult.Value is not null)
+                {
+                    hazardFiles.AddRange(hazardFilesResult.Value);
+                }
+            }
         }
 
         var distinctLocations = hazardLocations
@@ -569,6 +685,73 @@ public partial class ReportListing : ComponentBase
             .Select(group => group.First())
             .ToList();
 
+        var distinctScoringPanels = scoringPanels
+            .GroupBy(panel => panel.Code)
+            .Select(group => group.First())
+            .ToList();
+
+        var distinctMitigations = mitigations
+            .GroupBy(mitigation => mitigation.Code)
+            .Select(group => group.First())
+            .ToList();
+
+        var distinctHazardFiles = hazardFiles
+            .GroupBy(file => file.Code)
+            .Select(group => group.First())
+            .ToList();
+
+        var riskAssessmentCodes = distinctRiskAssessments
+            .Where(a => !string.IsNullOrWhiteSpace(a.Code))
+            .Select(a => a.Code)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var allRiskAnalysisQuery = new GetAllRiskAnalysisQuery();
+        var allRiskAnalysisResult = await _mediator.SendAsync(allRiskAnalysisQuery, CancellationToken.None);
+        var riskAnalyses = allRiskAnalysisResult.IsSuccess && allRiskAnalysisResult.Value is not null
+            ? allRiskAnalysisResult.Value
+                .Where(analysis =>
+                    (!string.IsNullOrWhiteSpace(analysis.HazardCode) && hazardCodes.Contains(analysis.HazardCode)) ||
+                    (!string.IsNullOrWhiteSpace(analysis.RiskAssessmentCode) && riskAssessmentCodes.Contains(analysis.RiskAssessmentCode)))
+                .GroupBy(analysis => analysis.Code)
+                .Select(group => group.First())
+                .ToList()
+            : new List<RiskAnalysis>();
+
+        var allInvestigationsQuery = new GetAllInvestigationsQuery();
+        var allInvestigationsResult = await _mediator.SendAsync(allInvestigationsQuery, CancellationToken.None);
+        var investigations = allInvestigationsResult.IsSuccess && allInvestigationsResult.Value is not null
+            ? allInvestigationsResult.Value
+                .Where(investigation =>
+                    string.Equals(investigation.ReportCode, report.Code, StringComparison.OrdinalIgnoreCase) ||
+                    (!string.IsNullOrWhiteSpace(investigation.HazardCode) && hazardCodes.Contains(investigation.HazardCode)))
+                .GroupBy(investigation => investigation.Code)
+                .Select(group => group.First())
+                .ToList()
+            : new List<Investigation>();
+
+        var investigationCodes = investigations
+            .Where(i => !string.IsNullOrWhiteSpace(i.Code))
+            .Select(i => i.Code)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var allInterviewsQuery = new GetAllInterviewsQuery();
+        var allInterviewsResult = await _mediator.SendAsync(allInterviewsQuery, CancellationToken.None);
+        var interviews = allInterviewsResult.IsSuccess && allInterviewsResult.Value is not null
+            ? allInterviewsResult.Value
+                .Where(interview =>
+                    !string.IsNullOrWhiteSpace(interview.InvestigationCode)
+                    && investigationCodes.Contains(interview.InvestigationCode))
+                .GroupBy(interview => interview.Code)
+                .Select(group => group.First())
+                .ToList()
+            : new List<Interview>();
+
+        var reportValidationQuery = new GetReportValidationByReportIdQuery(new ReportID(report.Code));
+        var reportValidationResult = await _mediator.SendAsync(reportValidationQuery, CancellationToken.None);
+        var reportValidations = reportValidationResult.IsSuccess && reportValidationResult.Value is not null
+            ? new List<SMS_Domain.Entities.ReportValidation> { reportValidationResult.Value }
+            : new List<SMS_Domain.Entities.ReportValidation>();
+
         AddCsvEntry(
             archive,
             $"{folderName}/HazardLocations_{SanitizeFileNamePart(report.Code)}.csv",
@@ -578,6 +761,67 @@ public partial class ReportListing : ComponentBase
             archive,
             $"{folderName}/RiskAssessments_{SanitizeFileNamePart(report.Code)}.csv",
             BuildCsv(distinctRiskAssessments, RiskAssessmentExportProperties));
+
+        AddCsvEntry(
+            archive,
+            $"{folderName}/RiskAnalyses_{SanitizeFileNamePart(report.Code)}.csv",
+            BuildCsv(riskAnalyses, RiskAnalysisExportProperties));
+
+        AddCsvEntry(
+            archive,
+            $"{folderName}/ScoringPanels_{SanitizeFileNamePart(report.Code)}.csv",
+            BuildCsv(distinctScoringPanels, ScoringPanelExportProperties));
+
+        AddCsvEntry(
+            archive,
+            $"{folderName}/Mitigations_{SanitizeFileNamePart(report.Code)}.csv",
+            BuildCsv(distinctMitigations, MitigationExportProperties));
+
+        AddCsvEntry(
+            archive,
+            $"{folderName}/HazardFiles_{SanitizeFileNamePart(report.Code)}.csv",
+            BuildCsv(distinctHazardFiles, HazardFileExportProperties));
+
+        AddCsvEntry(
+            archive,
+            $"{folderName}/Investigations_{SanitizeFileNamePart(report.Code)}.csv",
+            BuildCsv(investigations, InvestigationExportProperties));
+
+        AddCsvEntry(
+            archive,
+            $"{folderName}/Interviews_{SanitizeFileNamePart(report.Code)}.csv",
+            BuildCsv(interviews, InterviewExportProperties));
+
+        AddCsvEntry(
+            archive,
+            $"{folderName}/ReportValidation_{SanitizeFileNamePart(report.Code)}.csv",
+            BuildCsv(reportValidations, ReportValidationExportProperties));
+
+        await AddHazardFileContentEntriesAsync(archive, folderName, distinctHazardFiles);
+        await AddLocationThumbnailEntriesAsync(archive, folderName, distinctLocations, httpClient);
+
+        var reportSummary = BuildExportManifest(
+            report,
+            hazards.Count,
+            distinctLocations.Count,
+            distinctRiskAssessments.Count,
+            riskAnalyses.Count,
+            distinctScoringPanels.Count,
+            distinctMitigations.Count,
+            distinctHazardFiles.Count,
+            investigations.Count,
+            interviews.Count,
+            reportValidations.Count);
+
+        AddTextEntry(
+            archive,
+            $"{folderName}/ExportManifest_{SanitizeFileNamePart(report.Code)}.txt",
+            reportSummary);
+
+        AddTextEntry(
+            archive,
+            $"ReportSummary_{SanitizeFileNamePart(report.Code)}.txt",
+            reportSummary);
     }
 
     private static void AddCsvEntry(ZipArchive archive, string entryPath, string csvContent)
@@ -586,6 +830,21 @@ public partial class ReportListing : ComponentBase
         using var entryStream = entry.Open();
         using var writer = new StreamWriter(entryStream, Encoding.UTF8);
         writer.Write(csvContent);
+    }
+
+    private static void AddTextEntry(ZipArchive archive, string entryPath, string content)
+    {
+        var entry = archive.CreateEntry(entryPath, CompressionLevel.Fastest);
+        using var entryStream = entry.Open();
+        using var writer = new StreamWriter(entryStream, Encoding.UTF8);
+        writer.Write(content);
+    }
+
+    private static void AddBinaryEntry(ZipArchive archive, string entryPath, byte[] content)
+    {
+        var entry = archive.CreateEntry(entryPath, CompressionLevel.Optimal);
+        using var entryStream = entry.Open();
+        entryStream.Write(content, 0, content.Length);
     }
 
     private static string BuildCsv<T>(IEnumerable<T> records, PropertyInfo[] properties)
@@ -635,6 +894,248 @@ public partial class ReportListing : ComponentBase
     {
         var invalidChars = Path.GetInvalidFileNameChars();
         return new string(value.Select(c => invalidChars.Contains(c) ? '_' : c).ToArray());
+    }
+
+    private async Task AddHazardFileContentEntriesAsync(ZipArchive archive, string folderName, IReadOnlyCollection<HazardFile> hazardFiles)
+    {
+        if (hazardFiles.Count == 0)
+        {
+            return;
+        }
+
+        var usedFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var hazardFile in hazardFiles)
+        {
+            var fileBytes = await TryResolveHazardFileBytesAsync(hazardFile);
+            if (fileBytes is null || fileBytes.Length == 0)
+            {
+                continue;
+            }
+
+            var hazardPart = string.IsNullOrWhiteSpace(hazardFile.HazardCode)
+                ? "UnknownHazard"
+                : SanitizeFileNamePart(hazardFile.HazardCode);
+
+            var baseName = !string.IsNullOrWhiteSpace(hazardFile.FileName)
+                ? SanitizeFileNamePart(hazardFile.FileName)
+                : $"{SanitizeFileNamePart(hazardFile.Code)}.bin";
+
+            var candidateName = baseName;
+            var suffix = 1;
+            while (!usedFileNames.Add($"{hazardPart}/{candidateName}"))
+            {
+                var fileNameNoExt = Path.GetFileNameWithoutExtension(baseName);
+                var extension = Path.GetExtension(baseName);
+                candidateName = $"{fileNameNoExt}_{suffix}{extension}";
+                suffix++;
+            }
+
+            AddBinaryEntry(
+                archive,
+                $"{folderName}/HazardFiles/{hazardPart}/{candidateName}",
+                fileBytes);
+        }
+    }
+
+    private static async Task<byte[]?> TryResolveHazardFileBytesAsync(HazardFile hazardFile)
+    {
+        if (hazardFile.FileData is { Length: > 0 })
+        {
+            return hazardFile.FileData;
+        }
+
+        if (!string.IsNullOrWhiteSpace(hazardFile.FilePath) && File.Exists(hazardFile.FilePath))
+        {
+            try
+            {
+                return await File.ReadAllBytesAsync(hazardFile.FilePath);
+            }
+            catch
+            {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    private async Task AddLocationThumbnailEntriesAsync(
+        ZipArchive archive,
+        string folderName,
+        IReadOnlyCollection<HazardLocation> locations,
+        HttpClient httpClient)
+    {
+        if (locations.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var location in locations)
+        {
+            if (!location.Latitude.HasValue || !location.Longitude.HasValue)
+            {
+                continue;
+            }
+
+            var locationCode = string.IsNullOrWhiteSpace(location.Code)
+                ? $"Location_{Guid.NewGuid():N}"
+                : SanitizeFileNamePart(location.Code);
+
+            try
+            {
+                var thumbnailBytes = await TryDownloadStaticMapThumbnailAsync(httpClient, location.Latitude.Value, location.Longitude.Value);
+                if (thumbnailBytes is not null && thumbnailBytes.Length > 0)
+                {
+                    AddBinaryEntry(
+                        archive,
+                        $"{folderName}/LocationThumbnails/{locationCode}.png",
+                        thumbnailBytes);
+                    continue;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed downloading static thumbnail for hazard location {LocationCode}", location.Code);
+            }
+
+            var fallbackSvg = BuildFallbackLocationSvgThumbnail(location);
+            AddBinaryEntry(
+                archive,
+                $"{folderName}/LocationThumbnails/{locationCode}.svg",
+                Encoding.UTF8.GetBytes(fallbackSvg));
+        }
+    }
+
+    private static async Task<byte[]?> TryDownloadStaticMapThumbnailAsync(HttpClient httpClient, decimal latitude, decimal longitude)
+    {
+        // External static map host may be blocked in secured/offline environments.
+        // Keep export deterministic by using SVG fallback thumbnails unless this is explicitly re-enabled.
+        const bool enableExternalStaticMapDownload = false;
+        if (!enableExternalStaticMapDownload)
+        {
+            return null;
+        }
+
+        var lat = latitude.ToString("0.######", CultureInfo.InvariantCulture);
+        var lng = longitude.ToString("0.######", CultureInfo.InvariantCulture);
+        var url = $"https://staticmap.openstreetmap.de/staticmap.php?center={lat},{lng}&zoom=15&size=640x360&maptype=mapnik&markers={lat},{lng},red-pushpin";
+
+        try
+        {
+            using var response = await httpClient.GetAsync(url);
+            if (!response.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            var contentType = response.Content.Headers.ContentType?.MediaType;
+            if (string.IsNullOrWhiteSpace(contentType) || !contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase))
+            {
+                return null;
+            }
+
+            return await response.Content.ReadAsByteArrayAsync();
+        }
+        catch (HttpRequestException)
+        {
+            return null;
+        }
+        catch (TaskCanceledException)
+        {
+            return null;
+        }
+    }
+
+    private static string BuildFallbackLocationSvgThumbnail(HazardLocation location)
+    {
+        var latText = location.Latitude?.ToString("0.######", CultureInfo.InvariantCulture) ?? "N/A";
+        var lngText = location.Longitude?.ToString("0.######", CultureInfo.InvariantCulture) ?? "N/A";
+        var description = string.IsNullOrWhiteSpace(location.Description)
+            ? "Location"
+            : EscapeXml(location.Description);
+
+        return $"""
+<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"640\" height=\"360\" viewBox=\"0 0 640 360\">
+  <defs>
+    <linearGradient id=\"bg\" x1=\"0\" y1=\"0\" x2=\"0\" y2=\"1\">
+      <stop offset=\"0%\" stop-color=\"#eef5ff\" />
+      <stop offset=\"100%\" stop-color=\"#dde8f8\" />
+    </linearGradient>
+  </defs>
+  <rect x=\"0\" y=\"0\" width=\"640\" height=\"360\" fill=\"url(#bg)\" />
+  <g stroke=\"#c7d6ea\" stroke-width=\"1\" opacity=\"0.65\">
+    <line x1=\"0\" y1=\"60\" x2=\"640\" y2=\"60\" />
+    <line x1=\"0\" y1=\"120\" x2=\"640\" y2=\"120\" />
+    <line x1=\"0\" y1=\"180\" x2=\"640\" y2=\"180\" />
+    <line x1=\"0\" y1=\"240\" x2=\"640\" y2=\"240\" />
+    <line x1=\"0\" y1=\"300\" x2=\"640\" y2=\"300\" />
+    <line x1=\"80\" y1=\"0\" x2=\"80\" y2=\"360\" />
+    <line x1=\"160\" y1=\"0\" x2=\"160\" y2=\"360\" />
+    <line x1=\"240\" y1=\"0\" x2=\"240\" y2=\"360\" />
+    <line x1=\"320\" y1=\"0\" x2=\"320\" y2=\"360\" />
+    <line x1=\"400\" y1=\"0\" x2=\"400\" y2=\"360\" />
+    <line x1=\"480\" y1=\"0\" x2=\"480\" y2=\"360\" />
+    <line x1=\"560\" y1=\"0\" x2=\"560\" y2=\"360\" />
+  </g>
+  <g transform=\"translate(320,170)\">
+    <circle cx=\"0\" cy=\"0\" r=\"18\" fill=\"#dc3545\" stroke=\"#ffffff\" stroke-width=\"3\" />
+    <path d=\"M0 18 L-8 34 L8 34 Z\" fill=\"#dc3545\" />
+  </g>
+  <rect x=\"16\" y=\"270\" width=\"608\" height=\"74\" rx=\"8\" fill=\"#ffffff\" fill-opacity=\"0.9\" />
+  <text x=\"28\" y=\"296\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"16\" fill=\"#1f2d3d\" font-weight=\"600\">{description}</text>
+  <text x=\"28\" y=\"321\" font-family=\"Consolas, monospace\" font-size=\"14\" fill=\"#334e68\">Lat: {latText}   Lng: {lngText}</text>
+  <text x=\"28\" y=\"341\" font-family=\"Segoe UI, Arial, sans-serif\" font-size=\"12\" fill=\"#627d98\">Fallback map thumbnail generated during export.</text>
+</svg>
+""";
+    }
+
+    private static string EscapeXml(string value)
+    {
+        return value
+            .Replace("&", "&amp;", StringComparison.Ordinal)
+            .Replace("<", "&lt;", StringComparison.Ordinal)
+            .Replace(">", "&gt;", StringComparison.Ordinal)
+            .Replace("\"", "&quot;", StringComparison.Ordinal)
+            .Replace("'", "&apos;", StringComparison.Ordinal);
+    }
+
+    private static string BuildExportManifest(
+        Report report,
+        int hazardCount,
+        int hazardLocationCount,
+        int riskAssessmentCount,
+        int riskAnalysisCount,
+        int scoringPanelCount,
+        int mitigationCount,
+        int hazardFileCount,
+        int investigationCount,
+        int interviewCount,
+        int reportValidationCount)
+    {
+        var sb = new StringBuilder();
+        sb.AppendLine("PDXSMS Comprehensive Report Export Package");
+        sb.AppendLine($"Generated UTC: {DateTime.UtcNow:O}");
+        sb.AppendLine($"Report Code: {report.Code}");
+        sb.AppendLine($"Report Name: {report.Name}");
+        sb.AppendLine($"Report Status: {report.Status}");
+        sb.AppendLine();
+        sb.AppendLine("Included Data Counts:");
+        sb.AppendLine($"- Hazards: {hazardCount}");
+        sb.AppendLine($"- Hazard Locations: {hazardLocationCount}");
+        sb.AppendLine($"- Risk Assessments: {riskAssessmentCount}");
+        sb.AppendLine($"- Risk Analyses: {riskAnalysisCount}");
+        sb.AppendLine($"- Scoring Panels: {scoringPanelCount}");
+        sb.AppendLine($"- Mitigations: {mitigationCount}");
+        sb.AppendLine($"- Hazard Files (metadata): {hazardFileCount}");
+        sb.AppendLine($"- Investigations: {investigationCount}");
+        sb.AppendLine($"- Interviews: {interviewCount}");
+        sb.AppendLine($"- Report Validations: {reportValidationCount}");
+        sb.AppendLine();
+        sb.AppendLine("Included Folders:");
+        sb.AppendLine("- HazardFiles/* (exported evidence files when data/path is available)");
+        sb.AppendLine("- LocationThumbnails/* (map thumbnails per location, with SVG fallback)");
+        return sb.ToString();
     }
 
     #endregion

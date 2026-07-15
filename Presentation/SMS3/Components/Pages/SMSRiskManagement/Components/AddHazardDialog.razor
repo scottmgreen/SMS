@@ -112,6 +112,29 @@
                                 </RadzenCard>
                             </RadzenColumn>
                         </RadzenRow>
+                        <RadzenRow Gap="1rem" Class="rz-mb-3">
+                            <RadzenColumn Size="12" class="rz-col-2">
+                                <RadzenFormField Text="Hazard Title *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;" class="@(IsHazardTitleValidationAlert ? "validation-error-field" : string.Empty)">
+                                    <RadzenTextBox @bind-Value="@NewHazardTitle"
+                                                   Name="HazardTitle"
+                                                   MaxLength="60"
+                                                   class="@(IsHazardTitleValidationAlert ? "default-validation-dropdown" : string.Empty)"
+                                                   Placeholder="Enter a short hazard title (5-6 words)..."
+                                                   Style="width: 50%; min-width: 50%;" />
+                                </RadzenFormField>
+                                <RadzenRequiredValidator Component="HazardTitle" Text="Hazard title is required" />
+                                @if (IsHazardTitleValidationAlert)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
+                                        Hazard title is required.
+                                    </RadzenText>
+                                }
+                                <RadzenText TextStyle="TextStyle.Caption"
+                                            Class="@($"rz-mt-1 {(HazardTitleCharacterCount > 55 ? "rz-color-danger" : HazardTitleCharacterCount > 45 ? "rz-color-warning" : "rz-color-base-500")}")">
+                                    @HazardTitleCharacterCount/60 characters
+                                </RadzenText>
+                            </RadzenColumn>
+                        </RadzenRow>
                         <!-- Hazard Description -->
                         <RadzenFormField Text="Hazard Description *" AllowFloatingLabel="false"    Variant="Variant.Outlined" class="@(IsHazardDescriptionInvalid ? "validation-error-field" : "")">
                             <RadzenTextArea @bind-Value="@NewHazardDescription" Rows="3"

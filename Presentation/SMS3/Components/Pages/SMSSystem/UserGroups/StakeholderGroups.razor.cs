@@ -35,6 +35,7 @@ public partial class StakeholderGroups : ComponentBase
 
     private List<SMSStakeholderGroup> SMSStakeholderGroups { get; set; } = new();
     private List<SMSStakeholderUser> SMSStakeholderUsers { get; set; } = new();
+    private Dictionary<string, int> GroupMemberCounts { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     private List<SMSStakeholderUser> GroupMembers { get; set; } = new();
     private List<SMSStakeholderUser> AvailableUsers { get; set; } = new();
     private SMSStakeholderGroup? _currentGroup { get; set; }
@@ -111,6 +112,8 @@ public partial class StakeholderGroups : ComponentBase
                 usersResult.Value?.ToList() ?? new List<SMSStakeholderUser>() :
                 new List<SMSStakeholderUser>();
 
+            await LoadGroupMemberCountsAsync();
+
             Logger.LogInformation("Loaded {GroupCount} stakeholder groups and {UserCount} stakeholder users",
                 SMSStakeholderGroups.Count, SMSStakeholderUsers.Count);
         }
@@ -122,6 +125,48 @@ public partial class StakeholderGroups : ComponentBase
     }
 
     #endregion
+
+    private async Task LoadGroupMemberCountsAsync()
+    {
+        GroupMemberCounts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var group in SMSStakeholderGroups)
+        {
+            if (string.IsNullOrWhiteSpace(group.Code))
+            {
+                continue;
+            }
+
+            var groupMembersQuery = new GetUsersByStakeholderGroupCodeQuery(group.Code);
+            var membersResult = await Mediator.SendAsync(groupMembersQuery, CancellationToken.None);
+            GroupMemberCounts[group.Code] = membersResult.IsSuccess
+                ? membersResult.Value?.Count() ?? 0
+                : 0;
+        }
+    }
+
+    private int GetAssignedUsersCount(string? groupCode)
+    {
+        if (string.IsNullOrWhiteSpace(groupCode))
+        {
+            return 0;
+        }
+
+        return GroupMemberCounts.TryGetValue(groupCode, out var count) ? count : 0;
+    }
+
+    private bool IsGroupDeleteDisabled(string? groupCode)
+    {
+        return GetAssignedUsersCount(groupCode) > 0;
+    }
+
+    private string GetDeleteTooltip(string? groupCode)
+    {
+        var assignedCount = GetAssignedUsersCount(groupCode);
+        return assignedCount > 0
+            ? $"Cannot delete. {assignedCount} user(s) assigned."
+            : "Delete Group";
+    }
 
     #region Edit Operations
 
@@ -292,6 +337,12 @@ public partial class StakeholderGroups : ComponentBase
             return;
         }
 
+        if (IsGroupDeleteDisabled(_deleteGroupCode))
+        {
+            await ShowErrorAsyncNotification($"Group '{_deleteGroupName}' cannot be deleted while users are assigned.");
+            return;
+        }
+
         try
         {
             _isSaving = true;
@@ -374,8 +425,14 @@ public partial class StakeholderGroups : ComponentBase
         _newDescription = string.Empty;
     }
 
-    private void ConfirmDelete(string groupCode, string groupName)
+    private async Task ConfirmDelete(string groupCode, string groupName)
     {
+        if (IsGroupDeleteDisabled(groupCode))
+        {
+            await ShowErrorAsyncNotification($"Group '{groupName}' cannot be deleted while users are assigned.");
+            return;
+        }
+
         _deleteGroupCode = groupCode;
         _deleteGroupName = groupName;
         _showDeleteModal = true;
@@ -463,6 +520,8 @@ public partial class StakeholderGroups : ComponentBase
 
             Logger.LogInformation("Loaded {MemberCount} group members and {AvailableCount} available users for group {GroupCode}",
                 GroupMembers.Count, AvailableUsers.Count, groupCode);
+
+            GroupMemberCounts[groupCode] = GroupMembers.Count;
         }
         catch (Exception ex)
         {
@@ -471,6 +530,7 @@ public partial class StakeholderGroups : ComponentBase
             // For now, if the query fails, just load empty collections
             GroupMembers = new List<SMSStakeholderUser>();
             AvailableUsers = SMSStakeholderUsers?.ToList() ?? new List<SMSStakeholderUser>();
+            GroupMemberCounts[groupCode] = 0;
         }
     }
 

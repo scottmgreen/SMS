@@ -42,6 +42,7 @@ public partial class HazardLocationListing : ComponentBase
     private RadzenDataGrid<HazardLocation>? _locationsGrid;
     private IEnumerable<HazardLocation> _locations = new List<HazardLocation>();
     private List<HazardLocation> _allLocations = new List<HazardLocation>(); // Store all locations for client-side filtering
+    private readonly Dictionary<string, string> _hazardCodeToReportCodeMap = new(StringComparer.OrdinalIgnoreCase);
     private int _totalCount;
     private bool _isLoading = false;
     #endregion
@@ -65,6 +66,8 @@ public partial class HazardLocationListing : ComponentBase
 
             var query = new GetAllHazardLocationsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
+
+            await LoadHazardReportMapAsync();
 
             if (result.IsSuccess && result.Value is not null)
             {
@@ -111,6 +114,43 @@ public partial class HazardLocationListing : ComponentBase
         }
     }
 
+    private async Task LoadHazardReportMapAsync()
+    {
+        try
+        {
+            var hazardsResult = await _mediator.SendAsync(new GetAllHazardsQuery(), CancellationToken.None);
+            _hazardCodeToReportCodeMap.Clear();
+
+            if (hazardsResult.IsSuccess && hazardsResult.Value is not null)
+            {
+                foreach (var hazard in hazardsResult.Value)
+                {
+                    if (!string.IsNullOrWhiteSpace(hazard.Code) && !string.IsNullOrWhiteSpace(hazard.ReportCode))
+                    {
+                        _hazardCodeToReportCodeMap[hazard.Code] = hazard.ReportCode;
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to load hazard/report mappings for HazardLocation listing");
+            _hazardCodeToReportCodeMap.Clear();
+        }
+    }
+
+    private string GetReportCodeForLocation(HazardLocation location)
+    {
+        if (!string.IsNullOrWhiteSpace(location.HazardCode)
+            && _hazardCodeToReportCodeMap.TryGetValue(location.HazardCode, out var reportCode)
+            && !string.IsNullOrWhiteSpace(reportCode))
+        {
+            return reportCode;
+        }
+
+        return "N/A";
+    }
+
     private async Task LoadData(LoadDataArgs args)
     {
         try
@@ -118,8 +158,8 @@ public partial class HazardLocationListing : ComponentBase
             _isLoading = true;
             StateHasChanged();
 
-            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filter: {Filter}", 
-                args.Skip, args.Top, args.OrderBy, args.Filter);
+            _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filters: {FiltersCount}", 
+                args.Skip, args.Top, args.OrderBy, args.Filters?.Count() ?? 0);
 
             // If we don't have all locations yet, load them first
             if (_allLocations is null || !_allLocations.Any())
@@ -134,9 +174,8 @@ public partial class HazardLocationListing : ComponentBase
             _logger.LogInformation("Starting with {Count} total locations", query.Count());
 
             // Apply filtering
-            if (!string.IsNullOrEmpty(args.Filter))
+            if (args.Filters is not null && args.Filters.Any())
             {
-                _logger.LogInformation("Applying filter: {Filter}", args.Filter);
                 query = ApplyFiltering(query, args);
                 _logger.LogInformation("After filtering: {Count} locations", query.Count());
             }
@@ -178,8 +217,8 @@ public partial class HazardLocationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filter={Filter}", 
-                args.Skip, args.Top, args.OrderBy, args.Filter);
+            _logger.LogError(ex, "Error in LoadData with args: Skip={Skip}, Top={Top}, OrderBy={OrderBy}, Filters={FiltersCount}", 
+                args.Skip, args.Top, args.OrderBy, args.Filters?.Count() ?? 0);
             await ShowErrorAsyncNotification($"Error loading data: {ex.Message}");
             
             // Fallback to show all data without filtering/sorting
@@ -209,25 +248,7 @@ public partial class HazardLocationListing : ComponentBase
     {
         try
         {
-            _logger.LogInformation("ApplyFiltering called with Filter: {Filter}, Filters count: {FilterCount}", 
-                args.Filter, args.Filters?.Count() ?? 0);
-
-            // Handle simple string filter (when user types in the general filter)
-            if (!string.IsNullOrEmpty(args.Filter) && !args.Filter.Contains("("))
-            {
-                var filterValue = args.Filter.ToLower();
-                _logger.LogInformation("Applying simple string filter: {FilterValue}", filterValue);
-                
-                query = query.Where(l => 
-                    (!string.IsNullOrEmpty(l.Code) && l.Code.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(l.HazardCode) && l.HazardCode.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(l.Description) && l.Description.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(l.CreatedBy) && l.CreatedBy.ToLower().Contains(filterValue)) ||
-                    (l.Latitude.HasValue && l.Latitude.ToString()!.Contains(filterValue)) ||
-                    (l.Longitude.HasValue && l.Longitude.ToString()!.Contains(filterValue))
-                );
-                return query;
-            }
+            _logger.LogInformation("ApplyFiltering called with Filters count: {FilterCount}", args.Filters?.Count() ?? 0);
 
             // Handle advanced column-specific filters
             if (args.Filters is not null && args.Filters.Any())
@@ -247,11 +268,14 @@ public partial class HazardLocationListing : ComponentBase
 
                     switch (columnName)
                     {
+                        case "reportcode":
+                            query = ApplyComputedStringFilter(query, GetReportCodeForLocation, filterValue, filterOperator);
+                            break;
                         case "code":
                             query = ApplyStringFilter(query, l => l.Code, filterValue, filterOperator);
                             break;
                         case "hazardcode":
-                            query = ApplyStringFilter(query, l => l.HazardCode, filterValue, filterOperator);
+                            query = ApplyHazardOrReportCodeFilter(query, filterValue, filterOperator);
                             break;
                         case "description":
                             query = ApplyStringFilter(query, l => l.Description, filterValue, filterOperator);
@@ -294,8 +318,8 @@ public partial class HazardLocationListing : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error applying filters - Filter: {Filter}, Filters: {@Filters}", 
-                args.Filter, args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
+            _logger.LogError(ex, "Error applying filters - Filters: {@Filters}", 
+                args.Filters?.Select(f => new { f.Property, f.FilterValue, f.FilterOperator }));
             return query; // Return unfiltered query if filtering fails
         }
     }
@@ -313,6 +337,51 @@ public partial class HazardLocationListing : ComponentBase
             FilterOperator.Equals => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower() == filterValue)),
             FilterOperator.NotEquals => query.Where(CombineExpressions(propertySelector, value => string.IsNullOrEmpty(value) || value.ToLower() != filterValue)),
             _ => query.Where(CombineExpressions(propertySelector, value => !string.IsNullOrEmpty(value) && value.ToLower().Contains(filterValue)))
+        };
+    }
+
+    private static IQueryable<HazardLocation> ApplyComputedStringFilter(
+        IQueryable<HazardLocation> query,
+        Func<HazardLocation, string?> valueSelector,
+        string filterValue,
+        FilterOperator filterOperator)
+    {
+        return filterOperator switch
+        {
+            FilterOperator.Contains => query.Where(l => (valueSelector(l) ?? string.Empty).Contains(filterValue, StringComparison.OrdinalIgnoreCase)),
+            FilterOperator.StartsWith => query.Where(l => (valueSelector(l) ?? string.Empty).StartsWith(filterValue, StringComparison.OrdinalIgnoreCase)),
+            FilterOperator.EndsWith => query.Where(l => (valueSelector(l) ?? string.Empty).EndsWith(filterValue, StringComparison.OrdinalIgnoreCase)),
+            FilterOperator.Equals => query.Where(l => string.Equals(valueSelector(l) ?? string.Empty, filterValue, StringComparison.OrdinalIgnoreCase)),
+            FilterOperator.NotEquals => query.Where(l => !string.Equals(valueSelector(l) ?? string.Empty, filterValue, StringComparison.OrdinalIgnoreCase)),
+            _ => query.Where(l => (valueSelector(l) ?? string.Empty).Contains(filterValue, StringComparison.OrdinalIgnoreCase))
+        };
+    }
+
+    private IQueryable<HazardLocation> ApplyHazardOrReportCodeFilter(
+        IQueryable<HazardLocation> query,
+        string filterValue,
+        FilterOperator filterOperator)
+    {
+        return filterOperator switch
+        {
+            FilterOperator.Contains => query.Where(l =>
+                (l.HazardCode ?? string.Empty).Contains(filterValue, StringComparison.OrdinalIgnoreCase)
+                || (GetReportCodeForLocation(l) ?? string.Empty).Contains(filterValue, StringComparison.OrdinalIgnoreCase)),
+            FilterOperator.StartsWith => query.Where(l =>
+                (l.HazardCode ?? string.Empty).StartsWith(filterValue, StringComparison.OrdinalIgnoreCase)
+                || (GetReportCodeForLocation(l) ?? string.Empty).StartsWith(filterValue, StringComparison.OrdinalIgnoreCase)),
+            FilterOperator.EndsWith => query.Where(l =>
+                (l.HazardCode ?? string.Empty).EndsWith(filterValue, StringComparison.OrdinalIgnoreCase)
+                || (GetReportCodeForLocation(l) ?? string.Empty).EndsWith(filterValue, StringComparison.OrdinalIgnoreCase)),
+            FilterOperator.Equals => query.Where(l =>
+                string.Equals(l.HazardCode ?? string.Empty, filterValue, StringComparison.OrdinalIgnoreCase)
+                || string.Equals(GetReportCodeForLocation(l) ?? string.Empty, filterValue, StringComparison.OrdinalIgnoreCase)),
+            FilterOperator.NotEquals => query.Where(l =>
+                !string.Equals(l.HazardCode ?? string.Empty, filterValue, StringComparison.OrdinalIgnoreCase)
+                && !string.Equals(GetReportCodeForLocation(l) ?? string.Empty, filterValue, StringComparison.OrdinalIgnoreCase)),
+            _ => query.Where(l =>
+                (l.HazardCode ?? string.Empty).Contains(filterValue, StringComparison.OrdinalIgnoreCase)
+                || (GetReportCodeForLocation(l) ?? string.Empty).Contains(filterValue, StringComparison.OrdinalIgnoreCase))
         };
     }
 
@@ -401,6 +470,9 @@ public partial class HazardLocationListing : ComponentBase
 
             return propertyName switch
             {
+                "reportcode" => isDescending
+                    ? query.OrderByDescending(l => GetReportCodeForLocation(l))
+                    : query.OrderBy(l => GetReportCodeForLocation(l)),
                 "code" => isDescending ? query.OrderByDescending(l => l.Code ?? "") : query.OrderBy(l => l.Code ?? ""),
                 "hazardcode" => isDescending ? query.OrderByDescending(l => l.HazardCode ?? "") : query.OrderBy(l => l.HazardCode ?? ""),
                 "description" => isDescending ? query.OrderByDescending(l => l.Description ?? "") : query.OrderBy(l => l.Description ?? ""),

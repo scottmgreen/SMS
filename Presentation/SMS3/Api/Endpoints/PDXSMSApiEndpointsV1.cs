@@ -89,7 +89,7 @@ namespace SMS3.Api.Endpoints
             try
             {
                 // Use the dedicated API service for business logic
-                var result = await apiService.ProcessReportSubmissionAsync(request, httpContext);
+                var result = await apiService.ProcessReportSubmissionAsyncV1(request, httpContext);
                 
                 return result.IsSuccess 
                     ? Results.Ok(result.Value)

@@ -74,7 +74,7 @@
                                         </RadzenStack>
                                     </Template>
                                 </RadzenDataGridColumn>
-                                <RadzenDataGridColumn TItem="SMSUserRole" Title="Permissions Summary" Width="500px" Sortable="false">
+                                <RadzenDataGridColumn TItem="SMSUserRole" Title="Permissions Summary" Width="500px" Sortable="false" Filterable="false">
                                     <Template Context="role">
                                         @{
                                             var totalPermissions = GetTotalPermissions(role);
@@ -102,7 +102,11 @@
                                             <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" 
                                                         Click="@(() => ShowPermissionsDialog(role))" 
                                                         title="View Permissions" />
+                                            <RadzenButton Icon="groups" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
+                                                        Click="@(() => ShowAssignedUsersDialog(role))"
+                                                        title="View Assigned Users" />
                                             <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
+                                                        Disabled="@IsRoleDeleteDisabled(role)"
                                                         Click="@(() => ShowDeleteDialog(role.Code ?? "", role.Name ?? ""))" 
                                                         title="Delete Role" />
                                         </RadzenStack>
@@ -437,7 +441,6 @@
 
                         <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter" class="rz-mt-3">
                             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                <RadzenIcon Icon="info" />
                                 <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
                                     Total: @GetViewRoleTotalPermissions() of @GetMaxPermissions() possible permissions granted
                                 </RadzenText>
@@ -448,7 +451,6 @@
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
                             <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                <RadzenIcon Icon="warning" Style="font-size: 2rem;" />
                                 <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">No Permissions Defined</RadzenText>
                                 <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">This role has no module permissions assigned.</RadzenText>
                             </RadzenStack>
@@ -458,6 +460,80 @@
                 <div class="sms-modal-footer">
                     <div class="d-flex justify-content-end align-items-center w-100">
                         <RadzenButton Text="Close" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@ClosePermissionsModal" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Assigned Users Modal -->
+@if (_showAssignedUsersModal && _assignmentViewRole is not null)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-lg">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <h5 class="sms-modal-title">
+                        <i class="fas fa-users"></i> Assigned Users: @_assignmentViewRole.Name
+                    </h5>
+                </div>
+                <div class="sms-modal-body">
+                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0 0 1rem 0; text-align: center;">
+                        Code: @_assignmentViewRole.Code
+                    </RadzenText>
+
+                    <RadzenRow Gap="1rem" class="rz-mb-3">
+                        <RadzenColumn Size="4">
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Application: @GetAssignedUsersCountByType("Application")</RadzenText>
+                            </RadzenAlert>
+                        </RadzenColumn>
+                        <RadzenColumn Size="4">
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Organizational: @GetAssignedUsersCountByType("Organizational")</RadzenText>
+                            </RadzenAlert>
+                        </RadzenColumn>
+                        <RadzenColumn Size="4">
+                            <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Stakeholder: @GetAssignedUsersCountByType("Stakeholder")</RadzenText>
+                            </RadzenAlert>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    @if (_assignmentViewUsers.Any())
+                    {
+                        <RadzenDataGrid Data="@_assignmentViewUsers" TItem="RoleAssignedUserView" AllowPaging="true" PageSize="10" AllowSorting="true" class="permission-view-grid">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="RoleAssignedUserView" Property="UserType" Title="User Type" Width="180px" />
+                                <RadzenDataGridColumn TItem="RoleAssignedUserView" Property="DisplayName" Title="Display Name" Width="260px" />
+                                <RadzenDataGridColumn TItem="RoleAssignedUserView" Property="UserName" Title="User Name" Width="220px" />
+                                <RadzenDataGridColumn TItem="RoleAssignedUserView" Property="UserCode" Title="Code" Width="160px" />
+                            </Columns>
+                        </RadzenDataGrid>
+
+                        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter" class="rz-mt-3">
+                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                    This role cannot be deleted while users are assigned.
+                                </RadzenText>
+                            </RadzenStack>
+                        </RadzenAlert>
+                    }
+                    else
+                    {
+                        <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter">
+                            <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="0.5rem">
+                                <RadzenIcon Icon="check_circle" Style="font-size: 2rem;" />
+                                <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">No Assigned Users</RadzenText>
+                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">This role is currently not assigned to any users.</RadzenText>
+                            </RadzenStack>
+                        </RadzenAlert>
+                    }
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end align-items-center w-100">
+                        <RadzenButton Text="Close" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@CloseAssignedUsersModal" />
                     </div>
                 </div>
             </div>

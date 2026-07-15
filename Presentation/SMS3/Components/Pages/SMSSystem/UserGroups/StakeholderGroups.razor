@@ -378,8 +378,11 @@
                                               Click="@(() => EditGroup(group.Code))" title="Edit Group" />
                                 <RadzenButton Icon="people" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall"
                                               Click="@(() => ManageMembers(group.Code))" title="Manage Members" />
+                                <RadzenButton Text="@(GetAssignedUsersCount(group.Code).ToString())" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                              Click="@(() => ManageMembers(group.Code))" title="View Assigned Users" />
                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
-                                              Click="@(() => ConfirmDelete(group.Code, group.Name))" title="Delete Group" />
+                                              Disabled="@IsGroupDeleteDisabled(group.Code)"
+                                              Click="@(() => ConfirmDelete(group.Code, group.Name))" title="@GetDeleteTooltip(group.Code)" />
                             </div>
                         </Template>
                     </RadzenDataGridColumn>
