@@ -1026,7 +1026,7 @@ public partial class ReportProcessing : ComponentBase
             builder.AddAttribute(1, "Data", PendingValidation);
             builder.AddAttribute(2, "AllowSorting", true);
             builder.AddAttribute(3, "AllowPaging", true);
-            builder.AddAttribute(4, "PageSize", 10);
+            builder.AddAttribute(4, "PageSize", 15);
             builder.AddAttribute(5, "Columns", (RenderFragment)(columnsBuilder =>
             {
                 RenderValidationColumns(columnsBuilder);
@@ -1057,7 +1057,7 @@ public partial class ReportProcessing : ComponentBase
             builder.AddAttribute(1, "Data", PendingRiskAssessment);
             builder.AddAttribute(2, "AllowSorting", true);
             builder.AddAttribute(3, "AllowPaging", true);
-            builder.AddAttribute(4, "PageSize", 10);
+            builder.AddAttribute(4, "PageSize", 15);
             builder.AddAttribute(5, "Columns", (RenderFragment)(columnsBuilder =>
             {
                 RenderRiskAssessmentColumns(columnsBuilder);
@@ -1088,7 +1088,7 @@ public partial class ReportProcessing : ComponentBase
             builder.AddAttribute(1, "Data", PendingInvestigation);
             builder.AddAttribute(2, "AllowSorting", true);
             builder.AddAttribute(3, "AllowPaging", true);
-            builder.AddAttribute(4, "PageSize", 10);
+            builder.AddAttribute(4, "PageSize", 15);
             builder.AddAttribute(5, "Columns", (RenderFragment)(columnsBuilder =>
             {
                 RenderInvestigationColumns(columnsBuilder);

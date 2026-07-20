@@ -1,6 +1,9 @@
 
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.JSInterop;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text.Json;
 
 using SMS_Application.Common;
 
@@ -33,6 +36,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private IConfiguration _configuration { get; set; } = default!;
+    [Inject] private IHttpClientFactory _httpClientFactory { get; set; } = default!;
     #endregion
 
     #region Route Parameters
@@ -2131,6 +2135,28 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             storageType = "Cloud";
                             fileDataToStore = null;
                         }
+                        else if (!string.IsNullOrWhiteSpace(_configuration.GetValue<string>("HazardFileCloudStorage:UploadEndpoint")))
+                        {
+                            try
+                            {
+                                var uploadResult = await UploadFileToCloudEndpointAsync(attachedFile, uploadSessionFolder);
+                                fileNameToStore = uploadResult.StoredFileName;
+                                filePathToStore = uploadResult.FileUri;
+                                storageType = "Cloud";
+                                fileDataToStore = null;
+                            }
+                            catch (Exception cloudUploadEx)
+                            {
+                                _logger.LogWarning(cloudUploadEx,
+                                    "Cloud upload failed for file {FileName}; falling back to database storage.",
+                                    attachedFile.FileName);
+
+                                fileNameToStore = attachedFile.FileName;
+                                filePathToStore = null;
+                                storageType = "Database";
+                                fileDataToStore = attachedFile.Data;
+                            }
+                        }
                         else
                         {
                             fileNameToStore = attachedFile.FileName;
@@ -2204,10 +2230,226 @@ public partial class HazardReporting : ComponentBase, IDisposable
             safeOriginalName = "hazard-file.bin";
         }
 
-        var guidPrefixedFileName = $"{Guid.NewGuid():D}-{safeOriginalName}";
-        var uri = $"{baseUri.TrimEnd('/')}/{DateTime.UtcNow:yyyy/MM/dd}/{uploadSessionFolder}/{guidPrefixedFileName}";
+        var extension = Path.GetExtension(safeOriginalName);
+        var guidFileName = $"{Guid.NewGuid():D}{extension}";
+        var uri = $"{baseUri.TrimEnd('/')}/{DateTime.UtcNow:yyyy/MM/dd}/{uploadSessionFolder}/{guidFileName}";
 
-        return Task.FromResult((guidPrefixedFileName, uri));
+        return Task.FromResult((guidFileName, uri));
+    }
+
+    private async Task<(string StoredFileName, string FileUri)> UploadFileToCloudEndpointAsync(AttachedFile attachedFile, string uploadSessionFolder)
+    {
+        var uploadEndpoint = _configuration.GetValue<string>("HazardFileCloudStorage:UploadEndpoint")?.Trim();
+        if (string.IsNullOrWhiteSpace(uploadEndpoint))
+        {
+            throw new InvalidOperationException("HazardFileCloudStorage:UploadEndpoint is not configured.");
+        }
+
+        var permanentToken = _configuration.GetValue<string>("HazardFileCloudStorage:PermanentToken")?.Trim();
+        var clientId = _configuration.GetValue<string>("HazardFileCloudStorage:OAuthClientId")?.Trim();
+
+        var originalName = Path.GetFileName(attachedFile.FileName);
+        var safeOriginalName = string.Concat(originalName.Where(ch => !Path.GetInvalidFileNameChars().Contains(ch))).Trim();
+        if (string.IsNullOrWhiteSpace(safeOriginalName))
+        {
+            safeOriginalName = "hazard-file.bin";
+        }
+
+        var extension = Path.GetExtension(safeOriginalName);
+        var uploadUid = Guid.NewGuid().ToString("D");
+        var guidFileName = $"{uploadUid}{extension}";
+        var endpointWithUid = QueryHelpers.AddQueryString(uploadEndpoint, "uid", uploadUid);
+
+        _logger.LogInformation(
+            "Cloud upload request prepared. Method=POST Url={Url} Header.ClientId={ClientIdPresent} Header.Authorization={AuthorizationPresent} FormField=file FileName={FileName} ContentType={ContentType} SizeBytes={SizeBytes} uid={Uid}",
+            endpointWithUid,
+            !string.IsNullOrWhiteSpace(clientId),
+            !string.IsNullOrWhiteSpace(permanentToken),
+            guidFileName,
+            attachedFile.ContentType ?? "application/octet-stream",
+            attachedFile.Size,
+            uploadUid);
+
+        using var httpClient = _httpClientFactory.CreateClient();
+        using var form = new MultipartFormDataContent();
+        using var fileContent = new ByteArrayContent(attachedFile.Data);
+
+        fileContent.Headers.ContentType = new MediaTypeHeaderValue(attachedFile.ContentType ?? "application/octet-stream");
+
+        form.Add(fileContent, "file", guidFileName);
+
+        string? tokenValue = null;
+        if (!string.IsNullOrWhiteSpace(permanentToken))
+        {
+            tokenValue = permanentToken.StartsWith("perm:", StringComparison.OrdinalIgnoreCase)
+                ? permanentToken
+                : $"perm:{permanentToken}";
+        }
+
+        var request = new HttpRequestMessage(HttpMethod.Post, endpointWithUid)
+        {
+            Content = form
+        };
+
+        request.Headers.Accept.ParseAdd("*/*");
+
+        if (!string.IsNullOrWhiteSpace(clientId))
+        {
+            request.Headers.TryAddWithoutValidation("ClientId", clientId);
+        }
+
+        if (!string.IsNullOrWhiteSpace(tokenValue))
+        {
+            request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", tokenValue);
+        }
+
+        var requestHeaders = string.Join(" | ", request.Headers.Select(h => $"{h.Key}={string.Join(",", h.Value)}"));
+        var contentHeaders = string.Join(" | ", request.Content.Headers.Select(h => $"{h.Key}={string.Join(",", h.Value)}"));
+        var defaultHeaders = string.Join(" | ", httpClient.DefaultRequestHeaders.Select(h => $"{h.Key}={string.Join(",", h.Value)}"));
+
+        var authHeader = request.Headers.Authorization ?? httpClient.DefaultRequestHeaders.Authorization;
+        var authScheme = authHeader?.Scheme ?? "(none)";
+        var authPrefix = authHeader?.Parameter is { Length: > 5 }
+            ? authHeader.Parameter[..5]
+            : authHeader?.Parameter ?? "(none)";
+
+        _logger.LogWarning(
+            "Cloud upload PRE-SEND request details: Method={Method}; RequestUri={RequestUri}; HttpClient.BaseAddress={BaseAddress}; HttpClient.Timeout={TimeoutSeconds}s; HttpVersion={Version}; DefaultHeaders=[{DefaultHeaders}]; RequestHeaders=[{RequestHeaders}]; ContentHeaders=[{ContentHeaders}]; MultipartField=file; MultipartFileName={MultipartFileName}; MultipartContentType={MultipartContentType}; MultipartSizeBytes={MultipartSizeBytes}; Query.uid={Uid}; ClientId={ClientId}; AuthorizationScheme={AuthorizationScheme}; AuthorizationPrefix={AuthorizationPrefix}",
+            request.Method,
+            request.RequestUri,
+            httpClient.BaseAddress?.ToString() ?? "(null)",
+            httpClient.Timeout.TotalSeconds,
+            request.Version,
+            string.IsNullOrWhiteSpace(defaultHeaders) ? "(none)" : defaultHeaders,
+            string.IsNullOrWhiteSpace(requestHeaders) ? "(none)" : requestHeaders,
+            string.IsNullOrWhiteSpace(contentHeaders) ? "(none)" : contentHeaders,
+            guidFileName,
+            attachedFile.ContentType ?? "application/octet-stream",
+            attachedFile.Size,
+            uploadUid,
+            clientId ?? "(null)",
+            authScheme,
+            authPrefix);
+
+        var response = await httpClient.SendAsync(request);
+        var responseBody = await response.Content.ReadAsStringAsync();
+
+        var responseHeaders = string.Join(" | ", response.Headers.Select(h => $"{h.Key}={string.Join(",", h.Value)}"));
+        var responseContentHeaders = string.Join(" | ", response.Content.Headers.Select(h => $"{h.Key}={string.Join(",", h.Value)}"));
+
+        _logger.LogWarning(
+            "Cloud upload response details: StatusCode={StatusCode}; ReasonPhrase={ReasonPhrase}; ResponseHeaders=[{ResponseHeaders}]; ResponseContentHeaders=[{ResponseContentHeaders}]; Body={Body}",
+            (int)response.StatusCode,
+            response.ReasonPhrase,
+            string.IsNullOrWhiteSpace(responseHeaders) ? "(none)" : responseHeaders,
+            string.IsNullOrWhiteSpace(responseContentHeaders) ? "(none)" : responseContentHeaders,
+            responseBody);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new InvalidOperationException($"Cloud upload failed ({(int)response.StatusCode}): {responseBody}");
+        }
+
+        var returnedFileName = TryExtractFileNameFromUploadResponse(responseBody);
+        var fileUri = TryExtractUriFromUploadResponse(responseBody);
+        if (string.IsNullOrWhiteSpace(fileUri))
+        {
+            var baseUri = _configuration.GetValue<string>("HazardFileCloudStorage:BaseUri")
+                ?? uploadEndpoint;
+            fileUri = $"{baseUri.TrimEnd('/')}/{uploadUid}/{guidFileName}";
+        }
+
+        var storedFileName = !string.IsNullOrWhiteSpace(returnedFileName)
+            ? Path.GetFileName(returnedFileName)
+            : guidFileName;
+
+        return (storedFileName, fileUri);
+    }
+
+    private static string? TryExtractUriFromUploadResponse(string responseBody)
+    {
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(responseBody);
+            var root = doc.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            var candidates = new[] { "fileUri", "fileUrl", "url", "uri", "location", "path" };
+            foreach (var property in root.EnumerateObject())
+            {
+                if (property.Value.ValueKind != JsonValueKind.String)
+                {
+                    continue;
+                }
+
+                if (candidates.Any(c => string.Equals(c, property.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    var text = property.Value.GetString();
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        return text;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            return null;
+        }
+
+        return null;
+    }
+
+    private static string? TryExtractFileNameFromUploadResponse(string responseBody)
+    {
+        if (string.IsNullOrWhiteSpace(responseBody))
+        {
+            return null;
+        }
+
+        try
+        {
+            using var doc = JsonDocument.Parse(responseBody);
+            var root = doc.RootElement;
+
+            if (root.ValueKind != JsonValueKind.Object)
+            {
+                return null;
+            }
+
+            var candidates = new[] { "fileName", "filename", "name" };
+            foreach (var property in root.EnumerateObject())
+            {
+                if (property.Value.ValueKind != JsonValueKind.String)
+                {
+                    continue;
+                }
+
+                if (candidates.Any(c => string.Equals(c, property.Name, StringComparison.OrdinalIgnoreCase)))
+                {
+                    var text = property.Value.GetString();
+                    if (!string.IsNullOrWhiteSpace(text))
+                    {
+                        return text;
+                    }
+                }
+            }
+        }
+        catch
+        {
+            return null;
+        }
+
+        return null;
     }
 
 

@@ -43,3 +43,6 @@
 - Cleanup should continue in targeted batches with build validation.
 - Use enums only for display styles; do not use hard-coded strings for event source display naming.
 - Standardize data-reader string mapping to `GetValue<string>` with trimming handled in the extension method rather than direct `GetString` calls.
+
+## Paging
+- When applying paging changes, update all SMSListings pages in SMS3 so every listing uses 15 rows per page and do not skip any listing page.

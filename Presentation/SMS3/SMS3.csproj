@@ -10,13 +10,13 @@
     <NoWarn>$(NoWarn);1591;CA1873</NoWarn> <!-- Suppress missing XML comment warnings and costly logging argument analyzer noise -->
     
     <!-- Version Information -->
-    <Version>1.1.5</Version>
-    <AssemblyVersion>1.1.5.0</AssemblyVersion>
-    <FileVersion>1.1.5.0</FileVersion>
+    <Version>1.1.6</Version>
+    <AssemblyVersion>1.1.6.0</AssemblyVersion>
+    <FileVersion>1.1.6.0</FileVersion>
     <AssemblyTitle>SMS Presentation Layer</AssemblyTitle>
     <Product>PDX Safety Management System</Product>
     <Company>Portland International Airport</Company>
-    <Copyright>Copyright © 2024 Portland International Airport</Copyright>
+    <Copyright>Copyright © 2026 Portland International Airport</Copyright>
   </PropertyGroup>
 
   

@@ -35,6 +35,7 @@ public class Program
         // Add services to the container.
         builder.Services.AddRazorComponents().AddInteractiveServerComponents();
         builder.Services.AddRadzenComponents();
+        builder.Services.AddHttpClient();
         // Register mock email sender for development/testing
         builder.Services.AddScoped<SMS3.Components.Pages.SMSSystem.Models.IEmailSender, SMS3.Components.Pages.SMSSystem.Services.MockEmailSender>();
         

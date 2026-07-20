@@ -76,7 +76,7 @@ public partial class HazardFileListing : ComponentBase
             if (result.IsSuccess && result.Value is not null)
             {
                 _allFiles = result.Value.ToList(); // Store all files for filtering/sorting
-                _files = _allFiles; // Initially show all files
+                _files = _allFiles.Take(15).ToList(); // Initially show first page
                 _totalCount = _allFiles.Count();
                 _logger.LogInformation("Loaded {Count} hazard files for listing", _totalCount);
 
@@ -171,11 +171,9 @@ public partial class HazardFileListing : ComponentBase
                 query = query.Skip(args.Skip.Value);
             }
 
-            if (args.Top.HasValue && args.Top > 0)
-            {
-                _logger.LogInformation("Applying take: {Top}", args.Top);
-                query = query.Take(args.Top.Value);
-            }
+            const int pageSize = 15;
+            _logger.LogInformation("Applying take: {Top}", pageSize);
+            query = query.Take(pageSize);
 
             _files = query.ToList();
 

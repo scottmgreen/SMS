@@ -73,10 +73,8 @@ public partial class ScoringPanelListing : ComponentBase
                 query = query.Skip(args.Skip.Value);
             }
 
-            if (args.Top.HasValue)
-            {
-                query = query.Take(args.Top.Value);
-            }
+            const int pageSize = 15;
+            query = query.Take(pageSize);
 
             _panels = query.ToList();
         }

@@ -96,7 +96,7 @@ public partial class RiskAssessmentListing : ComponentBase
             {
                 _allAssessments = result.Value.ToList(); // Ensure it's a concrete list
                 await LoadAssessmentValidationStatusAsync(_allAssessments);
-                _assessments = _allAssessments; // Initially show all assessments
+                _assessments = _allAssessments.Take(15).ToList(); // Initially show first page
                 _totalCount = _allAssessments.Count();
                 _logger.LogInformation("Loaded {Count} risk assessments for listing", _totalCount);
 
@@ -449,11 +449,9 @@ public partial class RiskAssessmentListing : ComponentBase
                 query = query.Skip(args.Skip.Value);
             }
 
-            if (args.Top.HasValue && args.Top > 0)
-            {
-                _logger.LogInformation("Applying take: {Top}", args.Top);
-                query = query.Take(args.Top.Value);
-            }
+            const int pageSize = 15;
+            _logger.LogInformation("Applying take: {Top}", pageSize);
+            query = query.Take(pageSize);
 
             _assessments = query.ToList();
 

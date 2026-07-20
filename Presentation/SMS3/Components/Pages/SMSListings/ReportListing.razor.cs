@@ -181,7 +181,7 @@ public partial class ReportListing : ComponentBase
             if (result.IsSuccess && result.Value is not null)
             {
                 _allReports = result.Value; // Store all reports for filtering/sorting
-                _reports = _allReports; // Initially show all reports
+                _reports = _allReports.Take(15).ToList(); // Initially show first page
                 _totalCount = _allReports.Count();
                 _logger.LogInformation("Loaded {Count} reports for listing", _totalCount);
 
@@ -252,10 +252,8 @@ public partial class ReportListing : ComponentBase
                 query = query.Skip(args.Skip.Value);
             }
 
-            if (args.Top.HasValue && args.Top > 0)
-            {
-                query = query.Take(args.Top.Value);
-            }
+            const int pageSize = 15;
+            query = query.Take(pageSize);
 
             _reports = query.ToList();
 

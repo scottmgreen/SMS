@@ -72,7 +72,7 @@ public partial class HazardLocationListing : ComponentBase
             if (result.IsSuccess && result.Value is not null)
             {
                 _allLocations = result.Value.ToList(); // Store all locations for filtering/sorting
-                _locations = _allLocations; // Initially show all locations
+                _locations = _allLocations.Take(15).ToList(); // Initially show first page
                 _totalCount = _allLocations.Count();
                 _logger.LogInformation("Loaded {Count} hazard locations for listing", _totalCount);
 
@@ -204,11 +204,9 @@ public partial class HazardLocationListing : ComponentBase
                 query = query.Skip(args.Skip.Value);
             }
 
-            if (args.Top.HasValue && args.Top > 0)
-            {
-                _logger.LogInformation("Applying take: {Top}", args.Top);
-                query = query.Take(args.Top.Value);
-            }
+            const int pageSize = 15;
+            _logger.LogInformation("Applying take: {Top}", pageSize);
+            query = query.Take(pageSize);
 
             _locations = query.ToList();
 

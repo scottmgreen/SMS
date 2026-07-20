@@ -177,9 +177,9 @@ public partial class MitigationListing : ComponentBase
             // Create view models with Report ID and Hazard ID information
             await CreateMitigationViewModels();
 
-            // Initially show all data
-            _mitigations = _allMitigations;
-            _mitigationModels = _allMitigationModels;
+            // Initially show first page
+            _mitigationModels = _allMitigationModels.Take(15).ToList();
+            _mitigations = _mitigationModels.Select(m => m.Mitigation).ToList();
             _totalCount = _allMitigationModels.Count();
 
             // Show success/info notification based on loaded row count
@@ -258,11 +258,9 @@ public partial class MitigationListing : ComponentBase
                 query = query.Skip(args.Skip.Value);
             }
 
-            if (args.Top.HasValue && args.Top > 0)
-            {
-                _logger.LogInformation("Applying take: {Top}", args.Top);
-                query = query.Take(args.Top.Value);
-            }
+            const int pageSize = 15;
+            _logger.LogInformation("Applying take: {Top}", pageSize);
+            query = query.Take(pageSize);
 
             _mitigationModels = query.ToList();
             _mitigations = _mitigationModels.Select(m => m.Mitigation).ToList();

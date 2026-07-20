@@ -88,7 +88,7 @@ public partial class HazardListing : ComponentBase
             if (result.IsSuccess && result.Value is not null)
             {
                 _allHazards = result.Value; // Store all hazards for filtering/sorting
-                _hazards = _allHazards; // Initially show all hazards
+                _hazards = _allHazards.Take(15).ToList(); // Initially show first page
                 _totalCount = _allHazards.Count();
                 _logger.LogInformation("Loaded {Count} hazards for listing", _totalCount);
 
@@ -159,10 +159,8 @@ public partial class HazardListing : ComponentBase
                 query = query.Skip(args.Skip.Value);
             }
 
-            if (args.Top.HasValue && args.Top > 0)
-            {
-                query = query.Take(args.Top.Value);
-            }
+            const int pageSize = 15;
+            query = query.Take(pageSize);
 
             _hazards = query.ToList();
 

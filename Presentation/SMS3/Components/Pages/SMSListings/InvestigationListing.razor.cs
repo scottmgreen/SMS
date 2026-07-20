@@ -63,24 +63,18 @@ public partial class InvestigationListing : ComponentBase
             if (result.IsSuccess && result.Value is not null)
             {
                 _allInvestigations = result.Value.ToList(); // Store all investigations for filtering/sorting
-                _investigations = _allInvestigations; // Initially show all investigations
+                _investigations = _allInvestigations.Take(15).ToList(); // Initially show first page
                 _totalCount = _allInvestigations.Count();
                 _logger.LogInformation("Loaded {Count} investigations for listing", _totalCount);
 
-                // Only show success notification if we have data
                 if (_totalCount > 0)
                 {
                     await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {_totalCount} investigations"));
-
-                    if (_totalCount == 0)
-                    {
-                        await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No investigations found"));
-                    }
                 }
                 else
                 {
-                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to load investigations"));
-                    _logger.LogError("Failed to load investigations: {Error}", result.Error?.Message);
+                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "No investigations found"));
+                    _logger.LogInformation("No investigations found");
                 }
             }
             else
@@ -154,11 +148,9 @@ public partial class InvestigationListing : ComponentBase
                 query = query.Skip(args.Skip.Value);
             }
 
-            if (args.Top.HasValue && args.Top > 0)
-            {
-                _logger.LogInformation("Applying take: {Top}", args.Top);
-                query = query.Take(args.Top.Value);
-            }
+            const int pageSize = 15;
+            _logger.LogInformation("Applying take: {Top}", pageSize);
+            query = query.Take(pageSize);
 
             _investigations = query.ToList();
 
