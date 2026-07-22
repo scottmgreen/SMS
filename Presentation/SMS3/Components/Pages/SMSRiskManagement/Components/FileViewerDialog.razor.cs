@@ -3,7 +3,6 @@ using System.Text;
 using Microsoft.AspNetCore.Components.Web;
 using Microsoft.JSInterop;
 
-using SMS_Application.Queries;
 using SMS_Application.Interfaces;
 using SMS_Domain.Events;
 using SMS_Shared.Configuration;
@@ -16,7 +15,6 @@ public partial class FileViewerDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
-    [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ILogger<FileViewerDialog> Logger { get; set; } = default!;
     [Inject] private IBaseEventBus EventBus { get; set; } = default!;
     #endregion
@@ -54,87 +52,24 @@ public partial class FileViewerDialog : ComponentBase
         TextContent = null;
         FileDataUrl = null;
 
-        var isCloudSource = string.Equals(ViewingFile.StorageType, "Cloud", StringComparison.OrdinalIgnoreCase)
-                            && !string.IsNullOrWhiteSpace(ViewingFile.FilePath);
+        var useStoredExternalPath = ShouldUseStoredExternalPath(ViewingFile);
 
-        if (isCloudSource)
+        if (useStoredExternalPath)
         {
             FileDataUrl = ViewingFile.FilePath;
-            Logger.LogInformation("Using cloud file path for viewing: {FileName} => {FilePath}", ViewingFile.FileName, ViewingFile.FilePath);
+            Logger.LogInformation("Using stored external file path for viewing: {FileName} ({StorageType}) => {FilePath}",
+                ViewingFile.FileName,
+                ViewingFile.StorageType,
+                ViewingFile.FilePath);
             IsLoading = false;
             StateHasChanged();
             return;
         }
 
-        var fileData = ViewingFile.FileData;
-        if (fileData is null || fileData.Length == 0)
-        {
-            try
-            {
-                var fileDataResult = await Mediator.SendAsync(new GetHazardFileDataQuery(ViewingFile.Code), CancellationToken.None);
-                if (fileDataResult.IsSuccess && fileDataResult.Value?.FileData is { Length: > 0 })
-                {
-                    ViewingFile.FileData = fileDataResult.Value.FileData;
-                    fileData = ViewingFile.FileData;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Unable to fetch file data for file: {FileName}", ViewingFile.FileName);
-            }
-        }
-
-        if (fileData is null || fileData.Length == 0)
-        {
-            Logger.LogWarning("File data is null or empty for file: {FileName}", ViewingFile.FileName);
-            await ShowErrorAsyncNotification("File data is not available for viewing");
-            return;
-        }
-
-        try
-        {
-            IsLoading = true;
-            StateHasChanged();
-
-            Logger.LogInformation("Loading file for viewing: {FileName} ({Size} bytes)",
-                ViewingFile.FileName, fileData.Length);
-
-            // For text files, decode the content
-            if (IsTextFile(ViewingFile))
-            {
-                try
-                {
-                    TextContent = Encoding.UTF8.GetString(fileData);
-                    Logger.LogInformation("Loaded text content for file: {FileName} ({Length} characters)",
-                        ViewingFile.FileName, TextContent.Length);
-                }
-                catch (Exception ex)
-                {
-                    Logger.LogWarning(ex, "Failed to decode text file as UTF-8: {FileName}", ViewingFile.FileName);
-                    TextContent = Encoding.Default.GetString(fileData);
-                }
-            }
-            else
-            {
-                // For binary files, create data URL
-                var mimeType = GetMimeType(ViewingFile);
-                var base64 = Convert.ToBase64String(fileData);
-                FileDataUrl = $"data:{mimeType};base64,{base64}";
-
-                Logger.LogInformation("Created data URL for file: {FileName} with MIME type: {MimeType}",
-                    ViewingFile.FileName, mimeType);
-            }
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error loading file for viewing: {FileName}", ViewingFile.FileName);
-            await ShowErrorAsyncNotification($"Error loading file for viewing: {ex.Message}");
-        }
-        finally
-        {
-            IsLoading = false;
-            StateHasChanged();
-        }
+        Logger.LogWarning("Cloud file path is missing for file: {FileName}", ViewingFile.FileName);
+        await ShowErrorAsyncNotification("Cloud file path is missing. The file cannot be viewed.");
+        IsLoading = false;
+        StateHasChanged();
     }
     #endregion
 
@@ -312,10 +247,9 @@ public partial class FileViewerDialog : ComponentBase
             return;
         }
 
-        var isCloudSource = string.Equals(ViewingFile.StorageType, "Cloud", StringComparison.OrdinalIgnoreCase)
-                            && !string.IsNullOrWhiteSpace(ViewingFile.FilePath);
+        var useStoredExternalPath = ShouldUseStoredExternalPath(ViewingFile);
 
-        if (isCloudSource)
+        if (useStoredExternalPath)
         {
             try
             {
@@ -330,46 +264,24 @@ public partial class FileViewerDialog : ComponentBase
             return;
         }
 
-        if (ViewingFile.FileData is null || ViewingFile.FileData.Length == 0)
+        await ShowErrorAsyncNotification("Cloud file path is missing. The file cannot be downloaded.");
+    }
+
+    private static bool ShouldUseStoredExternalPath(HazardFile file)
+    {
+        if (string.IsNullOrWhiteSpace(file.FilePath))
         {
-            try
-            {
-                var fileDataResult = await Mediator.SendAsync(new GetHazardFileDataQuery(ViewingFile.Code), CancellationToken.None);
-                if (fileDataResult.IsSuccess && fileDataResult.Value?.FileData is { Length: > 0 })
-                {
-                    ViewingFile.FileData = fileDataResult.Value.FileData;
-                }
-            }
-            catch (Exception ex)
-            {
-                Logger.LogWarning(ex, "Unable to fetch file data for download: {FileName}", ViewingFile.FileName);
-            }
+            return false;
         }
 
-        if (ViewingFile.FileData is null || ViewingFile.FileData.Length == 0)
+        var storageType = file.StorageType ?? string.Empty;
+        if (storageType.Equals("Cloud", StringComparison.OrdinalIgnoreCase) ||
+            storageType.Equals("FileSystem", StringComparison.OrdinalIgnoreCase))
         {
-            await ShowErrorAsyncNotification("File is not available for download");
-            return;
+            return true;
         }
 
-        try
-        {
-            Logger.LogInformation("Starting download for file: {FileName}", ViewingFile.FileName);
-
-            // Create download link using JS interop
-            var fileName = ViewingFile.FileName ?? "file";
-            var mimeType = GetMimeType(ViewingFile);
-            var base64 = Convert.ToBase64String(ViewingFile.FileData);
-
-            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, mimeType, base64);
-
-            await ShowSuccessAsyncNotification($"Download started for '{fileName}'");
-        }
-        catch (Exception ex)
-        {
-            Logger.LogError(ex, "Error downloading file: {FileName}", ViewingFile?.FileName);
-            await ShowErrorAsyncNotification("Unable to download file");
-        }
+        return Uri.TryCreate(file.FilePath, UriKind.Absolute, out _);
     }
     #endregion
 

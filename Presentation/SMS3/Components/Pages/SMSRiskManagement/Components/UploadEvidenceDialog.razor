@@ -32,183 +32,65 @@
             <div class="sms-modal-body">
                 <RadzenTemplateForm Data="@Model" Submit="@UploadFiles" TItem="UploadFileModel">
                     <RadzenStack Gap="1rem">
-                        
-                        <!-- File Selection - Multiple Files Support -->
-                        <RadzenFormField Text="Select Evidence Files *" Variant="Variant.Outlined">
-                            <InputFile OnChange="OnInputFileChange" 
-                                     multiple 
-                                     accept=".jpg,.jpeg,.png,.gif,.bmp,.pdf,.doc,.docx,.txt,.xlsx,.xls,.zip,.rar,.mp4,.avi,.mov,.wmv,.mp3,.wav"
-                                     style="width: 100%; padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;" />
-                            <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color); margin-top: 0.5rem;">
-                                <RadzenIcon Icon="attach_file" Style="font-size: 0.9rem;" /> 
-                                <strong>Supported formats:</strong> Images (JPG, PNG, GIF), Documents (PDF, DOC, DOCX, TXT), Spreadsheets (XLS, XLSX), 
-                                Videos (MP4, AVI, MOV), Audio (MP3, WAV), Archives (ZIP, RAR)
-                                <br/>
-                                <RadzenIcon Icon="info" Style="font-size: 0.9rem;" /> 
-                                <strong>File size limit:</strong> 50MB per file | <strong>Multiple files:</strong> Up to 10 files at once
-                                @if (AttachedFiles.Any())
-                                {
-                                    <br/>
-                                    <span style="margin-left: 1rem; color: var(--rz-success);">
-                                        <RadzenIcon Icon="check_circle" Style="font-size: 0.9rem;" />
-                                        @AttachedFiles.Count file(s) queued for upload
-                                    </span>
-                                }
-                            </RadzenText>
-                        </RadzenFormField>
+                        <RadzenFormField Text="Supporting Documents" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                            <RadzenStack Gap="0.75rem" Class="rz-py-2 rz-px-2 rz-pb-2">
+                                <RadzenUpload Multiple="true"
+                                              Change=@OnInputFileChange
+                                              ChooseText="📄 Choose Files"
+                                              Class="hazard-upload"
+                                              Style="width: 100%;padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;"
+                                              Accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
+                                              MaxFileSize="10485760" />
 
-                        <!-- Selected Files Preview -->
-                        @if (AttachedFiles.Any())
-                        {
-                            <RadzenFormField Text="Selected Files" Variant="Variant.Outlined">
-                                <RadzenCard Variant="Variant.Text" Style="background-color: #f8f9fa; border: 1px solid #e9ecef; max-height: 200px; overflow-y: auto;">
-                                    <RadzenStack Gap="0.5rem">
-                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                            <RadzenText TextStyle="TextStyle.Subtitle2" Style="color: var(--rz-primary);">
-                                                <RadzenIcon Icon="folder_open" Style="margin-right: 0.5rem;" />
-                                                @AttachedFiles.Count file(s) ready for upload
-                                            </RadzenText>
-                                            <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                                                        Variant="Variant.Text"
-                                                        Icon="clear_all" 
-                                                        Text="Clear All"
-                                                        Size="ButtonSize.ExtraSmall"
-                                                        Click="ClearAllFiles" />
-                                        </RadzenStack>
-                                        
-                                        @for (int i = 0; i < AttachedFiles.Count; i++)
-                                        {
-                                            var file = AttachedFiles[i];
-                                            var fileIndex = i;
-                                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" 
-                                                       Style="padding: 0.25rem 0.5rem; border: 1px solid #dee2e6; border-radius: 0.25rem; background-color: #ffffff;">
-                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                                                    <RadzenIcon Icon="@GetFileIcon(file.FileName)" Style="@($"color: {GetFileIconColor(file.FileName)}; font-size: 1.1rem;")" />
-                                                    <RadzenStack Gap="0.1rem">
-                                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 500;">@file.FileName</RadzenText>
-                                                        <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color); margin: 0;">
-                                                            @file.SizeDisplay | @GetFileTypeDisplay(file.FileName)
-                                                        </RadzenText>
-                                                    </RadzenStack>
-                                                </RadzenStack>
-                                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                                                    <RadzenBadge Text="Ready" BadgeStyle="BadgeStyle.Success" />
-                                                    <RadzenButton ButtonStyle="ButtonStyle.Danger" 
-                                                                Variant="Variant.Text"
-                                                                Icon="close" 
-                                                                Size="ButtonSize.ExtraSmall"
-                                                                Click="@(() => RemoveFile(fileIndex))"
-                                                                title="Remove this file" />
-                                                </RadzenStack>
-                                            </RadzenStack>
-                                        }
-                                        
-                                        <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat">
-                                            <RadzenIcon Icon="info" /> 
-                                            <strong>Total size:</strong> @GetTotalSizeDisplay() | 
-                                            <strong>Evidence types:</strong> @GetFileTypeSummary()
-                                        </RadzenAlert>
-                                    </RadzenStack>
-                                </RadzenCard>
-                            </RadzenFormField>
-                        }
-
-                        <!-- Evidence Description -->
-                        <RadzenFormField Text="Evidence Description *" Variant="Variant.Outlined">
-                            <RadzenTextArea @bind-Value="@Model.Description" 
-                                          Rows="3" 
-                                          Placeholder="Provide a detailed description of this evidence and its relevance to the investigation..."
-                                          Style="width: 100%;" />
-                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center" Style="margin-top: 0.5rem;">
-                                <RadzenRequiredValidator Component="Description" Text="Evidence description is required" />
-                                <RadzenText TextStyle="TextStyle.Caption" 
-                                          Style="@(DescriptionCharacterCount > 950 ? "color: var(--rz-danger);" : DescriptionCharacterCount > 800 ? "color: var(--rz-warning);" : "color: var(--rz-text-secondary-color);")">
-                                    @DescriptionCharacterCount/1000 characters
+                                <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-base-500">
+                                    <RadzenIcon Icon="attach_file" Style="font-size: 0.9rem;" />
+                                    Supported: JPG, PNG, PDF, DOC, DOCX, TXT (Max 10MB per file)
                                 </RadzenText>
                             </RadzenStack>
                         </RadzenFormField>
 
-                        <!-- Evidence Category and Security in Row -->
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="6">
-                                <RadzenFormField Text="Evidence Category" Variant="Variant.Outlined">
-                                    <RadzenDropDown @bind-Value="@Model.Category" 
-                                                  Data="@CategoryOptions" 
-                                                  TextProperty="Text" 
-                                                  ValueProperty="Value"
-                                                  Style="width: 100%;" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                            <RadzenColumn Size="6">
-                                <RadzenFormField Text="Security Classification" Variant="Variant.Outlined">
-                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.75rem">
-                                        <RadzenCheckBox @bind-Value="@Model.IsConfidential" Name="confidential" />
-                                        <RadzenLabel Text="Mark as confidential" Component="confidential" />
-                                        <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                                                    Variant="Variant.Text"
-                                                    Icon="info"
-                                                    Size="ButtonSize.ExtraSmall"
-                                                    Click="ToggleConfidentialInfo" />
-                                    </RadzenStack>
-                                </RadzenFormField>
-                            </RadzenColumn>
-                        </RadzenRow>
-
-                        <!-- Confidential Info Alert -->
-                        @if (ShowConfidentialInfo)
+                        @if (AttachedFiles.Any())
                         {
-                            <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat">
-                                <RadzenIcon Icon="security" /> 
-                                <strong>Confidential Evidence:</strong> Access restricted to authorized investigation personnel only. 
-                                Evidence will be protected from unauthorized disclosure and excluded from general reports unless specifically authorized.
-                            </RadzenAlert>
-                        }
+                            <RadzenStack Gap="1rem" Class="rz-px-2 rz-pb-2">
+                                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                    <strong>Queued files (@AttachedFiles.Count):</strong>
+                                    <RadzenButton ButtonStyle="ButtonStyle.Base"
+                                                  Variant="Variant.Text"
+                                                  Icon="clear_all"
+                                                  Text="Clear All"
+                                                  Size="ButtonSize.ExtraSmall"
+                                                  Click="ClearAllFiles" />
+                                </RadzenStack>
 
-                        @if (Model.IsConfidential)
-                        {
-                            <RadzenAlert AlertStyle="AlertStyle.Warning" Icon="warning" Title="Confidential Evidence" Size="AlertSize.Small" Variant="Variant.Flat">
-                                This evidence will be restricted to authorized investigation personnel only and excluded from public reports.
-                            </RadzenAlert>
-                        }
-
-                        <!-- Upload Progress -->
-                        @if (IsUploading)
-                        {
-                            <RadzenCard Variant="Variant.Outlined" Style="background: linear-gradient(135deg, rgba(33, 150, 243, 0.05) 0%, rgba(33, 150, 243, 0.1) 100%); border-color: var(--rz-info);">
-                                <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" AlignItems="AlignItems.Center" Gap="1rem">
-                                        <RadzenProgressBarCircular Value="@UploadProgress" ShowValue="true" ProgressBarStyle="ProgressBarStyle.Info" Size="ProgressBarCircularSize.Medium" />
-                                        <RadzenStack Gap="0.25rem">
-                                            <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin: 0; font-weight: 600;">Uploading Evidence Files...</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="color: var(--rz-text-secondary-color); margin: 0;">@CurrentUploadStatus</RadzenText>
-                                        </RadzenStack>
-                                    </RadzenStack>
-                                    
-                                    @if (!string.IsNullOrEmpty(CurrentFileName))
+                                <RadzenStack Gap="0.5rem">
+                                    @for (int i = 0; i < AttachedFiles.Count; i++)
                                     {
-                                        <RadzenProgressBar Value="@FileProgress" ShowValue="false" ProgressBarStyle="ProgressBarStyle.Info" />
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="text-align: center; color: var(--rz-text-secondary-color);">
-                                            Processing: @CurrentFileName (@(CurrentFileIndex + 1) of @AttachedFiles.Count)
-                                        </RadzenText>
+                                        var file = AttachedFiles[i];
+                                        var fileIndex = i;
+                                        <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center"
+                                                     Style="padding: 0.25rem 0.5rem; border: 1px solid #dee2e6; border-radius: 0.25rem; background-color: #f8f9fa;">
+                                            <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                                <RadzenIcon Icon="attach_file" Style="color: var(--sms-blue-dark-bold); font-size: 0.9rem;" />
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                                    @file.FileName (@file.SizeDisplay)
+                                                </RadzenText>
+                                            </RadzenStack>
+                                            <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                                          Variant="Variant.Text"
+                                                          Icon="close"
+                                                          Size="ButtonSize.ExtraSmall"
+                                                          Click="@(() => RemoveFile(fileIndex))"
+                                                          Text="" />
+                                        </RadzenStack>
                                     }
                                 </RadzenStack>
-                            </RadzenCard>
+                            </RadzenStack>
                         }
 
-                        <!-- Upload Summary -->
                         @if (AttachedFiles.Any() && !IsUploading)
                         {
-                            <RadzenAlert AlertStyle="@(CanUpload() ? AlertStyle.Success : AlertStyle.Warning)" 
-                                        Size="AlertSize.Small" Variant="Variant.Flat"
-                                        Icon="@(CanUpload() ? "check_circle" : "warning")">
-                                @if (CanUpload())
-                                {
-                                    <text><strong>Ready to Upload:</strong> @AttachedFiles.Count file(s) selected, total size @GetTotalSizeDisplay()</text>
-                                }
-                                else
-                                {
-                                    <text><strong>Missing Information:</strong> @GetValidationMessage()</text>
-                                }
+                            <RadzenAlert AlertStyle="AlertStyle.Success" Size="AlertSize.Small" Variant="Variant.Flat" Icon="check_circle">
+                                <strong>Ready to Upload:</strong> @AttachedFiles.Count file(s) selected, total size @GetTotalSizeDisplay()
                             </RadzenAlert>
                         }
                     </RadzenStack>
@@ -230,7 +112,7 @@
                                 ButtonType="ButtonType.Submit"
                                 Size="ButtonSize.Medium"
                                 Click="@(() => UploadFiles(Model))"
-                                Disabled="@(IsUploading || !CanUpload())" />
+                                Disabled="@(IsUploading || !AttachedFiles.Any())" />
                 </div>
             </div>
         </div>

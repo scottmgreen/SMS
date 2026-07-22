@@ -6,7 +6,6 @@ public partial class UploadEvidenceDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
-    [Inject] private IConfiguration Configuration { get; set; } = default!;
     [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
     [Inject] private ILogger<UploadEvidenceDialog> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
@@ -25,42 +24,15 @@ public partial class UploadEvidenceDialog : ComponentBase
     private int CurrentFileIndex { get; set; } = 0;
     private string CurrentFileName { get; set; } = string.Empty;
     private string CurrentUploadStatus { get; set; } = string.Empty;
-    private bool ShowConfidentialInfo { get; set; } = false;
 
     public UploadFileModel Model { get; set; } = new();
     public List<AttachedFile> AttachedFiles { get; set; } = new();
     #endregion
 
     #region Computed Properties
-    public int DescriptionCharacterCount => Model.Description?.Length ?? 0;
-
     private long _totalSize => AttachedFiles.Sum(f => f.Size);
 
     private string GetTotalSizeDisplay() => FormatFileSize(_totalSize);
-
-    private string GetFileTypeSummary()
-    {
-        var typeGroups = AttachedFiles
-            .GroupBy(f => GetFileTypeCategory(f.FileName))
-            .Select(g => $"{g.Count()} {g.Key}")
-            .ToList();
-
-        return typeGroups.Any() ? string.Join(", ", typeGroups) : "None";
-    }
-    #endregion
-
-    #region Dropdown Options
-    private readonly List<DropdownOption> CategoryOptions = new()
-    {
-        new() { Value = "Evidence", Text = "General Evidence" },
-        new() { Value = "Photo", Text = "Photographic Evidence" },
-        new() { Value = "Document", Text = "Document/Report" },
-        new() { Value = "Video", Text = "Video Evidence" },
-        new() { Value = "Audio", Text = "Audio Recording" },
-        new() { Value = "Witness", Text = "Witness Statement" },
-        new() { Value = "Technical", Text = "Technical Data" },
-        new() { Value = "Other", Text = "Other" }
-    };
     #endregion
 
     #region Lifecycle Methods
@@ -70,15 +42,6 @@ public partial class UploadEvidenceDialog : ComponentBase
         return Task.CompletedTask;
     }
 
-    protected override Task OnParametersSetAsync()
-    {
-        // React to parameter changes
-        if (Model.SelectedFiles?.Any() == true && !AttachedFiles.Any())
-        {
-            return ProcessAttachedFiles();
-        }
-        return Task.CompletedTask;
-    }
     #endregion
 
     #region Initialization
@@ -88,19 +51,18 @@ public partial class UploadEvidenceDialog : ComponentBase
 
         Model = new UploadFileModel
         {
-            Category = "Evidence",
-            IsConfidential = false
+            SelectedFiles = null
         };
     }
     #endregion
 
     #region File Processing
     /// <summary>
-    /// Handle InputFile change event - this will accumulate files properly
+    /// Handle file selection event - aligned with HazardReporting upload behavior
     /// </summary>
-    public async Task OnInputFileChange(InputFileChangeEventArgs e)
+    public async Task OnInputFileChange(UploadChangeEventArgs args)
     {
-        var newFiles = e.GetMultipleFiles(10); // Allow up to 10 files at once
+        var newFiles = args.Files;
         Logger.LogInformation("OnInputFileChange called with {Count} new files", newFiles?.Count() ?? 0);
 
         if (newFiles?.Any() == true)
@@ -124,18 +86,18 @@ public partial class UploadEvidenceDialog : ComponentBase
                         continue;
                     }
 
-                    // Check file size (50MB limit)
-                    if (newFile.Size > 52428800)
+                    // Check file size (10MB limit to match HazardReporting)
+                    if (newFile.Size > 10 * 1024 * 1024)
                     {
-                        Logger.LogWarning("File {FileName} exceeds 50MB limit", newFile.Name);
-                        await NotificationHelper.ShowWarningAsync($"File '{newFile.Name}' exceeds 50MB limit and will be skipped");
+                        Logger.LogWarning("File {FileName} exceeds 10MB limit", newFile.Name);
+                        await NotificationHelper.ShowWarningAsync($"File '{newFile.Name}' exceeds 10MB limit and will be skipped");
                         failedFiles.Add(newFile.Name);
                         continue;
                     }
 
                     // Read file data immediately to avoid JavaScript interop issues
                     byte[] fileData;
-                    using (var stream = newFile.OpenReadStream(maxAllowedSize: 52428800))
+                    using (var stream = newFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
                     using (var memoryStream = new MemoryStream())
                     {
                         await stream.CopyToAsync(memoryStream);
@@ -193,49 +155,17 @@ public partial class UploadEvidenceDialog : ComponentBase
 
         StateHasChanged();
     }
-
-    /// <summary>
-    /// Handle file selection with proper event callback signature
-    /// </summary>
-    public async Task OnFilesSelected(IReadOnlyList<IBrowserFile> files)
-    {
-        Model.SelectedFiles = files;
-        await ProcessAttachedFiles();
-        StateHasChanged();
-    }
-
-    /// <summary>
-    /// Wrapper method for RadzenFileInput Change event
-    /// </summary>
-    public async Task OnFilesSelectedWrapper(object files)
-    {
-        if (files is IReadOnlyList<IBrowserFile> browserFiles)
-        {
-            await OnFilesSelected(browserFiles);
-        }
-    }
-
-    private async Task ProcessAttachedFiles()
-    {
-        // This method is now redundant since we process files directly in OnInputFileChange
-        // But keeping it for backward compatibility with any existing calls
-        Logger.LogInformation("ProcessAttachedFiles called - files are now processed immediately in OnInputFileChange");
-    }
     #endregion
 
     #region Validation
     private bool CanUpload()
     {
-        return AttachedFiles.Any() &&
-               !string.IsNullOrWhiteSpace(Model.Description) &&
-               DescriptionCharacterCount <= 1000;
+        return AttachedFiles.Any();
     }
 
     private string GetValidationMessage()
     {
         if (!AttachedFiles.Any()) return "Please select at least one file";
-        if (string.IsNullOrWhiteSpace(Model.Description)) return "Evidence description is required";
-        if (DescriptionCharacterCount > 1000) return "Description exceeds character limit";
 
         return "Ready to upload";
     }
@@ -263,8 +193,6 @@ public partial class UploadEvidenceDialog : ComponentBase
             var uploadedFileIds = new List<string>();
             var totalFiles = AttachedFiles.Count;
             var currentUser = SessionService.GetCurrentUserDisplayName() ?? "Unknown User";
-            var useMockCloudStorage = Configuration.GetValue<bool>("HazardFileCloudStorage:EnableMockCloudStorage", true);
-            var uploadSessionFolder = Guid.NewGuid().ToString("D");
 
             for (int i = 0; i < totalFiles; i++)
             {
@@ -289,47 +217,22 @@ public partial class UploadEvidenceDialog : ComponentBase
                     // Generate unique file code
                     var fileCode = "HF-0000";
 
-                    string storedFileName;
-                    string? filePath;
-                    string storageType;
-                    byte[]? fileData;
-
-                    if (useMockCloudStorage)
-                    {
-                        var mockCloudUpload = SimulateCloudUpload(file, uploadSessionFolder);
-                        storedFileName = mockCloudUpload.StoredFileName;
-                        filePath = mockCloudUpload.FileUri;
-                        storageType = "Cloud";
-                        fileData = null;
-                    }
-                    else
-                    {
-                        storedFileName = file.FileName;
-                        filePath = null;
-                        storageType = "Database";
-                        fileData = file.Data;
-                    }
-
                     // Create HazardFile entity using only existing properties
                     var hazardFile = new HazardFile(new HazardFileID(fileCode))
                     {
                         Code = fileCode,
                         HazardCode = HazardCode,
                         ReportCode = string.Empty,
-                        FileName = storedFileName,
+                        FileName = file.FileName,
                         FileType = GetFileTypeFromExtension(file.FileName),
                         ContentType = file.ContentType ?? "application/octet-stream",
                         FileSizeBytes = file.Size,
                         FileSize = FormatFileSize(file.Size),
-                        StorageType = storageType,
-                        FilePath = filePath,
-                        FileData = fileData,
+                        FileData = file.Data,
                         UploadedBy = currentUser,
                         UploadedDate = DateTime.UtcNow,
                         IsActive = true,
-                        IsConfidential = Model.IsConfidential,
-                        Description = Model.Description,
-                        Category = Model.Category ?? "Evidence"
+                        Category = "Evidence"
                     };
 
                     // Send CreateHazardFileCommand
@@ -443,22 +346,6 @@ public partial class UploadEvidenceDialog : ComponentBase
         };
     }
 
-    private string GetFileTypeCategory(string fileName)
-    {
-        return GetFileTypeFromExtension(fileName).ToLowerInvariant() switch
-        {
-            "image" => "images",
-            "video" => "videos",
-            "audio" => "audio files",
-            "pdf" => "PDFs",
-            "document" => "documents",
-            "spreadsheet" => "spreadsheets",
-            "text" => "text files",
-            "archive" => "archives",
-            _ => "other files"
-        };
-    }
-
     private string GetFileIcon(string fileName)
     {
         return GetFileTypeFromExtension(fileName) switch
@@ -507,14 +394,6 @@ public partial class UploadEvidenceDialog : ComponentBase
     }
     #endregion
 
-    #region UI Event Handlers
-    private void ToggleConfidentialInfo()
-    {
-        ShowConfidentialInfo = !ShowConfidentialInfo;
-        StateHasChanged();
-    }
-    #endregion
-
     #region Utility Methods
     private string FormatFileSize(long bytes)
     {
@@ -531,32 +410,12 @@ public partial class UploadEvidenceDialog : ComponentBase
         return "0 Bytes";
     }
 
-    private (string StoredFileName, string FileUri) SimulateCloudUpload(AttachedFile file, string uploadSessionFolder)
-    {
-        var baseUri = Configuration.GetValue<string>("HazardFileCloudStorage:BaseUri")
-            ?? "https://contoso-sms.blob.core.windows.net/pre-submit";
-
-        var originalName = Path.GetFileName(file.FileName);
-        var safeOriginalName = string.Concat(originalName.Where(ch => !Path.GetInvalidFileNameChars().Contains(ch))).Trim();
-        if (string.IsNullOrWhiteSpace(safeOriginalName))
-        {
-            safeOriginalName = "hazard-file.bin";
-        }
-
-        var guidPrefixedFileName = $"{Guid.NewGuid():D}-{safeOriginalName}";
-        var fileUri = $"{baseUri.TrimEnd('/')}/{DateTime.UtcNow:yyyy/MM/dd}/{uploadSessionFolder}/{guidPrefixedFileName}";
-
-        return (guidPrefixedFileName, fileUri);
-    }
     #endregion
 
     #region Data Models
     public class UploadFileModel
     {
         public IReadOnlyList<IBrowserFile>? SelectedFiles { get; set; }
-        public string? Description { get; set; }
-        public string? Category { get; set; } = "Evidence";
-        public bool IsConfidential { get; set; } = false;
     }
 
   

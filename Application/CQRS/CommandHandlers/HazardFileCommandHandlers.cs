@@ -21,11 +21,16 @@ namespace SMS_Application.CommandHandlers;
 public class CreateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateHazardFileCommand, Result<HazardFile>>
 {
     private readonly IHazardFileService _hazardFileService;
+    private readonly HazardFileExternalStorageService _externalStorageService;
     private readonly ILogger<CreateHazardFileCommandHandler> _logger;
 
-    public CreateHazardFileCommandHandler(IHazardFileService hazardFileService, ILogger<CreateHazardFileCommandHandler> logger)
+    public CreateHazardFileCommandHandler(
+        IHazardFileService hazardFileService,
+        HazardFileExternalStorageService externalStorageService,
+        ILogger<CreateHazardFileCommandHandler> logger)
     {
         _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
+        _externalStorageService = externalStorageService ?? throw new ArgumentNullException(nameof(externalStorageService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -40,6 +45,30 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHan
             }
 
             _logger.LogApplicationInformation(" Processing CreateHazardFileCommand for Code: {Code}", request.HazardFile.Code);
+
+            var shouldPrepareExternalStorage =
+                !string.IsNullOrWhiteSpace(request.HazardFile.HazardCode)
+                && request.HazardFile.FileData is { Length: > 0 };
+
+            if (shouldPrepareExternalStorage)
+            {
+                var preparationResult = await _externalStorageService.PrepareHazardFileForStorageAsync(
+                    request.HazardFile,
+                    request.HazardFile.FileData!,
+                    cancellationToken);
+
+                if (preparationResult.IsFailure || preparationResult.Value is null)
+                {
+                    _logger.LogApplicationError("Failed to prepare hazard file storage for Code: {Code}. Error: {Error}",
+                        request.HazardFile.Code,
+                        preparationResult.Error?.Message);
+
+                    return Result<HazardFile>.Failure<HazardFile>(
+                        preparationResult.Error ?? DomainErrors.HazardFileError.CreateFailed);
+                }
+
+                request.HazardFile = preparationResult.Value;
+            }
 
             var result = await _hazardFileService.CreateHazardFileAsync(request.HazardFile, cancellationToken);
 

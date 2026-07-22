@@ -107,7 +107,6 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileFileType, hazardFile.FileType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileContentType, hazardFile.ContentType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileFileSizeBytes, hazardFile.FileSizeBytes));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileFileHash, hazardFile.FileHash ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileStorageType, hazardFile.StorageType ?? "Database"));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileFilePath, hazardFile.FilePath ?? (object)DBNull.Value));
             var fileDataParameter = new SqlParameter(ParameterNames.pmHazardFileFileData, SqlDbType.VarBinary)
@@ -119,7 +118,6 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileCategory, hazardFile.Category ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileIsConfidential, hazardFile.IsConfidential));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileUploadedBy, hazardFile.UploadedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileTags, hazardFile.Tags ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, hazardFile.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, hazardFile.CreatedDate));
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };

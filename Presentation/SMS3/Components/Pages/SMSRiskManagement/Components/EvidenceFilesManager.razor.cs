@@ -167,9 +167,15 @@ public partial class EvidenceFilesManager : ComponentBase
         {
             Logger.LogInformation("Opening file viewer for: {FileName}", file.FileName);
 
-            ViewingFile = file;
-            ShowFileViewer = true;
-            StateHasChanged();
+            if (ShouldUseStoredExternalPath(file))
+            {
+                var resolvedPath = ResolveExternalFilePath(file.FilePath);
+                await JSRuntime.InvokeVoidAsync("open", resolvedPath, "_blank");
+                await NotificationHelper.ShowInfoAsync($"Opened '{file.FileName}' in a new tab");
+                return;
+            }
+
+            await NotificationHelper.ShowErrorAsync("Cloud file path is missing. The file cannot be opened.");
         }
         catch (Exception ex)
         {
@@ -189,24 +195,16 @@ public partial class EvidenceFilesManager : ComponentBase
     {
         try
         {
-            if (file.FileData is null || file.FileData.Length == 0)
+            var useStoredExternalPath = ShouldUseStoredExternalPath(file);
+            if (useStoredExternalPath)
             {
-                await NotificationHelper.ShowErrorAsync("File data is not available for download");
+                Logger.LogInformation("Opening external file path for download: {FileName} => {FilePath}", file.FileName, file.FilePath);
+                await JSRuntime.InvokeVoidAsync("open", file.FilePath, "_blank");
+                await NotificationHelper.ShowInfoAsync($"Opened '{file.FileName}' in a new tab");
                 return;
             }
 
-            Logger.LogInformation("Starting download for file: {FileName}", file.FileName);
-
-            var fileName = file.FileName ?? "file";
-            var mimeType = GetMimeType(file);
-            var base64 = Convert.ToBase64String(file.FileData);
-
-            await JSRuntime.InvokeVoidAsync("downloadFile", fileName, mimeType, base64);
-
-            await NotificationHelper.ShowInfoAsync($"Download started for '{fileName}'");
-
-            Logger.LogInformation("Download initiated for file: {FileName} (Code: {Code})",
-                file.FileName, file.Code);
+            await NotificationHelper.ShowErrorAsync("Cloud file path is missing. The file cannot be downloaded.");
         }
         catch (Exception ex)
         {
@@ -350,6 +348,48 @@ public partial class EvidenceFilesManager : ComponentBase
             ".js" => "text/javascript",
             _ => "application/octet-stream"
         };
+    }
+
+    private static bool ShouldUseStoredExternalPath(HazardFile file)
+    {
+        if (string.IsNullOrWhiteSpace(file.FilePath))
+        {
+            return false;
+        }
+
+        var storageType = file.StorageType ?? string.Empty;
+        if (storageType.Equals("Cloud", StringComparison.OrdinalIgnoreCase) ||
+            storageType.Equals("FileSystem", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return Uri.TryCreate(file.FilePath, UriKind.Absolute, out _);
+    }
+
+    private static string ResolveExternalFilePath(string? filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            return string.Empty;
+        }
+
+        if (Uri.TryCreate(filePath, UriKind.Absolute, out _))
+        {
+            return filePath;
+        }
+
+        if (filePath.StartsWith("//", StringComparison.Ordinal))
+        {
+            return $"https:{filePath}";
+        }
+
+        if (!filePath.Contains('/') && !filePath.Contains('\\'))
+        {
+            return filePath;
+        }
+
+        return filePath.TrimStart('~');
     }
     #endregion
 }

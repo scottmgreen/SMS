@@ -872,21 +872,17 @@ public static partial class Mappers
         hazardFile.FileType = reader.GetValue<string>(FieldNames.fHazardFileFileType) ?? string.Empty;
         hazardFile.ContentType = reader.GetValue<string>(FieldNames.fHazardFileContentType) ?? string.Empty;
         hazardFile.FileSizeBytes = reader.GetValue<long>(FieldNames.fHazardFileFileSizeBytes);
-        hazardFile.FileHash = reader.GetValue<string>(FieldNames.fHazardFileFileHash);
         hazardFile.StorageType = reader.GetValue<string>(FieldNames.fHazardFileStorageType) ?? "FileSystem";
         hazardFile.FilePath = reader.GetValue<string>(FieldNames.fHazardFileFilePath);
         hazardFile.FileData = reader.GetValue<byte[]>(FieldNames.fHazardFileFileData);
         hazardFile.Description = reader.GetValue<string>(FieldNames.fHazardFileDescription);
         hazardFile.Category = reader.GetValue<string>(FieldNames.fHazardFileCategory);
         hazardFile.IsConfidential = reader.IsDBNull(FieldNames.fHazardFileIsConfidential) ? false : reader.GetBoolean(FieldNames.fHazardFileIsConfidential);
-        hazardFile.UploadedBy = reader.GetValue<string>(FieldNames.fHazardFileUploadedBy) ?? string.Empty;
-        hazardFile.UploadedDate = reader.IsDBNull(FieldNames.fHazardFileUploadedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fHazardFileUploadedDate);
-        hazardFile.Tags = reader.GetValue<string>(FieldNames.fHazardFileTags);
         hazardFile.IsActive = reader.IsDBNull(FieldNames.fHazardFileIsActive) ? true : reader.GetBoolean(FieldNames.fHazardFileIsActive);
-        hazardFile.InactiveReason = reader.GetValue<string>(FieldNames.fHazardFileInactiveReason);
-        hazardFile.InactiveDate = reader.IsDBNull(FieldNames.fHazardFileInactiveDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fHazardFileInactiveDate);
-        hazardFile.InactiveBy = reader.GetValue<string>(FieldNames.fHazardFileInactiveBy);
-
+        hazardFile.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? "SYSTEM";
+        hazardFile.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        hazardFile.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
+        hazardFile.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
         return hazardFile;
     }
 

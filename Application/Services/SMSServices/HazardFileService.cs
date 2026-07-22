@@ -24,7 +24,9 @@ public sealed class HazardFileService : IHazardFileService
     private readonly HazardFileDataService _dataService;
     private readonly ILogger<HazardFileService> _logger;
 
-    public HazardFileService(HazardFileDataService dataService, ILogger<HazardFileService> logger)
+    public HazardFileService(
+        HazardFileDataService dataService,
+        ILogger<HazardFileService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));

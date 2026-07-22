@@ -9,48 +9,40 @@
 
 <PageTitle>Report Processing - SMS3</PageTitle>
 
-<div class="container-fluid">
-    <!-- SMS Page Header with Additional Content -->
-    <PageHeader Title="Report Processing Workflow"
-               Subtitle="Process reports and manage SMS risk validation workflow"
-               Icon="fas fa-cogs">
-        <AdditionalContent>
-            <div class="d-flex justify-content-end align-items-center w-100">
-                <div class="d-flex gap-2">
-                    <RadzenButton ButtonStyle="ButtonStyle.Light" 
-                                 Text="Refresh All" 
-                                 Icon="refresh"
-                                 Size="ButtonSize.Small"
-                                 Click="@LoadDataAsync" />
-                
-                </div>
+<!-- SMS Page Header with Additional Content -->
+<PageHeader Title="Report Processing Workflow"
+           Subtitle="Process reports and manage SMS risk validation workflow"
+           Icon="fas fa-cogs">
+    <AdditionalContent>
+        <div class="d-flex justify-content-end align-items-center w-100">
+            <div class="d-flex gap-2">
+                <RadzenButton ButtonStyle="ButtonStyle.Light" 
+                             Text="Refresh All" 
+                             Icon="refresh"
+                             Size="ButtonSize.Small"
+                             Click="@LoadDataAsync" />
             </div>
-        </AdditionalContent>
-    </PageHeader>
+        </div>
+    </AdditionalContent>
+</PageHeader>
 
-    <!-- Main Tabs -->
-    <RadzenRow Gap="1rem">
-        <RadzenColumn Size="12">
-                    <RadzenTabs @bind-SelectedIndex="_selectedTabIndex">
-                <Tabs>
-                    <RadzenTabsItem Text="@($"Validation ({PendingValidation.Count})")" Icon="check_circle">
-                        @RenderValidationTab()
-                    </RadzenTabsItem>
-                    <RadzenTabsItem Text="@($"Risk Assessment ({PendingRiskAssessment.Count})")" Icon="assessment">
-                        @RenderRiskAssessmentTab()
-                    </RadzenTabsItem>
-                    <RadzenTabsItem Text="@($"Investigation ({PendingInvestigation.Count})")" Icon="search">
-                        @RenderInvestigationTab()
-                    </RadzenTabsItem>
-                    <RadzenTabsItem Text="@($"Mitigation ({PendingMitigation.Count()})")" Icon="build">
-                        @RenderMitigationTab()
-                    </RadzenTabsItem>
-                    
-                </Tabs>
-            </RadzenTabs>
-        </RadzenColumn>
-    </RadzenRow>
-</div>
+<!-- Main Tabs -->
+<RadzenTabs @bind-SelectedIndex="_selectedTabIndex">
+    <Tabs>
+        <RadzenTabsItem Text="@($"Validation ({PendingValidation.Count})")" Icon="check_circle">
+            @RenderValidationTab()
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="@($"Risk Assessment ({PendingRiskAssessment.Count})")" Icon="assessment">
+            @RenderRiskAssessmentTab()
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="@($"Investigation ({PendingInvestigation.Count})")" Icon="search">
+            @RenderInvestigationTab()
+        </RadzenTabsItem>
+        <RadzenTabsItem Text="@($"Mitigation ({PendingMitigation.Count()})")" Icon="build">
+            @RenderMitigationTab()
+        </RadzenTabsItem>
+    </Tabs>
+</RadzenTabs>
 
 
 <!-- 🚀 ENHANCED: Bulk Mitigation Approval Confirmation Dialog with Risk-Based Approver Selection -->

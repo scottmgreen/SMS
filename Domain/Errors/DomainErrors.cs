@@ -754,7 +754,6 @@ public static class DomainErrors
         public static Error UploadedByRequired => new Error("HazardFile.UploadedByRequired", "The UploadedBy field is required.");
         public static Error UploaderRequired => new Error("HazardFile.UploaderRequired", "An uploader is required for file creation.");
         public static Error InvalidFileSize => new Error("HazardFile.InvalidFileSize", "The file size must be greater than 0.");
-        public static Error InvalidFileHash => new Error("HazardFile.InvalidFileHash", "The file hash is invalid.");
         public static Error CannotModifyInactive => new Error("HazardFile.CannotModifyInactive", "Cannot modify an inactive file.");
         public static Error AlreadyInactive => new Error("HazardFile.AlreadyInactive", "The file is already inactive.");
         public static Error AlreadyActive => new Error("HazardFile.AlreadyActive", "The file is already active.");

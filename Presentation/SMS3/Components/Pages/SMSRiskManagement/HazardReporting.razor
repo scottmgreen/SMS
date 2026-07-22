@@ -507,9 +507,23 @@ else
                                                                          Style="padding: 0.25rem 0.5rem; border: 1px solid #dee2e6; border-radius: 0.25rem; background-color: #f8f9fa;">
                                                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
                                                                     <RadzenIcon Icon="attach_file" Style="color: var(--sms-blue-dark-bold); font-size: 0.9rem;" />
-                                                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                                                        @file.FileName (@file.SizeDisplay)
-                                                                    </RadzenText>
+                                                                    @if (ShouldUseStoredExternalPath(file))
+                                                                    {
+                                                                        <RadzenLink Text="@file.FileName"
+                                                                                    Style="font-size: 0.95rem; font-weight: 500; color: var(--rz-primary);"
+                                                                                    Path="@ResolveExternalFilePath(file.FilePath)"
+                                                                                    Target="_blank"
+                                                                                    title="Click to open file in a new tab" />
+                                                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                                                                            (@file.SizeDisplay)
+                                                                        </RadzenText>
+                                                                    }
+                                                                    else
+                                                                    {
+                                                                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                                                                            @file.FileName (@file.SizeDisplay)
+                                                                        </RadzenText>
+                                                                    }
                                                                 </RadzenStack>
                                                                 <RadzenButton ButtonStyle="ButtonStyle.Danger"
                                                                               Variant="Variant.Text"

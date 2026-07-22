@@ -28,7 +28,6 @@
                 ShowPagingSummary="true"
                 FilterMode="FilterMode.Advanced"
                 SelectionMode="DataGridSelectionMode.Multiple"
-                Style="height: calc(100vh - 200px)"
                 IsLoading="@_isLoading">
     
     <Columns>
@@ -56,9 +55,20 @@
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardFile" Property="FileName" Title="File Name" Width="200px">
             <Template Context="file">
-                <div title="@file.FileName" style="font-size:smaller;font-weight: 600">
-                    @(file.FileName?.Length > 30 ? file.FileName.Substring(0, 27) + "..." : file.FileName)
-                </div>
+                @if (ShouldUseStoredExternalPath(file))
+                {
+                    <RadzenLink Text="@(file.FileName?.Length > 30 ? file.FileName.Substring(0, 27) + "..." : file.FileName)"
+                                Path="@ResolveExternalFilePath(file.FilePath)"
+                                Target="_blank"
+                                title="@file.FileName"
+                                Style="font-size:smaller;font-weight:600;" />
+                }
+                else
+                {
+                    <div title="@file.FileName" style="font-size:smaller;font-weight: 600">
+                        @(file.FileName?.Length > 30 ? file.FileName.Substring(0, 27) + "..." : file.FileName)
+                    </div>
+                }
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardFile" Property="FileType" Title="Type" Width="120px">

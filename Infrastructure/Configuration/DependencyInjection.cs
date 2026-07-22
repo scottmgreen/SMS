@@ -94,6 +94,7 @@ public static class DependencyInjection
         // SMS Data Services - ALL AVAILABLE SERVICES
         services.AddScoped<HazardDataService>();
         services.AddScoped<HazardLocationDataService>();
+        services.AddScoped<HazardFileExternalStorageService>();
         services.AddScoped<HazardFileDataService>();
         services.AddScoped<AirportSharedDatasetDataService>();
         services.AddScoped<ReportDataService>();

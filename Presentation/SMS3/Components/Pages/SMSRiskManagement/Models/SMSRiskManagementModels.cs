@@ -42,6 +42,8 @@ public class AttachedFile
     public long FileSizeBytes { get; set; }
     public string SizeDisplay { get; set; } = string.Empty;
     public string ContentType { get; set; } = string.Empty;
+    public string? FilePath { get; set; }
+    public string? StorageType { get; set; }
     public byte[] Data { get; set; } = Array.Empty<byte>();
 }
 

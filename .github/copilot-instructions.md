@@ -18,6 +18,7 @@
 
 ## Database Naming Conventions
 - Field names should use typed prefixes like `fldi_`, `fldv_`, `fldd_` (and similar) consistently in SQL/stored procedures.
+- Truncate hazard file DB data; no need to retain or report DB-stored hazard files during cloud-only storage cutover.
 
 ## Logging and Error Handling
 - Use `Application/Common/ApplicationLogMessages.cs` consistently for logging.
@@ -43,6 +44,15 @@
 - Cleanup should continue in targeted batches with build validation.
 - Use enums only for display styles; do not use hard-coded strings for event source display naming.
 - Standardize data-reader string mapping to `GetValue<string>` with trimming handled in the extension method rather than direct `GetString` calls.
+- Use Domain Entities rather than introducing DTOs when realigning code to clean architecture patterns in this codebase.
 
 ## Paging
 - When applying paging changes, update all SMSListings pages in SMS3 so every listing uses 15 rows per page and do not skip any listing page.
+
+## Cloud Uploads
+- For FlyPDX hazard file cloud uploads, the request must include User-Agent 'curl/8.19.0'; removing it causes upload failure.
+- Hazard file storage policy is cloud-only; remove database failover. On cloud upload failure, publish an error instead of storing in the database.
+- Hazard file cloud storage must only use appsettings values; no hardcoded fallback URIs like contoso-sms.blob.core.windows.net are allowed. Hazard file paths must use configured Port of Portland endpoints only; never use contoso-sms.blob.core.windows.net for hazard file paths under any circumstances.
+
+## Investigation Evidence File Viewing
+- For investigation evidence file viewing, use cloud returned FilePath when storage is cloud; viewer behavior must automatically handle cloud storage.

@@ -53,10 +53,22 @@
                                         <RadzenColumn Size="8">
                                             <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
                                                 <!-- Clickable file name -->
-                                                <RadzenLink Text="@file.FileName" 
-                                                          Style="font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--rz-primary);" 
-                                                          Click="@(() => ViewFile(file))"
-                                                          title="Click to view file" />
+                                                @if (ShouldUseStoredExternalPath(file))
+                                                {
+                                                    <RadzenLink Text="@file.FileName"
+                                                              Style="font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--rz-primary);"
+                                                              Path="@ResolveExternalFilePath(file.FilePath)"
+                                                              Target="_blank"
+                                                              title="Click to open file in a new tab" />
+                                                }
+                                                else
+                                                {
+                                                    <RadzenLink Text="@file.FileName"
+                                                              Style="font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--rz-primary);"
+                                                              Path="javascript:void(0);"
+                                                              Click="@(() => ViewFile(file))"
+                                                              title="Click to view file" />
+                                                }
                                                 
                                                 @if (!string.IsNullOrEmpty(file.Description))
                                                 {

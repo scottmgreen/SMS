@@ -33,7 +33,6 @@ public class HazardFile : BaseAuditableEntity
     public string StorageType { get; set; } = "FileSystem";
     public string? FilePath { get; set; }
     public byte[]? FileData { get; set; }
-    public string? FileHash { get; set; }
     public string? Description { get; set; }
     public string? Category { get; set; }
     public bool IsConfidential { get; set; }

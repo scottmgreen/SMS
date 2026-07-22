@@ -1099,9 +1099,6 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmHazardFileFileSizeBytes = new Lazy<string>(() => "@pFileSizeBytes");
     public static string pmHazardFileFileSizeBytes => _pmHazardFileFileSizeBytes.Value;
 
-    private static readonly Lazy<string> _pmHazardFileFileHash = new Lazy<string>(() => "@pFileHash");
-    public static string pmHazardFileFileHash => _pmHazardFileFileHash.Value;
-
     private static readonly Lazy<string> _pmHazardFileStorageType = new Lazy<string>(() => "@pStorageType");
     public static string pmHazardFileStorageType => _pmHazardFileStorageType.Value;
 

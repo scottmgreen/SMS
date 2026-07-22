@@ -423,6 +423,48 @@ public partial class HazardFileListing : ComponentBase
         return "0 Bytes";
     }
 
+    private static bool ShouldUseStoredExternalPath(HazardFile file)
+    {
+        if (string.IsNullOrWhiteSpace(file.FilePath))
+        {
+            return false;
+        }
+
+        var storageType = file.StorageType ?? string.Empty;
+        if (storageType.Equals("Cloud", StringComparison.OrdinalIgnoreCase) ||
+            storageType.Equals("FileSystem", StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return Uri.TryCreate(file.FilePath, UriKind.Absolute, out _);
+    }
+
+    private static string ResolveExternalFilePath(string? filePath)
+    {
+        if (string.IsNullOrWhiteSpace(filePath))
+        {
+            return string.Empty;
+        }
+
+        if (Uri.TryCreate(filePath, UriKind.Absolute, out _))
+        {
+            return filePath;
+        }
+
+        if (filePath.StartsWith("//", StringComparison.Ordinal))
+        {
+            return $"https:{filePath}";
+        }
+
+        if (!filePath.Contains('/') && !filePath.Contains('\\'))
+        {
+            return filePath;
+        }
+
+        return filePath.TrimStart('~');
+    }
+
     public static bool IsImageFile(string? fileType) =>
         !string.IsNullOrEmpty(fileType) && (fileType.ToLower() is "jpg" or "jpeg" or "png" or "gif" or "bmp" or "webp");
 

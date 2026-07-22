@@ -593,9 +593,6 @@ public static class FieldNames
     private static readonly Lazy<string> _fHazardFileFileSizeBytes = new Lazy<string>(() => "fldi_FileSizeBytes");
     public static string fHazardFileFileSizeBytes => _fHazardFileFileSizeBytes.Value;
 
-    private static readonly Lazy<string> _fHazardFileFileHash = new Lazy<string>(() => "fldv_FileHash");
-    public static string fHazardFileFileHash => _fHazardFileFileHash.Value;
-
     private static readonly Lazy<string> _fHazardFileStorageType = new Lazy<string>(() => "fldv_StorageType");
     public static string fHazardFileStorageType => _fHazardFileStorageType.Value;
 
