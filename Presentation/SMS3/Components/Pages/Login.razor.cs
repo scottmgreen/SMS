@@ -166,22 +166,7 @@ public partial class Login : ComponentBase
         }
     }
 
-    /// <summary>
-    /// NEW: Get user agent for audit logging
-    /// </summary>
-    private string GetUserAgent()
-    {
-        try
-        {
-            var httpContext = HttpContextAccessor.HttpContext;
-            return httpContext?.Request.Headers["User-Agent"].FirstOrDefault() ?? "Blazor";
-        }
-        catch
-        {
-            return "Unknown";
-        }
-    }
-
+    
     private async Task CompleteLoginAsync(BaseUser user, SMSUserType userType)
     {
         // ?? CREATE SESSION-BASED AUTHENTICATION - Replaces static authentication
@@ -189,9 +174,9 @@ public partial class Login : ComponentBase
         
         // ?? START SESSION TIMER - Begin countdown for automatic logout
         SessionTimerService.StartTimer();
-        
-        // Navigate to home page
-        Navigation.NavigateTo("/", forceLoad: false);
+
+        // Navigate to default page /SMSRiskManagement/ReportProcessing
+        Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing", forceLoad: false);
     }
 
     private async Task HandleLoginFailureAsync(string username, string errorMessage)

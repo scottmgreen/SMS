@@ -5,9 +5,8 @@
 <div class="sms-login-card">
     <!-- Login Card Header -->
     <div class="sms-login-header">
-        <i class="fas fa-shield-alt sms-login-icon"></i>
-         <h2 class="sms-login-title">PDX SMS Portal</h2>
-         <p class="sms-login-subtitle-text">Portland International Airport</p>
+        <img src="/images/PDX_SMSEmailLogo.png" alt="PDX SMS Safety Management System" class="sms-login-logo" />
+        <p class="sms-login-subtitle-text">Portland International Airport</p>
     </div>
     
     @if (!string.IsNullOrEmpty(ErrorMessage))
@@ -78,8 +77,18 @@
 .sms-login-header {
     text-align: center;
     margin-bottom: 2rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 1px solid var(--sms-blue-light);
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    background: #212e61;
+    border: 1px solid #1a254d;
+}
+
+.sms-login-logo {
+    display: block;
+    max-width: 320px;
+    width: 100%;
+    height: auto;
+    margin: 0 auto 0.75rem auto;
 }
 
 .sms-login-icon {
@@ -98,7 +107,7 @@
 }
 
 .sms-login-subtitle-text {
-        color: var(--sms-blue-dark-bold);
+    color: #ffffff;
     font-weight: 500;
     font-size: 1rem;
     margin-bottom: 0;

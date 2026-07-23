@@ -14,29 +14,30 @@
     <div class="sms-pdx-card">
         <!-- Header - matching Login page style -->
         <div class="sms-login-header">
-            <i class="fas fa-shield-alt sms-login-icon"></i>
-            <h2 class="sms-login-title">PDX SMS Portal</h2>
+            <img src="/images/PDX_SMSEmailLogo.png" alt="PDX SMS Safety Management System" class="sms-login-logo" />
             <p class="sms-login-subtitle-text">Portland International Airport</p>
         </div>
 
         <!-- Disclaimer Content -->
         <div class="sms-disclaimer-content">
-            <div class="alert alert-info sms-info-alert">
+            @* <div class="alert alert-info sms-info-alert">
                 <h6 class="alert-heading">
                     <i class="fas fa-info-circle me-2"></i><strong>This system is restricted to authorized Port of Portland personnel only.</strong>
                 </h6>
-            </div>
+            </div> *@
 
             <div class="sms-terms-section">
                 <p class="sms-terms-text"><strong>By proceeding, you acknowledge that:</strong></p>
 
                 <ul class="sms-terms-list">
-                    <li><strong>Unauthorized access is strictly prohibited</strong> and may be subject to criminal prosecution
+                    <li>
+                        <strong>Unauthorized access is strictly prohibited</strong> and may be subject to criminal prosecution
                         under applicable federal and state laws.</li>
                     <li><strong>All activities are monitored and logged.</strong> Your access and usage may be audited.</li>
                     <li><strong>You have authorized access</strong> to this system as a Port of Portland employee.</li>
                     <li><strong>You agree to comply</strong> with all Port of Portland IT policies and SMS procedures.</li>
-                    <li><strong>Confidential safety information</strong> must be handled according to established security
+                    <li>
+                        <strong>Confidential safety information</strong> must be handled according to established security
                         protocols.</li>
                 </ul>
             </div>
@@ -81,7 +82,7 @@
         box-shadow: 0 1rem 3rem rgba(33, 46, 97, 0.15);
         padding: 2.5rem;
         width: 100%;
-        max-width: 800px;
+        max-width: 1200px;
         border: 1px solid var(--sms-blue-light);
         position: absolute;
         top: 50%;
@@ -95,8 +96,18 @@
     .sms-login-header {
         text-align: center;
         margin-bottom: 2rem;
-        padding-bottom: 1.5rem;
-        border-bottom: 1px solid var(--sms-blue-light);
+        padding: 1.25rem;
+        border-radius: 0.75rem;
+        background: #212e61;
+        border: 1px solid #222222;
+    }
+
+    .sms-login-logo {
+        display: block;
+        max-width: 320px;
+        width: 100%;
+        height: auto;
+        margin: 0 auto 0.75rem auto;
     }
 
     .sms-login-icon {
@@ -115,7 +126,7 @@
     }
 
     .sms-login-subtitle-text {
-        color: var(--sms-blue-dark-bold);
+        color: #ffffff;
         font-weight: 500;
         font-size: 1rem;
         margin-bottom: 0;
@@ -208,6 +219,10 @@
 
         .sms-login-icon {
             font-size: 2.5rem;
+        }
+
+        .sms-login-logo {
+            max-width: 260px;
         }
 
         .sms-login-title {

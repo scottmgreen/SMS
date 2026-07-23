@@ -26,7 +26,7 @@ public sealed class SMSEmailSection
 
 public static class SMSEmailTemplateBuilder
 {
-    public const string DefaultLogoUrl = "https://localhost:7272/images/PDX_SMSEmailLogo.png";
+    public const string DefaultLogoUrl = "";
 
     public static string BuildStandardEmail(
         string title,
@@ -37,14 +37,24 @@ public static class SMSEmailTemplateBuilder
         string? logoUrl = null)
     {
         var safeTitle = WebUtility.HtmlEncode(title ?? string.Empty);
-        var safeLogoUrl = WebUtility.HtmlEncode(string.IsNullOrWhiteSpace(logoUrl) ? DefaultLogoUrl : logoUrl);
+        var resolvedLogoUrl = string.IsNullOrWhiteSpace(logoUrl) ? DefaultLogoUrl : logoUrl;
+        var includeLogo = ShouldRenderLogo(resolvedLogoUrl);
+        var safeLogoUrl = WebUtility.HtmlEncode(resolvedLogoUrl);
 
         var sb = new StringBuilder();
         sb.Append("<html><body style='margin:0;padding:0;background:#f7f7f7;font-family:Arial,sans-serif;color:#111;'>");
         sb.Append("<table role='presentation' width='100%' cellspacing='0' cellpadding='0' style='background:#f7f7f7;padding:24px 0;'><tr><td align='center'>");
         sb.Append("<table role='presentation' width='720' cellspacing='0' cellpadding='0' style='max-width:720px;background:#ffffff;border:1px solid #e6e6e6;'>");
         sb.Append("<tr><td style='background:#111111;padding:16px 24px;text-align:left;'>");
-        sb.Append($"<img src='{safeLogoUrl}' alt='PDX SMS Safety Management System' style='display:block;max-width:320px;width:100%;height:auto;' />");
+        if (includeLogo)
+        {
+            sb.Append($"<img src='{safeLogoUrl}' alt='PDX SMS Safety Management System' style='display:block;max-width:320px;width:100%;height:auto;' />");
+        }
+        else
+        {
+            sb.Append("<div style='color:#ffffff;font-size:28px;font-weight:700;line-height:1.1;'>PDX SMS</div>");
+            sb.Append("<div style='color:#ffffff;font-size:14px;font-weight:400;'>Safety Management System</div>");
+        }
         sb.Append("</td></tr>");
         sb.Append($"<tr><td style='background:#003F40;color:#ffffff;padding:12px 24px;font-size:20px;font-weight:bold;'>{safeTitle}</td></tr>");
         sb.Append($"<tr><td style='padding:20px 24px;font-size:14px;line-height:1.6;'>{introHtml}</td></tr>");
@@ -97,5 +107,21 @@ public static class SMSEmailTemplateBuilder
 
         sb.Append("</table></td></tr></table></body></html>");
         return sb.ToString();
+    }
+
+    private static bool ShouldRenderLogo(string? logoUrl)
+    {
+        if (string.IsNullOrWhiteSpace(logoUrl))
+        {
+            return false;
+        }
+
+        if (!Uri.TryCreate(logoUrl, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        return !uri.IsLoopback &&
+               !string.Equals(uri.Host, "localhost", StringComparison.OrdinalIgnoreCase);
     }
 }

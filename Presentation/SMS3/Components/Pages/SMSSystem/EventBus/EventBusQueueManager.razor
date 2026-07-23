@@ -164,7 +164,7 @@
 
                 <RadzenDataGridColumn TItem="QueuedEvent" Property="EventType" Title="Event Type" Sortable="true">
                     <Template Context="queuedEvent">
-                        <span class="fw-bold">@queuedEvent.EventType  @GetEventReportIdentifier(queuedEvent)</span>
+                        <span class="fw-bold">@GetEventTypeDisplay(queuedEvent)</span>
                         @* @if (!string.IsNullOrEmpty(queuedEvent.TargetSystem))
                         {
                             <small class="text-muted d-block">→ @queuedEvent.TargetSystem</small>

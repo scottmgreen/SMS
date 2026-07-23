@@ -1,5 +1,7 @@
 ﻿@using Radzen
 @using Radzen.Blazor
+@using Microsoft.AspNetCore.Components.Forms
+@using System.Linq
 @using SMS3.Components.Pages.SMSSystem.Models
 
 
@@ -27,7 +29,7 @@
                 <RadzenColumn Size="11" class="text-start">
                     @foreach (string recipient in Model.To)
                     {
-                        <RadzenBadge BadgeStyle="BadgeStyle.Primary" Text="@recipient" class="me-2" /> 
+                        <RadzenBadge BadgeStyle="BadgeStyle.Base" Text="@recipient" class="me-2" /> 
                         
                     }
                 </RadzenColumn>
@@ -38,12 +40,38 @@
         
         @if (ShowCc)
         {
-            <div class="compose-row">
-                <label class="compose-label">Cc</label>
-                <div class="compose-field">
-                    
-                </div>
-            </div>
+            <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center" class="mt-2">
+                <RadzenColumn Size="1" class="text-end">
+                    <RadzenLabel>Cc:</RadzenLabel>
+                </RadzenColumn>
+                <RadzenColumn Size="11" class="text-start">
+                    @if (!PreviewOnly)
+                    {
+                        <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center" class="mb-2">
+                            <RadzenColumn Size="10">
+                                <RadzenTextBox @bind-Value="CcEntryText" Placeholder="Add CC email and press Enter" Style="width:100%;" @onkeydown="@AddCcRecipientOnEnter" />
+                            </RadzenColumn>
+                            <RadzenColumn Size="2">
+                                <RadzenButton Icon="add" Text="Add" ButtonStyle="ButtonStyle.Light" Click="@AddCcRecipient" />
+                            </RadzenColumn>
+                        </RadzenRow>
+                    }
+
+                    @if (Model.Cc.Any())
+                    {
+                        <div>
+                            @foreach (var cc in Model.Cc)
+                            {
+                                <RadzenBadge BadgeStyle="BadgeStyle.Base" Text="@cc" class="me-2 mb-2" />
+                                @if (!PreviewOnly)
+                                {
+                                    <RadzenButton Icon="close" Size="ButtonSize.ExtraSmall" ButtonStyle="ButtonStyle.Base" Click="@(() => RemoveCcRecipient(cc))" class="me-2 mb-2" />
+                                }
+                            }
+                        </div>
+                    }
+                </RadzenColumn>
+            </RadzenRow>
         }
 
         @if (ShowBcc)
@@ -66,6 +94,36 @@
                 
                     <RadzenTextBox @bind-Value="Model.Subject" Placeholder="Add a subject" class="subject-input" Disabled="@PreviewOnly" />
                 
+            </RadzenColumn>
+        </RadzenRow>
+
+        <RadzenRow Gap="0.5rem" AlignItems="AlignItems.Center" class="mt-2">
+            <RadzenColumn Size="1" class="text-end">
+                <i class="fas fa-paperclip"></i>
+            </RadzenColumn>
+            <RadzenColumn Size="11" class="text-start">
+                @if (!PreviewOnly)
+                {
+                    <label class="rz-button rz-button-md rz-button-light rz-shade-default mb-2" for="email-attachments-input">
+                        <span class="rz-button-icon-left rzi rzi-attach_file"></span>
+                        <span class="rz-button-text">Attach</span>
+                    </label>
+                    <InputFile id="email-attachments-input" OnChange="@AddAttachmentAsync" multiple style="display:none" />
+                }
+
+                @if (Model.Attachments.Any())
+                {
+                    <div>
+                        @foreach (var attachment in Model.Attachments)
+                        {
+                            <RadzenBadge Text="@attachment.FileName" BadgeStyle="BadgeStyle.Base" class="me-2 mb-2" />
+                            @if (!PreviewOnly)
+                            {
+                                <RadzenButton Icon="close" Size="ButtonSize.ExtraSmall" ButtonStyle="ButtonStyle.Light" Click="@(() => RemoveAttachment(attachment))" class="me-2 mb-2" />
+                            }
+                        }
+                    </div>
+                }
             </RadzenColumn>
         </RadzenRow>
 

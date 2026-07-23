@@ -18,6 +18,7 @@ using SMS_Application.Queries;
 
 using SMS_Domain.Enums;
 using SMS_Domain.Events;
+using SMS_Domain.Entities;
 using SMS_Domain.ValueObjects;
 
 namespace SMS3.Components.Pages.SMSSystem.EventBus;
@@ -38,6 +39,7 @@ public partial class EventBusQueueManager
 
     private bool _isLoading = true;
     private bool _isProcessing = false;
+    private readonly Dictionary<string, string> _hazardTitleByReportId = new(StringComparer.OrdinalIgnoreCase);
 
     private QueuedEventStatus? _statusFilter;
     private EventCategory? _eventTypeFilter = EventCategory.IntegrationEvent;
@@ -73,6 +75,116 @@ public partial class EventBusQueueManager
             }
         }
         return string.Empty;
+    }
+
+    protected string GetEventTypeDisplay(QueuedEvent queuedEvent)
+    {
+        var eventType = queuedEvent.EventType?.Trim() ?? string.Empty;
+
+        if (queuedEvent.EventCategory != EventCategory.IntegrationEvent
+            || !string.Equals(eventType, SMS_Domain.Enums.EventType.EmailNotification.Value, StringComparison.OrdinalIgnoreCase))
+        {
+            return string.IsNullOrWhiteSpace(eventType)
+                ? GetEventReportIdentifier(queuedEvent)
+                : eventType;
+        }
+
+        var reportIdentifier = GetEventReportIdentifier(queuedEvent);
+        var hazardTitle = GetHazardTitleFromEventData(queuedEvent.EventData);
+        var emailType = GetEmailTypeFromEventData(queuedEvent.EventData);
+
+        if (string.IsNullOrWhiteSpace(hazardTitle)
+            && !string.IsNullOrWhiteSpace(reportIdentifier)
+            && _hazardTitleByReportId.TryGetValue(reportIdentifier.Trim(), out var cachedHazardTitle)
+            && !string.IsNullOrWhiteSpace(cachedHazardTitle))
+        {
+            hazardTitle = cachedHazardTitle;
+        }
+
+        var suffixParts = new List<string>();
+
+        if (!string.IsNullOrWhiteSpace(reportIdentifier))
+        {
+            suffixParts.Add(reportIdentifier.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(hazardTitle))
+        {
+            suffixParts.Add(hazardTitle.Trim());
+        }
+
+        if (!string.IsNullOrWhiteSpace(emailType))
+        {
+            suffixParts.Add(emailType.Trim());
+        }
+
+        if (suffixParts.Count == 0)
+        {
+            return eventType;
+        }
+
+        return $"{eventType} {string.Join(" - ", suffixParts)}";
+    }
+
+    private static string GetHazardTitleFromEventData(string eventData)
+    {
+        if (string.IsNullOrWhiteSpace(eventData))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(eventData);
+            var root = doc.RootElement;
+
+            var title = FirstString(root,
+                "HazardTitle",
+                "hazardTitle",
+                "HazardName",
+                "hazardName",
+                "Name",
+                "name");
+
+            return title;
+        }
+        catch
+        {
+            return string.Empty;
+        }
+    }
+
+    private static string GetEmailTypeFromEventData(string eventData)
+    {
+        if (string.IsNullOrWhiteSpace(eventData))
+        {
+            return string.Empty;
+        }
+
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(eventData);
+            var root = doc.RootElement;
+
+            var subject = FirstString(root, "Subject", "subject");
+            if (string.IsNullOrWhiteSpace(subject))
+            {
+                return string.Empty;
+            }
+
+            var label = subject.Trim();
+            var colonIndex = label.IndexOf(':');
+            if (colonIndex > 0)
+            {
+                label = label[..colonIndex].Trim();
+            }
+
+            return label;
+        }
+        catch
+        {
+            return string.Empty;
+        }
     }
 
     #region Filter Options
@@ -141,6 +253,7 @@ public partial class EventBusQueueManager
             if (result.IsSuccess)
             {
                 _queuedEvents = result.Value;
+                await BuildHazardTitleCacheAsync(_queuedEvents);
                 Logger.LogDebug("Loaded {EventCount} queued events", _queuedEvents.Count());
             }
             else
@@ -172,6 +285,45 @@ public partial class EventBusQueueManager
         {
             _isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task BuildHazardTitleCacheAsync(IEnumerable<QueuedEvent> queuedEvents)
+    {
+        _hazardTitleByReportId.Clear();
+
+        var reportIds = queuedEvents
+            .Where(e => e.EventCategory == EventCategory.IntegrationEvent
+                        && string.Equals(e.EventType, SMS_Domain.Enums.EventType.EmailNotification.Value, StringComparison.OrdinalIgnoreCase))
+            .Select(GetEventReportIdentifier)
+            .Where(v => !string.IsNullOrWhiteSpace(v))
+            .Select(v => v.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        foreach (var reportId in reportIds)
+        {
+            try
+            {
+                var hazardsResult = await _mediator.SendAsync(new GetHazardsByReportCodeQuery(new ReportID(reportId)), CancellationToken.None);
+                if (hazardsResult.IsFailure || hazardsResult.Value == null || hazardsResult.Value.Count == 0)
+                {
+                    continue;
+                }
+
+                var title = hazardsResult.Value
+                    .Select(h => string.IsNullOrWhiteSpace(h.HazardTitle) ? h.Name : h.HazardTitle)
+                    .FirstOrDefault(t => !string.IsNullOrWhiteSpace(t));
+
+                if (!string.IsNullOrWhiteSpace(title))
+                {
+                    _hazardTitleByReportId[reportId] = title.Trim();
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.LogWarning(ex, "Unable to hydrate hazard title for report {ReportId}", reportId);
+            }
         }
     }
 
@@ -269,7 +421,7 @@ public partial class EventBusQueueManager
                         var dialogResult = await DialogService.OpenAsync<Components.EmailComposeDialog>(
                             "SMS Notification",
                             new Dictionary<string, object?> { { "InitialModel", model } },
-                            new DialogOptions { Width = "950px", Height = "700px", Resizable = true, Draggable = true, ShowClose = false }
+                            new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false }
                         );
 
                         var emailSent = dialogResult is bool sent && sent;

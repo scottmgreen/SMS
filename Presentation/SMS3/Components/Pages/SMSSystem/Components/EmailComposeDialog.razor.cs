@@ -4,6 +4,9 @@ using System.Net.Mail;
 using System.Threading.Tasks;
 
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Forms;
+using Microsoft.AspNetCore.Components.Web;
+using SMS_Application.Interfaces;
 using SMS3.Components.Pages.SMSSystem.Models;
 
 
@@ -12,6 +15,7 @@ public class EmailComposeDialogBase : ComponentBase
     [Inject] protected NotificationService NotificationService { get; set; } = default!;
     [Inject] protected DialogService DialogService { get; set; } = default!;
     [Inject] protected IEmailSender EmailSender { get; set; } = default!;
+    [Inject] protected ICurrentUserService CurrentUserService { get; set; } = default!;
 
     [Parameter] public EmailComposeModel? InitialModel { get; set; }
     [Parameter] public bool PreviewOnly { get; set; }
@@ -21,7 +25,9 @@ public class EmailComposeDialogBase : ComponentBase
     protected bool ShowCc { get; set; }
     protected bool ShowBcc { get; set; }
     protected bool IsSending { get; set; }
+    protected string? SelectedAttachmentName { get; set; }
     protected string DialogTitle { get; set; } = "New message";
+    protected string CcEntryText { get; set; } = string.Empty;
 
     
 
@@ -39,7 +45,13 @@ public class EmailComposeDialogBase : ComponentBase
                 Cc = InitialModel.Cc?.Distinct().ToList() ?? new(),
                 Bcc = InitialModel.Bcc?.Distinct().ToList() ?? new(),
                 Subject = InitialModel.Subject ?? string.Empty,
-                BodyHtml = InitialModel.BodyHtml ?? string.Empty
+                BodyHtml = InitialModel.BodyHtml ?? string.Empty,
+                Attachments = InitialModel.Attachments?.Select(a => new MailAttachment
+                {
+                    FileName = a.FileName,
+                    Content = a.Content,
+                    ContentType = a.ContentType
+                }).ToList() ?? new()
             };
 
             ShowCc = (Model.Cc?.Count ?? 0) > 0;
@@ -51,6 +63,9 @@ public class EmailComposeDialogBase : ComponentBase
                 DialogTitle = "Mitigation Approval Request";
             }
         }
+
+        EnsureCurrentUserInCc();
+        ShowCc = true;
 
         if (!string.IsNullOrWhiteSpace(DialogTitleOverride))
         {
@@ -67,6 +82,58 @@ public class EmailComposeDialogBase : ComponentBase
         Model.To = NormalizeList(Model.To);
         Model.Cc = NormalizeList(Model.Cc);
         Model.Bcc = NormalizeList(Model.Bcc);
+    }
+
+    protected void AddCcRecipient()
+    {
+        if (PreviewOnly)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(CcEntryText))
+        {
+            return;
+        }
+
+        var entries = CcEntryText
+            .Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+            .Select(v => v.Trim())
+            .Where(v => !string.IsNullOrWhiteSpace(v))
+            .ToList();
+
+        foreach (var entry in entries)
+        {
+            if (!Model.Cc.Contains(entry, StringComparer.OrdinalIgnoreCase))
+            {
+                Model.Cc.Add(entry);
+            }
+        }
+
+        Model.Cc = NormalizeList(Model.Cc);
+        CcEntryText = string.Empty;
+    }
+
+    protected void AddCcRecipientOnEnter(KeyboardEventArgs args)
+    {
+        if (string.Equals(args.Key, "Enter", StringComparison.OrdinalIgnoreCase))
+        {
+            AddCcRecipient();
+        }
+    }
+
+    protected void RemoveCcRecipient(string email)
+    {
+        if (PreviewOnly)
+        {
+            return;
+        }
+
+        var existing = Model.Cc.FirstOrDefault(v => string.Equals(v, email, StringComparison.OrdinalIgnoreCase));
+        if (!string.IsNullOrWhiteSpace(existing))
+        {
+            Model.Cc.Remove(existing);
+        }
     }
 
     private static System.Collections.Generic.List<string> NormalizeList(System.Collections.Generic.IEnumerable<string>? source)
@@ -120,7 +187,8 @@ public class EmailComposeDialogBase : ComponentBase
                 Cc = Model.Cc,
                 Bcc = Model.Bcc,
                 Subject = Model.Subject?.Trim() ?? string.Empty,
-                BodyHtml = Model.BodyHtml ?? string.Empty
+                BodyHtml = Model.BodyHtml ?? string.Empty,
+                Attachments = Model.Attachments
             };
 
             await EmailSender.SendAsync(request);
@@ -154,6 +222,55 @@ public class EmailComposeDialogBase : ComponentBase
         DialogService.Close(false);
     }
 
+    protected async Task AddAttachmentAsync(InputFileChangeEventArgs e)
+    {
+        if (PreviewOnly)
+        {
+            return;
+        }
+
+        const long maxFileSize = 25L * 1024L * 1024L;
+
+        foreach (var file in e.GetMultipleFiles())
+        {
+            try
+            {
+                await using var stream = file.OpenReadStream(maxFileSize);
+                using var memoryStream = new MemoryStream();
+                await stream.CopyToAsync(memoryStream);
+
+                Model.Attachments.Add(new MailAttachment
+                {
+                    FileName = file.Name,
+                    Content = memoryStream.ToArray(),
+                    ContentType = string.IsNullOrWhiteSpace(file.ContentType)
+                        ? "application/octet-stream"
+                        : file.ContentType
+                });
+
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(new Radzen.NotificationMessage
+                {
+                    Severity = NotificationSeverity.Warning,
+                    Summary = "Attachment skipped",
+                    Detail = $"{file.Name}: {ex.Message}"
+                });
+            }
+        }
+    }
+
+    protected void RemoveAttachment(MailAttachment attachment)
+    {
+        if (PreviewOnly)
+        {
+            return;
+        }
+
+        Model.Attachments.Remove(attachment);
+    }
+
     private static System.Collections.Generic.List<string> ValidateModel(EmailComposeModel m)
     {
         var errors = new System.Collections.Generic.List<string>();
@@ -183,6 +300,21 @@ public class EmailComposeDialogBase : ComponentBase
         // Optional: bodyHtml can be empty
 
         return errors;
+    }
+
+    private void EnsureCurrentUserInCc()
+    {
+        var currentUserEmail = CurrentUserService?.Email?.Trim();
+        if (string.IsNullOrWhiteSpace(currentUserEmail))
+        {
+            return;
+        }
+
+        if (!Model.Cc.Contains(currentUserEmail, StringComparer.OrdinalIgnoreCase))
+        {
+            Model.Cc.Add(currentUserEmail);
+            Model.Cc = NormalizeList(Model.Cc);
+        }
     }
 }
 

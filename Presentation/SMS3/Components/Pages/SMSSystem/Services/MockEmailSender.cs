@@ -25,7 +25,13 @@ namespace SMS3.Components.Pages.SMSSystem.Services
                 isHtmlContent: true,
                 priority: EmailPriority.Normal,
                 workflowType: "ManualComposeDialog",
-                relatedEntityType: "EmailComposeDialog");
+                relatedEntityType: "EmailComposeDialog",
+                attachments: request.Attachments?.Select(a => new EmailAttachment
+                {
+                    FileName = a.FileName,
+                    Content = a.Content,
+                    ContentType = a.ContentType
+                }).ToList());
 
             var result = await _emailService.SendEmailAsync(emailEvent, CancellationToken.None).ConfigureAwait(false);
             if (result.IsFailure)

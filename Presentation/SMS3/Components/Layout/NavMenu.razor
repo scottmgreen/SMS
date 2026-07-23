@@ -21,8 +21,11 @@
     <div class="container-fluid">
         <!-- Brand Logo with Environment Detection -->
         <a class="navbar-brand sms-brand @BrandCssClass" href="/">
-            <i class="fas fa-plane-departure me-2"></i>
-            PDX SMS &nbsp;  <small>@(EnvironmentSuffix)</small>
+            <img src="/images/PDX_SMSEmailLogo.png" alt="PDX SMS Safety Management System" class="sms-brand-logo" />
+            @if (!string.IsNullOrWhiteSpace(EnvironmentSuffix))
+            {
+                <small class="sms-brand-environment">@EnvironmentSuffix</small>
+            }
         </a>
 
         <!-- Navigation Links -->

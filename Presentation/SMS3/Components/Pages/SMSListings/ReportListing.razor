@@ -23,6 +23,12 @@
                       ButtonStyle="ButtonStyle.Light"
                       Click="@OnExportSelectedReportsAsync"
                       Disabled="@(!HasExportableSelection())" />
+        <RadzenButton Text="Export Selected Package (PDF)"
+                      Icon="picture_as_pdf"
+                      ButtonStyle="ButtonStyle.Secondary"
+                      class="ms-2"
+                      Click="@OnExportSelectedReportsPdfAsync"
+                      Disabled="@(!HasExportableSelection())" />
     </AdditionalContent>
 </PageHeader>
 

@@ -4,6 +4,9 @@ using System.Text;
 using System.IO.Compression;
 using System.Globalization;
 using System.Net.Http;
+using System.Collections;
+using QuestPDF.Fluent;
+using QuestPDF.Infrastructure;
 
 using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
@@ -203,6 +206,43 @@ public partial class ReportListing : ComponentBase
         {
             _isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task OnExportSelectedReportsPdfAsync()
+    {
+        var exportableReports = _selectedReports
+            .Where(IsReportExportEligible)
+            .GroupBy(r => r.Code, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.First())
+            .ToList();
+
+        if (!exportableReports.Any())
+        {
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Select at least one report that is not REPORT_NEEDS_VALIDATION to export."));
+            return;
+        }
+
+        try
+        {
+            var excludedCount = _selectedReports.Count - exportableReports.Count;
+            if (excludedCount > 0)
+            {
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", $"{excludedCount} selected report(s) were skipped because status is REPORT_NEEDS_VALIDATION."));
+            }
+
+            var zipBytes = await BuildExportPackagePdfAsync(exportableReports);
+            var base64 = Convert.ToBase64String(zipBytes);
+            var fileName = $"reports-export-package-pdf-{DateTime.UtcNow:yyyyMMdd-HHmmss}.zip";
+
+            await _jsRuntime.InvokeVoidAsync("downloadFile", fileName, "application/zip", base64);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Exported {exportableReports.Count} report package(s) in PDF format"));
+            _logger.LogInformation("Exported PDF package for {Count} selected reports", exportableReports.Count);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to export selected reports PDF package");
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Failed to export selected reports PDF package"));
         }
     }
 
@@ -583,6 +623,279 @@ public partial class ReportListing : ComponentBase
         return memoryStream.ToArray();
     }
 
+    private async Task<byte[]> BuildExportPackagePdfAsync(IEnumerable<Report> reportsToExport)
+    {
+        using var httpClient = new HttpClient
+        {
+            Timeout = TimeSpan.FromSeconds(20)
+        };
+
+        using var memoryStream = new MemoryStream();
+        using (var archive = new ZipArchive(memoryStream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            foreach (var report in reportsToExport)
+            {
+                if (string.IsNullOrWhiteSpace(report.Code))
+                {
+                    continue;
+                }
+
+                await AddReportFolderToArchivePdfAsync(archive, report, httpClient);
+            }
+        }
+
+        return memoryStream.ToArray();
+    }
+
+    private async Task AddReportFolderToArchivePdfAsync(ZipArchive archive, Report report, HttpClient httpClient)
+    {
+        var folderName = $"Report_{SanitizeFileNamePart(report.Code)}";
+
+        var hazardsQuery = new GetHazardsByReportCodeQuery(new ReportID(report.Code));
+        var hazardsResult = await _mediator.SendAsync(hazardsQuery, CancellationToken.None);
+        var hazards = hazardsResult.IsSuccess && hazardsResult.Value is not null
+            ? hazardsResult.Value.ToList()
+            : new List<Hazard>();
+
+        var hazardCodes = hazards
+            .Where(h => !string.IsNullOrWhiteSpace(h.Code))
+            .Select(h => h.Code)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var hazardLocations = new List<HazardLocation>();
+        var riskAssessments = new List<RiskAssessment>();
+        var scoringPanels = new List<ScoringPanel>();
+        var mitigations = new List<Mitigation>();
+        var hazardFiles = new List<HazardFile>();
+
+        foreach (var hazard in hazards)
+        {
+            if (!string.IsNullOrWhiteSpace(hazard.Code))
+            {
+                var locationQuery = new GetHazardLocationsByHazardCodeQuery(hazard.Code);
+                var locationResult = await _mediator.SendAsync(locationQuery, CancellationToken.None);
+
+                if (locationResult.IsSuccess && locationResult.Value is not null)
+                {
+                    hazardLocations.AddRange(locationResult.Value);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(hazard.Code))
+            {
+                var riskAssessmentQuery = new GetRiskAssessmentsByHazardCodeQuery(new HazardID(hazard.Code));
+                var riskAssessmentResult = await _mediator.SendAsync(riskAssessmentQuery, CancellationToken.None);
+
+                if (riskAssessmentResult.IsSuccess && riskAssessmentResult.Value is not null)
+                {
+                    riskAssessments.AddRange(riskAssessmentResult.Value);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(hazard.Code))
+            {
+                var scoringPanelQuery = new GetScoringPanelsByHazardCodeQuery(hazard.Code);
+                var scoringPanelResult = await _mediator.SendAsync(scoringPanelQuery, CancellationToken.None);
+
+                if (scoringPanelResult.IsSuccess && scoringPanelResult.Value is not null)
+                {
+                    scoringPanels.AddRange(scoringPanelResult.Value);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(hazard.Code))
+            {
+                var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazard.Code);
+                var mitigationResult = await _mediator.SendAsync(mitigationQuery, CancellationToken.None);
+
+                if (mitigationResult.IsSuccess && mitigationResult.Value is not null)
+                {
+                    mitigations.AddRange(mitigationResult.Value);
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(hazard.Code))
+            {
+                var hazardFilesQuery = new GetHazardFilesByHazardCodeQuery(hazard.Code, includeFileData: true);
+                var hazardFilesResult = await _mediator.SendAsync(hazardFilesQuery, CancellationToken.None);
+
+                if (hazardFilesResult.IsSuccess && hazardFilesResult.Value is not null)
+                {
+                    hazardFiles.AddRange(hazardFilesResult.Value);
+                }
+            }
+        }
+
+        var distinctLocations = hazardLocations
+            .GroupBy(location => location.Code)
+            .Select(group => group.First())
+            .ToList();
+
+        var distinctRiskAssessments = riskAssessments
+            .GroupBy(assessment => assessment.Code)
+            .Select(group => group.First())
+            .ToList();
+
+        var distinctScoringPanels = scoringPanels
+            .GroupBy(panel => panel.Code)
+            .Select(group => group.First())
+            .ToList();
+
+        var distinctMitigations = mitigations
+            .GroupBy(mitigation => mitigation.Code)
+            .Select(group => group.First())
+            .ToList();
+
+        var distinctHazardFiles = hazardFiles
+            .GroupBy(file => file.Code)
+            .Select(group => group.First())
+            .ToList();
+
+        AddPdfEntryIfAny(
+            archive,
+            $"{folderName}/Report_{SanitizeFileNamePart(report.Code)}.pdf",
+            BuildTablePdf($"Report - {report.Code}", new[] { report }, ReportExportProperties));
+
+        AddPdfEntryIfAny(
+            archive,
+            $"{folderName}/Hazards_{SanitizeFileNamePart(report.Code)}.pdf",
+            hazards,
+            records => BuildTablePdf($"Hazards - {report.Code}", records, HazardExportProperties));
+
+        var riskAssessmentCodes = distinctRiskAssessments
+            .Where(a => !string.IsNullOrWhiteSpace(a.Code))
+            .Select(a => a.Code)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var allRiskAnalysisQuery = new GetAllRiskAnalysisQuery();
+        var allRiskAnalysisResult = await _mediator.SendAsync(allRiskAnalysisQuery, CancellationToken.None);
+        var riskAnalyses = allRiskAnalysisResult.IsSuccess && allRiskAnalysisResult.Value is not null
+            ? allRiskAnalysisResult.Value
+                .Where(analysis =>
+                    (!string.IsNullOrWhiteSpace(analysis.HazardCode) && hazardCodes.Contains(analysis.HazardCode)) ||
+                    (!string.IsNullOrWhiteSpace(analysis.RiskAssessmentCode) && riskAssessmentCodes.Contains(analysis.RiskAssessmentCode)))
+                .GroupBy(analysis => analysis.Code)
+                .Select(group => group.First())
+                .ToList()
+            : new List<RiskAnalysis>();
+
+        var allInvestigationsQuery = new GetAllInvestigationsQuery();
+        var allInvestigationsResult = await _mediator.SendAsync(allInvestigationsQuery, CancellationToken.None);
+        var investigations = allInvestigationsResult.IsSuccess && allInvestigationsResult.Value is not null
+            ? allInvestigationsResult.Value
+                .Where(investigation =>
+                    string.Equals(investigation.ReportCode, report.Code, StringComparison.OrdinalIgnoreCase) ||
+                    (!string.IsNullOrWhiteSpace(investigation.HazardCode) && hazardCodes.Contains(investigation.HazardCode)))
+                .GroupBy(investigation => investigation.Code)
+                .Select(group => group.First())
+                .ToList()
+            : new List<Investigation>();
+
+        var investigationCodes = investigations
+            .Where(i => !string.IsNullOrWhiteSpace(i.Code))
+            .Select(i => i.Code)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var allInterviewsQuery = new GetAllInterviewsQuery();
+        var allInterviewsResult = await _mediator.SendAsync(allInterviewsQuery, CancellationToken.None);
+        var interviews = allInterviewsResult.IsSuccess && allInterviewsResult.Value is not null
+            ? allInterviewsResult.Value
+                .Where(interview =>
+                    !string.IsNullOrWhiteSpace(interview.InvestigationCode)
+                    && investigationCodes.Contains(interview.InvestigationCode))
+                .GroupBy(interview => interview.Code)
+                .Select(group => group.First())
+                .ToList()
+            : new List<Interview>();
+
+        var reportValidationQuery = new GetReportValidationByReportIdQuery(new ReportID(report.Code));
+        var reportValidationResult = await _mediator.SendAsync(reportValidationQuery, CancellationToken.None);
+        var reportValidations = reportValidationResult.IsSuccess && reportValidationResult.Value is not null
+            ? new List<SMS_Domain.Entities.ReportValidation> { reportValidationResult.Value }
+            : new List<SMS_Domain.Entities.ReportValidation>();
+
+        AddPdfEntryIfAny(
+            archive,
+            $"{folderName}/HazardLocations_{SanitizeFileNamePart(report.Code)}.pdf",
+            distinctLocations,
+            records => BuildTablePdf($"Hazard Locations - {report.Code}", records, HazardLocationExportProperties));
+
+        AddPdfEntryIfAny(
+            archive,
+            $"{folderName}/RiskAssessments_{SanitizeFileNamePart(report.Code)}.pdf",
+            distinctRiskAssessments,
+            records => BuildTablePdf($"Risk Assessments - {report.Code}", records, RiskAssessmentExportProperties));
+
+        AddPdfEntryIfAny(
+            archive,
+            $"{folderName}/RiskAnalyses_{SanitizeFileNamePart(report.Code)}.pdf",
+            riskAnalyses,
+            records => BuildTablePdf($"Risk Analyses - {report.Code}", records, RiskAnalysisExportProperties));
+
+        AddPdfEntryIfAny(
+            archive,
+            $"{folderName}/ScoringPanels_{SanitizeFileNamePart(report.Code)}.pdf",
+            distinctScoringPanels,
+            records => BuildTablePdf($"Scoring Panels - {report.Code}", records, ScoringPanelExportProperties));
+
+        AddPdfEntryIfAny(
+            archive,
+            $"{folderName}/Mitigations_{SanitizeFileNamePart(report.Code)}.pdf",
+            distinctMitigations,
+            records => BuildTablePdf($"Mitigations - {report.Code}", records, MitigationExportProperties));
+
+        AddPdfEntryIfAny(
+            archive,
+            $"{folderName}/HazardFiles_{SanitizeFileNamePart(report.Code)}.pdf",
+            distinctHazardFiles,
+            records => BuildTablePdf($"Hazard Files - {report.Code}", records, HazardFileExportProperties));
+
+        AddPdfEntryIfAny(
+            archive,
+            $"{folderName}/Investigations_{SanitizeFileNamePart(report.Code)}.pdf",
+            investigations,
+            records => BuildTablePdf($"Investigations - {report.Code}", records, InvestigationExportProperties));
+
+        AddPdfEntryIfAny(
+            archive,
+            $"{folderName}/Interviews_{SanitizeFileNamePart(report.Code)}.pdf",
+            interviews,
+            records => BuildTablePdf($"Interviews - {report.Code}", records, InterviewExportProperties));
+
+        AddPdfEntryIfAny(
+            archive,
+            $"{folderName}/ReportValidation_{SanitizeFileNamePart(report.Code)}.pdf",
+            reportValidations,
+            records => BuildTablePdf($"Report Validation - {report.Code}", records, ReportValidationExportProperties));
+
+        await AddHazardFileContentEntriesAsync(archive, folderName, distinctHazardFiles);
+        await AddLocationThumbnailEntriesAsync(archive, folderName, distinctLocations, httpClient);
+
+        var reportSummary = BuildExportManifest(
+            report,
+            hazards.Count,
+            distinctLocations.Count,
+            distinctRiskAssessments.Count,
+            riskAnalyses.Count,
+            distinctScoringPanels.Count,
+            distinctMitigations.Count,
+            distinctHazardFiles.Count,
+            investigations.Count,
+            interviews.Count,
+            reportValidations.Count);
+
+        AddTextEntry(
+            archive,
+            $"{folderName}/ExportManifest_{SanitizeFileNamePart(report.Code)}.txt",
+            reportSummary);
+
+        AddTextEntry(
+            archive,
+            $"ReportSummary_{SanitizeFileNamePart(report.Code)}.txt",
+            reportSummary);
+    }
+
     private async Task AddReportFolderToArchiveAsync(ZipArchive archive, Report report, HttpClient httpClient)
     {
         var folderName = $"Report_{SanitizeFileNamePart(report.Code)}";
@@ -830,6 +1143,38 @@ public partial class ReportListing : ComponentBase
         writer.Write(csvContent);
     }
 
+    private static void AddPdfEntry(ZipArchive archive, string entryPath, byte[] pdfBytes)
+    {
+        var entry = archive.CreateEntry(entryPath, CompressionLevel.Fastest);
+        using var entryStream = entry.Open();
+        entryStream.Write(pdfBytes, 0, pdfBytes.Length);
+    }
+
+    private static void AddPdfEntryIfAny<T>(
+        ZipArchive archive,
+        string entryPath,
+        IEnumerable<T>? records,
+        Func<IReadOnlyCollection<T>, byte[]> pdfFactory)
+    {
+        var items = records?.ToList() ?? new List<T>();
+        if (items.Count == 0)
+        {
+            return;
+        }
+
+        AddPdfEntry(archive, entryPath, pdfFactory(items));
+    }
+
+    private static void AddPdfEntryIfAny(ZipArchive archive, string entryPath, byte[]? pdfBytes)
+    {
+        if (pdfBytes is null || pdfBytes.Length == 0)
+        {
+            return;
+        }
+
+        AddPdfEntry(archive, entryPath, pdfBytes);
+    }
+
     private static void AddTextEntry(ZipArchive archive, string entryPath, string content)
     {
         var entry = archive.CreateEntry(entryPath, CompressionLevel.Fastest);
@@ -862,15 +1207,195 @@ public partial class ReportListing : ComponentBase
         return sb.ToString();
     }
 
+    private static byte[] BuildTablePdf<T>(string title, IEnumerable<T> records, PropertyInfo[] properties)
+    {
+        var items = records?.ToList() ?? new List<T>();
+
+        QuestPDF.Settings.License = LicenseType.Community;
+
+        var document = Document.Create(container =>
+        {
+            container.Page(page =>
+            {
+                page.Size(QuestPDF.Helpers.PageSizes.A4);
+                page.Margin(20);
+                page.DefaultTextStyle(x => x.FontSize(9));
+
+                page.Header().Column(column =>
+                {
+                    column.Item().Background("#111111").Padding(12).Text("PDX SMS Export").FontSize(16).Bold().FontColor("#FFFFFF");
+                    column.Item().Background("#003F40").PaddingHorizontal(12).PaddingVertical(8).Text(title).FontSize(11).Bold().FontColor("#FFFFFF");
+                    column.Item().PaddingTop(6).Text($"Generated UTC: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}").FontSize(8).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                });
+
+                page.Content().PaddingTop(10).Table(table =>
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.ConstantColumn(200);
+                        columns.RelativeColumn();
+                    });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().Background("#00AF9B").Border(1).BorderColor("#E6E6E6").Padding(6)
+                            .Text("Field Name").Bold().FontSize(9).FontColor("#111111");
+                        header.Cell().Background("#00AF9B").Border(1).BorderColor("#E6E6E6").Padding(6)
+                            .Text("Field Value").Bold().FontSize(9).FontColor("#111111");
+                    });
+
+                    if (items.Count == 0)
+                    {
+                        table.Cell().ColumnSpan(2).Border(1).BorderColor("#E6E6E6").Padding(8)
+                            .Text("No records found.");
+                    }
+                    else
+                    {
+                        foreach (var item in items)
+                        {
+                            foreach (var property in properties)
+                            {
+                                var value = property.GetValue(item);
+                                var text = FormatPdfValue(value);
+
+                                table.Cell().Border(1).BorderColor("#E6E6E6").Background("#FAFAFA").Padding(6)
+                                    .Text(property.Name).FontSize(8).SemiBold();
+
+                                table.Cell().Border(1).BorderColor("#E6E6E6").Padding(6)
+                                    .Text(string.IsNullOrWhiteSpace(text) ? "-" : text).FontSize(8);
+                            }
+                        }
+                    }
+                });
+
+                page.Footer().AlignRight().Text(x =>
+                {
+                    x.Span("Page ");
+                    x.CurrentPageNumber();
+                    x.Span(" / ");
+                    x.TotalPages();
+                });
+            });
+        });
+
+        return document.GeneratePdf();
+    }
+
+    private static string FormatPdfValue(object? value)
+    {
+        if (value is null)
+        {
+            return string.Empty;
+        }
+
+        if (value is IEnumerable enumerable && value is not string)
+        {
+            return TruncateForPdf(FormatEnumerableValue(enumerable));
+        }
+
+        return TruncateForPdf(FormatObjectValue(value));
+    }
+
+    private static string TruncateForPdf(string value)
+    {
+        const int maxLength = 320;
+        if (string.IsNullOrEmpty(value) || value.Length <= maxLength)
+        {
+            return value;
+        }
+
+        return value[..maxLength] + "…";
+    }
+
     private static string FormatCsvValue(object? value)
     {
         return value switch
         {
             null => string.Empty,
+            bool flag => EscapeCsv(flag ? "TRUE" : "FALSE"),
             DateTime dateTime => EscapeCsv(dateTime.ToString("O")),
             DateTimeOffset dateTimeOffset => EscapeCsv(dateTimeOffset.ToString("O")),
+            byte[] bytes => EscapeCsv($"[{bytes.Length} bytes]"),
+            IEnumerable enumerable when value is not string => EscapeCsv(FormatEnumerableValue(enumerable)),
             _ => EscapeCsv(value.ToString() ?? string.Empty)
         };
+    }
+
+    private static string FormatEnumerableValue(IEnumerable values)
+    {
+        var items = new List<string>();
+
+        foreach (var item in values)
+        {
+            var formatted = FormatObjectValue(item);
+            if (!string.IsNullOrWhiteSpace(formatted))
+            {
+                items.Add(formatted);
+            }
+        }
+
+        return string.Join(" | ", items);
+    }
+
+    private static string FormatObjectValue(object? value)
+    {
+        if (value is null)
+        {
+            return string.Empty;
+        }
+
+        if (value is DateTime dateTime)
+        {
+            return dateTime.ToString("O");
+        }
+
+        if (value is DateTimeOffset dateTimeOffset)
+        {
+            return dateTimeOffset.ToString("O");
+        }
+
+        if (value is bool flag)
+        {
+            return flag ? "TRUE" : "FALSE";
+        }
+
+        if (value is string text)
+        {
+            return text;
+        }
+
+        if (value is byte[] bytes)
+        {
+            return $"[{bytes.Length} bytes]";
+        }
+
+        var valueType = value.GetType();
+        if (valueType.IsPrimitive || value is decimal)
+        {
+            return Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty;
+        }
+
+        var codeProperty = valueType.GetProperty("Code", BindingFlags.Public | BindingFlags.Instance);
+        if (codeProperty is not null)
+        {
+            var codeValue = codeProperty.GetValue(value)?.ToString();
+            if (!string.IsNullOrWhiteSpace(codeValue))
+            {
+                return codeValue;
+            }
+        }
+
+        var idValueProperty = valueType.GetProperty("Value", BindingFlags.Public | BindingFlags.Instance);
+        if (idValueProperty is not null)
+        {
+            var idValue = idValueProperty.GetValue(value)?.ToString();
+            if (!string.IsNullOrWhiteSpace(idValue))
+            {
+                return idValue;
+            }
+        }
+
+        return value.ToString() ?? string.Empty;
     }
 
     private static string EscapeCsv(string value)
