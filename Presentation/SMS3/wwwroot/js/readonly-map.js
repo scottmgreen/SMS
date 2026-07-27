@@ -5,6 +5,10 @@
  */
 
 let mapInstances = new Map();
+const PDX_SMS_TILE_URL = 'https://cdn.portofportland.com/maps/sms_260702/{z}/{x}/{y}.png';
+const PDX_SMS_FALLBACK_ZOOM = 16;
+const STANDARD_MAX_ZOOM = 20;
+const DEFAULT_INITIAL_ZOOM = 14;
 
 /**
  * Initialize a read-only map for displaying a location
@@ -36,9 +40,12 @@ export function initializeReadOnlyMap(containerId, lat, lng, zoomLevel, location
         mapContainer.innerHTML = '';
 
         // Initialize map with read-only options
+        const safeZoom = Number.isFinite(zoomLevel) ? Math.min(zoomLevel, STANDARD_MAX_ZOOM) : DEFAULT_INITIAL_ZOOM;
+
         const map = L.map(containerId, {
             center: [lat, lng],
-            zoom: zoomLevel,
+            zoom: safeZoom,
+            maxZoom: STANDARD_MAX_ZOOM,
             zoomControl: showZoomControls,
             doubleClickZoom: false,
             closePopupOnClick: false,
@@ -60,14 +67,36 @@ export function initializeReadOnlyMap(containerId, lat, lng, zoomLevel, location
             maxZoom: 19
         });
 
+        const pdxSmsMap = L.tileLayer(PDX_SMS_TILE_URL, {
+            attribution: 'Port of Portland SMS Map',
+            maxZoom: STANDARD_MAX_ZOOM,
+            maxNativeZoom: STANDARD_MAX_ZOOM,
+            opacity: 1
+        });
+
+        if (map.getZoom() > STANDARD_MAX_ZOOM) {
+            map.setZoom(STANDARD_MAX_ZOOM);
+        }
+
         // Add satellite imagery
         const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
             attribution: 'Tiles © Esri — Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community',
             maxZoom: 19
         });
 
-        // Add default layer
+        // Keep a guaranteed-visible base map first
         streetMap.addTo(map);
+
+        // Log if companion layer cannot load from this host/policy
+        let pdxTileErrors = 0;
+        pdxSmsMap.on('tileerror', () => {
+            pdxTileErrors++;
+            if (pdxTileErrors === 1) {
+                console.warn('PDX SMS overlay unavailable from this app context. Satellite base remains active.');
+            }
+        });
+
+        // Overlay intentionally not enabled by default
 
         // Add layer control if requested
         if (showLayerControls) {
@@ -75,7 +104,13 @@ export function initializeReadOnlyMap(containerId, lat, lng, zoomLevel, location
                 "Street Map": streetMap,
                 "Satellite": satellite
             };
-            L.control.layers(baseMaps).addTo(map);
+            const overlays = {
+                "PDX SMS Overlay": pdxSmsMap
+            };
+            L.control.layers(baseMaps, overlays, {
+                collapsed: false,
+                position: 'topright'
+            }).addTo(map);
         }
 
         // Create custom red marker for the location

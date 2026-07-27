@@ -7,6 +7,13 @@
 let map = null;
 let selectedMarker = null;
 let dotNetRef = null;
+let pdxOverlayLayer = null;
+const PDX_SMS_TILE_URL = 'https://cdn.portofportland.com/maps/sms_260702/{z}/{x}/{y}.png';
+const PDX_SMS_FALLBACK_ZOOM = 16;
+const PDX_SMS_NATIVE_ZOOM = 20;
+const STANDARD_MAX_ZOOM = 19;
+const PDX_BAG_TUNNEL_LABEL = 'PDX Bag Tunnel';
+const PDX_BAG_TUNNEL_DESCRIPTION = 'PDX Bag Tunnel 7000, Northeast Airport Way, Portland, Multnomah County, Oregon, 97218, United States';
 
 // Airport boundaries (PDX)
 const AIRPORT_BOUNDS = {
@@ -28,6 +35,7 @@ export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference) 
             map.remove();
             map = null;
             selectedMarker = null;
+            pdxOverlayLayer = null;
         }
 
         // Wait for DOM element to be available
@@ -42,9 +50,12 @@ export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference) 
         mapContainer.innerHTML = '';
 
         // Initialize map with specific options
+        const safeZoom = Number.isFinite(zoomLevel) ? Math.min(zoomLevel, STANDARD_MAX_ZOOM) : PDX_SMS_FALLBACK_ZOOM;
+
         map = L.map('hazardLocationMap', {
             center: [centerLat, centerLng],
-            zoom: zoomLevel,
+            zoom: safeZoom,
+            maxZoom: STANDARD_MAX_ZOOM,
             zoomControl: true,
             doubleClickZoom: true,
             closePopupOnClick: true,
@@ -66,15 +77,55 @@ export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference) 
             maxZoom: 19
         });
 
-        // Add default layer
-        streetMap.addTo(map);
+        const pdxSmsMap = L.tileLayer(PDX_SMS_TILE_URL, {
+            attribution: 'Port of Portland SMS Map',
+            maxZoom: STANDARD_MAX_ZOOM,
+            maxNativeZoom: PDX_SMS_NATIVE_ZOOM,
+            opacity: 1
+        });
+        pdxOverlayLayer = pdxSmsMap;
+
+        // Make map rendering crisper when using fallback layers at higher zoom
+        if (map.getZoom() > 19) {
+            map.setZoom(19);
+        }
+
+        // Companion pattern: satellite base + optional PDX overlay
+        satellite.addTo(map);
+
+        // Log if companion layer cannot load from this host/policy
+        let pdxTileErrors = 0;
+        pdxSmsMap.on('tileerror', () => {
+            pdxTileErrors++;
+            if (pdxTileErrors === 1) {
+                console.warn('PDX SMS overlay unavailable from this app context. Satellite base remains active.');
+            }
+        });
 
         // Layer control
         const baseMaps = {
             "Street Map": streetMap,
             "Satellite": satellite
         };
-        L.control.layers(baseMaps).addTo(map);
+        const overlays = {
+            "PDX Bag Tunnel": pdxSmsMap
+        };
+        L.control.layers(baseMaps, overlays, {
+            collapsed: false,
+            position: 'topright'
+        }).addTo(map);
+
+        map.on('overlayadd', (e) => {
+            if (e.layer === pdxOverlayLayer) {
+                resetSelectionForLayerToggle();
+            }
+        });
+
+        map.on('overlayremove', (e) => {
+            if (e.layer === pdxOverlayLayer) {
+                resetSelectionForLayerToggle();
+            }
+        });
 
         // Add click event listener
         map.on('click', onMapClick);
@@ -101,6 +152,11 @@ function onMapClick(e) {
         return;
     }
     
+    if (isPdxBagTunnelLayerActive()) {
+        setMapLocation(lat, lng, PDX_BAG_TUNNEL_DESCRIPTION);
+        return;
+    }
+
     // Set map location with marker
     setMapLocation(lat, lng, 'Selected location');
     
@@ -119,6 +175,8 @@ function onMapClick(e) {
  * Set map location with marker and notify Blazor
  */
 function setMapLocation(lat, lng, description) {
+    const effectiveDescription = isPdxBagTunnelLayerActive() ? PDX_BAG_TUNNEL_DESCRIPTION : description;
+
     // Remove existing marker
     if (selectedMarker && map) {
         map.removeLayer(selectedMarker);
@@ -138,19 +196,38 @@ function setMapLocation(lat, lng, description) {
     // Add new marker
     selectedMarker = L.marker([lat, lng], {icon: selectedIcon})
         .addTo(map)
-        .bindPopup(`<strong>Selected Location</strong><br>${description}<br><small>Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}</small>`)
+        .bindPopup(`<strong>Selected Location</strong><br>${effectiveDescription}<br><small>Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}</small>`)
         .openPopup();
     
     // Notify Blazor component
     if (dotNetRef) {
         try {
-            dotNetRef.invokeMethodAsync('OnMapLocationSelected', lat, lng, description);
+            dotNetRef.invokeMethodAsync('OnMapLocationSelected', lat, lng, effectiveDescription);
         } catch (error) {
             console.error('Error calling Blazor method:', error);
         }
     }
     
-    console.log('Location set:', lat, lng, description);
+    console.log('Location set:', lat, lng, effectiveDescription);
+}
+
+function isPdxBagTunnelLayerActive() {
+    return !!(map && pdxOverlayLayer && map.hasLayer(pdxOverlayLayer));
+}
+
+function resetSelectionForLayerToggle() {
+    if (selectedMarker && map) {
+        map.removeLayer(selectedMarker);
+        selectedMarker = null;
+    }
+
+    if (dotNetRef) {
+        try {
+            dotNetRef.invokeMethodAsync('OnMapLocationSelected', 0, 0, '');
+        } catch (error) {
+            console.error('Error clearing map selection from layer toggle:', error);
+        }
+    }
 }
 
 /**

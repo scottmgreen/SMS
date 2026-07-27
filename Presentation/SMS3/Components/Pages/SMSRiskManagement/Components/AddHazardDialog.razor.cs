@@ -62,7 +62,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     // Airport coordinates - EXACTLY like HazardReporting
     private double _airportCenterLatitude => 45.5898;
     private double _airportCenterLongitude => -122.5951;
-    private int _defaultZoomLevel => 20;
+    private int _defaultZoomLevel => 14;
 
     // Form validation - UPDATED to be more lenient for debugging
     private bool IsFormValid =>

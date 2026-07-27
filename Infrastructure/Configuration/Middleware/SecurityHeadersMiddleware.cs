@@ -164,7 +164,7 @@ namespace SMS_Infrastructure.Configuration.Middleware
             cspBuilder.Add("font-src 'self' data: https://cdnjs.cloudflare.com https://fonts.gstatic.com");
 
             // Image sources - support data URIs and blob for dynamic images + map tiles
-            cspBuilder.Add("img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://server.arcgisonline.com https://*.arcgisonline.com");
+            cspBuilder.Add("img-src 'self' data: blob: https://tile.openstreetmap.org https://*.tile.openstreetmap.org https://server.arcgisonline.com https://*.arcgisonline.com https://cdn.portofportland.com https://*.portofportland.com https://unpkg.com");
 
             // Connect sources - WebSocket connections for Blazor SignalR + Map services
             if (isDevMode)

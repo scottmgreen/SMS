@@ -326,7 +326,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     // Airport coordinates //GOLDKEY
     private double _airportCenterLatitude => 45.58808;
     private double _airportCenterLongitude => -122.592430;
-    private int _defaultZoomLevel => 20;
+    private int _defaultZoomLevel => 14;
 
     private IJSObjectReference? _mapModule;
     private DotNetObjectReference<HazardReporting>? _dotNetRef;
