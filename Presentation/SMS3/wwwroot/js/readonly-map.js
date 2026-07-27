@@ -84,8 +84,8 @@ export function initializeReadOnlyMap(containerId, lat, lng, zoomLevel, location
             maxZoom: 19
         });
 
-        // Keep a guaranteed-visible base map first
-        streetMap.addTo(map);
+        // Companion pattern: satellite base + required PDX overlay
+        satellite.addTo(map);
 
         // Log if companion layer cannot load from this host/policy
         let pdxTileErrors = 0;
@@ -96,7 +96,24 @@ export function initializeReadOnlyMap(containerId, lat, lng, zoomLevel, location
             }
         });
 
-        // Overlay intentionally not enabled by default
+        // Required overlay: always enabled
+        try {
+            pdxSmsMap.addTo(map);
+            pdxSmsMap.bringToFront();
+        } catch (overlayError) {
+            console.warn('Unable to add PDX SMS overlay at startup.', overlayError);
+        }
+
+        map.on('baselayerchange', () => {
+            try {
+                if (!map.hasLayer(pdxSmsMap)) {
+                    pdxSmsMap.addTo(map);
+                }
+                pdxSmsMap.bringToFront();
+            } catch (overlayError) {
+                console.warn('Unable to enforce required PDX SMS overlay.', overlayError);
+            }
+        });
 
         // Add layer control if requested
         if (showLayerControls) {
@@ -104,10 +121,7 @@ export function initializeReadOnlyMap(containerId, lat, lng, zoomLevel, location
                 "Street Map": streetMap,
                 "Satellite": satellite
             };
-            const overlays = {
-                "PDX SMS Overlay": pdxSmsMap
-            };
-            L.control.layers(baseMaps, overlays, {
+            L.control.layers(baseMaps, undefined, {
                 collapsed: false,
                 position: 'topright'
             }).addTo(map);

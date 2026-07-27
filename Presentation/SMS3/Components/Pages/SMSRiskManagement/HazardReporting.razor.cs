@@ -214,6 +214,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
     }
     public bool HasValidCoordinates => SelectedLatitude != 0 && SelectedLongitude != 0;
+    public bool HasLocationDescription => !string.IsNullOrWhiteSpace(SelectedLocationDescription);
+    public bool CanUseSelectedMapLocation => HasValidCoordinates && HasLocationDescription && !IsMapReadOnlyMode;
     public string GeoLocationDisplay => HasGeoLocation ? $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" : "No coordinates selected";
     public int HazardTitleCharacterCount => HazardReport?.HazardTitle?.Length ?? 0;
     public int DescriptionCharacterCount => HazardReport?.Description?.Length ?? 0;
@@ -227,16 +229,18 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
     public bool IsFormValidForSubmission ()
     {
+        var hasLocationDescription = !string.IsNullOrWhiteSpace(SelectedLocationDescription);
+
         if (!HazardReport.IsAnonymous)
         {
             return IsFormValidForPreview &&
                 !string.IsNullOrEmpty(HazardReport.ReportContactName) &&
                 !string.IsNullOrEmpty(HazardReport.ReportContactEmail) &&
-                (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) && DescriptionCharacterCount <= 3000;
+                HasGeoLocation && hasLocationDescription && DescriptionCharacterCount <= 3000;
         }
 
         return IsFormValidForPreview &&
-            (HasGeoLocation || !string.IsNullOrEmpty(HazardReport.Location)) && DescriptionCharacterCount <= 3000;
+            HasGeoLocation && hasLocationDescription && DescriptionCharacterCount <= 3000;
     }
 
     public void CancelEdit()
@@ -1213,6 +1217,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(SelectedLocationDescription))
+        {
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Warning("Warning", "Location description is required."));
+            return;
+        }
+
         var locationWasPreviouslyValidated = ActiveLocationForValidation?.IsValidated == true;
         var locationWasModified = locationWasPreviouslyValidated && IsLocationChangedFromActiveLocation();
 
@@ -1338,6 +1348,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
         SelectedLatitude = (decimal)latitude;
         SelectedLongitude = (decimal)longitude;
         SelectedLocationDescription = description; // This will set the description automatically!
+
+        if (latitude != 0 || longitude != 0)
+        {
+            SelectedGeoLocation.IsValidated = false;
+            SelectedGeoLocation.IsValid = false;
+        }
 
         // Validate that we received proper coordinates
         if (latitude == 0 && longitude == 0)

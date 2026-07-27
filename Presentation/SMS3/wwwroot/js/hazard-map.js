@@ -12,8 +12,6 @@ const PDX_SMS_TILE_URL = 'https://cdn.portofportland.com/maps/sms_260702/{z}/{x}
 const PDX_SMS_FALLBACK_ZOOM = 16;
 const PDX_SMS_NATIVE_ZOOM = 20;
 const STANDARD_MAX_ZOOM = 19;
-const PDX_BAG_TUNNEL_LABEL = 'PDX Bag Tunnel';
-const PDX_BAG_TUNNEL_DESCRIPTION = 'PDX Bag Tunnel 7000, Northeast Airport Way, Portland, Multnomah County, Oregon, 97218, United States';
 
 // Airport boundaries (PDX)
 const AIRPORT_BOUNDS = {
@@ -93,6 +91,13 @@ export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference) 
         // Companion pattern: satellite base + optional PDX overlay
         satellite.addTo(map);
 
+        try {
+            pdxSmsMap.addTo(map);
+            pdxSmsMap.bringToFront();
+        } catch (overlayError) {
+            console.warn('Unable to add PDX SMS overlay at startup.', overlayError);
+        }
+
         // Log if companion layer cannot load from this host/policy
         let pdxTileErrors = 0;
         pdxSmsMap.on('tileerror', () => {
@@ -107,23 +112,19 @@ export function initializeMap(centerLat, centerLng, zoomLevel, dotNetReference) 
             "Street Map": streetMap,
             "Satellite": satellite
         };
-        const overlays = {
-            "PDX Bag Tunnel": pdxSmsMap
-        };
-        L.control.layers(baseMaps, overlays, {
+        L.control.layers(baseMaps, undefined, {
             collapsed: false,
             position: 'topright'
         }).addTo(map);
 
-        map.on('overlayadd', (e) => {
-            if (e.layer === pdxOverlayLayer) {
-                resetSelectionForLayerToggle();
-            }
-        });
-
-        map.on('overlayremove', (e) => {
-            if (e.layer === pdxOverlayLayer) {
-                resetSelectionForLayerToggle();
+        map.on('baselayerchange', () => {
+            try {
+                if (!map.hasLayer(pdxSmsMap)) {
+                    pdxSmsMap.addTo(map);
+                }
+                pdxSmsMap.bringToFront();
+            } catch (overlayError) {
+                console.warn('Unable to enforce required PDX SMS overlay.', overlayError);
             }
         });
 
@@ -152,30 +153,15 @@ function onMapClick(e) {
         return;
     }
     
-    if (isPdxBagTunnelLayerActive()) {
-        setMapLocation(lat, lng, PDX_BAG_TUNNEL_DESCRIPTION);
-        return;
-    }
-
-    // Set map location with marker
-    setMapLocation(lat, lng, 'Selected location');
-    
-    // Reverse geocoding to get location description
-    reverseGeocode(lat, lng)
-        .then(description => {
-            setMapLocation(lat, lng, description);
-        })
-        .catch(error => {
-            console.warn('Reverse geocoding failed:', error);
-            setMapLocation(lat, lng, `Map location: ${lat.toFixed(6)}, ${lng.toFixed(6)}`);
-        });
+    // Description is intentionally blank and required for user entry
+    setMapLocation(lat, lng, '');
 }
 
 /**
  * Set map location with marker and notify Blazor
  */
 function setMapLocation(lat, lng, description) {
-    const effectiveDescription = isPdxBagTunnelLayerActive() ? PDX_BAG_TUNNEL_DESCRIPTION : description;
+    const effectiveDescription = description ?? '';
 
     // Remove existing marker
     if (selectedMarker && map) {
@@ -196,7 +182,7 @@ function setMapLocation(lat, lng, description) {
     // Add new marker
     selectedMarker = L.marker([lat, lng], {icon: selectedIcon})
         .addTo(map)
-        .bindPopup(`<strong>Selected Location</strong><br>${effectiveDescription}<br><small>Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}</small>`)
+        .bindPopup(`<strong>Selected Location</strong><br><small>Coordinates: ${lat.toFixed(6)}, ${lng.toFixed(6)}</small>`)
         .openPopup();
     
     // Notify Blazor component
@@ -209,25 +195,6 @@ function setMapLocation(lat, lng, description) {
     }
     
     console.log('Location set:', lat, lng, effectiveDescription);
-}
-
-function isPdxBagTunnelLayerActive() {
-    return !!(map && pdxOverlayLayer && map.hasLayer(pdxOverlayLayer));
-}
-
-function resetSelectionForLayerToggle() {
-    if (selectedMarker && map) {
-        map.removeLayer(selectedMarker);
-        selectedMarker = null;
-    }
-
-    if (dotNetRef) {
-        try {
-            dotNetRef.invokeMethodAsync('OnMapLocationSelected', 0, 0, '');
-        } catch (error) {
-            console.error('Error clearing map selection from layer toggle:', error);
-        }
-    }
 }
 
 /**

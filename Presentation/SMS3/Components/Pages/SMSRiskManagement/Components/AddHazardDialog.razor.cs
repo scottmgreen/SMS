@@ -53,6 +53,8 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         SelectedGeoLocation.Longitude.HasValue &&
         SelectedGeoLocation.IsValidated;
     public bool HasValidCoordinates => SelectedLatitude != 0 && SelectedLongitude != 0;
+    public bool HasLocationDescription => !string.IsNullOrWhiteSpace(LocationDescription);
+    public bool CanUseSelectedMapLocation => HasValidCoordinates && HasLocationDescription;
     public string GeoLocationDisplay => HasGeoLocation ? $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" : "No coordinates selected";
 
     // JavaScript module reference - EXACTLY like HazardReporting
@@ -90,7 +92,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         string.IsNullOrWhiteSpace(NewHazardDescription?.Trim()) ||
         NewHazardDescription.Trim().Length < 10;
 
-    private bool IsHazardLocationInvalid => !HasGeoLocation;
+    private bool IsHazardLocationInvalid => !HasGeoLocation || string.IsNullOrWhiteSpace(LocationDescription);
         
 
     // UI computed properties for edit mode
@@ -263,6 +265,12 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         if (string.IsNullOrEmpty(categoryValue))
         {
             HazardTypeOptions.Clear();
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(LocationDescription))
+        {
+            _logger?.LogWarning("UseSelectedLocation called but description is blank");
             return;
         }
 
@@ -814,6 +822,12 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         SelectedLatitude = (decimal)latitude;
         SelectedLongitude = (decimal)longitude;
         LocationDescription = description; // This will set the description automatically!
+
+        if (latitude != 0 || longitude != 0)
+        {
+            SelectedGeoLocation.IsValidated = false;
+            SelectedGeoLocation.IsValid = false;
+        }
 
         // Validate that we received proper coordinates
         if (latitude == 0 && longitude == 0)

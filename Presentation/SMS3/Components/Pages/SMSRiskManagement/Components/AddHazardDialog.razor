@@ -190,7 +190,7 @@
                                 <div class="location-description">
                                     <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;" class="@(IsHazardLocationInvalid ? "validation-error-field" : "")">
                                         <RadzenTextBox @bind-Value="@LocationDescription"
-                                                       Placeholder="Optional description (e.g., 'Terminal A, Gate 5, near security checkpoint')"
+                                                       Placeholder="Required location description"
                                                        class="@(IsHazardLocationInvalid ? "default-validation-dropdown" : "")"
                                                        Style="width: 100%;" />
                                     </RadzenFormField>
@@ -199,7 +199,7 @@
                             @if (IsHazardLocationInvalid)
                             {
                                 <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger); margin-top: 0.5rem; display: block;">
-                                    Hazard location is required. Select a location on the map to continue.
+                                    Hazard location description is required. Select a location and enter a description to continue.
                                 </RadzenText>
                             }
                         </RadzenFieldset>
@@ -255,6 +255,7 @@
                                     <RadzenTextBox Value="@SelectedLatitudeText"
                                                    ReadOnly="true"
                                                    Placeholder=""
+                                                   class="@(!HasValidCoordinates ? "default-validation-dropdown" : string.Empty)"
                                                    Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
                                 </RadzenFormField>
                             </div>
@@ -264,6 +265,7 @@
                                     <RadzenTextBox Value="@SelectedLongitudeText"
                                                    ReadOnly="true"
                                                    Placeholder=""
+                                                   class="@(!HasValidCoordinates ? "default-validation-dropdown" : string.Empty)"
                                                    Style="background-color: #f8f9fa; border-color: #dee2e6; width: 100%;" />
                                 </RadzenFormField>
                             </div>
@@ -271,9 +273,16 @@
                             <div class="location-description">
                                 <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
                                     <RadzenTextBox @bind-Value="@LocationDescription"
-                                                   Placeholder="Optional description (e.g., 'Terminal A, Gate 5, near security checkpoint')"
+                                                    Placeholder="Required location description"
+                                                    class="@(!HasLocationDescription ? "default-validation-dropdown" : string.Empty)"
                                                    Style="width: 100%;" />
                                 </RadzenFormField>
+                                @if (!HasLocationDescription)
+                                {
+                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger); margin-top: 0.35rem; display: block;">
+                                        Location description is required.
+                                    </RadzenText>
+                                }
                             </div>
                         </div>
                         <br />
@@ -297,7 +306,7 @@
                                         Icon="check"
                                         Size="ButtonSize.Medium"
                                         Click="UseSelectedLocation"
-                                        Disabled="@(!HasValidCoordinates)" />
+                                        Disabled="@(!CanUseSelectedMapLocation)" />
                         </div>
                     </div>
                 </div>
@@ -441,7 +450,8 @@
 /* Location selection styling - EXACTLY like HazardReporting */
 .location-row {
     display: flex !important;
-    align-items: flex-end !important;
+    align-items: flex-start !important;
+    flex-wrap: nowrap !important;
     gap: 1rem !important;
     width: 100% !important;
 }
