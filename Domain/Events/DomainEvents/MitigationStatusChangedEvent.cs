@@ -28,7 +28,7 @@ public class MitigationStatusChangedEvent : BaseDomainEvent
     {
         MitigationId = mitigationId ?? throw new ArgumentNullException(nameof(mitigationId));
         Status = status ?? "";
-        ChangedBy = changedBy ?? "SYSTEM";
+        ChangedBy = changedBy ?? string.Empty;
         ChangedDate = changedDate;
     }
 }

@@ -55,7 +55,7 @@ public interface ISMSStakeholderGroupService
     /// <summary>
     /// Assigns a user to a stakeholder group with business validation
     /// </summary>
-    Task<Result<bool>> AssignUserToGroupAsync(string userCode, SMSStakeholderGroupID groupCode, string assignedBy = "SYSTEM", CancellationToken ct = default);
+    Task<Result<bool>> AssignUserToGroupAsync(string userCode, SMSStakeholderGroupID groupCode, string assignedBy, CancellationToken ct = default);
 
     /// <summary>
     /// Removes a user from a stakeholder group
@@ -70,5 +70,5 @@ public interface ISMSStakeholderGroupService
     /// <summary>
     /// Updates a user's group memberships (clears existing and assigns new ones)
     /// </summary>
-    Task<Result<bool>> UpdateUserGroupMembershipsAsync(string userCode, IEnumerable<SMSStakeholderGroupID> groupCodes, string assignedBy = "SYSTEM", CancellationToken ct = default);
+    Task<Result<bool>> UpdateUserGroupMembershipsAsync(string userCode, IEnumerable<SMSStakeholderGroupID> groupCodes, string assignedBy, CancellationToken ct = default);
 }

@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class RiskAnalysis : BaseAuditableEntity
 {
-    public RiskAnalysis(RiskAnalysisID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public RiskAnalysis(RiskAnalysisID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
     public string? Code { get; set; }
     public RiskAnalysisType AssessmentType { get; set; } = RiskAnalysisType.Initial;

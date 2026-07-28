@@ -30,7 +30,7 @@ public class EntityTests
         // Assert
         dataset.Should().NotBeNull();
         dataset.Code.Should().NotBeNull(); // Use Code instead of ID
-        dataset.CreatedBy.Should().Be("SYSTEM");
+        dataset.CreatedBy.Should().BeEmpty();
         dataset.CreatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
     }
 
@@ -123,7 +123,7 @@ public class EntityTests
         // Assert
         riskAnalysis.Should().NotBeNull();
         riskAnalysis.Code.Should().NotBeNull(); // Use Code instead of ID
-        riskAnalysis.CreatedBy.Should().Be("SYSTEM");
+        riskAnalysis.CreatedBy.Should().BeEmpty();
         riskAnalysis.CreatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
         riskAnalysis.AssessmentType.Should().Be(RiskAnalysisType.Initial);
     }
@@ -255,10 +255,10 @@ public class EntityTests
         var hazard = new Hazard(new HazardID("HZ-AUDIT-001"));
 
         // Assert
-        hazard.CreatedBy.Should().Be("SYSTEM");
+        hazard.CreatedBy.Should().BeEmpty();
         hazard.CreatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
-        hazard.UpdatedBy.Should().Be("SYSTEM");
-        hazard.UpdatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+        hazard.UpdatedBy.Should().BeNull();
+        hazard.UpdatedDate.Should().BeNull();
     }
 
     [Fact]
@@ -276,7 +276,7 @@ public class EntityTests
         report.UpdatedBy.Should().Be("TEST_USER");
         report.UpdatedDate.Should().Be(newUpdateTime);
         // Original created values should remain unchanged
-        report.CreatedBy.Should().Be("SYSTEM");
+        report.CreatedBy.Should().BeEmpty();
         report.CreatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromMinutes(1));
     }
 

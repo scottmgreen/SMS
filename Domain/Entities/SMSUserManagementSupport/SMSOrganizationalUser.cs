@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class SMSOrganizationalUser : BaseUser
 {
-    public SMSOrganizationalUser(SMSOrganizationalUserID id) : base(id, "SYSTEM", DateTime.UtcNow)
+    public SMSOrganizationalUser(SMSOrganizationalUserID id) : base(id, string.Empty, DateTime.UtcNow)
     {
         OrganizationalUserId = id;
     }

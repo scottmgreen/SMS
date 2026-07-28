@@ -168,7 +168,7 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileCategory, hazardFile.Category ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileIsConfidential, hazardFile.IsConfidential));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileTags, hazardFile.Tags ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazardFile.UpdatedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazardFile.UpdatedBy ?? hazardFile.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, hazardFile.UpdatedDate ?? DateTime.UtcNow));
 
             await sql.OpenAsync(cancellationToken).ConfigureAwait(false);

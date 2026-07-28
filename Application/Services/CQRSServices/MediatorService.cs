@@ -27,7 +27,8 @@ namespace SMS_Application.Services
         public async Task<TResponse> SendAsync<TResponse>(IRequest<TResponse> request, CancellationToken cancellation)
         {
 
-            var behaviors = _serviceProvider.GetServices<IBasePipeline<IRequest<TResponse>, TResponse>>().ToList();
+            var pipelineType = typeof(IBasePipeline<,>).MakeGenericType(request.GetType(), typeof(TResponse));
+            var behaviors = _serviceProvider.GetServices(pipelineType).Cast<object>().ToList();
 
             var handlerType = typeof(IBaseRequestHandler<,>).MakeGenericType(request.GetType(), typeof(TResponse));
             var handler = _serviceProvider.GetRequiredService(handlerType);
@@ -46,7 +47,8 @@ namespace SMS_Application.Services
             foreach (var behavior in behaviors)
             {
                 var currentNext = next;
-                next = () => behavior.HandleAsync(request, currentNext, cancellation);
+                var behaviorHandleMethod = behavior.GetType().GetMethod(nameof(IBasePipeline<IRequest<TResponse>, TResponse>.HandleAsync));
+                next = () => (Task<TResponse>)behaviorHandleMethod!.Invoke(behavior, new object[] { request, currentNext, cancellation }!)!;
             }
 
             return await next();

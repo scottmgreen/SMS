@@ -13,6 +13,7 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 
 using SMS_Domain.Enums;
+using SMS3.Configuration;
 
 namespace SMS3.Api.Models;
 
@@ -28,8 +29,8 @@ namespace SMS3.Api.Models;
 
         public string? ReportSubmittedBy { get; init; }
         public DateTime? ReportSubmittedDate { get; init; }
-        public string? ReportSubmittingDepartment { get; init; } = "EXTERNAL_API_SOURCE";
-        public string? ReportSubmittingDepartmentJobFunction { get; init; } = "EXTERNAL_API_SOURCE";
+        public string? ReportSubmittingDepartment { get; init; } = SystemConstants.FlyPdxApiSource;
+        public string? ReportSubmittingDepartmentJobFunction { get; init; } = SystemConstants.FlyPdxApiSource;
         public bool? ReportIsAnonymous { get; init; }
         public string? ReportContactName { get; init; }
         public string? ReportContactCell { get; init; }
@@ -76,8 +77,8 @@ namespace SMS3.Api.Models;
 
         public string? ReportSubmittedBy { get; init; }
         public DateTime? ReportSubmittedDate { get; init; }
-        public string? ReportSubmittingDepartment { get; init; } = "EXTERNAL_API_SOURCE";
-        public string? ReportSubmittingDepartmentJobFunction { get; init; } = "EXTERNAL_API_SOURCE";
+        public string? ReportSubmittingDepartment { get; init; } = SystemConstants.FlyPdxApiSource;
+        public string? ReportSubmittingDepartmentJobFunction { get; init; } = SystemConstants.FlyPdxApiSource;
         public bool? ReportIsAnonymous { get; init; }
         public string? ReportContactName { get; init; }
         public string? ReportContactCell { get; init; }
@@ -231,15 +232,15 @@ namespace SMS3.Api.Models;
         public int SubmittedFileCount { get; init; }
     }
 
-    public record PDXSMSAttachmentSummary
-    {
-        public string FileId { get; init; } = string.Empty;
-        public string FileName { get; init; } = string.Empty;
-        public string FileType { get; init; } = string.Empty;
-        public long FileSizeBytes { get; init; }
-        public bool IsConfidential { get; init; }
-        public DateTime? UploadedDate { get; init; }
-    }
+    //public record PDXSMSAttachmentSummary
+    //{
+    //    public string FileId { get; init; } = string.Empty;
+    //    public string FileName { get; init; } = string.Empty;
+    //    public string FileType { get; init; } = string.Empty;
+    //    public long FileSizeBytes { get; init; }
+    //    public bool IsConfidential { get; init; }
+    //    public DateTime? UploadedDate { get; init; }
+    //}
 
     /// <summary>
     /// File attachment model for API submissions

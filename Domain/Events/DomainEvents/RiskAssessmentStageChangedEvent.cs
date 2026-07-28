@@ -11,7 +11,7 @@ public sealed class RiskAssessmentStageChangedEvent : BaseDomainEvent
     public string? RiskAssessmentCode { get; set; }
     public RiskAssessmentStage PreviousStage { get; set; } = RiskAssessmentStage.DescribingSystem;
     public RiskAssessmentStage NewStage { get; set; } = RiskAssessmentStage.DescribingSystem;
-    public string ChangedBy { get; set; } = "SYSTEM";
+    public string ChangedBy { get; set; } = string.Empty;
     public DateTime ChangedDate { get; set; }
 
     public RiskAssessmentStageChangedEvent(SMSEventID id) : base(id)
@@ -31,7 +31,7 @@ public sealed class RiskAssessmentStageChangedEvent : BaseDomainEvent
         RiskAssessmentCode = riskAssessmentCode;
         PreviousStage = previousStage ?? RiskAssessmentStage.DescribingSystem;
         NewStage = newStage ?? RiskAssessmentStage.DescribingSystem;
-        ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? "SYSTEM" : changedBy;
+        ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? string.Empty : changedBy;
         ChangedDate = changedDate;
     }
 }

@@ -88,7 +88,7 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
             try
             {
                 // Keep this simple - no caching for UserCode to avoid complexity
-                var userCode = _strategyManager.GetCurrentUserIdAsync().GetAwaiter().GetResult() ?? "SYSTEM";
+                var userCode = _strategyManager.GetCurrentUserIdAsync().GetAwaiter().GetResult() ?? string.Empty;
                 _logger.LogApplicationDebug("UserCode check: Result={UserCode}", userCode);
                 
                 return userCode;
@@ -96,7 +96,7 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
             catch (Exception ex)
             {
                 _logger.LogApplicationError(ex, "Error getting current user code");
-                return "SYSTEM";
+                return string.Empty;
             }
         }
     }
@@ -124,12 +124,14 @@ public class StrategyBasedCurrentUserService : ICurrentUserService
         {
             try
             {
-                return _strategyManager.GetCurrentUserDisplayNameAsync().GetAwaiter().GetResult() ?? "System User";
+                return _strategyManager.GetCurrentUserDisplayNameAsync().GetAwaiter().GetResult()
+                       ?? UserCode
+                       ?? SystemActorConstants.FlyPdxApiSource;
             }
             catch (Exception ex)
             {
                 _logger.LogApplicationError(ex, "Error getting current user display name");
-                return "System User";
+                return UserCode ?? SystemActorConstants.FlyPdxApiSource;
             }
         }
     }

@@ -229,7 +229,7 @@ namespace SMS_Application.CommandHandlers
                             previousStatus: previousStatus!,
                             newStatus: hazard.Status,
                             statusChangeReason: "Hazard status updated",
-                            changedBy: hazard.UpdatedBy ?? "SYSTEM",
+                            changedBy: hazard.UpdatedBy ?? hazard.CreatedBy ?? string.Empty,
                             statusChangeDate: hazard.UpdatedDate ?? DateTime.UtcNow),
                         ct).ConfigureAwait(false);
 
@@ -387,7 +387,7 @@ namespace SMS_Application.CommandHandlers
                     created.Description = hazard.Description ?? "No description";
                     created.LocationArea = hazard.LocationArea ?? "Unknown Location";
                     created.ReportCode = hazard.ReportCode ?? "Unknown Report";
-                    created.CreatedBy = !string.IsNullOrWhiteSpace(hazard.CreatedBy) ? hazard.CreatedBy : "System";
+                    created.CreatedBy = !string.IsNullOrWhiteSpace(hazard.CreatedBy) ? hazard.CreatedBy : string.Empty;
                     created.CreatedDate = hazard.CreatedDate ?? DateTime.UtcNow;
                     created.IsInitialHazard = hazard.IsInitialHazard;
                     created.Priority = hazardPriority;
@@ -398,7 +398,7 @@ namespace SMS_Application.CommandHandlers
                 {
                     updated.ReportId = hazard.ReportCode;
                     updated.HazardId = hazard.Code;
-                    updated.UpdatedBy = "SYSTEM";
+                    updated.UpdatedBy = !string.IsNullOrWhiteSpace(hazard.UpdatedBy) ? hazard.UpdatedBy : hazard.CreatedBy ?? string.Empty;
                     updated.UpdatedDate = DateTime.UtcNow;
                 }
                 if (evt is HazardDeletedEvent deleted)

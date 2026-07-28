@@ -27,7 +27,7 @@ public sealed class InvestigationStatusChangedEvent : BaseDomainEvent
         InvestigationCode = investigationCode;
         PreviousStatus = previousStatus ?? InvestigationStatus.StatusUnknown;
         NewStatus = newStatus ?? InvestigationStatus.StatusUnknown;
-        ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? "SYSTEM" : changedBy;
+        ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? string.Empty : changedBy;
         ChangedDate = changedDate;
     }
 }

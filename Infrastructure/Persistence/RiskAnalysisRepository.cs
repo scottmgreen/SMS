@@ -237,7 +237,7 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualWorstCredibleOutcome, riskAnalysis.ResidualWorstCredibleOutcome));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualRootCause, riskAnalysis.ResidualRootCause));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualAdditionalComments, riskAnalysis.ResidualAdditionalComments));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, riskAnalysis.UpdatedBy ?? riskAnalysis.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

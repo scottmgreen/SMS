@@ -119,7 +119,7 @@ public class SMSAuditEvidenceDataService : BaseDataService<SMSAuditEvidenceDataS
     /// <summary>
     /// Archives SMS Audit Evidence
     /// </summary>
-    public async Task<Result<bool>> ArchiveEvidenceAsync(string evidenceCode, string archivedBy = "SYSTEM", CancellationToken ct = default)
+    public async Task<Result<bool>> ArchiveEvidenceAsync(string evidenceCode, string archivedBy = "", CancellationToken ct = default)
     {
         return await _repo.ArchiveSMSAuditEvidenceAsync(evidenceCode, archivedBy, ct);
     }

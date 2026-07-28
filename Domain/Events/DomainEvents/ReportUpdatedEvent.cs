@@ -24,7 +24,7 @@ public class ReportUpdatedEvent : BaseDomainEvent
     public ReportUpdatedEvent(SMSEventID id,string reportId, string updatedBy, DateTime updatedDate) : base(id)
     {
         ReportId = reportId ?? throw new ArgumentNullException(nameof(reportId));
-        UpdatedBy = updatedBy ?? "SYSTEM";
+        UpdatedBy = updatedBy ?? string.Empty;
         UpdatedDate = updatedDate;
     }
 }

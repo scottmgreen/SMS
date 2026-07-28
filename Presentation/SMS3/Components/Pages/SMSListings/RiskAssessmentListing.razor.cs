@@ -12,6 +12,7 @@ using SMS_Domain.Errors;
 using SMS_Domain.ValueObjects;
 
 using SMS_Shared.Configuration;
+using SMS3.Configuration;
 
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
@@ -51,6 +52,7 @@ public partial class RiskAssessmentListing : ComponentBase
     private List<RiskAssessment> _allAssessments = new List<RiskAssessment>(); // Store all assessments for client-side filtering
     private HashSet<string> _riskRegistryOnlyReportCodes = new(StringComparer.OrdinalIgnoreCase);
     private Dictionary<string, AssessmentValidationSnapshot> _assessmentValidationStatus = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, string> _userCodeToFullName = new(StringComparer.OrdinalIgnoreCase);
     private int _totalCount;
     private bool _isLoading = false;
     private bool _showViewDialog = false;
@@ -73,6 +75,8 @@ public partial class RiskAssessmentListing : ComponentBase
             StateHasChanged();
 
             _logger.LogInformation("Loading risk assessments for listing view");
+
+            await LoadUserDisplayMapAsync();
 
             var query = new GetAllRiskAssessmentsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
@@ -139,6 +143,46 @@ public partial class RiskAssessmentListing : ComponentBase
             _isLoading = false;
             StateHasChanged();
         }
+    }
+
+    private async Task LoadUserDisplayMapAsync()
+    {
+        _userCodeToFullName.Clear();
+
+        var usersResult = await _mediator.SendAsync(new GetAllSMSApplicationUsersQuery(), CancellationToken.None);
+        if (!usersResult.IsSuccess || usersResult.Value is null)
+        {
+            return;
+        }
+
+        foreach (var user in usersResult.Value)
+        {
+            if (string.IsNullOrWhiteSpace(user.Code))
+            {
+                continue;
+            }
+
+            var firstName = user.FirstName?.Value?.Trim() ?? string.Empty;
+            var lastName = user.LastName?.Value?.Trim() ?? string.Empty;
+            var fullName = string.Join(" ", new[] { firstName, lastName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+            if (!string.IsNullOrWhiteSpace(fullName))
+            {
+                _userCodeToFullName[user.Code] = fullName;
+            }
+        }
+    }
+
+    private string GetUserDisplayName(string? userCode)
+    {
+        if (string.IsNullOrWhiteSpace(userCode))
+        {
+            return SystemConstants.FlyPdxApiSource;
+        }
+
+        return _userCodeToFullName.TryGetValue(userCode, out var fullName)
+            ? fullName
+            : userCode;
     }
 
     private bool IsRiskRegistryOnlyAssessment(RiskAssessment assessment)

@@ -9,6 +9,7 @@ public partial class SPIConfiguration
     #region Injected Services
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
@@ -167,7 +168,7 @@ public partial class SPIConfiguration
             "New SPI",
             "Safety Performance Indicator",
             SMSSafetyPerformanceIndicatorType.IncidentRate,
-            "SYSTEM"
+            _currentUserService.UserCode
         );
 
         await OpenSPIDialog(newSPI, false);
@@ -181,7 +182,7 @@ public partial class SPIConfiguration
             spi.Name,
             spi.Description ?? string.Empty,
             spi.IndicatorType,
-            "SYSTEM"
+            _currentUserService.UserCode
         );
 
         // Copy all properties
@@ -211,7 +212,7 @@ public partial class SPIConfiguration
             $"Copy of {spi.Name}",
             spi.Description ?? string.Empty,
             spi.IndicatorType,
-            "SYSTEM"
+            _currentUserService.UserCode
         );
 
         // Copy configuration but reset ID and code
@@ -333,7 +334,7 @@ public partial class SPIConfiguration
                     spi.NextReviewDate,
                     spi.AlertsEnabled,
                     spi.AlertRecipients,
-                    "SYSTEM"
+                    _currentUserService.UserCode
                 );
 
                 result = await _mediator.SendAsync(command, CancellationToken.None);
@@ -370,7 +371,7 @@ public partial class SPIConfiguration
                     spi.LastReviewNotes,
                     spi.AlertsEnabled,
                     spi.AlertRecipients,
-                    "SYSTEM"
+                    _currentUserService.UserCode
                 );
 
                 result = await _mediator.SendAsync(command, CancellationToken.None);

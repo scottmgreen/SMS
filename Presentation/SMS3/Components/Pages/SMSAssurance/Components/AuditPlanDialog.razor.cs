@@ -13,7 +13,7 @@ namespace SMS3.Components.Pages.SMSAssurance.Components;
 public partial class AuditPlanDialog : ComponentBase
 {
     #region Parameters
-    [Parameter] public SMSAuditPlan AuditPlan { get; set; } = new(new SMSAuditPlanID("TEMP"), "SYSTEM");
+    [Parameter] public SMSAuditPlan AuditPlan { get; set; } = new(new SMSAuditPlanID("TEMP"), string.Empty);
     [Parameter] public bool IsNew { get; set; } = true;
     #endregion
 
@@ -22,6 +22,7 @@ public partial class AuditPlanDialog : ComponentBase
     [Inject] private ILogger<AuditPlanDialog> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Form State
@@ -221,12 +222,12 @@ public partial class AuditPlanDialog : ComponentBase
 
             if (IsNew)
             {
-                auditPlan = new SMSAuditPlan(new SMSAuditPlanID(_code!), "CURRENT_USER");
+                auditPlan = new SMSAuditPlan(new SMSAuditPlanID(_code!), _currentUserService.UserCode);
             }
             else
             {
                 // Create a copy or clone the existing audit plan instead of using the reference
-                auditPlan = new SMSAuditPlan(new SMSAuditPlanID(AuditPlan.Code), AuditPlan.CreatedBy ?? "System");
+                auditPlan = new SMSAuditPlan(new SMSAuditPlanID(AuditPlan.Code), AuditPlan.CreatedBy ?? _currentUserService.UserCode);
                 // Copy over the original timestamps and metadata
                 auditPlan.CreatedDate = AuditPlan.CreatedDate;
             }

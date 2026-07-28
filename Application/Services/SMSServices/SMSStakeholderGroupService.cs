@@ -239,7 +239,7 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     public async Task<Result<bool>> AssignUserToGroupAsync(
         string userCode,
         SMSStakeholderGroupID groupCode,
-        string assignedBy = "SYSTEM",
+        string assignedBy,
         CancellationToken ct = default)
     {
         try
@@ -351,7 +351,7 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
     public async Task<Result<bool>> UpdateUserGroupMembershipsAsync(
         string userCode,
         IEnumerable<SMSStakeholderGroupID> groupCodes,
-        string assignedBy = "SYSTEM",
+        string assignedBy,
         CancellationToken ct = default)
     {
         try

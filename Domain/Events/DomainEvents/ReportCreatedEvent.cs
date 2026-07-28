@@ -18,7 +18,7 @@ public class ReportCreatedEvent : BaseDomainEvent
     public string EventCategory => SMS_Domain.Enums.EventCategory.DomainEvent.Value;
 
     // Example properties (expand as needed)
-    public string CreatedBy { get; set; } = "SYSTEM";
+    public string CreatedBy { get; set; } = string.Empty;
     public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
 
     public ReportCreatedEvent(SMSEventID id) : base(id)
@@ -28,7 +28,7 @@ public class ReportCreatedEvent : BaseDomainEvent
     public ReportCreatedEvent(SMSEventID id,string reportId, string createdBy, DateTime createdDate) : base(id)
     {
         ReportId = reportId ?? throw new ArgumentNullException(nameof(reportId));
-        CreatedBy = createdBy ?? "SYSTEM";
+        CreatedBy = createdBy ?? string.Empty;
         CreatedDate = createdDate;
     }
 }

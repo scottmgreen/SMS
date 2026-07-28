@@ -53,6 +53,8 @@ public class ReportProcessingSummary
 
     // ENHANCED: Risk Assessment Information
     public string? RiskAssessmentId { get; set; }
+    public string? RiskAssessmentCreatedBy { get; set; }
+    public DateTime? RiskAssessmentCreatedDate { get; set; }
     public int CurrentAssessmentStep { get; set; } = 0;
     public string RiskAssessmentStatus { get; set; } = string.Empty;
     public string AssessmentStage { get; set; } = string.Empty;
@@ -286,6 +288,7 @@ public partial class ReportProcessing : ComponentBase
     private List<ReportProcessingSummary> PendingInvestigation { get; set; } = new();
     private List<ReportProcessingSummary> PendingMitigation { get; set; } = new();
     private List<ReportProcessingSummary> ClosedReferred { get; set; } = new();
+    private readonly Dictionary<string, string> _userIdToFullName = new(StringComparer.OrdinalIgnoreCase);
 
     private int _selectedTabIndex = 0;
     private bool _isLoading { get; set; } = true;
@@ -365,6 +368,7 @@ public partial class ReportProcessing : ComponentBase
         try
         {
             _isLoading = true;
+            await LoadUserDisplayMapAsync();
             await LoadAvailableApprovers();
 
 
@@ -395,6 +399,81 @@ public partial class ReportProcessing : ComponentBase
             _isLoading = false;
             StateHasChanged();
         }
+    }
+
+    private async Task LoadUserDisplayMapAsync()
+    {
+        _userIdToFullName.Clear();
+
+        var appUsersResult = await _mediator.SendAsync(new GetAllSMSApplicationUsersQuery(), CancellationToken.None);
+        if (appUsersResult.IsSuccess && appUsersResult.Value is not null)
+        {
+            foreach (var user in appUsersResult.Value)
+            {
+                var fullName = string.Join(" ", new[]
+                {
+                    user.FirstName?.Value?.Trim() ?? string.Empty,
+                    user.LastName?.Value?.Trim() ?? string.Empty
+                }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+                if (string.IsNullOrWhiteSpace(fullName))
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(user.Code))
+                {
+                    _userIdToFullName[user.Code] = fullName;
+                }
+
+                var userName = user.UserName?.Value?.Trim();
+                if (!string.IsNullOrWhiteSpace(userName))
+                {
+                    _userIdToFullName[userName] = fullName;
+                }
+            }
+        }
+
+        var orgUsersResult = await _mediator.SendAsync(new GetAllSMSOrganizationalUsersQuery(), CancellationToken.None);
+        if (orgUsersResult.IsSuccess && orgUsersResult.Value is not null)
+        {
+            foreach (var user in orgUsersResult.Value)
+            {
+                var fullName = string.Join(" ", new[]
+                {
+                    user.FirstName?.Value?.Trim() ?? string.Empty,
+                    user.LastName?.Value?.Trim() ?? string.Empty
+                }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+                if (string.IsNullOrWhiteSpace(fullName))
+                {
+                    continue;
+                }
+
+                if (!string.IsNullOrWhiteSpace(user.Code))
+                {
+                    _userIdToFullName[user.Code] = fullName;
+                }
+
+                var userName = user.UserName?.Value?.Trim();
+                if (!string.IsNullOrWhiteSpace(userName))
+                {
+                    _userIdToFullName[userName] = fullName;
+                }
+            }
+        }
+    }
+
+    private string GetUserDisplayName(string? userIdentifier)
+    {
+        if (string.IsNullOrWhiteSpace(userIdentifier))
+        {
+            return "Not Assigned";
+        }
+
+        return _userIdToFullName.TryGetValue(userIdentifier, out var fullName)
+            ? fullName
+            : userIdentifier;
     }
 
     private async Task<(List<Report> reports, List<Hazard> hazards, List<RiskAssessment> riskAssessments, List<SMS_Domain.Entities.ReportValidation> reportValidations, List<Investigation> investigations, List<Interview> interviews)> LoadCoreEntitiesAsync()
@@ -631,6 +710,8 @@ public partial class ReportProcessing : ComponentBase
 
                             // Risk Assessment Information
                             RiskAssessmentId = riskAssessment.Code,
+                            RiskAssessmentCreatedBy = riskAssessment.CreatedBy,
+                            RiskAssessmentCreatedDate = riskAssessment.CreatedDate,
                             CurrentAssessmentStep = riskAssessment.CurrentStep,
                             RiskAssessmentStatus = riskAssessment.Status?.ToString() ?? "",
                             AssessmentStage = riskAssessment.Stage ?? "",
@@ -705,6 +786,8 @@ public partial class ReportProcessing : ComponentBase
 
                         // No risk assessment information
                         RiskAssessmentId = null,
+                        RiskAssessmentCreatedBy = null,
+                        RiskAssessmentCreatedDate = null,
                         CurrentAssessmentStep = 0,
                         RiskAssessmentStatus = "",
                         AssessmentStage = "",
@@ -1026,8 +1109,9 @@ public partial class ReportProcessing : ComponentBase
             builder.AddAttribute(1, "Data", PendingValidation);
             builder.AddAttribute(2, "AllowSorting", true);
             builder.AddAttribute(3, "AllowPaging", true);
-            builder.AddAttribute(4, "PageSize", 15);
-            builder.AddAttribute(5, "Columns", (RenderFragment)(columnsBuilder =>
+            builder.AddAttribute(4, "PageSize", 10);
+            builder.AddAttribute(5, "PagerHorizontalAlign", HorizontalAlign.Left);
+            builder.AddAttribute(6, "Columns", (RenderFragment)(columnsBuilder =>
             {
                 RenderValidationColumns(columnsBuilder);
             }));
@@ -1057,8 +1141,9 @@ public partial class ReportProcessing : ComponentBase
             builder.AddAttribute(1, "Data", PendingRiskAssessment);
             builder.AddAttribute(2, "AllowSorting", true);
             builder.AddAttribute(3, "AllowPaging", true);
-            builder.AddAttribute(4, "PageSize", 15);
-            builder.AddAttribute(5, "Columns", (RenderFragment)(columnsBuilder =>
+            builder.AddAttribute(4, "PageSize", 10);
+            builder.AddAttribute(5, "PagerHorizontalAlign", HorizontalAlign.Left);
+            builder.AddAttribute(6, "Columns", (RenderFragment)(columnsBuilder =>
             {
                 RenderRiskAssessmentColumns(columnsBuilder);
             }));
@@ -1088,8 +1173,9 @@ public partial class ReportProcessing : ComponentBase
             builder.AddAttribute(1, "Data", PendingInvestigation);
             builder.AddAttribute(2, "AllowSorting", true);
             builder.AddAttribute(3, "AllowPaging", true);
-            builder.AddAttribute(4, "PageSize", 15);
-            builder.AddAttribute(5, "Columns", (RenderFragment)(columnsBuilder =>
+            builder.AddAttribute(4, "PageSize", 10);
+            builder.AddAttribute(5, "PagerHorizontalAlign", HorizontalAlign.Left);
+            builder.AddAttribute(6, "Columns", (RenderFragment)(columnsBuilder =>
             {
                 RenderInvestigationColumns(columnsBuilder);
             }));
@@ -1806,22 +1892,37 @@ public partial class ReportProcessing : ComponentBase
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
             templateBuilder.AddAttribute(1, "style", _basicTextStyle);
-                templateBuilder.AddAttribute(2, "Text", report.AssignedTo ?? "Not Assigned");
+                templateBuilder.AddAttribute(2, "Text", GetUserDisplayName(report.AssignedTo));
+                templateBuilder.CloseComponent();
+            })));
+        builder.CloseComponent();
+
+        // Risk Assessment Created By Column
+        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(24);
+        builder.AddAttribute(25, "Property", "RiskAssessmentCreatedBy");
+        builder.AddAttribute(26, "Title", "Created By");
+        builder.AddAttribute(27, "Width", "160px");
+        builder.AddAttribute(28, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+            (templateBuilder =>
+            {
+                templateBuilder.OpenComponent<RadzenText>(0);
+            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
+                templateBuilder.AddAttribute(2, "Text", GetUserDisplayName(report.RiskAssessmentCreatedBy));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
 
         // Created Date Column
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(25);
-        builder.AddAttribute(26, "Property", "CreatedDate");
-        builder.AddAttribute(27, "Title", "Report Created");
+        builder.AddAttribute(26, "Property", "RiskAssessmentCreatedDate");
+        builder.AddAttribute(27, "Title", "Created Date");
         builder.AddAttribute(28, "Width", "120px");
         builder.AddAttribute(29, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
             templateBuilder.AddAttribute(1, "style", _basicTextStyle);
-                templateBuilder.AddAttribute(2, "Text", report.CreatedDate.ToString("MM/dd/yyyy"));
+                templateBuilder.AddAttribute(2, "Text", report.RiskAssessmentCreatedDate?.ToString("MM/dd/yyyy") ?? "Not Specified");
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -1887,7 +1988,7 @@ public partial class ReportProcessing : ComponentBase
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
             templateBuilder.AddAttribute(1, "style", _basicTextStyle);
-                templateBuilder.AddAttribute(2, "Text", report.AssignedInvestigator ?? "Not Assigned");
+                templateBuilder.AddAttribute(2, "Text", GetUserDisplayName(report.AssignedInvestigator));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -2095,7 +2196,7 @@ public partial class ReportProcessing : ComponentBase
                                 // ? Update mitigation status using enum value
                                 mitigation.Status = MitigationStatus.Approved; 
                                 mitigation.UpdatedDate = DateTime.UtcNow;
-                                mitigation.UpdatedBy = _currentUserService?.UserDisplayName;
+                                mitigation.UpdatedBy = _currentUserService?.UserCode;
                                 mitigation.ApprovedBy = approverCode;
                                 var updateCommand = new UpdateMitigationCommand(mitigation);
                                 var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -2165,7 +2266,7 @@ public partial class ReportProcessing : ComponentBase
     private async Task<bool> UpdateReportStatus(string reportId, ReportStatus status)
     {
         
-            var cmd = new UpdateReportStatusCommand(reportId, status, _currentUserService?.UserDisplayName ?? "SYSTEM");
+            var cmd = new UpdateReportStatusCommand(reportId, status, _currentUserService.UserCode);
             var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
             if (!cmdResult.IsSuccess)
             {

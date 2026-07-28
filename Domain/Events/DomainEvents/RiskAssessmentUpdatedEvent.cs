@@ -27,7 +27,7 @@ public class RiskAssessmentUpdatedEvent : BaseDomainEvent
     public RiskAssessmentUpdatedEvent(SMSEventID id,string riskAssessmentId, string updatedBy, DateTime updatedDate) : base(id)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
-        UpdatedBy = updatedBy ?? "SYSTEM";
+        UpdatedBy = updatedBy ?? string.Empty;
         UpdatedDate = updatedDate;
     }
 }

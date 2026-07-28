@@ -164,7 +164,7 @@ public partial class Investigations : ComponentBase
                 // Verify if the assigned investigator exists in the list
                 if (!string.IsNullOrEmpty(InvestigationEntity?.AssignedInvestigatorId))
                 {
-                    var assignedInvestigator = AvailableInvestigators.FirstOrDefault(i => i.UserName == InvestigationEntity.AssignedInvestigatorId);
+                    var assignedInvestigator = AvailableInvestigators.FirstOrDefault(i => i.Code == InvestigationEntity.AssignedInvestigatorId);
                     if (assignedInvestigator is not null)
                     {
                         _logger.LogInformation("Found assigned investigator: {Name} ({Code})", assignedInvestigator.DisplayName, assignedInvestigator.Code);
@@ -254,7 +254,7 @@ public partial class Investigations : ComponentBase
             if(InvestigationEntity.Status == InvestigationStatus.InvestigationComplete)
             {
                 InvestigationEntity.CompletedDate = DateTime.UtcNow;
-                InvestigationEntity.UpdatedBy = _currentUserService?.UserDisplayName;
+                InvestigationEntity.UpdatedBy = _currentUserService?.UserCode;
                 InvestigationEntity.UpdatedDate = DateTime.UtcNow;  
             }
 
@@ -374,7 +374,7 @@ public partial class Investigations : ComponentBase
                 return;
             }
                         
-            InvestigationEntity.DecisionMaker = _currentUserService?.UserDisplayName ?? "SYSTEM";
+            InvestigationEntity.DecisionMaker = _currentUserService.UserCode;
             InvestigationEntity.Status = InvestigationStatus.FromValue(InvestigationStatusId) ?? InvestigationStatus.StatusUnknown;
 
             // Check if user is trying to set status to complete
@@ -601,7 +601,7 @@ public partial class Investigations : ComponentBase
                 var report = reportResult.Value;
 
                 // Create new ReportValidation using the static factory method
-                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, _currentUserService?.UserDisplayName ?? "SYSTEM");
+                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, _currentUserService.UserCode);
                 validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
 
                 var createCommand = new CreateReportValidationCommand(validation);
@@ -641,7 +641,7 @@ public partial class Investigations : ComponentBase
 
     private async Task<bool> UpdateReportStatus(string reportcode, ReportStatus status)
     {
-        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, _currentUserService?.UserDisplayName ?? "SYSTEM");
+        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, _currentUserService.UserCode);
         var getupdateResult = await _mediator.SendAsync(updatestatuscmd, CancellationToken.None);
         if (!getupdateResult.IsSuccess)
         {

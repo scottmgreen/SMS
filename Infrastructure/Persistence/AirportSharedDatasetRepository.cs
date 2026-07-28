@@ -92,7 +92,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPoliceReportDetails, airportSharedDataset.PoliceReportDetails));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmContributingFactors, airportSharedDataset.ContributingFactors));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFactorsOtherDescription, airportSharedDataset.FactorsOtherDescription));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, airportSharedDataset.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
@@ -256,7 +256,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPoliceReportDetails, airportSharedDataset.PoliceReportDetails));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmContributingFactors, airportSharedDataset.ContributingFactors));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFactorsOtherDescription, airportSharedDataset.FactorsOtherDescription));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, airportSharedDataset.UpdatedBy ?? airportSharedDataset.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

@@ -652,7 +652,7 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IBaseRequestH
             dataPointToUpdate.IsVerified = request.DataPoint.IsVerified;
             dataPointToUpdate.VerifiedBy = request.DataPoint.VerifiedBy;
             dataPointToUpdate.VerifiedDate = request.DataPoint.VerifiedDate;
-            dataPointToUpdate.UpdatedBy = request.DataPoint.UpdatedBy ?? "SYSTEM";
+            dataPointToUpdate.UpdatedBy = request.DataPoint.UpdatedBy ?? request.DataPoint.VerifiedBy ?? string.Empty;
             dataPointToUpdate.UpdatedDate = DateTime.UtcNow;
 
             // Save the updated SPI

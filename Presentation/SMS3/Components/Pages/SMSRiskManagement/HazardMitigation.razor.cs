@@ -280,7 +280,7 @@ public partial class HazardMitigation : ComponentBase
     /// </summary>
     protected string GetCurrentUserId()
     {
-        return _currentUserService?.UserCode ?? "SYSTEM";
+        return _currentUserService.UserCode;
     }
 
     

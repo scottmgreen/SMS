@@ -1,4 +1,6 @@
 
+using SMS3.Configuration;
+
 namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 /// <summary>
@@ -8,6 +10,10 @@ public class Step5Model
 {
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+
+    private string CurrentActor => string.IsNullOrWhiteSpace(_currentUserService?.UserCode)
+        ? SystemConstants.FlyPdxApiSource
+        : _currentUserService.UserCode;
 
     public Step5Model(IBaseMediator mediator, ICurrentUserService _currentUserService)
     {
@@ -65,9 +71,9 @@ public class Step5Model
             ResidualRootCause = string.Empty,
             ResidualAdditionalComments = string.Empty,
             CreatedDate = DateTime.UtcNow,
-            CreatedBy = "SYSTEM",
+            CreatedBy = CurrentActor,
             UpdatedDate = DateTime.UtcNow,
-            UpdatedBy = "SYSTEM"
+            UpdatedBy = CurrentActor
         };
     }
     
@@ -235,7 +241,7 @@ public class Step5Model
                     existingAnalysis.ResidualRootCause = analysis.ResidualRootCause;
                     existingAnalysis.ResidualAdditionalComments = analysis.ResidualAdditionalComments;
                     existingAnalysis.UpdatedDate = DateTime.UtcNow;
-                    existingAnalysis.UpdatedBy = "SYSTEM";
+                    existingAnalysis.UpdatedBy = CurrentActor;
 
                     // Ensure RiskAssessmentCode is properly set
                     if (string.IsNullOrEmpty(existingAnalysis.RiskAssessmentCode))
@@ -265,7 +271,7 @@ public class Step5Model
                     analysis.HazardCode = hazardCode;
                     analysis.RiskAssessmentCode = assessment.Code;
                     analysis.UpdatedDate = DateTime.UtcNow;
-                    analysis.UpdatedBy = _currentUserService?.UserDisplayName ?? "SYSTEM";
+                    analysis.UpdatedBy = CurrentActor;
 
                     if (analysis.CreatedDate == default)
                     {
@@ -274,7 +280,7 @@ public class Step5Model
 
                     if (string.IsNullOrWhiteSpace(analysis.CreatedBy))
                     {
-                        analysis.CreatedBy = _currentUserService?.UserDisplayName ?? "SYSTEM";
+                        analysis.CreatedBy = CurrentActor;
                     }
 
                     var createCommand = new CreateRiskAnalysisCommand(analysis);

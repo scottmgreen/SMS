@@ -27,8 +27,15 @@ public class CreateRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<Ri
 
     public void SetCreatedBy(string userId, DateTime timestamp)
     {
-        //RiskAssessment.CreatedBy = userId;
-        //RiskAssessment.CreatedDate = timestamp;
+        if (string.IsNullOrWhiteSpace(RiskAssessment.CreatedBy))
+        {
+            RiskAssessment.CreatedBy = userId;
+        }
+
+        if (!RiskAssessment.CreatedDate.HasValue || RiskAssessment.CreatedDate.Value == default)
+        {
+            RiskAssessment.CreatedDate = timestamp;
+        }
     }
 
     public void SetUpdatedBy(string userId, DateTime timestamp)
@@ -53,8 +60,8 @@ public class UpdateRiskAssessmentCommand : BaseCommandBundle, IRequest<Result<Ri
 
     public void SetUpdatedBy(string userId, DateTime timestamp)
     {
-        //RiskAssessment.UpdatedBy = userId;
-        //RiskAssessment.UpdatedDate = timestamp;
+        RiskAssessment.UpdatedBy = userId;
+        RiskAssessment.UpdatedDate = timestamp;
     }
 }
 

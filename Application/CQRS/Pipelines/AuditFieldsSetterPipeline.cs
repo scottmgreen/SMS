@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using SMS_Application.Common;
 using SMS_Application.Interfaces;
 
 namespace SMS_Application.Pipelines;
@@ -39,7 +40,9 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
         cancellationToken.ThrowIfCancellationRequested();
 
         var requestType = request.GetType().Name;
-        var currentUserId = _currentUserService.UserDisplayName;
+        var currentUserId = string.IsNullOrWhiteSpace(_currentUserService.UserCode)
+            ? SystemActorConstants.FlyPdxApiSource
+            : _currentUserService.UserCode;
 
         _logger.LogApplicationDebug("Audit Fields Setter: Processing {RequestType}", requestType);
 
@@ -66,6 +69,12 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
             // Handle Create Commands
             if (request is ICreateCommand createCommand)
             {
+                if (HasExplicitCreatedByValue(request))
+                {
+                    _logger.LogApplicationDebug("Preserving existing CreatedBy for CREATE command: {RequestType}", requestType);
+                    return;
+                }
+
                 _logger.LogApplicationDebug("Setting CreatedBy='{UserId}' for CREATE command: {RequestType}",
                     currentUserId, requestType);
                 createCommand.SetCreatedBy(currentUserId, timestamp);
@@ -152,6 +161,50 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
                commandName.Contains("Deactivate", StringComparison.OrdinalIgnoreCase) ||
                commandName.Contains("Record", StringComparison.OrdinalIgnoreCase) ||
                commandName.Contains("Assign", StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool HasExplicitCreatedByValue(object request)
+    {
+        if (TryGetStringPropertyValue(request, "CreatedBy", out var createdBy) && !string.IsNullOrWhiteSpace(createdBy))
+        {
+            return true;
+        }
+
+        var properties = request.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        foreach (var property in properties)
+        {
+            if (property.PropertyType == typeof(string) || property.GetIndexParameters().Length > 0)
+            {
+                continue;
+            }
+
+            var value = property.GetValue(request);
+            if (value is null)
+            {
+                continue;
+            }
+
+            if (TryGetStringPropertyValue(value, "CreatedBy", out createdBy) && !string.IsNullOrWhiteSpace(createdBy))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryGetStringPropertyValue(object source, string propertyName, out string? value)
+    {
+        value = null;
+
+        var property = source.GetType().GetProperty(propertyName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        if (property is null || property.PropertyType != typeof(string) || property.GetIndexParameters().Length > 0)
+        {
+            return false;
+        }
+
+        value = property.GetValue(source) as string;
+        return true;
     }
 }
 

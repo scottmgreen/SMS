@@ -25,7 +25,7 @@ public class MitigationApprovalApprovedEvent : BaseDomainEvent
     public MitigationApprovalApprovedEvent(SMSEventID id,string mitigationId, string approvedBy, DateTime approvedDate):base(id)
     {
         MitigationId = mitigationId ?? throw new ArgumentNullException(nameof(mitigationId));
-        ApprovedBy = approvedBy ?? "SYSTEM";
+        ApprovedBy = approvedBy ?? string.Empty;
         ApprovedDate = approvedDate;
     }
 }

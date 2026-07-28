@@ -337,7 +337,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardInitialAverageScore, hazard.InitialAverageScore));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardResidualRiskMatrixCode, hazard.ResidualRiskMatrixCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardResidualAverageScore, hazard.ResidualAverageScore));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazard.UpdatedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazard.UpdatedBy ?? hazard.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

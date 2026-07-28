@@ -25,7 +25,7 @@ public sealed class ReportStageChangedEvent : BaseDomainEvent
         ReportCode = reportCode;
         PreviousStage = previousStage ?? string.Empty;
         NewStage = newStage ?? string.Empty;
-        ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? "SYSTEM" : changedBy;
+        ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? string.Empty : changedBy;
         ChangedDate = changedDate;
     }
 }

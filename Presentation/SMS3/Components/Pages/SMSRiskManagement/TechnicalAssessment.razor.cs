@@ -7,6 +7,7 @@ using SMS_Domain.Events;
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration;
 using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
@@ -96,7 +97,7 @@ public partial class TechnicalAssessment : ComponentBase
     #region UI Helper Properties
 
     public string AssessmentName => GetCurrentAssessmentName();
-    public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.UserName.Value == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
+    public string LeadAssessorName => AvailableAssessors.FirstOrDefault(a => a.Code  == Step1.LeadAssessor)?.DisplayName ?? Step1.LeadAssessor;
     public string LeadInvestigatorName => AvailableInvestigators.FirstOrDefault()?.DisplayName ?? "Not Assigned";
 
     
@@ -450,7 +451,7 @@ public partial class TechnicalAssessment : ComponentBase
                 Status = initialStatus,
                 CurrentStep = initialStep,
                 CreatedDate = DateTime.UtcNow,
-                CreatedBy  = _currentUserService?.UserDisplayName
+                CreatedBy  = _currentUserService?.UserCode
             };
 
             // Save Technical assessment
@@ -928,7 +929,7 @@ public partial class TechnicalAssessment : ComponentBase
         TechRiskAssessment.Stage = DetermineRiskAssessmentStageFromStep(targetStep);
         TechRiskAssessment.CompletedBy = null;
         TechRiskAssessment.CompletedDate = null;
-        TechRiskAssessment.UpdatedBy = _currentUserService?.UserDisplayName;
+        TechRiskAssessment.UpdatedBy = _currentUserService?.UserCode;
         TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
 
         var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
@@ -938,7 +939,7 @@ public partial class TechnicalAssessment : ComponentBase
             TechRiskAssessment = updateResult.Value;
         }
 
-        var reportStatusCommand = new UpdateReportStatusCommand(ReportId ?? string.Empty, ReportStatus.RiskAssessmentInProgress, _currentUserService?.UserDisplayName ?? "System");
+        var reportStatusCommand = new UpdateReportStatusCommand(ReportId ?? string.Empty, ReportStatus.RiskAssessmentInProgress, _currentUserService.UserCode);
         await _mediator.SendAsync(reportStatusCommand, CancellationToken.None);
     }
 
@@ -1123,7 +1124,7 @@ public partial class TechnicalAssessment : ComponentBase
 
             // Update last modified info
             TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
-            TechRiskAssessment.UpdatedBy = _currentUserService?.UserDisplayName;
+            TechRiskAssessment.UpdatedBy = _currentUserService?.UserCode;
             if (CurrentStep == 5 && !isExplicitSaveOnFinalStep)
             {
                 TechRiskAssessment.CompletedBy = _currentUserService?.UserDisplayName;
@@ -1155,7 +1156,7 @@ public partial class TechnicalAssessment : ComponentBase
                 status = ReportStatus.RiskAssessmentInProgress;
             }
 
-            var cmd = new UpdateReportStatusCommand(ReportId ?? "", status, _currentUserService?.UserDisplayName ?? "System");
+            var cmd = new UpdateReportStatusCommand(ReportId ?? "", status, _currentUserService.UserCode);
             var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
 
 
@@ -1245,7 +1246,7 @@ public partial class TechnicalAssessment : ComponentBase
                 // Use calculated risk level from scoring panels
                 hazard.HazardRiskLevel = riskLevel;
 
-                hazard.UpdatedBy = _currentUserService?.UserDisplayName;  
+                hazard.UpdatedBy = _currentUserService?.UserCode;  
                 hazard.UpdatedDate = DateTime.UtcNow;   
 
                 // Only update if status changed
@@ -1736,7 +1737,9 @@ public partial class TechnicalAssessment : ComponentBase
 
         // Capture completion details
         var completedDate = DateTime.UtcNow;
-        var completedBy = _currentUserService?.UserDisplayName ?? "Unknown User";
+        var completedBy = string.IsNullOrWhiteSpace(_currentUserService?.UserCode)
+            ? SystemConstants.FlyPdxApiSource
+            : _currentUserService.UserCode;
 
         // Explicitly mark assessment completed on submit.
         TechRiskAssessment.CurrentStep = MaxAssessmentStep;
@@ -1752,7 +1755,7 @@ public partial class TechnicalAssessment : ComponentBase
         await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
         var reportCompletionStatus = IsRiskRegistryOnly ? ReportStatus.Closed : ReportStatus.ValidationCompleted;
-        var cmd = new UpdateReportStatusCommand(ReportId ?? "", reportCompletionStatus, _currentUserService?.UserDisplayName ?? "System");
+        var cmd = new UpdateReportStatusCommand(ReportId ?? "", reportCompletionStatus, _currentUserService.UserCode);
         var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
 
         // Domain event publishing for assessment completion is handled in UpdateRiskAssessmentCommandHandler.

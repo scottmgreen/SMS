@@ -87,7 +87,7 @@ public class HazardStatusChangedEvent : BaseDomainEvent, IEventSource
         PreviousStatus = previousStatus ?? HazardStatus.StatusUnknown;
         NewStatus = newStatus ?? HazardStatus.StatusUnknown;
         StatusChangeReason = statusChangeReason ?? string.Empty;
-        ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? "SYSTEM" : changedBy;
+        ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? string.Empty : changedBy;
         StatusChangeDate = statusChangeDate;
         NotificationRecipients = notificationRecipients ?? new List<string>();
         StatusMetadata = statusMetadata ?? new Dictionary<string, string>();

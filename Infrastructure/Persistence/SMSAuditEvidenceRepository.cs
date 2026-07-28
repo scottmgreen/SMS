@@ -347,7 +347,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
         }
     }
 
-    public async Task<Result<bool>> ArchiveSMSAuditEvidenceAsync(string code, string archivedBy = "SYSTEM", CancellationToken ct = default)
+    public async Task<Result<bool>> ArchiveSMSAuditEvidenceAsync(string code, string archivedBy = "", CancellationToken ct = default)
     {
         try
         {

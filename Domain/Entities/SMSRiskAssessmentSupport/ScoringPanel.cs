@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class ScoringPanel : BaseAuditableEntity
 {
-    public ScoringPanel(ScoringPanelID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public ScoringPanel(ScoringPanelID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
     public string? Code { get; set; }
     public string? HazardCode { get; set; }

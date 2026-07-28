@@ -225,10 +225,10 @@ function Create-ApiRequest {
     # Anonymous/source-only import because this CSV does not include contact identity fields.
     $apiRequest = @{
         hazardDescription = $hazardDescription
-        reportSubmittedBy = "EXTERNAL_API_SOURCE"
+        reportSubmittedBy = "FLYPDX_API"
         reportSubmittedDate = $submittedDate
-        reportSubmittingDepartment = "EXTERNAL_API_SOURCE"
-        reportSubmittingDepartmentJobFunction = "EXTERNAL_API_SOURCE"
+        reportSubmittingDepartment = "FLYPDX_API"
+        reportSubmittingDepartmentJobFunction = "FLYPDX_API"
         reportIsAnonymous = $false
         reportContactName = "Scott Green"
         reportContactCell = "36082398359"

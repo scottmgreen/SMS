@@ -120,7 +120,7 @@ public class AuthenticationStateCache : IAuthenticationStateCache
             {
                 _logger.LogApplicationError("Error getting cached user code", ApplicationEventIds.Error, ex);
                 InvalidateUserCache();
-                return "SYSTEM";
+                return string.Empty;
             }
         }
     }

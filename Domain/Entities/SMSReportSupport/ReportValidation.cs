@@ -19,7 +19,7 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
 {
 
     // Public constructor for domain usage
-    public ReportValidation(ReportValidationID id) : base(id, "SYSTEM", DateTime.UtcNow)
+    public ReportValidation(ReportValidationID id) : base(id, string.Empty, DateTime.UtcNow)
     {
         Code = string.Empty;
         ReportCode = string.Empty;

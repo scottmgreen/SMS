@@ -588,8 +588,8 @@ public partial class MitigationListing : ComponentBase
         {
             mitigation.Status = MitigationStatus.Approved;
             mitigation.UpdatedDate = DateTime.UtcNow;
-            mitigation.UpdatedBy = _currentUserService.UserCode ?? "System";
-            mitigation.ApprovedBy = _currentUserService?.UserCode ?? "System";  // ? FIXED: Set ApprovedBy property
+            mitigation.UpdatedBy = _currentUserService.UserCode;
+            mitigation.ApprovedBy = _currentUserService.UserCode;  // ? FIXED: Set ApprovedBy property
 
             var updateCommand = new UpdateMitigationCommand(mitigation);
             var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -663,8 +663,8 @@ public partial class MitigationListing : ComponentBase
                 {
                     mitigation.Status = MitigationStatus.Approved;
                     mitigation.UpdatedDate = DateTime.UtcNow;
-                    mitigation.UpdatedBy = _currentUserService?.UserCode ?? "System";
-                    mitigation.ApprovedBy = _currentUserService?.UserCode ?? "System";  // ? FIXED: Set ApprovedBy property
+                    mitigation.UpdatedBy = _currentUserService.UserCode;
+                    mitigation.ApprovedBy = _currentUserService.UserCode;  // ? FIXED: Set ApprovedBy property
 
                     var updateCommand = new UpdateMitigationCommand(mitigation);
                     var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);

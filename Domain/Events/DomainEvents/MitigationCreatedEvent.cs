@@ -26,7 +26,7 @@ public class MitigationCreatedEvent : BaseDomainEvent
     public MitigationCreatedEvent(SMSEventID id,string mitigationId, string createdBy, DateTime createdDate):base(id)
     {
         MitigationId = mitigationId ?? throw new ArgumentNullException(nameof(mitigationId));
-        CreatedBy = createdBy ?? "SYSTEM";
+        CreatedBy = createdBy ?? string.Empty;
         CreatedDate = createdDate;
     }
 }

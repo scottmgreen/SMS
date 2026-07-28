@@ -143,7 +143,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPILastReviewNotes, spi.LastReviewNotes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIAlertsEnabled, spi.AlertsEnabled));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIAlertRecipients, spi.AlertRecipients));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, spi.UpdatedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, spi.UpdatedBy ?? spi.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -559,7 +559,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointMeasurementDate, dataPoint.MeasurementDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointPeriod, dataPoint.Period));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointDataSource, dataPoint.DataSource));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, dataPoint.UpdatedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, dataPoint.UpdatedBy ?? dataPoint.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointNotes, dataPoint.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointIsVerified, dataPoint.IsVerified));

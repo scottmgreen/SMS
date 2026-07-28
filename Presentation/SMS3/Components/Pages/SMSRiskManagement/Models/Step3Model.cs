@@ -254,9 +254,9 @@ public class Step3Model
                         ResidualRootCause = string.Empty,
                         ResidualAdditionalComments = string.Empty,
                         CreatedDate = DateTime.UtcNow,
-                        CreatedBy = "SYSTEM",
+                        CreatedBy = _currentUserService.UserCode,
                         UpdatedDate = DateTime.UtcNow,
-                        UpdatedBy = "SYSTEM"
+                        UpdatedBy = _currentUserService.UserCode
                     };
 
                     // Save via CQRS
@@ -321,7 +321,7 @@ public class Step3Model
                 if (string.IsNullOrEmpty(analysis.RiskAssessmentCode) && assessment is not null)
                 {
                     analysis.RiskAssessmentCode = assessment.Code;
-                    analysis.UpdatedBy = _currentUserService?.UserDisplayName;
+                    analysis.UpdatedBy = _currentUserService?.UserCode;
                     analysis.UpdatedDate = DateTime.UtcNow;
                 }
 

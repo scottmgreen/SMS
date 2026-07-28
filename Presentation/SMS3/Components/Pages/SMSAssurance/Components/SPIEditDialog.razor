@@ -2,6 +2,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using SMS_Application.Common
+@using SMS_Application.Interfaces
 @using SMS_Domain.Entities
 @using SMS_Domain.Enums
 
@@ -259,6 +260,7 @@
     [Parameter] public List<SPIStatus> AvailableStatuses { get; set; } = new();
     [Parameter] public List<SPIMeasurementFrequency> AvailableFrequencies { get; set; } = new();
     [Parameter] public List<string> AvailableDepartments { get; set; } = new();
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     private string SelectedStatus { get; set; } = string.Empty;
     private string SelectedIndicatorType { get; set; } = string.Empty;
@@ -294,7 +296,7 @@
 
             if (selectedTypeEnum != null)
             {
-                SPI.UpdateStatus(selectedStatusEnum, "SYSTEM");
+                SPI.UpdateStatus(selectedStatusEnum, _currentUserService.UserCode);
                 SPI.MeasurementFrequency = selectedFrequencyEnum;
                 
                 DialogService.Close(SPI);

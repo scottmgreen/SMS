@@ -27,7 +27,7 @@ public class RiskAssessmentCreatedEvent : BaseDomainEvent
     public RiskAssessmentCreatedEvent(SMSEventID id,string riskAssessmentId, string createdBy, DateTime createdDate) : base(id)
     {
         RiskAssessmentId = riskAssessmentId ?? throw new ArgumentNullException(nameof(riskAssessmentId));
-        CreatedBy = createdBy ?? "SYSTEM";
+        CreatedBy = createdBy ?? string.Empty;
         CreatedDate = createdDate;
     }
 }

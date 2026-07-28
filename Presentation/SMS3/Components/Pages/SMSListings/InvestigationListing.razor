@@ -30,10 +30,39 @@
         <RadzenDataGridColumn TItem="Investigation" Property="ReportCode" Title="Report ID" Width="130px" />
         <RadzenDataGridColumn TItem="Investigation" Property="HazardCode" Title="Hazard ID" Width="130px" />
         <RadzenDataGridColumn TItem="Investigation" Property="Code" Title="Investigation ID" Width="150px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="InvestigationNotes" Title="Investigation Notes" Width="350px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="Status" Title="Status" Width="160px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="AssignedInvestigatorId" Title="Investigator" Width="170px" />
-        <RadzenDataGridColumn TItem="Investigation" Property="CreatedBy" Title="Created By" Width="130px" />
+        <RadzenDataGridColumn TItem="Investigation" Property="InvestigationNotes" Title="Investigation Notes" Width="110px" Sortable="false" Filterable="false">
+            <Template Context="investigation">
+                <RadzenButton Text="Notes"
+                              Icon="description"
+                              ButtonStyle="ButtonStyle.Base"
+                              Variant="Variant.Text"
+                              Size="ButtonSize.ExtraSmall"
+                              Title="Click to view full notes"
+                              Class="description-button"
+                              Click="@(() => ShowInvestigationNotesDialog(investigation))" />
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Investigation" Property="Status" Title="Status" Width="190px">
+            <Template Context="investigation">
+                <div title="@GetStatusValue(investigation)" style="@_basicTextStyle">
+                    @GetStatusValue(investigation)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Investigation" Property="AssignedInvestigatorId" Title="Investigator" Width="190px">
+            <Template Context="investigation">
+                <div title="@investigation.AssignedInvestigatorId" style="@_basicTextStyle">
+                    @GetUserDisplayName(investigation.AssignedInvestigatorId)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Investigation" Property="CreatedBy" Title="Created By" Width="190px">
+            <Template Context="investigation">
+                <div title="@investigation.CreatedBy" style="@_basicTextStyle">
+                    @GetUserDisplayName(investigation.CreatedBy)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
 
         <RadzenDataGridColumn TItem="Investigation" Property="CreatedDate" Title="Created" Width="130px" FormatString="{0:MM/dd/yyyy}" />
         <RadzenDataGridColumn TItem="Investigation" Property="DecisionDate" Title="Decision Date" Width="130px" FormatString="{0:MM/dd/yyyy}" />
@@ -57,3 +86,104 @@
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
+
+@if (_showInvestigationNotesModal)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-md">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-file-alt"></i> Investigation Notes - @_selectedInvestigationId
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Text"
+                                      Icon="close"
+                                      Size="ButtonSize.Small"
+                                      Click="@CloseInvestigationNotesModal" />
+                    </div>
+                </div>
+                <div class="sms-modal-body">
+                    <RadzenCard Variant="Variant.Outlined">
+                        <div class="p-3">
+                            <div style="line-height: 1.6; white-space: normal;">
+                                @((MarkupString)(_selectedInvestigationNotes ?? "No notes available"))
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end">
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                      Text="Close"
+                                      Icon="close"
+                                      Click="@CloseInvestigationNotesModal"
+                                      Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1050;
+    padding: 1rem;
+}
+
+.sms-modal-dialog {
+    position: relative;
+    margin: 0 auto;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+}
+
+.sms-modal-md {
+    max-width: 700px;
+    width: 100%;
+}
+
+.sms-modal-content {
+    background: white;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+}
+
+.sms-modal-header {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid #e9ecef;
+    border-radius: 0.5rem 0.5rem 0 0;
+}
+
+.sms-header-primary {
+    background-color: #212e61;
+    color: white;
+}
+
+.sms-modal-title {
+    margin: 0;
+    font-weight: 600;
+}
+
+.sms-modal-body {
+    max-height: calc(100vh - 200px);
+    overflow-y: auto;
+}
+
+.sms-modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #e9ecef;
+    border-radius: 0 0 0.5rem 0.5rem;
+}
+</style>

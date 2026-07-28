@@ -382,7 +382,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationReferralDetails, investigation.ReferralDetails ?? (object)DBNull.Value));
 
             // Audit properties
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, investigation.UpdatedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, investigation.UpdatedBy ?? investigation.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, investigation.UpdatedDate ?? DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -449,7 +449,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationCode, investigationCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, status.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -490,7 +490,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationDecisionDate, DateTime.UtcNow));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationNextSteps, nextSteps ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationReferralDetails, referralDetails ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, decisionMaker));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -526,7 +526,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationCode, investigationCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, InvestigationStatus.InvestigationComplete.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationCompletedDate, DateTime.UtcNow));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

@@ -1,4 +1,5 @@
 ﻿using SMS_Application.Services;
+using SMS_Application.Interfaces;
 
 using SMS_Domain.Errors;
 
@@ -16,6 +17,7 @@ public partial class Verify2FA : ComponentBase
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ILogger<Verify2FA> _logger { get; set; } = default!;
     [Inject] private ISMSSessionService _sessionService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private IHttpContextAccessor _httpContextAccessor { get; set; } = default!;
     [Inject] private TwoFactorAuthService _twoFactorAuthService { get; set; } = default!;
     [Inject] private SessionTimerService _sessionTimerService { get; set; } = default!;
@@ -491,13 +493,14 @@ public partial class Verify2FA : ComponentBase
     private async Task<Result> Setup2FAAsync(string userCode, string secretKey, string backupCodesJson, SMSUserType userType)
     {
         _logger.LogInformation("Setting up 2FA for user {UserCode} with type {UserType}", userCode, userType.Value);
+        var updatedBy = ResolveAuditActor(userCode);
         
         if (userType == SMSUserType.Application)
-            return await _applicationUserRepository.Setup2FAAsync(userCode, secretKey, backupCodesJson);
+            return await _applicationUserRepository.Setup2FAAsync(userCode, secretKey, backupCodesJson, updatedBy);
         else if (userType == SMSUserType.Organizational)
-            return await _organizationalUserRepository.Setup2FAAsync(userCode, secretKey, backupCodesJson);
+            return await _organizationalUserRepository.Setup2FAAsync(userCode, secretKey, backupCodesJson, updatedBy);
         else if (userType == SMSUserType.Stakeholder)
-            return await _stakeholderUserRepository.Setup2FAAsync(userCode, secretKey, backupCodesJson);
+            return await _stakeholderUserRepository.Setup2FAAsync(userCode, secretKey, backupCodesJson, updatedBy);
         else
             return Result.Failure(DomainErrors.BaseUserError.InvalidUserType);
     }
@@ -508,13 +511,14 @@ public partial class Verify2FA : ComponentBase
     private async Task<Result> Reset2FAFailedAttemptsAsync(string userCode, SMSUserType userType)
     {
         _logger.LogInformation("Resetting 2FA failed attempts for user {UserCode} with type {UserType}", userCode, userType.Value);
+        var updatedBy = ResolveAuditActor(userCode);
         
         if (userType == SMSUserType.Application)
-            return await _applicationUserRepository.Reset2FAFailedAttemptsAsync(userCode);
+            return await _applicationUserRepository.Reset2FAFailedAttemptsAsync(userCode, updatedBy);
         else if (userType == SMSUserType.Organizational)
-            return await _organizationalUserRepository.Reset2FAFailedAttemptsAsync(userCode);
+            return await _organizationalUserRepository.Reset2FAFailedAttemptsAsync(userCode, updatedBy);
         else if (userType == SMSUserType.Stakeholder)
-            return await _stakeholderUserRepository.Reset2FAFailedAttemptsAsync(userCode);
+            return await _stakeholderUserRepository.Reset2FAFailedAttemptsAsync(userCode, updatedBy);
         else
             return Result.Failure(DomainErrors.BaseUserError.InvalidUserType);
     }
@@ -526,15 +530,22 @@ public partial class Verify2FA : ComponentBase
     {
         _logger.LogInformation("Updating 2FA failed attempts for user {UserCode} with type {UserType} - Attempts: {Attempts}", 
             userCode, userType.Value, failedAttempts);
+        var updatedBy = ResolveAuditActor(userCode);
         
         if (userType == SMSUserType.Application)
-            return await _applicationUserRepository.Update2FAFailedAttemptsAsync(userCode, failedAttempts, lockoutUntil);
+            return await _applicationUserRepository.Update2FAFailedAttemptsAsync(userCode, failedAttempts, lockoutUntil, updatedBy);
         else if (userType == SMSUserType.Organizational)
-            return await _organizationalUserRepository.Update2FAFailedAttemptsAsync(userCode, failedAttempts, lockoutUntil);
+            return await _organizationalUserRepository.Update2FAFailedAttemptsAsync(userCode, failedAttempts, lockoutUntil, updatedBy);
         else if (userType == SMSUserType.Stakeholder)
-            return await _stakeholderUserRepository.Update2FAFailedAttemptsAsync(userCode, failedAttempts, lockoutUntil);
+            return await _stakeholderUserRepository.Update2FAFailedAttemptsAsync(userCode, failedAttempts, lockoutUntil, updatedBy);
         else
             return Result.Failure(DomainErrors.BaseUserError.InvalidUserType);
+    }
+
+    private string ResolveAuditActor(string fallbackUserCode)
+    {
+        var userCode = _currentUserService.UserCode;
+        return string.IsNullOrWhiteSpace(userCode) ? fallbackUserCode : userCode;
     }
 
     /// <summary>

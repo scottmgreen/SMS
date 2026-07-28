@@ -103,7 +103,13 @@
             </Template>
         </RadzenDataGridColumn>
                       
-        <RadzenDataGridColumn TItem="RiskAssessment" Property="LeadAssessorId" Title="Lead Assessor" Width="150px" />
+        <RadzenDataGridColumn TItem="RiskAssessment" Property="LeadAssessorId" Title="Lead Assessor" Width="180px">
+            <Template Context="assessment">
+                <div title="@assessment.LeadAssessorId" style="@_basicTextStyle">
+                    @GetUserDisplayName(assessment.LeadAssessorId)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
                
         <RadzenDataGridColumn TItem="RiskAssessment" Title="Actions" Width="250px" Sortable="false" Filterable="false">
             <Template Context="assessment">

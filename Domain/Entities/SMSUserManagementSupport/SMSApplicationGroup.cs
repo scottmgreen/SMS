@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class SMSApplicationGroup : BaseAuditableEntity
 {
-    public SMSApplicationGroup(SMSApplicationGroupID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public SMSApplicationGroup(SMSApplicationGroupID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
     public string Code { get; set; }
     public string Name { get; set; }

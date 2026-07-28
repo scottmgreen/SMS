@@ -299,7 +299,7 @@ public class CompleteSMSAuditCommandHandler : BaseCommandBundle, IBaseRequestHan
                 _logger.LogApplicationInformation("All audits completed for plan {AuditPlanCode}, marking plan as completed", auditPlanCode);
 
                 // Complete the audit plan using domain method
-                var completePlanResult = auditPlan.CompleteAuditPlan("SYSTEM", "All associated audits completed");
+                var completePlanResult = auditPlan.CompleteAuditPlan(auditPlan.UpdatedBy ?? auditPlan.CreatedBy ?? string.Empty, "All associated audits completed");
                 if (completePlanResult.IsSuccess)
                 {
                     // Save the completed audit plan

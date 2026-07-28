@@ -18,7 +18,7 @@ public class HazardFile : BaseAuditableEntity
     // Private constructor for Entity Framework
     
 
-    public HazardFile(HazardFileID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public HazardFile(HazardFileID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
     #region Properties
 

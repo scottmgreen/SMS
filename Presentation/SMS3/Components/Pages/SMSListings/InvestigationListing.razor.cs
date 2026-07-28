@@ -11,10 +11,12 @@ using SMS_Domain.Errors;
 using SMS_Domain.ValueObjects;
 
 using SMS_Shared.Configuration;
+using SMS3.Configuration;
 
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using Microsoft.AspNetCore.Components;
 
 namespace SMS3.Components.Pages.SMSListings;
 
@@ -24,6 +26,8 @@ namespace SMS3.Components.Pages.SMSListings;
 /// </summary>
 public partial class InvestigationListing : ComponentBase
 {
+    private string _basicTextStyle = "font-size:smaller;font-weight: 600";
+
     #region Dependencies
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
@@ -36,8 +40,12 @@ public partial class InvestigationListing : ComponentBase
     private RadzenDataGrid<Investigation>? _investigationsGrid;
     private IEnumerable<Investigation> _investigations = new List<Investigation>();
     private List<Investigation> _allInvestigations = new List<Investigation>(); // Store all investigations for client-side filtering
+    private readonly Dictionary<string, string> _userCodeToFullName = new(StringComparer.OrdinalIgnoreCase);
     private int _totalCount;
     private bool _isLoading = false;
+    private bool _showInvestigationNotesModal = false;
+    private string _selectedInvestigationNotes = string.Empty;
+    private string _selectedInvestigationId = string.Empty;
     #endregion
     
     #region Lifecycle Methods
@@ -56,6 +64,8 @@ public partial class InvestigationListing : ComponentBase
             StateHasChanged();
 
             _logger.LogInformation("Loading investigations for listing view");
+
+            await LoadUserDisplayMapAsync();
 
             var query = new GetAllInvestigationsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
@@ -93,6 +103,73 @@ public partial class InvestigationListing : ComponentBase
             _isLoading = false;
             StateHasChanged();
         }
+    }
+
+    private async Task LoadUserDisplayMapAsync()
+    {
+        _userCodeToFullName.Clear();
+
+        var usersResult = await _mediator.SendAsync(new GetAllSMSApplicationUsersQuery(), CancellationToken.None);
+        if (!usersResult.IsSuccess || usersResult.Value is null)
+        {
+            return;
+        }
+
+        foreach (var user in usersResult.Value)
+        {
+            var firstName = user.FirstName?.Value?.Trim() ?? string.Empty;
+            var lastName = user.LastName?.Value?.Trim() ?? string.Empty;
+            var fullName = string.Join(" ", new[] { firstName, lastName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+            if (string.IsNullOrWhiteSpace(fullName))
+            {
+                continue;
+            }
+
+            if (!string.IsNullOrWhiteSpace(user.Code))
+            {
+                _userCodeToFullName[user.Code] = fullName;
+            }
+
+            var userName = user.UserName?.Value?.Trim();
+            if (!string.IsNullOrWhiteSpace(userName))
+            {
+                _userCodeToFullName[userName] = fullName;
+            }
+        }
+    }
+
+    private string GetUserDisplayName(string? userCode)
+    {
+        if (string.IsNullOrWhiteSpace(userCode))
+        {
+            return SystemConstants.FlyPdxApiSource;
+        }
+
+        return _userCodeToFullName.TryGetValue(userCode, out var fullName)
+            ? fullName
+            : userCode;
+    }
+
+    private static string GetStatusValue(Investigation investigation)
+    {
+        return investigation?.Status?.Value ?? string.Empty;
+    }
+
+    private void ShowInvestigationNotesDialog(Investigation investigation)
+    {
+        _selectedInvestigationNotes = investigation?.InvestigationNotes ?? "No notes available";
+        _selectedInvestigationId = investigation?.Code ?? "Unknown";
+        _showInvestigationNotesModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseInvestigationNotesModal()
+    {
+        _showInvestigationNotesModal = false;
+        _selectedInvestigationNotes = string.Empty;
+        _selectedInvestigationId = string.Empty;
+        StateHasChanged();
     }
 
     private async Task LoadData(LoadDataArgs args)
@@ -229,7 +306,7 @@ public partial class InvestigationListing : ComponentBase
                             query = ApplyStringFilter(query, i => i.CreatedBy, filterValue, filterOperator);
                             break;
                         case "status":
-                            query = ApplyEnumFilter(query, i => i.Status.ToString(), filterValue, filterOperator);
+                            query = ApplyEnumFilter(query, i => i.Status.Value, filterValue, filterOperator);
                             break;
                         case "completeddate":
                             if (DateTime.TryParse(filter.FilterValue?.ToString(), out var completedDateValue))
@@ -353,7 +430,7 @@ public partial class InvestigationListing : ComponentBase
                 "investigationnotes" => isDescending ? query.OrderByDescending(i => i.InvestigationNotes ?? "") : query.OrderBy(i => i.InvestigationNotes ?? ""),
                 "assignedinvestigatorid" => isDescending ? query.OrderByDescending(i => i.AssignedInvestigatorId ?? "") : query.OrderBy(i => i.AssignedInvestigatorId ?? ""),
                 "createdby" => isDescending ? query.OrderByDescending(i => i.CreatedBy ?? "") : query.OrderBy(i => i.CreatedBy ?? ""),
-                "status" => isDescending ? query.OrderByDescending(i => i.Status.ToString()) : query.OrderBy(i => i.Status.ToString()),
+                "status" => isDescending ? query.OrderByDescending(i => i.Status.Value) : query.OrderBy(i => i.Status.Value),
                 "completeddate" => isDescending ? query.OrderByDescending(i => i.CompletedDate) : query.OrderBy(i => i.CompletedDate),
                 "createddate" => isDescending ? query.OrderByDescending(i => i.CreatedDate) : query.OrderBy(i => i.CreatedDate),
                 "updateddate" => isDescending ? query.OrderByDescending(i => i.UpdatedDate) : query.OrderBy(i => i.UpdatedDate),

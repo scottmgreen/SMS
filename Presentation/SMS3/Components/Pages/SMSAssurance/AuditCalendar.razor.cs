@@ -11,6 +11,7 @@ public partial class AuditCalendar : ComponentBase
     [Inject] private ILogger<AuditCalendar> _logger { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Component State - Matching Radzen sample
@@ -217,7 +218,7 @@ public partial class AuditCalendar : ComponentBase
             if (auditPlan is not null)
             {
                 // Create a copy for editing like Radzen sample
-                var copy = new SMSAuditPlan(new SMSAuditPlanID(auditPlan.Code), auditPlan.CreatedBy ?? "System")
+                var copy = new SMSAuditPlan(new SMSAuditPlanID(auditPlan.Code), auditPlan.CreatedBy ?? _currentUserService.UserCode)
                 {
                     Code = auditPlan.Code,
                     Name = auditPlan.Name,

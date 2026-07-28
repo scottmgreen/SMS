@@ -19,7 +19,7 @@ namespace SMS_Domain.Common;
 public abstract class BaseDomainEvent :BaseAuditableEntity, IBaseDomainEvent
 {
     
-    protected BaseDomainEvent(SMSEventID id) : base(id, "SYSTEM", DateTime.UtcNow)
+    protected BaseDomainEvent(SMSEventID id) : base(id, string.Empty, DateTime.UtcNow)
     {
         EventId = Guid.NewGuid();
         OccurredOn = DateTime.UtcNow;

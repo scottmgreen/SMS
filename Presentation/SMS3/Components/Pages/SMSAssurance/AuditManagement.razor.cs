@@ -309,7 +309,7 @@ public partial class AuditManagement : ComponentBase
             var result = await _dialogService.OpenAsync<Components.AuditPlanDialog>("Create Audit Plan",
                 new Dictionary<string, object?>()
                 {
-                    { "AuditPlan", new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), _currentUserService?.UserDisplayName ?? "System") },
+                    { "AuditPlan", new SMSAuditPlan(new SMSAuditPlanID("AP-0000"), _currentUserService.UserCode) },
                     { "IsNew", true }
                 },
                 new DialogOptions() { Width = "1200px", Height = "900px", Resizable = true });
@@ -375,7 +375,7 @@ public partial class AuditManagement : ComponentBase
             {
                 // Step 1: Update the audit plan status to "Scheduled"
                 plan.Status = "Scheduled";
-                plan.UpdatedBy = "CURRENT_USER";
+                plan.UpdatedBy = _currentUserService.UserCode;
                 plan.UpdatedDate = DateTime.UtcNow;
 
                 var updatePlanCommand = new UpdateSMSAuditPlanCommand(plan);
@@ -397,7 +397,7 @@ public partial class AuditManagement : ComponentBase
                     scheduledEndDate: plan.PlannedEndDate,
                     leadAuditor: plan.LeadAuditor ?? "TBD",
                     responsibleDepartment: plan.ResponsibleDepartment ?? "Operations",
-                    createdBy: "CURRENT_USER"
+                    createdBy: _currentUserService.UserCode
                 );
 
                 var createAuditResult = await _mediator.SendAsync(createAuditCommand, CancellationToken.None);
@@ -432,7 +432,7 @@ public partial class AuditManagement : ComponentBase
 
             if (confirm == true)
             {
-                var command = new DeleteSMSAuditPlanCommand(plan.Code, _currentUserService?.UserDisplayName ?? "System");
+                var command = new DeleteSMSAuditPlanCommand(plan.Code, _currentUserService.UserCode);
                 var result = await _mediator.SendAsync(command, CancellationToken.None);
 
                 if (result.IsSuccess)

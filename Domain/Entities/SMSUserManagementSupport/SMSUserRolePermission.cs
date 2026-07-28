@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class SMSUserRolePermission : BaseAuditableEntity
 {
-    public SMSUserRolePermission(SMSUserRolePermissionID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public SMSUserRolePermission(SMSUserRolePermissionID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
     public string? Code { get; set; }
     public string? SMSUserRoleCode { get; set; }

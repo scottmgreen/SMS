@@ -1,4 +1,5 @@
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
@@ -47,7 +48,7 @@ public partial class UploadEvidenceDialog : ComponentBase
     #region Initialization
     private void InitializeModel()
     {
-        var currentUser = SessionService.GetCurrentUserDisplayName() ?? "System User";
+        var currentUser = SessionService.GetCurrentUserId() ?? SystemConstants.FlyPdxApiSource;
 
         Model = new UploadFileModel
         {
@@ -192,7 +193,7 @@ public partial class UploadEvidenceDialog : ComponentBase
 
             var uploadedFileIds = new List<string>();
             var totalFiles = AttachedFiles.Count;
-            var currentUser = SessionService.GetCurrentUserDisplayName() ?? "Unknown User";
+            var currentUser = SessionService.GetCurrentUserId() ?? SystemConstants.FlyPdxApiSource;
 
             for (int i = 0; i < totalFiles; i++)
             {
@@ -230,6 +231,7 @@ public partial class UploadEvidenceDialog : ComponentBase
                         FileSize = FormatFileSize(file.Size),
                         FileData = file.Data,
                         UploadedBy = currentUser,
+                        CreatedBy = currentUser,
                         UploadedDate = DateTime.UtcNow,
                         IsActive = true,
                         Category = "Evidence"

@@ -53,7 +53,7 @@ public sealed class HazardReportTrackingRepository : BaseRepository<HazardReport
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportCode, hazardReportTracking.ReportCode ?? (object)DBNull.Value));
 
             // Audit Fields
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, hazardReportTracking.CreatedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, hazardReportTracking.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, hazardReportTracking.CreatedDate));
 
             var newID = new SqlParameter(ParameterNames.pmNewID, SqlDbType.Int) { Direction = ParameterDirection.Output };
@@ -312,7 +312,7 @@ public sealed class HazardReportTrackingRepository : BaseRepository<HazardReport
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportCode, hazardReportTracking.ReportCode ?? (object)DBNull.Value));
 
             // Audit Fields
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazardReportTracking.UpdatedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazardReportTracking.UpdatedBy ?? hazardReportTracking.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, hazardReportTracking.UpdatedDate ?? DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

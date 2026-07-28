@@ -17,7 +17,7 @@ public sealed class SMSStakeholderUser : BaseUser
 {
     // Simple constructors
 
-    public SMSStakeholderUser(SMSStakeholderUserID id) : base(id, "SYSTEM", DateTime.UtcNow)
+    public SMSStakeholderUser(SMSStakeholderUserID id) : base(id, string.Empty, DateTime.UtcNow)
     {
         StakeholderUserId = id;
     }

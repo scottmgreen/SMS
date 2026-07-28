@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class SPIDataPoint : BaseAuditableEntity
 {
-    public SPIDataPoint(SPIDataPointID id) : base(id, "SYSTEM", DateTime.UtcNow)
+    public SPIDataPoint(SPIDataPointID id) : base(id, string.Empty, DateTime.UtcNow)
     {
         Code = id.Value;
 

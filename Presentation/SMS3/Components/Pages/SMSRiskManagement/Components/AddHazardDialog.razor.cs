@@ -414,7 +414,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         EditingHazard.HazardType = NewHazardType;
         EditingHazard.IsInitialHazard = false;
         EditingHazard.UpdatedDate = DateTime.UtcNow;
-        EditingHazard.UpdatedBy = _currentUserService?.UserDisplayName;
+        EditingHazard.UpdatedBy = _currentUserService?.UserCode;
         await UpdateHazardLocationForHazard(EditingHazard);
 
 
@@ -470,7 +470,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         
         hazard.Status = HazardStatus.InitialRiskAssessment;
         
-        hazard.CreatedBy = _currentUserService?.UserDisplayName;
+        hazard.CreatedBy = _currentUserService?.UserCode;
         hazard.CreatedDate = DateTime.UtcNow;
         // Handle location for new hazard - EXACTLY like HazardReporting
         await UpdateHazardLocationForHazard(hazard);
@@ -554,7 +554,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                 Latitude = SelectedGeoLocation.Latitude,
                 Longitude = SelectedGeoLocation.Longitude,
                 Description = SelectedGeoLocation.Description ?? "Map selected location",
-                CreatedBy = _currentUserService?.UserDisplayName,
+                CreatedBy = _currentUserService?.UserCode,
                 CreatedDate = DateTime.UtcNow,
                 IsValidated = true,
                 IsValid = true
@@ -622,7 +622,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                     hazardLocation.Description = SelectedGeoLocation.Description ?? "Map selected location";
                     hazardLocation.IsValidated = true;
                     hazardLocation.UpdatedDate = DateTime.UtcNow;
-                    hazardLocation.UpdatedBy = _currentUserService?.UserDisplayName;
+                    hazardLocation.UpdatedBy = _currentUserService?.UserCode;
                     hazard.HazardLocation = hazardLocation;
 
                     var locationUpdateResult = await _mediator.SendAsync(

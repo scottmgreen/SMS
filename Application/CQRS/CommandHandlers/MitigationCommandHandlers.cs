@@ -157,7 +157,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                             id: new SMSEventID("EV-0000"),
                             mitigationId: (updatedMitigation.Code ?? updatedMitigation.Id.Value ?? string.Empty).Trim(),
                             status: currentStatusValue,
-                            changedBy: updatedMitigation.UpdatedBy ?? "SYSTEM",
+                            changedBy: updatedMitigation.UpdatedBy ?? updatedMitigation.CreatedBy ?? string.Empty,
                             changedDate: updatedMitigation.UpdatedDate ?? DateTime.UtcNow)
                         {
                             ReportId = reportId
@@ -176,7 +176,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                         {
                             var mitigationCode = (updatedMitigation.Code ?? updatedMitigation.Id.Value ?? string.Empty).Trim();
                             var completedDate = updatedMitigation.UpdatedDate ?? DateTime.UtcNow;
-                            var completedBy = updatedMitigation.ApprovedBy ?? updatedMitigation.UpdatedBy ?? "SYSTEM";
+                            var completedBy = updatedMitigation.ApprovedBy ?? updatedMitigation.UpdatedBy ?? updatedMitigation.CreatedBy ?? string.Empty;
 
                             var mitigationCompletedEvent = new MitigationCompletedEvent(
                                 new SMSEventID("EV-0000"),

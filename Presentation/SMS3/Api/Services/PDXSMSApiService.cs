@@ -22,6 +22,7 @@ using SMS_Shared.Common;
 
 using SMS3.Api.Models;
 using SMS3.Api.Services;
+using SMS3.Configuration;
 
 
 namespace SMS3.Api.Services
@@ -273,9 +274,9 @@ namespace SMS3.Api.Services
                 var report = new Report(new ReportID("RP-0000"))
                 {
                     Code = "RP-0000",
-                    Name = $"EXTERNAL_API_SOURCE",
+                    Name = SystemConstants.FlyPdxApiSource,
                     Description = request.HazardDescription,
-                    SubmittedBy = "EXTERNAL_API_SOURCE",
+                    SubmittedBy = SystemConstants.FlyPdxApiSource,
                     SubmittedDate = request.ReportSubmittedDate ?? DateTime.UtcNow,
                     SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
                     SubmittingDepartmentJobFunction = request.ReportSubmittingDepartmentJobFunction ?? string.Empty,
@@ -287,7 +288,7 @@ namespace SMS3.Api.Services
                     ReportContactCompany = request.ReportContactCompany ?? string.Empty,
                     Stage = "INITIAL",
                     Status = ReportStatus.NeedsValidation,
-                    CreatedBy = "EXTERNAL_API_SOURCE",
+                    CreatedBy = SystemConstants.FlyPdxApiSource,
                     CreatedDate = DateTime.UtcNow
                 };
                 var reportResult = await _mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
@@ -301,7 +302,7 @@ namespace SMS3.Api.Services
                 var hazard = new Hazard(new HazardID("HZ-0000"))
                 {
                     Code = "HZ-0000",
-                    Name = $"EXTERNAL_API_SOURCE",
+                    Name = SystemConstants.FlyPdxApiSource,
                     HazardTitle = string.Empty,
                     Description = request.HazardDescription ?? string.Empty,
                     HazardCategory = HazardCategory.Default.Value,
@@ -309,7 +310,7 @@ namespace SMS3.Api.Services
                     ReportCode = actualReportCode,
                     IsInitialHazard = true,
                     Status = HazardStatus.InitialRiskAssessment,
-                    CreatedBy = "EXTERNAL_API_SOURCE",
+                    CreatedBy = SystemConstants.FlyPdxApiSource,
                     CreatedDate = DateTime.UtcNow
                 };
                 var hazardResult = await _mediator.SendAsync(new CreateHazardCommand(hazard), CancellationToken.None);
@@ -513,11 +514,11 @@ namespace SMS3.Api.Services
                         StorageType = storageType,
                         FilePath = filePath,
                         FileData = fileData,
-                        UploadedBy = "EXTERNAL_API_SOURCE",
+                        UploadedBy = SystemConstants.FlyPdxApiSource,
                         UploadedDate = DateTime.UtcNow,
                         IsActive = true,
                         IsConfidential = true,
-                        CreatedBy = "EXTERNAL_API_SOURCE",
+                        CreatedBy = SystemConstants.FlyPdxApiSource,
                         CreatedDate = DateTime.UtcNow
                     };
 
@@ -559,7 +560,7 @@ namespace SMS3.Api.Services
                 Code = "RP-0000", // Database will generate actual code
                 Name = $"{request.HazardCategory}/{request.HazardType}",
                 Description = request.HazardDescription,
-                SubmittedBy = "EXTERNAL_API_SOURCE",
+                SubmittedBy = SystemConstants.FlyPdxApiSource,
                 SubmittedDate = request.ReportSubmittedDate.Value,
                 SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
                 SubmittingDepartmentJobFunction = request.ReportSubmittingDepartmentJobFunction ?? string.Empty,
@@ -571,7 +572,7 @@ namespace SMS3.Api.Services
                 ReportContactCompany = request.ReportContactCompany ?? string.Empty,
                 Stage = "INITIAL",
                 Status = ReportStatus.NeedsValidation,
-                CreatedBy = "EXTERNAL_API_SOURCE",
+                CreatedBy = SystemConstants.FlyPdxApiSource,
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -590,7 +591,7 @@ namespace SMS3.Api.Services
                 ReportCode = reportCode,
                 IsInitialHazard = true,
                 Status = HazardStatus.InitialRiskAssessment,
-                CreatedBy = "EXTERNAL_API_SOURCE",
+                CreatedBy = SystemConstants.FlyPdxApiSource,
                 CreatedDate = DateTime.UtcNow
             };
 

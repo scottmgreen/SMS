@@ -271,9 +271,9 @@
             {
                 events =
                 [
-                    ("UserCreated", "System"),
-                    ("HazardReported", "System"),
-                    ("RiskAssessmentCompleted", "System")
+                    ("UserCreated", "EventQueueService"),
+                    ("HazardReported", "EventQueueService"),
+                    ("RiskAssessmentCompleted", "EventQueueService")
                 ];
             }
             else if (category == EventCategory.IntegrationEvent)

@@ -132,7 +132,7 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
                             investigationCode: updatedInvestigation.Code,
                             previousStatus: previousStatus!,
                             newStatus: updatedInvestigation.Status,
-                            changedBy: updatedInvestigation.UpdatedBy ?? "SYSTEM",
+                            changedBy: updatedInvestigation.UpdatedBy ?? updatedInvestigation.CreatedBy ?? string.Empty,
                             changedDate: updatedInvestigation.UpdatedDate ?? DateTime.UtcNow),
                         ct).ConfigureAwait(false);
                 }

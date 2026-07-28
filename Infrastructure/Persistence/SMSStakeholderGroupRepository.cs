@@ -104,7 +104,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupName, stakeholderGroup.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupDescription, stakeholderGroup.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupIsActive, stakeholderGroup.IsActive));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, stakeholderGroup.UpdatedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, stakeholderGroup.UpdatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, stakeholderGroup.UpdatedDate ?? DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -141,7 +141,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Trim()));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, code.Trim()));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -214,7 +214,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, userCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, userCode));
 
             List<SMSStakeholderGroup> response = new();
 
@@ -292,7 +292,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
     /// <summary>
     /// Assigns a user to a stakeholder group
     /// </summary>
-    public async Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy = "SYSTEM", CancellationToken ct = default)
+    public async Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy, CancellationToken ct = default)
     {
         try
         {
@@ -352,7 +352,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserCodeForAssignment, userCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, groupCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, userCode));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -388,7 +388,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, userCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, userCode));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

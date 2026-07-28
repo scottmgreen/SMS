@@ -31,11 +31,11 @@ public interface IEventQueueDataService
 
     Task<Result<bool>> MarkProcessedAsync(Guid queueGuid, string worker, CancellationToken ct = default);
     Task<Result<bool>> MarkFailedAsync(Guid queueGuid, string worker, string lastError, int backoffSeconds = 30, CancellationToken ct = default);
-    Task<Result<bool>> CancelAsync(Guid queueGuid, string cancelledBy = "SYSTEM", CancellationToken ct = default);
+    Task<Result<bool>> CancelAsync(Guid queueGuid, string cancelledBy = "", CancellationToken ct = default);
 
-    Task<Result<int>> ClearCompletedAsync(string clearedBy = "SYSTEM", CancellationToken ct = default);
+    Task<Result<int>> ClearCompletedAsync(string clearedBy = "", CancellationToken ct = default);
     Task<Result<int>> ClearAllAsync(CancellationToken ct = default);
-    Task<Result<int>> RecoverExpiredLocksAsync(int recoveryDelaySeconds = 5, string recoveredBy = "SYSTEM", CancellationToken ct = default);
+    Task<Result<int>> RecoverExpiredLocksAsync(int recoveryDelaySeconds = 5, string recoveredBy = "", CancellationToken ct = default);
 
     Task<Result<QueueStatistics>> GetStatsAsync(CancellationToken ct = default);
 }

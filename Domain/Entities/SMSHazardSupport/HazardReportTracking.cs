@@ -16,7 +16,7 @@ namespace SMS_Domain.Entities;
 public class HazardReportTracking : BaseAuditableEntity
 {
     // Public constructor for domain usage
-    public HazardReportTracking(HazardReportTrackingID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public HazardReportTracking(HazardReportTrackingID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
 
 

@@ -28,6 +28,7 @@ using SMS_Shared.Configuration;
 using SMS3.Components.Pages.SMSRiskManagement;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration;
 using SMS3.Configuration.Extensions;
 
 namespace SMS3.Components.Pages.SMSListings;
@@ -59,6 +60,7 @@ public partial class ReportListing : ComponentBase
     private IEnumerable<Report> _reports = new List<Report>();
     private IList<Report> _selectedReports = new List<Report>();
     private List<Report> _allReports = new List<Report>(); // Store all reports for client-side filtering
+    private readonly Dictionary<string, string> _userCodeToFullName = new(StringComparer.OrdinalIgnoreCase);
     private int _totalCount;
     private bool _isLoading = false;
 
@@ -178,6 +180,8 @@ public partial class ReportListing : ComponentBase
 
             _logger.LogInformation("Loading reports for listing view");
 
+            await LoadUserDisplayMapAsync();
+
             var query = new GetAllReportsQuery();
             var result = await _mediator.SendAsync(query, CancellationToken.None);
 
@@ -189,7 +193,6 @@ public partial class ReportListing : ComponentBase
                 _logger.LogInformation("Loaded {Count} reports for listing", _totalCount);
 
                 await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Successfully loaded {_totalCount} reports"));
-               
             }
             else
             {
@@ -207,6 +210,46 @@ public partial class ReportListing : ComponentBase
             _isLoading = false;
             StateHasChanged();
         }
+    }
+
+    private async Task LoadUserDisplayMapAsync()
+    {
+        _userCodeToFullName.Clear();
+
+        var usersResult = await _mediator.SendAsync(new GetAllSMSApplicationUsersQuery(), CancellationToken.None);
+        if (!usersResult.IsSuccess || usersResult.Value is null)
+        {
+            return;
+        }
+
+        foreach (var user in usersResult.Value)
+        {
+            if (string.IsNullOrWhiteSpace(user.Code))
+            {
+                continue;
+            }
+
+            var firstName = user.FirstName?.Value?.Trim() ?? string.Empty;
+            var lastName = user.LastName?.Value?.Trim() ?? string.Empty;
+            var fullName = string.Join(" ", new[] { firstName, lastName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+            if (!string.IsNullOrWhiteSpace(fullName))
+            {
+                _userCodeToFullName[user.Code] = fullName;
+            }
+        }
+    }
+
+    private string GetActorDisplayName(string? actorCode)
+    {
+        if (string.IsNullOrWhiteSpace(actorCode))
+        {
+            return SystemConstants.FlyPdxApiSource;
+        }
+
+        return _userCodeToFullName.TryGetValue(actorCode, out var fullName)
+            ? fullName
+            : actorCode;
     }
 
     private async Task OnExportSelectedReportsPdfAsync()
@@ -336,8 +379,8 @@ public partial class ReportListing : ComponentBase
                     (!string.IsNullOrEmpty(r.Name) && r.Name.ToLower().Contains(filterValue)) ||
                     (!string.IsNullOrEmpty(r.Description) && r.Description.ToLower().Contains(filterValue)) ||
                     (!string.IsNullOrEmpty(r.Status) && r.Status.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(r.SubmittedBy) && r.SubmittedBy.ToLower().Contains(filterValue)) ||
-                    (!string.IsNullOrEmpty(r.SubmittingDepartment) && r.SubmittingDepartment.ToLower().Contains(filterValue))
+                    (!string.IsNullOrEmpty(r.CreatedBy) && r.CreatedBy.ToLower().Contains(filterValue)) ||
+                    (!string.IsNullOrEmpty(r.UpdatedBy) && r.UpdatedBy.ToLower().Contains(filterValue))
                 );
                 return query;
             }
@@ -367,16 +410,22 @@ public partial class ReportListing : ComponentBase
                         case "status":
                             query = ApplyStringFilter(query, r => r.Status, filterValue, filterOperator);
                             break;
-                        case "submittedby":
-                            query = ApplyStringFilter(query, r => r.SubmittedBy, filterValue, filterOperator);
+                        case "createdby":
+                            query = ApplyStringFilter(query, r => r.CreatedBy, filterValue, filterOperator);
                             break;
-                        case "submittingdepartment":
-                            query = ApplyStringFilter(query, r => r.SubmittingDepartment, filterValue, filterOperator);
+                        case "updatedby":
+                            query = ApplyStringFilter(query, r => r.UpdatedBy, filterValue, filterOperator);
                             break;
-                        case "submitteddate":
+                        case "createddate":
                             if (DateTime.TryParse(filter.FilterValue?.ToString(), out var dateValue))
                             {
-                                query = ApplyDateFilter(query, r => r.SubmittedDate, dateValue, filterOperator);
+                                query = ApplyDateFilter(query, r => r.CreatedDate, dateValue, filterOperator);
+                            }
+                            break;
+                        case "updateddate":
+                            if (DateTime.TryParse(filter.FilterValue?.ToString(), out var updatedDateValue))
+                            {
+                                query = ApplyDateFilter(query, r => r.UpdatedDate, updatedDateValue, filterOperator);
                             }
                             break;
                     }
@@ -461,10 +510,10 @@ public partial class ReportListing : ComponentBase
                 "name" => isDescending ? query.OrderByDescending(r => r.Name) : query.OrderBy(r => r.Name),
                 "description" => isDescending ? query.OrderByDescending(r => r.Description) : query.OrderBy(r => r.Description),
                 "status" => isDescending ? query.OrderByDescending(r => r.Status) : query.OrderBy(r => r.Status),
-                "submittedby" => isDescending ? query.OrderByDescending(r => r.SubmittedBy) : query.OrderBy(r => r.SubmittedBy),
-                "submitteddate" => isDescending ? query.OrderByDescending(r => r.SubmittedDate) : query.OrderBy(r => r.SubmittedDate),
-                "submittingdepartment" => isDescending ? query.OrderByDescending(r => r.SubmittingDepartment) : query.OrderBy(r => r.SubmittingDepartment),
+                "createdby" => isDescending ? query.OrderByDescending(r => r.CreatedBy) : query.OrderBy(r => r.CreatedBy),
                 "createddate" => isDescending ? query.OrderByDescending(r => r.CreatedDate) : query.OrderBy(r => r.CreatedDate),
+                "updatedby" => isDescending ? query.OrderByDescending(r => r.UpdatedBy) : query.OrderBy(r => r.UpdatedBy),
+                "updateddate" => isDescending ? query.OrderByDescending(r => r.UpdatedDate) : query.OrderBy(r => r.UpdatedDate),
                 _ => query.OrderByDescending(r => r.CreatedDate) // Default sort
             };
         }
@@ -2083,7 +2132,11 @@ public partial class ReportListing : ComponentBase
                 var report = reportResult.Value;
 
                 // Create new ReportValidation using the static factory method
-                var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, _currentUserService?.UserDisplayName ?? "Unknown User");
+                var validation = SMS_Domain.Entities.ReportValidation.Create(
+                    reportCode,
+                    string.IsNullOrWhiteSpace(_currentUserService?.UserCode)
+                        ? SystemConstants.FlyPdxApiSource
+                        : _currentUserService.UserCode);
                 validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
 
                 var createCommand = new CreateReportValidationCommand(validation);
@@ -2126,7 +2179,12 @@ public partial class ReportListing : ComponentBase
     
     private async Task<bool> UpdateReportStatus(string reportcode, ReportStatus status)
     {
-        var updatestatuscmd = new UpdateReportStatusCommand(reportcode, status, _currentUserService?.UserDisplayName ?? "Unknown User");
+        var updatestatuscmd = new UpdateReportStatusCommand(
+            reportcode,
+            status,
+            string.IsNullOrWhiteSpace(_currentUserService?.UserCode)
+                ? SystemConstants.FlyPdxApiSource
+                : _currentUserService.UserCode);
         var getupdateResult = await _mediator.SendAsync(updatestatuscmd, CancellationToken.None);
         if (!getupdateResult.IsSuccess)
         {

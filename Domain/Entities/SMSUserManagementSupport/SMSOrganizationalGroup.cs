@@ -15,6 +15,8 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class SMSOrganizationalGroup : BaseAuditableEntity
 {
+    private const string DefaultActor = "FLYPDX_API";
+
     /// <summary>
     /// Unique identifier for the organizational group
     /// </summary>
@@ -53,7 +55,7 @@ public sealed class SMSOrganizationalGroup : BaseAuditableEntity
     /// <summary>
     /// Parameterless constructor for Entity Framework
     /// </summary>
-    private SMSOrganizationalGroup() : base(new SMSOrganizationalGroupID(string.Empty), "SYSTEM", DateTime.UtcNow)
+    private SMSOrganizationalGroup() : base(new SMSOrganizationalGroupID(string.Empty), string.Empty, DateTime.UtcNow)
     {
         Id = new SMSOrganizationalGroupID(string.Empty);
     }
@@ -62,12 +64,12 @@ public sealed class SMSOrganizationalGroup : BaseAuditableEntity
     /// Creates a new organizational group with the specified ID
     /// </summary>
     /// <param name="id">The unique identifier for the organizational group</param>
-    public SMSOrganizationalGroup(SMSOrganizationalGroupID id) : base(id, "SYSTEM", DateTime.UtcNow)
+    public SMSOrganizationalGroup(SMSOrganizationalGroupID id) : base(id, DefaultActor, DateTime.UtcNow)
     {
         Id = id ?? throw new ArgumentNullException(nameof(id));
         Code = id.Value;
         CreatedDate = DateTime.UtcNow;
-        CreatedBy = "SYSTEM";
+        CreatedBy = DefaultActor;
     }
 
     /// <summary>
@@ -76,7 +78,7 @@ public sealed class SMSOrganizationalGroup : BaseAuditableEntity
     /// <param name="name">The name of the organizational group</param>
     /// <param name="groupType">The type of organizational group</param>
     /// <param name="createdBy">The user creating the group</param>
-    public static SMSOrganizationalGroup Create(string name, string groupType = "Department", string createdBy = "SYSTEM")
+    public static SMSOrganizationalGroup Create(string name, string groupType = "Department", string createdBy = DefaultActor)
     {
         if (string.IsNullOrWhiteSpace(name))
             throw new ArgumentException("Group name cannot be null or empty.", nameof(name));

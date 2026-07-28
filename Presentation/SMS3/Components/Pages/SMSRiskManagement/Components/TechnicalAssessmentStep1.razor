@@ -26,7 +26,7 @@
                                             <RadzenDropDown @bind-Value="@Step1.LeadAssessor" 
                                                             Data="@AvailableAssessors"
                                                             TextProperty="DisplayName"
-                                                            ValueProperty="UserName.Value"
+                                                            ValueProperty="Code"
                                                             Placeholder="Lead Assessor..." 
                                                             Style="width: 100%;"
                                                             AllowClear="false"
@@ -376,7 +376,7 @@
             return "Please select a lead assessor";
         }
 
-        var selectedAssessor = AvailableAssessors?.FirstOrDefault(a => a.UserName.Value == Step1.LeadAssessor);
+        var selectedAssessor = AvailableAssessors?.FirstOrDefault(a => a.Code == Step1.LeadAssessor);
         if (!ReferenceEquals(selectedAssessor, null))
         {
             return $"Selected: {selectedAssessor.DisplayName} ✓";

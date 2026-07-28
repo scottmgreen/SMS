@@ -49,7 +49,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
 
 
     
-    public RiskAssessment(RiskAssessmentID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public RiskAssessment(RiskAssessmentID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
        
 

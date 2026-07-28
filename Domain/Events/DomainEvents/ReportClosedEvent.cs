@@ -24,7 +24,7 @@ public class ReportClosedEvent : BaseDomainEvent
     public ReportClosedEvent(SMSEventID id,string reportId, string closedBy, DateTime closedDate) : base(id)
     {
         ReportId = reportId ?? throw new ArgumentNullException(nameof(reportId));
-        ClosedBy = closedBy ?? "SYSTEM";
+        ClosedBy = closedBy ?? string.Empty;
         ClosedDate = closedDate;
     }
 }

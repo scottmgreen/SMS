@@ -29,6 +29,8 @@ public class CreateHazardFileCommand : BaseCommandBundle, IRequest<Result<Hazard
     {
         HazardFile.UploadedBy = userId;
         HazardFile.UploadedDate = timestamp;
+        HazardFile.CreatedBy = userId;
+        HazardFile.CreatedDate = timestamp;
     }
 
     public void SetUpdatedBy(string userId, DateTime timestamp)

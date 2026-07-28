@@ -73,8 +73,8 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAssessmentCategory, riskAssessment.RiskAssessmentCategory.Value ?? (object)DBNull.Value));
 
             // Audit fields
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, riskAssessment.CreatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, riskAssessment.CreatedBy ?? string.Empty));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, riskAssessment.CreatedDate ?? DateTime.UtcNow));
 
             // Output parameters
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
@@ -283,8 +283,8 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompletionPercentage, completionPercentage));
 
             // Audit fields
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, riskAssessment.UpdatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, riskAssessment.UpdatedBy ?? riskAssessment.CreatedBy ?? string.Empty));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, riskAssessment.UpdatedDate ?? DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

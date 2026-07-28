@@ -100,27 +100,34 @@
             </Template>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="Report" Property="SubmittedBy" Title="Submitted By" Width="150px">
+        <RadzenDataGridColumn TItem="Report" Property="CreatedBy" Title="Created By" Width="150px">
             <Template Context="report">
-                <div title="@report.SubmittedBy" style="@_basicTextStyle">
-                    @(report.SubmittedBy)
+                <div title="@report.CreatedBy" style="@_basicTextStyle">
+                    @GetActorDisplayName(report.CreatedBy)
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Report" Property="SubmittedDate" Title="Submitted Date" Width="150px" FormatString="{0:MM/dd/yyyy}">
+        <RadzenDataGridColumn TItem="Report" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}">
             <Template Context="report">
-                <div title="@report.SubmittedDate" style="@_basicTextStyle">
-                    @(report.SubmittedDate)
+                <div title="@report.CreatedDate" style="@_basicTextStyle">
+                    @(report.CreatedDate)
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Report" Property="SubmittingDepartment" Title="Submitting Department" Width="250px">
+        <RadzenDataGridColumn TItem="Report" Property="UpdatedBy" Title="Updated By" Width="150px">
             <Template Context="report">
-                <div title="@report.SubmittingDepartment" style="@_basicTextStyle">
-                    @(report.SubmittingDepartment)
+                <div title="@report.UpdatedBy" style="@_basicTextStyle">
+                    @GetActorDisplayName(report.UpdatedBy)
                 </div>
             </Template>
 
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Report" Property="UpdatedDate" Title="Updated Date" Width="150px" FormatString="{0:MM/dd/yyyy}">
+            <Template Context="report">
+                <div title="@report.UpdatedDate" style="@_basicTextStyle">
+                    @(report.UpdatedDate)
+                </div>
+            </Template>
         </RadzenDataGridColumn>
        
         <!-- Enhanced Actions Column -->

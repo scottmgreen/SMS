@@ -51,7 +51,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentCode, mitigationAssignment.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentMitigationCode, mitigationAssignment.MitigationCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentDepartmentCode, mitigationAssignment.DepartmentCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, mitigationAssignment.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
@@ -178,7 +178,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentCode, mitigationAssignment.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentMitigationCode, mitigationAssignment.MitigationCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentDepartmentCode, mitigationAssignment.DepartmentCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, mitigationAssignment.UpdatedBy ?? mitigationAssignment.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);

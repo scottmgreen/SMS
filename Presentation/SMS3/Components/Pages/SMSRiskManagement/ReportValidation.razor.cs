@@ -133,7 +133,7 @@ public partial class ReportValidation : ComponentBase
 
                 // Set defaults for new validation
                 _selectedValidationDecision = null;
-                _validatedBy = _currentUserService?.UserDisplayName ?? string.Empty;
+                _validatedBy = _currentUserService?.UserCode ?? string.Empty;
                 _validationType = RiskAssessmentCategory.Technical;
                 _validationComments = "";
             }
@@ -172,7 +172,7 @@ public partial class ReportValidation : ComponentBase
                 {
                     LeadAssessorOptions.Add(new DropdownOption
                     {
-                        Value = assessor.UserName.Value,
+                        Value = assessor.Code,
                         Text = $"{assessor.DisplayName}" // ({assessor.UserName.Value}) - {assessor.UserRole}" 
                     });
                 }
@@ -208,7 +208,7 @@ public partial class ReportValidation : ComponentBase
                 {
                     LeadInvestigatorOptions.Add(new DropdownOption
                     {
-                        Value = assessor.UserName.Value,
+                        Value = assessor.Code,
                         Text = $"{assessor.DisplayName}" // ({assessor.UserName.Value}) - {assessor.UserRole}" 
                     });
                 }
@@ -324,7 +324,7 @@ public partial class ReportValidation : ComponentBase
             Status = initialStatus,
             CurrentStep = initialStep,
             CreatedDate = DateTime.UtcNow,
-            CreatedBy = _currentUserService?.UserDisplayName,
+            CreatedBy = _currentUserService?.UserCode,
         };
     }
 
@@ -338,7 +338,7 @@ public partial class ReportValidation : ComponentBase
         var getReportQuery = new GetReportByCodeQuery(new ReportID(reportId));
         var getReportQueryResult = await _mediator.SendAsync(getReportQuery, CancellationToken.None);
 
-        var cmd = new UpdateReportStatusCommand(reportId, status, _currentUserService?.UserDisplayName ?? "SYSTEM");
+        var cmd = new UpdateReportStatusCommand(reportId, status, _currentUserService.UserCode);
         var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
         if (!cmdResult.IsSuccess)
         {
@@ -353,6 +353,7 @@ public partial class ReportValidation : ComponentBase
         try
         {
             _logger.LogInformation("Smart validation record processing for ReportId: {ReportId}, HasExisting: {HasExisting}",ReportId, ExistingValidation is not null);
+            var validatedByUserCode = _currentUserService?.UserCode ?? string.Empty;
 
             if (ExistingValidation is not null)
             {
@@ -363,12 +364,12 @@ public partial class ReportValidation : ComponentBase
                 ExistingValidation.ValidationDecision = ValidationDecisionValue;
                 ExistingValidation.ValidationComments = _validationComments;
                 ExistingValidation.ValidationType = _currentValidationType;
-                ExistingValidation.ValidatedBy = _validatedBy;
+                ExistingValidation.ValidatedBy = validatedByUserCode;
                 ExistingValidation.Status = ReportValidationStatus.Revised;
                 ExistingValidation.Stage = "COMPLETE";
                 ExistingValidation.ValidatedDate = DateTime.UtcNow;
 
-                ExistingValidation.UpdatedBy = _currentUserService?.UserDisplayName; 
+                ExistingValidation.UpdatedBy = _currentUserService?.UserCode; 
                 ExistingValidation.UpdatedDate = DateTime.UtcNow;
 
                 var updateCommand = new UpdateReportValidationCommand(ExistingValidation);
@@ -399,14 +400,14 @@ public partial class ReportValidation : ComponentBase
                 {
                     Code = validationId.Value,
                     ReportCode = ReportId,
-                    ValidatedBy = _validatedBy,
+                    ValidatedBy = validatedByUserCode,
                     ValidationDecision = ValidationDecisionValue,
                     ValidationComments = _validationComments,
                     ValidationType = _currentValidationType,
                     Status = ReportValidationStatus.ValidationComplete,
                     Stage = "NEW",
                     ValidatedDate = DateTime.UtcNow,
-                    CreatedBy = _currentUserService?.UserDisplayName,
+                    CreatedBy = _currentUserService?.UserCode,
                     CreatedDate = DateTime.UtcNow
                 };
 
@@ -443,13 +444,13 @@ public partial class ReportValidation : ComponentBase
         try
         {
             // Step 1: Check if user wants to create Airport Shared Dataset
-            bool createDataset = await ShowAirportDatasetDialog();
+            //bool createDataset = await ShowAirportDatasetDialog();
             
-            if (createDataset)
-            {
-                await NavigateToDatasetCreation();
-                return;
-            }
+            //if (createDataset)
+            //{
+            //    await NavigateToDatasetCreation();
+            //    return;
+            //}
 
             if (_riskRegistryOnly)
             {
@@ -465,7 +466,7 @@ public partial class ReportValidation : ComponentBase
                     await _notificationHelper.ShowInfoAsync($"Using existing Risk Assessment {riskAssessment.Code}");
                 }
 
-                await UpdateReportStatusWithValidation(ReportStatus.RiskRegistryOnly, "Risk registry only");
+                await UpdateReportStatusWithValidation(ReportStatus.RiskRegistryOnly, "Risk Registry Only");
 
                 var encodedReportCode = Uri.EscapeDataString((ReportId ?? string.Empty).Trim());
                 var hazardCode = _reportHazard?.Code ?? riskAssessment.HazardCode ?? riskAssessment.PrimaryHazardId ?? string.Empty;
@@ -536,7 +537,7 @@ public partial class ReportValidation : ComponentBase
                 Investigation investigation = new Investigation(investigationId);
                 investigation.HazardCode = _reportHazard.Code;
                 investigation.Status = InvestigationStatus.InvestigatorAssigned;
-                investigation.CreatedBy = _currentUserService?.UserDisplayName;
+                investigation.CreatedBy = _currentUserService?.UserCode;
                 investigation.ReportCode = ReportId;
                 investigation.AssignedInvestigatorId = _leadInvestigator;
                 investigation.InvestigationObjectives = $"Investigation required based on validation decision for hazard {_reportHazard.Code}";
@@ -761,7 +762,7 @@ public partial class ReportValidation : ComponentBase
                 existingAssessment.LeadAssessorId = _leadAssessor;
             }
 
-            existingAssessment.UpdatedBy = _currentUserService?.UserDisplayName ?? "SYSTEM";
+            existingAssessment.UpdatedBy = _currentUserService.UserCode;
             existingAssessment.UpdatedDate = DateTime.UtcNow;
 
             var updateCmd = new UpdateRiskAssessmentCommand(existingAssessment);
@@ -796,7 +797,7 @@ public partial class ReportValidation : ComponentBase
                 existingAssessment.LeadAssessorId = _leadAssessor;
             }
 
-            existingAssessment.UpdatedBy = _currentUserService?.UserDisplayName ?? "SYSTEM";
+            existingAssessment.UpdatedBy = _currentUserService.UserCode;
             existingAssessment.UpdatedDate = DateTime.UtcNow;
 
             var updateCmd = new UpdateRiskAssessmentCommand(existingAssessment);

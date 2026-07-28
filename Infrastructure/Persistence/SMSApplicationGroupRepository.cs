@@ -104,7 +104,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupName, applicationGroup.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupDescription, applicationGroup.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupIsActive, applicationGroup.IsActive));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, applicationGroup.UpdatedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, applicationGroup.UpdatedBy ?? applicationGroup.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, applicationGroup.UpdatedDate ?? DateTime.UtcNow));
             cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected", 0, null));
 
@@ -142,7 +142,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, groupCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected", 0, null));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -263,7 +263,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, groupCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUserId, string.Empty));
 
             SMSApplicationGroup? response = null;
 
@@ -296,7 +296,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
     /// <summary>
     /// Assigns a user to an application group
     /// </summary>
-    public async Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy = "SYSTEM", CancellationToken ct = default)
+    public async Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy, CancellationToken ct = default)
     {
         try
         {
@@ -356,7 +356,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupUserCode, userCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupCode, groupCode));
-            cmd.Parameters.Add(DataAccess.Parameter("@pRemovedBy", "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter("@pRemovedBy", userCode));
             cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected", 0, null));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -393,7 +393,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupUserCode, userCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupClearedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupClearedBy, userCode));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -424,7 +424,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             };
 
             cmd.Parameters.Add(DataAccess.Parameter("@pActiveOnly", activeOnly));
-            cmd.Parameters.Add(DataAccess.Parameter("@pRequestedBy", "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter("@pRequestedBy", string.Empty));
 
             List<SMSApplicationGroup> groups = new();
             Dictionary<string, List<SMSApplicationUser>> groupMembers = new();

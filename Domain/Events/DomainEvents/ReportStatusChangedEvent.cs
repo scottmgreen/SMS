@@ -26,7 +26,7 @@ public sealed class ReportStatusChangedEvent : BaseDomainEvent
         ReportCode = reportCode;
         PreviousStatus = previousStatus ?? ReportStatus.Unknown;
         NewStatus = newStatus ?? ReportStatus.Unknown;
-        ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? "SYSTEM" : changedBy;
+        ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? string.Empty : changedBy;
         ChangedDate = changedDate;
     }
 }

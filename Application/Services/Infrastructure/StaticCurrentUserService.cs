@@ -6,6 +6,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Application.Common;
 using SMS_Domain.Entities;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Interfaces;
@@ -42,11 +43,11 @@ public class StaticCurrentUserService : ICurrentUserService
 
     public bool IsAuthenticated => _isAuthenticated;
 
-    public string UserCode => _currentUserId ?? "SYSTEM";
+    public string UserCode => _currentUserId ?? string.Empty;
 
     public string? UserType => _currentUserType;
 
-    public string UserDisplayName => _currentDisplayName ?? "System User";
+    public string UserDisplayName => _currentDisplayName ?? UserCode ?? SystemActorConstants.FlyPdxApiSource;
 
     public string? Email => _currentEmail;
 

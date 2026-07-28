@@ -21,6 +21,7 @@ public partial class SPIDetail : ComponentBase
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -131,7 +132,7 @@ public partial class SPIDetail : ComponentBase
         {
             MeasurementDate = DateTime.Today,
             DataSource = SPI.DataSource,
-            CreatedBy = "SYSTEM", // TODO: Get current user
+            CreatedBy = _currentUserService.UserCode,
             CreatedDate = DateTime.UtcNow,
             IsVerified = true,
             Period = string.Empty

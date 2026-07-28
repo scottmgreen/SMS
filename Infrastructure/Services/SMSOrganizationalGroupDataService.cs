@@ -210,7 +210,7 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
     /// <summary>
     /// Assigns a user to an organizational group
     /// </summary>
-    public async Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy = "SYSTEM", CancellationToken ct = default)
+    public async Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy, CancellationToken ct = default)
     {
         try
         {
@@ -222,7 +222,7 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
 
             _logger.LogInfrastructureInformation("Assigning user {UserCode} to group {GroupCode}", userCode, groupCode);
 
-            var result = await _repository.AssignUserToGroupAsync(userCode, groupCode);
+            var result = await _repository.AssignUserToGroupAsync(userCode, groupCode, assignedBy);
 
             if (result.IsSuccess)
             {
@@ -292,7 +292,7 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
 
             _logger.LogInfrastructureInformation("Clearing all group memberships for user {UserCode}", userCode);
 
-            var result = await _repository.ClearUserGroupsAsync(userCode, "SYSTEM");
+            var result = await _repository.ClearUserGroupsAsync(userCode, clearedBy: userCode);
 
             if (result.IsSuccess)
             {

@@ -24,15 +24,18 @@ public sealed class MitigationService : IMitigationService
 {
     private readonly MitigationDataService _dataService;
     private readonly IBaseMediator _mediator;
+    private readonly ICurrentUserService _currentUserService;
     private readonly ILogger<MitigationService> _logger;
 
     public MitigationService(
         MitigationDataService dataService,
         IBaseMediator mediator,
+        ICurrentUserService currentUserService,
         ILogger<MitigationService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -216,7 +219,11 @@ public sealed class MitigationService : IMitigationService
                 return;
             }
 
-            var statusResult = await _mediator.SendAsync(new UpdateReportStatusCommand(reportCode, ReportStatus.MitigationComplete, "SYSTEM"),ct).ConfigureAwait(false);
+            var updatedBy = string.IsNullOrWhiteSpace(_currentUserService.UserCode)
+                ? _currentUserService.UserDisplayName
+                : _currentUserService.UserCode;
+
+            var statusResult = await _mediator.SendAsync(new UpdateReportStatusCommand(reportCode, ReportStatus.MitigationComplete, updatedBy),ct).ConfigureAwait(false);
 
             if (statusResult.IsSuccess)
             {

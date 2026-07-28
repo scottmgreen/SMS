@@ -23,7 +23,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class AirportSharedDataset : BaseAuditableEntity
 {
-    public AirportSharedDataset(AirportSharedDatasetID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public AirportSharedDataset(AirportSharedDatasetID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
     #region Required References
 

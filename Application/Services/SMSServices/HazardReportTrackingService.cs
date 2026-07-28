@@ -12,6 +12,7 @@ using SMS_Domain.Entities;
 
 using Microsoft.Extensions.Logging;
 
+using SMS_Application.Common;
 using SMS_Application.Queries;
 
 namespace SMS_Application.Services;
@@ -101,7 +102,7 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
                 HazardCode = hazardCode,
                 ReportCode = reportCode,
                 TrackingCode = trackingCode,
-                CreatedBy = "SYSTEM", // This should be set by the audit pipeline
+                CreatedBy = SystemActorConstants.FlyPdxApiSource,
                 CreatedDate = DateTime.UtcNow
             };
 

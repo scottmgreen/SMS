@@ -69,8 +69,8 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportDescription, report.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStatus, report.Status));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, report.CreatedBy ?? "SYSTEM"));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, report.CreatedBy ?? string.Empty));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, report.CreatedDate ?? DateTime.UtcNow));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewReportCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -263,8 +263,8 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportContactCompany, report.ReportContactCompany));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportDescription, report.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStatus, report.Status));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, report.UpdatedBy ?? "SYSTEM"));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, report.UpdatedBy ?? report.CreatedBy ?? string.Empty));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, report.UpdatedDate ?? DateTime.UtcNow));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

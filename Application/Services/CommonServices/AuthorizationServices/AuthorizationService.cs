@@ -95,7 +95,7 @@ public class AuthorizationService : IAuthorizationService
 
     public async Task<UserAuthorizationContext?> GetUserContextAsync(string userId, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(userId) || userId == "SYSTEM")
+        if (string.IsNullOrWhiteSpace(userId))
         {
             return null;
         }
@@ -133,7 +133,7 @@ public class AuthorizationService : IAuthorizationService
             var context = new UserAuthorizationContext
             {
                 UserId = userId,
-                UserDisplayName = GetSessionString(httpContext, "SMS_DisplayName") ?? "Unknown User",
+                UserDisplayName = GetSessionString(httpContext, "SMS_DisplayName") ?? userId,
                 UserType = GetSessionString(httpContext, "SMS_UserType"),
                 UserRoleCode = GetSessionString(httpContext, "SMS_UserRoleCode"),
                 UserRoleName = GetSessionString(httpContext, "SMS_UserRoleName"),

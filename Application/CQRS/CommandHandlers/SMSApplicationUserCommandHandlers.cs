@@ -375,7 +375,7 @@ public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IB
 
             // Record the login
             user.RecordLogin();
-            user.UpdatedBy = "SYSTEM";
+            user.UpdatedBy = request.UserId;
             user.UpdatedDate = DateTime.UtcNow;
 
             // Update the user via the service

@@ -235,7 +235,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
 
     #region Group Membership Operations
 
-    public async Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode)
+    public async Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy)
     {
         try
         {
@@ -254,7 +254,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupUserCode, userCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupCodeForAssignment, groupCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedBy, assignedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.UtcNow));
 
             await sql.OpenAsync().ConfigureAwait(false);
@@ -403,7 +403,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupUserCode, userCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupClearedBy, clearedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupClearedBy, clearedBy));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);

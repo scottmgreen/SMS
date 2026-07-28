@@ -278,7 +278,7 @@ public class EventQueueService : IEventQueueService
             }
 
             _logger.LogApplicationInformation("Executing queued event {EventType} (Queue ID: {QueueId}) by {ExecutedBy}",
-                queuedEvent.EventType, eventId, executedBy ?? "System");
+                queuedEvent.EventType, eventId, worker);
 
             Result executionResult;
 
@@ -356,7 +356,7 @@ public class EventQueueService : IEventQueueService
                 .ToList();
 
             _logger.LogApplicationInformation("Executing {EventCount} pending events (Type: {EventType}) by {ExecutedBy}",
-                pendingEvents.Count, eventType, executedBy ?? "System");
+                pendingEvents.Count, eventType, string.IsNullOrWhiteSpace(executedBy) ? "EventQueueService" : executedBy);
 
             int successCount = 0;
             var errors = new List<string>();
@@ -411,14 +411,15 @@ public class EventQueueService : IEventQueueService
                 return Result.Failure(new Error("QUEUE_EVENT_NOT_PENDING", $"Event {eventId} cannot be cancelled (Current status: {queuedEvent.Status})"));
             }
 
-            var cancelResult = await _eventQueueDataService.CancelAsync(eventId, cancelledBy ?? "System");
+            var cancelActor = string.IsNullOrWhiteSpace(cancelledBy) ? "EventQueueService" : cancelledBy;
+            var cancelResult = await _eventQueueDataService.CancelAsync(eventId, cancelActor);
             if (cancelResult.IsFailure || !cancelResult.Value)
             {
                 return Result.Failure(new Error("QUEUE_CANCEL_FAILED", $"Failed to cancel event {eventId}"));
             }
 
             _logger.LogApplicationInformation("Cancelled queued event {EventType} (Queue ID: {QueueId}) by {CancelledBy}",
-                queuedEvent.EventType, eventId, cancelledBy ?? "System");
+                queuedEvent.EventType, eventId, cancelActor);
 
             return Result.Success();
         }
@@ -674,18 +675,18 @@ public class EventQueueService : IEventQueueService
         {
             if (TryGetJsonProperty(root, "ChangedBy", out var changedByProp) && changedByProp.ValueKind == JsonValueKind.String)
             {
-                value = changedByProp.GetString() ?? "SYSTEM";
+                value = changedByProp.GetString() ?? string.Empty;
                 return true;
             }
 
             if (TryGetJsonProperty(root, "CompletionNotes", out var notesProp) && notesProp.ValueKind == JsonValueKind.String)
             {
                 var notes = notesProp.GetString();
-                value = string.IsNullOrWhiteSpace(notes) ? "SYSTEM" : notes;
+                value = string.IsNullOrWhiteSpace(notes) ? string.Empty : notes;
                 return true;
             }
 
-            value = "SYSTEM";
+            value = string.Empty;
             return true;
         }
 

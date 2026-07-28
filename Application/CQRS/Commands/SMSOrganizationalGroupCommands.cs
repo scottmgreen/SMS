@@ -115,7 +115,7 @@ public class AssignUserToOrganizationalGroupCommand : BaseCommandBundle, IReques
     /// <summary>
     /// The user who is making the assignment
     /// </summary>
-    public string AssignedBy { get; set; } = "SYSTEM";
+    public string AssignedBy { get; set; } = string.Empty;
 
     /// <summary>
     /// Initializes a new instance of the AssignUserToOrganizationalGroupCommand class.

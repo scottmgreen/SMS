@@ -96,7 +96,7 @@ public record QueuedEvent
             EventType = domainEvent.EventType, // Use the event's own EventType property instead of C# type name
             EventData = System.Text.Json.JsonSerializer.Serialize(domainEvent),
             ReportId = domainEvent.ReportId,
-            QueuedBy = queuedBy ?? "System",
+            QueuedBy = queuedBy ?? string.Empty,
             Priority = EventPriority.Normal
         };
     }
@@ -113,7 +113,7 @@ public record QueuedEvent
             EventData = System.Text.Json.JsonSerializer.Serialize(integrationEvent),
             ReportId = integrationEvent.ReportId,
             TargetSystem = integrationEvent.TargetSystem,
-            QueuedBy = queuedBy ?? "System",
+            QueuedBy = queuedBy ?? string.Empty,
             Priority = EventPriority.High // Integration events are typically high priority
         };
     }
@@ -130,7 +130,7 @@ public record QueuedEvent
             EventData = System.Text.Json.JsonSerializer.Serialize(uiEvent),
             ReportId = uiEvent.ReportId,
             TargetSystem = uiEvent.TargetComponent,
-            QueuedBy = queuedBy ?? "System",
+            QueuedBy = queuedBy ?? string.Empty,
             Priority = EventPriority.Low // UI events are typically lower priority
         };
     }

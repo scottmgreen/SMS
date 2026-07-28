@@ -45,6 +45,9 @@
 - Use enums only for display styles; do not use hard-coded strings for event source display naming.
 - Standardize data-reader string mapping to `GetValue<string>` with trimming handled in the extension method rather than direct `GetString` calls.
 - Use Domain Entities rather than introducing DTOs when realigning code to clean architecture patterns in this codebase.
+- Use a generic shared constants file name `SystemConstants.cs` in SMS3 for reusable constant values rather than a feature-specific constants file name.
+- Use UserCode (not UserDisplayName) for all CreatedBy and UpdatedBy audit assignments across the codebase. Avoid magic string defaults like "SYSTEM"/"SYSTEM-2FA".
+- Use UserCode (not display name or other identifiers) for ReportValidation.ValidatedBy and related audit actor fields.
 
 ## Paging
 - When applying paging changes, update all SMSListings pages in SMS3 so every listing uses 15 rows per page and do not skip any listing page.

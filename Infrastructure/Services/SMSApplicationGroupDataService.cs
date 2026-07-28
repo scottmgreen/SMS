@@ -226,7 +226,7 @@ public class SMSApplicationGroupDataService : BaseDataService<SMSApplicationGrou
     /// <summary>
     /// Assigns a user to an application group
     /// </summary>
-    public async Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy = "SYSTEM", CancellationToken ct = default)
+    public async Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy, CancellationToken ct = default)
     {
         try
         {

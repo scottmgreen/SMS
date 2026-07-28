@@ -60,7 +60,7 @@ public interface ISMSOrganizationalGroupRepository
     /// <param name="userCode">The code of the user to assign</param>
     /// <param name="groupCode">The code of the group to assign the user to</param>
     /// <returns>A result indicating success or failure</returns>
-    Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode);
+    Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy);
 
     /// <summary>
     /// Removes a user from an organizational group

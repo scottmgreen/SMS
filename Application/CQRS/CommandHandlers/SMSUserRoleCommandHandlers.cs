@@ -263,7 +263,7 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequest
 
             // Note: Add activation logic to your domain model if needed
             // For now, we'll just update the timestamps
-            userRole.UpdatedBy = "SYSTEM";
+            userRole.UpdatedBy = request.ActivatedBy ?? string.Empty;
             userRole.UpdatedDate = DateTime.UtcNow;
 
             var result = await _userRoleService.UpdateUserRoleAsync(userRole);
@@ -328,7 +328,7 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseReque
             // Note: Add deactivation logic to your domain model
             // userRole.Deactivate(request.DeactivatedBy, request.DeactivationReason);
             
-            userRole.UpdatedBy = "SYSTEM";
+            userRole.UpdatedBy = request.DeactivatedBy ?? string.Empty;
             userRole.UpdatedDate = DateTime.UtcNow;
 
             var result = await _userRoleService.UpdateUserRoleAsync(userRole);

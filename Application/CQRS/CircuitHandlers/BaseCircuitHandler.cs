@@ -43,11 +43,11 @@ public abstract class BaseCircuitHandler : CircuitHandler
     protected string GetCurrentUserCode()
     {
         var session = _httpContextAccessor?.HttpContext?.Session;
-        if (session == null) return "SYSTEM";
+        if (session == null) return string.Empty;
 
         return session.GetString("SMS_UserCode") ??
                session.GetString("SMS_UserId") ??
-               "SYSTEM";
+               string.Empty;
     }
 
     /// <summary>
@@ -56,11 +56,11 @@ public abstract class BaseCircuitHandler : CircuitHandler
     protected string GetCurrentUserDisplayName()
     {
         var session = _httpContextAccessor?.HttpContext?.Session;
-        if (session == null) return "System";
+        if (session == null) return string.Empty;
 
         return session.GetString("SMS_DisplayName") ??
                session.GetString("SMS_Email") ??
-               "System";
+               GetCurrentUserCode();
     }
 
     /// <summary>

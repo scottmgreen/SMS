@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class MitigationAssignment : BaseAuditableEntity
 {
-    public MitigationAssignment(MitigationAssignmentID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public MitigationAssignment(MitigationAssignmentID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
     public string? Code { get; set; }
     public string? MitigationCode { get; set; }

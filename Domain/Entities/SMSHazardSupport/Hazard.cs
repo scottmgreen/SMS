@@ -16,7 +16,7 @@ namespace SMS_Domain.Entities;
 public sealed class Hazard : BaseAuditableEntity
 {
     // Public constructor for domain usage
-    public Hazard(HazardID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public Hazard(HazardID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
     
     #region Core Properties

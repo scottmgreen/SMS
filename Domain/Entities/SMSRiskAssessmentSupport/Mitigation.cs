@@ -19,7 +19,7 @@ public sealed class Mitigation : BaseAuditableEntity
     #region Constructors
 
     // Public constructor following domain pattern
-    public Mitigation(MitigationID id) : base(id, "SYSTEM", DateTime.UtcNow) {}
+    public Mitigation(MitigationID id) : base(id, string.Empty, DateTime.UtcNow) {}
 
     #endregion
 

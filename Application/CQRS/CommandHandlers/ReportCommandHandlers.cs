@@ -56,7 +56,7 @@ public class CreateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                 var reportCreatedEvent = new ReportCreatedEvent(
                     id: new SMSEventID("EV-0000"),
                     reportId: createdReport.Code,
-                    createdBy: createdReport.CreatedBy ?? "SYSTEM",
+                    createdBy: createdReport.CreatedBy ?? string.Empty,
                     createdDate: createdReport.CreatedDate ?? DateTime.UtcNow);
 
                 //var publishResult = await _eventBus.PublishDomainEventAsync(reportCreatedEvent, cancellationToken);
@@ -148,7 +148,7 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                             reportCode: updatedReport.Code,
                             previousStatus: previousStatus!,
                             newStatus: currentStatus!,
-                            changedBy: updatedReport.UpdatedBy ?? "SYSTEM",
+                            changedBy: updatedReport.UpdatedBy ?? updatedReport.CreatedBy ?? string.Empty,
                             changedDate: updatedReport.UpdatedDate ?? DateTime.UtcNow),
                         cancellationToken).ConfigureAwait(false);
                 }
@@ -168,7 +168,7 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                             reportCode: updatedReport.Code,
                             previousStage: normalizedPreviousStage,
                             newStage: normalizedCurrentStage,
-                            changedBy: updatedReport.UpdatedBy ?? "SYSTEM",
+                            changedBy: updatedReport.UpdatedBy ?? updatedReport.CreatedBy ?? string.Empty,
                             changedDate: updatedReport.UpdatedDate ?? DateTime.UtcNow),
                         cancellationToken).ConfigureAwait(false);
                 }

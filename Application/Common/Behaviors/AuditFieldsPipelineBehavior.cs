@@ -7,6 +7,7 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.Extensions.Logging;
+using SMS_Application.Common;
 using SMS_Application.Interfaces;
 
 namespace SMS_Application.Behaviors;
@@ -93,12 +94,19 @@ public class AuditFieldsPipelineBehavior<TRequest, TResponse> : IPipelineBehavio
     /// </summary>
     private void SetAuditFields(TRequest request, string auditAction)
     {
-        var currentUser = _currentUserService.UserCode;
+        var currentUser = string.IsNullOrWhiteSpace(_currentUserService.UserCode)
+            ? SystemActorConstants.FlyPdxApiSource
+            : _currentUserService.UserCode;
         var currentTime = DateTime.UtcNow;
 
         // Use the interface methods that already exist
         if (request is ICreateCommand createCommand)
-            createCommand.SetCreatedBy(currentUser, currentTime);
+        {
+            if (!HasExplicitCreatedByValue(request))
+            {
+                createCommand.SetCreatedBy(currentUser, currentTime);
+            }
+        }
         else if (request is IUpdateCommand updateCommand)
             updateCommand.SetUpdatedBy(currentUser, currentTime);
         else if (request is IDeleteCommand deleteCommand)
@@ -107,6 +115,50 @@ public class AuditFieldsPipelineBehavior<TRequest, TResponse> : IPipelineBehavio
             readQuery.SetAccessedBy(currentUser, currentTime);
 
         _logger.LogApplicationInformation("Audit fields set for {CommandName} by {User}", typeof(TRequest).Name, currentUser);
+    }
+
+    private static bool HasExplicitCreatedByValue(object request)
+    {
+        if (TryGetStringPropertyValue(request, "CreatedBy", out var createdBy) && !string.IsNullOrWhiteSpace(createdBy))
+        {
+            return true;
+        }
+
+        var properties = request.GetType().GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        foreach (var property in properties)
+        {
+            if (property.PropertyType == typeof(string) || property.GetIndexParameters().Length > 0)
+            {
+                continue;
+            }
+
+            var value = property.GetValue(request);
+            if (value is null)
+            {
+                continue;
+            }
+
+            if (TryGetStringPropertyValue(value, "CreatedBy", out createdBy) && !string.IsNullOrWhiteSpace(createdBy))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TryGetStringPropertyValue(object source, string propertyName, out string? value)
+    {
+        value = null;
+
+        var property = source.GetType().GetProperty(propertyName, System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+        if (property is null || property.PropertyType != typeof(string) || property.GetIndexParameters().Length > 0)
+        {
+            return false;
+        }
+
+        value = property.GetValue(source) as string;
+        return true;
     }
 }
 

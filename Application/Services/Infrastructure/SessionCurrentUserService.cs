@@ -7,6 +7,7 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Application.Common;
 using SMS_Domain.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
@@ -53,7 +54,7 @@ public class SessionCurrentUserService : ICurrentUserService
     { 
         get 
         { 
-            return SafeGetSessionString("SMS_UserId") ?? "SYSTEM";
+            return SafeGetSessionString("SMS_UserId") ?? string.Empty;
         } 
     }
 
@@ -69,7 +70,7 @@ public class SessionCurrentUserService : ICurrentUserService
     { 
         get 
         { 
-            return SafeGetSessionString("SMS_DisplayName") ?? "System User";
+            return SafeGetSessionString("SMS_DisplayName") ?? UserCode ?? SystemActorConstants.FlyPdxApiSource;
         } 
     }
 

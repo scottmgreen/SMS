@@ -27,7 +27,7 @@ public sealed class RiskAssessmentStatusChangedEvent : BaseDomainEvent
         RiskAssessmentCode = riskAssessmentCode;
         PreviousStatus = previousStatus ?? RiskAssessmentStatus.AssessmentCreate;
         NewStatus = newStatus ?? RiskAssessmentStatus.AssessmentCreate;
-        ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? "SYSTEM" : changedBy;
+        ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? string.Empty : changedBy;
         ChangedDate = changedDate;
     }
 }

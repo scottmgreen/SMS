@@ -18,10 +18,10 @@ namespace SMS_Domain.Entities;
 public sealed class HazardLocation : BaseAuditableEntity
 {
     // Public constructor for Entity Framework and Model Binding
-    public HazardLocation() : base(new HazardLocationID(Guid.NewGuid().ToString()), "SYSTEM", DateTime.UtcNow) { }
+    public HazardLocation() : base(new HazardLocationID(Guid.NewGuid().ToString()), string.Empty, DateTime.UtcNow) { }
 
     // Public constructor for domain usage
-    public HazardLocation(HazardLocationID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public HazardLocation(HazardLocationID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
     
     #region Core Properties

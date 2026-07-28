@@ -48,7 +48,7 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
             if (!group.IsActive)
             {
                 _logger.LogApplicationInformation("Activating group during creation: {Code}", group.Code);
-                group.Activate("SYSTEM");
+                group.Activate(group.CreatedBy ?? string.Empty);
             }
 
             // Business validation - validate group type and authority level combination
@@ -248,7 +248,7 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
     /// <summary>
     /// Assigns a user to an organizational group with business validation
     /// </summary>
-    public async Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy = "SYSTEM", CancellationToken ct = default)
+    public async Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy, CancellationToken ct = default)
     {
         try
         {

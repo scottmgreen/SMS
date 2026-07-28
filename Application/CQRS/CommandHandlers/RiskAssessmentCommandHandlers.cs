@@ -125,7 +125,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                     var updatedEvent = new RiskAssessmentUpdatedEvent(
                         id: new SMSEventID("EV-0000"),
                         riskAssessmentId: assessment.Id.Value,
-                        updatedBy: assessment.UpdatedBy ?? "SYSTEM",
+                        updatedBy: assessment.UpdatedBy ?? assessment.CreatedBy ?? string.Empty,
                         updatedDate: assessment.UpdatedDate ?? DateTime.UtcNow)
                     {
                         ReportId = assessment.ReportCode ?? string.Empty
@@ -151,7 +151,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                                 riskAssessmentCode: assessment.Code,
                                 previousStatus: previousStatus,
                                 newStatus: assessment.Status,
-                                changedBy: assessment.UpdatedBy ?? "SYSTEM",
+                                changedBy: assessment.UpdatedBy ?? assessment.CreatedBy ?? string.Empty,
                                 changedDate: assessment.UpdatedDate ?? DateTime.UtcNow),
                             ct).ConfigureAwait(false);
                     }
@@ -168,7 +168,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                                 riskAssessmentCode: assessment.Code,
                                 previousStage: previousStage,
                                 newStage: assessment.Stage,
-                                changedBy: assessment.UpdatedBy ?? "SYSTEM",
+                                changedBy: assessment.UpdatedBy ?? assessment.CreatedBy ?? string.Empty,
                                 changedDate: assessment.UpdatedDate ?? DateTime.UtcNow),
                             ct).ConfigureAwait(false);
                     }
@@ -257,7 +257,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                                         hazardCode: mitigation.HazardCode,
                                         mitigationDescription: mitigation.Description ?? mitigation.Name ?? "Mitigation requires approval",
                                         priority: MapMitigationPriority(mitigation),
-                                        requestedBy: assessment.UpdatedBy ?? "SYSTEM",
+                                        requestedBy: assessment.UpdatedBy ?? assessment.CreatedBy ?? string.Empty,
                                         requestDate: completedDate,
                                         proposedImplementationDate: mitigation.TargetDate ?? completedDate.AddDays(14),
                                         requiredApprovers: approverEmails,

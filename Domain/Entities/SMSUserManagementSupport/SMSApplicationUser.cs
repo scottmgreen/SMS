@@ -17,7 +17,7 @@ public sealed class SMSApplicationUser : BaseUser
 {
     // Simple constructors
 
-    public SMSApplicationUser(SMSApplicationUserID id) : base(id, "SYSTEM", DateTime.UtcNow)
+    public SMSApplicationUser(SMSApplicationUserID id) : base(id, string.Empty, DateTime.UtcNow)
     {
         ApplicationUserId = id;
     }

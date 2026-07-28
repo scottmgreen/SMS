@@ -565,7 +565,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserPassword, hashedPassword));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, code.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
 
             await sql.OpenAsync().ConfigureAwait(false);
@@ -619,7 +619,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
     /// <summary>
     /// Setup 2FA for a user (first-time setup)
     /// </summary>
-    public async Task<Result<bool>> Setup2FAAsync(string userCode, string secretKey, string? backupCodes = null, string updatedBy = "SYSTEM-2FA")
+    public async Task<Result<bool>> Setup2FAAsync(string userCode, string secretKey, string? backupCodes = null, string updatedBy = "")
     {
         try
         {
@@ -657,7 +657,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
     /// <summary>
     /// Update failed 2FA attempts and optionally set lockout
     /// </summary>
-    public async Task<Result<bool>> Update2FAFailedAttemptsAsync(string userCode, int failedAttempts, DateTime? lockoutUntil = null, string updatedBy = "SYSTEM-2FA")
+    public async Task<Result<bool>> Update2FAFailedAttemptsAsync(string userCode, int failedAttempts, DateTime? lockoutUntil = null, string updatedBy = "")
     {
         try
         {
@@ -695,7 +695,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
     /// <summary>
     /// Reset failed 2FA attempts (called on successful 2FA verification)
     /// </summary>
-    public async Task<Result<bool>> Reset2FAFailedAttemptsAsync(string userCode, string updatedBy = "SYSTEM-2FA")
+    public async Task<Result<bool>> Reset2FAFailedAttemptsAsync(string userCode, string updatedBy = "")
     {
         try
         {
@@ -731,7 +731,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
     /// <summary>
     /// Disable 2FA for a user
     /// </summary>
-    public async Task<Result<bool>> Disable2FAAsync(string userCode, string updatedBy = "SYSTEM-2FA")
+    public async Task<Result<bool>> Disable2FAAsync(string userCode, string updatedBy = "")
     {
         try
         {

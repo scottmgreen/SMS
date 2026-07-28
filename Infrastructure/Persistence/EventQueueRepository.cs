@@ -51,7 +51,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmTargetSystem, queuedEvent.TargetSystem ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventPriority, (int)queuedEvent.Priority));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMaxAttempts, 5));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmQueuedBy, queuedEvent.QueuedBy ?? "SYSTEM"));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmQueuedBy, queuedEvent.QueuedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCreatedBy, createdBy));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -340,7 +340,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
         }
     }
 
-    public async Task<Result<bool>> CancelAsync(Guid queueGuid, string cancelledBy = "SYSTEM", CancellationToken ct = default)
+    public async Task<Result<bool>> CancelAsync(Guid queueGuid, string cancelledBy = "", CancellationToken ct = default)
     {
         try
         {
@@ -371,7 +371,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
         }
     }
 
-    public async Task<Result<int>> ClearCompletedAsync(string clearedBy = "SYSTEM", CancellationToken ct = default)
+    public async Task<Result<int>> ClearCompletedAsync(string clearedBy = "", CancellationToken ct = default)
     {
         try
         {
@@ -429,7 +429,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
         }
     }
 
-    public async Task<Result<int>> RecoverExpiredLocksAsync(int recoveryDelaySeconds = 5, string recoveredBy = "SYSTEM", CancellationToken ct = default)
+    public async Task<Result<int>> RecoverExpiredLocksAsync(int recoveryDelaySeconds = 5, string recoveredBy = "", CancellationToken ct = default)
     {
         try
         {
@@ -587,7 +587,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
     {
         if (string.IsNullOrWhiteSpace(queuedEvent.EventData))
         {
-            return queuedEvent.QueuedBy ?? "SYSTEM";
+            return queuedEvent.QueuedBy ?? string.Empty;
         }
 
         try
@@ -635,6 +635,6 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
         {
         }
 
-        return queuedEvent.QueuedBy ?? "SYSTEM";
+        return queuedEvent.QueuedBy ?? string.Empty;
     }
 }

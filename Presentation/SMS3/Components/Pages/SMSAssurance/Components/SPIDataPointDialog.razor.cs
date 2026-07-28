@@ -24,6 +24,7 @@ public partial class SPIDataPointDialog : ComponentBase
     [Inject] private ILogger<SPIDataPointDialog> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -147,7 +148,7 @@ public partial class SPIDataPointDialog : ComponentBase
                 _currentDataPoint.VerifiedDate = DateTime.UtcNow;
                 if (string.IsNullOrWhiteSpace(_currentDataPoint.VerifiedBy))
                 {
-                    _currentDataPoint.VerifiedBy = "SYSTEM"; // Fallback
+                    _currentDataPoint.VerifiedBy = _currentUserService.UserCode;
                 }
             }
             else

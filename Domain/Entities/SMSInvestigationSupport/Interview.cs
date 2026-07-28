@@ -17,7 +17,7 @@ public class Interview : BaseAuditableEntity
 {
 
     // Public constructor for domain usage
-    public Interview(InterviewID id) : base(id, "SYSTEM", DateTime.UtcNow)
+    public Interview(InterviewID id) : base(id, string.Empty, DateTime.UtcNow)
     {
         Status = InterviewStatus.IntervieweeIdentified; // UPDATED: Default to IntervieweeIdentified (first step in new workflow)
         Type = InterviewType.Witness;
@@ -27,7 +27,7 @@ public class Interview : BaseAuditableEntity
 
     // Private constructor for creation with validation
     private Interview(InterviewID id, string code, string investigationCode, string personInterviewed, string investigatorCode)
-        : base(id, "SYSTEM", DateTime.UtcNow)
+        : base(id, string.Empty, DateTime.UtcNow)
     {
         Code = code;
         InvestigationCode = investigationCode;

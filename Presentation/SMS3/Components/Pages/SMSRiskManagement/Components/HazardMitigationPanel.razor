@@ -10,6 +10,7 @@
 @using SMS_Domain.Enums
 @using SMS_Domain.ValueObjects
 @using SMS_Shared.Common
+@using SMS3.Configuration
 @using global::System.Text.Json
 
 @inject IBaseMediator Mediator
@@ -727,7 +728,7 @@
         ResidualStakeholderSelectionItems.AddRange(AvailableAssessors.Select(a => new ResidualStakeholderSelectionItem
         {
             Id = a.Id.Value,
-            Name = a.DisplayName ?? a.UserName?.Value ?? "Unknown User",
+            Name = a.DisplayName ?? a.UserName?.Value ?? SystemConstants.FlyPdxApiSource,
             Organization = "SMS Team",
             Role = a.UserRole?.Name ?? string.Empty,
             IsSelected = currentPanelMembers.Contains(a.Id.Value)

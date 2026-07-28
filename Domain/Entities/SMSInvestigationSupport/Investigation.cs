@@ -17,7 +17,7 @@ namespace SMS_Domain.Entities;
 public sealed class Investigation : BaseAuditableEntity
 {
     // Public constructor for instantiation
-    public Investigation(InvestigationID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public Investigation(InvestigationID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
       
 

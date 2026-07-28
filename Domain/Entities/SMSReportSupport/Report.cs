@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class Report : BaseAuditableEntity
 {
-    public Report(ReportID id) : base(id, "SYSTEM", DateTime.UtcNow) { }
+    public Report(ReportID id) : base(id, string.Empty, DateTime.UtcNow) { }
 
     public string Code { get; set; } = string.Empty;
     public string? Name { get; set; }

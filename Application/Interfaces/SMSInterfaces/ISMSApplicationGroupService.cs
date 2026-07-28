@@ -55,7 +55,7 @@ public interface ISMSApplicationGroupService
     /// <summary>
     /// Assigns a user to an application group with business validation
     /// </summary>
-    Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy = "SYSTEM", CancellationToken ct = default);
+    Task<Result<bool>> AssignUserToGroupAsync(string userCode, string groupCode, string assignedBy, CancellationToken ct = default);
 
     /// <summary>
     /// Removes a user from an application group

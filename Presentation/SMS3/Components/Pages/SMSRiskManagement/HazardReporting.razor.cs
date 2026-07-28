@@ -11,6 +11,7 @@ using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Pages.SMSSystem.Components;
 using SMS3.Components.Pages.SMSSystem.Models;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration;
 using SMS3.Configuration.Extensions;
 
 using System.Net;
@@ -325,7 +326,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             : IsHazardTitleMissing
                                 ? "Please provide a Hazard Title before proceeding."
                                 : "The selected map location is not validated yet. Click Validate Location and confirm to continue.";
-    public bool IsExternalSystemSubmittedReport => IsEditMode && string.Equals(HazardReport?.SubmittedBy?.Trim(), "EXTERNAL_API_SOURCE", StringComparison.OrdinalIgnoreCase);
+    public bool IsExternalSystemSubmittedReport => IsEditMode && string.Equals(HazardReport?.SubmittedBy?.Trim(), SystemConstants.FlyPdxApiSource, StringComparison.OrdinalIgnoreCase);
 
     // Airport coordinates //GOLDKEY
     private double _airportCenterLatitude => 45.58808;
@@ -744,7 +745,10 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 HazardTitle = EditingHazard.HazardTitle,
                 // Use report data if available, otherwise use defaults
                 IncidentDateTime = EditingReport?.IncidentDateTime ?? DateTime.Now,
-                SubmittedBy = EditingReport?.SubmittedBy ?? _currentUserService?.UserDisplayName ?? "Unknown User",
+                SubmittedBy = EditingReport?.SubmittedBy
+                    ?? (string.IsNullOrWhiteSpace(_currentUserService?.UserCode)
+                        ? SystemConstants.FlyPdxApiSource
+                        : _currentUserService.UserCode),
                 SubmittedDate = EditingReport?.SubmittedDate ?? DateTime.Now,
                 SubmittingDepartment = EditingReport?.SubmittingDepartment ?? "",
                 SubmittingDepartmentJobFunction = EditingReport?.SubmittingDepartmentJobFunction ?? "",
@@ -1654,7 +1658,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingHazard.HazardType = HazardReport.HazardType; // This is the actual selected hazard type, not "Technical"
         
         EditingHazard.UpdatedDate = DateTime.UtcNow;
-        EditingHazard.UpdatedBy = _currentUserService.UserDisplayName;
+        EditingHazard.UpdatedBy = _currentUserService.UserCode;
 
         // Handle location updates
         await UpdateHazardLocation(EditingHazard);
@@ -1772,7 +1776,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             Description = HazardReport.Description,
             Stage = "INITIAL",
             Status = ReportStatus.ReadyForProcessing, //needs validation
-            CreatedBy = _currentUserService.UserDisplayName,
+            CreatedBy = _currentUserService.UserCode,
             CreatedDate = DateTime.UtcNow
         };
 
@@ -1800,7 +1804,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             
             ReportCode = actualReportCode,
             IsInitialHazard = true ,
-            CreatedBy = _currentUserService.UserDisplayName,
+            CreatedBy = _currentUserService.UserCode,
             CreatedDate = DateTime.UtcNow
         };
 
@@ -2001,7 +2005,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 HazardCode = createdHazard.Code,
                 ReportCode = createdHazard.ReportCode,
                 TrackingCode = "HT-0000", // This will be replaced by database
-                CreatedBy = _currentUserService?.UserDisplayName,
+                CreatedBy = _currentUserService?.UserCode,
                 CreatedDate = DateTime.UtcNow
             };
 
@@ -2057,7 +2061,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                         Longitude = SelectedGeoLocation.Longitude,
                         Description = SelectedGeoLocation.Description ?? "Map selected location",
                         IsValidated = SelectedGeoLocation.IsValidated,
-                        UpdatedBy = _currentUserService?.UserDisplayName,
+                        UpdatedBy = _currentUserService?.UserCode,
                         UpdatedDate = DateTime.UtcNow,
                         IsValid = true
                     };
@@ -2081,7 +2085,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             Longitude = SelectedGeoLocation.Longitude,
                             Description = SelectedGeoLocation.Description ?? "Map selected location",
                             IsValidated = SelectedGeoLocation.IsValidated,
-                            UpdatedBy = _currentUserService?.UserDisplayName,
+                            UpdatedBy = _currentUserService?.UserCode,
                             UpdatedDate = DateTime.UtcNow,
                             IsValid = true
                         };
@@ -2114,7 +2118,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                         Longitude = SelectedGeoLocation.Longitude,
                         Description = SelectedGeoLocation.Description ?? "Map selected location",
                         IsValidated = SelectedGeoLocation.IsValidated,
-                        CreatedBy = _currentUserService?.UserDisplayName,
+                        CreatedBy = _currentUserService?.UserCode,
                         CreatedDate = DateTime.UtcNow,
                         IsValid = true
                     };
@@ -2187,7 +2191,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             StorageType = "Database",
                             FilePath = null,
                             FileData = attachedFile.Data,
-                            UploadedBy = HazardReport.SubmittedBy ?? _currentUserService?.UserDisplayName ?? "SYSTEM",
+                            UploadedBy = HazardReport.SubmittedBy ?? _currentUserService.UserCode,
                             UploadedDate = DateTime.UtcNow,
                             IsActive = true,
                             IsConfidential = HazardReport.IsAnonymous
