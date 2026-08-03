@@ -9,10 +9,10 @@ public class Step3Model
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
-    public Step3Model(IBaseMediator mediator, ICurrentUserService _currentUserService)
+    public Step3Model(IBaseMediator mediator, ICurrentUserService currentUserService)
     {
         Mediator = mediator;
-        _currentUserService = _currentUserService;
+        _currentUserService = currentUserService;
     }
 
     public Dictionary<string, RiskAnalysis> Step3RiskAnalyses { get; set; } = new();
@@ -224,6 +224,10 @@ public class Step3Model
 
         try
         {
+            var actor = !string.IsNullOrWhiteSpace(_currentUserService?.UserCode)
+                ? _currentUserService.UserCode
+                : "SYSTEM";
+
             foreach (var hazard in newHazards)
             {
                 // Find the appropriate assessment for this hazard
@@ -254,9 +258,9 @@ public class Step3Model
                         ResidualRootCause = string.Empty,
                         ResidualAdditionalComments = string.Empty,
                         CreatedDate = DateTime.UtcNow,
-                        CreatedBy = _currentUserService.UserCode,
+                        CreatedBy = actor,
                         UpdatedDate = DateTime.UtcNow,
-                        UpdatedBy = _currentUserService.UserCode
+                        UpdatedBy = actor
                     };
 
                     // Save via CQRS

@@ -485,7 +485,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
 
             string newCodeValue = Convert.ToString(newCode.Value) ?? string.Empty;
             SMSApplicationUserID userId = new(newCodeValue);
-            return await GetByIdAsync(userId).ConfigureAwait(false);
+            return await GetByCodeAsync(userId).ConfigureAwait(false);
         }
         catch (Exception ex)
         {
@@ -943,13 +943,13 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
     /// Base interface method implementation - required by IBaseUserRepository
     /// Delegates to the string version for consistency
     /// </summary>
-    public async Task<Result<SMSApplicationUser>> GetByIdAsync(BaseUserID id)
-    {
-        if (id?.Value is null || string.IsNullOrWhiteSpace(id.Value))
-        {
-            return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
-        }
+    //public async Task<Result<SMSApplicationUser>> GetByIdAsync(BaseUserID id)
+    //{
+    //    if (id?.Value is null || string.IsNullOrWhiteSpace(id.Value))
+    //    {
+    //        return Result<SMSApplicationUser>.Failure<SMSApplicationUser>(DomainErrors.SMSApplicationUserError.NullOrEmpty);
+    //    }
 
-        return await GetByIdAsync(id.Value);
-    }
+    //    return await GetByIdAsync(id.Value);
+    //}
 }

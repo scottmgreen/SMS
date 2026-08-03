@@ -324,19 +324,84 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
             ? hazardResult.Value.HazardRiskLevel
             : RiskLevel.Low;
 
+        var groupsResult = await _mediator.SendAsync(new GetAllSMSOrganizationalGroupsQuery(), ct).ConfigureAwait(false);
+        if (groupsResult.IsSuccess && groupsResult.Value is not null)
+        {
+            var eligibleGroups = groupsResult.Value
+                .Where(g => g.IsActive)
+                .Select(g => new
+                {
+                    GroupCode = g.Code?.Trim() ?? string.Empty,
+                    Authority = ConvertGroupAuthorityToNumericLevel(g.AuthorityLevel)
+                })
+                .Where(g => !string.IsNullOrWhiteSpace(g.GroupCode))
+                .Where(g => g.Authority >= riskLevel.RequiredAuthorityLevel)
+                .ToList();
+
+            if (eligibleGroups.Count > 0)
+            {
+                var minimumGroupAuthority = eligibleGroups.Min(g => g.Authority);
+                return eligibleGroups
+                    .Where(g => g.Authority == minimumGroupAuthority)
+                    .Select(g => g.GroupCode)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+            }
+        }
+
         var usersResult = await _mediator.SendAsync(new GetAllSMSOrganizationalUsersQuery(), ct).ConfigureAwait(false);
         if (usersResult.IsFailure || usersResult.Value is null)
         {
             return new List<string>();
         }
 
-        return usersResult.Value
+        var qualifiedUsers = usersResult.Value
             .Where(u => u.IsActive && CanApproveRiskLevel(u, riskLevel))
-            .Select(u => u.UserName?.Value)
-            .Where(email => !string.IsNullOrWhiteSpace(email))
-            .Select(email => email!.Trim())
+            .ToList();
+
+        if (qualifiedUsers.Count == 0)
+        {
+            return new List<string>();
+        }
+
+        var minimumAuthority = qualifiedUsers
+            .Select(GetAuthorityLevel)
+            .DefaultIfEmpty(int.MaxValue)
+            .Min();
+
+        return qualifiedUsers
+            .Where(u => GetAuthorityLevel(u) == minimumAuthority)
+            .Select(u => u.Code)
+            .Where(code => !string.IsNullOrWhiteSpace(code))
+            .Select(code => code!.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
+    }
+
+    private static int ConvertGroupAuthorityToNumericLevel(string? authorityLevel)
+    {
+        if (string.IsNullOrWhiteSpace(authorityLevel))
+        {
+            return 0;
+        }
+
+        return authorityLevel.Trim().ToUpperInvariant() switch
+        {
+            "EXECUTIVE" => 10,
+            "STRATEGIC" => 9,
+            "OPERATIONAL" => 8,
+            "PROCESS" => 7,
+            "SUPPORT" => 6,
+            "STANDARD" => 5,
+            _ => 0
+        };
+    }
+
+    private static int GetAuthorityLevel(SMSOrganizationalUser user)
+    {
+        return user.AuthorityLevel
+            ?? user.OrganizationLevel?.AuthorityLevel
+            ?? int.MaxValue;
     }
 
     private static bool CanApproveRiskLevel(SMSOrganizationalUser user, RiskLevel riskLevel)

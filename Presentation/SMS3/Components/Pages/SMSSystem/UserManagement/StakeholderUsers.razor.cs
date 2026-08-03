@@ -172,6 +172,12 @@ public partial class StakeholderUsers : ComponentBase
                 }
             }
 
+            if (user.UserRole is null)
+            {
+                await ShowErrorAsyncNotification("SMS User Role/Permissions is required.");
+                return;
+            }
+
             var command = new CreateSMSStakeholderUserCommand(user);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
 
@@ -274,17 +280,21 @@ public partial class StakeholderUsers : ComponentBase
             _currentEditUser.SMSUserType = SMSUserType.Stakeholder;
             
                         
-            // Update user role if specified
-            if (!string.IsNullOrWhiteSpace(_editUser.UserRoleCode))
+            if (string.IsNullOrWhiteSpace(_editUser.UserRoleCode))
             {
-                var roleQuery = new GetSMSUserRoleByIdQuery(_editUser.UserRoleCode);
-                var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
-                if (roleResult.IsSuccess && roleResult.Value is not null)
-                {
-                    _currentEditUser.UserRole = roleResult.Value;
-                }
+                await ShowErrorAsyncNotification("SMS User Role/Permissions is required.");
+                return;
             }
-            // Note: If no role is specified, we keep the existing UserRole unchanged
+
+            var roleQuery = new GetSMSUserRoleByIdQuery(_editUser.UserRoleCode);
+            var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
+            if (roleResult.IsFailure || roleResult.Value is null)
+            {
+                await ShowErrorAsyncNotification("Selected SMS User Role/Permissions was not found.");
+                return;
+            }
+
+            _currentEditUser.UserRole = roleResult.Value;
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSStakeholderUserCommand(_currentEditUser);
@@ -325,7 +335,8 @@ public partial class StakeholderUsers : ComponentBase
         !string.IsNullOrWhiteSpace(_editUser.FirstName) &&
         !string.IsNullOrWhiteSpace(_editUser.LastName) &&
         !string.IsNullOrWhiteSpace(_editUser.StakeholderType) &&
-        !string.IsNullOrWhiteSpace(_editUser.Organization);
+        !string.IsNullOrWhiteSpace(_editUser.Organization) &&
+        !string.IsNullOrWhiteSpace(_editUser.UserRoleCode);
 
     private async Task ShowDeleteDialog(string userId, string displayName)
     {

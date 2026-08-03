@@ -28,8 +28,6 @@ public sealed class SMSOrganizationalUser : BaseUser
     public SMSOrganizationalLevel OrganizationLevel { get; set; } 
 
 
-    public SMSUserRole? SMSUserRole { get; set; }
-
     /// <summary>
     /// Authority level for risk approval (Strategic, Executive, Operational, Process, Support)
     /// </summary>

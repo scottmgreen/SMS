@@ -214,6 +214,30 @@
                                              Disabled="@_isProcessing"
                                              Title="Cancel Event"
                                              class="me-1" />
+
+                                @if (queuedEvent.EventCategory == EventCategory.IntegrationEvent
+                                    && queuedEvent.EventType == SMS_Domain.Enums.EventType.EmailNotification.Value)
+                                {
+                                    <RadzenButton Icon="autorenew"
+                                                 Size="ButtonSize.Small"
+                                                 ButtonStyle="ButtonStyle.Warning"
+                                                 Click="@(() => RebuildEmailEvent(queuedEvent.Id))"
+                                                 Disabled="@_isProcessing"
+                                                 Title="Rebuild Email Event"
+                                                 class="me-1" />
+                                }
+                            }
+                            else if (queuedEvent.Status == QueuedEventStatus.Failed
+                                && queuedEvent.EventCategory == EventCategory.IntegrationEvent
+                                && queuedEvent.EventType == SMS_Domain.Enums.EventType.EmailNotification.Value)
+                            {
+                                <RadzenButton Icon="autorenew"
+                                             Size="ButtonSize.Small"
+                                             ButtonStyle="ButtonStyle.Warning"
+                                             Click="@(() => RebuildEmailEvent(queuedEvent.Id))"
+                                             Disabled="@_isProcessing"
+                                             Title="Rebuild Email Event"
+                                             class="me-1" />
                             }
                             else if (queuedEvent.Status == QueuedEventStatus.Processed
                                 && queuedEvent.EventCategory == EventCategory.IntegrationEvent

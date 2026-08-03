@@ -494,13 +494,15 @@ public sealed class MitigationApprovalRequestedEventHandler : BaseDomainEventHan
         var recipients = (domainEvent.RequiredApprovers ?? new List<string>())
             .Where(v => !string.IsNullOrWhiteSpace(v))
             .Select(v => v.Trim())
-            .Select(v => v.Contains('@') ? v : $"{v}@flypdx.com")
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
         if (recipients.Count == 0)
         {
-            recipients.Add("sms.manager@flypdx.com");
+            _logger.LogApplicationWarning(
+                "[MITIGATION APPROVAL] No approver recipients resolved for mitigation {MitigationCode}. Email notification will not be sent.",
+                domainEvent.MitigationCode);
+            return Result.Failure(new Error("MITIGATION_APPROVAL_NO_RECIPIENTS", "No approver recipients resolved for mitigation approval notification."));
         }
 
         var emailEvent = new EmailNotificationEvent(

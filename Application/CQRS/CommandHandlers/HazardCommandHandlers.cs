@@ -9,6 +9,8 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Events;
+using SMS_Domain.Enums;
+using SMS_Application.Queries;
 
 using SMS_Infrastructure.Interfaces;
 
@@ -192,12 +194,14 @@ namespace SMS_Application.CommandHandlers
                 hazard.ReportCode = request.Hazard.ReportCode;
 
                 HazardStatus? previousStatus = null;
+                var previousRiskLevelValue = string.Empty;
                 if (!string.IsNullOrWhiteSpace(hazard.Code))
                 {
                     var existingHazardResult = await _hazardService.GetHazardByCodeAsync(new HazardID(hazard.Code), ct);
                     if (existingHazardResult.IsSuccess && existingHazardResult.Value is not null)
                     {
                         previousStatus = existingHazardResult.Value.Status;
+                        previousRiskLevelValue = existingHazardResult.Value.HazardRiskLevel?.Value ?? string.Empty;
                     }
                 }
 
@@ -233,6 +237,11 @@ namespace SMS_Application.CommandHandlers
                             statusChangeDate: hazard.UpdatedDate ?? DateTime.UtcNow),
                         ct).ConfigureAwait(false);
 
+                    if (HasHazardRiskLevelChanged(previousRiskLevelValue, hazard.HazardRiskLevel?.Value))
+                    {
+                        await TriggerMitigationApprovalNotificationsForRescoreAsync(hazard, ct).ConfigureAwait(false);
+                    }
+
                 }
                 catch (Exception eventEx)
                 {
@@ -248,6 +257,249 @@ namespace SMS_Application.CommandHandlers
                 _logger.LogApplicationError("Exception creating hazard - {Name}", ApplicationEventIds.Error, ex);
                 return Result<Hazard>.Failure<Hazard>(DomainErrors.HazardError.CreateFailed);
             }
+        }
+
+        private async Task TriggerMitigationApprovalNotificationsForRescoreAsync(Hazard hazard, CancellationToken ct)
+        {
+            if (string.IsNullOrWhiteSpace(hazard.Code))
+            {
+                return;
+            }
+
+            var riskAssessmentsResult = await _mediator.SendAsync(
+                new GetRiskAssessmentsByHazardCodeQuery(new HazardID(hazard.Code)),
+                ct).ConfigureAwait(false);
+
+            if (riskAssessmentsResult.IsFailure || riskAssessmentsResult.Value is null)
+            {
+                _logger.LogApplicationWarning("Risk-level rescore notification skipped for hazard {HazardCode}: risk assessment lookup failed.", hazard.Code);
+                return;
+            }
+
+            var hasSubmittedAssessment = riskAssessmentsResult.Value.Any(assessment =>
+                assessment.Status == RiskAssessmentStatus.AssessmentComplete);
+
+            if (!hasSubmittedAssessment)
+            {
+                return;
+            }
+
+            var mitigationResult = await _mediator
+                .SendAsync(new GetMitigationsByHazardCodeQuery(hazard.Code), ct)
+                .ConfigureAwait(false);
+
+            if (mitigationResult.IsFailure || mitigationResult.Value is null)
+            {
+                _logger.LogApplicationWarning("Risk-level rescore notification skipped for hazard {HazardCode}: mitigation lookup failed.", hazard.Code);
+                return;
+            }
+
+            var pendingMitigations = mitigationResult.Value
+                .Where(m => m.Status == MitigationStatus.PendingApproval)
+                .ToList();
+
+            if (pendingMitigations.Count == 0)
+            {
+                return;
+            }
+
+            var riskLevel = hazard.HazardRiskLevel ?? RiskLevel.Low;
+            var requiredApprovers = await ResolveApproverCodesAsync(riskLevel, ct).ConfigureAwait(false);
+            if (requiredApprovers.Count == 0)
+            {
+                _logger.LogApplicationWarning(
+                    "Risk-level rescore notification skipped for hazard {HazardCode}: no approvers found for required authority {AuthorityLevel}.",
+                    hazard.Code,
+                    riskLevel.RequiredAuthorityLevel);
+                return;
+            }
+
+            var publishCount = 0;
+            var requestedBy = !string.IsNullOrWhiteSpace(hazard.UpdatedBy) ? hazard.UpdatedBy : hazard.CreatedBy ?? string.Empty;
+            var requestDate = DateTime.UtcNow;
+
+            foreach (var mitigation in pendingMitigations)
+            {
+                var approvalEvent = new MitigationApprovalRequestedEvent(
+                    id: new SMSEventID("EV-0000"),
+                    mitigationId: mitigation.Id.Value,
+                    mitigationCode: mitigation.Code,
+                    hazardId: mitigation.HazardCode,
+                    hazardCode: mitigation.HazardCode,
+                    mitigationDescription: mitigation.Description ?? mitigation.Name ?? "Mitigation requires approval",
+                    priority: MapMitigationPriority(mitigation),
+                    requestedBy: requestedBy,
+                    requestDate: requestDate,
+                    proposedImplementationDate: mitigation.TargetDate ?? requestDate.AddDays(14),
+                    requiredApprovers: requiredApprovers,
+                    approvalJustification: "Hazard risk level rescored after assessment submission; mitigation approval recipients recalculated.",
+                    estimatedCost: mitigation.EstimatedCost,
+                    resourceRequirements: mitigation.ResourceRequirements ?? string.Empty,
+                    estimatedImplementationTime: mitigation.EstimatedHours.HasValue ? TimeSpan.FromHours(mitigation.EstimatedHours.Value) : null,
+                    requiresExecutiveApproval: (mitigation.EstimatedCost ?? 0m) >= 25000m,
+                    escalationPath: "SafetyManager->SafetyDirector")
+                {
+                    ReportId = hazard.ReportCode ?? string.Empty
+                };
+
+                var publishResult = await _eventBus.PublishDomainEventAsync(approvalEvent, ct).ConfigureAwait(false);
+                if (publishResult.IsSuccess)
+                {
+                    publishCount++;
+                }
+                else
+                {
+                    _logger.LogApplicationWarning(
+                        "Failed to publish mitigation approval request after hazard rescore for mitigation {MitigationCode}: {Error}",
+                        mitigation.Code,
+                        publishResult.Error?.Message ?? "Unknown publish error");
+                }
+            }
+
+            _logger.LogApplicationInformation(
+                "Hazard {HazardCode} risk-level change triggered {PublishCount} mitigation approval request event(s) using current authority thresholds.",
+                hazard.Code,
+                publishCount);
+        }
+
+        private async Task<List<string>> ResolveApproverCodesAsync(RiskLevel riskLevel, CancellationToken ct)
+        {
+            var groupsResult = await _mediator.SendAsync(new GetAllSMSOrganizationalGroupsQuery(), ct).ConfigureAwait(false);
+            if (groupsResult.IsSuccess && groupsResult.Value is not null)
+            {
+                var eligibleGroups = groupsResult.Value
+                    .Where(g => g.IsActive)
+                    .Select(g => new
+                    {
+                        GroupCode = g.Code?.Trim() ?? string.Empty,
+                        Authority = ConvertGroupAuthorityToNumericLevel(g.AuthorityLevel)
+                    })
+                    .Where(g => !string.IsNullOrWhiteSpace(g.GroupCode))
+                    .Where(g => g.Authority >= riskLevel.RequiredAuthorityLevel)
+                    .ToList();
+
+                if (eligibleGroups.Count > 0)
+                {
+                    var minimumAuthority = eligibleGroups.Min(g => g.Authority);
+                    return eligibleGroups
+                        .Where(g => g.Authority == minimumAuthority)
+                        .Select(g => g.GroupCode)
+                        .Distinct(StringComparer.OrdinalIgnoreCase)
+                        .ToList();
+                }
+            }
+
+            var usersResult = await _mediator.SendAsync(new GetAllSMSOrganizationalUsersQuery(), ct).ConfigureAwait(false);
+            if (usersResult.IsFailure || usersResult.Value is null)
+            {
+                return new List<string>();
+            }
+
+            var approvers = new List<string>();
+            var approverAuthority = new List<(string Code, int Authority)>();
+            foreach (var user in usersResult.Value.Where(u => u.IsActive && !string.IsNullOrWhiteSpace(u.Code)))
+            {
+                var effectiveAuthorityLevel = await GetEffectiveAuthorityLevelAsync(user, ct).ConfigureAwait(false);
+                if (effectiveAuthorityLevel >= riskLevel.RequiredAuthorityLevel)
+                {
+                    approverAuthority.Add((user.Code.Trim(), effectiveAuthorityLevel));
+                }
+            }
+
+            if (approverAuthority.Count == 0)
+            {
+                return new List<string>();
+            }
+
+            var minimumQualifiedAuthority = approverAuthority.Min(a => a.Authority);
+
+            approvers.AddRange(approverAuthority
+                .Where(a => a.Authority == minimumQualifiedAuthority)
+                .Select(a => a.Code));
+
+            return approvers
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+        }
+
+        private async Task<int> GetEffectiveAuthorityLevelAsync(SMSOrganizationalUser user, CancellationToken ct)
+        {
+            var authorityCandidates = new List<int>();
+
+            if (user.AuthorityLevel.HasValue)
+            {
+                authorityCandidates.Add(user.AuthorityLevel.Value);
+            }
+
+            if (user.OrganizationLevel is not null)
+            {
+                authorityCandidates.Add(user.OrganizationLevel.AuthorityLevel);
+            }
+
+            var groupsResult = await _mediator.SendAsync(new GetSMSOrganizationalGroupsByUserCodeQuery(user.Code), ct).ConfigureAwait(false);
+            if (groupsResult.IsSuccess && groupsResult.Value is not null)
+            {
+                authorityCandidates.AddRange(groupsResult.Value
+                    .Where(g => g.IsActive)
+                    .Select(g => ConvertGroupAuthorityToNumericLevel(g.AuthorityLevel)));
+            }
+
+            return authorityCandidates.DefaultIfEmpty(0).Max();
+        }
+
+        private static int ConvertGroupAuthorityToNumericLevel(string? authorityLevel)
+        {
+            if (string.IsNullOrWhiteSpace(authorityLevel))
+            {
+                return 0;
+            }
+
+            return authorityLevel.Trim().ToUpperInvariant() switch
+            {
+                "EXECUTIVE" => 10,
+                "STRATEGIC" => 9,
+                "OPERATIONAL" => 8,
+                "PROCESS" => 7,
+                "SUPPORT" => 6,
+                "STANDARD" => 5,
+                _ => 0
+            };
+        }
+
+        private static bool HasHazardRiskLevelChanged(string? previousRiskLevelValue, string? currentRiskLevelValue)
+        {
+            var previous = previousRiskLevelValue?.Trim() ?? string.Empty;
+            var current = currentRiskLevelValue?.Trim() ?? string.Empty;
+            return !string.Equals(previous, current, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private static SMS_Domain.Events.MitigationPriority MapMitigationPriority(Mitigation mitigation)
+        {
+            var progress = mitigation.Progress;
+            var cost = mitigation.EstimatedCost ?? 0m;
+
+            if (cost >= 100000m)
+            {
+                return SMS_Domain.Events.MitigationPriority.Emergency;
+            }
+
+            if (cost >= 50000m)
+            {
+                return SMS_Domain.Events.MitigationPriority.Critical;
+            }
+
+            if (cost >= 25000m || progress > 50)
+            {
+                return SMS_Domain.Events.MitigationPriority.High;
+            }
+
+            if (cost >= 10000m)
+            {
+                return SMS_Domain.Events.MitigationPriority.Medium;
+            }
+
+            return SMS_Domain.Events.MitigationPriority.Low;
         }
     }
 

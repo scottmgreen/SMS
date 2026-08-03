@@ -22,6 +22,7 @@ public abstract class SMSDepartment : BaseEnum<SMSDepartment>
     public string[] Responsibilities { get; }
 
     // Approved Final Department List
+    
     public static readonly SMSDepartment AirlineServiceProvider = new AirlineServiceProviderRole();
     public static readonly SMSDepartment AirportCommunicationsCenter = new AirportCommunicationsCenterRole();
     public static readonly SMSDepartment AirportOperations = new AirportOperationsRole();
@@ -34,6 +35,7 @@ public abstract class SMSDepartment : BaseEnum<SMSDepartment>
     public static readonly SMSDepartment EmergencyManagement = new EmergencyManagementRole();
     public static readonly SMSDepartment Engineering = new EngineeringRole();
     public static readonly SMSDepartment Environmental = new EnvironmentalRole();
+    public static readonly SMSDepartment ExecutiveTeam = new PortOfPortlandExecutiveTeamRole();
     public static readonly SMSDepartment FixedBaseOperator = new FixedBaseOperatorRole();
     public static readonly SMSDepartment IT = new ITRole();
     public static readonly SMSDepartment Maintenance = new MaintenanceRole();
@@ -45,6 +47,22 @@ public abstract class SMSDepartment : BaseEnum<SMSDepartment>
     public static readonly SMSDepartment Risk = new RiskRole();
     public static readonly SMSDepartment SafetyAndLossControl = new SafetyAndLossControlRole();
     public static readonly SMSDepartment Wildlife = new WildlifeRole();
+
+
+    private sealed class PortOfPortlandExecutiveTeamRole : SMSDepartment
+    {
+        public PortOfPortlandExecutiveTeamRole() : base("EXECUTIVE_TEAM", "Executive Team",
+            "Port Of Portland Executive Team",
+            new[] { "Port Of Portland Executive Team" })
+        {
+        }
+    }
+
+
+
+
+
+
 
     private sealed class AirlineServiceProviderRole : SMSDepartment
     {

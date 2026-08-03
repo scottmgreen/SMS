@@ -409,11 +409,15 @@ public partial class EventBusQueueManager
 
                         AppendEmailPreviewDetails(queuedEvent, emailEvent, ref subject, ref body);
 
+                        var previewToRecipients = await ResolvePreviewRecipientsAsync(emailEvent.ToRecipients, enforceGroupContactOnly: true);
+                        var previewCcRecipients = await ResolvePreviewRecipientsAsync(emailEvent.CcRecipients, enforceGroupContactOnly: false);
+                        var previewBccRecipients = await ResolvePreviewRecipientsAsync(emailEvent.BccRecipients, enforceGroupContactOnly: false);
+
                         var model = new SMS3.Components.Pages.SMSSystem.Models.EmailComposeModel
                         {
-                            To = emailEvent.ToRecipients ?? new List<string>(),
-                            Cc = emailEvent.CcRecipients ?? new List<string>(),
-                            Bcc = emailEvent.BccRecipients ?? new List<string>(),
+                            To = previewToRecipients,
+                            Cc = previewCcRecipients,
+                            Bcc = previewBccRecipients,
                             Subject = subject,
                             BodyHtml = emailEvent.IsHtmlContent ? ((MarkupString)body).Value : body.Replace("\n", "<br />")
                         };
@@ -683,6 +687,107 @@ public partial class EventBusQueueManager
         return $"{existingBody}\n\n{details}";
     }
 
+    private async Task<List<string>> ResolvePreviewRecipientsAsync(IEnumerable<string>? recipients, bool enforceGroupContactOnly)
+    {
+        if (recipients is null)
+        {
+            return new List<string>();
+        }
+
+        var resolved = new List<string>();
+        var unresolved = new List<string>();
+
+        foreach (var recipient in recipients.Where(r => !string.IsNullOrWhiteSpace(r)).Select(r => r.Trim()))
+        {
+            if (recipient.Contains('@'))
+            {
+                resolved.Add(recipient);
+                continue;
+            }
+
+            var recipientMatches = await ResolveRecipientTokenToEmailsAsync(recipient);
+            if (recipientMatches.Count > 0)
+            {
+                resolved.AddRange(recipientMatches);
+            }
+            else
+            {
+                if (enforceGroupContactOnly)
+                {
+                    unresolved.Add(recipient);
+                }
+                else
+                {
+                    resolved.Add(recipient);
+                }
+            }
+        }
+
+        if (enforceGroupContactOnly && unresolved.Count > 0)
+        {
+            Logger.LogWarning("Preview recipient resolution dropped {Count} unresolved To token(s): {Recipients}", unresolved.Count, string.Join(", ", unresolved));
+        }
+
+        return resolved
+            .Where(v => !string.IsNullOrWhiteSpace(v))
+            .Select(v => v.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private async Task<List<string>> ResolveRecipientTokenToEmailsAsync(string recipientToken)
+    {
+        var resolved = new List<string>();
+
+        var appByCode = await _mediator.SendAsync(new GetSMSApplicationGroupByCodeQuery(recipientToken), CancellationToken.None);
+        if (appByCode.IsSuccess && !string.IsNullOrWhiteSpace(appByCode.Value?.ContactEmail))
+        {
+            resolved.Add(appByCode.Value.ContactEmail.Trim());
+        }
+
+        var stakeholderByCode = await _mediator.SendAsync(new GetSMSStakeholderGroupByCodeQuery(recipientToken), CancellationToken.None);
+        if (stakeholderByCode.IsSuccess && !string.IsNullOrWhiteSpace(stakeholderByCode.Value?.ContactEmail))
+        {
+            resolved.Add(stakeholderByCode.Value.ContactEmail.Trim());
+        }
+
+        var orgByCode = await _mediator.SendAsync(new GetSMSOrganizationalGroupByCodeQuery(recipientToken), CancellationToken.None);
+        if (orgByCode.IsSuccess && !string.IsNullOrWhiteSpace(orgByCode.Value?.ContactEmail))
+        {
+            resolved.Add(orgByCode.Value.ContactEmail.Trim());
+        }
+
+        var appByUserCode = await _mediator.SendAsync(new GetSMSApplicationGroupsByUserCodeQuery(recipientToken), CancellationToken.None);
+        if (appByUserCode.IsSuccess && appByUserCode.Value is not null)
+        {
+            resolved.AddRange(appByUserCode.Value
+                .Where(g => !string.IsNullOrWhiteSpace(g.ContactEmail))
+                .Select(g => g.ContactEmail!.Trim()));
+        }
+
+        var stakeholderByUserCode = await _mediator.SendAsync(new GetSMSStakeholderGroupsByUserCodeQuery(recipientToken), CancellationToken.None);
+        if (stakeholderByUserCode.IsSuccess && stakeholderByUserCode.Value is not null)
+        {
+            resolved.AddRange(stakeholderByUserCode.Value
+                .Where(g => !string.IsNullOrWhiteSpace(g.ContactEmail))
+                .Select(g => g.ContactEmail!.Trim()));
+        }
+
+        var orgByUserCode = await _mediator.SendAsync(new GetSMSOrganizationalGroupsByUserCodeQuery(recipientToken), CancellationToken.None);
+        if (orgByUserCode.IsSuccess && orgByUserCode.Value is not null)
+        {
+            resolved.AddRange(orgByUserCode.Value
+                .Where(g => !string.IsNullOrWhiteSpace(g.ContactEmail))
+                .Select(g => g.ContactEmail!.Trim()));
+        }
+
+        return resolved
+            .Where(v => !string.IsNullOrWhiteSpace(v))
+            .Select(v => v.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
     private async Task CancelEvent(Guid eventId)
     {
         try
@@ -733,6 +838,79 @@ public partial class EventBusQueueManager
                 Severity = NotificationSeverity.Error,
                 Summary = "Cancellation Error",
                 Detail = "An unexpected error occurred during cancellation.",
+                Duration = 4000
+            });
+        }
+        finally
+        {
+            _isProcessing = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task RebuildEmailEvent(Guid eventId)
+    {
+        try
+        {
+            var confirmed = await DialogService.Confirm(
+                "Rebuild this email event and cancel the original?",
+                "Rebuild Email Event",
+                new ConfirmOptions()
+                {
+                    OkButtonText = "Rebuild",
+                    CancelButtonText = "Cancel"
+                });
+
+            if (confirmed != true)
+            {
+                return;
+            }
+
+            _isProcessing = true;
+            StateHasChanged();
+
+            Logger.LogInformation("Rebuilding queued email event {EventId}", eventId);
+
+            var result = await _mediator.SendAsync(
+                new RebuildQueuedEmailEventCommand(eventId, "ManualUI"),
+                CancellationToken.None);
+
+            if (result.IsSuccess)
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Success,
+                    Summary = "Email Event Rebuilt",
+                    Detail = $"Rebuilt as queued event {result.Value} (not sent).",
+                    Duration = 4000
+                });
+
+                Logger.LogInformation("Successfully rebuilt email event {OldEventId} as {NewEventId}", eventId, result.Value);
+            }
+            else
+            {
+                NotificationService.Notify(new NotificationMessage
+                {
+                    Severity = NotificationSeverity.Error,
+                    Summary = "Rebuild Failed",
+                    Detail = result.Error.Message,
+                    Duration = 4000
+                });
+
+                Logger.LogWarning("Failed to rebuild email event {EventId}: {Error}", eventId, result.Error.Message);
+            }
+
+            await LoadQueuedEvents();
+            await LoadStatistics();
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Exception while rebuilding email event {EventId}", eventId);
+            NotificationService.Notify(new NotificationMessage
+            {
+                Severity = NotificationSeverity.Error,
+                Summary = "Rebuild Error",
+                Detail = "An unexpected error occurred during event rebuild.",
                 Duration = 4000
             });
         }

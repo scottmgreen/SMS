@@ -9,6 +9,7 @@
 
 using SMS_Application.Interfaces;
 using SMS_Application.Interfaces;
+using SMS_Application.Queries;
 
 using SMS_Domain.ValueObjects;
 using SMS_Domain.Common;
@@ -33,6 +34,7 @@ public class EventQueueService : IEventQueueService
 {
     private readonly ILogger<EventQueueService> _logger;
     private readonly IBaseEventBus _eventBus;
+    private readonly IBaseMediator _mediator;
     private readonly IEventQueueDataService _eventQueueDataService;
     private readonly QueuedEventTypeRegistry _queuedEventTypeRegistry;
     private static readonly JsonSerializerOptions EventJsonOptions = new()
@@ -43,11 +45,13 @@ public class EventQueueService : IEventQueueService
     public EventQueueService(
         ILogger<EventQueueService> logger,
         IBaseEventBus eventBus,
+        IBaseMediator mediator,
         IEventQueueDataService eventQueueDataService,
         QueuedEventTypeRegistry queuedEventTypeRegistry)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _eventQueueDataService = eventQueueDataService ?? throw new ArgumentNullException(nameof(eventQueueDataService));
         _queuedEventTypeRegistry = queuedEventTypeRegistry ?? throw new ArgumentNullException(nameof(queuedEventTypeRegistry));
     }
@@ -428,6 +432,267 @@ public class EventQueueService : IEventQueueService
             _logger.LogApplicationError(ex, "Failed to cancel queued event {EventId}", eventId);
             return Result.Failure(new Error("QUEUE_CANCEL_FAILED", $"Failed to cancel event: {ex.Message}"));
         }
+    }
+
+    public async Task<Result<Guid>> RebuildQueuedEmailEventAsync(Guid eventId, string? rebuiltBy = null)
+    {
+        try
+        {
+            var queuedEventResult = await _eventQueueDataService.GetQueuedEventAsync(eventId);
+            if (queuedEventResult.IsFailure)
+            {
+                return Result.Failure<Guid>(new Error("QUEUE_EVENT_NOT_FOUND", $"Queued event with ID {eventId} not found"));
+            }
+
+            var queuedEvent = queuedEventResult.Value;
+
+            if (queuedEvent.EventCategory != EventCategory.IntegrationEvent ||
+                !string.Equals(queuedEvent.EventType, SMS_Domain.Enums.EventType.EmailNotification.Value, StringComparison.OrdinalIgnoreCase))
+            {
+                return Result.Failure<Guid>(new Error("QUEUE_REBUILD_UNSUPPORTED", "Only EmailNotification integration events can be rebuilt."));
+            }
+
+            if (queuedEvent.Status != QueuedEventStatus.Pending && queuedEvent.Status != QueuedEventStatus.Failed)
+            {
+                return Result.Failure<Guid>(new Error("QUEUE_REBUILD_INVALID_STATUS", $"Event {eventId} cannot be rebuilt from status {queuedEvent.Status}."));
+            }
+
+            var emailEvent = JsonSerializer.Deserialize<EmailNotificationEvent>(queuedEvent.EventData, EventJsonOptions);
+            if (emailEvent is null)
+            {
+                return Result.Failure<Guid>(new Error("QUEUE_REBUILD_DESERIALIZE_FAILED", "Unable to deserialize queued EmailNotificationEvent."));
+            }
+
+            await ReevaluateEmailRecipientsForCurrentStateAsync(emailEvent, cancellationToken: CancellationToken.None);
+
+            var actor = string.IsNullOrWhiteSpace(rebuiltBy) ? "EventQueueService-Rebuild" : rebuiltBy;
+            var enqueueResult = await _eventQueueDataService.EnqueueIntegrationEventAsync(emailEvent, actor);
+            if (enqueueResult.IsFailure)
+            {
+                return Result.Failure<Guid>(new Error("QUEUE_REBUILD_ENQUEUE_FAILED", enqueueResult.Error?.Message ?? "Failed to enqueue rebuilt email event."));
+            }
+
+            var rebuiltEventId = enqueueResult.Value.Id;
+
+            var cancelResult = await _eventQueueDataService.CancelAsync(eventId, actor);
+            if (cancelResult.IsFailure || !cancelResult.Value)
+            {
+                _logger.LogApplicationWarning("Rebuilt email event {OriginalEventId} into {NewEventId}, but failed to cancel original event.", eventId, rebuiltEventId);
+            }
+
+            _logger.LogApplicationInformation("Rebuilt queued email event {OriginalEventId} as {NewEventId} by {Actor}", eventId, rebuiltEventId, actor);
+            return Result.Success(rebuiltEventId);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError(ex, "Failed to rebuild queued email event {EventId}", eventId);
+            return Result.Failure<Guid>(new Error("QUEUE_REBUILD_FAILED", $"Failed to rebuild queued email event: {ex.Message}"));
+        }
+    }
+
+    private async Task ReevaluateEmailRecipientsForCurrentStateAsync(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
+    {
+        if (!string.Equals(emailEvent.WorkflowType, "MitigationApproval", StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(emailEvent.RelatedEntityType, "Mitigation", StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        var mitigationCode = ResolveMitigationCode(emailEvent);
+        if (string.IsNullOrWhiteSpace(mitigationCode))
+        {
+            _logger.LogApplicationDebug("[QUEUE] Skipping recipient reevaluation: mitigation code could not be resolved for email event {EventId}", emailEvent.EventId);
+            return;
+        }
+
+        var mitigationResult = await _mediator.SendAsync(new GetMitigationByCodeQuery(new MitigationID(mitigationCode.Trim())), cancellationToken);
+        if (mitigationResult.IsFailure || mitigationResult.Value is null || string.IsNullOrWhiteSpace(mitigationResult.Value.HazardCode))
+        {
+            _logger.LogApplicationWarning("[QUEUE] Recipient reevaluation skipped for mitigation {MitigationCode}: mitigation/hazard lookup failed.", mitigationCode);
+            return;
+        }
+
+        var hazardResult = await _mediator.SendAsync(new GetHazardByCodeQuery(new HazardID(mitigationResult.Value.HazardCode.Trim())), cancellationToken);
+        if (hazardResult.IsFailure || hazardResult.Value is null)
+        {
+            _logger.LogApplicationWarning("[QUEUE] Recipient reevaluation skipped for mitigation {MitigationCode}: hazard lookup failed for {HazardCode}.", mitigationCode, mitigationResult.Value.HazardCode);
+            return;
+        }
+
+        var requiredAuthorityLevel = hazardResult.Value.HazardRiskLevel?.RequiredAuthorityLevel ?? 0;
+
+        var orgGroupsResult = await _mediator.SendAsync(new GetAllSMSOrganizationalGroupsQuery(), cancellationToken);
+        if (orgGroupsResult.IsSuccess && orgGroupsResult.Value is not null)
+        {
+            var eligibleGroups = orgGroupsResult.Value
+                .Where(g => g.IsActive)
+                .Select(g => new
+                {
+                    GroupCode = g.Code?.Trim() ?? string.Empty,
+                    Authority = ConvertGroupAuthorityToNumericLevel(g.AuthorityLevel)
+                })
+                .Where(g => !string.IsNullOrWhiteSpace(g.GroupCode))
+                .Where(g => g.Authority >= requiredAuthorityLevel)
+                .ToList();
+
+            if (eligibleGroups.Count > 0)
+            {
+                var minimumAuthority = eligibleGroups.Min(g => g.Authority);
+                var selectedGroupCodes = eligibleGroups
+                    .Where(g => g.Authority == minimumAuthority)
+                    .Select(g => g.GroupCode)
+                    .Distinct(StringComparer.OrdinalIgnoreCase)
+                    .ToList();
+
+                emailEvent.ToRecipients.Clear();
+                emailEvent.ToRecipients.AddRange(selectedGroupCodes);
+
+                emailEvent.EmailMetadata["RebuiltRecipientAuthorityLevel"] = requiredAuthorityLevel;
+                emailEvent.EmailMetadata["RebuiltRecipientCount"] = selectedGroupCodes.Count;
+                emailEvent.EmailMetadata["RebuiltRecipientAuthorityLevelSelected"] = minimumAuthority;
+                emailEvent.EmailMetadata["RebuiltRecipientStrategy"] = "OrganizationalGroup";
+
+                _logger.LogApplicationInformation("[QUEUE] Rebuilt email recipients for mitigation {MitigationCode}: {RecipientCount} organizational group code(s) selected at authority {SelectedAuthority} (required >= {RequiredAuthority}).", mitigationCode, selectedGroupCodes.Count, minimumAuthority, requiredAuthorityLevel);
+                return;
+            }
+        }
+
+        var orgUsersResult = await _mediator.SendAsync(new GetAllSMSOrganizationalUsersQuery(), cancellationToken);
+        if (orgUsersResult.IsFailure || orgUsersResult.Value is null)
+        {
+            _logger.LogApplicationWarning("[QUEUE] Recipient reevaluation skipped for mitigation {MitigationCode}: organizational user lookup failed.", mitigationCode);
+            return;
+        }
+
+        var approverAuthority = new List<(string Code, int Authority)>();
+        foreach (var user in orgUsersResult.Value.Where(u => u.IsActive && !string.IsNullOrWhiteSpace(u.Code)))
+        {
+            var effectiveAuthority = await GetEffectiveAuthorityLevelAsync(user, cancellationToken);
+            if (effectiveAuthority >= requiredAuthorityLevel)
+            {
+                approverAuthority.Add((user.Code.Trim(), effectiveAuthority));
+            }
+        }
+
+        var approverCodes = approverAuthority.Count == 0
+            ? new List<string>()
+            : approverAuthority
+                .Where(a => a.Authority == approverAuthority.Min(x => x.Authority))
+                .Select(a => a.Code)
+                .ToList();
+
+        approverCodes = approverCodes
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (approverCodes.Count == 0)
+        {
+            _logger.LogApplicationWarning("[QUEUE] Recipient reevaluation found no approvers for mitigation {MitigationCode} at authority >= {AuthorityLevel}. Keeping original recipients.", mitigationCode, requiredAuthorityLevel);
+            return;
+        }
+
+        emailEvent.ToRecipients.Clear();
+        emailEvent.ToRecipients.AddRange(approverCodes);
+
+        emailEvent.EmailMetadata["RebuiltRecipientAuthorityLevel"] = requiredAuthorityLevel;
+        emailEvent.EmailMetadata["RebuiltRecipientCount"] = approverCodes.Count;
+        emailEvent.EmailMetadata["RebuiltRecipientAuthorityLevelSelected"] = approverAuthority.Min(a => a.Authority);
+        emailEvent.EmailMetadata["RebuiltRecipientStrategy"] = "OrganizationalUser";
+
+        _logger.LogApplicationInformation("[QUEUE] Rebuilt email recipients for mitigation {MitigationCode}: {RecipientCount} approver(s) selected for authority >= {AuthorityLevel}.", mitigationCode, approverCodes.Count, requiredAuthorityLevel);
+    }
+
+    private async Task<int> GetEffectiveAuthorityLevelAsync(SMSOrganizationalUser user, CancellationToken cancellationToken)
+    {
+        var authorityCandidates = new List<int>();
+
+        if (user.AuthorityLevel.HasValue)
+        {
+            authorityCandidates.Add(user.AuthorityLevel.Value);
+        }
+
+        if (user.OrganizationLevel is not null)
+        {
+            authorityCandidates.Add(user.OrganizationLevel.AuthorityLevel);
+        }
+
+        var groupsResult = await _mediator.SendAsync(new GetSMSOrganizationalGroupsByUserCodeQuery(user.Code), cancellationToken);
+        if (groupsResult.IsSuccess && groupsResult.Value is not null)
+        {
+            authorityCandidates.AddRange(groupsResult.Value
+                .Where(g => g.IsActive)
+                .Select(g => ConvertGroupAuthorityToNumericLevel(g.AuthorityLevel)));
+        }
+
+        return authorityCandidates.DefaultIfEmpty(0).Max();
+    }
+
+    private static int ConvertGroupAuthorityToNumericLevel(string? authorityLevel)
+    {
+        if (string.IsNullOrWhiteSpace(authorityLevel))
+        {
+            return 0;
+        }
+
+        return authorityLevel.Trim().ToUpperInvariant() switch
+        {
+            "EXECUTIVE" => 10,
+            "STRATEGIC" => 9,
+            "OPERATIONAL" => 8,
+            "PROCESS" => 7,
+            "SUPPORT" => 6,
+            "STANDARD" => 5,
+            _ => 0
+        };
+    }
+
+    private static string? ResolveMitigationCode(EmailNotificationEvent emailEvent)
+    {
+        if (string.Equals(emailEvent.RelatedEntityType, "Mitigation", StringComparison.OrdinalIgnoreCase)
+            && !string.IsNullOrWhiteSpace(emailEvent.RelatedEntityId))
+        {
+            return emailEvent.RelatedEntityId.Trim();
+        }
+
+        if (emailEvent.EmailMetadata != null
+            && emailEvent.EmailMetadata.TryGetValue("MitigationCode", out var mitigationCodeValue))
+        {
+            return ConvertMetadataValueToString(mitigationCodeValue);
+        }
+
+        return null;
+    }
+
+    private static string? ConvertMetadataValueToString(object? value)
+    {
+        if (value is null)
+        {
+            return null;
+        }
+
+        if (value is string raw && !string.IsNullOrWhiteSpace(raw))
+        {
+            return raw.Trim();
+        }
+
+        if (value is JsonElement element)
+        {
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                var stringValue = element.GetString();
+                return string.IsNullOrWhiteSpace(stringValue) ? null : stringValue.Trim();
+            }
+
+            if (element.ValueKind != JsonValueKind.Null && element.ValueKind != JsonValueKind.Undefined)
+            {
+                var jsonRaw = element.ToString();
+                return string.IsNullOrWhiteSpace(jsonRaw) ? null : jsonRaw.Trim();
+            }
+        }
+
+        var converted = value.ToString();
+        return string.IsNullOrWhiteSpace(converted) ? null : converted.Trim();
     }
 
     /// <summary>
@@ -903,7 +1168,19 @@ public class EventQueueService : IEventQueueService
                 return Result.Failure(new Error("DESERIALIZATION_FAILED", $"Could not deserialize integration event: {queuedEvent.EventType}"));
             }
 
-            var executionResult = await _eventBus.PublishIntegrationEventAsync(integrationEvent, EventExecutionMode.Immediate);
+            // Invoke generic publish with the concrete integration event CLR type so the correct typed handlers run.
+            var publishMethodDef = _eventBus.GetType()
+                .GetMethods()
+                .FirstOrDefault(m => m.Name == "PublishIntegrationEventAsync" && m.IsGenericMethodDefinition && m.GetParameters().Length == 3);
+
+            if (publishMethodDef == null)
+            {
+                return Result.Failure(new Error("METHOD_NOT_FOUND", $"PublishIntegrationEventAsync not found for event type: {queuedEvent.EventType}"));
+            }
+
+            var publishMethod = publishMethodDef.MakeGenericMethod(eventType);
+            var task = (Task<Result>)publishMethod.Invoke(_eventBus, new object[] { integrationEvent, EventExecutionMode.Immediate, CancellationToken.None });
+            var executionResult = await task.ConfigureAwait(false);
 
             if (executionResult.IsFailure)
             {

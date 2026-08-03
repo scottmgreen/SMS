@@ -247,6 +247,9 @@ public static class FieldNames
     private static readonly Lazy<string> _fSMSStakeholderGroupDescription = new Lazy<string>(() => "fldv_Description");
     public static string fSMSStakeholderGroupDescription => _fSMSStakeholderGroupDescription.Value;
 
+    private static readonly Lazy<string> _fSMSStakeholderGroupContactEmail = new Lazy<string>(() => "fldv_ContactEmail");
+    public static string fSMSStakeholderGroupContactEmail => _fSMSStakeholderGroupContactEmail.Value;
+
     private static readonly Lazy<string> _fSMSStakeholderGroupIsActive = new Lazy<string>(() => "fldb_IsActive");
     public static string fSMSStakeholderGroupIsActive => _fSMSStakeholderGroupIsActive.Value;
 
@@ -262,6 +265,9 @@ public static class FieldNames
     private static readonly Lazy<string> _fSMSApplicationGroupDescription = new Lazy<string>(() => "fldv_Description");
     public static string fSMSApplicationGroupDescription => _fSMSApplicationGroupDescription.Value;
 
+    private static readonly Lazy<string> _fSMSApplicationGroupContactEmail = new Lazy<string>(() => "fldv_ContactEmail");
+    public static string fSMSApplicationGroupContactEmail => _fSMSApplicationGroupContactEmail.Value;
+
     private static readonly Lazy<string> _fSMSApplicationGroupIsActive = new Lazy<string>(() => "fldb_IsActive");
     public static string fSMSApplicationGroupIsActive => _fSMSApplicationGroupIsActive.Value;
 
@@ -276,6 +282,9 @@ public static class FieldNames
 
     private static readonly Lazy<string> _fSMSOrganizationalGroupDescription = new Lazy<string>(() => "fldv_Description");
     public static string fSMSOrganizationalGroupDescription => _fSMSOrganizationalGroupDescription.Value;
+
+    private static readonly Lazy<string> _fSMSOrganizationalGroupContactEmail = new Lazy<string>(() => "fldv_ContactEmail");
+    public static string fSMSOrganizationalGroupContactEmail => _fSMSOrganizationalGroupContactEmail.Value;
 
     private static readonly Lazy<string> _fSMSOrganizationalGroupGroupType = new Lazy<string>(() => "fldv_GroupType");
     public static string fSMSOrganizationalGroupGroupType => _fSMSOrganizationalGroupGroupType.Value;

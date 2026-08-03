@@ -5,6 +5,7 @@ using SMS_Shared.Configuration;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 using SMS_Domain.Enums;
+using System.ComponentModel.DataAnnotations;
 
 namespace SMS3.Components.Pages.SMSSystem.UserGroups;
 
@@ -75,10 +76,12 @@ public partial class OrganizationalGroups : ComponentBase
     private bool _showDeleteModal { get; set; } = false;
     private string _newGroupName { get; set; } = string.Empty;
     private string _newDescription { get; set; } = string.Empty;
+    private string _newContactEmail { get; set; } = string.Empty;
     private string _newGroupType { get; set; } = string.Empty;
     private string _newAuthorityLevel { get; set; } = string.Empty;
     private string _editGroupName { get; set; } = string.Empty;
     private string _editDescription { get; set; } = string.Empty;
+    private string _editContactEmail { get; set; } = string.Empty;
     private string _editGroupType { get; set; } = string.Empty;
     private string _editAuthorityLevel { get; set; } = string.Empty;
     private bool _editIsActive { get; set; } = true;
@@ -220,6 +223,7 @@ public partial class OrganizationalGroups : ComponentBase
             // Set edit form values
             _editGroupName = _currentGroup.Name ?? string.Empty;
             _editDescription = _currentGroup.Description ?? string.Empty;
+            _editContactEmail = _currentGroup.ContactEmail ?? string.Empty;
             _editGroupType = _currentGroup.GroupType.ToUpper() ?? string.Empty;
             _editAuthorityLevel = _currentGroup.AuthorityLevel.ToUpper() ?? string.Empty;
             _editIsActive = _currentGroup.IsActive;
@@ -245,6 +249,7 @@ public partial class OrganizationalGroups : ComponentBase
         _currentGroup = null;
         _editGroupName = string.Empty;
         _editDescription = string.Empty;
+        _editContactEmail = string.Empty;
         _editGroupType = string.Empty;
         _editAuthorityLevel = string.Empty;
         _editIsActive = true;
@@ -257,6 +262,7 @@ public partial class OrganizationalGroups : ComponentBase
         _currentGroup = null;
         _editGroupName = string.Empty;
         _editDescription = string.Empty;
+        _editContactEmail = string.Empty;
         _editGroupType = string.Empty; // This will select the default "-- Select --" option
         _editAuthorityLevel = string.Empty; // This will select the default "-- Select --" option
         _editIsActive = true;
@@ -274,6 +280,12 @@ public partial class OrganizationalGroups : ComponentBase
             return;
         }
 
+        if (!IsValidOptionalEmail(_newContactEmail))
+        {
+            await ShowErrorAsyncNotification("Contact Email must be a valid email address.");
+            return;
+        }
+
         try
         {
             _isSaving = true;
@@ -287,6 +299,7 @@ public partial class OrganizationalGroups : ComponentBase
                 Code = groupCode,
                 Name = _newGroupName,
                 Description = _newDescription,
+                ContactEmail = string.IsNullOrWhiteSpace(_newContactEmail) ? null : _newContactEmail.Trim(),
                 GroupType = _newGroupType,
                 AuthorityLevel = _newAuthorityLevel,
                 IsActive = true
@@ -328,6 +341,12 @@ public partial class OrganizationalGroups : ComponentBase
             return;
         }
 
+        if (!IsValidOptionalEmail(_editContactEmail))
+        {
+            await ShowErrorAsyncNotification("Contact Email must be a valid email address.");
+            return;
+        }
+
         try
         {
             _isSaving = true;
@@ -336,6 +355,7 @@ public partial class OrganizationalGroups : ComponentBase
             // Update group properties
             _currentGroup.Name = _editGroupName;
             _currentGroup.Description = _editDescription;
+            _currentGroup.ContactEmail = string.IsNullOrWhiteSpace(_editContactEmail) ? null : _editContactEmail.Trim();
             _currentGroup.GroupType = _editGroupType;
             _currentGroup.AuthorityLevel = _editAuthorityLevel;
             _currentGroup.IsActive = _editIsActive;
@@ -439,6 +459,7 @@ public partial class OrganizationalGroups : ComponentBase
     {
         _newGroupName = string.Empty;
         _newDescription = string.Empty;
+        _newContactEmail = string.Empty;
         _newGroupType = string.Empty;
         _newAuthorityLevel = string.Empty;
         _showCreateModal = true;
@@ -449,6 +470,7 @@ public partial class OrganizationalGroups : ComponentBase
         _showCreateModal = false;
         _newGroupName = string.Empty;
         _newDescription = string.Empty;
+        _newContactEmail = string.Empty;
         _newGroupType = string.Empty;
         _newAuthorityLevel = string.Empty;
     }
@@ -476,6 +498,16 @@ public partial class OrganizationalGroups : ComponentBase
     #endregion
 
     #region Notification Methods (EventBus-Driven)
+
+    private static bool IsValidOptionalEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return true;
+        }
+
+        return new EmailAddressAttribute().IsValid(email.Trim());
+    }
 
     private async Task ShowErrorAsyncNotification(string message)
     {
@@ -720,13 +752,12 @@ public partial class OrganizationalGroups : ComponentBase
         // Initialize group type options
         GroupTypeOptions = new List<DropdownOption>
         {
-            new("", "-- Select Group Type --"), // Add empty option for default
-            new("DEPARTMENT", "Department"),
+             new("", "-- Select Group Type --"),
+            new("TEAM", "Team"),
             new("COMMITTEE", "Committee"),
-            new("TEAM", "Management Team"),
-            new("DIVISION", "Division"),
-            new("EXECUTIVE", "Executive"),
-            new("FUNCTIONAL", "Functional Group")
+            new("EXECUTIVES", "Executive"),
+            new("MANAGERS", "Managers"),
+            new("FUNCTIONAL", "Functional")
         };
 
         // Initialize authority level options from SMSOrganizationalLevel enum

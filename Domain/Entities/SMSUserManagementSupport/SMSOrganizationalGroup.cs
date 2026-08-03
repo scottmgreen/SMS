@@ -13,7 +13,7 @@ namespace SMS_Domain.Entities;
 /// <summary>
 /// SMS Organizational Group entity for managing internal organizational groups
 /// </summary>
-public sealed class SMSOrganizationalGroup : BaseAuditableEntity
+public sealed class SMSOrganizationalGroup : BaseUserGroup
 {
     private const string DefaultActor = "FLYPDX_API";
 
@@ -25,32 +25,13 @@ public sealed class SMSOrganizationalGroup : BaseAuditableEntity
     /// <summary>
     /// Unique code for the organizational group (e.g., "OG-20240101-XXXXXXXX")
     /// </summary>
-    public string Code { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Display name of the organizational group
-    /// </summary>
-    public string Name { get; set; } = string.Empty;
-
-    /// <summary>
-    /// Optional description of the group's purpose and responsibilities
-    /// </summary>
-    public string? Description { get; set; }
-
-    /// <summary>
     /// Type of organizational group (e.g., "Department", "Division", "Team", "Committee")
-    /// </summary>
     public string GroupType { get; set; } = "Department";
 
     /// <summary>
     /// Authority level of this group for decision-making and approvals
     /// </summary>
     public string AuthorityLevel { get; set; } = "Standard";
-
-    /// <summary>
-    /// Whether the organizational group is currently active
-    /// </summary>
-    public bool IsActive { get; set; } = true;
 
     /// <summary>
     /// Parameterless constructor for Entity Framework

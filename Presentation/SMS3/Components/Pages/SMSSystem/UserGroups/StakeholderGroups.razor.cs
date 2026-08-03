@@ -11,6 +11,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using System.ComponentModel.DataAnnotations;
 
 namespace SMS3.Components.Pages.SMSSystem.UserGroups;
 
@@ -63,8 +64,10 @@ public partial class StakeholderGroups : ComponentBase
     private bool _showDeleteModal { get; set; } = false;
     private string _newGroupName { get; set; } = string.Empty;
     private string _newDescription { get; set; } = string.Empty;
+    private string _newContactEmail { get; set; } = string.Empty;
     private string _editGroupName { get; set; } = string.Empty;
     private string _editDescription { get; set; } = string.Empty;
+    private string _editContactEmail { get; set; } = string.Empty;
     private bool _editIsActive { get; set; } = true;
     private string _deleteGroupCode { get; set; } = string.Empty;
     private string _deleteGroupName { get; set; } = string.Empty;
@@ -194,6 +197,7 @@ public partial class StakeholderGroups : ComponentBase
             // Set edit form values
             _editGroupName = _currentGroup.Name ?? string.Empty;
             _editDescription = _currentGroup.Description ?? string.Empty;
+            _editContactEmail = _currentGroup.ContactEmail ?? string.Empty;
             _editIsActive = _currentGroup.IsActive;
 
             // Open edit modal
@@ -212,6 +216,7 @@ public partial class StakeholderGroups : ComponentBase
         _currentGroup = null;
         _editGroupName = string.Empty;
         _editDescription = string.Empty;
+        _editContactEmail = string.Empty;
         _editIsActive = true;
         Logger.LogInformation("Group edit cancelled");
         await EventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", "Edit cancelled"));
@@ -239,6 +244,12 @@ public partial class StakeholderGroups : ComponentBase
             return;
         }
 
+        if (!IsValidOptionalEmail(_newContactEmail))
+        {
+            await ShowErrorAsyncNotification("Contact Email must be a valid email address.");
+            return;
+        }
+
         try
         {
             _isSaving = true;
@@ -252,6 +263,7 @@ public partial class StakeholderGroups : ComponentBase
                 Code = groupCode,
                 Name = _newGroupName,
                 Description = _newDescription,
+                ContactEmail = string.IsNullOrWhiteSpace(_newContactEmail) ? null : _newContactEmail.Trim(),
                 IsActive = true
             };
 
@@ -291,6 +303,12 @@ public partial class StakeholderGroups : ComponentBase
             return;
         }
 
+        if (!IsValidOptionalEmail(_editContactEmail))
+        {
+            await ShowErrorAsyncNotification("Contact Email must be a valid email address.");
+            return;
+        }
+
         try
         {
             _isSaving = true;
@@ -299,6 +317,7 @@ public partial class StakeholderGroups : ComponentBase
             // Update group properties
             _currentGroup.Name = _editGroupName;
             _currentGroup.Description = _editDescription;
+            _currentGroup.ContactEmail = string.IsNullOrWhiteSpace(_editContactEmail) ? null : _editContactEmail.Trim();
             _currentGroup.IsActive = _editIsActive;
 
             var updateCommand = new UpdateSMSStakeholderGroupCommand(_currentGroup);
@@ -415,6 +434,7 @@ public partial class StakeholderGroups : ComponentBase
     {
         _newGroupName = string.Empty;
         _newDescription = string.Empty;
+        _newContactEmail = string.Empty;
         _showCreateModal = true;
     }
 
@@ -423,6 +443,7 @@ public partial class StakeholderGroups : ComponentBase
         _showCreateModal = false;
         _newGroupName = string.Empty;
         _newDescription = string.Empty;
+        _newContactEmail = string.Empty;
     }
 
     private async Task ConfirmDelete(string groupCode, string groupName)
@@ -448,6 +469,16 @@ public partial class StakeholderGroups : ComponentBase
     #endregion
 
     #region Notification Methods (EventBus-Driven)
+
+    private static bool IsValidOptionalEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return true;
+        }
+
+        return new EmailAddressAttribute().IsValid(email.Trim());
+    }
 
     private async Task ShowErrorAsyncNotification(string message)
     {

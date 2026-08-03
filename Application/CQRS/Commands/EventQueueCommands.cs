@@ -52,6 +52,18 @@ public class ClearCompletedQueuedEventsCommand : BaseCommandBundle, IRequest<Res
 {
 }
 
+public class RebuildQueuedEmailEventCommand : BaseCommandBundle, IRequest<Result<Guid>>
+{
+    public Guid EventId { get; set; }
+    public string? RebuiltBy { get; set; }
+
+    public RebuildQueuedEmailEventCommand(Guid eventId, string? rebuiltBy = null)
+    {
+        EventId = eventId;
+        RebuiltBy = rebuiltBy;
+    }
+}
+
 public class ClearAllQueuedEventsCommand : BaseCommandBundle, IRequest<Result<int>>
 {
 }

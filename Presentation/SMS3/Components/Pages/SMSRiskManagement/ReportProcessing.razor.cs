@@ -293,6 +293,7 @@ public partial class ReportProcessing : ComponentBase
     private int _selectedTabIndex = 0;
     private bool _isLoading { get; set; } = true;
     private List<SMSOrganizationalUser> AvailableApprovers { get; set; } = new();
+    private readonly Dictionary<string, int> _userGroupAuthorityByUserCode = new(StringComparer.OrdinalIgnoreCase);
     private string? _selectedApprover { get; set; }
 
     private bool _showBulkApprovalDialog { get; set; } = false;
@@ -343,11 +344,10 @@ public partial class ReportProcessing : ComponentBase
             if (usersResult.IsSuccess && usersResult.Value is not null)
             {
                 AvailableApprovers = usersResult.Value
-                .Where(u => u.IsActive &&
-                           (u.AuthorityLevel.HasValue || // Has integer authority level
-                            u.OrganizationLevel is not null || // Has organization level enum
-                            !string.IsNullOrEmpty(u.RiskApprovalAuthority))) // Has risk approval authority string
+                .Where(u => u.IsActive)
                 .ToList();
+
+                await LoadApproverGroupAuthorityAsync(AvailableApprovers);
 
                 _logger.LogInformation("Loaded {Count} available approvers", AvailableApprovers.Count);
             }
@@ -355,13 +355,60 @@ public partial class ReportProcessing : ComponentBase
             {
                 _logger.LogWarning("Failed to load approvers: {Error}", usersResult.Error?.Message);
                 AvailableApprovers = new List<SMSOrganizationalUser>();
+                _userGroupAuthorityByUserCode.Clear();
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading available approvers");
             AvailableApprovers = new List<SMSOrganizationalUser>();
+            _userGroupAuthorityByUserCode.Clear();
         }
+    }
+
+    private async Task LoadApproverGroupAuthorityAsync(IEnumerable<SMSOrganizationalUser> users)
+    {
+        _userGroupAuthorityByUserCode.Clear();
+
+        foreach (var user in users)
+        {
+            if (string.IsNullOrWhiteSpace(user.Code))
+            {
+                continue;
+            }
+
+            var groupsResult = await _mediator.SendAsync(new GetSMSOrganizationalGroupsByUserCodeQuery(user.Code), CancellationToken.None);
+            if (groupsResult.IsFailure || groupsResult.Value is null)
+            {
+                continue;
+            }
+
+            var maxGroupAuthority = groupsResult.Value
+                .Select(g => ConvertGroupAuthorityToNumericLevel(g.AuthorityLevel))
+                .DefaultIfEmpty(0)
+                .Max();
+
+            _userGroupAuthorityByUserCode[user.Code] = maxGroupAuthority;
+        }
+    }
+
+    private static int ConvertGroupAuthorityToNumericLevel(string? authorityLevel)
+    {
+        if (string.IsNullOrWhiteSpace(authorityLevel))
+        {
+            return 0;
+        }
+
+        return authorityLevel.Trim().ToUpperInvariant() switch
+        {
+            "EXECUTIVE" => 10,
+            "STRATEGIC" => 9,
+            "OPERATIONAL" => 8,
+            "PROCESS" => 7,
+            "SUPPORT" => 6,
+            "STANDARD" => 5,
+            _ => 0
+        };
     }
     private async Task LoadDataAsync()
     {
@@ -2327,6 +2374,14 @@ public partial class ReportProcessing : ComponentBase
 
         // Secondary check: User's OrganizationLevel enum authority
         if (user.OrganizationLevel?.AuthorityLevel >= riskLevelEnum.RequiredAuthorityLevel)
+        {
+            return true;
+        }
+
+        // Group authority check: user can approve if any assigned organizational group authority meets the threshold.
+        if (!string.IsNullOrWhiteSpace(user.Code)
+            && _userGroupAuthorityByUserCode.TryGetValue(user.Code, out var maxGroupAuthority)
+            && maxGroupAuthority >= riskLevelEnum.RequiredAuthorityLevel)
         {
             return true;
         }

@@ -98,6 +98,19 @@
                         </Template>
                     </RadzenDataGridColumn>
 
+                    <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="ContactEmail" Title="Contact Email" Width="260px" Sortable="true" Filterable="true">
+                        <Template Context="group">
+                            @if (!string.IsNullOrEmpty(group.ContactEmail))
+                            {
+                                <span>@group.ContactEmail</span>
+                            }
+                            else
+                            {
+                                <em style="color: var(--rz-text-secondary-color);">No email</em>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+
                     
 
                     <RadzenDataGridColumn TItem="SMSOrganizationalGroup" Property="IsActive" Title="Active" Width="150px" Sortable="true" Filterable="true">
@@ -155,7 +168,7 @@
 @if (_showCreateModal)
 {
     <div class="modal-backdrop">
-        <div class="modal-dialog">
+        <div class="modal-dialog modal-lg">
             <RadzenCard class="modal-content">
                 <!-- Modal Header -->
                 <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
@@ -166,32 +179,52 @@
                 </div>
                 
                 <!-- Modal Body -->
-                <RadzenStack Gap="1rem">
-                    <RadzenFormField Text="Group Name *" Variant="Variant.Outlined">
-                        <RadzenTextBox @bind-Value="@_newGroupName" 
-                                       Placeholder="Enter group name (e.g., Executive Leadership, SMS Core Team)" 
-                                       Style="width: 100%;" />
-                    </RadzenFormField>
-                    
-                    <RadzenFormField Text="Description" Variant="Variant.Outlined">
-                        <RadzenTextArea @bind-Value="@_newDescription" Rows="3"
-                                        Placeholder="Optional description of the group's purpose or responsibilities"
-                                        Style="width: 100%;" />
-                    </RadzenFormField>
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="12">
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="Group Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenTextBox @bind-Value="@_newGroupName"
+                                               Placeholder="Enter group name (e.g., Executive Leadership, SMS Core Team)"
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="Description" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenTextArea @bind-Value="@_newDescription" Rows="3"
+                                                Placeholder="Optional description of the group's purpose or responsibilities"
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="Contact Email" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenTextBox @bind-Value="@_newContactEmail"
+                                               Placeholder="Optional group email (e.g., sms.ops@flypdx.com)"
+                                               Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
 
-                    <RadzenFormField Text="Group Type" Variant="Variant.Outlined">
-                        <RadzenDropDown @bind-Value="@_newGroupType" Data="@GroupTypeOptions" 
-                                        TextProperty="Text" ValueProperty="Value" 
-                                        Style="width: 100%;" />
-                    </RadzenFormField>
-
-                    <RadzenFormField Text="Authority Level" Variant="Variant.Outlined">
-                        <RadzenDropDown @bind-Value="@_newAuthorityLevel" Data="@AuthorityLevelOptions" 
-                                        TextProperty="Text" ValueProperty="Value" 
-                                        Style="width: 100%;" />
-                    </RadzenFormField>
-                    
-                </RadzenStack>
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="Group Type" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenDropDown @bind-Value="@_newGroupType" Data="@GroupTypeOptions"
+                                                TextProperty="Text" ValueProperty="Value"
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="Authority Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenDropDown @bind-Value="@_newAuthorityLevel" Data="@AuthorityLevelOptions"
+                                                TextProperty="Text" ValueProperty="Value"
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                    </RadzenColumn>
+                </RadzenRow>
                 
                 <!-- Modal Footer -->
                 <div class="d-flex justify-content-end gap-2 mt-3">
@@ -235,6 +268,13 @@
                                 <RadzenTextArea @bind-Value="@_editDescription" Rows="3"
                                                 Placeholder="Optional description of the group's purpose or responsibilities"
                                                 Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenStack>
+                        <RadzenStack Gap="1rem">
+                            <RadzenFormField Text="Contact Email" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                <RadzenTextBox @bind-Value="@_editContactEmail"
+                                               Placeholder="Optional group email (e.g., sms.ops@flypdx.com)"
+                                               Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenStack>
                     </RadzenColumn>

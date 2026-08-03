@@ -13,14 +13,9 @@ namespace SMS_Domain.Entities;
 /// <summary>
 /// SMS Stakeholder Group entity for managing external stakeholder groups
 /// </summary>
-public class SMSStakeholderGroup : BaseAuditableEntity
+public sealed class SMSStakeholderGroup : BaseUserGroup
 {
     public SMSStakeholderGroup(SMSStakeholderGroupID id) : base(id, string.Empty, DateTime.UtcNow) { }
-
-    public string Code { get; set; }
-    public string Name { get; set; }
-    public string? Description { get; set; }
-    public bool IsActive { get; set; }
 
     public List<SMSStakeholderUser> GroupMembers { get; set; }
 }

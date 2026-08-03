@@ -11,9 +11,11 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using SMS_Application.Interfaces;
+using SMS_Application.Queries;
 using SMS_Application.Services;
 using SMS_Domain.Events;
 using SMS_Domain.Common;
+using SMS_Domain.Entities;
 
 namespace SMS_Application.EventHandlers;
 
@@ -26,16 +28,28 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
 {
     private readonly IEmailService _emailService;
     private readonly ILogger<EmailNotificationEventHandler> _logger;
+    private readonly IBaseMediator _mediator;
+    private readonly ISMSApplicationGroupService _applicationGroupService;
+    private readonly ISMSStakeholderGroupService _stakeholderGroupService;
+    private readonly ISMSOrganizationalGroupService _organizationalGroupService;
     private readonly bool _useSimulation;
 
     public EmailNotificationEventHandler(
         ILogger<EmailNotificationEventHandler> logger,
         IEmailService emailService,
+        IBaseMediator mediator,
+        ISMSApplicationGroupService applicationGroupService,
+        ISMSStakeholderGroupService stakeholderGroupService,
+        ISMSOrganizationalGroupService organizationalGroupService,
         IOptions<SmtpEmailConfiguration> smtpConfig)
         : base(logger)
     {
         _logger = logger;
         _emailService = emailService ?? throw new ArgumentNullException(nameof(emailService));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _applicationGroupService = applicationGroupService ?? throw new ArgumentNullException(nameof(applicationGroupService));
+        _stakeholderGroupService = stakeholderGroupService ?? throw new ArgumentNullException(nameof(stakeholderGroupService));
+        _organizationalGroupService = organizationalGroupService ?? throw new ArgumentNullException(nameof(organizationalGroupService));
 
         // Use configuration-based simulation setting
         _useSimulation = smtpConfig?.Value?.UseSimulation ?? false;
@@ -51,6 +65,8 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
     {
         try
         {
+            await ResolveGroupContactRecipientsAsync(integrationEvent, cancellationToken);
+
             _logger.LogApplicationInformation("[EMAIL HANDLER] Processing email notification: '{Subject}' to {RecipientCount} recipients (Priority: {Priority}) - UseSimulation: {UseSimulation}",
                 integrationEvent.Subject, integrationEvent.ToRecipients.Count, integrationEvent.Priority, _useSimulation);
 
@@ -255,6 +271,361 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
     private bool ValidateEmailEvent(EmailNotificationEvent emailEvent)
     {
         return !string.IsNullOrEmpty(emailEvent.Subject) && emailEvent.ToRecipients.Any();
+    }
+
+    private async Task ResolveGroupContactRecipientsAsync(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
+    {
+        var resolvedTo = await ResolveRecipientsAsync(emailEvent.ToRecipients, cancellationToken, enforceGroupContactOnly: true);
+        var resolvedCc = await ResolveRecipientsAsync(emailEvent.CcRecipients, cancellationToken, enforceGroupContactOnly: false);
+        var resolvedBcc = await ResolveRecipientsAsync(emailEvent.BccRecipients, cancellationToken, enforceGroupContactOnly: false);
+
+        emailEvent.ToRecipients.Clear();
+        emailEvent.ToRecipients.AddRange(resolvedTo);
+
+        emailEvent.CcRecipients.Clear();
+        emailEvent.CcRecipients.AddRange(resolvedCc);
+
+        emailEvent.BccRecipients.Clear();
+        emailEvent.BccRecipients.AddRange(resolvedBcc);
+    }
+
+    private async Task<List<string>> ResolveRecipientsAsync(
+        IEnumerable<string> recipients,
+        CancellationToken cancellationToken,
+        bool enforceGroupContactOnly)
+    {
+        var resolved = new List<string>();
+        var unresolved = new List<string>();
+
+        foreach (var recipient in recipients.Where(r => !string.IsNullOrWhiteSpace(r)))
+        {
+            var normalizedRecipient = recipient.Trim();
+            var groupContactEmails = await ResolveGroupContactEmailsForRecipientAsync(normalizedRecipient, cancellationToken);
+
+            if (groupContactEmails.Count > 0)
+            {
+                resolved.AddRange(groupContactEmails);
+                continue;
+            }
+
+            if (enforceGroupContactOnly && IsValidEmail(normalizedRecipient))
+            {
+                var directGroupContactMatch = await ResolveGroupContactEmailsByContactAddressAsync(normalizedRecipient, cancellationToken);
+                if (directGroupContactMatch.Count > 0)
+                {
+                    resolved.AddRange(directGroupContactMatch);
+                    continue;
+                }
+            }
+
+            if (enforceGroupContactOnly)
+            {
+                unresolved.Add(normalizedRecipient);
+            }
+            else
+            {
+                resolved.Add(normalizedRecipient);
+            }
+        }
+
+        if (enforceGroupContactOnly && unresolved.Count > 0)
+        {
+            _logger.LogApplicationWarning(
+                "[EMAIL HANDLER] Group-contact-only routing dropped {UnresolvedCount} recipient token(s): {Recipients}",
+                unresolved.Count,
+                string.Join(", ", unresolved));
+        }
+
+        return resolved
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .Select(r => r.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private async Task<List<string>> ResolveGroupContactEmailsByContactAddressAsync(string emailAddress, CancellationToken cancellationToken)
+    {
+        var normalized = emailAddress.Trim();
+        var resolvedGroupEmails = new List<string>();
+
+        await AppendGroupContactEmailsByAddressAsync(
+            () => _applicationGroupService.GetAllSMSApplicationGroupsAsync(cancellationToken),
+            normalized,
+            resolvedGroupEmails);
+
+        await AppendGroupContactEmailsByAddressAsync(
+            () => _stakeholderGroupService.GetAllSMSStakeholderGroupsAsync(cancellationToken),
+            normalized,
+            resolvedGroupEmails);
+
+        await AppendGroupContactEmailsByAddressAsync(
+            () => _organizationalGroupService.GetAllSMSOrganizationalGroupsAsync(cancellationToken),
+            normalized,
+            resolvedGroupEmails);
+
+        return resolvedGroupEmails
+            .Where(IsValidEmail)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private async Task AppendOrganizationalAuthorityLevelContactEmailsByRecipientAsync(
+        string recipient,
+        List<string> resolvedGroupEmails,
+        CancellationToken cancellationToken)
+    {
+        var organizationalUser = await ResolveOrganizationalUserFromRecipientAsync(recipient, cancellationToken);
+        if (organizationalUser is null || string.IsNullOrWhiteSpace(organizationalUser.Code))
+        {
+            return;
+        }
+
+        var groupsResult = await _organizationalGroupService.GetSMSOrganizationalGroupsByUserCodeAsync(organizationalUser.Code.Trim(), cancellationToken);
+        if (groupsResult.IsFailure || groupsResult.Value is null)
+        {
+            return;
+        }
+
+        var userAuthorityLevel = ResolveAuthorityLevelName(organizationalUser.AuthorityLevel);
+
+        var matchingAuthorityEmails = groupsResult.Value
+            .Where(g => g.IsActive)
+            .Where(g => !string.IsNullOrWhiteSpace(g.ContactEmail))
+            .Where(g => string.Equals(g.AuthorityLevel ?? string.Empty, userAuthorityLevel, StringComparison.OrdinalIgnoreCase))
+            .Select(g => g.ContactEmail!.Trim())
+            .Where(IsValidEmail)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (matchingAuthorityEmails.Count > 0)
+        {
+            resolvedGroupEmails.AddRange(matchingAuthorityEmails);
+            return;
+        }
+
+        var fallbackEmails = groupsResult.Value
+            .Where(g => g.IsActive)
+            .Where(g => !string.IsNullOrWhiteSpace(g.ContactEmail))
+            .Select(g => g.ContactEmail!.Trim())
+            .Where(IsValidEmail)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        resolvedGroupEmails.AddRange(fallbackEmails);
+    }
+
+    private async Task<SMSOrganizationalUser?> ResolveOrganizationalUserFromRecipientAsync(string recipient, CancellationToken cancellationToken)
+    {
+        var normalized = recipient.Trim();
+
+        if (!normalized.Contains('@'))
+        {
+            var byCode = await _mediator.SendAsync(new GetSMSOrganizationalUserByCodeQuery(normalized), cancellationToken);
+            if (byCode.IsSuccess && byCode.Value is not null)
+            {
+                return byCode.Value;
+            }
+        }
+
+        var candidateUserNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { normalized };
+        var atSymbolIndex = normalized.IndexOf('@');
+        if (atSymbolIndex > 0)
+        {
+            candidateUserNames.Add(normalized[..atSymbolIndex]);
+        }
+
+        foreach (var userName in candidateUserNames)
+        {
+            var byUserName = await _mediator.SendAsync(new GetSMSOrganizationalUserByUserNameQuery(userName), cancellationToken);
+            if (byUserName.IsSuccess && byUserName.Value is not null)
+            {
+                return byUserName.Value;
+            }
+        }
+
+        return null;
+    }
+
+    private static string ResolveAuthorityLevelName(int? authorityLevel)
+    {
+        if (!authorityLevel.HasValue)
+        {
+            return "Standard";
+        }
+
+        return authorityLevel.Value switch
+        {
+            >= 9 => "Executive",
+            >= 7 => "Strategic",
+            >= 5 => "Operational",
+            >= 3 => "Process",
+            >= 1 => "Support",
+            _ => "Standard"
+        };
+    }
+
+    private async Task<List<string>> ResolveGroupContactEmailsForRecipientAsync(string recipient, CancellationToken cancellationToken)
+    {
+        var resolvedGroupEmails = new List<string>();
+
+        await AppendGroupContactEmailByGroupCodeAsync(_applicationGroupService.GetSMSApplicationGroupByCodeAsync, recipient, resolvedGroupEmails, cancellationToken);
+        await AppendGroupContactEmailByGroupCodeAsync(_stakeholderGroupService.GetSMSStakeholderGroupByCodeAsync, recipient, resolvedGroupEmails, cancellationToken);
+        await AppendGroupContactEmailByGroupCodeAsync(_organizationalGroupService.GetSMSOrganizationalGroupByCodeAsync, recipient, resolvedGroupEmails, cancellationToken);
+
+        // Treat recipient token as a user code first (e.g., OU-0001 / SU-0001 / AU-0001)
+        await AppendGroupContactEmailsByUserCodeAsync(
+            () => _applicationGroupService.GetSMSApplicationGroupsByUserCodeAsync(recipient, cancellationToken),
+            resolvedGroupEmails);
+
+        await AppendGroupContactEmailsByUserCodeAsync(
+            () => _stakeholderGroupService.GetSMSStakeholderGroupsByUserCodeAsync(recipient, cancellationToken),
+            resolvedGroupEmails);
+
+        await AppendGroupContactEmailsByUserCodeAsync(
+            () => _organizationalGroupService.GetSMSOrganizationalGroupsByUserCodeAsync(recipient, cancellationToken),
+            resolvedGroupEmails);
+
+        await AppendOrganizationalAuthorityLevelContactEmailsByRecipientAsync(recipient, resolvedGroupEmails, cancellationToken);
+
+        var candidateUserNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { recipient };
+
+        var atSymbolIndex = recipient.IndexOf('@');
+        if (atSymbolIndex > 0)
+        {
+            candidateUserNames.Add(recipient[..atSymbolIndex]);
+        }
+
+        foreach (var candidateUserName in candidateUserNames)
+        {
+            var userCode = await ResolveUserCodeFromUserNameAsync(candidateUserName, cancellationToken);
+            if (string.IsNullOrWhiteSpace(userCode))
+            {
+                continue;
+            }
+
+            await AppendGroupContactEmailsByUserCodeAsync(
+                () => _applicationGroupService.GetSMSApplicationGroupsByUserCodeAsync(userCode, cancellationToken),
+                resolvedGroupEmails);
+
+            await AppendGroupContactEmailsByUserCodeAsync(
+                () => _stakeholderGroupService.GetSMSStakeholderGroupsByUserCodeAsync(userCode, cancellationToken),
+                resolvedGroupEmails);
+
+            await AppendGroupContactEmailsByUserCodeAsync(
+                () => _organizationalGroupService.GetSMSOrganizationalGroupsByUserCodeAsync(userCode, cancellationToken),
+                resolvedGroupEmails);
+
+            await AppendOrganizationalAuthorityLevelContactEmailsByRecipientAsync(userCode, resolvedGroupEmails, cancellationToken);
+        }
+
+        return resolvedGroupEmails
+            .Where(IsValidEmail)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private async Task AppendGroupContactEmailByGroupCodeAsync<TGroup>(
+        Func<string, CancellationToken, Task<Result<TGroup>>> groupLookup,
+        string groupCode,
+        List<string> resolvedGroupEmails,
+        CancellationToken cancellationToken)
+        where TGroup : BaseUserGroup
+    {
+        var groupResult = await groupLookup(groupCode, cancellationToken);
+        if (groupResult.IsSuccess && !string.IsNullOrWhiteSpace(groupResult.Value?.ContactEmail))
+        {
+            resolvedGroupEmails.Add(groupResult.Value.ContactEmail.Trim());
+        }
+    }
+
+    private static async Task AppendGroupContactEmailsByUserCodeAsync<TGroup>(
+        Func<Task<Result<IEnumerable<TGroup>>>> groupLookup,
+        List<string> resolvedGroupEmails)
+        where TGroup : BaseUserGroup
+    {
+        var groupsResult = await groupLookup();
+        if (groupsResult.IsFailure || groupsResult.Value is null)
+        {
+            return;
+        }
+
+        foreach (var group in groupsResult.Value)
+        {
+            if (!string.IsNullOrWhiteSpace(group.ContactEmail))
+            {
+                resolvedGroupEmails.Add(group.ContactEmail.Trim());
+            }
+        }
+    }
+
+    private static async Task AppendGroupContactEmailsByAddressAsync<TGroup>(
+        Func<Task<Result<IEnumerable<TGroup>>>> groupLookup,
+        string emailAddress,
+        List<string> resolvedGroupEmails)
+        where TGroup : BaseUserGroup
+    {
+        var groupsResult = await groupLookup();
+        if (groupsResult.IsFailure || groupsResult.Value is null)
+        {
+            return;
+        }
+
+        foreach (var group in groupsResult.Value)
+        {
+            if (string.IsNullOrWhiteSpace(group.ContactEmail))
+            {
+                continue;
+            }
+
+            if (string.Equals(group.ContactEmail.Trim(), emailAddress, StringComparison.OrdinalIgnoreCase))
+            {
+                resolvedGroupEmails.Add(group.ContactEmail.Trim());
+            }
+        }
+    }
+
+    private async Task<string?> ResolveUserCodeFromUserNameAsync(string userName, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var appUserResult = await _mediator.SendAsync(new GetSMSApplicationUserByUserNameQuery(userName), cancellationToken);
+            if (appUserResult.IsSuccess && !string.IsNullOrWhiteSpace(appUserResult.Value?.Code))
+            {
+                return appUserResult.Value.Code.Trim();
+            }
+
+            var stakeholderUserResult = await _mediator.SendAsync(new GetSMSStakeholderUserByUserNameQuery(userName), cancellationToken);
+            if (stakeholderUserResult.IsSuccess && !string.IsNullOrWhiteSpace(stakeholderUserResult.Value?.Code))
+            {
+                return stakeholderUserResult.Value.Code.Trim();
+            }
+
+            var organizationalUserResult = await _mediator.SendAsync(new GetSMSOrganizationalUserByUserNameQuery(userName), cancellationToken);
+            if (organizationalUserResult.IsSuccess && !string.IsNullOrWhiteSpace(organizationalUserResult.Value?.Code))
+            {
+                return organizationalUserResult.Value.Code.Trim();
+            }
+
+            return null;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationDebug(ex, "[EMAIL HANDLER] User name lookup failed for recipient token '{UserName}'", userName);
+            return null;
+        }
+    }
+
+    private static bool IsValidEmail(string value)
+    {
+        try
+        {
+            _ = new System.Net.Mail.MailAddress(value);
+            return true;
+        }
+        catch
+        {
+            return false;
+        }
     }
 }
 

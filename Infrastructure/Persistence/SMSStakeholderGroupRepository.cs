@@ -57,6 +57,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, stakeholderGroup.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupName, stakeholderGroup.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupDescription, stakeholderGroup.Description ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupContactEmail, stakeholderGroup.ContactEmail ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, stakeholderGroup.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, stakeholderGroup.CreatedDate));
 
@@ -103,6 +104,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, stakeholderGroup.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupName, stakeholderGroup.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupDescription, stakeholderGroup.Description ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupContactEmail, stakeholderGroup.ContactEmail ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupIsActive, stakeholderGroup.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, stakeholderGroup.UpdatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, stakeholderGroup.UpdatedDate ?? DateTime.UtcNow));

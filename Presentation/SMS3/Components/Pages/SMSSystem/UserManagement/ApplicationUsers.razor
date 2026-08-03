@@ -174,7 +174,6 @@
                                                 TextProperty="Name"
                                                 ValueProperty="Code"
                                                 Placeholder="Select a role..."
-                                                AllowClear="true"
                                                 Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>
@@ -325,12 +324,12 @@
                                                Style="width: 100%;" />
                             </RadzenFormField>
 
-                            <RadzenFormField Text="Assign Role (Optional)" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenFormField Text="SMS User Role/Permissions *" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                 <RadzenDropDown @bind-Value="@_editUserRoleCode"
                                                 Data="@AvailableRoles"
                                                 TextProperty="Name"
                                                 ValueProperty="Code"
-                                                Style="width: 100%;" Placeholder="Select a role (optional)..." AllowClear="true" />
+                                                Style="width: 100%;" Placeholder="Select a role" />
                             </RadzenFormField>
                         </RadzenStack>
                     </RadzenColumn>
@@ -414,12 +413,12 @@
                                                Style="width: 100%;min-width:100%" />
                             </RadzenFormField>
 
-                            <RadzenFormField Text="Assign Role (Optional)" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenFormField Text="SMS User Role/Permissions *" Variant="Variant.Outlined" AllowFloatingLabel="false">
                                 <RadzenDropDown @bind-Value="@_newUser.UserRoleCode"
                                                 Data="@AvailableRoles"
                                                 TextProperty="Name"
                                                 ValueProperty="Code"
-                                                Style="width: 100%;" Placeholder="Select a role" AllowClear="true" />
+                                                Style="width: 100%;" Placeholder="Select a role" />
                             </RadzenFormField>
                         </RadzenStack>
                     </RadzenColumn>

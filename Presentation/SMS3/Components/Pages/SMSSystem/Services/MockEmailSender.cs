@@ -2,6 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using SMS_Application.Interfaces;
+using SMS_Domain.Enums;
 using SMS_Domain.Events;
 using SMS3.Components.Pages.SMSSystem.Models;
 
@@ -9,11 +10,11 @@ namespace SMS3.Components.Pages.SMSSystem.Services
 {
     public class MockEmailSender : IEmailSender
     {
-        private readonly IEmailService _emailService;
+        private readonly IBaseEventBus _eventBus;
 
-        public MockEmailSender(IEmailService emailService)
+        public MockEmailSender(IBaseEventBus eventBus)
         {
-            _emailService = emailService;
+            _eventBus = eventBus;
         }
 
         public async Task SendAsync(MailRequest request)
@@ -33,7 +34,7 @@ namespace SMS3.Components.Pages.SMSSystem.Services
                     ContentType = a.ContentType
                 }).ToList());
 
-            var result = await _emailService.SendEmailAsync(emailEvent, CancellationToken.None).ConfigureAwait(false);
+            var result = await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Immediate, CancellationToken.None).ConfigureAwait(false);
             if (result.IsFailure)
             {
                 throw new InvalidOperationException(result.Error?.Message ?? "Email send failed.");

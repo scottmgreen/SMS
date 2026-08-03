@@ -790,6 +790,9 @@ public static partial class Mappers
             stakeholderGroup.Code = code;
             stakeholderGroup.Name = reader.GetValue<string>(FieldNames.fSMSStakeholderGroupName) ?? string.Empty;
             stakeholderGroup.Description = reader.GetValue<string>(FieldNames.fSMSStakeholderGroupDescription) ?? string.Empty;
+            stakeholderGroup.ContactEmail = reader.HasColumn(FieldNames.fSMSStakeholderGroupContactEmail)
+                ? reader.GetValue<string>(FieldNames.fSMSStakeholderGroupContactEmail)
+                : string.Empty;
             stakeholderGroup.IsActive = reader.IsDBNull(FieldNames.fSMSStakeholderGroupIsActive) ? true : reader.GetBoolean(FieldNames.fSMSStakeholderGroupIsActive);
             
             stakeholderGroup.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
@@ -816,6 +819,9 @@ public static partial class Mappers
             applicationGroup.Code = code;
             applicationGroup.Name = reader.GetValue<string>(FieldNames.fSMSApplicationGroupName) ?? string.Empty;
             applicationGroup.Description = reader.GetValue<string>(FieldNames.fSMSApplicationGroupDescription) ?? string.Empty;
+            applicationGroup.ContactEmail = reader.HasColumn(FieldNames.fSMSApplicationGroupContactEmail)
+                ? reader.GetValue<string>(FieldNames.fSMSApplicationGroupContactEmail)
+                : string.Empty;
             applicationGroup.IsActive = reader.IsDBNull(FieldNames.fSMSApplicationGroupIsActive) ? true : reader.GetBoolean(FieldNames.fSMSApplicationGroupIsActive);
             
             applicationGroup.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
@@ -845,6 +851,9 @@ public static partial class Mappers
             organizationalGroup.Code = code;
             organizationalGroup.Name = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupName) ?? string.Empty;
             organizationalGroup.Description = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupDescription) ?? string.Empty;
+            organizationalGroup.ContactEmail = reader.HasColumn(FieldNames.fSMSOrganizationalGroupContactEmail)
+                ? reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupContactEmail)
+                : string.Empty;
             organizationalGroup.GroupType = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupGroupType) ?? "Department";
             organizationalGroup.AuthorityLevel = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupAuthorityLevel) ?? "Standard";
             organizationalGroup.IsActive = reader.IsDBNull(FieldNames.fSMSOrganizationalGroupIsActive) ? true : reader.GetBoolean(FieldNames.fSMSOrganizationalGroupIsActive);

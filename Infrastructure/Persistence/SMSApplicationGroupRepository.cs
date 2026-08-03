@@ -57,6 +57,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupCode, applicationGroup.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupName, applicationGroup.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupDescription, applicationGroup.Description ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupContactEmail, applicationGroup.ContactEmail ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, applicationGroup.CreatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, applicationGroup.CreatedDate));
 
@@ -103,6 +104,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, applicationGroup.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupName, applicationGroup.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupDescription, applicationGroup.Description ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupContactEmail, applicationGroup.ContactEmail ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupIsActive, applicationGroup.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, applicationGroup.UpdatedBy ?? applicationGroup.CreatedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, applicationGroup.UpdatedDate ?? DateTime.UtcNow));

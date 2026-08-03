@@ -59,6 +59,11 @@ public interface IEventQueueService
     Task<Result> CancelQueuedEventAsync(Guid eventId, string? cancelledBy = null);
 
     /// <summary>
+    /// Rebuilds and re-queues an EmailNotification integration event from an existing queued event.
+    /// </summary>
+    Task<Result<Guid>> RebuildQueuedEmailEventAsync(Guid eventId, string? rebuiltBy = null);
+
+    /// <summary>
     /// Clears all processed and failed events
     /// </summary>
     Task<Result<int>> ClearCompletedEventsAsync();

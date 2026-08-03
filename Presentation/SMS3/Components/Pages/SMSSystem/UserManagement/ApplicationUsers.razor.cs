@@ -398,11 +398,17 @@ public partial class ApplicationUsers : ComponentBase
             _isSaving = true;
             StateHasChanged();
 
-            // ?? NEW: Get selected role if provided
+            // Get selected role (required)
             SMSUserRole? selectedRole = null;
             if (!string.IsNullOrEmpty(_newUser.UserRoleCode))
             {
                 selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == _newUser.UserRoleCode);
+            }
+
+            if (selectedRole is null)
+            {
+                await ShowErrorAsyncNotification("SMS User Role/Permissions is required.");
+                return;
             }
 
             // Create user entity
@@ -414,7 +420,7 @@ public partial class ApplicationUsers : ComponentBase
                 LastName = LastName.Create(_newUser.LastName).Value,
                 UserName = UserName.Create(_newUser.UserName).Value,
                 Password = Password.Create(_newUser.Password).Value,
-                UserRole = selectedRole ?? new SMSUserRole(new SMSUserRoleID("ROLE-UNASSIGNED")) { Name = "Unassigned" }, // ?? NEW: Assign role during creation
+                UserRole = selectedRole,
                 TwoFactorEnabled = _newUser.TwoFactorEnabled, // ?? NEW: Set 2FA requirement
                 IsActive = _newIsActive, // UPDATED: Use NewIsActive property
                 SMSUserType = SMSUserType.Application
@@ -466,7 +472,8 @@ public partial class ApplicationUsers : ComponentBase
         !string.IsNullOrWhiteSpace(_newUser.FirstName) &&
         !string.IsNullOrWhiteSpace(_newUser.LastName) &&
         !string.IsNullOrWhiteSpace(_newUser.UserName) &&
-        !string.IsNullOrWhiteSpace(_newUser.Password);
+        !string.IsNullOrWhiteSpace(_newUser.Password) &&
+        !string.IsNullOrWhiteSpace(_newUser.UserRoleCode);
 
     private void EditUser(string userId)
     {
@@ -501,15 +508,20 @@ public partial class ApplicationUsers : ComponentBase
             _currentUser.SMSUserType = SMSUserType.Application;
             
             // Update role if changed
-            if (!string.IsNullOrEmpty(_editUserRoleCode))
+            if (string.IsNullOrWhiteSpace(_editUserRoleCode))
             {
-                var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == _editUserRoleCode);
-                _currentUser.UserRole = selectedRole ?? new SMSUserRole(new SMSUserRoleID("ROLE-UNASSIGNED")) { Name = "Unassigned" };
+                await ShowErrorAsyncNotification("SMS User Role/Permissions is required.");
+                return;
             }
-            else
+
+            var selectedRole = AvailableRoles.FirstOrDefault(r => r.Code == _editUserRoleCode);
+            if (selectedRole is null)
             {
-                _currentUser.UserRole = new SMSUserRole(new SMSUserRoleID("ROLE-UNASSIGNED")) { Name = "Unassigned" };
+                await ShowErrorAsyncNotification("Selected SMS User Role/Permissions was not found.");
+                return;
             }
+
+            _currentUser.UserRole = selectedRole;
             
             // ? REMOVED: Manual audit field assignments
             // CurrentUser.UpdatedBy = _currentUserService?.UserDisplayName;

@@ -39,6 +39,12 @@
 - When rendering HazardDescription in modals or static display areas, treat it as HTML markup (e.g., via MarkupString) so RadzenHtmlEditor formatting is preserved.
 - Use Radzen DialogService for confirmation prompts; do not use IJSRuntime/JavaScript confirm dialogs in this codebase.
 
+## User Management
+- For SMS user management dialogs, SMS User Role/Permissions is required and must not be labeled as optional. Bindings and parameters for user role must be 100% consistent across ApplicationUsers, StakeholderUsers, and OrganizationalUsers.
+
+## Email Routing
+- Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.
+
 ## Code Style
 - Private variables in SMS3 code-behind files must consistently follow the _variableName naming convention (e.g., _memberName). 
 - Cleanup should continue in targeted batches with build validation.
@@ -48,6 +54,7 @@
 - Use a generic shared constants file name `SystemConstants.cs` in SMS3 for reusable constant values rather than a feature-specific constants file name.
 - Use UserCode (not UserDisplayName) for all CreatedBy and UpdatedBy audit assignments across the codebase. Avoid magic string defaults like "SYSTEM"/"SYSTEM-2FA".
 - Use UserCode (not display name or other identifiers) for ReportValidation.ValidatedBy and related audit actor fields.
+- For repository parameter ordering, place the ContactEmail parameter immediately after the Description in all relevant calls.
 
 ## Paging
 - When applying paging changes, update all SMSListings pages in SMS3 so every listing uses 15 rows per page and do not skip any listing page.

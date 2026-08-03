@@ -57,12 +57,9 @@ public partial class OrganizationalUsers : ComponentBase
     private string _newOrganizationLevelId { get; set; } =  string.Empty;
     private bool _newTwoFactorEnabled { get; set; } = false;
     private bool _newIsActive { get; set; } = true; // ADDED: Missing property
-    private SMSUserRole? _newSmsUserRole { get; set; }
-
-    // Update form fields to use role ID instead of role name
-    
-    private string _newSmsUserRoleId { get; set; } = string.Empty;
-    private string _editSmsUserRoleId { get; set; } = string.Empty;
+    // Update form fields to use role ID consistently with other user dialogs
+    private string _newUserRoleCode { get; set; } = string.Empty;
+    private string _editUserRoleCode { get; set; } = string.Empty;
 
 
     // Edit form fields
@@ -173,13 +170,15 @@ public partial class OrganizationalUsers : ComponentBase
         !string.IsNullOrWhiteSpace(_newUserName) &&
         !string.IsNullOrWhiteSpace(_newPassword) &&
         IsValidDepartment(_newDepartmentId) &&
-        IsValidOrganizationLevel(_newOrganizationLevelId);
+        IsValidOrganizationLevel(_newOrganizationLevelId) &&
+        !string.IsNullOrWhiteSpace(_newUserRoleCode);
 
     private bool _isEditFormValid =>
         !string.IsNullOrWhiteSpace(_editFirstName) &&
         !string.IsNullOrWhiteSpace(_editLastName) &&
         IsValidDepartment(_editDepartmentId) &&
-        IsValidOrganizationLevel(_editOrganizationLevelId);
+        IsValidOrganizationLevel(_editOrganizationLevelId) &&
+        !string.IsNullOrWhiteSpace(_editUserRoleCode);
 
     
     // Helper method to validate organization level
@@ -300,8 +299,7 @@ public partial class OrganizationalUsers : ComponentBase
         _newOrganizationLevelId = string.Empty;
         _newTwoFactorEnabled = false;
         _newIsActive = true; // ADDED: Reset new property
-        _newSmsUserRole = null;
-        _newSmsUserRoleId = string.Empty; // ADDED: Reset role ID
+        _newUserRoleCode = string.Empty;
         _showCreateModal = true;
     }
 
@@ -317,8 +315,7 @@ public partial class OrganizationalUsers : ComponentBase
         _newOrganizationLevelId = string.Empty;
         _newTwoFactorEnabled = false;
         _newIsActive = true; // ADDED: Reset new property
-        _newSmsUserRole = null;
-        _newSmsUserRoleId = string.Empty; // ADDED: Reset role ID
+        _newUserRoleCode = string.Empty;
     }
 
     private async Task CreateUser()
@@ -336,13 +333,11 @@ public partial class OrganizationalUsers : ComponentBase
 
             // Find the actual SMS User Role if one was selected
             SMSUserRole? selectedRole = null;
-            if (!string.IsNullOrEmpty(_newSmsUserRoleId))
+            if (!string.IsNullOrEmpty(_newUserRoleCode))
             {
-                // You'll need to fetch the actual role from the database or loaded options
-                var roleOption = SMSRoleOptions.FirstOrDefault(r => r.Value == _newSmsUserRoleId);
+                var roleOption = SMSRoleOptions.FirstOrDefault(r => r.Value == _newUserRoleCode);
                 if (roleOption is not null)
                 {
-                    // Either fetch from database or create a minimal role object
                     selectedRole = new SMSUserRole(new SMSUserRoleID(roleOption.Value))
                     {
                         Code = roleOption.Value,
@@ -364,7 +359,7 @@ public partial class OrganizationalUsers : ComponentBase
                 Department = SMSDepartment.FromValue(_newDepartmentId) ?? SMSDepartment.AirportOperations,
                 Position = _newPosition,
                 OrganizationLevel = SMSOrganizationalLevel.FromName(_newOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel,
-                SMSUserRole = selectedRole, // UPDATED: Use selectedRole instead of _newSmsUserRole
+                UserRole = selectedRole,
                 TwoFactorEnabled = _newTwoFactorEnabled,
                 IsActive = _newIsActive, // UPDATED: Use _newIsActive property
                 SMSUserType = SMSUserType.Organizational // ADDED: Set correct user type
@@ -430,7 +425,7 @@ public partial class OrganizationalUsers : ComponentBase
             _editOrganizationLevelId = _currentUser.OrganizationLevel.Name ?? SMSOrganizationalLevel.UnassignedLevel;
             _editIsActive = _currentUser.IsActive;
             _editTwoFactorEnabled = _currentUser.TwoFactorEnabled;
-            _editSmsUserRoleId = _currentUser.UserRole?.Code ?? string.Empty;
+            _editUserRoleCode = _currentUser.UserRole?.Code ?? string.Empty;
             // Open edit modal
             _showEditModal = true;
         }
@@ -451,7 +446,7 @@ public partial class OrganizationalUsers : ComponentBase
         _editPosition = string.Empty;
         // FIXED: Reset to empty string instead of enum object
         _editOrganizationLevelId = string.Empty;
-        _editSmsUserRoleId = string.Empty; // ADDED: Reset SMS User Role
+        _editUserRoleCode = string.Empty;
         _editIsActive = true;
         _editTwoFactorEnabled = false;
     }
@@ -478,9 +473,9 @@ public partial class OrganizationalUsers : ComponentBase
             _currentUser.IsActive = _editIsActive;
             _currentUser.TwoFactorEnabled = _editTwoFactorEnabled;
             // ADDED: Handle SMS User Role update
-            if (!string.IsNullOrEmpty(_editSmsUserRoleId))
+            if (!string.IsNullOrEmpty(_editUserRoleCode))
             {
-                var roleOption = SMSRoleOptions.FirstOrDefault(r => r.Value == _editSmsUserRoleId);
+                var roleOption = SMSRoleOptions.FirstOrDefault(r => r.Value == _editUserRoleCode);
                 if (roleOption is not null)
                 {
                     _currentUser.UserRole = new SMSUserRole(new SMSUserRoleID(roleOption.Value))
@@ -489,10 +484,16 @@ public partial class OrganizationalUsers : ComponentBase
                         Name = roleOption.Text
                     };
                 }
+                else
+                {
+                    await ShowErrorAsyncNotification("Selected SMS User Role/Permissions was not found.");
+                    return;
+                }
             }
             else
             {
-                _currentUser.SMSUserRole = null;
+                await ShowErrorAsyncNotification("SMS User Role/Permissions is required.");
+                return;
             }
 
             _currentUser.IsActive = _editIsActive;

@@ -135,6 +135,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, group.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupName, group.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupDescription, group.Description));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupContactEmail, group.ContactEmail ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupGroupType, group.GroupType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupAuthorityLevel, group.AuthorityLevel));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupIsActive, group.IsActive));
@@ -182,6 +183,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, group.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupName, group.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupDescription, group.Description));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupContactEmail, group.ContactEmail ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupGroupType, group.GroupType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupAuthorityLevel, group.AuthorityLevel));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupIsActive, group.IsActive));

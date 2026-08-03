@@ -67,6 +67,7 @@ namespace SMS_Application.Configuration
             // SMS Group Application Services - INTERFACE BINDINGS (Only for existing interfaces)
             services.AddScoped<ISMSOrganizationalGroupService, SMSOrganizationalGroupService>();
             services.AddScoped<ISMSApplicationGroupService, SMSApplicationGroupService>();
+            services.AddScoped<ISMSStakeholderGroupService, SMSStakeholderGroupService>();
 
             // SMS Group Application Services - CONCRETE REGISTRATIONS (For Query Handlers)
             services.AddScoped<SMSApplicationGroupService>();

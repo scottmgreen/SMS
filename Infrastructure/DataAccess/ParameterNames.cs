@@ -1173,6 +1173,9 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmSMSStakeholderGroupDescription = new Lazy<string>(() => "@pDescription");
     public static string pmSMSStakeholderGroupDescription => _pmSMSStakeholderGroupDescription.Value;
 
+    private static readonly Lazy<string> _pmSMSStakeholderGroupContactEmail = new Lazy<string>(() => "@pContactEmail");
+    public static string pmSMSStakeholderGroupContactEmail => _pmSMSStakeholderGroupContactEmail.Value;
+
     private static readonly Lazy<string> _pmSMSStakeholderGroupIsActive = new Lazy<string>(() => "@pIsActive");
     public static string pmSMSStakeholderGroupIsActive => _pmSMSStakeholderGroupIsActive.Value;
 
@@ -1196,6 +1199,9 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmSMSApplicationGroupDescription = new Lazy<string>(() => "@pDescription");
     public static string pmSMSApplicationGroupDescription => _pmSMSApplicationGroupDescription.Value;
 
+    private static readonly Lazy<string> _pmSMSApplicationGroupContactEmail = new Lazy<string>(() => "@pContactEmail");
+    public static string pmSMSApplicationGroupContactEmail => _pmSMSApplicationGroupContactEmail.Value;
+
     private static readonly Lazy<string> _pmSMSApplicationGroupIsActive = new Lazy<string>(() => "@pIsActive");
     public static string pmSMSApplicationGroupIsActive => _pmSMSApplicationGroupIsActive.Value;
 
@@ -1216,6 +1222,9 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmSMSOrganizationalGroupDescription = new Lazy<string>(() => "@pDescription");
     public static string pmSMSOrganizationalGroupDescription => _pmSMSOrganizationalGroupDescription.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationalGroupContactEmail = new Lazy<string>(() => "@pContactEmail");
+    public static string pmSMSOrganizationalGroupContactEmail => _pmSMSOrganizationalGroupContactEmail.Value;
 
     private static readonly Lazy<string> _pmSMSOrganizationalGroupGroupType = new Lazy<string>(() => "@pGroupType");
     public static string pmSMSOrganizationalGroupGroupType => _pmSMSOrganizationalGroupGroupType.Value;

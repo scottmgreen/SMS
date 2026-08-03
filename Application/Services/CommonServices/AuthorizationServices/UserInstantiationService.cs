@@ -102,6 +102,9 @@ public class UserInstantiationService : IUserInstantiationService
                 return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(result.Error);
             }
 
+            // Ensure role details (name + permissions) are fully hydrated.
+            await EnsureRoleCompletenessAsync(user!, cancellationToken);
+
             // Validate user completeness
             if (!_completenessValidator.IsUserComplete(user!))
             {
@@ -188,6 +191,9 @@ public class UserInstantiationService : IUserInstantiationService
                     username, userType.Value, result.Error?.Message);
                 return Result<(BaseUser, SMSUserType)>.Failure<(BaseUser, SMSUserType)>(result.Error);
             }
+
+            // Ensure role details (name + permissions) are fully hydrated.
+            await EnsureRoleCompletenessAsync(user!, cancellationToken);
 
             // Validate user completeness
             if (!_completenessValidator.IsUserComplete(user!))
@@ -427,7 +433,18 @@ public class UserInstantiationService : IUserInstantiationService
             
             if (result.IsSuccess)
             {
-                return Result<BaseUser>.Success(result.Value.User);
+                var completeUser = result.Value.User;
+
+                if (_completenessValidator.IsUserComplete(completeUser))
+                {
+                    return Result<BaseUser>.Success(completeUser);
+                }
+
+                var missing = _completenessValidator.GetMissingComponents(completeUser);
+                _logger.LogApplicationWarning("User {UserCode} remains incomplete after CQRS refetch - Missing: {MissingComponents}",
+                    completeUser.Code, string.Join(", ", missing));
+
+                return Result<BaseUser>.Failure<BaseUser>(DomainErrors.GeneralError.UnProcessableRequest);
             }
             else
             {
@@ -438,6 +455,44 @@ public class UserInstantiationService : IUserInstantiationService
         {
             _logger.LogApplicationError(ex, "Error ensuring user completeness for {UserCode}", user.Code);
             return Result<BaseUser>.Failure<BaseUser>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    /// <summary>
+    /// Ensure user role has complete role metadata and permissions.
+    /// </summary>
+    private async Task EnsureRoleCompletenessAsync(BaseUser user, CancellationToken cancellationToken)
+    {
+        if (user.UserRole == null || string.IsNullOrWhiteSpace(user.UserRole.Code))
+        {
+            return;
+        }
+
+        var hasRoleName = !string.IsNullOrWhiteSpace(user.UserRole.Name);
+        var hasPermissions = user.UserRole.Permissions != null && user.UserRole.Permissions.Any();
+
+        if (hasRoleName && hasPermissions)
+        {
+            return;
+        }
+
+        _logger.LogApplicationInformation("Hydrating role details for user {UserCode}, role {RoleCode}", user.Code, user.UserRole.Code);
+
+        var roleResult = await _mediator.SendAsync(new GetSMSUserRoleByIdQuery(user.UserRole.Code), cancellationToken);
+        if (roleResult.IsSuccess && roleResult.Value != null)
+        {
+            user.UserRole = roleResult.Value;
+            _logger.LogApplicationInformation("Role hydration successful for user {UserCode} - Role: {RoleCode}, Permissions: {PermissionCount}",
+                user.Code,
+                user.UserRole.Code,
+                user.UserRole.Permissions?.Count ?? 0);
+        }
+        else
+        {
+            _logger.LogApplicationWarning("Role hydration failed for user {UserCode}, role {RoleCode}: {Error}",
+                user.Code,
+                user.UserRole.Code,
+                roleResult.Error?.Message);
         }
     }
 

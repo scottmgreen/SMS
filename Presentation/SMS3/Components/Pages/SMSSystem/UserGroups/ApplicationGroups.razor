@@ -83,6 +83,19 @@
                         </Template>
                     </RadzenDataGridColumn>
 
+                    <RadzenDataGridColumn TItem="SMSApplicationGroup" Property="ContactEmail" Title="Contact Email" Width="260px" Sortable="true" Filterable="true">
+                        <Template Context="group">
+                            @if (!string.IsNullOrEmpty(group.ContactEmail))
+                            {
+                                <span>@group.ContactEmail</span>
+                            }
+                            else
+                            {
+                                <em style="color: var(--rz-text-secondary-color);">No email</em>
+                            }
+                        </Template>
+                    </RadzenDataGridColumn>
+
                     
 
                     <RadzenDataGridColumn TItem="SMSApplicationGroup" Property="IsActive" Title="Active" Width="150px" Sortable="true" Filterable="true">
@@ -164,6 +177,12 @@
                                         Style="width: 100%;" />
                     </RadzenFormField>
 
+                    <RadzenFormField Text="Contact Email" Variant="Variant.Outlined">
+                        <RadzenTextBox @bind-Value="@_newContactEmail"
+                                       Placeholder="Optional group email (e.g., sms.team@flypdx.com)"
+                                       Style="width: 100%;" />
+                    </RadzenFormField>
+
                 </RadzenStack>
                 
                 <!-- Modal Footer -->
@@ -208,6 +227,13 @@
                                     <RadzenTextArea @bind-Value="@_editDescription" Rows="3"
                                                     Placeholder="Optional description of the group's purpose or responsibilities"
                                                     Style="width: 100%;" />
+                                </RadzenFormField>
+                            </RadzenStack>
+                            <RadzenStack Gap="1rem">
+                                <RadzenFormField Text="Contact Email" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                                    <RadzenTextBox @bind-Value="@_editContactEmail"
+                                                   Placeholder="Optional group email (e.g., sms.team@flypdx.com)"
+                                                   Style="width: 100%;" />
                                 </RadzenFormField>
                             </RadzenStack>
                     </RadzenColumn>

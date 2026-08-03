@@ -254,28 +254,31 @@ namespace SMS_Infrastructure.Common
 
         #endregion
 
-        #region SMS Application Groups Stored Procedures
         private static readonly Lazy<string> _pr_Tracking_GetByReportCode = new(() => "pr_Tracking_GetByReportCode");
         public static string pr_Tracking_GetByReportCode => _pr_Tracking_GetByReportCode.Value;
+
+
+        #region SMS Application Groups Stored Procedures
+
         /// <summary>
         /// Stored procedures for SMS Application Groups operations
         /// </summary>
-        private static readonly Lazy<string> _pr_SMSApplicationGroup_Insert = new(() => "pr_SMSApplicationGroup_Insert");
+        private static readonly Lazy<string> _pr_SMSApplicationGroup_Insert = new(() => "pr_SMSApplicationUserGroup_Insert");
         public static string pr_SMSApplicationGroup_Insert => _pr_SMSApplicationGroup_Insert.Value;
 
-        private static readonly Lazy<string> _pr_SMSApplicationGroup_Update = new(() => "pr_SMSApplicationGroup_Update");
+        private static readonly Lazy<string> _pr_SMSApplicationGroup_Update = new(() => "pr_SMSApplicationUserGroup_Update");
         public static string pr_SMSApplicationGroup_Update => _pr_SMSApplicationGroup_Update.Value;
 
-        private static readonly Lazy<string> _pr_SMSApplicationGroup_Delete = new(() => "pr_SMSApplicationGroup_Delete");
+        private static readonly Lazy<string> _pr_SMSApplicationGroup_Delete = new(() => "pr_SMSApplicationUserGroup_Delete");
         public static string pr_SMSApplicationGroup_Delete => _pr_SMSApplicationGroup_Delete.Value;
 
-        private static readonly Lazy<string> _pr_SMSApplicationGroup_GetAll = new(() => "pr_SMSApplicationGroup_GetAll");
+        private static readonly Lazy<string> _pr_SMSApplicationGroup_GetAll = new(() => "pr_SMSApplicationUserGroup_GetAll");
         public static string pr_SMSApplicationGroup_GetAll => _pr_SMSApplicationGroup_GetAll.Value;
 
         private static readonly Lazy<string> _pr_SMSApplicationGroups_GetByUserCode = new(() => "pr_SMSApplicationUserGroup_GetGroupsByUserCode");
         public static string pr_SMSApplicationGroups_GetByUserCode => _pr_SMSApplicationGroups_GetByUserCode.Value;
 
-        private static readonly Lazy<string> _pr_SMSApplicationGroup_GetByCode = new(() => "pr_SMSApplicationGroup_GetByCode");
+        private static readonly Lazy<string> _pr_SMSApplicationGroup_GetByCode = new(() => "pr_SMSApplicationUserGroup_GetByCode");
         public static string pr_SMSApplicationGroup_GetByCode => _pr_SMSApplicationGroup_GetByCode.Value;
 
         /// <summary>
@@ -841,22 +844,22 @@ namespace SMS_Infrastructure.Common
         /// <summary>
         /// Stored procedures for SMS Organizational Group operations
         /// </summary>
-        private static readonly Lazy<string> _pr_SMSOrganizationalGroup_Insert = new(() => "pr_SMSOrganizationalGroup_Insert");
+        private static readonly Lazy<string> _pr_SMSOrganizationalGroup_Insert = new(() => "pr_SMSOrganizationalUserGroup_Insert");
         public static string pr_SMSOrganizationalGroup_Insert => _pr_SMSOrganizationalGroup_Insert.Value;
 
-        private static readonly Lazy<string> _pr_SMSOrganizationalGroup_Update = new(() => "pr_SMSOrganizationalGroup_Update");
+        private static readonly Lazy<string> _pr_SMSOrganizationalGroup_Update = new(() => "pr_SMSOrganizationalUserGroup_Update");
         public static string pr_SMSOrganizationalGroup_Update => _pr_SMSOrganizationalGroup_Update.Value;
 
-        private static readonly Lazy<string> _pr_SMSOrganizationalGroup_Delete = new(() => "pr_SMSOrganizationalGroup_Delete");
+        private static readonly Lazy<string> _pr_SMSOrganizationalGroup_Delete = new(() => "pr_SMSOrganizationalUserGroup_Delete");
         public static string pr_SMSOrganizationalGroup_Delete => _pr_SMSOrganizationalGroup_Delete.Value;
 
-        private static readonly Lazy<string> _pr_SMSOrganizationalGroup_GetAll = new(() => "pr_SMSOrganizationalGroup_GetAll");
+        private static readonly Lazy<string> _pr_SMSOrganizationalGroup_GetAll = new(() => "pr_SMSOrganizationalUserGroup_GetAll");
         public static string pr_SMSOrganizationalGroup_GetAll => _pr_SMSOrganizationalGroup_GetAll.Value;
 
-        private static readonly Lazy<string> _pr_SMSOrganizationalGroup_GetByCode = new(() => "pr_SMSOrganizationalGroup_GetByCode");
+        private static readonly Lazy<string> _pr_SMSOrganizationalGroup_GetByCode = new(() => "pr_SMSOrganizationalUserGroup_GetByCode");
         public static string pr_SMSOrganizationalGroup_GetByCode => _pr_SMSOrganizationalGroup_GetByCode.Value;
 
-        private static readonly Lazy<string> _pr_SMSOrganizationalGroups_GetByUserCode = new(() => "pr_SMSOrganizationalGroup_GetByUserCode");
+        private static readonly Lazy<string> _pr_SMSOrganizationalGroups_GetByUserCode = new(() => "pr_SMSOrganizationalUserGroup_GetByUserCode");
         public static string pr_SMSOrganizationalGroups_GetByUserCode => _pr_SMSOrganizationalGroups_GetByUserCode.Value;
 
         /// <summary>

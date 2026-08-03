@@ -154,6 +154,44 @@ public class ClearCompletedQueuedEventsCommandHandler : BaseCommandBundle, IBase
     }
 }
 
+public class RebuildQueuedEmailEventCommandHandler : BaseCommandBundle, IBaseRequestHandler<RebuildQueuedEmailEventCommand, Result<Guid>>
+{
+    private readonly IEventQueueService _service;
+    private readonly ILogger<RebuildQueuedEmailEventCommandHandler> _logger;
+
+    public RebuildQueuedEmailEventCommandHandler(
+        IEventQueueService service,
+        ILogger<RebuildQueuedEmailEventCommandHandler> logger)
+    {
+        _service = service ?? throw new ArgumentNullException(nameof(service));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<Guid>> HandleAsync(RebuildQueuedEmailEventCommand request, CancellationToken ct = default)
+    {
+        try
+        {
+            if (request.EventId == Guid.Empty)
+            {
+                return Result<Guid>.Failure<Guid>(DomainErrors.GeneralError.InvalidParameters);
+            }
+
+            _logger.LogApplicationInformation("Processing RebuildQueuedEmailEventCommand for EventId: {EventId}", request.EventId);
+            return await _service.RebuildQueuedEmailEventAsync(request.EventId, request.RebuiltBy).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogApplicationWarning("RebuildQueuedEmailEventCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error while rebuilding queued email event", ApplicationEventIds.Error, ex);
+            return Result<Guid>.Failure<Guid>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+}
+
 public class ClearAllQueuedEventsCommandHandler : BaseCommandBundle, IBaseRequestHandler<ClearAllQueuedEventsCommand, Result<int>>
 {
     private readonly IEventQueueService _service;

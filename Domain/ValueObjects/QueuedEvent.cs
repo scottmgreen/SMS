@@ -10,6 +10,7 @@
 using SMS_Domain.Common;
 using SMS_Domain.Interfaces;
 using SMS_Domain.Enums;
+using SMS_Domain.Events;
 
 
 namespace SMS_Domain.ValueObjects;
@@ -114,8 +115,25 @@ public record QueuedEvent
             ReportId = integrationEvent.ReportId,
             TargetSystem = integrationEvent.TargetSystem,
             QueuedBy = queuedBy ?? string.Empty,
-            Priority = EventPriority.High // Integration events are typically high priority
+            Priority = MapIntegrationPriority(integrationEvent)
         };
+    }
+
+    private static EventPriority MapIntegrationPriority(IBaseIntegrationEvent integrationEvent)
+    {
+        if (integrationEvent is EmailNotificationEvent emailEvent)
+        {
+            return emailEvent.Priority switch
+            {
+                EmailPriority.Urgent => EventPriority.Critical,
+                EmailPriority.High => EventPriority.High,
+                EmailPriority.Normal => EventPriority.Normal,
+                EmailPriority.Low => EventPriority.Low,
+                _ => EventPriority.Normal
+            };
+        }
+
+        return EventPriority.High;
     }
 
     /// <summary>
