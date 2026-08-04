@@ -332,7 +332,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                 .Select(g => new
                 {
                     GroupCode = g.Code?.Trim() ?? string.Empty,
-                    Authority = ConvertGroupAuthorityToNumericLevel(g.AuthorityLevel)
+                    Authority = g.EffectiveAuthorityLevel
                 })
                 .Where(g => !string.IsNullOrWhiteSpace(g.GroupCode))
                 .Where(g => g.Authority >= riskLevel.RequiredAuthorityLevel)
@@ -378,40 +378,14 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
             .ToList();
     }
 
-    private static int ConvertGroupAuthorityToNumericLevel(string? authorityLevel)
-    {
-        if (string.IsNullOrWhiteSpace(authorityLevel))
-        {
-            return 0;
-        }
-
-        return authorityLevel.Trim().ToUpperInvariant() switch
-        {
-            "EXECUTIVE" => 10,
-            "STRATEGIC" => 9,
-            "OPERATIONAL" => 8,
-            "PROCESS" => 7,
-            "SUPPORT" => 6,
-            "STANDARD" => 5,
-            _ => 0
-        };
-    }
-
     private static int GetAuthorityLevel(SMSOrganizationalUser user)
     {
-        return user.AuthorityLevel
-            ?? user.OrganizationLevel?.AuthorityLevel
-            ?? int.MaxValue;
+        return user.EffectiveAuthorityLevel;
     }
 
     private static bool CanApproveRiskLevel(SMSOrganizationalUser user, RiskLevel riskLevel)
     {
-        if (user.AuthorityLevel.HasValue && user.AuthorityLevel.Value >= riskLevel.RequiredAuthorityLevel)
-        {
-            return true;
-        }
-
-        if (user.OrganizationLevel?.AuthorityLevel >= riskLevel.RequiredAuthorityLevel)
+        if (user.EffectiveAuthorityLevel >= riskLevel.RequiredAuthorityLevel)
         {
             return true;
         }

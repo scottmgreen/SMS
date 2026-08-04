@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 
 using Microsoft.Extensions.Logging;
 
@@ -21,11 +22,16 @@ namespace SMS_Application.Services;
 public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupService
 {
     private readonly SMSOrganizationalGroupDataService _dataService;
+    private readonly ISMSOrganizationalUserService _organizationalUserService;
     private readonly ILogger<SMSOrganizationalGroupService> _logger;
 
-    public SMSOrganizationalGroupService(SMSOrganizationalGroupDataService dataService, ILogger<SMSOrganizationalGroupService> logger)
+    public SMSOrganizationalGroupService(
+        SMSOrganizationalGroupDataService dataService,
+        ISMSOrganizationalUserService organizationalUserService,
+        ILogger<SMSOrganizationalGroupService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _organizationalUserService = organizationalUserService ?? throw new ArgumentNullException(nameof(organizationalUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -274,6 +280,27 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.CannotAssignToInactiveGroup);
             }
 
+            var userResult = await _organizationalUserService.GetSMSOrganizationalUserByCodeAsync(userCode, ct).ConfigureAwait(false);
+            if (userResult.IsFailure || userResult.Value is null)
+            {
+                _logger.LogApplicationWarning("Cannot assign non-existent organizational user {UserCode} to group {GroupCode}", userCode, groupCode);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.UserNotFound);
+            }
+
+            var userAuthorityLevel = userResult.Value.EffectiveAuthorityLevel;
+            var groupAuthorityLevel = groupResult.Value.EffectiveAuthorityLevel;
+
+            if (groupAuthorityLevel > userAuthorityLevel)
+            {
+                _logger.LogApplicationWarning(
+                    "Hierarchy violation assigning user {UserCode} (Authority {UserAuthority}) to group {GroupCode} (Authority {GroupAuthority})",
+                    userCode,
+                    userAuthorityLevel,
+                    groupCode,
+                    groupAuthorityLevel);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.HierarchyViolation);
+            }
+
             var result = await _dataService.AssignUserToGroupAsync(userCode, groupCode, assignedBy, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
@@ -371,6 +398,12 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
     /// </summary>
     private async Task ValidateGroupTypeAuthorityLevelCombination(string groupType, string authorityLevel)
     {
+        if (!TryResolveOrganizationalLevel(authorityLevel, out _))
+        {
+            _logger.LogApplicationWarning("Invalid authority level value provided for group type validation: {AuthorityLevel}", authorityLevel);
+            throw new ArgumentException(DomainErrors.SMSOrganizationalGroupError.InvalidAuthorityLevel.Message, nameof(authorityLevel));
+        }
+
         // Business rule validation - certain authority levels only valid for certain group types
         var restrictedCombinations = new Dictionary<string, string[]>
         {
@@ -392,6 +425,24 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
         }
 
         await Task.CompletedTask; // Placeholder for potential async validation
+    }
+
+    private static bool TryResolveOrganizationalLevel(string? authorityLevel, out SMSOrganizationalLevel? organizationalLevel)
+    {
+        organizationalLevel = null;
+        if (string.IsNullOrWhiteSpace(authorityLevel))
+        {
+            return false;
+        }
+
+        organizationalLevel = SMSOrganizationalLevel.FromValue(authorityLevel)
+                              ?? SMSOrganizationalLevel.FromName(authorityLevel)
+                              ?? SMSOrganizationalLevel.GetAllValues()
+                                  .FirstOrDefault(level =>
+                                      level.Value.Equals(authorityLevel, StringComparison.OrdinalIgnoreCase)
+                                      || level.Name.Equals(authorityLevel, StringComparison.OrdinalIgnoreCase));
+
+        return organizationalLevel is not null;
     }
 
     /// <summary>

@@ -225,7 +225,7 @@ public partial class OrganizationalGroups : ComponentBase
             _editDescription = _currentGroup.Description ?? string.Empty;
             _editContactEmail = _currentGroup.ContactEmail ?? string.Empty;
             _editGroupType = _currentGroup.GroupType.ToUpper() ?? string.Empty;
-            _editAuthorityLevel = _currentGroup.AuthorityLevel.ToUpper() ?? string.Empty;
+            _editAuthorityLevel = _currentGroup.AuthorityLevel ?? string.Empty;
             _editIsActive = _currentGroup.IsActive;
 
             // Debug logging to help identify binding issues
@@ -277,6 +277,12 @@ public partial class OrganizationalGroups : ComponentBase
         if (string.IsNullOrWhiteSpace(_newGroupName))
         {
             await ShowErrorAsyncNotification("Group name is required.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_newAuthorityLevel))
+        {
+            await ShowErrorAsyncNotification("Authority level is required.");
             return;
         }
 
@@ -338,6 +344,12 @@ public partial class OrganizationalGroups : ComponentBase
         if (_currentGroup is null || string.IsNullOrWhiteSpace(_editGroupName))
         {
             await ShowErrorAsyncNotification("Group name is required.");
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(_editAuthorityLevel))
+        {
+            await ShowErrorAsyncNotification("Authority level is required.");
             return;
         }
 
@@ -574,7 +586,12 @@ public partial class OrganizationalGroups : ComponentBase
             }
 
             var memberCodes = GroupMembers.Select(m => m.Code).ToHashSet();
-            AvailableUsers = SMSOrganizationalUsers.Where(u => !memberCodes.Contains(u.Code)).ToList();
+            var groupAuthorityLevel = _currentGroup?.EffectiveAuthorityLevel ?? 0;
+
+            AvailableUsers = SMSOrganizationalUsers
+                .Where(u => !memberCodes.Contains(u.Code))
+                .Where(u => u.EffectiveAuthorityLevel >= groupAuthorityLevel)
+                .ToList();
 
             // Initialize selection tracking
             SelectedUsers.Clear();
@@ -583,8 +600,8 @@ public partial class OrganizationalGroups : ComponentBase
                 SelectedUsers[user.Code] = false;
             }
 
-            _logger.LogInformation("Loaded {MemberCount} group members and {AvailableCount} available users for group {GroupCode}",
-                GroupMembers.Count, AvailableUsers.Count, groupCode);
+            _logger.LogInformation("Loaded {MemberCount} group members and {AvailableCount} eligible users for group {GroupCode} at authority {GroupAuthorityLevel}",
+                GroupMembers.Count, AvailableUsers.Count, groupCode, groupAuthorityLevel);
 
             GroupMemberCounts[groupCode] = GroupMembers.Count;
         }
@@ -594,7 +611,10 @@ public partial class OrganizationalGroups : ComponentBase
 
             // For now, if the query fails, just load empty collections
             GroupMembers = new List<SMSOrganizationalUser>();
-            AvailableUsers = SMSOrganizationalUsers?.ToList() ?? new List<SMSOrganizationalUser>();
+            var groupAuthorityLevel = _currentGroup?.EffectiveAuthorityLevel ?? 0;
+            AvailableUsers = SMSOrganizationalUsers?
+                .Where(u => u.EffectiveAuthorityLevel >= groupAuthorityLevel)
+                .ToList() ?? new List<SMSOrganizationalUser>();
             GroupMemberCounts[groupCode] = 0;
         }
     }

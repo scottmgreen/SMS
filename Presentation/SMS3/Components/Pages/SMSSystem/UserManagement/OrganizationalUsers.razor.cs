@@ -106,6 +106,7 @@ public partial class OrganizationalUsers : ComponentBase
     // Group Management Properties
     private string _groupManagementUserCode { get; set; } = string.Empty;
     private string _groupManagementUserDisplayName { get; set; } = string.Empty;
+    private int _groupManagementUserAuthorityLevel { get; set; }
     private List<SMSOrganizationalGroup> AllOrganizationalGroups { get; set; } = new();
     private List<SMSOrganizationalGroup> UserCurrentGroups { get; set; } = new();
     private List<SMSOrganizationalGroup> AvailableGroups { get; set; } = new();
@@ -364,6 +365,7 @@ public partial class OrganizationalUsers : ComponentBase
                 IsActive = _newIsActive, // UPDATED: Use _newIsActive property
                 SMSUserType = SMSUserType.Organizational // ADDED: Set correct user type
             };
+            user.SyncAuthorityFromOrganizationLevel();
 
             var command = new CreateSMSOrganizationalUserCommand(user);
             var result = await _mediator.SendAsync(command, CancellationToken.None);
@@ -470,6 +472,7 @@ public partial class OrganizationalUsers : ComponentBase
             _currentUser.Department = SMSDepartment.FromValue(_editDepartmentId) ?? SMSDepartment.AirportOperations;
             _currentUser.Position = _editPosition;
             _currentUser.OrganizationLevel = SMSOrganizationalLevel.FromName(_editOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel;
+            _currentUser.SyncAuthorityFromOrganizationLevel();
             _currentUser.IsActive = _editIsActive;
             _currentUser.TwoFactorEnabled = _editTwoFactorEnabled;
             // ADDED: Handle SMS User Role update
@@ -781,6 +784,13 @@ public partial class OrganizationalUsers : ComponentBase
         {
             _groupManagementUserCode = userId;
             _groupManagementUserDisplayName = displayName;
+            _groupManagementUserAuthorityLevel = 0;
+
+            var userResult = await _mediator.SendAsync(new GetSMSOrganizationalUserByCodeQuery(userId), CancellationToken.None);
+            if (userResult.IsSuccess && userResult.Value is not null)
+            {
+                _groupManagementUserAuthorityLevel = userResult.Value.EffectiveAuthorityLevel;
+            }
 
             await LoadUserGroups(userId);
             _showGroupsModal = true;
@@ -807,6 +817,7 @@ public partial class OrganizationalUsers : ComponentBase
             var currentGroupCodes = UserCurrentGroups.Select(g => g.Code).ToHashSet();
             AvailableGroups = AllOrganizationalGroups
                 .Where(g => !currentGroupCodes.Contains(g.Code) && g.IsActive)
+                .Where(g => g.EffectiveAuthorityLevel <= _groupManagementUserAuthorityLevel)
                 .OrderBy(g => g.Name)
                 .ToList();
 
@@ -885,6 +896,12 @@ public partial class OrganizationalUsers : ComponentBase
             return;
         }
 
+        if (!CanAssignGroupToManagedUser(groupCode))
+        {
+            await ShowErrorAsyncNotification("User cannot be assigned to a group with higher authority level.");
+            return;
+        }
+
         try
         {
             var groupId = new SMSOrganizationalGroupID(groupCode);
@@ -927,6 +944,12 @@ public partial class OrganizationalUsers : ComponentBase
             {
                 try
                 {
+                    if (!CanAssignGroupToManagedUser(groupCode))
+                    {
+                        failureCount++;
+                        continue;
+                    }
+
                     var groupId = new SMSOrganizationalGroupID(groupCode);
                     var command = new AssignUserToOrganizationalGroupCommand(_groupManagementUserCode, groupId);
                     var result = await _mediator.SendAsync(command, CancellationToken.None);
@@ -981,6 +1004,18 @@ public partial class OrganizationalUsers : ComponentBase
         if (level is null) return organizationLevel;
 
         return $"{level.Name} - {level.Category} (Authority Level {level.AuthorityLevel})";
+    }
+
+    private bool CanAssignGroupToManagedUser(string groupCode)
+    {
+        var group = AllOrganizationalGroups.FirstOrDefault(g => g.Code == groupCode);
+        if (group is null)
+        {
+            return false;
+        }
+
+        var groupAuthorityLevel = group.EffectiveAuthorityLevel;
+        return groupAuthorityLevel <= _groupManagementUserAuthorityLevel;
     }
 
     #endregion

@@ -372,7 +372,7 @@ namespace SMS_Application.CommandHandlers
                     .Select(g => new
                     {
                         GroupCode = g.Code?.Trim() ?? string.Empty,
-                        Authority = ConvertGroupAuthorityToNumericLevel(g.AuthorityLevel)
+                        Authority = g.EffectiveAuthorityLevel
                     })
                     .Where(g => !string.IsNullOrWhiteSpace(g.GroupCode))
                     .Where(g => g.Authority >= riskLevel.RequiredAuthorityLevel)
@@ -442,29 +442,10 @@ namespace SMS_Application.CommandHandlers
             {
                 authorityCandidates.AddRange(groupsResult.Value
                     .Where(g => g.IsActive)
-                    .Select(g => ConvertGroupAuthorityToNumericLevel(g.AuthorityLevel)));
+                    .Select(g => g.EffectiveAuthorityLevel));
             }
 
             return authorityCandidates.DefaultIfEmpty(0).Max();
-        }
-
-        private static int ConvertGroupAuthorityToNumericLevel(string? authorityLevel)
-        {
-            if (string.IsNullOrWhiteSpace(authorityLevel))
-            {
-                return 0;
-            }
-
-            return authorityLevel.Trim().ToUpperInvariant() switch
-            {
-                "EXECUTIVE" => 10,
-                "STRATEGIC" => 9,
-                "OPERATIONAL" => 8,
-                "PROCESS" => 7,
-                "SUPPORT" => 6,
-                "STANDARD" => 5,
-                _ => 0
-            };
         }
 
         private static bool HasHazardRiskLevelChanged(string? previousRiskLevelValue, string? currentRiskLevelValue)

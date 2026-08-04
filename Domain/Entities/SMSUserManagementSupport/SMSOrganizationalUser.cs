@@ -29,12 +29,26 @@ public sealed class SMSOrganizationalUser : BaseUser
 
 
     /// <summary>
-    /// Authority level for risk approval (Strategic, Executive, Operational, Process, Support)
+    /// Numeric authority level (legacy persisted field). OrganizationLevel.AuthorityLevel is authoritative.
     /// </summary>
     public int? AuthorityLevel { get; set; }
 
     /// <summary>
-    /// Risk levels this user can approve (Critical/High, High/Escalated, Medium/Low, etc.)
+    /// Legacy risk approval authority label retained for compatibility.
     /// </summary>
     public string? RiskApprovalAuthority { get; set; }
+
+    /// <summary>
+    /// Effective authority level derived from OrganizationLevel, with AuthorityLevel as fallback.
+    /// </summary>
+    public int EffectiveAuthorityLevel => OrganizationLevel?.AuthorityLevel ?? AuthorityLevel ?? 0;
+
+    /// <summary>
+    /// Synchronizes legacy authority fields from the OrganizationLevel source of truth.
+    /// </summary>
+    public void SyncAuthorityFromOrganizationLevel()
+    {
+        AuthorityLevel = OrganizationLevel?.AuthorityLevel ?? 0;
+        RiskApprovalAuthority = OrganizationLevel?.Value;
+    }
 }

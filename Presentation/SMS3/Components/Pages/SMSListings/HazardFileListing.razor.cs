@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Text;
+using Microsoft.AspNetCore.Components.Forms;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Events;
@@ -35,6 +36,7 @@ public partial class HazardFileListing : ComponentBase
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -51,12 +53,223 @@ public partial class HazardFileListing : ComponentBase
     private string _fileDataUrl = string.Empty;
     private string _fileTextContent = string.Empty;
     private string _fileViewError = string.Empty;
+
+    // File metadata edit properties
+    private bool _showEditModal = false;
+    private bool _isSavingMetadata = false;
+    private HazardFile? _editingFile;
+    private string _editHazardCode = string.Empty;
+    private string _editReportCode = string.Empty;
+    private string _editDescription = string.Empty;
+    private string _editCategory = string.Empty;
+    private bool _editIsConfidential = false;
+
+    // New file upload properties
+    private bool _showAddModal = false;
+    private bool _isSavingNewFile = false;
+    private string _newHazardCode = string.Empty;
+    private string _newReportCode = string.Empty;
+    private string _newFileName = string.Empty;
+    private string _newFileContentType = string.Empty;
+    private byte[]? _newFileData;
+    private long _newFileSizeBytes;
     #endregion
     
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
         await LoadInitialData();
+    }
+
+    private void EditFile(HazardFile file)
+    {
+        _showFileModal = false;
+        _selectedFile = null;
+        _fileDataUrl = string.Empty;
+        _fileTextContent = string.Empty;
+        _fileViewError = string.Empty;
+
+        _editingFile = file;
+        _editHazardCode = file.HazardCode ?? string.Empty;
+        _editReportCode = file.ReportCode ?? string.Empty;
+        _editDescription = file.Description ?? string.Empty;
+        _editCategory = file.Category ?? string.Empty;
+        _editIsConfidential = file.IsConfidential;
+        _showEditModal = true;
+    }
+
+    private void CloseEditModal()
+    {
+        _showEditModal = false;
+        _editingFile = null;
+        _editHazardCode = string.Empty;
+        _editReportCode = string.Empty;
+        _editDescription = string.Empty;
+        _editCategory = string.Empty;
+        _editIsConfidential = false;
+    }
+
+    private async Task SaveFileMetadata()
+    {
+        if (_editingFile is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _isSavingMetadata = true;
+            StateHasChanged();
+
+            var getFileResult = await _mediator.SendAsync(new GetHazardFileByCodeQuery(_editingFile.Code), CancellationToken.None);
+            if (getFileResult.IsFailure || getFileResult.Value is null)
+            {
+                await ShowErrorAsyncNotification("Unable to load hazard file for update.");
+                return;
+            }
+
+            var fileToUpdate = getFileResult.Value;
+            fileToUpdate.HazardCode = _editHazardCode.Trim();
+            fileToUpdate.ReportCode = string.IsNullOrWhiteSpace(_editReportCode) ? null : _editReportCode.Trim();
+            fileToUpdate.Description = string.IsNullOrWhiteSpace(_editDescription) ? null : _editDescription.Trim();
+            fileToUpdate.Category = string.IsNullOrWhiteSpace(_editCategory) ? null : _editCategory.Trim();
+            fileToUpdate.IsConfidential = _editIsConfidential;
+            fileToUpdate.UpdatedDate = DateTime.UtcNow;
+
+            var updateResult = await _mediator.SendAsync(new UpdateHazardFileCommand(fileToUpdate), CancellationToken.None);
+            if (updateResult.IsFailure || updateResult.Value is null)
+            {
+                await ShowErrorAsyncNotification(updateResult.Error?.Message ?? "Failed to update hazard file metadata.");
+                return;
+            }
+
+            await ShowSuccessAsyncNotification("Hazard file metadata updated successfully.");
+            CloseEditModal();
+            await LoadInitialData();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating hazard file metadata for file {Code}", _editingFile.Code);
+            await ShowErrorAsyncNotification("An error occurred while updating hazard file metadata.");
+        }
+        finally
+        {
+            _isSavingMetadata = false;
+            StateHasChanged();
+        }
+    }
+
+    private void OpenAddModal()
+    {
+        _showAddModal = true;
+    }
+
+    private void CloseAddModal()
+    {
+        _showAddModal = false;
+        _isSavingNewFile = false;
+        _newHazardCode = string.Empty;
+        _newReportCode = string.Empty;
+        _newFileName = string.Empty;
+        _newFileContentType = string.Empty;
+        _newFileData = null;
+        _newFileSizeBytes = 0;
+    }
+
+    private async Task OnNewFileInputChange(UploadChangeEventArgs args)
+    {
+        var selectedFile = args.Files?.FirstOrDefault();
+        if (selectedFile is null)
+        {
+            return;
+        }
+
+        try
+        {
+            byte[] fileData;
+            await using (var stream = selectedFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
+            await using (var memoryStream = new MemoryStream())
+            {
+                await stream.CopyToAsync(memoryStream);
+                fileData = memoryStream.ToArray();
+            }
+
+            _newFileName = selectedFile.Name;
+            _newFileContentType = selectedFile.ContentType ?? "application/octet-stream";
+            _newFileData = fileData;
+            _newFileSizeBytes = selectedFile.Size;
+
+            await ShowInfoAsyncNotification($"Selected file '{_newFileName}'. Upload to continue.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error selecting new hazard file");
+            await ShowErrorAsyncNotification("Failed to read selected file.");
+        }
+    }
+
+    private async Task SaveNewFile()
+    {
+        if (string.IsNullOrWhiteSpace(_newHazardCode))
+        {
+            await ShowErrorAsyncNotification("Hazard ID is required.");
+            return;
+        }
+
+        if (_newFileData is null || _newFileData.Length == 0 || string.IsNullOrWhiteSpace(_newFileName))
+        {
+            await ShowErrorAsyncNotification("Please choose a file to upload.");
+            return;
+        }
+
+        try
+        {
+            _isSavingNewFile = true;
+            StateHasChanged();
+
+            var currentUserCode = string.IsNullOrWhiteSpace(_currentUserService.UserCode)
+                ? "UNKNOWN"
+                : _currentUserService.UserCode;
+
+            var hazardFile = new HazardFile(new HazardFileID("HF-0000"))
+            {
+                Code = "HF-0000",
+                HazardCode = _newHazardCode.Trim(),
+                ReportCode = string.IsNullOrWhiteSpace(_newReportCode) ? null : _newReportCode.Trim(),
+                FileName = _newFileName.Trim(),
+                FileType = GetFileTypeFromName(_newFileName),
+                ContentType = _newFileContentType,
+                FileSizeBytes = _newFileSizeBytes,
+                FileData = _newFileData,
+                UploadedBy = currentUserCode,
+                UploadedDate = DateTime.UtcNow,
+                CreatedBy = currentUserCode,
+                CreatedDate = DateTime.UtcNow,
+                IsActive = true
+            };
+
+            var createResult = await _mediator.SendAsync(new CreateHazardFileCommand(hazardFile), CancellationToken.None);
+            if (createResult.IsFailure || createResult.Value is null)
+            {
+                await ShowErrorAsyncNotification(createResult.Error?.Message ?? "Failed to upload hazard file.");
+                return;
+            }
+
+            await ShowSuccessAsyncNotification("Hazard file uploaded successfully.");
+            CloseAddModal();
+            await LoadInitialData();
+            EditFile(createResult.Value);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading hazard file");
+            await ShowErrorAsyncNotification("An error occurred while uploading the hazard file.");
+        }
+        finally
+        {
+            _isSavingNewFile = false;
+            StateHasChanged();
+        }
     }
     #endregion
 
@@ -308,6 +521,12 @@ public partial class HazardFileListing : ComponentBase
         };
     }
 
+    private static string GetFileTypeFromName(string fileName)
+    {
+        var extension = Path.GetExtension(fileName)?.TrimStart('.').ToLowerInvariant();
+        return string.IsNullOrWhiteSpace(extension) ? "other" : extension;
+    }
+
     /// <summary>
     /// Apply numeric filtering (for FileSizeBytes, etc.)
     /// </summary>
@@ -546,6 +765,9 @@ public partial class HazardFileListing : ComponentBase
         try
         {
             _logger.LogInformation("Reading file: {Code} - {FileName}", file.Code, file.FileName);
+
+            _showEditModal = false;
+            _editingFile = null;
 
             _selectedFile = file;
             _showFileModal = true;

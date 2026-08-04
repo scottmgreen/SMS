@@ -526,10 +526,11 @@ public class EventQueueService : IEventQueueService
         {
             var eligibleGroups = orgGroupsResult.Value
                 .Where(g => g.IsActive)
+                .Where(g => !string.IsNullOrWhiteSpace(g.ContactEmail))
                 .Select(g => new
                 {
                     GroupCode = g.Code?.Trim() ?? string.Empty,
-                    Authority = ConvertGroupAuthorityToNumericLevel(g.AuthorityLevel)
+                    Authority = g.EffectiveAuthorityLevel
                 })
                 .Where(g => !string.IsNullOrWhiteSpace(g.GroupCode))
                 .Where(g => g.Authority >= requiredAuthorityLevel)
@@ -605,46 +606,17 @@ public class EventQueueService : IEventQueueService
 
     private async Task<int> GetEffectiveAuthorityLevelAsync(SMSOrganizationalUser user, CancellationToken cancellationToken)
     {
-        var authorityCandidates = new List<int>();
-
-        if (user.AuthorityLevel.HasValue)
-        {
-            authorityCandidates.Add(user.AuthorityLevel.Value);
-        }
-
-        if (user.OrganizationLevel is not null)
-        {
-            authorityCandidates.Add(user.OrganizationLevel.AuthorityLevel);
-        }
+        var authorityCandidates = new List<int> { user.EffectiveAuthorityLevel };
 
         var groupsResult = await _mediator.SendAsync(new GetSMSOrganizationalGroupsByUserCodeQuery(user.Code), cancellationToken);
         if (groupsResult.IsSuccess && groupsResult.Value is not null)
         {
             authorityCandidates.AddRange(groupsResult.Value
                 .Where(g => g.IsActive)
-                .Select(g => ConvertGroupAuthorityToNumericLevel(g.AuthorityLevel)));
+                .Select(g => g.EffectiveAuthorityLevel));
         }
 
         return authorityCandidates.DefaultIfEmpty(0).Max();
-    }
-
-    private static int ConvertGroupAuthorityToNumericLevel(string? authorityLevel)
-    {
-        if (string.IsNullOrWhiteSpace(authorityLevel))
-        {
-            return 0;
-        }
-
-        return authorityLevel.Trim().ToUpperInvariant() switch
-        {
-            "EXECUTIVE" => 10,
-            "STRATEGIC" => 9,
-            "OPERATIONAL" => 8,
-            "PROCESS" => 7,
-            "SUPPORT" => 6,
-            "STANDARD" => 5,
-            _ => 0
-        };
     }
 
     private static string? ResolveMitigationCode(EmailNotificationEvent emailEvent)

@@ -41,7 +41,7 @@ public partial class EventBusQueueManager
     private bool _isProcessing = false;
     private readonly Dictionary<string, string> _hazardTitleByReportId = new(StringComparer.OrdinalIgnoreCase);
 
-    private QueuedEventStatus? _statusFilter;
+    private QueuedEventStatus? _statusFilter = QueuedEventStatus.Pending;
     private EventCategory? _eventTypeFilter = EventCategory.IntegrationEvent;
 
     #endregion
@@ -422,6 +422,18 @@ public partial class EventBusQueueManager
                             BodyHtml = emailEvent.IsHtmlContent ? ((MarkupString)body).Value : body.Replace("\n", "<br />")
                         };
 
+                        if (previewToRecipients.Count == 0)
+                        {
+                            var unresolvedToTokens = await GetUnresolvedToRecipientTokensAsync(emailEvent.ToRecipients);
+                            if (unresolvedToTokens.Count > 0)
+                            {
+                                model.HasToValidationError = true;
+                                model.ToValidationMessage =
+                                    $"Approver group ContactEmail is missing or unresolved for: {string.Join(", ", unresolvedToTokens)}. " +
+                                    "Add ContactEmail to the approver group(s) and rebuild this email event.";
+                            }
+                        }
+
                         var dialogResult = await DialogService.OpenAsync<Components.EmailComposeDialog>(
                             "SMS Notification",
                             new Dictionary<string, object?> { { "InitialModel", model } },
@@ -731,6 +743,33 @@ public partial class EventBusQueueManager
         return resolved
             .Where(v => !string.IsNullOrWhiteSpace(v))
             .Select(v => v.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+    }
+
+    private async Task<List<string>> GetUnresolvedToRecipientTokensAsync(IEnumerable<string>? toRecipientTokens)
+    {
+        if (toRecipientTokens is null)
+        {
+            return new List<string>();
+        }
+
+        var unresolved = new List<string>();
+        foreach (var token in toRecipientTokens.Where(t => !string.IsNullOrWhiteSpace(t)).Select(t => t.Trim()))
+        {
+            if (token.Contains('@'))
+            {
+                continue;
+            }
+
+            var resolvedEmails = await ResolveRecipientTokenToEmailsAsync(token);
+            if (resolvedEmails.Count == 0)
+            {
+                unresolved.Add(token);
+            }
+        }
+
+        return unresolved
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }

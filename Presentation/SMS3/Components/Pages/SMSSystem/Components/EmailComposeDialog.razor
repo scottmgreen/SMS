@@ -27,10 +27,24 @@
                     <RadzenLabel>To:</RadzenLabel>
                 </RadzenColumn>
                 <RadzenColumn Size="11" class="text-start">
-                    @foreach (string recipient in Model.To)
+                    <div class="to-recipient-container @(Model.HasToValidationError ? "to-recipient-validation-error" : string.Empty)">
+                        @foreach (string recipient in Model.To)
+                        {
+                            <RadzenBadge BadgeStyle="BadgeStyle.Base" Text="@recipient" class="me-2" />
+                        }
+
+                        @if (!Model.To.Any())
+                        {
+                            <span class="text-muted">No To recipients resolved.</span>
+                        }
+                    </div>
+
+                    @if (Model.HasToValidationError && !string.IsNullOrWhiteSpace(Model.ToValidationMessage))
                     {
-                        <RadzenBadge BadgeStyle="BadgeStyle.Base" Text="@recipient" class="me-2" /> 
-                        
+                        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" class="mt-2">
+                            <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
+                            @Model.ToValidationMessage
+                        </RadzenAlert>
                     }
                 </RadzenColumn>
             </RadzenRow>

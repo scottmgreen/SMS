@@ -8,6 +8,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using SMS_Domain.Enums;
+
 namespace SMS_Domain.Entities;
 
 /// <summary>
@@ -29,9 +31,14 @@ public sealed class SMSOrganizationalGroup : BaseUserGroup
     public string GroupType { get; set; } = "Department";
 
     /// <summary>
-    /// Authority level of this group for decision-making and approvals
+    /// Authority level value aligned to SMSOrganizationalLevel (stored as enum Value string)
     /// </summary>
-    public string AuthorityLevel { get; set; } = "Standard";
+    public string AuthorityLevel { get; set; } = "SMS_UNASSIGNED_LEVEL";
+
+    /// <summary>
+    /// Effective numeric authority level resolved from SMSOrganizationalLevel.
+    /// </summary>
+    public int EffectiveAuthorityLevel => ResolveAuthorityLevel(AuthorityLevel)?.AuthorityLevel ?? 0;
 
     /// <summary>
     /// Parameterless constructor for Entity Framework
@@ -128,6 +135,30 @@ public sealed class SMSOrganizationalGroup : BaseUserGroup
     /// </summary>
     public string FullDescription =>
         $"{Name} - {GroupType}" +
-        (!string.IsNullOrEmpty(AuthorityLevel) && AuthorityLevel != "Standard" ? $" | Authority: {AuthorityLevel}" : "") +
+        (!string.IsNullOrEmpty(AuthorityLevel) && AuthorityLevel != "SMS_UNASSIGNED_LEVEL" ? $" | Authority: {AuthorityLevel}" : "") +
         (!string.IsNullOrEmpty(Description) ? $" | {Description}" : "");
+
+    private static SMSOrganizationalLevel? ResolveAuthorityLevel(string? authorityLevel)
+    {
+        if (string.IsNullOrWhiteSpace(authorityLevel))
+        {
+            return null;
+        }
+
+        var byValue = SMSOrganizationalLevel.FromValue(authorityLevel);
+        if (byValue is not null)
+        {
+            return byValue;
+        }
+
+        var byName = SMSOrganizationalLevel.FromName(authorityLevel);
+        if (byName is not null)
+        {
+            return byName;
+        }
+
+        return SMSOrganizationalLevel.GetAllValues()
+            .FirstOrDefault(level => level.Value.Equals(authorityLevel, StringComparison.OrdinalIgnoreCase)
+                                  || level.Name.Equals(authorityLevel, StringComparison.OrdinalIgnoreCase));
+    }
 }

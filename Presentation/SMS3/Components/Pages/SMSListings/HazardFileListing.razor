@@ -16,6 +16,15 @@
             Subtitle="Complete listing and management interface for all SMS Hazard Evidence Files"
             Icon="fas fa-list" />
 
+<RadzenRow class="rz-mb-3" JustifyContent="JustifyContent.End">
+    <RadzenColumn Size="12" class="d-flex justify-content-end">
+        <RadzenButton Text="Add New"
+                      Icon="add_circle"
+                      ButtonStyle="ButtonStyle.Primary"
+                      Click="OpenAddModal" />
+    </RadzenColumn>
+</RadzenRow>
+
 <RadzenDataGrid @ref="_filesGrid" 
                 Data="@_files" 
                 Count="@_totalCount" 
@@ -31,12 +40,11 @@
                 IsLoading="@_isLoading">
     
     <Columns>
-        <RadzenDataGridColumn TItem="HazardFile" Width="60px" Sortable="false" Filterable="false">
-            <HeaderTemplate>
-                <input type="checkbox" />
-            </HeaderTemplate>
+        <RadzenDataGridColumn TItem="HazardFile" Property="ReportCode" Title="Report ID" Width="150px">
             <Template Context="file">
-                <input type="checkbox" @onclick:stopPropagation="true" />
+                <div title="@file.ReportCode" style="font-size:smaller;font-weight: 600">
+                    @(string.IsNullOrWhiteSpace(file.ReportCode) ? "N/A" : file.ReportCode)
+                </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardFile" Property="Code" Title="File ID" Width="150px">
@@ -120,6 +128,10 @@
                             Click="@(() => ReadFile(file))" 
                             Tooltip="View File"
                             Style="margin-right: 5px;" />
+                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
+                            Click="@(() => EditFile(file))"
+                            Tooltip="Edit File Metadata"
+                            Style="margin-right: 5px;" />
                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
                             Click="@(() => DeleteFile(file))" 
                             Tooltip="Delete File" />
@@ -127,6 +139,75 @@
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
+
+<!-- Add New File Modal -->
+@if (_showAddModal)
+{
+    <div class="modal-overlay">
+        <div class="file-modal-dialog" style="width: 760px;">
+            <div class="file-modal-content">
+                <div class="file-modal-header">
+                    <h5 class="file-modal-title">
+                        <i class="fas fa-upload"></i> Add Hazard File
+                    </h5>
+                    <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                  Variant="Variant.Text"
+                                  Icon="close"
+                                  Size="ButtonSize.Small"
+                                  Click="CloseAddModal" />
+                </div>
+                <div class="file-modal-body">
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Hazard ID *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                <RadzenTextBox @bind-Value="_newHazardCode" Placeholder="Enter hazard code..." Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Report ID (optional)" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                <RadzenTextBox @bind-Value="_newReportCode" Placeholder="Enter report code..." Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow Gap="1rem" class="mt-2">
+                        <RadzenColumn Size="12">
+                            <RadzenFormField Text="Supporting Documents" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                <RadzenStack Gap="0.75rem" Class="rz-py-2 rz-px-2 rz-pb-2">
+                                    <RadzenUpload Multiple="false"
+                                                  Change="@OnNewFileInputChange"
+                                                  ChooseText="📄 Choose Files"
+                                                  Class="hazard-upload"
+                                                  Style="width: 100%;padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;"
+                                                  Accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
+                                                  MaxFileSize="10485760" />
+
+                                    <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-base-500">
+                                        <RadzenIcon Icon="attach_file" Style="font-size: 0.9rem;" />
+                                        Supported: JPG, PNG, PDF, DOC, DOCX, TXT (Max 10MB per file)
+                                    </RadzenText>
+
+                                    @if (!string.IsNullOrWhiteSpace(_newFileName))
+                                    {
+                                        <RadzenText TextStyle="TextStyle.Body2">
+                                            <strong>Selected:</strong> @_newFileName (@FormatFileSize(_newFileSizeBytes))
+                                        </RadzenText>
+                                    }
+                                </RadzenStack>
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </div>
+                <div class="file-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="CloseAddModal" Disabled="@_isSavingNewFile" />
+                        <RadzenButton Text="Upload File" Icon="upload" ButtonStyle="ButtonStyle.Primary" Click="SaveNewFile" Disabled="@_isSavingNewFile" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <!-- File View Modal -->
 @if (_showFileModal && _selectedFile is not null)
@@ -217,6 +298,76 @@
                                         ButtonStyle="ButtonStyle.Dark"
                                         Click="CloseFileModal" />
                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Edit Metadata Modal -->
+@if (_showEditModal && _editingFile is not null)
+{
+    <div class="modal-overlay">
+        <div class="file-modal-dialog" style="width: 700px;">
+            <div class="file-modal-content">
+                <div class="file-modal-header">
+                    <h5 class="file-modal-title">
+                        <i class="fas fa-edit"></i> Edit Hazard File Metadata
+                    </h5>
+                    <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                  Variant="Variant.Text"
+                                  Icon="close"
+                                  Size="ButtonSize.Small"
+                                  Click="CloseEditModal" />
+                </div>
+
+                <div class="file-modal-body">
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Hazard ID" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                <RadzenTextBox @bind-Value="_editHazardCode" Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                        <RadzenColumn Size="12" SizeMD="6">
+                            <RadzenFormField Text="Report ID" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                <RadzenTextBox @bind-Value="_editReportCode" Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow Gap="1rem">
+                        <RadzenColumn Size="12">
+                            <RadzenFormField Text="Description" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                <RadzenTextArea @bind-Value="_editDescription" Rows="4" Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow Gap="1rem" class="mt-2">
+                        <RadzenColumn Size="12">
+                            <RadzenFormField Text="Category" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                <RadzenTextBox @bind-Value="_editCategory" Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow Gap="1rem" class="mt-2">
+                        <RadzenColumn Size="12">
+                            <RadzenFormField Text="Confidential" Variant="Variant.Outlined">
+                                <div class="d-flex align-items-center p-2">
+                                    <RadzenCheckBox @bind-Value="_editIsConfidential" Name="HazardFileConfidential" />
+                                    <RadzenLabel Text="Mark as confidential" Component="HazardFileConfidential" Style="margin-left: 0.5rem; cursor: pointer;" />
+                                </div>
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+                </div>
+
+                <div class="file-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="CloseEditModal" Disabled="@_isSavingMetadata" />
+                        <RadzenButton Text="Save Metadata" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="SaveFileMetadata" Disabled="@_isSavingMetadata" />
                     </div>
                 </div>
             </div>

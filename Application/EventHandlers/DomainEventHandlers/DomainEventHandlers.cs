@@ -497,6 +497,15 @@ public sealed class MitigationApprovalRequestedEventHandler : BaseDomainEventHan
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
 
+        if (recipients.Count > 0)
+        {
+            _logger.LogApplicationInformation(
+                "[MITIGATION APPROVAL] Resolved {RecipientCount} recipient token(s) for mitigation {MitigationCode}: {Recipients}",
+                recipients.Count,
+                domainEvent.MitigationCode,
+                string.Join(", ", recipients));
+        }
+
         if (recipients.Count == 0)
         {
             _logger.LogApplicationWarning(

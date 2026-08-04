@@ -55,6 +55,8 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
             // Business validation - validate department and position combination
             await ValidateDepartmentPositionCombination(user.Department, user.Position);
 
+            user.SyncAuthorityFromOrganizationLevel();
+
             var result = await _dataService.CreateSMSOrganizationalUserAsync(user, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)
@@ -192,6 +194,8 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
 
             // Business validation - validate department and position combination
             await ValidateDepartmentPositionCombination(user.Department, user.Position);
+
+            user.SyncAuthorityFromOrganizationLevel();
 
             var result = await _dataService.UpdateSMSOrganizationalUserAsync(user, ct).ConfigureAwait(false);
 
