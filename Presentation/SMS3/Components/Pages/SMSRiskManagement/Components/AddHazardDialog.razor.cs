@@ -1,8 +1,12 @@
 using Microsoft.JSInterop;
+using Microsoft.AspNetCore.Components.Forms;
+using Radzen;
 
 using SMS_Domain.Entities;
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Configuration;
+using SMS_Shared.Common;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
@@ -28,6 +32,10 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     private string NewHazardDescription { get; set; } = string.Empty;
     private string NewHazardCategory { get; set; } = string.Empty;
     private string NewHazardType { get; set; } = string.Empty;
+
+    // Supporting documents (mini HazardReporting behavior)
+    public IReadOnlyList<IBrowserFile> SelectedFiles { get; set; } = new List<IBrowserFile>().AsReadOnly();
+    public List<AttachedFile> AttachedFiles { get; set; } = new();
 
     // ENHANCED: Add busy state to prevent double submissions
     private bool IsSubmitting { get; set; } = false;
@@ -93,6 +101,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         NewHazardDescription.Trim().Length < 10;
 
     private bool IsHazardLocationInvalid => !HasGeoLocation || string.IsNullOrWhiteSpace(LocationDescription);
+    private bool HasMissingFileDescriptions => AttachedFiles.Any(f => (f.Data?.Length ?? 0) > 0 && string.IsNullOrWhiteSpace(f.Description));
         
 
     // UI computed properties for edit mode
@@ -203,7 +212,53 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                 SelectedLatitude, SelectedLongitude);
         }
 
+        await LoadExistingHazardFilesAsync(EditingHazard.Code);
+
         await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task LoadExistingHazardFilesAsync(string hazardCode)
+    {
+        if (string.IsNullOrWhiteSpace(hazardCode))
+        {
+            AttachedFiles = new List<AttachedFile>();
+            return;
+        }
+
+        try
+        {
+            var filesResult = await _mediator.SendAsync(new GetHazardFilesByHazardCodeQuery(hazardCode, includeFileData: false), CancellationToken.None);
+
+            if (filesResult.IsSuccess && filesResult.Value is not null)
+            {
+                AttachedFiles = filesResult.Value
+                    .Where(f => !string.IsNullOrWhiteSpace(f.FileName))
+                    .Select(f => new AttachedFile
+                    {
+                        FileName = f.FileName,
+                        Description = f.Description,
+                        FileSizeBytes = f.FileSizeBytes,
+                        Size = f.FileSizeBytes,
+                        SizeDisplay = FormatFileSize(f.FileSizeBytes),
+                        ContentType = f.ContentType ?? "application/octet-stream",
+                        FilePath = f.FilePath,
+                        StorageType = f.StorageType,
+                        Data = Array.Empty<byte>()
+                    })
+                    .ToList();
+
+                _logger?.LogInformation("Loaded {Count} existing hazard files for hazard {HazardCode}", AttachedFiles.Count, hazardCode);
+            }
+            else
+            {
+                AttachedFiles = new List<AttachedFile>();
+            }
+        }
+        catch (Exception ex)
+        {
+            AttachedFiles = new List<AttachedFile>();
+            _logger?.LogWarning(ex, "Failed to load hazard files for hazard {HazardCode}", hazardCode);
+        }
     }
 
     /// <summary>
@@ -265,12 +320,6 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         if (string.IsNullOrEmpty(categoryValue))
         {
             HazardTypeOptions.Clear();
-            return;
-        }
-
-        if (string.IsNullOrWhiteSpace(LocationDescription))
-        {
-            _logger?.LogWarning("UseSelectedLocation called but description is blank");
             return;
         }
 
@@ -366,6 +415,12 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
     {
         if (!IsFormValid || IsSubmitting) return;
 
+        if (HasMissingFileDescriptions)
+        {
+            _logger?.LogWarning("AddHazard blocked because one or more attached files are missing descriptions.");
+            return;
+        }
+
         try
         {
             // CRITICAL: Set submitting state to prevent duplicate submissions
@@ -439,6 +494,8 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         _logger?.LogInformation("Successfully updated hazard: {HazardCode} with Category: {Category}, Type: {Type}", 
             updatedHazard?.Code, NewHazardCategory, NewHazardType);
 
+        await ProcessFileUpdates(updatedHazard);
+
         // Invoke callback with the updated hazard
         await OnHazardUpdated.InvokeAsync(updatedHazard);
         await CloseModal();
@@ -508,6 +565,8 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         {
             await CreateHazardLocation(createdHazard);
         }
+
+        await ProcessFileUpdates(createdHazard);
 
         
 
@@ -681,6 +740,10 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         
         // Reset dropdown options
         HazardTypeOptions.Clear();
+
+        // Reset file selections
+        SelectedFiles = new List<IBrowserFile>().AsReadOnly();
+        AttachedFiles.Clear();
     }
 
     #region Map Functionality - EXACTLY like HazardReporting
@@ -843,6 +906,179 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         _logger?.LogInformation("Map location selected: {Lat}, {Lng} - HasValidCoordinates: {HasValid}", 
             latitude, longitude, HasValidCoordinates);
     }
+
+    #region File Management Methods
+
+    public async Task OnInputFileChange(UploadChangeEventArgs args)
+    {
+        var newFiles = args.Files;
+        _logger?.LogInformation("AddHazardDialog OnInputFileChange called with {Count} file(s)", newFiles?.Count() ?? 0);
+
+        if (newFiles?.Any() != true)
+        {
+            return;
+        }
+
+        var successfullyProcessedFiles = new List<AttachedFile>();
+
+        foreach (var newFile in newFiles)
+        {
+            try
+            {
+                var isDuplicate = AttachedFiles.Any(existing =>
+                    existing.FileName.Equals(newFile.Name, StringComparison.OrdinalIgnoreCase) &&
+                    existing.Size == newFile.Size);
+
+                if (isDuplicate)
+                {
+                    _logger?.LogInformation("Skipped duplicate file in AddHazardDialog: {FileName}", newFile.Name);
+                    continue;
+                }
+
+                byte[] fileData;
+                using (var stream = newFile.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024))
+                using (var memoryStream = new MemoryStream())
+                {
+                    await stream.CopyToAsync(memoryStream);
+                    fileData = memoryStream.ToArray();
+                }
+
+                successfullyProcessedFiles.Add(new AttachedFile
+                {
+                    FileName = newFile.Name,
+                    ContentType = newFile.ContentType ?? "application/octet-stream",
+                    Size = newFile.Size,
+                    Data = fileData,
+                    SizeDisplay = FormatFileSize(newFile.Size)
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "Failed to process file in AddHazardDialog: {FileName}", newFile.Name);
+            }
+        }
+
+        if (successfullyProcessedFiles.Any())
+        {
+            AttachedFiles.AddRange(successfullyProcessedFiles);
+
+            var allFiles = SelectedFiles?.ToList() ?? new List<IBrowserFile>();
+            foreach (var file in newFiles.Where(f => successfullyProcessedFiles.Any(sf => sf.FileName == f.Name && sf.Size == f.Size)))
+            {
+                allFiles.Add(file);
+            }
+
+            SelectedFiles = allFiles.AsReadOnly();
+        }
+
+        StateHasChanged();
+    }
+
+    public async Task RemoveFile(int index)
+    {
+        if (index < 0 || index >= AttachedFiles.Count)
+        {
+            return;
+        }
+
+        var fileToRemove = AttachedFiles[index];
+        AttachedFiles.RemoveAt(index);
+
+        var selectedFilesList = SelectedFiles.ToList();
+        var selectedFileToRemove = selectedFilesList.FirstOrDefault(sf =>
+            sf.Name == fileToRemove.FileName && sf.Size == fileToRemove.Size);
+
+        if (selectedFileToRemove is not null)
+        {
+            selectedFilesList.Remove(selectedFileToRemove);
+            SelectedFiles = selectedFilesList.AsReadOnly();
+        }
+
+        await InvokeAsync(StateHasChanged);
+    }
+
+    public async Task ClearAllFiles()
+    {
+        AttachedFiles.Clear();
+        SelectedFiles = new List<IBrowserFile>().AsReadOnly();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task ProcessFileUpdates(Hazard hazard)
+    {
+        try
+        {
+            if (AttachedFiles?.Any() != true)
+            {
+                return;
+            }
+
+            foreach (var attachedFile in AttachedFiles.Where(f => f?.Data?.Length > 0))
+            {
+                try
+                {
+                    var hazardFile = new HazardFile(new HazardFileID("HF-0000"))
+                    {
+                        Code = "HF-0000",
+                        HazardCode = hazard.Code,
+                        ReportCode = hazard.ReportCode ?? string.Empty,
+                        FileName = attachedFile.FileName,
+                        FileType = Path.GetExtension(attachedFile.FileName)?.TrimStart('.') ?? "unknown",
+                        ContentType = attachedFile.ContentType ?? "application/octet-stream",
+                        FileSizeBytes = attachedFile.Size,
+                        StorageType = "Database",
+                        FilePath = null,
+                        FileData = attachedFile.Data,
+                        UploadedBy = string.IsNullOrWhiteSpace(_currentUserService?.UserCode) ? SystemConstants.FlyPdxApiSource : _currentUserService.UserCode,
+                        UploadedDate = DateTime.UtcNow,
+                        IsActive = true,
+                        IsConfidential = false,
+                        Description = string.IsNullOrWhiteSpace(attachedFile.Description)
+                            ? null
+                            : attachedFile.Description.Trim()
+                    };
+
+                    var createHazardFileCommand = new CreateHazardFileCommand(hazardFile);
+                    var hazardFileResult = await _mediator.SendAsync(createHazardFileCommand, CancellationToken.None);
+
+                    if (hazardFileResult.IsSuccess)
+                    {
+                        var createdFileId = hazardFileResult.Value.Code;
+                        hazard.AddHazardFile(new HazardFileID(createdFileId));
+                    }
+                }
+                catch (Exception fileEx)
+                {
+                    _logger?.LogWarning(fileEx, "Exception creating HazardFile: {FileName} for Hazard: {HazardCode}", attachedFile.FileName, hazard.Code);
+                }
+            }
+        }
+        catch (Exception fileEx)
+        {
+            _logger?.LogWarning(fileEx, "Error processing AddHazardDialog files for hazard {HazardCode}", hazard.Code);
+        }
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        const int scale = 1024;
+        string[] orders = { "GB", "MB", "KB", "Bytes" };
+        long max = (long)Math.Pow(scale, orders.Length - 1);
+
+        foreach (string order in orders)
+        {
+            if (bytes > max)
+            {
+                return $"{decimal.Divide(bytes, max):##.##} {order}";
+            }
+
+            max /= scale;
+        }
+
+        return "0 Bytes";
+    }
+
+    #endregion
 
     #endregion
 }

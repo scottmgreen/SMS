@@ -892,6 +892,12 @@ public static partial class Mappers
         hazardFile.FileData = reader.GetValue<byte[]>(FieldNames.fHazardFileFileData);
         hazardFile.Description = reader.GetValue<string>(FieldNames.fHazardFileDescription);
         hazardFile.Category = reader.GetValue<string>(FieldNames.fHazardFileCategory);
+        hazardFile.UploadedBy = reader.HasColumn(FieldNames.fHazardFileUploadedBy)
+            ? reader.GetValue<string>(FieldNames.fHazardFileUploadedBy) ?? string.Empty
+            : string.Empty;
+        hazardFile.UploadedDate = reader.HasColumn(FieldNames.fHazardFileUploadedDate)
+            ? (reader.IsDBNull(FieldNames.fHazardFileUploadedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fHazardFileUploadedDate))
+            : null;
         hazardFile.IsConfidential = reader.IsDBNull(FieldNames.fHazardFileIsConfidential) ? false : reader.GetBoolean(FieldNames.fHazardFileIsConfidential);
         hazardFile.IsActive = reader.IsDBNull(FieldNames.fHazardFileIsActive) ? true : reader.GetBoolean(FieldNames.fHazardFileIsActive);
         hazardFile.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;

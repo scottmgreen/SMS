@@ -1,15 +1,8 @@
 @page "/SMSListings/HazardFiles"
 
-@using SMS3.Components.Pages.SMSListings.Models
 @using Radzen
 @using Radzen.Blazor
-@using SMS3.Components.Shared
-@using SMS_Application.Interfaces
-@using SMS_Application.Commands
-@using SMS_Application.Queries
 @using SMS_Domain.Entities
-@using SMS_Domain.ValueObjects
-@using SMS_Shared.Common
 
 <PageTitle>Hazard Files</PageTitle>
 <PageHeader Title="Hazard Report Attached File Listing"
@@ -119,9 +112,7 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        @* <RadzenDataGridColumn TItem="HazardFile" Property="CreatedBy" Title="Created By" Width="150px" />
-        <RadzenDataGridColumn TItem="HazardFile" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}" /> *@
-        
+                
         <RadzenDataGridColumn TItem="HazardFile" Title="Actions" Width="120px" Sortable="false" Filterable="false">
             <Template Context="file">
                 <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" 
@@ -132,9 +123,9 @@
                             Click="@(() => EditFile(file))"
                             Tooltip="Edit File Metadata"
                             Style="margin-right: 5px;" />
-                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
+                @* <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
                             Click="@(() => DeleteFile(file))" 
-                            Tooltip="Delete File" />
+                            Tooltip="Delete File" /> *@
             </Template>
         </RadzenDataGridColumn>
     </Columns>
@@ -166,6 +157,14 @@
                         <RadzenColumn Size="12" SizeMD="6">
                             <RadzenFormField Text="Report ID (optional)" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
                                 <RadzenTextBox @bind-Value="_newReportCode" Placeholder="Enter report code..." Style="width: 100%;" />
+                            </RadzenFormField>
+                        </RadzenColumn>
+                    </RadzenRow>
+
+                    <RadzenRow Gap="1rem" class="mt-2">
+                        <RadzenColumn Size="12">
+                            <RadzenFormField Text="Description *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                <RadzenTextArea @bind-Value="_newDescription" Rows="3" Placeholder="Enter file description..." Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>
                     </RadzenRow>
@@ -338,7 +337,7 @@
 
                     <RadzenRow Gap="1rem">
                         <RadzenColumn Size="12">
-                            <RadzenFormField Text="Description" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                            <RadzenFormField Text="Description *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
                                 <RadzenTextArea @bind-Value="_editDescription" Rows="4" Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>

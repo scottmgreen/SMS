@@ -94,6 +94,31 @@ public sealed class EventDispatchService : IBaseEventBus
         return null;
     }
 
+    private async Task<Guid?> PersistIntegrationAuditEventAsync<T>(T integrationEvent, string queuedBy) where T : IBaseIntegrationEvent
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var queueDataService = scope.ServiceProvider.GetRequiredService<IEventQueueDataService>();
+            var enqueueResult = await queueDataService.EnqueueIntegrationEventAsync(integrationEvent, queuedBy).ConfigureAwait(false);
+            if (enqueueResult.IsSuccess)
+            {
+                return enqueueResult.Value.Id;
+            }
+
+            _logger.LogApplicationWarning("Failed to persist integration event audit record for {EventType} (ID: {EventId}): {Error}",
+                integrationEvent.EventType,
+                integrationEvent.EventId,
+                enqueueResult.Error?.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex, "Failed to persist integration event audit record for {EventType} (ID: {EventId})", integrationEvent.EventType, integrationEvent.EventId);
+        }
+
+        return null;
+    }
+
     private async Task MarkDomainAuditEventProcessedAsync(Guid queueId)
     {
         try
@@ -317,21 +342,54 @@ public sealed class EventDispatchService : IBaseEventBus
             _logger.LogApplicationInformation("Publishing integration event {EventType} for {TargetSystem} with mode {ExecutionMode} (Delivery: {DeliveryMode})", 
                 integrationEvent.EventType, integrationEvent.TargetSystem, mode, integrationEvent.DeliveryMode);
 
+            var queuedBy = mode switch
+            {
+                EventExecutionMode.Immediate => "EventBus-Immediate",
+                EventExecutionMode.Queued => "EventBus",
+                EventExecutionMode.Manual => "ManualExecution",
+                _ => "EventBus"
+            };
+
+            Guid? auditQueueId = null;
+            if (mode == EventExecutionMode.Immediate)
+            {
+                auditQueueId = await PersistIntegrationAuditEventAsync(integrationEvent, queuedBy).ConfigureAwait(false);
+            }
+
+            Result publishResult;
+
             switch (mode)
             {
                 case EventExecutionMode.Immediate:
-                    return await ExecuteIntegrationHandlersImmediately(integrationEvent, cancellationToken);
+                    publishResult = await ExecuteIntegrationHandlersImmediately(integrationEvent, cancellationToken);
+                    break;
 
                 case EventExecutionMode.Queued:
-                    return await QueueIntegrationEventForProcessing(integrationEvent, cancellationToken);
+                    publishResult = await QueueIntegrationEventForProcessing(integrationEvent, cancellationToken);
+                    break;
 
                 case EventExecutionMode.Manual:
-                    return await StoreIntegrationEventForManualExecution(integrationEvent, cancellationToken);
+                    publishResult = await StoreIntegrationEventForManualExecution(integrationEvent, cancellationToken);
+                    break;
 
                 default:
                     _logger.LogApplicationWarning("Unknown execution mode {ExecutionMode} for integration event {EventType}", mode, integrationEvent.EventType);
                     return Result.Failure(new Error("EVENTBUS_UNKNOWN_INTEGRATION_MODE", $"Unknown execution mode for integration event: {mode}"));
             }
+
+            if (mode == EventExecutionMode.Immediate && auditQueueId.HasValue)
+            {
+                if (publishResult.IsSuccess)
+                {
+                    await MarkDomainAuditEventProcessedAsync(auditQueueId.Value).ConfigureAwait(false);
+                }
+                else
+                {
+                    await MarkDomainAuditEventFailedAsync(auditQueueId.Value, publishResult.Error?.Message ?? "Immediate execution failed").ConfigureAwait(false);
+                }
+            }
+
+            return publishResult;
         }
         catch (Exception ex)
         {

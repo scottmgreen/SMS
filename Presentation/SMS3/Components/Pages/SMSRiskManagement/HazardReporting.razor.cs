@@ -1839,6 +1839,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         var hasContactEmail = !HazardReport.IsAnonymous && !string.IsNullOrWhiteSpace(HazardReport.ReportContactEmail);
 
         await SendSubmissionConfirmationEmailIfApplicable(createdHazard, createdTracking.TrackingCode);
+        await QueueHazardSubmissionNotificationAsync(createdHazard);
 
         // ===============================
         // STEP 3: Process files for new hazard
@@ -1868,6 +1869,64 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 ? $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}. A confirmation email was sent to {HazardReport.ReportContactEmail}."
                 : $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}."));
 
+    }
+
+    private async Task QueueHazardSubmissionNotificationAsync(Hazard createdHazard)
+    {
+        var recipientGroups = _configuration.GetSection("HazardReportNotifications:RecipientGroups").Get<string[]>()
+                             ?? Array.Empty<string>();
+
+        var validRecipientGroups = recipientGroups
+            .Where(r => !string.IsNullOrWhiteSpace(r))
+            .Select(r => r.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (!validRecipientGroups.Any())
+        {
+            _logger.LogWarning("Hazard submission notification skipped because no recipient groups are configured.");
+            return;
+        }
+
+        var autoSend = _configuration.GetValue<bool>("HazardReportNotifications:AutoSendHazardReportNotifications");
+
+        var geoLocation = SelectedGeoLocation is not null && SelectedGeoLocation.Latitude.HasValue && SelectedGeoLocation.Longitude.HasValue
+            ? $"{SelectedGeoLocation.Latitude.Value:F6}, {SelectedGeoLocation.Longitude.Value:F6}"
+            : (HasValidCoordinates ? $"{SelectedLatitude:F6}, {SelectedLongitude:F6}" : "N/A");
+
+        var locationDescription = string.IsNullOrWhiteSpace(SelectedLocationDescription)
+            ? (HazardReport.Location ?? string.Empty)
+            : SelectedLocationDescription;
+
+        var subject = $"SMS Hazard Report Submitted - {createdHazard.ReportCode} / {createdHazard.Code}";
+        var body = BuildHazardSubmissionNotificationEmailHtml(createdHazard, geoLocation, locationDescription);
+
+        var emailEvent = new EmailNotificationEvent(
+            toRecipients: validRecipientGroups,
+            subject: subject,
+            body: body,
+            isHtmlContent: true,
+            priority: EmailPriority.Normal,
+            reportId: createdHazard.ReportCode,
+            workflowType: "HazardSubmissionNotification",
+            relatedEntityType: "Report",
+            relatedEntityId: createdHazard.ReportCode,
+            emailMetadata: new Dictionary<string, object>
+            {
+                { "HazardCode", createdHazard.Code },
+                { "ReportCode", createdHazard.ReportCode ?? string.Empty },
+                { "GeoLocation", geoLocation },
+                { "LocationDescription", locationDescription ?? string.Empty }
+            });
+
+        var executionMode = autoSend ? EventExecutionMode.Immediate : EventExecutionMode.Manual;
+        var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, executionMode);
+        if (publishResult.IsFailure)
+        {
+            _logger.LogWarning("Failed to queue hazard submission notification for report {ReportCode}: {Error}",
+                createdHazard.ReportCode,
+                publishResult.Error?.Message ?? "Unknown publish error");
+        }
     }
 
     private async Task SendSubmissionConfirmationEmailIfApplicable(Hazard createdHazard, string trackingCode)
@@ -1991,6 +2050,35 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 }
             ],
             footerHtml: "If any information is missing or incorrect, please reply to this message or contact <a href='mailto:SMS@flypdx.com'>SMS@flypdx.com</a>.",
+            logoUrl: logoUrl);
+    }
+
+    private string BuildHazardSubmissionNotificationEmailHtml(Hazard createdHazard, string geoLocation, string? locationDescription)
+    {
+        var logoUrl = $"{_navigation.BaseUri.TrimEnd('/')}/images/PDX_SMSEmailLogo.png";
+
+        return SMSEmailTemplateBuilder.BuildStandardEmail(
+            title: "Hazard Report Submission Notification",
+            introHtml: "A new hazard report has been submitted and is ready for review.",
+            summaryFields:
+            [
+                new SMSEmailField { Label = "Report ID", Value = createdHazard.ReportCode ?? string.Empty },
+                new SMSEmailField { Label = "Hazard ID", Value = createdHazard.Code }
+            ],
+            sections:
+            [
+                new SMSEmailSection
+                {
+                    Title = "Hazard Details",
+                    Fields =
+                    [
+                        new SMSEmailField { Label = "Hazard Description", Value = HazardReport.Description ?? string.Empty, IsFullWidth = true },
+                        new SMSEmailField { Label = "Geo Location", Value = geoLocation },
+                        new SMSEmailField { Label = "Location Description", Value = locationDescription ?? string.Empty, IsFullWidth = true }
+                    ]
+                }
+            ],
+            footerHtml: "This notification was generated by SMS3 hazard report submission workflow.",
             logoUrl: logoUrl);
     }
 

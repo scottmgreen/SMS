@@ -38,6 +38,7 @@ public class HazardReportForm
 public class AttachedFile
 {
     public string FileName { get; set; } = string.Empty;
+    public string? Description { get; set; }
     public long Size { get; set; }
     public long FileSizeBytes { get; set; }
     public string SizeDisplay { get; set; } = string.Empty;

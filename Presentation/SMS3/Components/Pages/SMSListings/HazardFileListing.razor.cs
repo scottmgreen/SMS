@@ -69,6 +69,7 @@ public partial class HazardFileListing : ComponentBase
     private bool _isSavingNewFile = false;
     private string _newHazardCode = string.Empty;
     private string _newReportCode = string.Empty;
+    private string _newDescription = string.Empty;
     private string _newFileName = string.Empty;
     private string _newFileContentType = string.Empty;
     private byte[]? _newFileData;
@@ -170,6 +171,7 @@ public partial class HazardFileListing : ComponentBase
         _isSavingNewFile = false;
         _newHazardCode = string.Empty;
         _newReportCode = string.Empty;
+        _newDescription = string.Empty;
         _newFileName = string.Empty;
         _newFileContentType = string.Empty;
         _newFileData = null;
@@ -222,6 +224,12 @@ public partial class HazardFileListing : ComponentBase
             return;
         }
 
+        if (string.IsNullOrWhiteSpace(_newDescription))
+        {
+            await ShowErrorAsyncNotification("Description is required.");
+            return;
+        }
+
         try
         {
             _isSavingNewFile = true;
@@ -241,6 +249,7 @@ public partial class HazardFileListing : ComponentBase
                 ContentType = _newFileContentType,
                 FileSizeBytes = _newFileSizeBytes,
                 FileData = _newFileData,
+                Description = _newDescription.Trim(),
                 UploadedBy = currentUserCode,
                 UploadedDate = DateTime.UtcNow,
                 CreatedBy = currentUserCode,
@@ -258,7 +267,6 @@ public partial class HazardFileListing : ComponentBase
             await ShowSuccessAsyncNotification("Hazard file uploaded successfully.");
             CloseAddModal();
             await LoadInitialData();
-            EditFile(createResult.Value);
         }
         catch (Exception ex)
         {

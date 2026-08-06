@@ -223,9 +223,15 @@
                             @if (registry.MitigationStatus !=null)
                             {
                                 <div style="@_basicTextStyle">
-                                    @registry.MitigationStatus.Value
+                                    (@registry.MitigationCount) @registry.MitigationStatus.Value
                                 </div>
                             }
+                             else
+                             {
+                                <div style="@_basicTextStyle">
+                                    (@registry.MitigationCount) N/A
+                                </div>
+                             }
                         </Template>
                     </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="TargetDate" Title="Target Date" Width="150px" HeaderCssClass="custom-header-highlight">

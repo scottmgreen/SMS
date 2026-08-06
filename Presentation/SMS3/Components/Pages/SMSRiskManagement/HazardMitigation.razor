@@ -103,8 +103,19 @@ else
                                     <RadzenFormField Text="Status" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
                                         @if (CurrentMitigation is not null)
                                         {
-                                            <RadzenTextBox Value="@CurrentMitigation.Status.ToString()"
-                                                           Style="width: 100%; min-width: 100%;" />
+                                            @if (_isEditMode)
+                                            {
+                                                <RadzenDropDown @bind-Value="@_selectedMitigationStatus"
+                                                                Data="@_mitigationStatusOptions"
+                                                                Placeholder="Select status..."
+                                                                Style="width: 100%; min-width: 100%;" />
+                                            }
+                                            else
+                                            {
+                                                <RadzenTextBox Value="@CurrentMitigation.Status.Value"
+                                                               ReadOnly="true"
+                                                               Style="width: 100%; min-width: 100%;" />
+                                            }
                                         }
                                         @* <RadzenTextBox @bind-Value="@(CurrentMitigation?.Status "
                                                        Placeholder="Enter mitigation name..."

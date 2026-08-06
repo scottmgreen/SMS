@@ -15,8 +15,10 @@ using SMS_Application.Commands;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
+using SMS_Domain.Events;
 using SMS_Domain.ValueObjects;
 using SMS_Application.Queries;
+using SMS_Application.Common;
 
 using SMS_Shared.Common;
 
@@ -33,11 +35,15 @@ namespace SMS3.Api.Services
     public class PDXSMSApiService : IPDXSMSApiService
     {
         private readonly IBaseMediator _mediator;
+        private readonly IBaseEventBus _eventBus;
+        private readonly IConfiguration _configuration;
         private readonly ILogger<PDXSMSApiService> _logger;
 
-        public PDXSMSApiService(IBaseMediator mediator, ILogger<PDXSMSApiService> logger)
+        public PDXSMSApiService(IBaseMediator mediator, IBaseEventBus eventBus, IConfiguration configuration, ILogger<PDXSMSApiService> logger)
         {
             _mediator = mediator;
+            _eventBus = eventBus;
+            _configuration = configuration;
             _logger = logger;
         }
 
@@ -218,6 +224,14 @@ namespace SMS3.Api.Services
                 var (processedFiles, failedFiles) = await ProcessAttachmentsAsync(
                     request.ReportAttachments, createdHazard.Code, actualReportCode);
 
+                await QueueHazardSubmissionNotificationAsync(
+                    createdHazard,
+                    request.HazardDescription,
+                    request.LocationLatitude,
+                    request.LocationLongitude,
+                    request.LocationDescription,
+                    httpContext);
+
                 // Step 7: Build success response
                 var response = new PDXSMSReportApiResponse
                 {
@@ -347,6 +361,14 @@ namespace SMS3.Api.Services
                 var (processedFiles, failedFiles) = await ProcessAttachmentsAsync(
                     request.ReportAttachments, createdHazard.Code, actualReportCode);
 
+                await QueueHazardSubmissionNotificationAsync(
+                    createdHazard,
+                    request.HazardDescription,
+                    request.LocationLatitude,
+                    request.LocationLongitude,
+                    request.LocationDescription,
+                    httpContext);
+
                 // Step 7: Build success response
                 var response = new PDXSMSReportApiResponse
                 {
@@ -436,6 +458,7 @@ namespace SMS3.Api.Services
         {
             var processedFiles = 0;
             var failedFiles = 0;
+            var uploadedEndpoint = _configuration.GetValue<string>("HazardFileCloudStorage:UploadedEndpoint")?.Trim();
 
             if (attachments?.Any() != true)
                 return (processedFiles, failedFiles);
@@ -476,6 +499,13 @@ namespace SMS3.Api.Services
                             continue;
                         }
 
+                        if (fileData.Length == 0)
+                        {
+                            _logger.LogWarning("Skipping zero-byte base64 attachment: {FileName}", attachment.FileName);
+                            failedFiles++;
+                            continue;
+                        }
+
                         // Check file size (10MB limit)
                         if (fileData.Length > 10 * 1024 * 1024)
                         {
@@ -497,8 +527,29 @@ namespace SMS3.Api.Services
                             continue;
                         }
 
+                        if (string.IsNullOrWhiteSpace(uploadedEndpoint))
+                        {
+                            _logger.LogWarning("UploadedEndpoint is not configured; rejecting URI-only attachment: {FileName}", attachment.FileName);
+                            failedFiles++;
+                            continue;
+                        }
+
+                        var normalizedFileUri = attachment.FileUri!.Trim();
+                        var normalizedTrustedBase = uploadedEndpoint.TrimEnd('/') + "/";
+                        var normalizedTrustedRoot = uploadedEndpoint.TrimEnd('/');
+
+                        var isTrustedPath = normalizedFileUri.StartsWith(normalizedTrustedBase, StringComparison.OrdinalIgnoreCase)
+                                            || string.Equals(normalizedFileUri, normalizedTrustedRoot, StringComparison.OrdinalIgnoreCase);
+
+                        if (!isTrustedPath)
+                        {
+                            _logger.LogWarning("Untrusted FileUri rejected for attachment: {FileName} - {FileUri}", attachment.FileName, attachment.FileUri);
+                            failedFiles++;
+                            continue;
+                        }
+
                         storageType = "Cloud";
-                        filePath = attachment.FileUri;
+                        filePath = normalizedFileUri;
                     }
 
                     // Create hazard file entity
@@ -552,6 +603,110 @@ namespace SMS3.Api.Services
         }
 
         #region Private Helper Methods
+
+        private async Task QueueHazardSubmissionNotificationAsync(
+            Hazard createdHazard,
+            string? hazardDescription,
+            decimal? latitude,
+            decimal? longitude,
+            string? locationDescription,
+            HttpContext httpContext)
+        {
+            var recipientGroups = _configuration.GetSection("HazardReportNotifications:RecipientGroups").Get<string[]>()
+                                 ?? Array.Empty<string>();
+
+            var validRecipientGroups = recipientGroups
+                .Where(r => !string.IsNullOrWhiteSpace(r))
+                .Select(r => r.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            if (!validRecipientGroups.Any())
+            {
+                _logger.LogWarning("API hazard submission notification skipped because no recipient groups are configured.");
+                return;
+            }
+
+            var autoSend = _configuration.GetValue<bool>("HazardReportNotifications:AutoSendHazardReportNotifications");
+
+            var geoLocation = latitude.HasValue && longitude.HasValue
+                ? $"{latitude.Value:F6}, {longitude.Value:F6}"
+                : "N/A";
+
+            var normalizedLocationDescription = string.IsNullOrWhiteSpace(locationDescription)
+                ? "N/A"
+                : locationDescription.Trim();
+
+            var baseUri = $"{httpContext.Request.Scheme}://{httpContext.Request.Host}";
+            var subject = $"SMS Hazard Report Submitted - {createdHazard.ReportCode} / {createdHazard.Code}";
+            var body = BuildHazardSubmissionNotificationEmailHtml(
+                baseUri,
+                createdHazard,
+                hazardDescription,
+                geoLocation,
+                normalizedLocationDescription);
+
+            var emailEvent = new EmailNotificationEvent(
+                toRecipients: validRecipientGroups,
+                subject: subject,
+                body: body,
+                isHtmlContent: true,
+                priority: EmailPriority.Normal,
+                reportId: createdHazard.ReportCode,
+                workflowType: "HazardSubmissionNotification",
+                relatedEntityType: "Report",
+                relatedEntityId: createdHazard.ReportCode,
+                emailMetadata: new Dictionary<string, object>
+                {
+                    { "HazardCode", createdHazard.Code },
+                    { "ReportCode", createdHazard.ReportCode ?? string.Empty },
+                    { "GeoLocation", geoLocation },
+                    { "LocationDescription", normalizedLocationDescription }
+                });
+
+            var executionMode = autoSend ? EventExecutionMode.Immediate : EventExecutionMode.Manual;
+            var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, executionMode);
+            if (publishResult.IsFailure)
+            {
+                _logger.LogWarning("Failed to queue API hazard submission notification for report {ReportCode}: {Error}",
+                    createdHazard.ReportCode,
+                    publishResult.Error?.Message ?? "Unknown publish error");
+            }
+        }
+
+        private static string BuildHazardSubmissionNotificationEmailHtml(
+            string baseUri,
+            Hazard createdHazard,
+            string? hazardDescription,
+            string geoLocation,
+            string locationDescription)
+        {
+            var logoUrl = $"{baseUri.TrimEnd('/')}/images/PDX_SMSEmailLogo.png";
+
+            return SMSEmailTemplateBuilder.BuildStandardEmail(
+                title: "Hazard Report Submission Notification",
+                introHtml: "A new hazard report has been submitted through the API and is ready for review.",
+                summaryFields:
+                [
+                    new SMSEmailField { Label = "Report ID", Value = createdHazard.ReportCode ?? string.Empty },
+                    new SMSEmailField { Label = "Hazard ID", Value = createdHazard.Code }
+                ],
+                sections:
+                [
+                    new SMSEmailSection
+                    {
+                        Title = "Hazard Details",
+                        Fields =
+                        [
+                            new SMSEmailField { Label = "Hazard Description", Value = hazardDescription ?? string.Empty, IsFullWidth = true },
+                            new SMSEmailField { Label = "Geo Location", Value = geoLocation },
+                            new SMSEmailField { Label = "Location Description", Value = locationDescription, IsFullWidth = true }
+                        ]
+                    }
+                ],
+                footerHtml: "This notification was generated by SMS3 API hazard report submission workflow.",
+                logoUrl: logoUrl);
+        }
 
         private async Task<Result<Report>> CreateReportAsync(PDXSMSReportApiRequestV1 request)
         {

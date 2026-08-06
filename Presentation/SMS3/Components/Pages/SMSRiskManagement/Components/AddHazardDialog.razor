@@ -204,11 +204,100 @@
                             }
                         </RadzenFieldset>
 
+                        <RadzenRow Gap="1rem" Class="rz-mb-3">
+                            <RadzenColumn Size="12">
+                                <RadzenCard>
+                                    <RadzenFormField Text="Supporting Documents" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                        <RadzenStack Gap="0.75rem" Class="rz-py-2 rz-px-2 rz-pb-2">
+                                            <RadzenUpload Multiple="true"
+                                                          Change=@OnInputFileChange
+                                                          ChooseText="📄 Choose Files"
+                                                          Class="hazard-upload"
+                                                          Style="width: 100%;padding: 0.5rem; border: 1px solid #ccc; border-radius: 0.25rem;"
+                                                          Accept=".jpg,.jpeg,.png,.pdf,.doc,.docx,.txt"
+                                                          MaxFileSize="10485760" />
+
+                                            <RadzenText TextStyle="TextStyle.Caption" Class="rz-color-base-500">
+                                                <RadzenIcon Icon="attach_file" Style="font-size: 0.9rem;" />
+                                                Supported: JPG, PNG, PDF, DOC, DOCX, TXT (Max 10MB per file)
+                                            </RadzenText>
+
+                                            @if (AttachedFiles.Any())
+                                            {
+                                                <RadzenStack Gap="1rem" Class="rz-px-2 rz-pb-2">
+                                                    @if (HasMissingFileDescriptions)
+                                                    {
+                                                        <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+                                                            Each attached file requires a description before adding/updating the hazard.
+                                                        </RadzenAlert>
+                                                    }
+
+                                                    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
+                                                        <strong>Queued files (@AttachedFiles.Count):</strong>
+                                                        <RadzenButton ButtonStyle="ButtonStyle.Base"
+                                                                      Variant="Variant.Text"
+                                                                      Icon="clear_all"
+                                                                      Text="Clear All"
+                                                                      Size="ButtonSize.ExtraSmall"
+                                                                      Click="ClearAllFiles" />
+                                                    </RadzenStack>
+
+                                                    <RadzenStack Gap="0.5rem">
+                                                        @for (int i = 0; i < AttachedFiles.Count; i++)
+                                                        {
+                                                            var file = AttachedFiles[i];
+                                                            var fileIndex = i;
+
+                                                            <RadzenStack Gap="0.5rem"
+                                                                         Style="padding: 0.5rem; border: 1px solid #dee2e6; border-radius: 0.25rem; background-color: #f8f9fa;">
+                                                                <RadzenStack Orientation="Orientation.Horizontal"
+                                                                             JustifyContent="JustifyContent.SpaceBetween"
+                                                                             AlignItems="AlignItems.Center">
+                                                                    <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
+                                                                        <RadzenIcon Icon="attach_file" Style="color: var(--sms-blue-dark-bold); font-size: 0.9rem;" />
+                                                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 500;">@file.FileName</RadzenText>
+                                                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
+                                                                            (@file.SizeDisplay)
+                                                                        </RadzenText>
+                                                                    </RadzenStack>
+
+                                                                    <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                                                                                  Variant="Variant.Text"
+                                                                                  Icon="delete"
+                                                                                  Size="ButtonSize.ExtraSmall"
+                                                                                  Click="@(() => RemoveFile(fileIndex))"
+                                                                                  title="Remove file" />
+                                                                </RadzenStack>
+
+                                                                <RadzenFormField Text="File Description *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                                    <RadzenTextArea @bind-Value="file.Description"
+                                                                                    Rows="2"
+                                                                                    Placeholder="Enter a description for this file..."
+                                                                                    class="@(string.IsNullOrWhiteSpace(file.Description) ? "default-validation-dropdown" : string.Empty)"
+                                                                                    Style="width: 100%;" />
+                                                                </RadzenFormField>
+                                                                @if (string.IsNullOrWhiteSpace(file.Description))
+                                                                {
+                                                                    <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger);">
+                                                                        File description is required.
+                                                                    </RadzenText>
+                                                                }
+                                                            </RadzenStack>
+                                                        }
+                                                    </RadzenStack>
+                                                </RadzenStack>
+                                            }
+                                        </RadzenStack>
+                                    </RadzenFormField>
+                                </RadzenCard>
+                            </RadzenColumn>
+                        </RadzenRow>
+
                         
                     </RadzenStack>
                 </div>
                 <div class="modal-footer">
-                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Secondary" 
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Danger" 
                                   Click="@CloseModal" 
                                   Disabled="@IsSubmitting" />
                     <RadzenButton Text="@ActionButtonText" 

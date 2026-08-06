@@ -19,6 +19,7 @@ public class EmailComposeDialogBase : ComponentBase
 
     [Parameter] public EmailComposeModel? InitialModel { get; set; }
     [Parameter] public bool PreviewOnly { get; set; }
+    [Parameter] public bool DeferSendToQueueExecution { get; set; }
     [Parameter] public string? DialogTitleOverride { get; set; }
 
     protected EmailComposeModel Model { get; private set; } = new();
@@ -162,6 +163,12 @@ public class EmailComposeDialogBase : ComponentBase
     protected async Task SendAsync()
     {
         if (IsSending) return;
+
+        if (DeferSendToQueueExecution)
+        {
+            DialogService.Close(true);
+            return;
+        }
 
         // Basic validation to keep things Outlook-simple
         var errors = ValidateModel(Model);

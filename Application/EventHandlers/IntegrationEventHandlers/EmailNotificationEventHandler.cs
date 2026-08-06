@@ -113,8 +113,30 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
     // Helper methods...
     private async Task<Result> SendRealEmail(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
     {
-        // Implementation here
-        await Task.CompletedTask;
+        var deliveryResult = await _emailService.SendEmailAsync(emailEvent, cancellationToken);
+        if (deliveryResult.IsFailure || deliveryResult.Value is null)
+        {
+            _logger.LogApplicationError("[EMAIL HANDLER] Email service failed for '{Subject}'. Error: {Error}",
+                emailEvent.Subject,
+                deliveryResult.Error?.Message ?? "Unknown email service error");
+
+            return Result.Failure(deliveryResult.Error ?? new Error("EMAIL_SEND_FAILED", "Email delivery failed."));
+        }
+
+        if (!deliveryResult.Value.IsDelivered)
+        {
+            _logger.LogApplicationError("[EMAIL HANDLER] Email service reported undelivered message for '{Subject}'. Status: {Status}. Error: {Error}",
+                emailEvent.Subject,
+                deliveryResult.Value.DeliveryStatus,
+                deliveryResult.Value.ErrorMessage);
+
+            return Result.Failure(new Error("EMAIL_SEND_FAILED", deliveryResult.Value.ErrorMessage ?? "Email delivery was not successful."));
+        }
+
+        _logger.LogApplicationInformation("[EMAIL HANDLER] Email provider confirmed send for '{Subject}' (MessageId: {MessageId})",
+            emailEvent.Subject,
+            deliveryResult.Value.MessageId);
+
         return Result.Success();
     }
 

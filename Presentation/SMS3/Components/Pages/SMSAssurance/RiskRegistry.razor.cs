@@ -1,12 +1,4 @@
-using System.Data.Common;
-
-
-using Radzen;
-
-using SMS_Application.Interfaces;
-using SMS_Application.Queries;
-
-using SMS_Domain.Enums;
+using SMS_Domain.Services;
 
 using SMS3.Components.Pages.SMSAssurance.Components;
 using SMS3.Components.Shared;
@@ -302,7 +294,9 @@ public partial class RiskRegistry : ComponentBase
 
                 // Find associated risk assessment
 
-                var report = reports.Where(r => r.Code.Trim() == hazard.ReportCode.Trim()).FirstOrDefault();
+                var report = reports.FirstOrDefault(r =>
+                    !string.IsNullOrWhiteSpace(r.Code) &&
+                    string.Equals(r.Code.Trim(), hazard.ReportCode?.Trim(), StringComparison.OrdinalIgnoreCase));
                 
                 
                 
@@ -320,24 +314,28 @@ public partial class RiskRegistry : ComponentBase
                 }
 
                 // Find associated mitigations for this hazard
-                var hazardMitigations = mitigations.Where(m => m.HazardCode.Trim() == hazard.Code.Trim()).ToList();
+                var hazardMitigations = mitigations
+                    .Where(m => !string.IsNullOrWhiteSpace(m.HazardCode)
+                                && string.Equals(m.HazardCode.Trim(), hazard.Code.Trim(), StringComparison.OrdinalIgnoreCase))
+                    .ToList();
 
                 _logger.LogDebug("??? Found {MitigationCount} mitigations for hazard {HazardCode}", hazardMitigations.Count, hazard.Code);
 
                 if (hazardMitigations.Any())
                 {
-                    // Create one entry per mitigation
-                    foreach (var mitigation in hazardMitigations)
-                    {
-                        var entry = CreateRiskRegistryEntry(report ?? throw new ArgumentNullException(nameof(report)), hazard, assessment, mitigation);
-                        entries.Add(entry);
-                        _logger.LogDebug("Added entry for hazard {HazardCode} with mitigation {MitigationCode}", hazard.Code, mitigation.Code);
-                    }
+                    var overallMitigationStatus = MitigationStatusAggregationService.ResolveOverallStatus(hazardMitigations);
+                    var governingMitigation = MitigationStatusAggregationService.SelectGoverningMitigation(hazardMitigations);
+
+                    var entry = CreateRiskRegistryEntry(report, hazard, assessment, governingMitigation, overallMitigationStatus);
+                    entry.MitigationCount = hazardMitigations.Count;
+                    entries.Add(entry);
+                    _logger.LogDebug("Added aggregate entry for hazard {HazardCode} with overall mitigation status {MitigationStatus}", hazard.Code, overallMitigationStatus?.Value);
                 }
                 else
                 {
                     // Create entry without mitigation
-                    var entry = CreateRiskRegistryEntry(report ?? throw new ArgumentNullException(nameof(report)), hazard, assessment, null);
+                    var entry = CreateRiskRegistryEntry(report, hazard, assessment, null, null);
+                    entry.MitigationCount = 0;
                     entries.Add(entry);
                     _logger.LogDebug("Added entry for hazard {HazardCode} without mitigation", hazard.Code);
                 }
@@ -355,7 +353,12 @@ public partial class RiskRegistry : ComponentBase
     /// <summary>
     /// Create a single risk registry entry from hazard, assessment, and mitigation data
     /// </summary>
-    private RiskRegistryEntry CreateRiskRegistryEntry(Report report, Hazard hazard, RiskAssessment? assessment, Mitigation? mitigation)
+    private RiskRegistryEntry CreateRiskRegistryEntry(
+        Report? report,
+        Hazard hazard,
+        RiskAssessment? assessment,
+        Mitigation? mitigation,
+        MitigationStatus? overallMitigationStatus)
     {
         var initialResolution = AviationRiskMatrixCalculator.ResolveRiskFromMatrixCode(hazard.InitialRiskMatrixCode);
         var residualResolution = AviationRiskMatrixCalculator.ResolveRiskFromMatrixCode(hazard.ResidualRiskMatrixCode);
@@ -368,7 +371,7 @@ public partial class RiskRegistry : ComponentBase
         var entry = new RiskRegistryEntry
         {
             ReportStatus = report.Status ?? ReportStatus.Unknown,
-            ReportCode = hazard.ReportCode ?? "N/A",
+            ReportCode = hazard.ReportCode ?? report?.Code ?? "N/A",
             HazardCode = hazard.Code,
             HazardTitle = hazard.HazardTitle ?? string.Empty,
             HazardDescription = hazard.Description ?? "No description available",
@@ -379,7 +382,8 @@ public partial class RiskRegistry : ComponentBase
             EffectiveHazardRiskLevel = preferredResolution.RiskLevel,
             EffectiveRiskMatrixCode = preferredResolution.MatrixCode,
             MitigationDescription = mitigation?.Name ?? mitigation?.Description ?? "No mitigation assigned",
-            MitigationStatus = mitigation?.Status, // ? Can be null now
+            MitigationStatus = overallMitigationStatus,
+            MitigationCount = mitigation is null ? 0 : 1,
             TargetDate = mitigation?.TargetDate,
             AssignedTo = mitigation?.AssignedTo ?? assessment?.LeadAssessorId ?? "Unassigned",
             LastUpdated = assessment?.UpdatedDate ?? hazard.UpdatedDate ?? hazard.CreatedDate ?? DateTime.UtcNow,
@@ -574,6 +578,7 @@ public partial class RiskRegistry : ComponentBase
 
         public string ReportStatus { get; set; } = string.Empty;
         public MitigationStatus? MitigationStatus { get; set; } 
+        public int MitigationCount { get; set; }
         public DateTime? TargetDate { get; set; }
         public string? AssignedTo { get; set; }
         public DateTime? LastUpdated { get; set; }

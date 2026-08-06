@@ -436,7 +436,11 @@ public partial class EventBusQueueManager
 
                         var dialogResult = await DialogService.OpenAsync<Components.EmailComposeDialog>(
                             "SMS Notification",
-                            new Dictionary<string, object?> { { "InitialModel", model } },
+                            new Dictionary<string, object?>
+                            {
+                                { "InitialModel", model },
+                                { "DeferSendToQueueExecution", queuedEvent.Status == QueuedEventStatus.Pending }
+                            },
                             new DialogOptions { Width = "1050px", Height = "900px", Resizable = true, Draggable = true, ShowClose = false }
                         );
 

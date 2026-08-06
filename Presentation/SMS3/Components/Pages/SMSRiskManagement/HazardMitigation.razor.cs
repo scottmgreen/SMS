@@ -44,9 +44,13 @@ public partial class HazardMitigation : ComponentBase
         "Eliminate", "Engineering Control", "Administrative Control", "Personal Protective Equipment"
     };
 
-    
+    private readonly List<string> _mitigationStatusOptions = MitigationStatus.GetAllValues()
+        .Select(status => status.Value)
+        .OrderBy(value => value)
+        .ToList();
 
-    
+    private string? _selectedMitigationStatus;
+
 
     // ? UPDATED: Replace hardcoded department list with SMSDepartment enum
     private List<string> Departments => SMSDepartment.GetAllDepartments()
@@ -86,6 +90,8 @@ public partial class HazardMitigation : ComponentBase
                     TargetDate = DateTime.Now.AddMonths(3)
                 };
 
+                _selectedMitigationStatus = CurrentMitigation.Status.Value;
+
                 // ?? AUDIT: Set creation audit fields
                 CurrentMitigation.CreatedBy = GetCurrentUserId();
                 CurrentMitigation.CreatedDate = DateTime.UtcNow;
@@ -121,6 +127,7 @@ public partial class HazardMitigation : ComponentBase
             if (mitigationResult.IsSuccess && mitigationResult.Value is not null)
             {
                 CurrentMitigation = mitigationResult.Value;
+                _selectedMitigationStatus = CurrentMitigation.Status?.Value;
                 _logger.LogInformation("Successfully loaded existing hazard mitigation: {Code}", MitigationCode);
             }
             else
@@ -211,6 +218,17 @@ public partial class HazardMitigation : ComponentBase
 
     private async Task UpdateExistingMitigation()
     {
+        if (!string.IsNullOrWhiteSpace(_selectedMitigationStatus))
+        {
+            var selectedStatus = MitigationStatus.GetAllValues()
+                .FirstOrDefault(status => string.Equals(status.Value, _selectedMitigationStatus, StringComparison.OrdinalIgnoreCase));
+
+            if (selectedStatus is not null)
+            {
+                CurrentMitigation.Status = selectedStatus;
+            }
+        }
+
         // ?? AUDIT: Set update audit fields with current user
         CurrentMitigation.UpdatedBy = GetCurrentUserId();
         CurrentMitigation.UpdatedDate = DateTime.UtcNow;

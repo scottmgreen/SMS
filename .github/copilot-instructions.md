@@ -34,6 +34,7 @@
 - In this codebase, RiskAssessment should be fetched by hazard code (GetRiskAssessmentByHazardCode query), not via a Hazard.RiskAssessmentCode property.
 - Resetting/revalidating reports must preserve existing investigations, interviews, assessments, mitigations, and hazard scoring sessions across validation decisions (including NOT_SMS_RISK and NEEDS_INVESTIGATION).
 - Use `VALIDATION_DECISION_MADE` as a datasource and trigger metric updates when validation decision is `SMS_RISK` (hazard reported, evaluated, processing decision made).
+- RiskRegistry should display one row per ReportID/HazardID, with an overall mitigation status computed as the lowest-precedence status across all mitigations for that hazard (e.g., Pending Approval overrides In Progress).
 
 ## UI Rendering
 - When rendering HazardDescription in modals or static display areas, treat it as HTML markup (e.g., via MarkupString) so RadzenHtmlEditor formatting is preserved.
@@ -62,7 +63,7 @@
 ## Cloud Uploads
 - For FlyPDX hazard file cloud uploads, the request must include User-Agent 'curl/8.19.0'; removing it causes upload failure.
 - Hazard file storage policy is cloud-only; remove database failover. On cloud upload failure, publish an error instead of storing in the database.
-- Hazard file cloud storage must only use appsettings values; no hardcoded fallback URIs like contoso-sms.blob.core.windows.net are allowed. Hazard file paths must use configured Port of Portland endpoints only; never use contoso-sms.blob.core.windows.net for hazard file paths under any circumstances.
+- Hazard file cloud storage must only use appsettings values; no hardcoded fallback URIs like contoso-sms.blob.core.windows.net are allowed. Hazard file paths must use configured Port of Portland endpoints only; never use contoso-sms.blob.core.windows.net for hazard file paths under any circumstances. Use HazardFileCloudStorage setting name 'UploadedEndpoint' instead of 'CompanionUploadBaseUri' for trusted uploaded file URI base validation.
 
 ## Investigation Evidence File Viewing
 - For investigation evidence file viewing, use cloud returned FilePath when storage is cloud; viewer behavior must automatically handle cloud storage.

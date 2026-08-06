@@ -703,7 +703,7 @@ public partial class ReportProcessing : ComponentBase
                                 if (mitigationResult.IsSuccess && mitigationResult.Value?.Any() == true)
                                 {
                                     var hazardMitigations = mitigationResult.Value
-                                        .Where(m => m.Status != MitigationStatus.Approved && !string.IsNullOrEmpty(m.Code) && !processedMitigationCodes.Contains(m.Code))
+                                        .Where(m => m.Status == MitigationStatus.PendingApproval && !string.IsNullOrEmpty(m.Code) && !processedMitigationCodes.Contains(m.Code))
                                         .Select(m => new MitigationSummary
                                         {
                                             MitigationCode = m.Code ?? "Unknown",
