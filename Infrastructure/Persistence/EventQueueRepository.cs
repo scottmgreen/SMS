@@ -74,6 +74,8 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             using SqlConnection sql = new(_connectionString);
             await sql.OpenAsync(ct).ConfigureAwait(false);
 
+            var queueCode = queueGuid.ToString();
+
             using (SqlCommand updateCmd = new(
                 @"UPDATE dbo.tbld_EventQueue
                      SET fldi_Status = 1,
@@ -82,11 +84,12 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
                          fldd_LockExpiresDate = DATEADD(SECOND, @pLockSeconds, GETUTCDATE()),
                          fldv_UpdatedBy = @pWorker,
                          fldd_UpdatedDate = GETUTCDATE()
-                   WHERE fldv_QueueGuid = @pQueueGuid
+                   WHERE (fldv_Code = @pCode OR fldv_QueueGuid = @pQueueGuid)
                      AND fldi_Status = 0
                      AND (fldd_NextAttemptDate IS NULL OR fldd_NextAttemptDate <= GETUTCDATE());", sql))
             {
                 updateCmd.CommandType = CommandType.Text;
+                updateCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queueCode));
                 updateCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queueGuid.ToString()));
                 updateCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmWorker, worker));
                 updateCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLockSeconds, lockSeconds));
@@ -99,10 +102,14 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
                 }
             }
 
-            using SqlCommand selectCmd = new(StoredProcs.pr_EventQueue_GetByQueueGuid, sql)
+            using SqlCommand selectCmd = new(
+                @"SELECT TOP 1 *
+                    FROM dbo.tbld_EventQueue
+                   WHERE fldv_Code = @pCode OR fldv_QueueGuid = @pQueueGuid;", sql)
             {
-                CommandType = CommandType.StoredProcedure
+                CommandType = CommandType.Text
             };
+            selectCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queueCode));
             selectCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queueGuid.ToString()));
 
             QueuedEvent? response = null;
@@ -132,11 +139,16 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
         try
         {
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_EventQueue_GetByQueueGuid, sql)
+            var queueCode = queueGuid.ToString();
+            using SqlCommand cmd = new(
+                @"SELECT TOP 1 *
+                    FROM dbo.tbld_EventQueue
+                   WHERE fldv_Code = @pCode OR fldv_QueueGuid = @pQueueGuid;", sql)
             {
-                CommandType = CommandType.StoredProcedure
+                CommandType = CommandType.Text
             };
 
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queueCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queueGuid.ToString()));
 
             QueuedEvent? response = null;
@@ -563,11 +575,16 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
 
     private static QueuedEvent MapQueuedEvent(SqlDataReader reader)
     {
+        var queueGuidRaw = reader.GetValue<string>(FieldNames.fEventQueueGuid);
+        var queueCodeRaw = reader.GetValue<string>(FieldNames.fEventQueueCode);
+
         return new QueuedEvent
         {
-            Id = Guid.TryParse(reader.GetValue<string>(FieldNames.fEventQueueGuid), out var queueGuid)
+            Id = Guid.TryParse(queueGuidRaw, out var queueGuid)
                 ? queueGuid
-                : Guid.NewGuid(),
+                : Guid.TryParse(queueCodeRaw, out var queueCodeGuid)
+                    ? queueCodeGuid
+                    : Guid.NewGuid(),
             EventCategory = EventCategory.FromId(reader.GetValue<int>(FieldNames.fEventQueueEventCategory)) ?? EventCategory.DomainEvent,
             EventType = reader.GetValue<string>(FieldNames.fEventQueueEventType) ?? string.Empty,
             EventData = reader.GetValue<string>(FieldNames.fEventQueueEventData) ?? string.Empty,

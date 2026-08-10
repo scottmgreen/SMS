@@ -29,6 +29,7 @@ public class EmailComposeDialogBase : ComponentBase
     protected string? SelectedAttachmentName { get; set; }
     protected string DialogTitle { get; set; } = "New message";
     protected string CcEntryText { get; set; } = string.Empty;
+    private EmailComposeModel? _lastInitialModelReference;
 
     
 
@@ -37,23 +38,40 @@ public class EmailComposeDialogBase : ComponentBase
 
     protected override void OnInitialized()
     {
-        // Seed model if provided (e.g., prefilled recipients)
-        if (InitialModel != null)
+        HydrateModelFromParameters();
+    }
+
+    protected override void OnParametersSet()
+    {
+        HydrateModelFromParameters();
+    }
+
+    private void HydrateModelFromParameters()
+    {
+        var shouldRehydrateModel = !ReferenceEquals(_lastInitialModelReference, InitialModel);
+        if (shouldRehydrateModel)
         {
-            Model = new EmailComposeModel
+            if (InitialModel != null)
             {
-                To = InitialModel.To?.Distinct().ToList() ?? new(),
-                Cc = InitialModel.Cc?.Distinct().ToList() ?? new(),
-                Bcc = InitialModel.Bcc?.Distinct().ToList() ?? new(),
-                Subject = InitialModel.Subject ?? string.Empty,
-                BodyHtml = InitialModel.BodyHtml ?? string.Empty,
-                Attachments = InitialModel.Attachments?.Select(a => new MailAttachment
+                Model = new EmailComposeModel
                 {
-                    FileName = a.FileName,
-                    Content = a.Content,
-                    ContentType = a.ContentType
-                }).ToList() ?? new()
-            };
+                    To = InitialModel.To?.Distinct().ToList() ?? new(),
+                    Cc = InitialModel.Cc?.Distinct().ToList() ?? new(),
+                    Bcc = InitialModel.Bcc?.Distinct().ToList() ?? new(),
+                    Subject = InitialModel.Subject ?? string.Empty,
+                    BodyHtml = InitialModel.BodyHtml ?? string.Empty,
+                    Attachments = InitialModel.Attachments?.Select(a => new MailAttachment
+                    {
+                        FileName = a.FileName,
+                        Content = a.Content,
+                        ContentType = a.ContentType
+                    }).ToList() ?? new()
+                };
+            }
+            else
+            {
+                Model = new EmailComposeModel();
+            }
 
             ShowCc = (Model.Cc?.Count ?? 0) > 0;
             ShowBcc = (Model.Bcc?.Count ?? 0) > 0;
@@ -63,6 +81,8 @@ public class EmailComposeDialogBase : ComponentBase
             {
                 DialogTitle = "Mitigation Approval Request";
             }
+
+            _lastInitialModelReference = InitialModel;
         }
 
         EnsureCurrentUserInCc();

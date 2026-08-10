@@ -1144,8 +1144,8 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_EventQueue_MarkProcessed = new(() => "pr_EventQueue_MarkProcessed");
         public static string pr_EventQueue_MarkProcessed => _pr_EventQueue_MarkProcessed.Value;
 
-        private static readonly Lazy<string> _pr_EventQueue_GetByQueueGuid = new(() => "pr_EventQueue_GetByQueueGuid");
-        public static string pr_EventQueue_GetByQueueGuid => _pr_EventQueue_GetByQueueGuid.Value;
+        private static readonly Lazy<string> _pr_EventQueue_GetByCode = new(() => "pr_EventQueue_GetByCode");
+        public static string pr_EventQueue_GetByCode => _pr_EventQueue_GetByCode.Value;
 
         private static readonly Lazy<string> _pr_EventQueue_GetPending = new(() => "pr_EventQueue_GetPending");
         public static string pr_EventQueue_GetPending => _pr_EventQueue_GetPending.Value;

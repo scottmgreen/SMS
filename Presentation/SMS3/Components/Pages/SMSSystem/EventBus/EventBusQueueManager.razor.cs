@@ -31,6 +31,8 @@ public partial class EventBusQueueManager
 {
     #region Private Fields
 
+    private const string FailedSendManualResendNote = "FAILED SEND - READY FOR MANUAL RESEND";
+
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
 
     private IEnumerable<QueuedEvent> _queuedEvents = new List<QueuedEvent>();
@@ -116,6 +118,12 @@ public partial class EventBusQueueManager
         if (!string.IsNullOrWhiteSpace(emailType))
         {
             suffixParts.Add(emailType.Trim());
+        }
+
+        var queuedBy = queuedEvent.QueuedBy?.Trim() ?? string.Empty;
+        if (string.Equals(queuedBy, FailedSendManualResendNote, StringComparison.OrdinalIgnoreCase))
+        {
+            suffixParts.Add(FailedSendManualResendNote);
         }
 
         if (suffixParts.Count == 0)

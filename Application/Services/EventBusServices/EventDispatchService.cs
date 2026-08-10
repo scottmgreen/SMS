@@ -11,6 +11,7 @@
 using SMS_Application.Interfaces;
 using SMS_Application.Interfaces;
 using SMS_Domain.Common;
+using SMS_Domain.Events;
 using SMS_Domain.Interfaces;
 using SMS_Infrastructure.Interfaces;
 using Microsoft.Extensions.Logging;
@@ -26,6 +27,7 @@ namespace SMS_Application.Services;
 public sealed class EventDispatchService : IBaseEventBus
 {
     private static readonly AsyncLocal<bool> SuppressDomainAuditPersistence = new();
+    private const string FailedSendManualResendNote = "FAILED SEND - READY FOR MANUAL RESEND";
 
     private readonly ILogger<EventDispatchService> _logger;
     private readonly IServiceProvider _serviceProvider;
@@ -158,6 +160,55 @@ public sealed class EventDispatchService : IBaseEventBus
         using var scope = _serviceProvider.CreateScope();
         var queueService = scope.ServiceProvider.GetRequiredService<IEventQueueService>();
         return await operation(queueService).ConfigureAwait(false);
+    }
+
+    private async Task<bool> QueueFailedEmailForManualResendAsync<T>(T integrationEvent) where T : IBaseIntegrationEvent
+    {
+        try
+        {
+            if (integrationEvent is not EmailNotificationEvent)
+            {
+                return false;
+            }
+
+            var queueResult = await ExecuteWithQueueServiceAsync(queueService =>
+                queueService.QueueIntegrationEventAsync(integrationEvent, FailedSendManualResendNote)).ConfigureAwait(false);
+
+            if (queueResult.IsSuccess)
+            {
+                _logger.LogApplicationInformation(
+                    "Queued failed email integration event {EventType} for manual resend.",
+                    integrationEvent.EventType);
+                return true;
+            }
+
+            _logger.LogApplicationWarning(
+                "Failed to queue failed email integration event {EventType} for manual resend: {Error}",
+                integrationEvent.EventType,
+                queueResult.Error?.Message ?? "Unknown queue error");
+            return false;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex,
+                "Error while queueing failed email integration event {EventType} for manual resend.",
+                integrationEvent.EventType);
+            return false;
+        }
+    }
+
+    private async Task MarkAuditEventCancelledAsync(Guid queueId)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var queueDataService = scope.ServiceProvider.GetRequiredService<IEventQueueDataService>();
+            await queueDataService.CancelAsync(queueId, "EventBus-Immediate").ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex, "Failed to cancel immediate integration audit event for QueueId {QueueId}", queueId);
+        }
     }
 
     /// <summary>
@@ -385,7 +436,16 @@ public sealed class EventDispatchService : IBaseEventBus
                 }
                 else
                 {
-                    await MarkDomainAuditEventFailedAsync(auditQueueId.Value, publishResult.Error?.Message ?? "Immediate execution failed").ConfigureAwait(false);
+                    var failureMessage = publishResult.Error?.Message ?? "Immediate execution failed";
+                    await MarkDomainAuditEventFailedAsync(
+                        auditQueueId.Value,
+                        $"{failureMessage} | {FailedSendManualResendNote}").ConfigureAwait(false);
+
+                    var queuedForManualResend = await QueueFailedEmailForManualResendAsync(integrationEvent).ConfigureAwait(false);
+                    if (queuedForManualResend)
+                    {
+                        await MarkAuditEventCancelledAsync(auditQueueId.Value).ConfigureAwait(false);
+                    }
                 }
             }
 
