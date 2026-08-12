@@ -509,7 +509,7 @@ else
                                                                     <RadzenIcon Icon="attach_file" Style="color: var(--sms-blue-dark-bold); font-size: 0.9rem;" />
                                                                     @if (ShouldUseStoredExternalPath(file))
                                                                     {
-                                                                        <RadzenLink Text="@file.FileName"
+                                                                        <RadzenLink Text="@GetAttachedFileDisplayName(file)"
                                                                                     Style="font-size: 0.95rem; font-weight: 500; color: var(--rz-primary);"
                                                                                     Path="@ResolveExternalFilePath(file.FilePath)"
                                                                                     Target="_blank"
@@ -521,7 +521,7 @@ else
                                                                     else
                                                                     {
                                                                         <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                                                            @file.FileName (@file.SizeDisplay)
+                                                                            @GetAttachedFileDisplayName(file) (@file.SizeDisplay)
                                                                         </RadzenText>
                                                                     }
                                                                 </RadzenStack>

@@ -76,8 +76,8 @@ public class EventQueueService : IEventQueueService
 
             var queuedEvent = result.Value;
 
-            _logger.LogApplicationInformation("Queued domain event {EventType} with ID {EventId} (Queue ID: {QueueId})",
-                domainEvent.EventType, domainEvent.EventId, queuedEvent.Id);
+            _logger.LogApplicationInformation("Queued domain event {EventType} with ID {EventId} (Queue Code: {QueueCode})",
+                domainEvent.EventType, domainEvent.EventId, queuedEvent.QueueCode);
 
             return Result.Success();
         }
@@ -108,8 +108,8 @@ public class EventQueueService : IEventQueueService
 
             var queuedEvent = result.Value;
 
-            _logger.LogApplicationInformation("Queued integration event {EventType} for {TargetSystem} (Queue ID: {QueueId})",
-                integrationEvent.EventType, integrationEvent.TargetSystem, queuedEvent.Id);
+            _logger.LogApplicationInformation("Queued integration event {EventType} for {TargetSystem} (Queue Code: {QueueCode})",
+                integrationEvent.EventType, integrationEvent.TargetSystem, queuedEvent.QueueCode);
 
             return Result.Success();
         }
@@ -140,8 +140,8 @@ public class EventQueueService : IEventQueueService
 
             var queuedEvent = result.Value;
 
-            _logger.LogApplicationInformation("Queued UI event {EventType} for {TargetComponent} (Queue ID: {QueueId})",
-                uiEvent.EventType, uiEvent.TargetComponent, queuedEvent.Id);
+            _logger.LogApplicationInformation("Queued UI event {EventType} for {TargetComponent} (Queue Code: {QueueCode})",
+                uiEvent.EventType, uiEvent.TargetComponent, queuedEvent.QueueCode);
 
             return Result.Success();
         }
@@ -238,17 +238,17 @@ public class EventQueueService : IEventQueueService
     }
 
     /// <summary>
-    /// Gets a specific queued event by ID
+    /// Gets a specific queued event by code
     /// </summary>
-    public async Task<Result<QueuedEvent>> GetQueuedEventAsync(Guid eventId)
+    public async Task<Result<QueuedEvent>> GetQueuedEventAsync(string queueCode)
     {
         try
         {
-            return await _eventQueueDataService.GetQueuedEventAsync(eventId);
+            return await _eventQueueDataService.GetQueuedEventAsync(queueCode);
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError(ex, "Failed to retrieve queued event {EventId}", eventId);
+            _logger.LogApplicationError(ex, "Failed to retrieve queued event {QueueCode}", queueCode);
             return Result.Failure<QueuedEvent>(new Error("QUEUE_RETRIEVE_EVENT_FAILED", $"Failed to retrieve event: {ex.Message}"));
         }
     }
@@ -256,33 +256,33 @@ public class EventQueueService : IEventQueueService
     /// <summary>
     /// Manually executes a queued event
     /// </summary>
-    public async Task<Result> ExecuteQueuedEventAsync(Guid eventId, string? executedBy = null)
+    public async Task<Result> ExecuteQueuedEventAsync(string queueCode, string? executedBy = null)
     {
         try
         {
-            var queuedEventResult = await _eventQueueDataService.GetQueuedEventAsync(eventId);
+            var queuedEventResult = await _eventQueueDataService.GetQueuedEventAsync(queueCode);
             if (queuedEventResult.IsFailure)
             {
-                return Result.Failure(new Error("QUEUE_EVENT_NOT_FOUND", $"Queued event with ID {eventId} not found"));
+                return Result.Failure(new Error("QUEUE_EVENT_NOT_FOUND", $"Queued event with code {queueCode} not found"));
             }
 
             var queuedEvent = queuedEventResult.Value;
 
             if (queuedEvent.Status != QueuedEventStatus.Pending)
             {
-                return Result.Failure(new Error("QUEUE_EVENT_NOT_PENDING", $"Event {eventId} is not in pending status (Current: {queuedEvent.Status})"));
+                return Result.Failure(new Error("QUEUE_EVENT_NOT_PENDING", $"Event {queueCode} is not in pending status (Current: {queuedEvent.Status})"));
             }
 
             var worker = string.IsNullOrWhiteSpace(executedBy) ? "EventQueueService" : executedBy;
 
-            var leaseResult = await _eventQueueDataService.LeaseQueuedEventAsync(eventId, worker, 60);
+            var leaseResult = await _eventQueueDataService.LeaseQueuedEventAsync(queueCode, worker, 60);
             if (leaseResult.IsFailure)
             {
-                return Result.Failure(new Error("QUEUE_LEASE_FAILED", $"Failed to lease event {eventId} for processing."));
+                return Result.Failure(new Error("QUEUE_LEASE_FAILED", $"Failed to lease event {queueCode} for processing."));
             }
 
-            _logger.LogApplicationInformation("Executing queued event {EventType} (Queue ID: {QueueId}) by {ExecutedBy}",
-                queuedEvent.EventType, eventId, worker);
+            _logger.LogApplicationInformation("Executing queued event {EventType} (Queue Code: {QueueCode}) by {ExecutedBy}",
+                queuedEvent.EventType, queueCode, worker);
 
             Result executionResult;
 
@@ -307,34 +307,34 @@ public class EventQueueService : IEventQueueService
             // Update event status based on execution result
             if (executionResult.IsSuccess)
             {
-                var markProcessedResult = await _eventQueueDataService.MarkProcessedAsync(eventId, worker);
+                var markProcessedResult = await _eventQueueDataService.MarkProcessedAsync(queueCode, worker);
                 if (markProcessedResult.IsFailure || !markProcessedResult.Value)
                 {
-                    return Result.Failure(new Error("QUEUE_MARK_PROCESSED_FAILED", $"Event {eventId} executed but could not be marked as processed."));
+                    return Result.Failure(new Error("QUEUE_MARK_PROCESSED_FAILED", $"Event {queueCode} executed but could not be marked as processed."));
                 }
 
-                _logger.LogApplicationInformation("Successfully executed queued event {EventType} (Queue ID: {QueueId})",
-                    queuedEvent.EventType, eventId);
+                _logger.LogApplicationInformation("Successfully executed queued event {EventType} (Queue Code: {QueueCode})",
+                    queuedEvent.EventType, queueCode);
             }
             else
             {
-                var markFailedResult = await _eventQueueDataService.MarkFailedAsync(eventId, worker, executionResult.Error.Message);
+                var markFailedResult = await _eventQueueDataService.MarkFailedAsync(queueCode, worker, executionResult.Error.Message);
                 if (markFailedResult.IsFailure || !markFailedResult.Value)
                 {
-                    _logger.LogApplicationWarning("Event execution failed and status update to failed did not persist for Queue ID: {QueueId}", eventId);
+                    _logger.LogApplicationWarning("Event execution failed and status update to failed did not persist for Queue Code: {QueueCode}", queueCode);
                 }
 
-                _logger.LogApplicationWarning("Failed to execute queued event {EventType} (Queue ID: {QueueId}): {Error}",
-                    queuedEvent.EventType, eventId, executionResult.Error.Message);
+                _logger.LogApplicationWarning("Failed to execute queued event {EventType} (Queue Code: {QueueCode}): {Error}",
+                    queuedEvent.EventType, queueCode, executionResult.Error.Message);
             }
 
             return executionResult;
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError(ex, "Failed to execute queued event {EventId}", eventId);
+            _logger.LogApplicationError(ex, "Failed to execute queued event {QueueCode}", queueCode);
 
-            await _eventQueueDataService.MarkFailedAsync(eventId, "EventQueueService", ex.Message);
+            await _eventQueueDataService.MarkFailedAsync(queueCode, "EventQueueService", ex.Message);
 
             return Result.Failure(new Error("QUEUE_EXECUTE_FAILED", $"Failed to execute event: {ex.Message}"));
         }
@@ -367,7 +367,7 @@ public class EventQueueService : IEventQueueService
 
             foreach (var queuedEvent in pendingEvents)
             {
-                var result = await ExecuteQueuedEventAsync(queuedEvent.Id, executedBy);
+                var result = await ExecuteQueuedEventAsync(queuedEvent.QueueCode, executedBy);
                 if (result.IsSuccess)
                 {
                     successCount++;
@@ -398,50 +398,50 @@ public class EventQueueService : IEventQueueService
     /// <summary>
     /// Cancels a queued event
     /// </summary>
-    public async Task<Result> CancelQueuedEventAsync(Guid eventId, string? cancelledBy = null)
+    public async Task<Result> CancelQueuedEventAsync(string queueCode, string? cancelledBy = null)
     {
         try
         {
-            var queuedEventResult = await _eventQueueDataService.GetQueuedEventAsync(eventId);
+            var queuedEventResult = await _eventQueueDataService.GetQueuedEventAsync(queueCode);
             if (queuedEventResult.IsFailure)
             {
-                return Result.Failure(new Error("QUEUE_EVENT_NOT_FOUND", $"Queued event with ID {eventId} not found"));
+                return Result.Failure(new Error("QUEUE_EVENT_NOT_FOUND", $"Queued event with code {queueCode} not found"));
             }
 
             var queuedEvent = queuedEventResult.Value;
 
             if (queuedEvent.Status != QueuedEventStatus.Pending)
             {
-                return Result.Failure(new Error("QUEUE_EVENT_NOT_PENDING", $"Event {eventId} cannot be cancelled (Current status: {queuedEvent.Status})"));
+                return Result.Failure(new Error("QUEUE_EVENT_NOT_PENDING", $"Event {queueCode} cannot be cancelled (Current status: {queuedEvent.Status})"));
             }
 
             var cancelActor = string.IsNullOrWhiteSpace(cancelledBy) ? "EventQueueService" : cancelledBy;
-            var cancelResult = await _eventQueueDataService.CancelAsync(eventId, cancelActor);
+            var cancelResult = await _eventQueueDataService.CancelAsync(queueCode, cancelActor);
             if (cancelResult.IsFailure || !cancelResult.Value)
             {
-                return Result.Failure(new Error("QUEUE_CANCEL_FAILED", $"Failed to cancel event {eventId}"));
+                return Result.Failure(new Error("QUEUE_CANCEL_FAILED", $"Failed to cancel event {queueCode}"));
             }
 
-            _logger.LogApplicationInformation("Cancelled queued event {EventType} (Queue ID: {QueueId}) by {CancelledBy}",
-                queuedEvent.EventType, eventId, cancelActor);
+            _logger.LogApplicationInformation("Cancelled queued event {EventType} (Queue Code: {QueueCode}) by {CancelledBy}",
+                queuedEvent.EventType, queueCode, cancelActor);
 
             return Result.Success();
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError(ex, "Failed to cancel queued event {EventId}", eventId);
+            _logger.LogApplicationError(ex, "Failed to cancel queued event {QueueCode}", queueCode);
             return Result.Failure(new Error("QUEUE_CANCEL_FAILED", $"Failed to cancel event: {ex.Message}"));
         }
     }
 
-    public async Task<Result<Guid>> RebuildQueuedEmailEventAsync(Guid eventId, string? rebuiltBy = null)
+    public async Task<Result<string>> RebuildQueuedEmailEventAsync(string queueCode, string? rebuiltBy = null)
     {
         try
         {
-            var queuedEventResult = await _eventQueueDataService.GetQueuedEventAsync(eventId);
+            var queuedEventResult = await _eventQueueDataService.GetQueuedEventAsync(queueCode);
             if (queuedEventResult.IsFailure)
             {
-                return Result.Failure<Guid>(new Error("QUEUE_EVENT_NOT_FOUND", $"Queued event with ID {eventId} not found"));
+                return Result.Failure<string>(new Error("QUEUE_EVENT_NOT_FOUND", $"Queued event with code {queueCode} not found"));
             }
 
             var queuedEvent = queuedEventResult.Value;
@@ -449,18 +449,18 @@ public class EventQueueService : IEventQueueService
             if (queuedEvent.EventCategory != EventCategory.IntegrationEvent ||
                 !string.Equals(queuedEvent.EventType, SMS_Domain.Enums.EventType.EmailNotification.Value, StringComparison.OrdinalIgnoreCase))
             {
-                return Result.Failure<Guid>(new Error("QUEUE_REBUILD_UNSUPPORTED", "Only EmailNotification integration events can be rebuilt."));
+                return Result.Failure<string>(new Error("QUEUE_REBUILD_UNSUPPORTED", "Only EmailNotification integration events can be rebuilt."));
             }
 
             if (queuedEvent.Status != QueuedEventStatus.Pending && queuedEvent.Status != QueuedEventStatus.Failed)
             {
-                return Result.Failure<Guid>(new Error("QUEUE_REBUILD_INVALID_STATUS", $"Event {eventId} cannot be rebuilt from status {queuedEvent.Status}."));
+                return Result.Failure<string>(new Error("QUEUE_REBUILD_INVALID_STATUS", $"Event {queueCode} cannot be rebuilt from status {queuedEvent.Status}."));
             }
 
             var emailEvent = JsonSerializer.Deserialize<EmailNotificationEvent>(queuedEvent.EventData, EventJsonOptions);
             if (emailEvent is null)
             {
-                return Result.Failure<Guid>(new Error("QUEUE_REBUILD_DESERIALIZE_FAILED", "Unable to deserialize queued EmailNotificationEvent."));
+                return Result.Failure<string>(new Error("QUEUE_REBUILD_DESERIALIZE_FAILED", "Unable to deserialize queued EmailNotificationEvent."));
             }
 
             await ReevaluateEmailRecipientsForCurrentStateAsync(emailEvent, cancellationToken: CancellationToken.None);
@@ -469,24 +469,24 @@ public class EventQueueService : IEventQueueService
             var enqueueResult = await _eventQueueDataService.EnqueueIntegrationEventAsync(emailEvent, actor);
             if (enqueueResult.IsFailure)
             {
-                return Result.Failure<Guid>(new Error("QUEUE_REBUILD_ENQUEUE_FAILED", enqueueResult.Error?.Message ?? "Failed to enqueue rebuilt email event."));
+                return Result.Failure<string>(new Error("QUEUE_REBUILD_ENQUEUE_FAILED", enqueueResult.Error?.Message ?? "Failed to enqueue rebuilt email event."));
             }
 
-            var rebuiltEventId = enqueueResult.Value.Id;
+            var rebuiltEventCode = enqueueResult.Value.QueueCode;
 
-            var cancelResult = await _eventQueueDataService.CancelAsync(eventId, actor);
+            var cancelResult = await _eventQueueDataService.CancelAsync(queueCode, actor);
             if (cancelResult.IsFailure || !cancelResult.Value)
             {
-                _logger.LogApplicationWarning("Rebuilt email event {OriginalEventId} into {NewEventId}, but failed to cancel original event.", eventId, rebuiltEventId);
+                _logger.LogApplicationWarning("Rebuilt email event {OriginalQueueCode} into {NewQueueCode}, but failed to cancel original event.", queueCode, rebuiltEventCode);
             }
 
-            _logger.LogApplicationInformation("Rebuilt queued email event {OriginalEventId} as {NewEventId} by {Actor}", eventId, rebuiltEventId, actor);
-            return Result.Success(rebuiltEventId);
+            _logger.LogApplicationInformation("Rebuilt queued email event {OriginalQueueCode} as {NewQueueCode} by {Actor}", queueCode, rebuiltEventCode, actor);
+            return Result.Success(rebuiltEventCode);
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError(ex, "Failed to rebuild queued email event {EventId}", eventId);
-            return Result.Failure<Guid>(new Error("QUEUE_REBUILD_FAILED", $"Failed to rebuild queued email event: {ex.Message}"));
+            _logger.LogApplicationError(ex, "Failed to rebuild queued email event {QueueCode}", queueCode);
+            return Result.Failure<string>(new Error("QUEUE_REBUILD_FAILED", $"Failed to rebuild queued email event: {ex.Message}"));
         }
     }
 
@@ -723,7 +723,7 @@ public class EventQueueService : IEventQueueService
     {
         try
         {
-            _logger.LogApplicationInformation("[QUEUE] Executing domain event {EventType} (Queue ID: {QueueId})", queuedEvent.EventType, queuedEvent.Id);
+            _logger.LogApplicationInformation("[QUEUE] Executing domain event {EventType} (Queue Code: {QueueCode})", queuedEvent.EventType, queuedEvent.QueueCode);
 
             if (!_queuedEventTypeRegistry.TryResolveDomainEventType(queuedEvent.EventType, out var eventType))
             {

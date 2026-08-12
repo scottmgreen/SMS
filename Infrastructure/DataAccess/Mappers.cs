@@ -11,6 +11,7 @@
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Interfaces;
+using SMS_Domain.ValueObjects;
 
 namespace SMS_Infrastructure.Common;
 
@@ -76,10 +77,37 @@ public static partial class Mappers
 
             return applicationUser;
         }
+
         catch (Exception ex)
         {
             throw new InvalidOperationException($"Error mapping SqlDataReader to SMSApplicationUser: {ex.Message}", ex);
         }
+    }
+
+    /// <summary>
+    /// Maps SqlDataReader to QueuedEvent entity.
+    /// </summary>
+    public static QueuedEvent MapToQueuedEvent(SqlDataReader reader)
+    {
+        var queueGuidRaw = reader.GetValue<string>(FieldNames.fEventQueueGuid);
+        var queueCodeRaw = reader.GetValue<string>(FieldNames.fEventQueueCode);
+
+        return new QueuedEvent(new EventQueueID(queueCodeRaw))
+        {
+            QueueGuid = Guid.TryParse(queueGuidRaw, out var queueGuid) ? queueGuid : Guid.NewGuid(),
+            EventCategory = EventCategory.FromId(reader.GetValue<int>(FieldNames.fEventQueueEventCategory)) ?? EventCategory.DomainEvent,
+            EventType = reader.GetValue<string>(FieldNames.fEventQueueEventType) ?? string.Empty,
+            EventData = reader.GetValue<string>(FieldNames.fEventQueueEventData) ?? string.Empty,
+            ReportId = reader.GetValue<string>(FieldNames.fEventQueueReportCode) ?? string.Empty,
+            Status = (QueuedEventStatus)reader.GetValue<int>(FieldNames.fEventQueueStatus),
+            QueuedAt = reader.GetValue<DateTime>(FieldNames.fEventQueueQueuedDate),
+            ProcessedAt = reader.GetValue<DateTime?>(FieldNames.fEventQueueProcessedDate),
+            AttemptCount = reader.GetValue<int>(FieldNames.fEventQueueAttemptCount),
+            LastError = reader.GetValue<string>(FieldNames.fEventQueueLastError),
+            Priority = (EventPriority)reader.GetValue<int>(FieldNames.fEventQueuePriority),
+            TargetSystem = reader.GetValue<string>(FieldNames.fEventQueueTargetSystem),
+            QueuedBy = reader.GetValue<string>(FieldNames.fEventQueueQueuedBy)
+        };
     }
 
     /// <summary>

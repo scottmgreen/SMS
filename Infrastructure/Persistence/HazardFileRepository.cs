@@ -343,12 +343,12 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
     {
         try
         {
-            _logger.LogInfrastructureGetItems($"{_logHeader} GetActiveFiles", null);
+            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_HazardFile_GetActiveFiles}", null);
 
             using var sql = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand("SELECT * FROM tbld_HazardFiles WHERE fldb_IsActive = 1 ORDER BY fldd_UploadedDate DESC", sql)
+            using var cmd = new SqlCommand(StoredProcs.pr_HazardFile_GetActiveFiles, sql)
             {
-                CommandType = CommandType.Text
+                CommandType = CommandType.StoredProcedure
             };
 
             var hazardFiles = new List<HazardFile>();

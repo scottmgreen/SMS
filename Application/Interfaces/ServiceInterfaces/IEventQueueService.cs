@@ -39,14 +39,14 @@ public interface IEventQueueService
         int? maxResults = null);
 
     /// <summary>
-    /// Gets a specific queued event by ID
+    /// Gets a specific queued event by code
     /// </summary>
-    Task<Result<QueuedEvent>> GetQueuedEventAsync(Guid eventId);
+    Task<Result<QueuedEvent>> GetQueuedEventAsync(string queueCode);
 
     /// <summary>
     /// Manually executes a queued event
     /// </summary>
-    Task<Result> ExecuteQueuedEventAsync(Guid eventId, string? executedBy = null);
+    Task<Result> ExecuteQueuedEventAsync(string queueCode, string? executedBy = null);
 
     /// <summary>
     /// Executes all pending events of a specific type
@@ -56,12 +56,12 @@ public interface IEventQueueService
     /// <summary>
     /// Cancels a queued event
     /// </summary>
-    Task<Result> CancelQueuedEventAsync(Guid eventId, string? cancelledBy = null);
+    Task<Result> CancelQueuedEventAsync(string queueCode, string? cancelledBy = null);
 
     /// <summary>
     /// Rebuilds and re-queues an EmailNotification integration event from an existing queued event.
     /// </summary>
-    Task<Result<Guid>> RebuildQueuedEmailEventAsync(Guid eventId, string? rebuiltBy = null);
+    Task<Result<string>> RebuildQueuedEmailEventAsync(string queueCode, string? rebuiltBy = null);
 
     /// <summary>
     /// Clears all processed and failed events

@@ -42,8 +42,8 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
 
             var createdBy = ResolveCreatedBy(queuedEvent);
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queuedEvent.Id.ToString()));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queuedEvent.Id.ToString()));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queuedEvent.QueueCode));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queuedEvent.QueueGuid.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventCategory, queuedEvent.EventCategory.Id));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventType, queuedEvent.EventType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventData, queuedEvent.EventData));
@@ -58,7 +58,27 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return await GetByQueueGuidAsync(queuedEvent.Id, ct).ConfigureAwait(false);
+            var createdByCodeResult = await GetByQueueCodeAsync(queuedEvent.QueueCode, ct).ConfigureAwait(false);
+            if (createdByCodeResult.IsSuccess)
+            {
+                return createdByCodeResult;
+            }
+
+            // Some database deployments generate EventQueue code server-side during insert.
+            // Fall back to locating the newly inserted pending row by secondary QueueGuid.
+            var pendingResult = await GetPendingAsync(5000, null, ct).ConfigureAwait(false);
+            if (pendingResult.IsSuccess)
+            {
+                var createdByQueueGuid = pendingResult.Value
+                    .FirstOrDefault(e => e.QueueGuid == queuedEvent.QueueGuid);
+
+                if (createdByQueueGuid is not null)
+                {
+                    return Result<QueuedEvent>.Success(createdByQueueGuid);
+                }
+            }
+
+            return Result<QueuedEvent>.Failure<QueuedEvent>(DomainErrors.GeneralError.UnProcessableRequest);
         }
         catch (Exception ex)
         {
@@ -67,14 +87,12 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
         }
     }
 
-    public async Task<Result<QueuedEvent>> LeaseByQueueGuidAsync(Guid queueGuid, string worker, int lockSeconds = 60, CancellationToken ct = default)
+    public async Task<Result<QueuedEvent>> LeaseByQueueCodeAsync(string queueCode, string worker, int lockSeconds = 60, CancellationToken ct = default)
     {
         try
         {
             using SqlConnection sql = new(_connectionString);
             await sql.OpenAsync(ct).ConfigureAwait(false);
-
-            var queueCode = queueGuid.ToString();
 
             using (SqlCommand updateCmd = new(
                 @"UPDATE dbo.tbld_EventQueue
@@ -84,13 +102,12 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
                          fldd_LockExpiresDate = DATEADD(SECOND, @pLockSeconds, GETUTCDATE()),
                          fldv_UpdatedBy = @pWorker,
                          fldd_UpdatedDate = GETUTCDATE()
-                   WHERE (fldv_Code = @pCode OR fldv_QueueGuid = @pQueueGuid)
+                   WHERE fldv_Code = @pCode
                      AND fldi_Status = 0
                      AND (fldd_NextAttemptDate IS NULL OR fldd_NextAttemptDate <= GETUTCDATE());", sql))
             {
                 updateCmd.CommandType = CommandType.Text;
                 updateCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queueCode));
-                updateCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queueGuid.ToString()));
                 updateCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmWorker, worker));
                 updateCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLockSeconds, lockSeconds));
 
@@ -105,19 +122,18 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             using SqlCommand selectCmd = new(
                 @"SELECT TOP 1 *
                     FROM dbo.tbld_EventQueue
-                   WHERE fldv_Code = @pCode OR fldv_QueueGuid = @pQueueGuid;", sql)
+                   WHERE fldv_Code = @pCode;", sql)
             {
                 CommandType = CommandType.Text
             };
             selectCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queueCode));
-            selectCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queueGuid.ToString()));
 
             QueuedEvent? response = null;
             using (SqlDataReader reader = await selectCmd.ExecuteReaderAsync(ct).ConfigureAwait(false))
             {
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
-                    response = MapQueuedEvent(reader);
+                    response = Mappers.MapToQueuedEvent(reader);
                 }
             }
 
@@ -134,22 +150,17 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
         }
     }
 
-    public async Task<Result<QueuedEvent>> GetByQueueGuidAsync(Guid queueGuid, CancellationToken ct = default)
+    public async Task<Result<QueuedEvent>> GetByQueueCodeAsync(string queueCode, CancellationToken ct = default)
     {
         try
         {
             using SqlConnection sql = new(_connectionString);
-            var queueCode = queueGuid.ToString();
-            using SqlCommand cmd = new(
-                @"SELECT TOP 1 *
-                    FROM dbo.tbld_EventQueue
-                   WHERE fldv_Code = @pCode OR fldv_QueueGuid = @pQueueGuid;", sql)
+            using SqlCommand cmd = new(StoredProcs.pr_EventQueue_GetByCode, sql)
             {
-                CommandType = CommandType.Text
+                CommandType = CommandType.StoredProcedure
             };
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queueCode));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queueGuid.ToString()));
 
             QueuedEvent? response = null;
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -157,7 +168,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             {
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
-                    response = MapQueuedEvent(reader);
+                    response = Mappers.MapToQueuedEvent(reader);
                 }
             }
             await sql.CloseAsync().ConfigureAwait(false);
@@ -192,7 +203,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             {
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
-                    response.Add(MapQueuedEvent(reader));
+                    response.Add(Mappers.MapToQueuedEvent(reader));
                 }
             }
             await sql.CloseAsync().ConfigureAwait(false);
@@ -231,7 +242,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             {
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
-                    response.Add(MapQueuedEvent(reader));
+                    response.Add(Mappers.MapToQueuedEvent(reader));
                 }
             }
             await sql.CloseAsync().ConfigureAwait(false);
@@ -265,7 +276,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             {
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
-                    response.Add(MapQueuedEvent(reader));
+                    response.Add(Mappers.MapToQueuedEvent(reader));
                 }
             }
             await sql.CloseAsync().ConfigureAwait(false);
@@ -279,21 +290,38 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
         }
     }
 
-    public async Task<Result<bool>> MarkProcessedAsync(Guid queueGuid, string worker, CancellationToken ct = default)
+    public async Task<Result<bool>> MarkProcessedAsync(string queueCode, string worker, CancellationToken ct = default)
     {
         try
         {
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_EventQueue_MarkProcessed, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
-
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queueGuid.ToString()));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmWorker, worker));
-
             await sql.OpenAsync(ct).ConfigureAwait(false);
-            var rows = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            var rows = 0;
+            try
+            {
+                using SqlCommand cmd = new(StoredProcs.pr_EventQueue_MarkProcessed, sql)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queueCode));
+                cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmWorker, worker));
+
+                rows = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            }
+            catch (SqlException ex) when (ExpectsQueueGuidParameter(ex))
+            {
+                var queueGuid = await ResolveQueueGuidForLegacyProcAsync(queueCode, ct).ConfigureAwait(false);
+                using SqlCommand legacyCmd = new(StoredProcs.pr_EventQueue_MarkProcessed, sql)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                legacyCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queueGuid));
+                legacyCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmWorker, worker));
+
+                rows = await legacyCmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            }
 
             await sql.CloseAsync().ConfigureAwait(false);
 
@@ -302,7 +330,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
                 return Result<bool>.Success(true);
             }
 
-            var verifyResult = await GetByQueueGuidAsync(queueGuid, ct).ConfigureAwait(false);
+            var verifyResult = await GetByQueueCodeAsync(queueCode, ct).ConfigureAwait(false);
             var markedProcessed = verifyResult.IsSuccess && verifyResult.Value.Status == QueuedEventStatus.Processed;
             return Result<bool>.Success(markedProcessed);
         }
@@ -313,23 +341,42 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
         }
     }
 
-    public async Task<Result<bool>> MarkFailedAsync(Guid queueGuid, string worker, string lastError, int backoffSeconds = 30, CancellationToken ct = default)
+    public async Task<Result<bool>> MarkFailedAsync(string queueCode, string worker, string lastError, int backoffSeconds = 30, CancellationToken ct = default)
     {
         try
         {
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_EventQueue_MarkFailed, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
-
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queueGuid.ToString()));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmWorker, worker));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLastError, lastError));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmBackoffSeconds, backoffSeconds));
-
             await sql.OpenAsync(ct).ConfigureAwait(false);
-            var rows = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            var rows = 0;
+            try
+            {
+                using SqlCommand cmd = new(StoredProcs.pr_EventQueue_MarkFailed, sql)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queueCode));
+                cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmWorker, worker));
+                cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLastError, lastError));
+                cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmBackoffSeconds, backoffSeconds));
+
+                rows = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            }
+            catch (SqlException ex) when (ExpectsQueueGuidParameter(ex))
+            {
+                var queueGuid = await ResolveQueueGuidForLegacyProcAsync(queueCode, ct).ConfigureAwait(false);
+                using SqlCommand legacyCmd = new(StoredProcs.pr_EventQueue_MarkFailed, sql)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                legacyCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queueGuid));
+                legacyCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmWorker, worker));
+                legacyCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLastError, lastError));
+                legacyCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmBackoffSeconds, backoffSeconds));
+
+                rows = await legacyCmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            }
 
             await sql.CloseAsync().ConfigureAwait(false);
 
@@ -338,7 +385,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
                 return Result<bool>.Success(true);
             }
 
-            var verifyResult = await GetByQueueGuidAsync(queueGuid, ct).ConfigureAwait(false);
+            var verifyResult = await GetByQueueCodeAsync(queueCode, ct).ConfigureAwait(false);
             var markedFailed = verifyResult.IsSuccess
                 && (verifyResult.Value.Status == QueuedEventStatus.Failed || verifyResult.Value.Status == QueuedEventStatus.Pending)
                 && !string.IsNullOrWhiteSpace(verifyResult.Value.LastError);
@@ -352,29 +399,49 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
         }
     }
 
-    public async Task<Result<bool>> CancelAsync(Guid queueGuid, string cancelledBy = "", CancellationToken ct = default)
+    public async Task<Result<bool>> CancelAsync(string queueCode, string cancelledBy = "", CancellationToken ct = default)
     {
         try
         {
             using SqlConnection sql = new(_connectionString);
-            using SqlCommand cmd = new(StoredProcs.pr_EventQueue_Cancel, sql)
-            {
-                CommandType = CommandType.StoredProcedure
-            };
-
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queueGuid.ToString()));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCancelledBy, cancelledBy));
-
             await sql.OpenAsync(ct).ConfigureAwait(false);
-            using var reader = await cmd.ExecuteReaderAsync(ct).ConfigureAwait(false);
-            var rowsAffected = 0;
-            if (await reader.ReadAsync(ct).ConfigureAwait(false))
+            var rows = 0;
+            try
             {
-                rowsAffected = reader.GetValue<int>(FieldNames.fRowsAffected);
+                using SqlCommand cmd = new(StoredProcs.pr_EventQueue_Cancel, sql)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCode, queueCode));
+                cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCancelledBy, cancelledBy));
+
+                rows = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
             }
+            catch (SqlException ex) when (ExpectsQueueGuidParameter(ex))
+            {
+                var queueGuid = await ResolveQueueGuidForLegacyProcAsync(queueCode, ct).ConfigureAwait(false);
+                using SqlCommand legacyCmd = new(StoredProcs.pr_EventQueue_Cancel, sql)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                legacyCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueGuid, queueGuid));
+                legacyCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCancelledBy, cancelledBy));
+
+                rows = await legacyCmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
+            }
+
             await sql.CloseAsync().ConfigureAwait(false);
 
-            return Result<bool>.Success(rowsAffected > 0);
+            if (rows > 0)
+            {
+                return Result<bool>.Success(true);
+            }
+
+            var verifyResult = await GetByQueueCodeAsync(queueCode, ct).ConfigureAwait(false);
+            var markedCancelled = verifyResult.IsSuccess && verifyResult.Value.Status == QueuedEventStatus.Cancelled;
+            return Result<bool>.Success(markedCancelled);
         }
         catch (Exception ex)
         {
@@ -573,33 +640,6 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
         }
     }
 
-    private static QueuedEvent MapQueuedEvent(SqlDataReader reader)
-    {
-        var queueGuidRaw = reader.GetValue<string>(FieldNames.fEventQueueGuid);
-        var queueCodeRaw = reader.GetValue<string>(FieldNames.fEventQueueCode);
-
-        return new QueuedEvent
-        {
-            Id = Guid.TryParse(queueGuidRaw, out var queueGuid)
-                ? queueGuid
-                : Guid.TryParse(queueCodeRaw, out var queueCodeGuid)
-                    ? queueCodeGuid
-                    : Guid.NewGuid(),
-            EventCategory = EventCategory.FromId(reader.GetValue<int>(FieldNames.fEventQueueEventCategory)) ?? EventCategory.DomainEvent,
-            EventType = reader.GetValue<string>(FieldNames.fEventQueueEventType) ?? string.Empty,
-            EventData = reader.GetValue<string>(FieldNames.fEventQueueEventData) ?? string.Empty,
-            ReportId = reader.GetValue<string>(FieldNames.fEventQueueReportCode) ?? string.Empty,
-            Status = (QueuedEventStatus)reader.GetValue<int>(FieldNames.fEventQueueStatus),
-            QueuedAt = reader.GetValue<DateTime>(FieldNames.fEventQueueQueuedDate),
-            ProcessedAt = reader.GetValue<DateTime?>(FieldNames.fEventQueueProcessedDate),
-            AttemptCount = reader.GetValue<int>(FieldNames.fEventQueueAttemptCount),
-            LastError = reader.GetValue<string>(FieldNames.fEventQueueLastError),
-            Priority = (EventPriority)reader.GetValue<int>(FieldNames.fEventQueuePriority),
-            TargetSystem = reader.GetValue<string>(FieldNames.fEventQueueTargetSystem),
-            QueuedBy = reader.GetValue<string>(FieldNames.fEventQueueQueuedBy)
-        };
-    }
-
     private static string ResolveCreatedBy(QueuedEvent queuedEvent)
     {
         if (string.IsNullOrWhiteSpace(queuedEvent.EventData))
@@ -653,5 +693,25 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
         }
 
         return queuedEvent.QueuedBy ?? string.Empty;
+    }
+
+    private static bool ExpectsQueueGuidParameter(SqlException ex)
+        => ex.Message.Contains("expects parameter '@pQueueGuid'", StringComparison.OrdinalIgnoreCase)
+           || ex.Message.Contains("@pQueueGuid", StringComparison.OrdinalIgnoreCase);
+
+    private async Task<string> ResolveQueueGuidForLegacyProcAsync(string queueCode, CancellationToken ct)
+    {
+        if (Guid.TryParse(queueCode, out var parsedQueueGuid))
+        {
+            return parsedQueueGuid.ToString();
+        }
+
+        var queueEventResult = await GetByQueueCodeAsync(queueCode, ct).ConfigureAwait(false);
+        if (queueEventResult.IsSuccess)
+        {
+            return queueEventResult.Value.QueueGuid.ToString();
+        }
+
+        return queueCode;
     }
 }

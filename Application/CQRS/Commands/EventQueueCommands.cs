@@ -14,12 +14,12 @@ namespace SMS_Application.Commands;
 
 public class ExecuteQueuedEventCommand : BaseCommandBundle, IRequest<Result>
 {
-    public Guid EventId { get; set; }
+    public string QueueCode { get; set; }
     public string? ExecutedBy { get; set; }
 
-    public ExecuteQueuedEventCommand(Guid eventId, string? executedBy = null)
+    public ExecuteQueuedEventCommand(string queueCode, string? executedBy = null)
     {
-        EventId = eventId;
+        QueueCode = queueCode;
         ExecutedBy = executedBy;
     }
 }
@@ -38,12 +38,12 @@ public class ExecuteAllPendingQueuedEventsCommand : BaseCommandBundle, IRequest<
 
 public class CancelQueuedEventCommand : BaseCommandBundle, IRequest<Result>
 {
-    public Guid EventId { get; set; }
+    public string QueueCode { get; set; }
     public string? CancelledBy { get; set; }
 
-    public CancelQueuedEventCommand(Guid eventId, string? cancelledBy = null)
+    public CancelQueuedEventCommand(string queueCode, string? cancelledBy = null)
     {
-        EventId = eventId;
+        QueueCode = queueCode;
         CancelledBy = cancelledBy;
     }
 }
@@ -52,14 +52,14 @@ public class ClearCompletedQueuedEventsCommand : BaseCommandBundle, IRequest<Res
 {
 }
 
-public class RebuildQueuedEmailEventCommand : BaseCommandBundle, IRequest<Result<Guid>>
+public class RebuildQueuedEmailEventCommand : BaseCommandBundle, IRequest<Result<string>>
 {
-    public Guid EventId { get; set; }
+    public string QueueCode { get; set; }
     public string? RebuiltBy { get; set; }
 
-    public RebuildQueuedEmailEventCommand(Guid eventId, string? rebuiltBy = null)
+    public RebuildQueuedEmailEventCommand(string queueCode, string? rebuiltBy = null)
     {
-        EventId = eventId;
+        QueueCode = queueCode;
         RebuiltBy = rebuiltBy;
     }
 }

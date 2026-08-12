@@ -55,7 +55,7 @@
                                                 <!-- Clickable file name -->
                                                 @if (ShouldUseStoredExternalPath(file))
                                                 {
-                                                    <RadzenLink Text="@file.FileName"
+                                                    <RadzenLink Text="@GetEvidenceFileDisplayName(file)"
                                                               Style="font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--rz-primary);"
                                                               Path="@ResolveExternalFilePath(file.FilePath)"
                                                               Target="_blank"
@@ -63,7 +63,7 @@
                                                 }
                                                 else
                                                 {
-                                                    <RadzenLink Text="@file.FileName"
+                                                    <RadzenLink Text="@GetEvidenceFileDisplayName(file)"
                                                               Style="font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--rz-primary);"
                                                               Path="javascript:void(0);"
                                                               Click="@(() => ViewFile(file))"
@@ -124,7 +124,7 @@
                         @foreach (var file in GetFilesByType("PDF"))
                         {
                             <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid #ccc; border-radius: 4px;">
-                                <strong>@file.FileName</strong> (PDF)<br/>
+                                <strong>@GetEvidenceFileDisplayName(file)</strong> (PDF)<br/>
                                 Size: @FormatFileSize(file.FileSizeBytes)
                             </div>
                         }
@@ -166,7 +166,7 @@
                                                         <RadzenIcon Icon="image" Style="font-size: 3rem; color: var(--rz-text-tertiary-color);" />
                                                     }
                                                 </div>
-                                                <RadzenLink Text="@file.FileName" 
+                                                <RadzenLink Text="@GetEvidenceFileDisplayName(file)" 
                                                           TextStyle="TextStyle.Subtitle2" 
                                                           Style="margin: 0; text-align: center; display: block; color: var(--rz-primary);"
                                                           Click="@(() => ViewFile(file))"
@@ -196,7 +196,7 @@
                         @foreach (var file in GetFilesByType("Video"))
                         {
                             <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid #ccc; border-radius: 4px;">
-                                <strong>@file.FileName</strong> (Video)<br/>
+                                <strong>@GetEvidenceFileDisplayName(file)</strong> (Video)<br/>
                                 Size: @FormatFileSize(file.FileSizeBytes)
                             </div>
                         }
@@ -214,7 +214,7 @@
                         @foreach (var file in GetFilesByType("Other"))
                         {
                             <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid #ccc; border-radius: 4px;">
-                                <strong>@file.FileName</strong><br/>
+                                <strong>@GetEvidenceFileDisplayName(file)</strong><br/>
                                 Size: @FormatFileSize(file.FileSizeBytes)
                             </div>
                         }

@@ -819,6 +819,9 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_HazardFile_GetByReportCode = new Lazy<string>(() => "pr_HazardFile_GetByReportCode");
         public static string pr_HazardFile_GetByReportCode => _pr_HazardFile_GetByReportCode.Value;
 
+        private static readonly Lazy<string> _pr_HazardFile_GetActiveFiles = new Lazy<string>(() => "pr_HazardFile_GetActiveFiles");
+        public static string pr_HazardFile_GetActiveFiles => _pr_HazardFile_GetActiveFiles.Value;
+
         private static readonly Lazy<string> _pr_HazardFile_GetFileData = new Lazy<string>(() => "pr_HazardFile_GetFileData");
         public static string pr_HazardFile_GetFileData => _pr_HazardFile_GetFileData.Value;
 

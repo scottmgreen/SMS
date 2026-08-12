@@ -11,6 +11,7 @@ using SMS_Domain.Common;
 using SMS_Domain.Interfaces;
 using SMS_Domain.Enums;
 using SMS_Domain.Events;
+using SMS_Domain.Entities;
 
 
 namespace SMS_Domain.ValueObjects;
@@ -19,80 +20,96 @@ namespace SMS_Domain.ValueObjects;
 /// Value object representing a queued event for manual execution
 /// Supports EventBus management and testing scenarios
 /// </summary>
-public record QueuedEvent
+public sealed class QueuedEvent : BaseEntity
 {
+    public QueuedEvent(EventQueueID id) : base(id)
+    {
+        QueueCode = id.Value;
+    }
+
+    public QueuedEvent() : this(new EventQueueID(Guid.NewGuid().ToString()))
+    {
+    }
+
     /// <summary>
-    /// Unique identifier for the queued event
+    /// Primary queue code for the queued event.
     /// </summary>
-    public Guid Id { get; init; } = Guid.NewGuid();
+    public string QueueCode { get; private set; } = string.Empty;
+
+    /// <summary>
+    /// Secondary GUID identifier maintained for compatibility with existing queue procedures.
+    /// </summary>
+    public Guid QueueGuid { get; set; } = Guid.NewGuid();
 
     /// <summary>
     /// Type of event (DomainEvent, UIEvent, IntegrationEvent)
     /// </summary>
-    public EventCategory EventCategory { get; init; }
+    public EventCategory EventCategory { get; set; }
 
     /// <summary>
     /// Specific event type name
     /// </summary>
-    public string EventType { get; init; } = string.Empty;
+    public string EventType { get; set; } = string.Empty;
 
     /// <summary>
     /// Serialized event data
     /// </summary>
-    public string EventData { get; init; } = string.Empty;
+    public string EventData { get; set; } = string.Empty;
 
     /// <summary>
     /// Report identifier the event originated from.
     /// </summary>
-    public string ReportId { get; init; } = string.Empty;
+    public string ReportId { get; set; } = string.Empty;
 
     /// <summary>
     /// Current status of the queued event
     /// </summary>
-    public QueuedEventStatus Status { get; init; } = QueuedEventStatus.Pending;
+    public QueuedEventStatus Status { get; set; } = QueuedEventStatus.Pending;
 
     /// <summary>
     /// When the event was queued
     /// </summary>
-    public DateTime QueuedAt { get; init; } = DateTime.UtcNow;
+    public DateTime QueuedAt { get; set; } = DateTime.UtcNow;
 
     /// <summary>
     /// When the event was processed (if processed)
     /// </summary>
-    public DateTime? ProcessedAt { get; init; }
+    public DateTime? ProcessedAt { get; set; }
 
     /// <summary>
     /// Number of processing attempts
     /// </summary>
-    public int AttemptCount { get; init; } = 0;
+    public int AttemptCount { get; set; } = 0;
 
     /// <summary>
     /// Last error message (if any)
     /// </summary>
-    public string? LastError { get; init; }
+    public string? LastError { get; set; }
 
     /// <summary>
     /// Priority level for processing order
     /// </summary>
-    public EventPriority Priority { get; init; } = EventPriority.Normal;
+    public EventPriority Priority { get; set; } = EventPriority.Normal;
 
     /// <summary>
     /// Target system for integration events
     /// </summary>
-    public string? TargetSystem { get; init; }
+    public string? TargetSystem { get; set; }
 
     /// <summary>
     /// User or system that queued the event
     /// </summary>
-    public string? QueuedBy { get; init; }
+    public string? QueuedBy { get; set; }
 
     /// <summary>
     /// Creates a new QueuedEvent from a domain event
     /// </summary>
     public static QueuedEvent FromDomainEvent<T>(T domainEvent, string? queuedBy = null) where T : IBaseDomainEvent
     {
-        return new QueuedEvent
+        var queueGuid = Guid.NewGuid();
+        return new QueuedEvent(new EventQueueID(queueGuid.ToString()))
         {
+            QueueGuid = queueGuid,
             EventCategory = EventCategory.DomainEvent,
             EventType = domainEvent.EventType, // Use the event's own EventType property instead of C# type name
             EventData = System.Text.Json.JsonSerializer.Serialize(domainEvent),
@@ -107,8 +124,10 @@ public record QueuedEvent
     /// </summary>
     public static QueuedEvent FromIntegrationEvent<T>(T integrationEvent, string? queuedBy = null) where T : IBaseIntegrationEvent
     {
-        return new QueuedEvent
+        var queueGuid = Guid.NewGuid();
+        return new QueuedEvent(new EventQueueID(queueGuid.ToString()))
         {
+            QueueGuid = queueGuid,
             EventCategory = EventCategory.IntegrationEvent,
             EventType = integrationEvent.EventType, // Use the event's own EventType property instead of C# type name
             EventData = System.Text.Json.JsonSerializer.Serialize(integrationEvent),
@@ -141,8 +160,10 @@ public record QueuedEvent
     /// </summary>
     public static QueuedEvent FromUIEvent<T>(T uiEvent, string? queuedBy = null) where T : IBaseUIEvent
     {
-        return new QueuedEvent
+        var queueGuid = Guid.NewGuid();
+        return new QueuedEvent(new EventQueueID(queueGuid.ToString()))
         {
+            QueueGuid = queueGuid,
             EventCategory = EventCategory.UIEvent,
             EventType = uiEvent.EventType, // Use the event's own EventType property instead of C# type name
             EventData = System.Text.Json.JsonSerializer.Serialize(uiEvent),
@@ -158,12 +179,10 @@ public record QueuedEvent
     /// </summary>
     public QueuedEvent MarkAsProcessed()
     {
-        return this with
-        {
-            Status = QueuedEventStatus.Processed,
-            ProcessedAt = DateTime.UtcNow,
-            AttemptCount = AttemptCount + 1
-        };
+        Status = QueuedEventStatus.Processed;
+        ProcessedAt = DateTime.UtcNow;
+        AttemptCount += 1;
+        return this;
     }
 
     /// <summary>
@@ -171,12 +190,10 @@ public record QueuedEvent
     /// </summary>
     public QueuedEvent MarkAsFailed(string errorMessage)
     {
-        return this with
-        {
-            Status = QueuedEventStatus.Failed,
-            AttemptCount = AttemptCount + 1,
-            LastError = errorMessage
-        };
+        Status = QueuedEventStatus.Failed;
+        AttemptCount += 1;
+        LastError = errorMessage;
+        return this;
     }
 
     /// <summary>
@@ -184,10 +201,8 @@ public record QueuedEvent
     /// </summary>
     public QueuedEvent IncrementAttempt()
     {
-        return this with
-        {
-            AttemptCount = AttemptCount + 1
-        };
+        AttemptCount += 1;
+        return this;
     }
 }
 

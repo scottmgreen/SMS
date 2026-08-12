@@ -39,16 +39,16 @@ public class GetQueuedEventsQuery : BaseQueryBundle, IRequest<Result<IEnumerable
     public string GetAccessType() => "GetQueuedEvents";
 }
 
-public class GetQueuedEventByIdQuery : BaseQueryBundle, IRequest<Result<QueuedEvent>>, IReadQuery
+public class GetQueuedEventByCodeQuery : BaseQueryBundle, IRequest<Result<QueuedEvent>>, IReadQuery
 {
-    public Guid EventId { get; set; }
+    public string QueueCode { get; set; }
 
     public string AccessedBy { get; private set; } = string.Empty;
     public DateTime? AccessedDate { get; private set; }
 
-    public GetQueuedEventByIdQuery(Guid eventId)
+    public GetQueuedEventByCodeQuery(string queueCode)
     {
-        EventId = eventId;
+        QueueCode = queueCode;
     }
 
     public void SetAccessedBy(string userId, DateTime timestamp)
@@ -57,9 +57,9 @@ public class GetQueuedEventByIdQuery : BaseQueryBundle, IRequest<Result<QueuedEv
         AccessedDate = timestamp;
     }
 
-    public string GetResourceIdentifier() => $"EventQueue:{EventId}";
+    public string GetResourceIdentifier() => $"EventQueue:{QueueCode}";
 
-    public string GetAccessType() => "GetQueuedEventById";
+    public string GetAccessType() => "GetQueuedEventByCode";
 }
 
 public class GetEventQueueStatisticsQuery : BaseQueryBundle, IRequest<Result<QueueStatistics>>, IReadQuery

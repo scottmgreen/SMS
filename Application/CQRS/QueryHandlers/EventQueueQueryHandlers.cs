@@ -48,39 +48,39 @@ public class GetQueuedEventsQueryHandler : BaseQueryBundle, IBaseRequestHandler<
     }
 }
 
-public class GetQueuedEventByIdQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetQueuedEventByIdQuery, Result<QueuedEvent>>
+public class GetQueuedEventByCodeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetQueuedEventByCodeQuery, Result<QueuedEvent>>
 {
     private readonly IEventQueueService _service;
-    private readonly ILogger<GetQueuedEventByIdQueryHandler> _logger;
+    private readonly ILogger<GetQueuedEventByCodeQueryHandler> _logger;
 
-    public GetQueuedEventByIdQueryHandler(
+    public GetQueuedEventByCodeQueryHandler(
         IEventQueueService service,
-        ILogger<GetQueuedEventByIdQueryHandler> logger)
+        ILogger<GetQueuedEventByCodeQueryHandler> logger)
     {
         _service = service ?? throw new ArgumentNullException(nameof(service));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<QueuedEvent>> HandleAsync(GetQueuedEventByIdQuery request, CancellationToken ct = default)
+    public async Task<Result<QueuedEvent>> HandleAsync(GetQueuedEventByCodeQuery request, CancellationToken ct = default)
     {
         try
         {
-            if (request.EventId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(request.QueueCode))
             {
                 return Result<QueuedEvent>.Failure<QueuedEvent>(DomainErrors.GeneralError.InvalidParameters);
             }
 
-            _logger.LogApplicationInformation("Processing GetQueuedEventByIdQuery for EventId: {EventId}", request.EventId);
-            return await _service.GetQueuedEventAsync(request.EventId).ConfigureAwait(false);
+            _logger.LogApplicationInformation("Processing GetQueuedEventByCodeQuery for QueueCode: {QueueCode}", request.QueueCode);
+            return await _service.GetQueuedEventAsync(request.QueueCode).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
-            _logger.LogApplicationWarning("GetQueuedEventByIdQuery operation was cancelled");
+            _logger.LogApplicationWarning("GetQueuedEventByCodeQuery operation was cancelled");
             throw;
         }
         catch (Exception ex)
         {
-            _logger.LogApplicationError("Unexpected error while retrieving queued event by id", ApplicationEventIds.Error, ex);
+            _logger.LogApplicationError("Unexpected error while retrieving queued event by code", ApplicationEventIds.Error, ex);
             return Result<QueuedEvent>.Failure<QueuedEvent>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }

@@ -29,13 +29,13 @@ public class ExecuteQueuedEventCommandHandler : BaseCommandBundle, IBaseRequestH
     {
         try
         {
-            if (request.EventId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(request.QueueCode))
             {
                 return Result.Failure(DomainErrors.GeneralError.InvalidParameters);
             }
 
-            _logger.LogApplicationInformation("Processing ExecuteQueuedEventCommand for EventId: {EventId}", request.EventId);
-            return await _service.ExecuteQueuedEventAsync(request.EventId, request.ExecutedBy).ConfigureAwait(false);
+            _logger.LogApplicationInformation("Processing ExecuteQueuedEventCommand for QueueCode: {QueueCode}", request.QueueCode);
+            return await _service.ExecuteQueuedEventAsync(request.QueueCode, request.ExecutedBy).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -100,13 +100,13 @@ public class CancelQueuedEventCommandHandler : BaseCommandBundle, IBaseRequestHa
     {
         try
         {
-            if (request.EventId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(request.QueueCode))
             {
                 return Result.Failure(DomainErrors.GeneralError.InvalidParameters);
             }
 
-            _logger.LogApplicationInformation("Processing CancelQueuedEventCommand for EventId: {EventId}", request.EventId);
-            return await _service.CancelQueuedEventAsync(request.EventId, request.CancelledBy).ConfigureAwait(false);
+            _logger.LogApplicationInformation("Processing CancelQueuedEventCommand for QueueCode: {QueueCode}", request.QueueCode);
+            return await _service.CancelQueuedEventAsync(request.QueueCode, request.CancelledBy).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -154,7 +154,7 @@ public class ClearCompletedQueuedEventsCommandHandler : BaseCommandBundle, IBase
     }
 }
 
-public class RebuildQueuedEmailEventCommandHandler : BaseCommandBundle, IBaseRequestHandler<RebuildQueuedEmailEventCommand, Result<Guid>>
+public class RebuildQueuedEmailEventCommandHandler : BaseCommandBundle, IBaseRequestHandler<RebuildQueuedEmailEventCommand, Result<string>>
 {
     private readonly IEventQueueService _service;
     private readonly ILogger<RebuildQueuedEmailEventCommandHandler> _logger;
@@ -167,17 +167,17 @@ public class RebuildQueuedEmailEventCommandHandler : BaseCommandBundle, IBaseReq
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<Result<Guid>> HandleAsync(RebuildQueuedEmailEventCommand request, CancellationToken ct = default)
+    public async Task<Result<string>> HandleAsync(RebuildQueuedEmailEventCommand request, CancellationToken ct = default)
     {
         try
         {
-            if (request.EventId == Guid.Empty)
+            if (string.IsNullOrWhiteSpace(request.QueueCode))
             {
-                return Result<Guid>.Failure<Guid>(DomainErrors.GeneralError.InvalidParameters);
+                return Result<string>.Failure<string>(DomainErrors.GeneralError.InvalidParameters);
             }
 
-            _logger.LogApplicationInformation("Processing RebuildQueuedEmailEventCommand for EventId: {EventId}", request.EventId);
-            return await _service.RebuildQueuedEmailEventAsync(request.EventId, request.RebuiltBy).ConfigureAwait(false);
+            _logger.LogApplicationInformation("Processing RebuildQueuedEmailEventCommand for QueueCode: {QueueCode}", request.QueueCode);
+            return await _service.RebuildQueuedEmailEventAsync(request.QueueCode, request.RebuiltBy).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -187,7 +187,7 @@ public class RebuildQueuedEmailEventCommandHandler : BaseCommandBundle, IBaseReq
         catch (Exception ex)
         {
             _logger.LogApplicationError("Unexpected error while rebuilding queued email event", ApplicationEventIds.Error, ex);
-            return Result<Guid>.Failure<Guid>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result<string>.Failure<string>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 }

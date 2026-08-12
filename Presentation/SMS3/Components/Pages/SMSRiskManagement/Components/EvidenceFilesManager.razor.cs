@@ -391,5 +391,16 @@ public partial class EvidenceFilesManager : ComponentBase
 
         return filePath.TrimStart('~');
     }
+
+    private static string GetEvidenceFileDisplayName(HazardFile file)
+    {
+        var fileName = file.FileName ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(file.Description))
+        {
+            return fileName;
+        }
+
+        return $"{file.Description.Trim()} {fileName}";
+    }
     #endregion
 }

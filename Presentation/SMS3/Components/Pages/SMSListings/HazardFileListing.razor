@@ -54,6 +54,13 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="HazardFile" Property="Description" Title="Description" Width="300px">
+            <Template Context="file">
+                <div title="@file.Description" style="font-size:smaller;font-weight: 600">
+                    @(file.Description?.Length > 50 ? file.Description.Substring(0, 47) + "..." : file.Description)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardFile" Property="FileName" Title="File Name" Width="200px">
             <Template Context="file">
                 @if (ShouldUseStoredExternalPath(file))
@@ -82,13 +89,6 @@
         <RadzenDataGridColumn TItem="HazardFile" Property="FileSizeBytes" Title="Size" Width="100px">
             <Template Context="file">
                 @FormatFileSize(file.FileSizeBytes)
-            </Template>
-        </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="HazardFile" Property="Description" Title="Description" Width="300px">
-            <Template Context="file">
-                <div title="@file.Description" style="font-size:smaller;font-weight: 600">
-                    @(file.Description?.Length > 50 ? file.Description.Substring(0, 47) + "..." : file.Description)
-                </div>
             </Template>
         </RadzenDataGridColumn>
         <RadzenDataGridColumn TItem="HazardFile" Property="UploadedBy" Title="Uploaded By" Width="150px">
@@ -150,13 +150,13 @@
                 <div class="file-modal-body">
                     <RadzenRow Gap="1rem">
                         <RadzenColumn Size="12" SizeMD="6">
-                            <RadzenFormField Text="Hazard ID *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                <RadzenTextBox @bind-Value="_newHazardCode" Placeholder="Enter hazard code..." Style="width: 100%;" />
+                            <RadzenFormField Text="Report ID (optional)" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                <RadzenTextBox @bind-Value="_newReportCode" Placeholder="Enter report code..." Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="6">
-                            <RadzenFormField Text="Report ID (optional)" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                <RadzenTextBox @bind-Value="_newReportCode" Placeholder="Enter report code..." Style="width: 100%;" />
+                            <RadzenFormField Text="Hazard ID *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                <RadzenTextBox @bind-Value="_newHazardCode" Placeholder="Enter hazard code..." Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>
                     </RadzenRow>

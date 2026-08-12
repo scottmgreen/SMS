@@ -53,11 +53,11 @@ public sealed class EventQueueDataService : BaseDataService<EventQueueDataServic
         return _repository.CreateAsync(queuedEvent, ct);
     }
 
-    public Task<Result<QueuedEvent>> GetQueuedEventAsync(Guid queueGuid, CancellationToken ct = default)
-        => _repository.GetByQueueGuidAsync(queueGuid, ct);
+    public Task<Result<QueuedEvent>> GetQueuedEventAsync(string queueCode, CancellationToken ct = default)
+        => _repository.GetByQueueCodeAsync(queueCode, ct);
 
-    public Task<Result<QueuedEvent>> LeaseQueuedEventAsync(Guid queueGuid, string worker, int lockSeconds = 60, CancellationToken ct = default)
-        => _repository.LeaseByQueueGuidAsync(queueGuid, worker, lockSeconds, ct);
+    public Task<Result<QueuedEvent>> LeaseQueuedEventAsync(string queueCode, string worker, int lockSeconds = 60, CancellationToken ct = default)
+        => _repository.LeaseByQueueCodeAsync(queueCode, worker, lockSeconds, ct);
 
     public Task<Result<List<QueuedEvent>>> GetPendingEventsAsync(int maxResults = 100, EventCategory? eventCategory = null, CancellationToken ct = default)
         => _repository.GetPendingAsync(maxResults, eventCategory, ct);
@@ -68,14 +68,14 @@ public sealed class EventQueueDataService : BaseDataService<EventQueueDataServic
     public Task<Result<List<QueuedEvent>>> LeaseBatchAsync(int batchSize, string worker, int lockSeconds = 60, CancellationToken ct = default)
         => _repository.LeaseBatchAsync(batchSize, worker, lockSeconds, ct);
 
-    public Task<Result<bool>> MarkProcessedAsync(Guid queueGuid, string worker, CancellationToken ct = default)
-        => _repository.MarkProcessedAsync(queueGuid, worker, ct);
+    public Task<Result<bool>> MarkProcessedAsync(string queueCode, string worker, CancellationToken ct = default)
+        => _repository.MarkProcessedAsync(queueCode, worker, ct);
 
-    public Task<Result<bool>> MarkFailedAsync(Guid queueGuid, string worker, string lastError, int backoffSeconds = 30, CancellationToken ct = default)
-        => _repository.MarkFailedAsync(queueGuid, worker, lastError, backoffSeconds, ct);
+    public Task<Result<bool>> MarkFailedAsync(string queueCode, string worker, string lastError, int backoffSeconds = 30, CancellationToken ct = default)
+        => _repository.MarkFailedAsync(queueCode, worker, lastError, backoffSeconds, ct);
 
-    public Task<Result<bool>> CancelAsync(Guid queueGuid, string cancelledBy = "", CancellationToken ct = default)
-        => _repository.CancelAsync(queueGuid, cancelledBy, ct);
+    public Task<Result<bool>> CancelAsync(string queueCode, string cancelledBy = "", CancellationToken ct = default)
+        => _repository.CancelAsync(queueCode, cancelledBy, ct);
 
     public Task<Result<int>> ClearCompletedAsync(string clearedBy = "", CancellationToken ct = default)
         => _repository.ClearCompletedAsync(clearedBy, ct);

@@ -3,7 +3,7 @@
 <RadzenCard class="event-details-dialog">
     <RadzenRow>
         <RadzenColumn Size="12">
-            <h5>Event Details</h5>
+            <h5>Queue Event Details</h5>
         </RadzenColumn>
     </RadzenRow>
 
@@ -11,10 +11,13 @@
         <RadzenColumn Size="6">
             <RadzenFieldset Text="Basic Information">
                 <div class="event-detail-item">
-                    <strong>ID:</strong> @Event.Id
+                    <strong>Queue Code:</strong> @Event.QueueCode
                 </div>
                 <div class="event-detail-item">
-                    <strong>Type:</strong> @Event.EventType
+                    <strong>Queue Guid:</strong> @Event.QueueGuid
+                </div>
+                <div class="event-detail-item">
+                    <strong>Queue Event Type:</strong> @Event.EventType
                 </div>
                 <div class="event-detail-item">
                     <strong>Category:</strong> @Event.EventCategory
@@ -73,7 +76,7 @@
 
     <RadzenRow>
         <RadzenColumn Size="12">
-            <RadzenFieldset Text="Event Data">
+            <RadzenFieldset Text="Queue Event Data">
                 <pre class="event-data-json">@Event.EventData</pre>
             </RadzenFieldset>
         </RadzenColumn>

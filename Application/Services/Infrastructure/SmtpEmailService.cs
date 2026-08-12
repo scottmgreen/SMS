@@ -26,6 +26,8 @@ public class SmtpEmailService : IEmailService
 {
     private readonly SmtpEmailConfiguration _config;
     private readonly ILogger<SmtpEmailService> _logger;
+    private readonly string _smtpUsername;
+    private readonly string _smtpPassword;
 
     public SmtpEmailService(
         IOptions<SmtpEmailConfiguration> config,
@@ -33,6 +35,14 @@ public class SmtpEmailService : IEmailService
     {
         _config = config?.Value ?? throw new ArgumentNullException(nameof(config));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+        _smtpUsername = ResolveSecretValue(
+            _config.Username,
+            "SmtpEmailConfiguration__Username",
+            "SMS_SMTP_USERNAME");
+        _smtpPassword = ResolveSecretValue(
+            _config.Password,
+            "SmtpEmailConfiguration__Password",
+            "SMS_SMTP_PASSWORD");
     }
 
     /// <summary>
@@ -104,6 +114,11 @@ public class SmtpEmailService : IEmailService
                 return Result.Failure(new Error("INVALID_SMTP_CONFIG", "From email is not configured"));
             }
 
+            if (!_config.UseSimulation && (string.IsNullOrWhiteSpace(_smtpUsername) || string.IsNullOrWhiteSpace(_smtpPassword)))
+            {
+                return Result.Failure(new Error("INVALID_SMTP_CONFIG", "SMTP username/password are not configured. Use user secrets key 'SmtpEmailConfiguration:Username'/'SmtpEmailConfiguration:Password' or environment variables 'SmtpEmailConfiguration__Username'/'SmtpEmailConfiguration__Password' (or SMS_SMTP_USERNAME/SMS_SMTP_PASSWORD)."));
+            }
+
             // Test SMTP connection with a simple validation
             using var smtpClient = CreateSmtpClient();
 
@@ -166,14 +181,33 @@ public class SmtpEmailService : IEmailService
         {
             smtpClient.DeliveryMethod = SmtpDeliveryMethod.Network;
 
-            if (!string.IsNullOrWhiteSpace(_config.Username))
+            if (!string.IsNullOrWhiteSpace(_smtpUsername))
             {
-                smtpClient.Credentials = new NetworkCredential(_config.Username, _config.Password ?? string.Empty);
+                smtpClient.Credentials = new NetworkCredential(_smtpUsername, _smtpPassword);
             }
         }
 
         return smtpClient;
     }
+
+    private static string ResolveSecretValue(string configuredValue, params string[] environmentVariableNames)
+    {
+        foreach (var variableName in environmentVariableNames)
+        {
+            var environmentValue = Environment.GetEnvironmentVariable(variableName);
+            if (!string.IsNullOrWhiteSpace(environmentValue))
+            {
+                return environmentValue.Trim();
+            }
+        }
+
+        return IsPlaceholder(configuredValue) ? string.Empty : configuredValue;
+    }
+
+    private static bool IsPlaceholder(string value)
+        => string.IsNullOrWhiteSpace(value)
+           || value.Equals("TO-BE-SET", StringComparison.OrdinalIgnoreCase)
+           || value.Equals("CHANGE-ME", StringComparison.OrdinalIgnoreCase);
 
     /// <summary>
     /// Creates mail message from email event

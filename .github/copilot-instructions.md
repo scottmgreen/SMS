@@ -19,6 +19,7 @@
 ## Database Naming Conventions
 - Field names should use typed prefixes like `fldi_`, `fldv_`, `fldd_` (and similar) consistently in SQL/stored procedures.
 - Truncate hazard file DB data; no need to retain or report DB-stored hazard files during cloud-only storage cutover.
+- There should be no inline SQL in this system; repository data access should use stored procedures consistently.
 
 ## Logging and Error Handling
 - Use `Application/Common/ApplicationLogMessages.cs` consistently for logging.
@@ -67,3 +68,6 @@
 
 ## Investigation Evidence File Viewing
 - For investigation evidence file viewing, use cloud returned FilePath when storage is cloud; viewer behavior must automatically handle cloud storage.
+
+## Event Queue
+- EventQueue data access should not use `@pQueueGuid`; use `@pCode` consistently for queue operations.

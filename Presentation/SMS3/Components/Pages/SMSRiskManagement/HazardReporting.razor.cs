@@ -899,6 +899,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     .Select(f => new AttachedFile
                     {
                         FileName = f.FileName,
+                        Description = f.Description,
                         FileSizeBytes = f.FileSizeBytes,
                         Size = f.FileSizeBytes,
                         SizeDisplay = FormatFileSize(f.FileSizeBytes),
@@ -1088,6 +1089,17 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         return filePath.TrimStart('~');
+    }
+
+    private static string GetAttachedFileDisplayName(AttachedFile file)
+    {
+        var fileName = file.FileName ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(file.Description))
+        {
+            return fileName;
+        }
+
+        return $"{file.Description.Trim()} {fileName}";
     }
 
     #endregion
@@ -2273,6 +2285,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             HazardCode = hazard.Code,
                             ReportCode = hazard.ReportCode ?? string.Empty,
                             FileName = attachedFile.FileName,
+                            Description = attachedFile.Description,
                             FileType = Path.GetExtension(attachedFile.FileName)?.TrimStart('.') ?? "unknown",
                             ContentType = attachedFile.ContentType ?? "application/octet-stream",
                             FileSizeBytes = attachedFile.Size,
