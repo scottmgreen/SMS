@@ -53,7 +53,7 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
             }
 
             // Business validation - validate department and position combination
-            await ValidateDepartmentPositionCombination(user.Department, user.Position);
+            await ValidateDepartmentPositionCombination(user.Department?.Value ?? string.Empty, user.Position);
 
             user.SyncAuthorityFromOrganizationLevel();
 
@@ -193,7 +193,7 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
             }
 
             // Business validation - validate department and position combination
-            await ValidateDepartmentPositionCombination(user.Department, user.Position);
+            await ValidateDepartmentPositionCombination(user.Department?.Value ?? string.Empty, user.Position);
 
             user.SyncAuthorityFromOrganizationLevel();
 

@@ -202,6 +202,15 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_SMSStakeholderUser_Disable2FA = new(() => "pr_SMSStakeholderUser_Disable2FA");
         public static string pr_SMSStakeholderUser_Disable2FA => _pr_SMSStakeholderUser_Disable2FA.Value;
 
+        private static readonly Lazy<string> _pr_SMSStakeholderUserTitle_GetAll = new(() => "pr_SMSStakeholderUserTitle_GetAll");
+        public static string pr_SMSStakeholderUserTitle_GetAll => _pr_SMSStakeholderUserTitle_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSDepartment_GetAll = new(() => "pr_SMSDepartment_GetAll");
+        public static string pr_SMSDepartment_GetAll => _pr_SMSDepartment_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSCompanies_GetAll = new(() => "pr_SMSCompanies_GetAll");
+        public static string pr_SMSCompanies_GetAll => _pr_SMSCompanies_GetAll.Value;
+
         #endregion
 
         #region SMS Stakeholder Groups Stored Procedures

@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 using SMS_Domain.Errors;
 using SMS_Domain.Interfaces;
 using SMS_Infrastructure.Interfaces;
@@ -1106,6 +1107,60 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
         {
             _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderUserError.UpdateFailed);
+        }
+    }
+}
+
+/// <summary>
+/// Repository implementation for SQL-backed SMS Stakeholder User Title operations.
+/// </summary>
+public sealed class SMSStakeholderUserTitleRepository : BaseRepository<SMSStakeholderUserTitleRepository, SMSStakeholderUserTitle>, ISMSStakeholderUserTitleRepository
+{
+    private readonly ILogger<SMSStakeholderUserTitleRepository> _logger;
+    private readonly string _logHeader;
+    private readonly string _connectionString;
+
+    public SMSStakeholderUserTitleRepository(ILogger<SMSStakeholderUserTitleRepository> logger, ILogSupport logSupport, IConfiguration configuration)
+        : base(logger, logSupport, configuration)
+    {
+        _logger = base.Logger;
+        _logHeader = base.LogHeader;
+        _connectionString = ConnectionString;
+        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, $"{_logHeader} SMS Stakeholder User Title Repository Initialized");
+    }
+
+    public async Task<Result<IEnumerable<SMSStakeholderUserTitle>>> GetAllAsync()
+    {
+        try
+        {
+            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSStakeholderUserTitle_GetAll}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSStakeholderUserTitle_GetAll, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            var stakeholderTitles = new List<SMSStakeholderUserTitle>();
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                stakeholderTitles.Add(Mappers.MapToSMSStakeholderUserTitle(reader));
+            }
+
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            SMSStakeholderUserTitle.SetTitles(stakeholderTitles);
+
+            return Result<IEnumerable<SMSStakeholderUserTitle>>.Success(stakeholderTitles.AsEnumerable());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
+            return Result<IEnumerable<SMSStakeholderUserTitle>>.Failure<IEnumerable<SMSStakeholderUserTitle>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 }

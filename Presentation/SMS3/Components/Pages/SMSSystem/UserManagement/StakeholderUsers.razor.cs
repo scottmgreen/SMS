@@ -1,5 +1,6 @@
 ﻿using SMS_Application.Interfaces;
 using SMS_Domain.Events;
+using SMS_Infrastructure.Interfaces;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -19,6 +20,7 @@ public partial class StakeholderUsers : ComponentBase
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private ISMSStakeholderUserTitleRepository _stakeholderUserTitleRepository { get; set; } = default!;
 
     // Data Properties
     private List<SMSStakeholderUser> StakeholderUsersList { get; set; } = new();
@@ -100,7 +102,12 @@ public partial class StakeholderUsers : ComponentBase
                 new List<SMSStakeholderGroup>();
 
 
-            StakeholderTypes = SMSStakeholderType.GetAllValuesAsStringArray();
+            var stakeholderTitlesResult = await _stakeholderUserTitleRepository.GetAllAsync();
+            StakeholderTypes = stakeholderTitlesResult.IsSuccess
+                ? stakeholderTitlesResult.Value
+                    .Select(st => st.Value)
+                    .ToArray()
+                : Array.Empty<string>();
 
 
             _logger.LogInformation("Loaded {UserCount} stakeholder users, {RoleCount} user roles, and {GroupCount} stakeholder groups",
@@ -820,8 +827,8 @@ public partial class StakeholderUsers : ComponentBase
 
     private string GetStakeholderTypeDisplay(string stakeholderType)
     {
-        var stakeholderTypeEnum = SMSStakeholderType.FromValue(stakeholderType);
-        return stakeholderTypeEnum?.Name ?? stakeholderType;
+        var stakeholderTitle = SMSStakeholderUserTitle.FromValue(stakeholderType);
+        return stakeholderTitle?.Name ?? stakeholderType;
     }
 
     #endregion

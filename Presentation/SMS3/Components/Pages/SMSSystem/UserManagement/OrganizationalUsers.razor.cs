@@ -357,7 +357,7 @@ public partial class OrganizationalUsers : ComponentBase
                 LastName = LastName.Create(_newLastName).Value,
                 UserName = UserName.Create(_newUserName).Value,
                 Password = Password.Create(_newPassword).Value,
-                Department = SMSDepartment.FromValue(_newDepartmentId) ?? SMSDepartment.AirportOperations,
+                Department = SMSDepartment.FromValue(_newDepartmentId) ?? SMSDepartment.Create(string.Empty, string.Empty, string.Empty, Array.Empty<string>()),
                 Position = _newPosition,
                 OrganizationLevel = SMSOrganizationalLevel.FromName(_newOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel,
                 UserRole = selectedRole,
@@ -469,7 +469,7 @@ public partial class OrganizationalUsers : ComponentBase
             // Update user properties
             _currentUser.FirstName = FirstName.Create(_editFirstName).Value;
             _currentUser.LastName = LastName.Create(_editLastName).Value;
-            _currentUser.Department = SMSDepartment.FromValue(_editDepartmentId) ?? SMSDepartment.AirportOperations;
+            _currentUser.Department = SMSDepartment.FromValue(_editDepartmentId) ?? SMSDepartment.Create(string.Empty, string.Empty, string.Empty, Array.Empty<string>());
             _currentUser.Position = _editPosition;
             _currentUser.OrganizationLevel = SMSOrganizationalLevel.FromName(_editOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel;
             _currentUser.SyncAuthorityFromOrganizationLevel();

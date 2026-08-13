@@ -235,6 +235,57 @@ public static class FieldNames
     private static readonly Lazy<string> _fSMSStakeholderUserTwoFactorLockedUntil = new Lazy<string>(() => "fldd_TwoFactorLockedUntil");
     public static string fSMSStakeholderUserTwoFactorLockedUntil => _fSMSStakeholderUserTwoFactorLockedUntil.Value;
 
+    private static readonly Lazy<string> _fSMSStakeholderUserTitleCode = new Lazy<string>(() => "fldv_Code");
+    public static string fSMSStakeholderUserTitleCode => _fSMSStakeholderUserTitleCode.Value;
+
+    private static readonly Lazy<string> _fSMSStakeholderUserTitleName = new Lazy<string>(() => "fldv_Name");
+    public static string fSMSStakeholderUserTitleName => _fSMSStakeholderUserTitleName.Value;
+
+    private static readonly Lazy<string> _fSMSStakeholderUserTitleDescription = new Lazy<string>(() => "fldv_Description");
+    public static string fSMSStakeholderUserTitleDescription => _fSMSStakeholderUserTitleDescription.Value;
+
+    private static readonly Lazy<string> _fSMSDepartmentCode = new Lazy<string>(() => "fldv_Code");
+    public static string fSMSDepartmentCode => _fSMSDepartmentCode.Value;
+
+    private static readonly Lazy<string> _fSMSDepartmentName = new Lazy<string>(() => "fldv_Name");
+    public static string fSMSDepartmentName => _fSMSDepartmentName.Value;
+
+    private static readonly Lazy<string> _fSMSDepartmentDescription = new Lazy<string>(() => "fldv_Description");
+    public static string fSMSDepartmentDescription => _fSMSDepartmentDescription.Value;
+
+    private static readonly Lazy<string> _fSMSDepartmentResponsibilityDepartmentCode = new Lazy<string>(() => "fldv_DepartmentCode");
+    public static string fSMSDepartmentResponsibilityDepartmentCode => _fSMSDepartmentResponsibilityDepartmentCode.Value;
+
+    private static readonly Lazy<string> _fSMSDepartmentResponsibilityValue = new Lazy<string>(() => "fldv_Responsibility");
+    public static string fSMSDepartmentResponsibilityValue => _fSMSDepartmentResponsibilityValue.Value;
+
+    private static readonly Lazy<string> _fSMSCompanyCode = new Lazy<string>(() => "fldv_Code");
+    public static string fSMSCompanyCode => _fSMSCompanyCode.Value;
+
+    private static readonly Lazy<string> _fSMSCompanyStakeholderGroup = new Lazy<string>(() => "fldv_StakeholderGroup");
+    public static string fSMSCompanyStakeholderGroup => _fSMSCompanyStakeholderGroup.Value;
+
+    private static readonly Lazy<string> _fSMSCompanyCompany = new Lazy<string>(() => "fldv_Company");
+    public static string fSMSCompanyCompany => _fSMSCompanyCompany.Value;
+
+    private static readonly Lazy<string> _fSMSCompanyName = new Lazy<string>(() => "fldv_Name");
+    public static string fSMSCompanyName => _fSMSCompanyName.Value;
+
+    private static readonly Lazy<string> _fSMSCompanyTitle = new Lazy<string>(() => "fldv_Title");
+    public static string fSMSCompanyTitle => _fSMSCompanyTitle.Value;
+
+    private static readonly Lazy<string> _fSMSCompanyServiceProvided = new Lazy<string>(() => "fldv_ServiceProvided");
+    public static string fSMSCompanyServiceProvided => _fSMSCompanyServiceProvided.Value;
+
+    private static readonly Lazy<string> _fSMSCompanyEmail = new Lazy<string>(() => "fldv_Email");
+    public static string fSMSCompanyEmail => _fSMSCompanyEmail.Value;
+
+    private static readonly Lazy<string> _fSMSCompanyPhone = new Lazy<string>(() => "fldv_Phone");
+    public static string fSMSCompanyPhone => _fSMSCompanyPhone.Value;
+
+    private static readonly Lazy<string> _fSMSCompanyPortRep = new Lazy<string>(() => "fldv_PortRep");
+    public static string fSMSCompanyPortRep => _fSMSCompanyPortRep.Value;
+
     /// <summary>
     /// SMS Stakeholder Groups table (tbld_SMSStakeholderGroups)
     /// </summary>

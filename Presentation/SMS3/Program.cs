@@ -3,6 +3,7 @@ using System.Net;
 
 using SMS_Infrastructure.Configuration;
 using SMS_Infrastructure.Configuration.Extensions;
+using SMS_Infrastructure.Interfaces;
 
 using SMS_Shared.Configuration;
 
@@ -50,6 +51,22 @@ public class Program
 
         // 🔧 INFRASTRUCTURE SERVICES also includes AddHttpContextAccessor() registration
         builder.Services.AddInfrastructureServices(builder.Configuration);
+
+        // Initialize SQL-driven department smart-enum values at startup
+        using (var preloadScope = builder.Services.BuildServiceProvider().CreateScope())
+        {
+            var departmentRepository = preloadScope.ServiceProvider.GetService<ISMSDepartmentRepository>();
+            if (departmentRepository is not null)
+            {
+                await departmentRepository.GetAllAsync();
+            }
+
+            var companyRepository = preloadScope.ServiceProvider.GetService<ISMSCompanyRepository>();
+            if (companyRepository is not null)
+            {
+                await companyRepository.GetAllAsync();
+            }
+        }
 
         if (builder.Configuration.GetValue<bool>("FeatureManagement:ExternalApiEnabled", true))
         {

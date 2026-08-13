@@ -17,9 +17,12 @@
 - Actively work through a concrete hardening plan for EventBus/SPI/SMS Assurance: complete SPIEventCoordinator orchestration, wire SPIDashboardRefreshEvent consumption, reduce replay-map maintenance, standardize event contracts, and add architecture tests.
 
 ## Database Naming Conventions
+- Use tbld_SMSStakeholderGroups (not tbls_SMSStakeholderGroups) for stakeholder group SQL scripts in this repository.
 - Field names should use typed prefixes like `fldi_`, `fldv_`, `fldd_` (and similar) consistently in SQL/stored procedures.
 - Truncate hazard file DB data; no need to retain or report DB-stored hazard files during cloud-only storage cutover.
 - There should be no inline SQL in this system; repository data access should use stored procedures consistently.
+- SMSStakeholderType should not include an IsActive property/column; stakeholder type values are DB-driven without IsActive filtering.
+- Use 'Title' instead of 'Type' for stakeholder lookup domain/repository/procedure naming (Type is deprecated).
 
 ## Logging and Error Handling
 - Use `Application/Common/ApplicationLogMessages.cs` consistently for logging.

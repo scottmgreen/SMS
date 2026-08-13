@@ -247,6 +247,68 @@ public static partial class Mappers
     }
 
     /// <summary>
+    /// Maps SqlDataReader to SMSStakeholderUserTitle smart-enum value.
+    /// </summary>
+    public static SMSStakeholderUserTitle MapToSMSStakeholderUserTitle(SqlDataReader reader)
+    {
+        var code = reader.GetValue<string>(FieldNames.fSMSStakeholderUserTitleCode);
+        var name = reader.GetValue<string>(FieldNames.fSMSStakeholderUserTitleName);
+        var description = reader.HasColumn(FieldNames.fSMSStakeholderUserTitleDescription)
+            ? reader.GetValue<string>(FieldNames.fSMSStakeholderUserTitleDescription)
+            : string.Empty;
+
+        return SMSStakeholderUserTitle.Create(code, name, description);
+    }
+
+    /// <summary>
+    /// Maps SqlDataReader to SMSDepartment smart-enum value (without responsibilities).
+    /// </summary>
+    public static SMSDepartment MapToSMSDepartment(SqlDataReader reader)
+    {
+        var code = reader.GetValue<string>(FieldNames.fSMSDepartmentCode);
+        var name = reader.GetValue<string>(FieldNames.fSMSDepartmentName);
+        var description = reader.HasColumn(FieldNames.fSMSDepartmentDescription)
+            ? reader.GetValue<string>(FieldNames.fSMSDepartmentDescription)
+            : string.Empty;
+
+        return SMSDepartment.Create(code, name, description, Array.Empty<string>());
+    }
+
+    /// <summary>
+    /// Maps SqlDataReader to SMSCompany smart-enum value.
+    /// </summary>
+    public static SMSCompany MapToSMSCompany(SqlDataReader reader)
+    {
+        var code = reader.GetValue<string>(FieldNames.fSMSCompanyCode);
+        var stakeholderGroup = reader.HasColumn(FieldNames.fSMSCompanyStakeholderGroup)
+            ? reader.GetValue<string>(FieldNames.fSMSCompanyStakeholderGroup)
+            : string.Empty;
+        var company = reader.HasColumn(FieldNames.fSMSCompanyCompany)
+            ? reader.GetValue<string>(FieldNames.fSMSCompanyCompany)
+            : string.Empty;
+        var contactName = reader.HasColumn(FieldNames.fSMSCompanyName)
+            ? reader.GetValue<string>(FieldNames.fSMSCompanyName)
+            : string.Empty;
+        var title = reader.HasColumn(FieldNames.fSMSCompanyTitle)
+            ? reader.GetValue<string>(FieldNames.fSMSCompanyTitle)
+            : string.Empty;
+        var serviceProvided = reader.HasColumn(FieldNames.fSMSCompanyServiceProvided)
+            ? reader.GetValue<string>(FieldNames.fSMSCompanyServiceProvided)
+            : string.Empty;
+        var email = reader.HasColumn(FieldNames.fSMSCompanyEmail)
+            ? reader.GetValue<string>(FieldNames.fSMSCompanyEmail)
+            : string.Empty;
+        var phone = reader.HasColumn(FieldNames.fSMSCompanyPhone)
+            ? reader.GetValue<string>(FieldNames.fSMSCompanyPhone)
+            : string.Empty;
+        var portRep = reader.HasColumn(FieldNames.fSMSCompanyPortRep)
+            ? reader.GetValue<string>(FieldNames.fSMSCompanyPortRep)
+            : string.Empty;
+
+        return SMSCompany.Create(code, stakeholderGroup, company, contactName, title, serviceProvided, email, phone, portRep);
+    }
+
+    /// <summary>
     /// Maps SqlDataReader to AirportSharedDataset entity using updated field names
     /// </summary>
     public static AirportSharedDataset MapToAirportSharedDataset(SqlDataReader reader)
