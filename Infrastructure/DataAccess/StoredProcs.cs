@@ -205,8 +205,8 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_SMSStakeholderUserTitle_GetAll = new(() => "pr_SMSStakeholderUserTitle_GetAll");
         public static string pr_SMSStakeholderUserTitle_GetAll => _pr_SMSStakeholderUserTitle_GetAll.Value;
 
-        private static readonly Lazy<string> _pr_SMSDepartment_GetAll = new(() => "pr_SMSDepartment_GetAll");
-        public static string pr_SMSDepartment_GetAll => _pr_SMSDepartment_GetAll.Value;
+        private static readonly Lazy<string> _pr_SMSOrginization_GetAll = new(() => "pr_SMSOrginization_GetAll");
+        public static string pr_SMSOrginization_GetAll => _pr_SMSOrginization_GetAll.Value;
 
         private static readonly Lazy<string> _pr_SMSCompanies_GetAll = new(() => "pr_SMSCompanies_GetAll");
         public static string pr_SMSCompanies_GetAll => _pr_SMSCompanies_GetAll.Value;

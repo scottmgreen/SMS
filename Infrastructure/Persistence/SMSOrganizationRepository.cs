@@ -1,8 +1,8 @@
 //-----------------------------------------------------------------------
-// <copyright file="SMSDepartmentRepository.cs" company="SMS Safety Management System">
+// <copyright file="SMSOrganizationRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Repository implementation for SQL-backed SMS Department operations.
+//     Description: Repository implementation for SQL-backed SMS Organization operations.
 // </copyright>
 //-----------------------------------------------------------------------
 
@@ -14,31 +14,31 @@ using SMS_Infrastructure.Interfaces;
 namespace SMS_Infrastructure.Persistence;
 
 /// <summary>
-/// Repository implementation for SQL-backed SMS Department operations.
+/// Repository implementation for SQL-backed SMS Organization operations.
 /// </summary>
-public sealed class SMSDepartmentRepository : BaseRepository<SMSDepartmentRepository, SMSDepartment>, ISMSDepartmentRepository
+public sealed class SMSOrganizationRepository : BaseRepository<SMSOrganizationRepository, SMSDepartment>, ISMSOrganizationRepository
 {
-    private readonly ILogger<SMSDepartmentRepository> _logger;
+    private readonly ILogger<SMSOrganizationRepository> _logger;
     private readonly string _logHeader;
     private readonly string _connectionString;
 
-    public SMSDepartmentRepository(ILogger<SMSDepartmentRepository> logger, ILogSupport logSupport, IConfiguration configuration)
+    public SMSOrganizationRepository(ILogger<SMSOrganizationRepository> logger, ILogSupport logSupport, IConfiguration configuration)
         : base(logger, logSupport, configuration)
     {
         _logger = base.Logger;
         _logHeader = base.LogHeader;
         _connectionString = ConnectionString;
-        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, $"{_logHeader} SMS Department Repository Initialized");
+        _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, $"{_logHeader} SMS Organization Repository Initialized");
     }
 
     public async Task<Result<IEnumerable<SMSDepartment>>> GetAllAsync()
     {
         try
         {
-            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSDepartment_GetAll}", null);
+            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSOrginization_GetAll}", null);
 
             using var sql = new SqlConnection(_connectionString);
-            using var cmd = new SqlCommand(StoredProcs.pr_SMSDepartment_GetAll, sql)
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSOrginization_GetAll, sql)
             {
                 CommandType = CommandType.StoredProcedure
             };

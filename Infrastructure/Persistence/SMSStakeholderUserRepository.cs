@@ -359,10 +359,14 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLastName, user.LastName.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserCompany, user.Company));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserOrganization, user.Organization));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTitle, user.Title));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserJobFunction, user.JobFunction));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserUserName, user.UserName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserPassword, user.Password.HashedValue));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserStakeholderType, user.StakeholderType));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserOrganization, user.Organization));
+            
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserRole, user.UserRole.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLastLoginDate, user.LastLoginDate));
@@ -419,9 +423,14 @@ public sealed class SMSStakeholderUserRepository : BaseRepository<SMSStakeholder
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLastName, user.LastName.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserCompany, user.Company));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserOrganization, user.Organization));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTitle, user.Title));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserJobFunction, user.JobFunction));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserUserName, user.UserName.Value));
+
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserStakeholderType, user.StakeholderType));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserOrganization, user.Organization));
+            
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserRole, user.UserRole.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserLastLoginDate, user.LastLoginDate));

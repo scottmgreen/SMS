@@ -22,6 +22,31 @@ public sealed class SMSOrganizationalUser : BaseUser
     public SMSOrganizationalUserID OrganizationalUserId { get; private set; }
     public SMSDepartment Department { get; set; } 
     public string Position { get; set; } = string.Empty;
+
+    public string? DepartmentCode
+    {
+        get => Department?.Value;
+        set
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                Department = null;
+                Organization = string.Empty;
+                return;
+            }
+
+            Department = SMSDepartment.FromValue(value)
+                ?? SMSDepartment.Create(value, value, string.Empty, Array.Empty<string>());
+
+            Organization = Department.Name;
+        }
+    }
+
+    public string? DepartmentName
+    {
+        get => Department?.Name;
+        set => Organization = value?.Trim() ?? string.Empty;
+    }
     /// <summary>
     /// OrganizationLevel (AE, RE, RM, SMS Manager, SMS Coordinator, SMS Team)
     /// </summary>

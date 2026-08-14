@@ -8,7 +8,9 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-namespace SMS_Domain.Entities;
+using SMS_Domain.Entities;
+
+namespace Domain.Common;
 
 /// <summary>
 /// Base entity for user group types in SMS

@@ -42,7 +42,7 @@ public static class DependencyInjection
         services.AddScoped<ISMSOrganizationalUserRepository, SMSOrganizationalUserRepository>();
         services.AddScoped<ISMSStakeholderUserRepository, SMSStakeholderUserRepository>();
         services.AddScoped<ISMSStakeholderUserTitleRepository, SMSStakeholderUserTitleRepository>();
-        services.AddScoped<ISMSDepartmentRepository, SMSDepartmentRepository>();
+        services.AddScoped<ISMSOrganizationRepository, SMSOrganizationRepository>();
         services.AddScoped<ISMSCompanyRepository, SMSCompanyRepository>();
         services.AddScoped<ISMSUserRoleRepository, SMSUserRoleRepository>();
 
@@ -78,7 +78,7 @@ public static class DependencyInjection
         services.AddScoped<SMSStakeholderGroupRepository>();
         services.AddScoped<SMSStakeholderUserRepository>();
         services.AddScoped<SMSStakeholderUserTitleRepository>();
-        services.AddScoped<SMSDepartmentRepository>();
+        services.AddScoped<SMSOrganizationRepository>();
         services.AddScoped<SMSCompanyRepository>();
         services.AddScoped<SMSUserRoleRepository>();
 

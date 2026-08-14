@@ -53,6 +53,8 @@ public partial class OrganizationalUsers : ComponentBase
     private string _newUserName { get; set; } = string.Empty;
     private string _newPassword { get; set; } = string.Empty;
     private string _newDepartmentId { get; set; } = string.Empty;
+    private string _newCompany { get; set; } = string.Empty;
+    private string _newJobFunction { get; set; } = string.Empty;
     private string _newPosition { get; set; } = string.Empty;
     private string _newOrganizationLevelId { get; set; } =  string.Empty;
     private bool _newTwoFactorEnabled { get; set; } = false;
@@ -67,6 +69,8 @@ public partial class OrganizationalUsers : ComponentBase
     private string _editFirstName { get; set; } = string.Empty;
     private string _editLastName { get; set; } = string.Empty;
     private string _editDepartmentId { get; set; } = string.Empty;
+    private string _editCompany { get; set; } = string.Empty;
+    private string _editJobFunction { get; set; } = string.Empty;
     private string _editPosition { get; set; } = string.Empty;
     private string _editOrganizationLevelId { get; set; }  = string.Empty;
     private bool _editIsActive { get; set; } = true;
@@ -133,6 +137,8 @@ public partial class OrganizationalUsers : ComponentBase
         }
     }
 
+    private List<DropdownOption> OrganizationOptions => DepartmentOptions;
+
     // Updated to use centralized helper for SMS Organization Level options
     private List<DropdownOption> _organizationLevelOptions => DropdownHelper.GetOrganizationLevelOptions();
 
@@ -170,6 +176,7 @@ public partial class OrganizationalUsers : ComponentBase
         !string.IsNullOrWhiteSpace(_newLastName) &&
         !string.IsNullOrWhiteSpace(_newUserName) &&
         !string.IsNullOrWhiteSpace(_newPassword) &&
+        _newPassword == _confirmPassword &&
         IsValidDepartment(_newDepartmentId) &&
         IsValidOrganizationLevel(_newOrganizationLevelId) &&
         !string.IsNullOrWhiteSpace(_newUserRoleCode);
@@ -295,7 +302,10 @@ public partial class OrganizationalUsers : ComponentBase
         _newLastName = string.Empty;
         _newUserName = string.Empty;
         _newPassword = string.Empty;
+        _confirmPassword = string.Empty;
         _newDepartmentId = string.Empty;
+        _newCompany = string.Empty;
+        _newJobFunction = string.Empty;
         _newPosition = string.Empty;
         _newOrganizationLevelId = string.Empty;
         _newTwoFactorEnabled = false;
@@ -311,7 +321,10 @@ public partial class OrganizationalUsers : ComponentBase
         _newLastName = string.Empty;
         _newUserName = string.Empty;
         _newPassword = string.Empty;
+        _confirmPassword = string.Empty;
         _newDepartmentId = string.Empty;
+        _newCompany = string.Empty;
+        _newJobFunction = string.Empty;
         _newPosition = string.Empty;
         _newOrganizationLevelId = string.Empty;
         _newTwoFactorEnabled = false;
@@ -358,6 +371,10 @@ public partial class OrganizationalUsers : ComponentBase
                 UserName = UserName.Create(_newUserName).Value,
                 Password = Password.Create(_newPassword).Value,
                 Department = SMSDepartment.FromValue(_newDepartmentId) ?? SMSDepartment.Create(string.Empty, string.Empty, string.Empty, Array.Empty<string>()),
+                Company = _newCompany,
+                Organization = SMSDepartment.FromValue(_newDepartmentId)?.Name ?? string.Empty,
+                Title = _newPosition,
+                JobFunction = _newJobFunction,
                 Position = _newPosition,
                 OrganizationLevel = SMSOrganizationalLevel.FromName(_newOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel,
                 UserRole = selectedRole,
@@ -423,6 +440,8 @@ public partial class OrganizationalUsers : ComponentBase
             _editFirstName = _currentUser.FirstName?.Value ?? string.Empty;
             _editLastName = _currentUser.LastName?.Value ?? string.Empty;
             _editDepartmentId = _currentUser.Department.Value ?? string.Empty;
+            _editCompany = _currentUser.Company ?? string.Empty;
+            _editJobFunction = _currentUser.JobFunction ?? string.Empty;
             _editPosition = _currentUser.Position ?? string.Empty;
             _editOrganizationLevelId = _currentUser.OrganizationLevel.Name ?? SMSOrganizationalLevel.UnassignedLevel;
             _editIsActive = _currentUser.IsActive;
@@ -445,6 +464,8 @@ public partial class OrganizationalUsers : ComponentBase
         _editFirstName = string.Empty;
         _editLastName = string.Empty;
         _editDepartmentId = string.Empty;
+        _editCompany = string.Empty;
+        _editJobFunction = string.Empty;
         _editPosition = string.Empty;
         // FIXED: Reset to empty string instead of enum object
         _editOrganizationLevelId = string.Empty;
@@ -470,6 +491,10 @@ public partial class OrganizationalUsers : ComponentBase
             _currentUser.FirstName = FirstName.Create(_editFirstName).Value;
             _currentUser.LastName = LastName.Create(_editLastName).Value;
             _currentUser.Department = SMSDepartment.FromValue(_editDepartmentId) ?? SMSDepartment.Create(string.Empty, string.Empty, string.Empty, Array.Empty<string>());
+            _currentUser.Company = _editCompany;
+            _currentUser.Organization = SMSDepartment.FromValue(_editDepartmentId)?.Name ?? string.Empty;
+            _currentUser.Title = _editPosition;
+            _currentUser.JobFunction = _editJobFunction;
             _currentUser.Position = _editPosition;
             _currentUser.OrganizationLevel = SMSOrganizationalLevel.FromName(_editOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel;
             _currentUser.SyncAuthorityFromOrganizationLevel();

@@ -10,12 +10,15 @@
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+
 using SMS_Application.Interfaces;
 using SMS_Application.Queries;
 using SMS_Application.Services;
+
 using SMS_Domain.Events;
 using SMS_Domain.Common;
-using SMS_Domain.Entities;
+
+using Domain.Common;
 
 namespace SMS_Application.EventHandlers;
 

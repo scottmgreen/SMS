@@ -162,6 +162,9 @@ public partial class StakeholderUsers : ComponentBase
                 Password = Password.Create(_newUser.Password).Value,
                 StakeholderType = _newUser.StakeholderType,
                 Organization = _newUser.Organization,
+                Company = _newUser.Company,
+                Title = _newUser.Title,
+                JobFunction = _newUser.JobFunction,
                 IsActive = _newUser.IsActive,
                 IsPOPEmployee = _newUser.IsPOPEmployee,
                 TwoFactorEnabled = _newUser.TwoFactorEnabled,
@@ -228,6 +231,7 @@ public partial class StakeholderUsers : ComponentBase
         !string.IsNullOrWhiteSpace(_newUser.LastName) &&
         !string.IsNullOrWhiteSpace(_newUser.UserName) &&
         !string.IsNullOrWhiteSpace(_newUser.Password) &&
+        _newUser.Password == _newUser.ConfirmPassword &&
         !string.IsNullOrWhiteSpace(_newUser.StakeholderType) &&
         !string.IsNullOrWhiteSpace(_newUser.Organization);
 
@@ -248,6 +252,9 @@ public partial class StakeholderUsers : ComponentBase
             LastName = user.LastName?.Value ?? "",
             StakeholderType = user.StakeholderType,
             Organization = user.Organization,
+            Company = user.Company,
+            Title = user.Title,
+            JobFunction = user.JobFunction,
             UserRoleCode = user.UserRole?.Code ?? "",
             IsActive = user.IsActive,
             IsPOPEmployee = user.IsPOPEmployee,
@@ -281,6 +288,9 @@ public partial class StakeholderUsers : ComponentBase
             _currentEditUser.LastName = LastName.Create(_editUser.LastName).Value;
             _currentEditUser.StakeholderType = _editUser.StakeholderType;
             _currentEditUser.Organization = _editUser.Organization;
+            _currentEditUser.Company = _editUser.Company;
+            _currentEditUser.Title = _editUser.Title;
+            _currentEditUser.JobFunction = _editUser.JobFunction;
             _currentEditUser.IsActive = _editUser.IsActive;
             _currentEditUser.IsPOPEmployee = _editUser.IsPOPEmployee;
             _currentEditUser.TwoFactorEnabled = _editUser.TwoFactorEnabled;
@@ -860,7 +870,11 @@ public partial class StakeholderUsers : ComponentBase
         public string LastName { get; set; } = "";
         public string UserName { get; set; } = "";
         public string Password { get; set; } = "";
+        public string ConfirmPassword { get; set; } = "";
         public string StakeholderType { get; set; } = "";
+        public string Company { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string JobFunction { get; set; } = "";
         public string Organization { get; set; } = "";
         public string UserRoleCode { get; set; } = "";
         public bool IsPOPEmployee { get; set; } = false;
@@ -874,6 +888,9 @@ public partial class StakeholderUsers : ComponentBase
         public string FirstName { get; set; } = "";
         public string LastName { get; set; } = "";
         public string StakeholderType { get; set; } = "";
+        public string Company { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string JobFunction { get; set; } = "";
         public string Organization { get; set; } = "";
         public string UserRoleCode { get; set; } = "";
         public bool IsActive { get; set; } = true;

@@ -24,6 +24,5 @@ public sealed class SMSApplicationUser : BaseUser
 
     // Simple properties with public setters
     public SMSApplicationUserID ApplicationUserId { get; set; }
-    //public string ApplicationRole { get; set; } = string.Empty;
-    //public string PermissionLevel { get; set; } = string.Empty;
+   
 }

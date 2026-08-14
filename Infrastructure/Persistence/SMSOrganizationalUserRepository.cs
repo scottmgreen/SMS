@@ -217,6 +217,10 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserLastName, user.LastName.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserCompany, user.Company));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserOrganization, user.Organization));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTitle, user.Title));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserJobFunction, user.JobFunction));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserUserName, user.UserName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPassword, user.Password.HashedValue));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserDepartment, user.Department.Value));
@@ -281,6 +285,10 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserLastName, user.LastName.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserCompany, user.Company));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserOrganization, user.Organization));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTitle, user.Title));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserJobFunction, user.JobFunction));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserUserName, user.UserName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserDepartment, user.Department.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPosition, user.Position));

@@ -166,19 +166,19 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
     /// <summary>
     /// Gets SMS Organizational Users by position
     /// </summary>
-    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetSMSOrganizationalUsersByPositionAsync(string position, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInfrastructureInformation("Retrieving SMS Organizational Users by position: {Position}", position);
-            return await _repository.GetByPositionAsync(position);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Organizational Users by position: {Position}", position);
-            return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
-        }
-    }
+    //public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetSMSOrganizationalUsersByPositionAsync(string position, CancellationToken ct = default)
+    //{
+    //    try
+    //    {
+    //        _logger.LogInfrastructureInformation("Retrieving SMS Organizational Users by position: {Position}", position);
+    //        return await _repository.GetByPositionAsync(position);
+    //    }
+    //    catch (Exception ex)
+    //    {
+    //        _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Organizational Users by position: {Position}", position);
+    //        return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
+    //    }
+    //}
 
     /// <summary>
     /// Gets department supervisors

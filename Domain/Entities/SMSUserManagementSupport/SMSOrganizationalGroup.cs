@@ -8,6 +8,8 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
+using Domain.Common;
+
 using SMS_Domain.Enums;
 
 namespace SMS_Domain.Entities;

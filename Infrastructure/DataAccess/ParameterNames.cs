@@ -197,6 +197,15 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmSMSOrganizationalUserLoginDate = new Lazy<string>(() => "@pLoginDate");
     public static string pmSMSOrganizationalUserLoginDate => _pmSMSOrganizationalUserLoginDate.Value;
 
+    private static readonly Lazy<string> _pmSMSUserCompany = new Lazy<string>(() => "@pCompany");
+    public static string pmSMSUserCompany => _pmSMSUserCompany.Value;
+    private static readonly Lazy<string> _pmSMSUserOrganization = new Lazy<string>(() => "@pOrganization");
+    public static string pmSMSUserOrganization => _pmSMSUserOrganization.Value;
+    private static readonly Lazy<string> _pmSMSUserTitle = new Lazy<string>(() => "@pTitle");
+    public static string pmSMSUserTitle => _pmSMSUserTitle.Value;
+
+    private static readonly Lazy<string> _pmSMSUserJobFunction = new Lazy<string>(() => "@pJobFunction");
+    public static string pmSMSUserJobFunction => _pmSMSUserJobFunction.Value;
     /// <summary>
     /// SMS Stakeholder User parameters
     /// </summary>

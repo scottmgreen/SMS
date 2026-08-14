@@ -185,7 +185,11 @@ public partial class ApplicationUsers : ComponentBase
             _editUser = new EditUserModel
             {
                 FirstName = _currentUser?.FirstName?.Value ?? "",
-                LastName = _currentUser?.LastName?.Value ?? ""
+                LastName = _currentUser?.LastName?.Value ?? "",
+                Company = _currentUser?.Company ?? string.Empty,
+                Organization = _currentUser?.Organization ?? string.Empty,
+                Title = _currentUser?.Title ?? string.Empty,
+                JobFunction = _currentUser?.JobFunction ?? string.Empty
             };
 
             // Set the role code for dropdown binding
@@ -420,6 +424,10 @@ public partial class ApplicationUsers : ComponentBase
                 LastName = LastName.Create(_newUser.LastName).Value,
                 UserName = UserName.Create(_newUser.UserName).Value,
                 Password = Password.Create(_newUser.Password).Value,
+                Company = _newUser.Company,
+                Organization = _newUser.Organization,
+                Title = _newUser.Title,
+                JobFunction = _newUser.JobFunction,
                 UserRole = selectedRole,
                 TwoFactorEnabled = _newUser.TwoFactorEnabled, // ?? NEW: Set 2FA requirement
                 IsActive = _newIsActive, // UPDATED: Use NewIsActive property
@@ -473,6 +481,7 @@ public partial class ApplicationUsers : ComponentBase
         !string.IsNullOrWhiteSpace(_newUser.LastName) &&
         !string.IsNullOrWhiteSpace(_newUser.UserName) &&
         !string.IsNullOrWhiteSpace(_newUser.Password) &&
+        _newUser.Password == _newUser.ConfirmPassword &&
         !string.IsNullOrWhiteSpace(_newUser.UserRoleCode);
 
     private void EditUser(string userId)
@@ -505,6 +514,10 @@ public partial class ApplicationUsers : ComponentBase
             // ? FIXED: Only update business fields - let pipeline handle audit fields
             _currentUser.FirstName = FirstName.Create(model.FirstName).Value;
             _currentUser.LastName = LastName.Create(model.LastName).Value;
+            _currentUser.Company = model.Company;
+            _currentUser.Organization = model.Organization;
+            _currentUser.Title = model.Title;
+            _currentUser.JobFunction = model.JobFunction;
             _currentUser.SMSUserType = SMSUserType.Application;
             
             // Update role if changed
@@ -679,6 +692,10 @@ public partial class ApplicationUsers : ComponentBase
     {
         public string FirstName { get; set; } = "";
         public string LastName { get; set; } = "";
+        public string Company { get; set; } = "";
+        public string Organization { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string JobFunction { get; set; } = "";
     }
 
     // ?? UPDATED: CreateUserModel with role assignment support
@@ -688,6 +705,11 @@ public partial class ApplicationUsers : ComponentBase
         public string LastName { get; set; } = "";
         public string UserName { get; set; } = "";
         public string Password { get; set; } = "";
+        public string ConfirmPassword { get; set; } = "";
+        public string Company { get; set; } = "";
+        public string Organization { get; set; } = "";
+        public string Title { get; set; } = "";
+        public string JobFunction { get; set; } = "";
         public string? UserRoleCode { get; set; } // NEW: Role assignment during creation
         public bool TwoFactorEnabled { get; set; } = false; // NEW: 2FA requirement during creation
     }

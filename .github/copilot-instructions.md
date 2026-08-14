@@ -23,6 +23,7 @@
 - There should be no inline SQL in this system; repository data access should use stored procedures consistently.
 - SMSStakeholderType should not include an IsActive property/column; stakeholder type values are DB-driven without IsActive filtering.
 - Use 'Title' instead of 'Type' for stakeholder lookup domain/repository/procedure naming (Type is deprecated).
+- Rename stored procedure usage from `pr_SMSDepartment_GetAll` to `pr_SMSOrganization_GetAll` in this codebase.
 
 ## Logging and Error Handling
 - Use `Application/Common/ApplicationLogMessages.cs` consistently for logging.
@@ -46,6 +47,7 @@
 
 ## User Management
 - For SMS user management dialogs, SMS User Role/Permissions is required and must not be labeled as optional. Bindings and parameters for user role must be 100% consistent across ApplicationUsers, StakeholderUsers, and OrganizationalUsers.
+- BaseUser must carry common identity fields: Company, Organization (renamed from Department), Title, and JobFunction shared by ApplicationUser, OrganizationalUser, and StakeholderUser. Do not map legacy OrganizationalUser Department or Position in the mapper.
 
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.

@@ -140,11 +140,10 @@ public static class FieldNames
     private static readonly Lazy<string> _fSMSOrganizationalUserPassword = new Lazy<string>(() => "fldv_Password");
     public static string fSMSOrganizationalUserPassword => _fSMSOrganizationalUserPassword.Value;
 
-    private static readonly Lazy<string> _fSMSOrganizationalUserDepartment = new Lazy<string>(() => "fldv_Department");
+    private static readonly Lazy<string> _fSMSOrganizationalUserDepartment = new Lazy<string>(() => "fldv_Orginization");
     public static string fSMSOrganizationalUserDepartment => _fSMSOrganizationalUserDepartment.Value;
 
-    private static readonly Lazy<string> _fSMSOrganizationalUserPosition = new Lazy<string>(() => "fldv_Position");
-    public static string fSMSOrganizationalUserPosition => _fSMSOrganizationalUserPosition.Value;
+   
 
     private static readonly Lazy<string> _fSMSOrganizationalUserOrganizationLevel = new Lazy<string>(() => "fldv_OrganizationLevel");
     public static string fSMSOrganizationalUserOrganizationLevel => _fSMSOrganizationalUserOrganizationLevel.Value;
@@ -234,6 +233,18 @@ public static class FieldNames
 
     private static readonly Lazy<string> _fSMSStakeholderUserTwoFactorLockedUntil = new Lazy<string>(() => "fldd_TwoFactorLockedUntil");
     public static string fSMSStakeholderUserTwoFactorLockedUntil => _fSMSStakeholderUserTwoFactorLockedUntil.Value;
+
+    private static readonly Lazy<string> _fSMSUserCompany = new Lazy<string>(() => "fldv_Company");
+    public static string fSMSUserCompany => _fSMSUserCompany.Value;
+
+    private static readonly Lazy<string> _fSMSUserOrganization = new Lazy<string>(() => "fldv_Organization");
+    public static string fSMSUserOrganization => _fSMSUserOrganization.Value;
+
+    private static readonly Lazy<string> _fSMSUserTitle = new Lazy<string>(() => "fldv_Title");
+    public static string fSMSUserTitle => _fSMSUserTitle.Value;
+
+    private static readonly Lazy<string> _fSMSUserJobFunction = new Lazy<string>(() => "fldv_JobFunction");
+    public static string fSMSUserJobFunction => _fSMSUserJobFunction.Value;
 
     private static readonly Lazy<string> _fSMSStakeholderUserTitleCode = new Lazy<string>(() => "fldv_Code");
     public static string fSMSStakeholderUserTitleCode => _fSMSStakeholderUserTitleCode.Value;

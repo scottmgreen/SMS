@@ -44,6 +44,10 @@ public static partial class Mappers
             applicationUser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetValue<string>(FieldNames.fSMSUserRoleCode)));
             applicationUser.IsActive = reader.GetBoolean(FieldNames.fSMSApplicationUserIsActive);
             applicationUser.LastLoginDate = reader.IsDBNull(FieldNames.fSMSApplicationUserLastLoginDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fSMSApplicationUserLastLoginDate);
+            applicationUser.Company = reader.HasColumn(FieldNames.fSMSUserCompany) ? (reader.GetValue<string>(FieldNames.fSMSUserCompany) ?? string.Empty) : string.Empty;
+            applicationUser.Organization = reader.HasColumn(FieldNames.fSMSUserOrganization) ? (reader.GetValue<string>(FieldNames.fSMSUserOrganization) ?? string.Empty) : string.Empty;
+            applicationUser.Title = reader.HasColumn(FieldNames.fSMSUserTitle) ? (reader.GetValue<string>(FieldNames.fSMSUserTitle) ?? string.Empty) : string.Empty;
+            applicationUser.JobFunction = reader.HasColumn(FieldNames.fSMSUserJobFunction) ? (reader.GetValue<string>(FieldNames.fSMSUserJobFunction) ?? string.Empty) : string.Empty;
             
             // ?? Two-Factor Authentication Properties - FIXED: Safe NULL handling
             applicationUser.TwoFactorSecretKey = reader.IsDBNull(FieldNames.fSMSApplicationUserTwoFactorSecretKey) ? 
@@ -126,8 +130,18 @@ public static partial class Mappers
             orgUser.UserName = UserName.Create(reader.GetValue<string>(FieldNames.fSMSOrganizationalUserUserName)).Value;
             orgUser.Password = Password.FromHash(reader.GetValue<string>(FieldNames.fSMSOrganizationalUserPassword), createdDate);
 
-            orgUser.Department = SMSDepartment.FromValue(reader.GetValue<string>(FieldNames.fSMSOrganizationalUserDepartment));
-            orgUser.Position = reader.GetValue<string>(FieldNames.fSMSOrganizationalUserPosition);
+            orgUser.Company = reader.HasColumn(FieldNames.fSMSUserCompany)
+                ? (reader.GetValue<string>(FieldNames.fSMSUserCompany) ?? string.Empty)
+                : string.Empty;
+            orgUser.Organization = reader.HasColumn(FieldNames.fSMSUserOrganization)
+                ? (reader.GetValue<string>(FieldNames.fSMSUserOrganization) ?? string.Empty)
+                : string.Empty;
+            orgUser.Title = reader.HasColumn(FieldNames.fSMSUserTitle)
+                ? (reader.GetValue<string>(FieldNames.fSMSUserTitle) ?? string.Empty)
+                : string.Empty;
+            orgUser.JobFunction = reader.HasColumn(FieldNames.fSMSUserJobFunction)
+                ? (reader.GetValue<string>(FieldNames.fSMSUserJobFunction) ?? string.Empty)
+                : string.Empty;
 
             
 
@@ -220,7 +234,12 @@ public static partial class Mappers
 
             stakeholderuser.StakeholderType = reader.GetValue<string>(FieldNames.fSMSStakeholderUserStakeholderTypeCode);
             stakeholderuser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetValue<string>(FieldNames.fSMSUserRoleCode)));
-            stakeholderuser.Organization = reader.GetValue<string>(FieldNames.fSMSStakeholderUserOrganization);
+            stakeholderuser.Organization = reader.GetValue<string>(FieldNames.fSMSStakeholderUserOrganization) ?? string.Empty;
+            stakeholderuser.Company = reader.HasColumn(FieldNames.fSMSUserCompany) ? (reader.GetValue<string>(FieldNames.fSMSUserCompany) ?? string.Empty) : string.Empty;
+            stakeholderuser.Title = reader.HasColumn(FieldNames.fSMSUserTitle)
+                ? (reader.GetValue<string>(FieldNames.fSMSUserTitle) ?? stakeholderuser.StakeholderType)
+                : stakeholderuser.StakeholderType;
+            stakeholderuser.JobFunction = reader.HasColumn(FieldNames.fSMSUserJobFunction) ? (reader.GetValue<string>(FieldNames.fSMSUserJobFunction) ?? string.Empty) : string.Empty;
 
             var smsUserRole = reader.GetValue<string>(FieldNames.fSMSUserRoleCode);
             stakeholderuser.IsActive = reader.GetBoolean(FieldNames.fSMSStakeholderUserIsActive);

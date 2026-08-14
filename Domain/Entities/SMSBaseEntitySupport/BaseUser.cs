@@ -31,6 +31,11 @@ public abstract class BaseUser : BaseAuditableEntity
 
     public SMSUserRole UserRole { get; set; }
 
+    public string Company { get; set; } = string.Empty;
+    public string Organization { get; set; } = string.Empty;
+    public string Title { get; set; } = string.Empty;
+    public string JobFunction { get; set; } = string.Empty;
+
     // 🔐 Two-Factor Authentication Properties
     public string? TwoFactorSecretKey { get; set; }
     public bool TwoFactorEnabled { get; set; } = false;

@@ -24,8 +24,11 @@ public sealed class SMSStakeholderUser : BaseUser
 
     // Simple properties with public setters
     public SMSStakeholderUserID StakeholderUserId { get; set; }
-    public string StakeholderType { get; set; } = string.Empty;
-    public string Organization { get; set; } = string.Empty;
+    public string StakeholderType
+    {
+        get => Title;
+        set => Title = value?.Trim() ?? string.Empty;
+    }
 
     public bool IsPOPEmployee { get; set; }
     

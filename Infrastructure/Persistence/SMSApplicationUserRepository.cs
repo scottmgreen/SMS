@@ -455,6 +455,10 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastName, user.LastName.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserCompany, user.Company));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserOrganization, user.Organization));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTitle, user.Title));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserJobFunction, user.JobFunction));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserUserName, user.UserName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserPassword, user.Password.HashedValue));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserType, user.SMSUserType.Value));
@@ -514,6 +518,10 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, user.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserFirstName, user.FirstName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastName, user.LastName.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserCompany, user.Company));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserOrganization, user.Organization));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTitle, user.Title));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserJobFunction, user.JobFunction));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserUserName, user.UserName.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserType, user.SMSUserType.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserRole, user.UserRole?.Code));

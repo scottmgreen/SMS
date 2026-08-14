@@ -52,13 +52,13 @@ public class Program
         // 🔧 INFRASTRUCTURE SERVICES also includes AddHttpContextAccessor() registration
         builder.Services.AddInfrastructureServices(builder.Configuration);
 
-        // Initialize SQL-driven department smart-enum values at startup
+        // Initialize SQL-driven organization smart-enum values at startup
         using (var preloadScope = builder.Services.BuildServiceProvider().CreateScope())
         {
-            var departmentRepository = preloadScope.ServiceProvider.GetService<ISMSDepartmentRepository>();
-            if (departmentRepository is not null)
+            var organizationRepository = preloadScope.ServiceProvider.GetService<ISMSOrganizationRepository>();
+            if (organizationRepository is not null)
             {
-                await departmentRepository.GetAllAsync();
+                await organizationRepository.GetAllAsync();
             }
 
             var companyRepository = preloadScope.ServiceProvider.GetService<ISMSCompanyRepository>();
