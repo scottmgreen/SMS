@@ -159,14 +159,14 @@ public static class DropdownHelper
 
     public static List<DropdownOption> GetDepartmentOptions()
     {
-        return SMSDepartment.GetAllValues()
+        return SMSOrganization.GetAllValues()
             .Select(dept => new DropdownOption(dept.Value, dept.Name))
             .ToList();
     }
 
     public static List<string> GetDepartmentNames()
     {
-        return SMSDepartment.GetAllDepartments()
+        return SMSOrganization.GetAllDepartments()
             .Select(d => d.Name)
             .OrderBy(name => name)
             .ToList();

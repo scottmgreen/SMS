@@ -2540,7 +2540,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     private string GetDepartmentDisplay(string? key)
     {
         if (string.IsNullOrEmpty(key)) return "UNKNOWN";
-        var department = SMSDepartment.FromValue(key);
+        var department = SMSOrganization.FromValue(key);
         return department?.Name ?? key;
     }
     #endregion

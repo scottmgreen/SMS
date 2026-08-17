@@ -1,0 +1,224 @@
+@page "/SMSSystem/UserSupport/Companies"
+
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+@using SMS_Domain.Enums
+
+<PageTitle>Company Management - SMS3</PageTitle>
+
+<PageHeader Title="Company Management"
+            Subtitle="@($"Maintain SMS companies ({_companies.Count})")"
+            Icon="fas fa-building">
+    <AdditionalContent>
+        <div class="d-flex justify-content-end align-items-center w-100">
+            <div class="d-flex gap-2">
+                <RadzenButton Text="New Company" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                              Click="@OpenCreateModal" />
+            </div>
+        </div>
+    </AdditionalContent>
+</PageHeader>
+
+@if (!string.IsNullOrWhiteSpace(_successMessage))
+{
+    <RadzenRow Gap="1rem" class="rz-mb-3">
+        <RadzenColumn Size="12">
+            <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter">
+                <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
+                @_successMessage
+            </RadzenAlert>
+        </RadzenColumn>
+    </RadzenRow>
+}
+
+@if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <RadzenRow Gap="1rem" class="rz-mb-3">
+        <RadzenColumn Size="12">
+            <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter">
+                <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
+                @_errorMessage
+            </RadzenAlert>
+        </RadzenColumn>
+    </RadzenRow>
+}
+
+<RadzenCard>
+    @if (_companies.Any())
+    {
+        <RadzenDataGrid @ref="_companiesGrid" Data="@_companies" TItem="SMSCompany"
+                        AllowFiltering="true" AllowColumnResize="true" AllowSorting="true"
+                        PageSize="15" AllowPaging="true" ShowPagingSummary="true"
+                        FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+            <Columns>
+                <RadzenDataGridColumn TItem="SMSCompany" Property="Value" Title="Code" Width="160px" />
+                <RadzenDataGridColumn TItem="SMSCompany" Property="Company" Title="Name" Width="260px" />
+                <RadzenDataGridColumn TItem="SMSCompany" Property="ServiceProvided" Title="Description" Width="320px" />
+                <RadzenDataGridColumn TItem="SMSCompany" Property="ContactName" Title="Contact Name" Width="220px" />
+                <RadzenDataGridColumn TItem="SMSCompany" Property="Email" Title="Contact Email" Width="240px" />
+                <RadzenDataGridColumn TItem="SMSCompany" Property="Phone" Title="Contact Phone" Width="180px" />
+                <RadzenDataGridColumn TItem="SMSCompany" Property="PortRep" Title="Internal Representative" Width="240px" />
+                <RadzenDataGridColumn TItem="SMSCompany" Title="Actions" Width="120px" Sortable="false" Filterable="false">
+                    <Template Context="company">
+                        <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                          Click="@(() => OpenEditModal(company))" title="Edit Company" />
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                          Click="@(() => ConfirmDelete(company))" title="Delete Company" />
+                        </RadzenStack>
+                    </Template>
+                </RadzenDataGridColumn>
+            </Columns>
+        </RadzenDataGrid>
+    }
+    else
+    {
+        <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
+            <RadzenIcon Icon="business" Style="font-size: 4rem; color: var(--rz-text-disabled-color);" />
+            <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-text-disabled-color);">
+                No Companies Found
+            </RadzenText>
+            <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-disabled-color);">
+                Click "New Company" to create your first company.
+            </RadzenText>
+            <RadzenButton Text="Add First Company" Icon="add" ButtonStyle="ButtonStyle.Primary"
+                          Click="@OpenCreateModal" />
+        </RadzenStack>
+    }
+</RadzenCard>
+
+@if (_showCreateModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal-dialog modal-lg">
+            <RadzenCard class="modal-content">
+                <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="add" Style="margin-right: 0.5rem;" />
+                        New Company
+                    </RadzenText>
+                </div>
+
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Name *" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="_newName" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Contact Name" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="_newContactName" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem" class="mt-2">
+                    <RadzenColumn Size="12">
+                        <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                            <RadzenTextArea @bind-Value="_newDescription" Rows="3" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem" class="mt-2">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Contact Email" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="_newContactEmail" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Contact Phone" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="_newContactPhone" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem" class="mt-2">
+                    <RadzenColumn Size="12">
+                        <RadzenFormField Text="Internal Representative" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="_newInternalRepresentative" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
+                    <RadzenButton Text="Create Company" Icon="save" ButtonStyle="ButtonStyle.Primary"
+                                  Click="@CreateCompany" Disabled="@(string.IsNullOrWhiteSpace(_newName) || _isSaving)"
+                                  Style="background-color: #212e61; border-color: #212e61;" />
+                </div>
+            </RadzenCard>
+        </div>
+    </div>
+}
+
+@if (_showEditModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal-dialog modal-lg">
+            <RadzenCard class="modal-content">
+                <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="edit" Style="margin-right: 0.5rem;" />
+                        Edit Company @_editCode
+                    </RadzenText>
+                </div>
+
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Code" Variant="Variant.Outlined">
+                            <RadzenTextBox Value="@_editCode" ReadOnly="true" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="8">
+                        <RadzenFormField Text="Name *" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="_editName" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem" class="mt-2">
+                    <RadzenColumn Size="12">
+                        <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                            <RadzenTextArea @bind-Value="_editDescription" Rows="3" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem" class="mt-2">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Contact Name" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="_editContactName" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Contact Email" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="_editContactEmail" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem" class="mt-2">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Contact Phone" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="_editContactPhone" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Internal Representative" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="_editInternalRepresentative" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
+                    <RadzenButton Text="Update Company" Icon="save" ButtonStyle="ButtonStyle.Primary"
+                                  Click="@UpdateCompany" Disabled="@(string.IsNullOrWhiteSpace(_editName) || _isSaving)"
+                                  Style="background-color: #212e61; border-color: #212e61;" />
+                </div>
+            </RadzenCard>
+        </div>
+    </div>
+}

@@ -52,8 +52,8 @@ public partial class HazardMitigation : ComponentBase
     private string? _selectedMitigationStatus;
 
 
-    // ? UPDATED: Replace hardcoded department list with SMSDepartment enum
-    private List<string> Departments => SMSDepartment.GetAllDepartments()
+    // ? UPDATED: Replace hardcoded department list with SMSOrganization enum
+    private List<string> Departments => SMSOrganization.GetAllDepartments()
         .Select(d => d.Name)
         .OrderBy(name => name)
         .ToList();

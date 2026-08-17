@@ -1,5 +1,5 @@
 ﻿//-----------------------------------------------------------------------
-// <copyright file="SMSDepartment.cs" company="SMS Safety Management System">
+// <copyright file="SMSOrganization.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
 //     Description: Enumeration defining valid values and classifications for SMS smsdepartment domain concepts.
@@ -10,14 +10,14 @@
 
 namespace SMS_Domain.Enums;
 
-public sealed class SMSDepartment : IEquatable<SMSDepartment>
+public sealed class SMSOrganization : IEquatable<SMSOrganization>
 {
     private static readonly object _syncLock = new();
 
-    private static IReadOnlyDictionary<string, SMSDepartment> _departmentsByCode =
-        new Dictionary<string, SMSDepartment>(StringComparer.OrdinalIgnoreCase);
+    private static IReadOnlyDictionary<string, SMSOrganization> _departmentsByCode =
+        new Dictionary<string, SMSOrganization>(StringComparer.OrdinalIgnoreCase);
 
-    private SMSDepartment(string value, string name, string description, string[] responsibilities)
+    private SMSOrganization(string value, string name, string description, string[] responsibilities)
     {
         Value = value?.Trim() ?? string.Empty;
         Name = name?.Trim() ?? string.Empty;
@@ -30,12 +30,12 @@ public sealed class SMSDepartment : IEquatable<SMSDepartment>
     public string Description { get; }
     public string[] Responsibilities { get; }
 
-    public static SMSDepartment Create(string value, string name, string description, string[] responsibilities)
+    public static SMSOrganization Create(string value, string name, string description, string[] responsibilities)
     {
-        return new SMSDepartment(value, name, description, responsibilities);
+        return new SMSOrganization(value, name, description, responsibilities);
     }
 
-    public static void SetDepartments(IEnumerable<SMSDepartment> departments)
+    public static void SetDepartments(IEnumerable<SMSOrganization> departments)
     {
         if (departments is null)
         {
@@ -54,7 +54,7 @@ public sealed class SMSDepartment : IEquatable<SMSDepartment>
         }
     }
 
-    public static SMSDepartment? FromValue(string value)
+    public static SMSOrganization? FromValue(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -64,7 +64,7 @@ public sealed class SMSDepartment : IEquatable<SMSDepartment>
         return _departmentsByCode.TryGetValue(value.Trim(), out var department) ? department : null;
     }
 
-    public static SMSDepartment? FromName(string name)
+    public static SMSOrganization? FromName(string name)
     {
         if (string.IsNullOrWhiteSpace(name))
         {
@@ -74,9 +74,9 @@ public sealed class SMSDepartment : IEquatable<SMSDepartment>
         return _departmentsByCode.Values.FirstOrDefault(d => d.Name.Equals(name.Trim(), StringComparison.OrdinalIgnoreCase));
     }
 
-    public static IEnumerable<SMSDepartment> GetAllValues() => _departmentsByCode.Values;
+    public static IEnumerable<SMSOrganization> GetAllValues() => _departmentsByCode.Values;
 
-    public static List<SMSDepartment> GetAllValuesList() => _departmentsByCode.Values.ToList();
+    public static List<SMSOrganization> GetAllValuesList() => _departmentsByCode.Values.ToList();
 
     /// <summary>
     /// Checks if this department has responsibility for a specific area
@@ -89,7 +89,7 @@ public sealed class SMSDepartment : IEquatable<SMSDepartment>
     /// <summary>
     /// Gets departments by responsibility area
     /// </summary>
-    public static IEnumerable<SMSDepartment> GetDepartmentsByResponsibility(string responsibility)
+    public static IEnumerable<SMSOrganization> GetDepartmentsByResponsibility(string responsibility)
     {
         return GetAllDepartments().Where(dept => dept.HasResponsibility(responsibility));
     }
@@ -97,19 +97,19 @@ public sealed class SMSDepartment : IEquatable<SMSDepartment>
     /// <summary>
     /// Gets all available departments
     /// </summary>
-    public static IEnumerable<SMSDepartment> GetAllDepartments()
+    public static IEnumerable<SMSOrganization> GetAllDepartments()
     {
         return _departmentsByCode.Values;
     }
 
-    public bool Equals(SMSDepartment? other)
+    public bool Equals(SMSOrganization? other)
     {
         return other is not null && Value.Equals(other.Value, StringComparison.OrdinalIgnoreCase);
     }
 
     public override bool Equals(object? obj)
     {
-        return obj is SMSDepartment other && Equals(other);
+        return obj is SMSOrganization other && Equals(other);
     }
 
     public override int GetHashCode()

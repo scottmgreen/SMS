@@ -81,7 +81,7 @@ public partial class SPIConfiguration
         // Load frequencies using centralized helper  
         _availableFrequencies = DropdownHelper.GetSPIMeasurementFrequencyOptions();
 
-        // Load departments from SMSDepartment enum
+        // Load departments from SMSOrganization enum
         _availableDepartments = DropdownHelper.GetDepartmentNames();
     }
 

@@ -1258,6 +1258,37 @@ public static class ParameterNames
 
     #endregion
 
+    #region SMS Company Parameters
+
+    private static readonly Lazy<string> _pmSMSCompanyCode = new Lazy<string>(() => "@pCode");
+    public static string pmSMSCompanyCode => _pmSMSCompanyCode.Value;
+
+    private static readonly Lazy<string> _pmSMSCompanyName = new Lazy<string>(() => "@pName");
+    public static string pmSMSCompanyName => _pmSMSCompanyName.Value;
+
+    private static readonly Lazy<string> _pmSMSCompanyDescription = new Lazy<string>(() => "@pDescription");
+    public static string pmSMSCompanyDescription => _pmSMSCompanyDescription.Value;
+
+    private static readonly Lazy<string> _pmSMSCompanyContactName = new Lazy<string>(() => "@pContactName");
+    public static string pmSMSCompanyContactName => _pmSMSCompanyContactName.Value;
+
+    private static readonly Lazy<string> _pmSMSCompanyContactEmail = new Lazy<string>(() => "@pContactEmail");
+    public static string pmSMSCompanyContactEmail => _pmSMSCompanyContactEmail.Value;
+
+    private static readonly Lazy<string> _pmSMSCompanyContactPhone = new Lazy<string>(() => "@pContactPhone");
+    public static string pmSMSCompanyContactPhone => _pmSMSCompanyContactPhone.Value;
+
+    private static readonly Lazy<string> _pmSMSCompanyInternalRepresentative = new Lazy<string>(() => "@pInternalRepresentative");
+    public static string pmSMSCompanyInternalRepresentative => _pmSMSCompanyInternalRepresentative.Value;
+
+    private static readonly Lazy<string> _pmSMSCompanyActiveOnly = new Lazy<string>(() => "@pActiveOnly");
+    public static string pmSMSCompanyActiveOnly => _pmSMSCompanyActiveOnly.Value;
+
+    private static readonly Lazy<string> _pmNewCompanyCode = new Lazy<string>(() => "@pNewCompanyCode");
+    public static string pmNewCompanyCode => _pmNewCompanyCode.Value;
+
+    #endregion
+
     #region Common Group Assignment Parameters
 
     /// <summary>

@@ -20,7 +20,7 @@ public sealed class SMSOrganizationalUser : BaseUser
         OrganizationalUserId = id;
     }
     public SMSOrganizationalUserID OrganizationalUserId { get; private set; }
-    public SMSDepartment Department { get; set; } 
+    public SMSOrganization Department { get; set; } 
     public string Position { get; set; } = string.Empty;
 
     public string? DepartmentCode
@@ -35,8 +35,8 @@ public sealed class SMSOrganizationalUser : BaseUser
                 return;
             }
 
-            Department = SMSDepartment.FromValue(value)
-                ?? SMSDepartment.Create(value, value, string.Empty, Array.Empty<string>());
+            Department = SMSOrganization.FromValue(value)
+                ?? SMSOrganization.Create(value, value, string.Empty, Array.Empty<string>());
 
             Organization = Department.Name;
         }

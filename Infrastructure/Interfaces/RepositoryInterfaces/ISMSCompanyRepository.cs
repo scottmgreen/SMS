@@ -14,4 +14,8 @@ namespace SMS_Infrastructure.Interfaces;
 public interface ISMSCompanyRepository
 {
     Task<Result<IEnumerable<SMSCompany>>> GetAllAsync();
+    Task<Result<SMSCompany>> GetByCodeAsync(string code, CancellationToken ct = default);
+    Task<Result<SMSCompany>> CreateAsync(SMSCompany company, string createdBy, CancellationToken ct = default);
+    Task<Result<SMSCompany>> UpdateAsync(SMSCompany company, string updatedBy, CancellationToken ct = default);
+    Task<Result<bool>> DeleteAsync(string code, string deletedBy, CancellationToken ct = default);
 }

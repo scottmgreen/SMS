@@ -76,3 +76,6 @@
 
 ## Event Queue
 - EventQueue data access should not use `@pQueueGuid`; use `@pCode` consistently for queue operations.
+
+## Domain Enums
+- When adding Company in Domain, model it as a data-driven enum in Domain/Enums (SMSCompany pattern), not as a Domain entity.

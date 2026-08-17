@@ -205,10 +205,28 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_SMSStakeholderUserTitle_GetAll = new(() => "pr_SMSStakeholderUserTitle_GetAll");
         public static string pr_SMSStakeholderUserTitle_GetAll => _pr_SMSStakeholderUserTitle_GetAll.Value;
 
-        private static readonly Lazy<string> _pr_SMSOrginization_GetAll = new(() => "pr_SMSOrginization_GetAll");
+        private static readonly Lazy<string> _pr_SMSOrganization_GetAll = new(() => "pr_SMSOrganization_GetAll");
+        public static string pr_SMSOrganization_GetAll => _pr_SMSOrganization_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrginization_GetAll = new(() => "pr_SMSOrganization_GetAll");
         public static string pr_SMSOrginization_GetAll => _pr_SMSOrginization_GetAll.Value;
 
-        private static readonly Lazy<string> _pr_SMSCompanies_GetAll = new(() => "pr_SMSCompanies_GetAll");
+        private static readonly Lazy<string> _pr_SMSCompany_GetAll = new(() => "pr_SMSCompany_GetAll");
+        public static string pr_SMSCompany_GetAll => _pr_SMSCompany_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSCompany_GetByCode = new(() => "pr_SMSCompany_GetByCode");
+        public static string pr_SMSCompany_GetByCode => _pr_SMSCompany_GetByCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSCompany_Insert = new(() => "pr_SMSCompany_Insert");
+        public static string pr_SMSCompany_Insert => _pr_SMSCompany_Insert.Value;
+
+        private static readonly Lazy<string> _pr_SMSCompany_Update = new(() => "pr_SMSCompany_Update");
+        public static string pr_SMSCompany_Update => _pr_SMSCompany_Update.Value;
+
+        private static readonly Lazy<string> _pr_SMSCompany_Delete = new(() => "pr_SMSCompany_Delete");
+        public static string pr_SMSCompany_Delete => _pr_SMSCompany_Delete.Value;
+
+        private static readonly Lazy<string> _pr_SMSCompanies_GetAll = new(() => "pr_SMSCompany_GetAll");
         public static string pr_SMSCompanies_GetAll => _pr_SMSCompanies_GetAll.Value;
 
         #endregion

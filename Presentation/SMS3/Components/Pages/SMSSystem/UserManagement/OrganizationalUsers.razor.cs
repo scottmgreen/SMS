@@ -126,7 +126,7 @@ public partial class OrganizationalUsers : ComponentBase
     {
         get
         {
-            return SMSDepartment.GetAllDepartments()
+            return SMSOrganization.GetAllDepartments()
                 .OrderBy(dept => dept.Name)
                 .Select(dept => new DropdownOption
                 {
@@ -201,7 +201,7 @@ public partial class OrganizationalUsers : ComponentBase
     {
         if (string.IsNullOrWhiteSpace(department)) return true; // Optional field
 
-        return SMSDepartment.GetAllValues()
+        return SMSOrganization.GetAllValues()
             .Any(level => level.Value.Equals(department, StringComparison.OrdinalIgnoreCase));
     }
     #endregion
@@ -370,9 +370,9 @@ public partial class OrganizationalUsers : ComponentBase
                 LastName = LastName.Create(_newLastName).Value,
                 UserName = UserName.Create(_newUserName).Value,
                 Password = Password.Create(_newPassword).Value,
-                Department = SMSDepartment.FromValue(_newDepartmentId) ?? SMSDepartment.Create(string.Empty, string.Empty, string.Empty, Array.Empty<string>()),
+                Department = SMSOrganization.FromValue(_newDepartmentId) ?? SMSOrganization.Create(string.Empty, string.Empty, string.Empty, Array.Empty<string>()),
                 Company = _newCompany,
-                Organization = SMSDepartment.FromValue(_newDepartmentId)?.Name ?? string.Empty,
+                Organization = SMSOrganization.FromValue(_newDepartmentId)?.Name ?? string.Empty,
                 Title = _newPosition,
                 JobFunction = _newJobFunction,
                 Position = _newPosition,
@@ -490,9 +490,9 @@ public partial class OrganizationalUsers : ComponentBase
             // Update user properties
             _currentUser.FirstName = FirstName.Create(_editFirstName).Value;
             _currentUser.LastName = LastName.Create(_editLastName).Value;
-            _currentUser.Department = SMSDepartment.FromValue(_editDepartmentId) ?? SMSDepartment.Create(string.Empty, string.Empty, string.Empty, Array.Empty<string>());
+            _currentUser.Department = SMSOrganization.FromValue(_editDepartmentId) ?? SMSOrganization.Create(string.Empty, string.Empty, string.Empty, Array.Empty<string>());
             _currentUser.Company = _editCompany;
-            _currentUser.Organization = SMSDepartment.FromValue(_editDepartmentId)?.Name ?? string.Empty;
+            _currentUser.Organization = SMSOrganization.FromValue(_editDepartmentId)?.Name ?? string.Empty;
             _currentUser.Title = _editPosition;
             _currentUser.JobFunction = _editJobFunction;
             _currentUser.Position = _editPosition;

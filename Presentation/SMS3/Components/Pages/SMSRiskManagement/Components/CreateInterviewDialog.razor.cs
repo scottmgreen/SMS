@@ -42,7 +42,7 @@ public partial class CreateInterviewDialog : ComponentBase
 
     private void InitializeDropdownOptions()
     {
-        DepartmentOptions = SMSDepartment.GetAllValues()
+        DepartmentOptions = SMSOrganization.GetAllValues()
                     .Select(hc => new DropdownOption(hc.Value, hc.Name))
                     .ToList();
 

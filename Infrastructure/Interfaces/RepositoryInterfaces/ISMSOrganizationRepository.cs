@@ -16,5 +16,5 @@ namespace SMS_Infrastructure.Interfaces;
 /// </summary>
 public interface ISMSOrganizationRepository
 {
-    Task<Result<IEnumerable<SMSDepartment>>> GetAllAsync();
+    Task<Result<IEnumerable<SMSOrganization>>> GetAllAsync();
 }

@@ -396,7 +396,7 @@
     };
 
     // ✅ UPDATED: Replace hardcoded department list with SMSDepartment enum
-    private List<string> Departments => SMSDepartment.GetAllDepartments()
+    private List<string> Departments => SMSOrganization.GetAllDepartments()
         .Select(d => d.Name)
         .OrderBy(name => name)
         .ToList();

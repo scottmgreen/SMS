@@ -16,7 +16,7 @@ namespace SMS_Infrastructure.Persistence;
 /// <summary>
 /// Repository implementation for SQL-backed SMS Organization operations.
 /// </summary>
-public sealed class SMSOrganizationRepository : BaseRepository<SMSOrganizationRepository, SMSDepartment>, ISMSOrganizationRepository
+public sealed class SMSOrganizationRepository : BaseRepository<SMSOrganizationRepository, SMSOrganization>, ISMSOrganizationRepository
 {
     private readonly ILogger<SMSOrganizationRepository> _logger;
     private readonly string _logHeader;
@@ -31,7 +31,7 @@ public sealed class SMSOrganizationRepository : BaseRepository<SMSOrganizationRe
         _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, $"{_logHeader} SMS Organization Repository Initialized");
     }
 
-    public async Task<Result<IEnumerable<SMSDepartment>>> GetAllAsync()
+    public async Task<Result<IEnumerable<SMSOrganization>>> GetAllAsync()
     {
         try
         {
@@ -43,7 +43,7 @@ public sealed class SMSOrganizationRepository : BaseRepository<SMSOrganizationRe
                 CommandType = CommandType.StoredProcedure
             };
 
-            var departments = new List<SMSDepartment>();
+            var departments = new List<SMSOrganization>();
             var responsibilitiesByCode = new Dictionary<string, List<string>>(StringComparer.OrdinalIgnoreCase);
 
             await sql.OpenAsync().ConfigureAwait(false);
@@ -51,15 +51,15 @@ public sealed class SMSOrganizationRepository : BaseRepository<SMSOrganizationRe
 
             while (await reader.ReadAsync().ConfigureAwait(false))
             {
-                departments.Add(Mappers.MapToSMSDepartment(reader));
+                departments.Add(Mappers.MapToSMSOrganization(reader));
             }
 
             if (await reader.NextResultAsync().ConfigureAwait(false))
             {
                 while (await reader.ReadAsync().ConfigureAwait(false))
                 {
-                    var departmentCode = reader.GetValue<string>(FieldNames.fSMSDepartmentResponsibilityDepartmentCode);
-                    var responsibility = reader.GetValue<string>(FieldNames.fSMSDepartmentResponsibilityValue);
+                    var departmentCode = reader.GetValue<string>(FieldNames.fSMSOrganizationResponsibilityOrganziationCode);
+                    var responsibility = reader.GetValue<string>(FieldNames.fSMSOrganizationResponsibilityValue);
 
                     if (string.IsNullOrWhiteSpace(departmentCode) || string.IsNullOrWhiteSpace(responsibility))
                     {
@@ -82,7 +82,7 @@ public sealed class SMSOrganizationRepository : BaseRepository<SMSOrganizationRe
             await sql.CloseAsync().ConfigureAwait(false);
 
             var hydratedDepartments = departments
-                .Select(d => SMSDepartment.Create(
+                .Select(d => SMSOrganization.Create(
                     d.Value,
                     d.Name,
                     d.Description,
@@ -91,14 +91,14 @@ public sealed class SMSOrganizationRepository : BaseRepository<SMSOrganizationRe
                         : Array.Empty<string>()))
                 .ToList();
 
-            SMSDepartment.SetDepartments(hydratedDepartments);
+            SMSOrganization.SetDepartments(hydratedDepartments);
 
-            return Result<IEnumerable<SMSDepartment>>.Success(hydratedDepartments.AsEnumerable());
+            return Result<IEnumerable<SMSOrganization>>.Success(hydratedDepartments.AsEnumerable());
         }
         catch (Exception ex)
         {
             _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
-            return Result<IEnumerable<SMSDepartment>>.Failure<IEnumerable<SMSDepartment>>(DomainErrors.GeneralError.UnProcessableRequest);
+            return Result<IEnumerable<SMSOrganization>>.Failure<IEnumerable<SMSOrganization>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
     }
 }

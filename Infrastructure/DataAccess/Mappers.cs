@@ -280,17 +280,17 @@ public static partial class Mappers
     }
 
     /// <summary>
-    /// Maps SqlDataReader to SMSDepartment smart-enum value (without responsibilities).
+    /// Maps SqlDataReader to SMSOrganization smart-enum value (without responsibilities).
     /// </summary>
-    public static SMSDepartment MapToSMSDepartment(SqlDataReader reader)
+    public static SMSOrganization MapToSMSOrganization(SqlDataReader reader)
     {
-        var code = reader.GetValue<string>(FieldNames.fSMSDepartmentCode);
-        var name = reader.GetValue<string>(FieldNames.fSMSDepartmentName);
-        var description = reader.HasColumn(FieldNames.fSMSDepartmentDescription)
-            ? reader.GetValue<string>(FieldNames.fSMSDepartmentDescription)
+        var code = reader.GetValue<string>(FieldNames.fSMSOrganizationCode);
+        var name = reader.GetValue<string>(FieldNames.fSMSOrganizationName);
+        var description = reader.HasColumn(FieldNames.fSMSOrganizationDescription)
+            ? reader.GetValue<string>(FieldNames.fSMSOrganizationDescription)
             : string.Empty;
 
-        return SMSDepartment.Create(code, name, description, Array.Empty<string>());
+        return SMSOrganization.Create(code, name, description, Array.Empty<string>());
     }
 
     /// <summary>
@@ -302,27 +302,39 @@ public static partial class Mappers
         var stakeholderGroup = reader.HasColumn(FieldNames.fSMSCompanyStakeholderGroup)
             ? reader.GetValue<string>(FieldNames.fSMSCompanyStakeholderGroup)
             : string.Empty;
-        var company = reader.HasColumn(FieldNames.fSMSCompanyCompany)
-            ? reader.GetValue<string>(FieldNames.fSMSCompanyCompany)
-            : string.Empty;
-        var contactName = reader.HasColumn(FieldNames.fSMSCompanyName)
+        var company = reader.HasColumn(FieldNames.fSMSCompanyName)
             ? reader.GetValue<string>(FieldNames.fSMSCompanyName)
-            : string.Empty;
+            : (reader.HasColumn(FieldNames.fSMSCompanyCompany)
+                ? reader.GetValue<string>(FieldNames.fSMSCompanyCompany)
+                : string.Empty);
+        var contactName = reader.HasColumn(FieldNames.fSMSCompanyContactName)
+            ? reader.GetValue<string>(FieldNames.fSMSCompanyContactName)
+            : (reader.HasColumn(FieldNames.fSMSCompanyName)
+                ? reader.GetValue<string>(FieldNames.fSMSCompanyName)
+                : string.Empty);
         var title = reader.HasColumn(FieldNames.fSMSCompanyTitle)
             ? reader.GetValue<string>(FieldNames.fSMSCompanyTitle)
             : string.Empty;
         var serviceProvided = reader.HasColumn(FieldNames.fSMSCompanyServiceProvided)
             ? reader.GetValue<string>(FieldNames.fSMSCompanyServiceProvided)
-            : string.Empty;
-        var email = reader.HasColumn(FieldNames.fSMSCompanyEmail)
-            ? reader.GetValue<string>(FieldNames.fSMSCompanyEmail)
-            : string.Empty;
-        var phone = reader.HasColumn(FieldNames.fSMSCompanyPhone)
-            ? reader.GetValue<string>(FieldNames.fSMSCompanyPhone)
-            : string.Empty;
-        var portRep = reader.HasColumn(FieldNames.fSMSCompanyPortRep)
-            ? reader.GetValue<string>(FieldNames.fSMSCompanyPortRep)
-            : string.Empty;
+            : (reader.HasColumn(FieldNames.fSMSCompanyDescription)
+                ? reader.GetValue<string>(FieldNames.fSMSCompanyDescription)
+                : string.Empty);
+        var email = reader.HasColumn(FieldNames.fSMSCompanyContactEmail)
+            ? reader.GetValue<string>(FieldNames.fSMSCompanyContactEmail)
+            : (reader.HasColumn(FieldNames.fSMSCompanyEmail)
+                ? reader.GetValue<string>(FieldNames.fSMSCompanyEmail)
+                : string.Empty);
+        var phone = reader.HasColumn(FieldNames.fSMSCompanyContactPhone)
+            ? reader.GetValue<string>(FieldNames.fSMSCompanyContactPhone)
+            : (reader.HasColumn(FieldNames.fSMSCompanyPhone)
+                ? reader.GetValue<string>(FieldNames.fSMSCompanyPhone)
+                : string.Empty);
+        var portRep = reader.HasColumn(FieldNames.fSMSCompanyInternalRepresentative)
+            ? reader.GetValue<string>(FieldNames.fSMSCompanyInternalRepresentative)
+            : (reader.HasColumn(FieldNames.fSMSCompanyPortRep)
+                ? reader.GetValue<string>(FieldNames.fSMSCompanyPortRep)
+                : string.Empty);
 
         return SMSCompany.Create(code, stakeholderGroup, company, contactName, title, serviceProvided, email, phone, portRep);
     }

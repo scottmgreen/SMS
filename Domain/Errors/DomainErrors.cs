@@ -279,10 +279,10 @@ public static class DomainErrors
     /// </summary>
     public static class SMSDepartmentError
     {
-        public static Error NullOrEmpty => new Error("SMSDepartment.NullOrEmpty", "The SMS Department is required.");
-        public static Error InvalidDepartment => new Error("SMSDepartment.InvalidDepartment", "The SMS Department is not valid.");
-        public static Error DepartmentNotFound => new Error("SMSDepartment.DepartmentNotFound", "The specified SMS Department was not found.");
-        public static Error ResponsibilityNotFound => new Error("SMSDepartment.ResponsibilityNotFound", "The specified responsibility is not assigned to this department.");
+        public static Error NullOrEmpty => new Error("SMSOrganization.NullOrEmpty", "The SMS Department is required.");
+        public static Error InvalidDepartment => new Error("SMSOrganization.InvalidDepartment", "The SMS Department is not valid.");
+        public static Error DepartmentNotFound => new Error("SMSOrganization.DepartmentNotFound", "The specified SMS Department was not found.");
+        public static Error ResponsibilityNotFound => new Error("SMSOrganization.ResponsibilityNotFound", "The specified responsibility is not assigned to this department.");
     }
 
     /// <summary>
