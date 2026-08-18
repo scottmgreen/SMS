@@ -48,6 +48,7 @@ public partial class OrganizationalGroups : ComponentBase
 
     private List<SMSOrganizationalGroup> SMSOrganizationalGroups { get; set; } = new();
     private List<SMSOrganizationalUser> SMSOrganizationalUsers { get; set; } = new();
+    private List<SMSCompany> CompanyOptions { get; set; } = new();
     private Dictionary<string, int> GroupMemberCounts { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     private List<SMSOrganizationalUser> GroupMembers { get; set; } = new();
     private List<SMSOrganizationalUser> AvailableUsers { get; set; } = new();
@@ -79,11 +80,13 @@ public partial class OrganizationalGroups : ComponentBase
     private string _newContactEmail { get; set; } = string.Empty;
     private string _newGroupType { get; set; } = string.Empty;
     private string _newAuthorityLevel { get; set; } = string.Empty;
+    private HashSet<string> _newAllowedCompanyCodes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     private string _editGroupName { get; set; } = string.Empty;
     private string _editDescription { get; set; } = string.Empty;
     private string _editContactEmail { get; set; } = string.Empty;
     private string _editGroupType { get; set; } = string.Empty;
     private string _editAuthorityLevel { get; set; } = string.Empty;
+    private HashSet<string> _editAllowedCompanyCodes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     private bool _editIsActive { get; set; } = true;
     private string _deleteGroupCode { get; set; } = string.Empty;
     private string _deleteGroupName { get; set; } = string.Empty;
@@ -140,6 +143,11 @@ public partial class OrganizationalGroups : ComponentBase
             SMSOrganizationalUsers = usersResult.IsSuccess ?
                 usersResult.Value?.ToList() ?? new List<SMSOrganizationalUser>() :
                 new List<SMSOrganizationalUser>();
+
+            CompanyOptions = SMSCompany.GetAllValuesList()
+                .Where(c => c is not null && !string.IsNullOrWhiteSpace(c.Value))
+                .OrderBy(c => c.Company)
+                .ToList();
 
             await LoadGroupMemberCountsAsync();
 
@@ -226,6 +234,9 @@ public partial class OrganizationalGroups : ComponentBase
             _editContactEmail = _currentGroup.ContactEmail ?? string.Empty;
             _editGroupType = _currentGroup.GroupType.ToUpper() ?? string.Empty;
             _editAuthorityLevel = _currentGroup.AuthorityLevel ?? string.Empty;
+            _editAllowedCompanyCodes = new HashSet<string>(
+                _currentGroup.AllowedCompanyCodes ?? new List<string>(),
+                StringComparer.OrdinalIgnoreCase);
             _editIsActive = _currentGroup.IsActive;
 
             // Debug logging to help identify binding issues
@@ -252,6 +263,7 @@ public partial class OrganizationalGroups : ComponentBase
         _editContactEmail = string.Empty;
         _editGroupType = string.Empty;
         _editAuthorityLevel = string.Empty;
+        _editAllowedCompanyCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         _editIsActive = true;
         _navigation.NavigateToSecure("/System/UserGroups/OrganizationalGroups");
     }
@@ -265,6 +277,7 @@ public partial class OrganizationalGroups : ComponentBase
         _editContactEmail = string.Empty;
         _editGroupType = string.Empty; // This will select the default "-- Select --" option
         _editAuthorityLevel = string.Empty; // This will select the default "-- Select --" option
+        _editAllowedCompanyCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         _editIsActive = true;
     }
 
@@ -308,7 +321,8 @@ public partial class OrganizationalGroups : ComponentBase
                 ContactEmail = string.IsNullOrWhiteSpace(_newContactEmail) ? null : _newContactEmail.Trim(),
                 GroupType = _newGroupType,
                 AuthorityLevel = _newAuthorityLevel,
-                IsActive = true
+                IsActive = true,
+                AllowedCompanyCodes = _newAllowedCompanyCodes.ToList()
             };
 
             var command = new CreateSMSOrganizationalGroupCommand(group);
@@ -319,6 +333,7 @@ public partial class OrganizationalGroups : ComponentBase
                 await ShowSuccessAsyncNotification($"Organizational group '{_newGroupName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
+                await RefreshMembersAfterCompanyAssignmentSaveAsync(result.Value?.Code);
                 if (_groupsGrid != null)
                     await _groupsGrid.Reload();
             }
@@ -370,6 +385,7 @@ public partial class OrganizationalGroups : ComponentBase
             _currentGroup.ContactEmail = string.IsNullOrWhiteSpace(_editContactEmail) ? null : _editContactEmail.Trim();
             _currentGroup.GroupType = _editGroupType;
             _currentGroup.AuthorityLevel = _editAuthorityLevel;
+            _currentGroup.AllowedCompanyCodes = _editAllowedCompanyCodes.ToList();
             _currentGroup.IsActive = _editIsActive;
 
             var updateCommand = new UpdateSMSOrganizationalGroupCommand(_currentGroup);
@@ -378,8 +394,10 @@ public partial class OrganizationalGroups : ComponentBase
             if (result.IsSuccess)
             {
                 await ShowSuccessAsyncNotification($"Organizational group '{_editGroupName}' updated successfully.");
+                var updatedGroupCode = _currentGroup.Code;
                 CloseEditModal();
                 await LoadDataAsync();
+                await RefreshMembersAfterCompanyAssignmentSaveAsync(updatedGroupCode);
                 if (_groupsGrid != null)
                     await _groupsGrid.Reload();
             }
@@ -474,6 +492,7 @@ public partial class OrganizationalGroups : ComponentBase
         _newContactEmail = string.Empty;
         _newGroupType = string.Empty;
         _newAuthorityLevel = string.Empty;
+        _newAllowedCompanyCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         _showCreateModal = true;
     }
 
@@ -485,6 +504,7 @@ public partial class OrganizationalGroups : ComponentBase
         _newContactEmail = string.Empty;
         _newGroupType = string.Empty;
         _newAuthorityLevel = string.Empty;
+        _newAllowedCompanyCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     }
 
     private async Task ConfirmDelete(string groupCode, string groupName)
@@ -505,6 +525,54 @@ public partial class OrganizationalGroups : ComponentBase
         _showDeleteModal = false;
         _deleteGroupCode = string.Empty;
         _deleteGroupName = string.Empty;
+    }
+
+    private bool IsCreateCompanySelected(string companyCode) =>
+        _newAllowedCompanyCodes.Contains(companyCode);
+
+    private bool IsEditCompanySelected(string companyCode) =>
+        _editAllowedCompanyCodes.Contains(companyCode);
+
+    private void SetCreateCompanySelection(string companyCode, bool isSelected)
+    {
+        if (isSelected)
+        {
+            _newAllowedCompanyCodes.Add(companyCode);
+            return;
+        }
+
+        _newAllowedCompanyCodes.Remove(companyCode);
+    }
+
+    private void SetEditCompanySelection(string companyCode, bool isSelected)
+    {
+        if (isSelected)
+        {
+            _editAllowedCompanyCodes.Add(companyCode);
+            return;
+        }
+
+        _editAllowedCompanyCodes.Remove(companyCode);
+    }
+
+    private async Task RefreshMembersAfterCompanyAssignmentSaveAsync(string? groupCode)
+    {
+        if (string.IsNullOrWhiteSpace(groupCode)
+            || !_showMembersModal
+            || string.IsNullOrWhiteSpace(_currentGroupCode)
+            || !string.Equals(_currentGroupCode, groupCode, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _currentGroup = SMSOrganizationalGroups.FirstOrDefault(g =>
+            string.Equals(g.Code, groupCode, StringComparison.OrdinalIgnoreCase));
+
+        if (_currentGroup is not null)
+        {
+            await LoadGroupMembersAsync(groupCode);
+            StateHasChanged();
+        }
     }
 
     #endregion
@@ -587,10 +655,14 @@ public partial class OrganizationalGroups : ComponentBase
 
             var memberCodes = GroupMembers.Select(m => m.Code).ToHashSet();
             var groupAuthorityLevel = _currentGroup?.EffectiveAuthorityLevel ?? 0;
+            var allowedCompanies = _currentGroup?.AllowedCompanyCodes ?? new List<string>();
 
             AvailableUsers = SMSOrganizationalUsers
                 .Where(u => !memberCodes.Contains(u.Code))
                 .Where(u => u.EffectiveAuthorityLevel >= groupAuthorityLevel)
+                .Where(u => allowedCompanies.Count == 0
+                    || (!string.IsNullOrWhiteSpace(u.Company)
+                        && allowedCompanies.Any(c => c.Equals(u.Company, StringComparison.OrdinalIgnoreCase))))
                 .ToList();
 
             // Initialize selection tracking
@@ -612,8 +684,12 @@ public partial class OrganizationalGroups : ComponentBase
             // For now, if the query fails, just load empty collections
             GroupMembers = new List<SMSOrganizationalUser>();
             var groupAuthorityLevel = _currentGroup?.EffectiveAuthorityLevel ?? 0;
+            var allowedCompanies = _currentGroup?.AllowedCompanyCodes ?? new List<string>();
             AvailableUsers = SMSOrganizationalUsers?
                 .Where(u => u.EffectiveAuthorityLevel >= groupAuthorityLevel)
+                .Where(u => allowedCompanies.Count == 0
+                    || (!string.IsNullOrWhiteSpace(u.Company)
+                        && allowedCompanies.Any(c => c.Equals(u.Company, StringComparison.OrdinalIgnoreCase))))
                 .ToList() ?? new List<SMSOrganizationalUser>();
             GroupMemberCounts[groupCode] = 0;
         }

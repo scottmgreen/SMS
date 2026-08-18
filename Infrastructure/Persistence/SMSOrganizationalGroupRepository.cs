@@ -34,6 +34,136 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
         _logger.LogInfrastructureInformation(InfrastructureEventIds.InfrastructureEvent, $"{_logHeader} SMS Organizational Group Repository Initialized");
     }
 
+    public async Task<Result<IEnumerable<string>>> GetAllowedCompaniesByGroupCodeAsync(string groupCode)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                return Result<IEnumerable<string>>.Failure<IEnumerable<string>>(DomainErrors.SMSOrganizationalGroupError.CodeRequired);
+            }
+
+            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSOrganizationalGroupCompany_GetByGroupCode} GroupCode:{groupCode}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            using var cmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalGroupCompany_GetByGroupCode, sql)
+            {
+                CommandType = CommandType.StoredProcedure
+            };
+
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, groupCode));
+
+            var allowedCompanies = new List<string>();
+
+            await sql.OpenAsync().ConfigureAwait(false);
+            using var reader = await cmd.ExecuteReaderAsync().ConfigureAwait(false);
+
+            while (await reader.ReadAsync().ConfigureAwait(false))
+            {
+                var companyCode = reader.GetValue<string>("CompanyCode");
+                if (!string.IsNullOrWhiteSpace(companyCode))
+                {
+                    allowedCompanies.Add(companyCode.Trim());
+                }
+            }
+
+            await sql.CloseAsync().ConfigureAwait(false);
+
+            return Result<IEnumerable<string>>.Success(allowedCompanies.AsEnumerable());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
+            return Result<IEnumerable<string>>.Failure<IEnumerable<string>>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
+    public async Task<Result<bool>> ReplaceAllowedCompaniesByGroupCodeAsync(string groupCode, IEnumerable<string> companyCodes, string updatedBy)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.CodeRequired);
+            }
+
+            _logger.LogInfrastructurePutItem($"{_logHeader} Sync allowed companies GroupCode:{groupCode}", null);
+
+            using var sql = new SqlConnection(_connectionString);
+            await sql.OpenAsync().ConfigureAwait(false);
+
+            var targetCompanyCodes = companyCodes?
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase)
+                ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            var currentAllowedResult = await GetAllowedCompaniesByGroupCodeAsync(groupCode).ConfigureAwait(false);
+            if (currentAllowedResult.IsFailure)
+            {
+                return Result<bool>.Failure<bool>(currentAllowedResult.Error ?? DomainErrors.GeneralError.UnProcessableRequest);
+            }
+
+            var currentCompanyCodes = currentAllowedResult.Value?
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToHashSet(StringComparer.OrdinalIgnoreCase)
+                ?? new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            var companiesToRemove = currentCompanyCodes
+                .Where(c => !targetCompanyCodes.Contains(c))
+                .ToList();
+
+            var companiesToAdd = targetCompanyCodes
+                .Where(c => !currentCompanyCodes.Contains(c))
+                .ToList();
+
+            foreach (var companyCode in companiesToRemove)
+            {
+                using var removeCmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalGroupCompany_Remove, sql)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                removeCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompanyCode, companyCode));
+                removeCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmGroupCode, groupCode));
+                removeCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRemovedBy, updatedBy ?? string.Empty));
+                await removeCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            }
+
+            foreach (var companyCode in companiesToAdd)
+            {
+                using var assignCmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalGroupCompany_Assign, sql)
+                {
+                    CommandType = CommandType.StoredProcedure
+                };
+
+                assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompanyCode, companyCode));
+                assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmGroupCode, groupCode));
+                assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedBy, updatedBy ?? string.Empty));
+                assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.UtcNow));
+
+                var newID = new SqlParameter(ParameterNames.pmNewID, SqlDbType.Int)
+                {
+                    Direction = ParameterDirection.Output
+                };
+                assignCmd.Parameters.Add(newID);
+
+                await assignCmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            }
+
+            await sql.CloseAsync().ConfigureAwait(false);
+            return Result<bool>.Success(true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructurePutItemError($"{_logHeader} {ex.Message}", null);
+            return Result<bool>.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
+        }
+    }
+
     public async Task<Result<IEnumerable<SMSOrganizationalGroup>>> GetAllAsync()
     {
         try

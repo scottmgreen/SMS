@@ -88,30 +88,6 @@ public class GetActiveSMSStakeholderUsersQuery : BaseQueryBundle, IRequest<Resul
 }
 
 /// <summary>
-/// Query to get SMS stakeholder users by stakeholder type
-/// </summary>
-public class GetSMSStakeholderUsersByTypeQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSStakeholderUser>>>
-{
-    /// <summary>
-    /// The stakeholder type to filter by
-    /// </summary>
-    public string StakeholderType { get; set; }
-
-    /// <summary>
-    /// Initializes a new instance of the GetSMSStakeholderUsersByTypeQuery class.
-    /// </summary>
-    /// <param name="stakeholderType">The stakeholder type to filter by</param>
-    /// <exception cref="ArgumentException">Thrown when stakeholderType is null or empty</exception>
-    public GetSMSStakeholderUsersByTypeQuery(string stakeholderType)
-    {
-        if (string.IsNullOrWhiteSpace(stakeholderType))
-            throw new ArgumentException("Stakeholder type cannot be null or empty", nameof(stakeholderType));
-
-        StakeholderType = stakeholderType;
-    }
-}
-
-/// <summary>
 /// Query to get SMS stakeholder users by organization
 /// </summary>
 public class GetSMSStakeholderUsersByOrganizationQuery : BaseQueryBundle, IRequest<Result<IEnumerable<SMSStakeholderUser>>>

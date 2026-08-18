@@ -91,7 +91,7 @@
 @if (_showCreateModal)
 {
     <div class="modal-backdrop">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog user-mgmt-modal">
             <RadzenCard class="modal-content">
                 <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
                     <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
@@ -115,7 +115,7 @@
 
                 <RadzenRow Gap="1rem" class="mt-2">
                     <RadzenColumn Size="12">
-                        <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                        <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;">
                             <RadzenTextArea @bind-Value="_newDescription" Rows="3" Style="width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
@@ -156,7 +156,7 @@
 @if (_showEditModal)
 {
     <div class="modal-backdrop">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog user-mgmt-modal">
             <RadzenCard class="modal-content">
                 <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
                     <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
@@ -180,7 +180,7 @@
 
                 <RadzenRow Gap="1rem" class="mt-2">
                     <RadzenColumn Size="12">
-                        <RadzenFormField Text="Description" Variant="Variant.Outlined">
+                        <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;">
                             <RadzenTextArea @bind-Value="_editDescription" Rows="3" Style="width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
@@ -222,3 +222,31 @@
         </div>
     </div>
 }
+
+<style>
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-dialog {
+    width: 90%;
+    max-width: 500px;
+    margin: 2rem;
+    overflow-x: hidden;
+}
+
+.modal-dialog.user-mgmt-modal {
+    width: min(92vw, 900px);
+    max-width: 900px;
+    margin: 1rem;
+}
+</style>

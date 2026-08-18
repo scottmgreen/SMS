@@ -10,6 +10,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using SMS_Infrastructure.Interfaces;
 
 namespace SMS3.Components.Pages.SMSSystem.UserManagement;
 
@@ -20,12 +21,21 @@ namespace SMS3.Components.Pages.SMSSystem.UserManagement;
 /// </summary>
 public partial class ApplicationUsers : ComponentBase
 {
+    private sealed class LookupOption
+    {
+        public string Value { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+    }
+
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ApplicationUsers> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private ISMSCompanyRepository _companyRepository { get; set; } = default!;
+    [Inject] private ISMSOrganizationRepository _organizationRepository { get; set; } = default!;
+    [Inject] private ISMSJobTitleRepository _jobTitleRepository { get; set; } = default!;
 
     // Route parameter for edit mode
     [Parameter] public string? Id { get; set; }
@@ -123,6 +133,8 @@ public partial class ApplicationUsers : ComponentBase
     {
         try
         {
+            await LoadLookupOptionsAsync();
+
             // Load Application Users
             var applicationUsersQuery = new GetAllSMSApplicationUsersQuery();
             var applicationUsersResult = await _mediator.SendAsync(applicationUsersQuery, CancellationToken.None);
@@ -186,9 +198,9 @@ public partial class ApplicationUsers : ComponentBase
             {
                 FirstName = _currentUser?.FirstName?.Value ?? "",
                 LastName = _currentUser?.LastName?.Value ?? "",
-                Company = _currentUser?.Company ?? string.Empty,
-                Organization = _currentUser?.Organization ?? string.Empty,
-                Title = _currentUser?.Title ?? string.Empty,
+                Company = NormalizeCompanySelection(_currentUser?.Company),
+                Organization = NormalizeOrganizationSelection(_currentUser?.Organization),
+                Title = NormalizeTitleSelection(_currentUser?.Title),
                 JobFunction = _currentUser?.JobFunction ?? string.Empty
             };
 
@@ -716,6 +728,94 @@ public partial class ApplicationUsers : ComponentBase
 
     // ADDED: Missing property for NewIsActive binding
     private bool _newIsActive { get; set; } = true;
+
+    private List<LookupOption> _companyOptions = new();
+    private List<LookupOption> _organizationOptions = new();
+    private List<LookupOption> _titleOptions = new();
+
+    private List<LookupOption> CompanyOptions => _companyOptions;
+
+    private List<LookupOption> OrganizationOptions => _organizationOptions;
+
+    private List<LookupOption> TitleOptions => _titleOptions;
+
+    private async Task LoadLookupOptionsAsync()
+    {
+        var companyResult = await _companyRepository.GetAllAsync();
+        _companyOptions = companyResult.IsSuccess
+            ? companyResult.Value?
+                .OrderBy(c => c.Company)
+                .Select(c => new LookupOption { Value = c.Value, Text = c.Company })
+                .ToList() ?? new List<LookupOption>()
+            : new List<LookupOption>();
+
+        var organizationResult = await _organizationRepository.GetAllAsync();
+        _organizationOptions = organizationResult.IsSuccess
+            ? organizationResult.Value?
+                .OrderBy(o => o.Name)
+                .Select(o => new LookupOption { Value = o.Value, Text = o.Name })
+                .ToList() ?? new List<LookupOption>()
+            : new List<LookupOption>();
+
+        var titleResult = await _jobTitleRepository.GetAllAsync();
+        _titleOptions = titleResult.IsSuccess
+            ? titleResult.Value?
+                .OrderBy(t => t.Name)
+                .Select(t => new LookupOption { Value = t.Value, Text = t.Name })
+                .ToList() ?? new List<LookupOption>()
+            : new List<LookupOption>();
+    }
+
+    private static string NormalizeCompanySelection(string? rawValue)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return string.Empty;
+        }
+
+        var byValue = SMSCompany.FromValue(rawValue);
+        if (byValue is not null)
+        {
+            return byValue.Value;
+        }
+
+        var byName = SMSCompany.FromCompany(rawValue);
+        return byName?.Value ?? rawValue;
+    }
+
+    private static string NormalizeOrganizationSelection(string? rawValue)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return string.Empty;
+        }
+
+        var byValue = SMSOrganization.FromValue(rawValue);
+        if (byValue is not null)
+        {
+            return byValue.Value;
+        }
+
+        var byName = SMSOrganization.FromName(rawValue);
+        return byName?.Value ?? rawValue;
+    }
+
+    private static string NormalizeTitleSelection(string? rawValue)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return string.Empty;
+        }
+
+        var byValue = SMSJobTitle.FromValue(rawValue);
+        if (byValue is not null)
+        {
+            return byValue.Value;
+        }
+
+        var byName = SMSJobTitle.FromName(rawValue);
+        return byName?.Value ?? rawValue;
+    }
 
     #endregion
 

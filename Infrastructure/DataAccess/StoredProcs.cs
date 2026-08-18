@@ -168,9 +168,6 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_SMSStakeholderUser_GetByUserName = new(() => "pr_SMSStakeholderUser_GetByUserName");
         public static string pr_SMSStakeholderUser_GetByUserName => _pr_SMSStakeholderUser_GetByUserName.Value;
 
-        private static readonly Lazy<string> _pr_SMSStakeholderUser_GetByStakeholderType = new(() => "pr_SMSStakeholderUser_GetByStakeholderType");
-        public static string pr_SMSStakeholderUser_GetByStakeholderType => _pr_SMSStakeholderUser_GetByStakeholderType.Value;
-
         private static readonly Lazy<string> _pr_SMSStakeholderUser_GetByOrganization = new(() => "pr_SMSStakeholderUser_GetByOrganization");
         public static string pr_SMSStakeholderUser_GetByOrganization => _pr_SMSStakeholderUser_GetByOrganization.Value;
 
@@ -205,8 +202,35 @@ namespace SMS_Infrastructure.Common
         private static readonly Lazy<string> _pr_SMSStakeholderUserTitle_GetAll = new(() => "pr_SMSStakeholderUserTitle_GetAll");
         public static string pr_SMSStakeholderUserTitle_GetAll => _pr_SMSStakeholderUserTitle_GetAll.Value;
 
+        private static readonly Lazy<string> _pr_SMSTitle_GetAll = new(() => "pr_SMSJobTitle_GetAll");
+        public static string pr_SMSTitle_GetAll => _pr_SMSTitle_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSTitle_GetByCode = new(() => "pr_SMSJobTitle_GetByCode");
+        public static string pr_SMSTitle_GetByCode => _pr_SMSTitle_GetByCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSTitle_Insert = new(() => "pr_SMSJobTitle_Insert");
+        public static string pr_SMSTitle_Insert => _pr_SMSTitle_Insert.Value;
+
+        private static readonly Lazy<string> _pr_SMSTitle_Update = new(() => "pr_SMSJobTitle_Update");
+        public static string pr_SMSTitle_Update => _pr_SMSTitle_Update.Value;
+
+        private static readonly Lazy<string> _pr_SMSTitle_Delete = new(() => "pr_SMSJobTitle_Delete");
+        public static string pr_SMSTitle_Delete => _pr_SMSTitle_Delete.Value;
+
         private static readonly Lazy<string> _pr_SMSOrganization_GetAll = new(() => "pr_SMSOrganization_GetAll");
         public static string pr_SMSOrganization_GetAll => _pr_SMSOrganization_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrganization_GetByCode = new(() => "pr_SMSOrganization_GetByCode");
+        public static string pr_SMSOrganization_GetByCode => _pr_SMSOrganization_GetByCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrganization_Insert = new(() => "pr_SMSOrganization_Insert");
+        public static string pr_SMSOrganization_Insert => _pr_SMSOrganization_Insert.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrganization_Update = new(() => "pr_SMSOrganization_Update");
+        public static string pr_SMSOrganization_Update => _pr_SMSOrganization_Update.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrganization_Delete = new(() => "pr_SMSOrganization_Delete");
+        public static string pr_SMSOrganization_Delete => _pr_SMSOrganization_Delete.Value;
 
         private static readonly Lazy<string> _pr_SMSOrginization_GetAll = new(() => "pr_SMSOrganization_GetAll");
         public static string pr_SMSOrginization_GetAll => _pr_SMSOrginization_GetAll.Value;
@@ -228,6 +252,24 @@ namespace SMS_Infrastructure.Common
 
         private static readonly Lazy<string> _pr_SMSCompanies_GetAll = new(() => "pr_SMSCompany_GetAll");
         public static string pr_SMSCompanies_GetAll => _pr_SMSCompanies_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSJobTitle_GetAll = new(() => "pr_SMSJobTitle_GetAll");
+        public static string pr_SMSJobTitle_GetAll => _pr_SMSJobTitle_GetAll.Value;
+
+        private static readonly Lazy<string> _pr_SMSJobTitle_GetByCode = new(() => "pr_SMSJobTitle_GetByCode");
+        public static string pr_SMSJobTitle_GetByCode => _pr_SMSJobTitle_GetByCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSJobTitle_Insert = new(() => "pr_SMSJobTitle_Insert");
+        public static string pr_SMSJobTitle_Insert => _pr_SMSJobTitle_Insert.Value;
+
+        private static readonly Lazy<string> _pr_SMSJobTitle_Update = new(() => "pr_SMSJobTitle_Update");
+        public static string pr_SMSJobTitle_Update => _pr_SMSJobTitle_Update.Value;
+
+        private static readonly Lazy<string> _pr_SMSJobTitle_Delete = new(() => "pr_SMSJobTitle_Delete");
+        public static string pr_SMSJobTitle_Delete => _pr_SMSJobTitle_Delete.Value;
+
+        private static readonly Lazy<string> _pr_SMSJobTitles_GetAll = new(() => "pr_SMSJobTitle_GetAll");
+        public static string pr_SMSJobTitles_GetAll => _pr_SMSJobTitles_GetAll.Value;
 
         #endregion
 
@@ -322,6 +364,42 @@ namespace SMS_Infrastructure.Common
 
         private static readonly Lazy<string> _pr_SMSApplicationUserGroup_ClearUserGroups = new(() => "pr_SMSApplicationUserGroup_ClearUserGroups");
         public static string pr_SMSApplicationUserGroup_ClearUserGroups => _pr_SMSApplicationUserGroup_ClearUserGroups.Value;
+
+        private static readonly Lazy<string> _pr_SMSApplicationGroupCompany_GetByGroupCode = new(() => "pr_SMSApplicationGroupCompany_GetByGroupCode");
+        public static string pr_SMSApplicationGroupCompany_GetByGroupCode => _pr_SMSApplicationGroupCompany_GetByGroupCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSApplicationGroupCompany_Assign = new(() => "pr_SMSApplicationGroupCompany_Assign");
+        public static string pr_SMSApplicationGroupCompany_Assign => _pr_SMSApplicationGroupCompany_Assign.Value;
+
+        private static readonly Lazy<string> _pr_SMSApplicationGroupCompany_Remove = new(() => "pr_SMSApplicationGroupCompany_Remove");
+        public static string pr_SMSApplicationGroupCompany_Remove => _pr_SMSApplicationGroupCompany_Remove.Value;
+
+        private static readonly Lazy<string> _pr_SMSApplicationGroupCompany_ReplaceByGroupCode = new(() => "pr_SMSApplicationGroupCompany_ReplaceByGroupCode");
+        public static string pr_SMSApplicationGroupCompany_ReplaceByGroupCode => _pr_SMSApplicationGroupCompany_ReplaceByGroupCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrganizationalGroupCompany_GetByGroupCode = new(() => "pr_SMSOrganizationalGroupCompany_GetByGroupCode");
+        public static string pr_SMSOrganizationalGroupCompany_GetByGroupCode => _pr_SMSOrganizationalGroupCompany_GetByGroupCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrganizationalGroupCompany_Assign = new(() => "pr_SMSOrganizationalGroupCompany_Assign");
+        public static string pr_SMSOrganizationalGroupCompany_Assign => _pr_SMSOrganizationalGroupCompany_Assign.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrganizationalGroupCompany_Remove = new(() => "pr_SMSOrganizationalGroupCompany_Remove");
+        public static string pr_SMSOrganizationalGroupCompany_Remove => _pr_SMSOrganizationalGroupCompany_Remove.Value;
+
+        private static readonly Lazy<string> _pr_SMSOrganizationalGroupCompany_ReplaceByGroupCode = new(() => "pr_SMSOrganizationalGroupCompany_ReplaceByGroupCode");
+        public static string pr_SMSOrganizationalGroupCompany_ReplaceByGroupCode => _pr_SMSOrganizationalGroupCompany_ReplaceByGroupCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSStakeholderGroupCompany_GetByGroupCode = new(() => "pr_SMSStakeholderGroupCompany_GetByGroupCode");
+        public static string pr_SMSStakeholderGroupCompany_GetByGroupCode => _pr_SMSStakeholderGroupCompany_GetByGroupCode.Value;
+
+        private static readonly Lazy<string> _pr_SMSStakeholderGroupCompany_Assign = new(() => "pr_SMSStakeholderGroupCompany_Assign");
+        public static string pr_SMSStakeholderGroupCompany_Assign => _pr_SMSStakeholderGroupCompany_Assign.Value;
+
+        private static readonly Lazy<string> _pr_SMSStakeholderGroupCompany_Remove = new(() => "pr_SMSStakeholderGroupCompany_Remove");
+        public static string pr_SMSStakeholderGroupCompany_Remove => _pr_SMSStakeholderGroupCompany_Remove.Value;
+
+        private static readonly Lazy<string> _pr_SMSStakeholderGroupCompany_ReplaceByGroupCode = new(() => "pr_SMSStakeholderGroupCompany_ReplaceByGroupCode");
+        public static string pr_SMSStakeholderGroupCompany_ReplaceByGroupCode => _pr_SMSStakeholderGroupCompany_ReplaceByGroupCode.Value;
 
 
         #endregion

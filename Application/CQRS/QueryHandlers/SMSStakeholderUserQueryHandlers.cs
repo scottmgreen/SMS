@@ -183,39 +183,6 @@ public class GetActiveSMSStakeholderUsersQueryHandler : BaseQueryBundle, IBaseRe
 }
 
 /// <summary>
-/// Query handler for getting SMS stakeholder users by type
-/// </summary>
-public class GetSMSStakeholderUsersByTypeQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSStakeholderUsersByTypeQuery, Result<IEnumerable<SMSStakeholderUser>>>
-{
-    private readonly SMSStakeholderUserService _stakeholderUserService;
-    private readonly ILogger<GetSMSStakeholderUsersByTypeQueryHandler> _logger;
-
-    public GetSMSStakeholderUsersByTypeQueryHandler(SMSStakeholderUserService stakeholderUserService, ILogger<GetSMSStakeholderUsersByTypeQueryHandler> logger)
-    {
-        _stakeholderUserService = stakeholderUserService ?? throw new ArgumentNullException(nameof(stakeholderUserService));
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-    }
-
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> HandleAsync(GetSMSStakeholderUsersByTypeQuery request, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogApplicationInformation("Processing GetSMSStakeholderUsersByTypeQuery for Type: {StakeholderType}", request.StakeholderType);
-
-            var result = await _stakeholderUserService.GetSMSStakeholderUsersByTypeAsync(request.StakeholderType, ct);
-
-            _logger.LogApplicationInformation("Successfully retrieved {Count} SMS Stakeholder Users for Type: {StakeholderType}", result.Value?.Count() ?? 0, request.StakeholderType);
-            return result;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Error processing GetSMSStakeholderUsersByTypeQuery for Type: {StakeholderType}", ApplicationEventIds.Error, ex);
-            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
-}
-
-/// <summary>
 /// Query handler for getting SMS stakeholder users by organization
 /// </summary>
 public class GetSMSStakeholderUsersByOrganizationQueryHandler : BaseQueryBundle, IBaseRequestHandler<GetSMSStakeholderUsersByOrganizationQuery, Result<IEnumerable<SMSStakeholderUser>>>

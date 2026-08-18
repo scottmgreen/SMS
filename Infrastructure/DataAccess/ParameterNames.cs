@@ -206,6 +206,12 @@ public static class ParameterNames
 
     private static readonly Lazy<string> _pmSMSUserJobFunction = new Lazy<string>(() => "@pJobFunction");
     public static string pmSMSUserJobFunction => _pmSMSUserJobFunction.Value;
+
+    private static readonly Lazy<string> _pmSMSJobTitleCode = new Lazy<string>(() => "@pCode");
+    public static string pmSMSJobTitleCode => _pmSMSJobTitleCode.Value;
+
+    private static readonly Lazy<string> _pmSMSJobTitleName = new Lazy<string>(() => "@pName");
+    public static string pmSMSJobTitleName => _pmSMSJobTitleName.Value;
     /// <summary>
     /// SMS Stakeholder User parameters
     /// </summary>
@@ -1289,6 +1295,28 @@ public static class ParameterNames
 
     #endregion
 
+    #region SMS Organization Parameters
+
+    private static readonly Lazy<string> _pmSMSOrganizationCode = new Lazy<string>(() => "@pCode");
+    public static string pmSMSOrganizationCode => _pmSMSOrganizationCode.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationValue = new Lazy<string>(() => "@pValue");
+    public static string pmSMSOrganizationValue => _pmSMSOrganizationValue.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationName = new Lazy<string>(() => "@pName");
+    public static string pmSMSOrganizationName => _pmSMSOrganizationName.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationDescription = new Lazy<string>(() => "@pDescription");
+    public static string pmSMSOrganizationDescription => _pmSMSOrganizationDescription.Value;
+
+    private static readonly Lazy<string> _pmSMSOrganizationActiveOnly = new Lazy<string>(() => "@pActiveOnly");
+    public static string pmSMSOrganizationActiveOnly => _pmSMSOrganizationActiveOnly.Value;
+
+    private static readonly Lazy<string> _pmNewOrganizationCode = new Lazy<string>(() => "@pNewOrganizationCode");
+    public static string pmNewOrganizationCode => _pmNewOrganizationCode.Value;
+
+    #endregion
+
     #region Common Group Assignment Parameters
 
     /// <summary>
@@ -1297,6 +1325,12 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmAssignedDate = new Lazy<string>(() => "@pAssignedDate");
     public static string pmAssignedDate => _pmAssignedDate.Value;
 
+    private static readonly Lazy<string> _pmRemovedBy = new Lazy<string>(() => "@pRemovedBy");
+    public static string pmRemovedBy => _pmRemovedBy.Value;
+
+    private static readonly Lazy<string> _pmCompanyCode = new Lazy<string>(() => "@pCompanyCode");
+    public static string pmCompanyCode => _pmCompanyCode.Value;
+
     #endregion
 
     /// <summary>
@@ -1304,6 +1338,9 @@ public static class ParameterNames
     /// </summary>
     private static readonly Lazy<string> _pmCode = new Lazy<string>(() => "@pCode");
     public static string pmCode => _pmCode.Value;
+
+    private static readonly Lazy<string> _pmGroupCode = new Lazy<string>(() => "@pGroupCode");
+    public static string pmGroupCode => _pmGroupCode.Value;
 
     private static readonly Lazy<string> _pmUserId = new Lazy<string>(() => "@pUserID");
     public static string pmUserId => _pmUserId.Value;

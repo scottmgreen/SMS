@@ -70,17 +70,25 @@
                         </Template>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Company" Title="Company" Width="160px" Sortable="true" Filterable="true" />
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Company" Title="Company" Width="160px" Sortable="true" Filterable="true">
+                        <Template Context="user">
+                            @(SMSCompany.FromValue(user.Company ?? string.Empty)?.Company ?? user.Company)
+                        </Template>
+                    </RadzenDataGridColumn>
 
                     <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Organization" Title="Organization" Width="150px" Sortable="true" Filterable="true" SortProperty="Organization" FilterProperty="Organization">
                         <Template Context="user">
-                            @(string.IsNullOrWhiteSpace(user.Organization) ? (user.Department?.Name ?? string.Empty).ToUpper() : user.Organization.ToUpper())
+                            @((SMSOrganization.FromValue(user.Organization ?? string.Empty)?.Name
+                                ?? user.Department?.Name
+                                ?? user.Organization
+                                ?? string.Empty).ToUpper())
                         </Template>
                     </RadzenDataGridColumn>
 
                     <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Title" Title="Title" Width="150px" Sortable="true" Filterable="true">
                         <Template Context="user">
-                            @(string.IsNullOrWhiteSpace(user.Title) ? user.Position : user.Title)
+                            @(SMSJobTitle.FromValue(string.IsNullOrWhiteSpace(user.Title) ? user.Position : user.Title)?.Name
+                                ?? (string.IsNullOrWhiteSpace(user.Title) ? user.Position : user.Title))
                         </Template>
                     </RadzenDataGridColumn>
 
@@ -170,7 +178,7 @@
 @if (_showCreateModal)
 {
     <div class="modal-backdrop">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog user-mgmt-modal">
             <RadzenCard class="modal-content">
                 <!-- Modal Header -->
                 <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
@@ -182,40 +190,42 @@
                 
                 <!-- Modal Body -->
                 <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenColumn Size="12" SizeMD="4">
                         <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
                             <RadzenTextBox @bind-Value="@_newFirstName" Placeholder="Enter first name" Style="width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenColumn Size="12" SizeMD="4">
                         <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
                             <RadzenTextBox @bind-Value="@_newLastName" Placeholder="Enter last name" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="User Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenTextBox @bind-Value="@_newUserName" Placeholder="Enter user name" Style="width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
 
                 <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="User Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                            <RadzenTextBox @bind-Value="@_newUserName" Placeholder="Enter user name" Style="width: 100%;" />
-                        </RadzenFormField>
-                    </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="Password *" Variant="Variant.Outlined" AllowFloatingLabel="false">
                             <RadzenPassword @bind-Value="@_newPassword" Placeholder="Enter password" Style="width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
-                </RadzenRow>
-
-                <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="Confirm Password *" Variant="Variant.Outlined" AllowFloatingLabel="false">
                             <RadzenPassword @bind-Value="@_confirmPassword" Placeholder="Confirm password" Style="width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="Company" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                            <RadzenTextBox @bind-Value="@_newCompany" Placeholder="Enter company" Style="width: 100%;" />
+                            <RadzenDropDown @bind-Value="@_newCompany" Data="@CompanyOptions"
+                                            TextProperty="Text" ValueProperty="Value"
+                                            Style="width: 100%;" Placeholder="Select company" />
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
@@ -228,30 +238,32 @@
                                             Style="width: 100%;" Placeholder="Select organization" />
                         </RadzenFormField>
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="Title" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                            <RadzenTextBox @bind-Value="@_newPosition" Placeholder="Enter title" Style="width: 100%;" />
-                        </RadzenFormField>
-                    </RadzenColumn>
                 </RadzenRow>
 
                 <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Title" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenDropDown @bind-Value="@_newPosition" Data="@TitleOptions"
+                                            TextProperty="Text" ValueProperty="Value"
+                                            Style="width: 100%;" Placeholder="Select title" />
+                        </RadzenFormField>
+                    </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="Job Function" Variant="Variant.Outlined" AllowFloatingLabel="false">
                             <RadzenTextBox @bind-Value="@_newJobFunction" Placeholder="Enter job function" Style="width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="6">
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="5">
                         <RadzenFormField Text="SMS Role *" Variant="Variant.Outlined" AllowFloatingLabel="false">
                             <RadzenDropDown @bind-Value="@_newUserRoleCode" Data="@SMSRoleOptions"
                                             TextProperty="Text" ValueProperty="Value"
                                             Style="width: 100%;" Placeholder="Select SMS role" />
                         </RadzenFormField>
                     </RadzenColumn>
-                </RadzenRow>
-
-                <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="6">
+                    <RadzenColumn Size="12" SizeMD="3">
                         <RadzenFormField Text="SMS Organizational Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
                             <RadzenDropDown @bind-Value="@_newOrganizationLevelId" Data="@_organizationLevelOptions"
                                             TextProperty="Text" ValueProperty="Value"
@@ -259,11 +271,7 @@
                                             title="Select the Organization Level that determines authority and approval permissions" />
                         </RadzenFormField>
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="6" />
-                </RadzenRow>
-
-                <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="6">
+                    <RadzenColumn Size="12" SizeMD="2">
                         <RadzenFormField Text="Require 2FA" Variant="Variant.Outlined">
                             <div class="d-flex align-items-center p-2">
                                 <RadzenCheckBox @bind-Value="@_newTwoFactorEnabled" Name="_newTwoFactorEnabled" />
@@ -271,7 +279,7 @@
                             </div>
                         </RadzenFormField>
                     </RadzenColumn>
-                    <RadzenColumn Size="6">
+                    <RadzenColumn Size="12" SizeMD="2">
                         <RadzenFormField Text="Active" Variant="Variant.Outlined">
                             <div class="d-flex align-items-center p-2">
                                 <RadzenCheckBox @bind-Value="@_newIsActive" Name="_newIsActive" />
@@ -297,7 +305,7 @@
 @if (_showEditModal && _currentUser is not null)
 {
     <div class="modal-backdrop">
-        <div class="modal-dialog modal-lg">
+        <div class="modal-dialog user-mgmt-modal">
             <RadzenCard class="modal-content">
                 <!-- Modal Header -->
                 <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
@@ -309,80 +317,84 @@
                 
                 <!-- Modal Body -->
                 <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="User Code" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenTextBox Value="@_currentUser.Code" ReadOnly="true" 
-                                               Style="width: 100%; background-color: #f8f9fa;" />
-                            </RadzenFormField>
-
-                            <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenTextBox @bind-Value="@_editFirstName" 
-                                               Placeholder="Enter first name" 
-                                               Style="width: 100%;" />
-                            </RadzenFormField>
-                            <RadzenFormField Text="Organization *" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenDropDown @bind-Value="@_editDepartmentId" Data="@OrganizationOptions"
-                                                TextProperty="Text" ValueProperty="Value"
-                                                Style="width: 100%;" />
-                            </RadzenFormField>
-
-                            <RadzenFormField Text="Company" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenTextBox @bind-Value="@_editCompany" Placeholder="Enter company" Style="width: 100%;" />
-                            </RadzenFormField>
-
-                            <RadzenFormField Text="SMS Organization Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenDropDown @bind-Value="@_editOrganizationLevelId" Data="@_organizationLevelOptions"
-                                                TextProperty="Text" ValueProperty="Value"
-                                                Style="width: 100%;"
-                                                title="Select the SMS role that determines authority and approval permissions" />
-                            </RadzenFormField>
-
-                           <RadzenFormField Text="SMS User Role/Permissions *" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenDropDown @bind-Value="@_editUserRoleCode" Data="@SMSRoleOptions"
-                                                TextProperty="Text" ValueProperty="Value"
-                                                Style="width: 100%;" Placeholder="Select SMS role" />
-                            </RadzenFormField> 
-
-                            
-                        </RadzenStack>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="First Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenTextBox @bind-Value="@_editFirstName"
+                                           Placeholder="Enter first name"
+                                           Style="width: 100%;" />
+                        </RadzenFormField>
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenStack Gap="1rem">
-                            <RadzenFormField Text="Username" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenTextBox Value="@_currentUser.UserName?.Value" ReadOnly="true"
-                                               Style="width: 100%; background-color: #f8f9fa;" />
-                            </RadzenFormField>
-                            <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenTextBox @bind-Value="@_editLastName"
-                                               Placeholder="Enter last name"
-                                               Style="width: 100%;" />
-                            </RadzenFormField>
-                            <RadzenFormField Text="Position" Variant="Variant.Outlined">
-                                <RadzenTextBox @bind-Value="@_editPosition"
-                                               Placeholder="Enter position/title"
-                                               Style="width: 100%;" />
-                            </RadzenFormField>
-
-                            <RadzenFormField Text="Job Function" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenTextBox @bind-Value="@_editJobFunction" Placeholder="Enter job function" Style="width: 100%;" />
-                            </RadzenFormField>
-                            
-                            
-                            
-                            
-                           
-                            @* <RadzenFormField Text="Status" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                                <RadzenDropDown @bind-Value="@_editIsActive" Data="@ActiveInactiveStatusOptions" 
-                                                TextProperty="Text" ValueProperty="Value" 
-                                                Style="width: 100%;" />
-                            </RadzenFormField> *@
-                        </RadzenStack>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Last Name *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenTextBox @bind-Value="@_editLastName"
+                                           Placeholder="Enter last name"
+                                           Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="4">
+                        <RadzenFormField Text="Username" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenTextBox Value="@_currentUser.UserName?.Value" ReadOnly="true"
+                                           Style="width: 100%; background-color: #f8f9fa;" />
+                        </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
 
                 <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="6">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Company" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenDropDown @bind-Value="@_editCompany" Data="@CompanyOptions"
+                                            TextProperty="Text" ValueProperty="Value"
+                                            Style="width: 100%;" Placeholder="Select company" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Organization *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenDropDown @bind-Value="@_editDepartmentId" Data="@OrganizationOptions"
+                                            TextProperty="Text" ValueProperty="Value"
+                                            Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Title" Variant="Variant.Outlined">
+                            <RadzenDropDown @bind-Value="@_editPosition" Data="@TitleOptions"
+                                            TextProperty="Text" ValueProperty="Value"
+                                            Placeholder="Select title"
+                                            Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="Job Function" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenTextBox @bind-Value="@_editJobFunction" Placeholder="Enter job function" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="5">
+                        <RadzenFormField Text="SMS User Role/Permissions *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenDropDown @bind-Value="@_editUserRoleCode" Data="@SMSRoleOptions"
+                                            TextProperty="Text" ValueProperty="Value"
+                                            Style="width: 100%;" Placeholder="Select SMS role" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="3">
+                        <RadzenFormField Text="SMS Organization Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenDropDown @bind-Value="@_editOrganizationLevelId" Data="@_organizationLevelOptions"
+                                            TextProperty="Text" ValueProperty="Value"
+                                            Style="width: 100%;"
+                                            title="Select the SMS role that determines authority and approval permissions" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    <RadzenColumn Size="12" SizeMD="2">
                         <RadzenFormField Text="Require 2FA" Variant="Variant.Outlined">
                             <div class="d-flex align-items-center p-2">
                                 <RadzenCheckBox @bind-Value="@_editTwoFactorEnabled" Name="TwoFactorEnabled" />
@@ -390,7 +402,7 @@
                             </div>
                         </RadzenFormField>
                     </RadzenColumn>
-                    <RadzenColumn Size="6">
+                    <RadzenColumn Size="12" SizeMD="2">
                         <RadzenFormField Text="Active" Variant="Variant.Outlined">
                             <div class="d-flex align-items-center p-2">
                                 <RadzenCheckBox @bind-Value="@_editIsActive" Name="IsActive" />
@@ -812,6 +824,7 @@
     width: 90%;
     max-width: 500px;
     margin: 2rem;
+    overflow-x: hidden;
 }
 
 .modal-dialog.modal-lg {
@@ -824,12 +837,19 @@
     width: 95%;
 }
 
+.modal-dialog.user-mgmt-modal {
+    width: min(92vw, 900px);
+    max-width: 900px;
+    margin: 1rem;
+}
+
 .modal-content {
     background: white;
     border-radius: 6px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
     max-height: 90vh;
     overflow-y: auto;
+    overflow-x: hidden;
 }
 
 .modal-header {
@@ -904,6 +924,16 @@
     border-top: 1px solid #e9ecef;
     border-radius: 0 0 0.5rem 0.5rem;
     background-color: #f8f9fa;
+}
+
+.modal-dialog.user-mgmt-modal .rz-form-field,
+.modal-dialog.user-mgmt-modal .rz-form-field-content,
+.modal-dialog.user-mgmt-modal .rz-form-field .rz-component,
+.modal-dialog.user-mgmt-modal .rz-dropdown,
+.modal-dialog.user-mgmt-modal .rz-textbox,
+.modal-dialog.user-mgmt-modal .rz-password {
+    width: 100% !important;
+    max-width: none !important;
 }
 </style>
 

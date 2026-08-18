@@ -68,6 +68,46 @@ public sealed class SMSStakeholderGroupDataService : BaseDataService<SMSStakehol
         }
     }
 
+    public async Task<Result<IEnumerable<string>>> GetAllowedCompaniesByGroupCodeAsync(string groupCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                _logger.LogInfrastructureError("GetAllowedCompaniesByGroupCodeAsync received null or empty group code");
+                return Result<IEnumerable<string>>.Failure<IEnumerable<string>>(DomainErrors.SMSStakeholderGroupError.CodeRequired);
+            }
+
+            _logger.LogInfrastructureInformation("Retrieving allowed companies for SMS Stakeholder Group: {GroupCode}", groupCode);
+            return await _repository.GetAllowedCompaniesByGroupCodeAsync(groupCode, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving allowed companies for SMS Stakeholder Group: {GroupCode}", groupCode);
+            return Result<IEnumerable<string>>.Failure<IEnumerable<string>>(DomainErrors.SMSStakeholderGroupError.NotFound);
+        }
+    }
+
+    public async Task<Result<bool>> ReplaceAllowedCompaniesByGroupCodeAsync(string groupCode, IEnumerable<string> companyCodes, string updatedBy, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                _logger.LogInfrastructureError("ReplaceAllowedCompaniesByGroupCodeAsync received null or empty group code");
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.CodeRequired);
+            }
+
+            _logger.LogInfrastructureInformation("Replacing allowed companies for SMS Stakeholder Group: {GroupCode}", groupCode);
+            return await _repository.ReplaceAllowedCompaniesByGroupCodeAsync(groupCode, companyCodes ?? Enumerable.Empty<string>(), updatedBy ?? string.Empty, ct).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureError(ex, "Unexpected error replacing allowed companies for SMS Stakeholder Group: {GroupCode}", groupCode);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UpdateFailed);
+        }
+    }
+
     /// <summary>
     /// Gets SMS Stakeholder Group by code
     /// </summary>

@@ -28,4 +28,20 @@ public abstract class BaseUserGroup : BaseAuditableEntity
     public string? Description { get; set; }
     public bool IsActive { get; set; } = true;
     public string? ContactEmail { get; set; }
+    public List<string> AllowedCompanyCodes { get; set; } = new();
+
+    public bool IsCompanyAllowed(string? companyCode)
+    {
+        if (AllowedCompanyCodes is null || AllowedCompanyCodes.Count == 0)
+        {
+            return true;
+        }
+
+        if (string.IsNullOrWhiteSpace(companyCode))
+        {
+            return false;
+        }
+
+        return AllowedCompanyCodes.Any(code => code.Equals(companyCode, StringComparison.OrdinalIgnoreCase));
+    }
 }

@@ -52,8 +52,6 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             //@pInvestigationCode NVARCHAR(50) = NULL,
             //@pSMSInvestigatorCode NVARCHAR(50) = NULL,
             //@pPersonInterviewed NVARCHAR(200) = NULL,
-            //@pPersonInterviewedRole NVARCHAR(100) = NULL,
-            //@pPersonInterviewedDepartment NVARCHAR(100) = NULL,
             //@pPersonInterviewedNotes NVARCHAR(MAX) = NULL,
             //@pInvestigatorNotes NVARCHAR(MAX) = NULL,
             //@pStatus NVARCHAR(50) = 'Planned',

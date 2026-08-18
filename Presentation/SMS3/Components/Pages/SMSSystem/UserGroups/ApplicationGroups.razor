@@ -183,6 +183,30 @@
                                        Style="width: 100%;" />
                     </RadzenFormField>
 
+                    <RadzenCard Style="background-color: #e3f2fd;">
+                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0.5rem; color: #007bff;">
+                            <RadzenIcon Icon="domain" Style="margin-right: 0.5rem;" />
+                            Allowed Companies
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Caption" Style="margin-bottom: 0.75rem; color: var(--rz-text-secondary-color); display: block;">
+                            If none are selected, all companies are currently allowed.
+                        </RadzenText>
+                        <div style="max-height: 180px; overflow-y: auto;">
+                            @if (CompanyOptions.Any())
+                            {
+                                @foreach (var company in CompanyOptions)
+                                {
+                                    <div class="d-flex align-items-center mb-2">
+                                        <RadzenCheckBox TValue="bool"
+                                                        Value="@IsCreateCompanySelected(company.Value)"
+                                                        Change="@(value => SetCreateCompanySelection(company.Value, value is bool selected && selected))" />
+                                        <span style="margin-left: 0.5rem;">@company.Company (@company.Value)</span>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </RadzenCard>
+
                 </RadzenStack>
                 
                 <!-- Modal Footer -->
@@ -236,6 +260,30 @@
                                                    Style="width: 100%;" />
                                 </RadzenFormField>
                             </RadzenStack>
+
+                            <RadzenCard Style="background-color: #e3f2fd;">
+                                <RadzenText TextStyle="TextStyle.Subtitle1" Style="margin-bottom: 0.5rem; color: #007bff;">
+                                    <RadzenIcon Icon="domain" Style="margin-right: 0.5rem;" />
+                                    Allowed Companies
+                                </RadzenText>
+                                <RadzenText TextStyle="TextStyle.Caption" Style="margin-bottom: 0.75rem; color: var(--rz-text-secondary-color); display: block;">
+                                    If none are selected, all companies are currently allowed.
+                                </RadzenText>
+                                <div style="max-height: 180px; overflow-y: auto;">
+                                    @if (CompanyOptions.Any())
+                                    {
+                                        @foreach (var company in CompanyOptions)
+                                        {
+                                            <div class="d-flex align-items-center mb-2">
+                                                <RadzenCheckBox TValue="bool"
+                                                                Value="@IsEditCompanySelected(company.Value)"
+                                                                Change="@(value => SetEditCompanySelection(company.Value, value is bool selected && selected))" />
+                                                <span style="margin-left: 0.5rem;">@company.Company (@company.Value)</span>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </RadzenCard>
                     </RadzenColumn>
                 </RadzenRow>
 

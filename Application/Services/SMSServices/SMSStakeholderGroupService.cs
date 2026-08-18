@@ -23,11 +23,16 @@ namespace SMS_Application.Services;
 public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
 {
     private readonly SMSStakeholderGroupDataService _dataService;
+    private readonly ISMSStakeholderUserService _stakeholderUserService;
     private readonly ILogger<SMSStakeholderGroupService> _logger;
 
-    public SMSStakeholderGroupService(SMSStakeholderGroupDataService dataService, ILogger<SMSStakeholderGroupService> logger)
+    public SMSStakeholderGroupService(
+        SMSStakeholderGroupDataService dataService,
+        ISMSStakeholderUserService stakeholderUserService,
+        ILogger<SMSStakeholderGroupService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _stakeholderUserService = stakeholderUserService ?? throw new ArgumentNullException(nameof(stakeholderUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -57,6 +62,13 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
 
             if (result.IsSuccess)
             {
+                await _dataService.ReplaceAllowedCompaniesByGroupCodeAsync(
+                    result.Value.Code,
+                    group.AllowedCompanyCodes ?? new List<string>(),
+                    group.CreatedBy ?? string.Empty,
+                    ct).ConfigureAwait(false);
+
+                await PopulateAllowedCompaniesAsync(result.Value, ct).ConfigureAwait(false);
                 _logger.LogApplicationInformation("Successfully created SMS Stakeholder Group with code: {Code}", result.Value?.Code);
             }
             else
@@ -81,7 +93,13 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
         try
         {
             _logger.LogApplicationInformation("Retrieving SMS Stakeholder Group with code: {Code}", groupCode);
-            return await _dataService.GetByCodeAsync(groupCode, ct).ConfigureAwait(false);
+            var result = await _dataService.GetByCodeAsync(groupCode, ct).ConfigureAwait(false);
+            if (result.IsSuccess && result.Value is not null)
+            {
+                await PopulateAllowedCompaniesAsync(result.Value, ct).ConfigureAwait(false);
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -98,7 +116,16 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
         try
         {
             _logger.LogApplicationInformation("Retrieving all SMS Stakeholder Groups");
-            return await _dataService.GetAllAsync(ct).ConfigureAwait(false);
+            var result = await _dataService.GetAllAsync(ct).ConfigureAwait(false);
+            if (result.IsSuccess && result.Value is not null)
+            {
+                foreach (var group in result.Value)
+                {
+                    await PopulateAllowedCompaniesAsync(group, ct).ConfigureAwait(false);
+                }
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -134,6 +161,13 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
 
             if (result.IsSuccess)
             {
+                await _dataService.ReplaceAllowedCompaniesByGroupCodeAsync(
+                    group.Code,
+                    group.AllowedCompanyCodes ?? new List<string>(),
+                    group.UpdatedBy ?? group.CreatedBy ?? string.Empty,
+                    ct).ConfigureAwait(false);
+
+                await PopulateAllowedCompaniesAsync(result.Value, ct).ConfigureAwait(false);
                 _logger.LogApplicationInformation("Successfully updated SMS Stakeholder Group with code: {Code}", group.Code);
             }
             else
@@ -250,6 +284,49 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
             {
                 _logger.LogApplicationWarning("Invalid user code provided for group assignment");
                 return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserCodeRequired);
+            }
+
+            var groupResult = await _dataService.GetByCodeAsync(groupCode.Value, ct).ConfigureAwait(false);
+            if (groupResult.IsFailure || groupResult.Value is null)
+            {
+                _logger.LogApplicationWarning("Cannot assign user to non-existent stakeholder group: {GroupCode}", groupCode);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.NotFound);
+            }
+
+            if (!groupResult.Value.IsActive)
+            {
+                _logger.LogApplicationWarning("Cannot assign user to inactive stakeholder group: {GroupCode}", groupCode);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.CannotAssignToInactiveGroup);
+            }
+
+            var userResult = await _stakeholderUserService.GetSMSStakeholderUserByCodeAsync(userCode, ct).ConfigureAwait(false);
+            if (userResult.IsFailure || userResult.Value is null)
+            {
+                _logger.LogApplicationWarning("Cannot assign non-existent stakeholder user {UserCode} to group {GroupCode}", userCode, groupCode);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UserNotFound);
+            }
+
+            var allowedCompaniesResult = await _dataService.GetAllowedCompaniesByGroupCodeAsync(groupCode.Value, ct).ConfigureAwait(false);
+            if (allowedCompaniesResult.IsFailure)
+            {
+                _logger.LogApplicationWarning("Failed loading allowed companies for group {GroupCode}; rejecting assignment", groupCode);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.AssignmentFailed);
+            }
+
+            var allowedCompanies = allowedCompaniesResult.Value?.ToList() ?? new List<string>();
+            if (allowedCompanies.Count > 0 && !string.IsNullOrWhiteSpace(userResult.Value.Company))
+            {
+                var isAllowed = allowedCompanies.Any(c => c.Equals(userResult.Value.Company, StringComparison.OrdinalIgnoreCase));
+                if (!isAllowed)
+                {
+                    _logger.LogApplicationWarning("User {UserCode} company {Company} is not allowed for group {GroupCode}", userCode, userResult.Value.Company, groupCode);
+                    return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.CompanyNotAllowed);
+                }
+            }
+            else if (allowedCompanies.Count > 0 && string.IsNullOrWhiteSpace(userResult.Value.Company))
+            {
+                _logger.LogApplicationWarning("User {UserCode} has no company and group {GroupCode} has explicit allowed companies", userCode, groupCode);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.CompanyNotAllowed);
             }
 
             var result = await _dataService.AssignUserToGroupAsync(userCode, groupCode.Value, assignedBy, ct).ConfigureAwait(false);
@@ -390,6 +467,19 @@ public sealed class SMSStakeholderGroupService : ISMSStakeholderGroupService
         {
             _logger.LogApplicationError(ex, "Unexpected error updating group memberships for user: {UserCode}", userCode);
             return Result<bool>.Failure<bool>(DomainErrors.SMSStakeholderGroupError.UpdateFailed);
+        }
+    }
+
+    private async Task PopulateAllowedCompaniesAsync(SMSStakeholderGroup group, CancellationToken ct)
+    {
+        var companiesResult = await _dataService.GetAllowedCompaniesByGroupCodeAsync(group.Code, ct).ConfigureAwait(false);
+        if (companiesResult.IsSuccess)
+        {
+            group.AllowedCompanyCodes = companiesResult.Value?
+                .Where(code => !string.IsNullOrWhiteSpace(code))
+                .Select(code => code.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList() ?? new List<string>();
         }
     }
 }

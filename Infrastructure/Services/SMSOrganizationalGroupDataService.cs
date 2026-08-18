@@ -67,6 +67,46 @@ public class SMSOrganizationalGroupDataService : BaseDataService<SMSOrganization
         }
     }
 
+    public async Task<Result<IEnumerable<string>>> GetAllowedCompaniesByGroupCodeAsync(string groupCode, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                _logger.LogInfrastructureError("GetAllowedCompaniesByGroupCodeAsync received null or empty group code");
+                return Result<IEnumerable<string>>.Failure<IEnumerable<string>>(DomainErrors.SMSOrganizationalGroupError.CodeRequired);
+            }
+
+            _logger.LogInfrastructureInformation("Retrieving allowed companies for SMS Organizational Group: {GroupCode}", groupCode);
+            return await _repository.GetAllowedCompaniesByGroupCodeAsync(groupCode).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving allowed companies for SMS Organizational Group: {GroupCode}", groupCode);
+            return Result<IEnumerable<string>>.Failure<IEnumerable<string>>(DomainErrors.SMSOrganizationalGroupError.NotFound);
+        }
+    }
+
+    public async Task<Result<bool>> ReplaceAllowedCompaniesByGroupCodeAsync(string groupCode, IEnumerable<string> companyCodes, string updatedBy, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(groupCode))
+            {
+                _logger.LogInfrastructureError("ReplaceAllowedCompaniesByGroupCodeAsync received null or empty group code");
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.CodeRequired);
+            }
+
+            _logger.LogInfrastructureInformation("Replacing allowed companies for SMS Organizational Group: {GroupCode}", groupCode);
+            return await _repository.ReplaceAllowedCompaniesByGroupCodeAsync(groupCode, companyCodes ?? Enumerable.Empty<string>(), updatedBy ?? string.Empty).ConfigureAwait(false);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogInfrastructureError(ex, "Unexpected error replacing allowed companies for SMS Organizational Group: {GroupCode}", groupCode);
+            return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.UpdateFailed);
+        }
+    }
+
     /// <summary>
     /// Gets SMS Organizational Group by code
     /// </summary>

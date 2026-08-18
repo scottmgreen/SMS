@@ -132,6 +132,7 @@ public static class DomainErrors
         public static Error RemovalFailed => new Error("SMSApplicationGroup.RemovalFailed", "Failed to remove user from the stakeholder group.");
         public static Error ClearGroupsFailed => new Error("SMSApplicationGroup.ClearGroupsFailed", "Failed to clear all group memberships for the user.");
         public static Error CannotAssignToInactiveGroup => new Error("SMSApplicationGroup.CannotAssignToInactiveGroup", "Cannot assign users to an inactive stakeholder group.");
+        public static Error CompanyNotAllowed => new Error("SMSApplicationGroup.CompanyNotAllowed", "The user's company is not allowed for this group.");
         public static Error InvalidUserType => new Error("SMSApplicationGroup.InvalidUserType", "Only stakeholder users can be assigned to stakeholder groups.");
         public static Error MaxMembersExceeded => new Error("SMSApplicationGroup.MaxMembersExceeded", "The stakeholder group has reached its maximum member limit.");
         public static Error MinMembersRequired => new Error("SMSApplicationGroup.MinMembersRequired", "The stakeholder group must have at least one member.");
@@ -222,6 +223,7 @@ public static class DomainErrors
         public static Error RemovalFailed => new Error("SMSStakeholderGroup.RemovalFailed", "Failed to remove user from the stakeholder group.");
         public static Error ClearGroupsFailed => new Error("SMSStakeholderGroup.ClearGroupsFailed", "Failed to clear all group memberships for the user.");
         public static Error CannotAssignToInactiveGroup => new Error("SMSStakeholderGroup.CannotAssignToInactiveGroup", "Cannot assign users to an inactive stakeholder group.");
+        public static Error CompanyNotAllowed => new Error("SMSStakeholderGroup.CompanyNotAllowed", "The user's company is not allowed for this group.");
         public static Error InvalidUserType => new Error("SMSStakeholderGroup.InvalidUserType", "Only stakeholder users can be assigned to stakeholder groups.");
         public static Error MaxMembersExceeded => new Error("SMSStakeholderGroup.MaxMembersExceeded", "The stakeholder group has reached its maximum member limit.");
         public static Error MinMembersRequired => new Error("SMSStakeholderGroup.MinMembersRequired", "The stakeholder group must have at least one member.");
@@ -832,6 +834,7 @@ public static class DomainErrors
         public static Error RemovalFailed => new Error("SMSOrganizationalGroup.RemovalFailed", "Failed to remove user from the organizational group.");
         public static Error ClearGroupsFailed => new Error("SMSOrganizationalGroup.ClearGroupsFailed", "Failed to clear all group memberships for the user.");
         public static Error CannotAssignToInactiveGroup => new Error("SMSOrganizationalGroup.CannotAssignToInactiveGroup", "Cannot assign users to an inactive organizational group.");
+        public static Error CompanyNotAllowed => new Error("SMSOrganizationalGroup.CompanyNotAllowed", "The user's company is not allowed for this group.");
         public static Error InvalidUserType => new Error("SMSOrganizationalGroup.InvalidUserType", "Only organizational users can be assigned to organizational groups.");
         public static Error MaxMembersExceeded => new Error("SMSOrganizationalGroup.MaxMembersExceeded", "The organizational group has reached its maximum member limit.");
         public static Error MinMembersRequired => new Error("SMSOrganizationalGroup.MinMembersRequired", "The organizational group must have at least one member.");

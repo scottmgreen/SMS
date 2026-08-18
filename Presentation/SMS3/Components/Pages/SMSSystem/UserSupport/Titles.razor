@@ -1,0 +1,139 @@
+@page "/SMSSystem/UserSupport/Titles"
+
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+@using SMS_Domain.Enums
+
+<PageTitle>Title Management - SMS3</PageTitle>
+
+<PageHeader Title="Title Management"
+            Subtitle="@($"Maintain SMS titles ({_titles.Count})")"
+            Icon="fas fa-id-badge">
+    <AdditionalContent>
+        <div class="d-flex justify-content-end align-items-center w-100">
+            <RadzenButton Text="New Title" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                          Click="@OpenCreateModal" />
+        </div>
+    </AdditionalContent>
+</PageHeader>
+
+@if (!string.IsNullOrWhiteSpace(_errorMessage))
+{
+    <RadzenAlert AlertStyle="AlertStyle.Danger" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-3">
+        <RadzenIcon Icon="error" Style="margin-right: 0.5rem;" />
+        @_errorMessage
+    </RadzenAlert>
+}
+
+<RadzenCard>
+    <RadzenDataGrid @ref="_titlesGrid" Data="@_titles" TItem="SMSJobTitle"
+                    AllowFiltering="true" AllowColumnResize="true" AllowSorting="true"
+                    PageSize="15" AllowPaging="true" ShowPagingSummary="true"
+                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+        <Columns>
+            <RadzenDataGridColumn TItem="SMSJobTitle" Property="Value" Title="Code" Width="280px" />
+            <RadzenDataGridColumn TItem="SMSJobTitle" Property="Name" Title="Title" Width="420px" />
+            <RadzenDataGridColumn TItem="SMSJobTitle" Title="Actions" Width="120px" Sortable="false" Filterable="false">
+                <Template Context="title">
+                    <div class="d-flex gap-1">
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
+                                      Click="@(() => OpenEditModal(title))" />
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
+                                      Click="@(() => DeleteTitle(title))" />
+                    </div>
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+</RadzenCard>
+
+@if (_showCreateModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal-dialog user-mgmt-modal">
+            <RadzenCard class="modal-content">
+                <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="add" Style="margin-right: 0.5rem;" />
+                        New Title
+                    </RadzenText>
+                </div>
+
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12">
+                        <RadzenFormField Text="Title *" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="_newName" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseCreateModal" />
+                    <RadzenButton Text="Create Title" Icon="save" ButtonStyle="ButtonStyle.Primary"
+                                  Click="@CreateTitle" Disabled="@(string.IsNullOrWhiteSpace(_newName) || _isSaving)"
+                                  Style="background-color: #212e61; border-color: #212e61;" />
+                </div>
+            </RadzenCard>
+        </div>
+    </div>
+}
+
+@if (_showEditModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal-dialog user-mgmt-modal">
+            <RadzenCard class="modal-content">
+                <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="edit" Style="margin-right: 0.5rem;" />
+                        Edit Title @_editCode
+                    </RadzenText>
+                </div>
+
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12">
+                        <RadzenFormField Text="Title *" Variant="Variant.Outlined">
+                            <RadzenTextBox @bind-Value="_editName" Style="width: 100%;" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseEditModal" />
+                    <RadzenButton Text="Update Title" Icon="save" ButtonStyle="ButtonStyle.Primary"
+                                  Click="@UpdateTitle" Disabled="@(string.IsNullOrWhiteSpace(_editName) || _isSaving)"
+                                  Style="background-color: #212e61; border-color: #212e61;" />
+                </div>
+            </RadzenCard>
+        </div>
+    </div>
+}
+
+<style>
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1050;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-dialog {
+    width: 90%;
+    max-width: 500px;
+    margin: 2rem;
+    overflow-x: hidden;
+}
+
+.modal-dialog.user-mgmt-modal {
+    width: min(92vw, 900px);
+    max-width: 900px;
+    margin: 1rem;
+}
+</style>

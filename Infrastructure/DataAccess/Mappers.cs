@@ -232,13 +232,19 @@ public static partial class Mappers
             stakeholderuser.UserName = userName;
             stakeholderuser.Password = password;
 
-            stakeholderuser.StakeholderType = reader.GetValue<string>(FieldNames.fSMSStakeholderUserStakeholderTypeCode);
+            var stakeholderType = reader.HasColumn(FieldNames.fSMSStakeholderUserStakeholderTypeCode)
+                ? (reader.GetValue<string>(FieldNames.fSMSStakeholderUserStakeholderTypeCode) ?? string.Empty)
+                : (reader.HasColumn(FieldNames.fSMSUserTitle)
+                    ? (reader.GetValue<string>(FieldNames.fSMSUserTitle) ?? string.Empty)
+                    : string.Empty);
+
+            stakeholderuser.StakeholderType = stakeholderType;
             stakeholderuser.UserRole = new SMSUserRole(new SMSUserRoleID(reader.GetValue<string>(FieldNames.fSMSUserRoleCode)));
             stakeholderuser.Organization = reader.GetValue<string>(FieldNames.fSMSStakeholderUserOrganization) ?? string.Empty;
             stakeholderuser.Company = reader.HasColumn(FieldNames.fSMSUserCompany) ? (reader.GetValue<string>(FieldNames.fSMSUserCompany) ?? string.Empty) : string.Empty;
             stakeholderuser.Title = reader.HasColumn(FieldNames.fSMSUserTitle)
-                ? (reader.GetValue<string>(FieldNames.fSMSUserTitle) ?? stakeholderuser.StakeholderType)
-                : stakeholderuser.StakeholderType;
+                ? (reader.GetValue<string>(FieldNames.fSMSUserTitle) ?? stakeholderType)
+                : stakeholderType;
             stakeholderuser.JobFunction = reader.HasColumn(FieldNames.fSMSUserJobFunction) ? (reader.GetValue<string>(FieldNames.fSMSUserJobFunction) ?? string.Empty) : string.Empty;
 
             var smsUserRole = reader.GetValue<string>(FieldNames.fSMSUserRoleCode);
@@ -277,6 +283,17 @@ public static partial class Mappers
             : string.Empty;
 
         return SMSStakeholderUserTitle.Create(code, name, description);
+    }
+
+    /// <summary>
+    /// Maps SqlDataReader to SMSJobTitle smart-enum value.
+    /// </summary>
+    public static SMSJobTitle MapToSMSJobTitle(SqlDataReader reader)
+    {
+        var code = reader.GetValue<string>(FieldNames.fSMSJobTitleCode);
+        var name = reader.GetValue<string>(FieldNames.fSMSJobTitleName);
+
+        return SMSJobTitle.Create(code, name);
     }
 
     /// <summary>

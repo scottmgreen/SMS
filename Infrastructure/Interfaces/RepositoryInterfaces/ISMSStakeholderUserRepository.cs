@@ -27,7 +27,6 @@ public interface ISMSStakeholderUserRepository
     //Task<Result<IEnumerable<SMSStakeholderUser>>> GetByAccessLevelAsync(string accessLevel);
     Task<Result<SMSStakeholderUser>> GetByCodeAsync(BaseUserID id);
     Task<Result<IEnumerable<SMSStakeholderUser>>> GetByOrganizationAsync(string organization);
-    Task<Result<IEnumerable<SMSStakeholderUser>>> GetByStakeholderTypeAsync(string stakeholderType);
     Task<Result<SMSStakeholderUser>> GetByUserNameAsync(string userName);
    
     Task<Result<Dictionary<string, int>>> GetOrganizationStatisticsAsync();

@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<ISMSStakeholderUserTitleRepository, SMSStakeholderUserTitleRepository>();
         services.AddScoped<ISMSOrganizationRepository, SMSOrganizationRepository>();
         services.AddScoped<ISMSCompanyRepository, SMSCompanyRepository>();
+        services.AddScoped<ISMSJobTitleRepository, SMSJobTitleRepository>();
         services.AddScoped<ISMSUserRoleRepository, SMSUserRoleRepository>();
 
         // SMS Repositories - BOTH CONCRETE AND INTERFACE BINDINGS
@@ -80,6 +81,7 @@ public static class DependencyInjection
         services.AddScoped<SMSStakeholderUserTitleRepository>();
         services.AddScoped<SMSOrganizationRepository>();
         services.AddScoped<SMSCompanyRepository>();
+        services.AddScoped<SMSJobTitleRepository>();
         services.AddScoped<SMSUserRoleRepository>();
 
         // SMS Audit Management Repositories (NEW) - NOW AVAILABLE

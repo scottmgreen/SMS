@@ -85,5 +85,16 @@ public interface ISMSOrganizationalGroupRepository
     /// <returns>A result indicating success or failure</returns>
     Task<Result<bool>> ClearUserGroupsAsync(string userCode, string clearedBy);
 
+    /// <summary>
+    /// Retrieves allowed company codes configured for a group.
+    /// Empty result means all companies are allowed (back-compat mode).
+    /// </summary>
+    Task<Result<IEnumerable<string>>> GetAllowedCompaniesByGroupCodeAsync(string groupCode);
+
+    /// <summary>
+    /// Replaces allowed company mappings for a group.
+    /// </summary>
+    Task<Result<bool>> ReplaceAllowedCompaniesByGroupCodeAsync(string groupCode, IEnumerable<string> companyCodes, string updatedBy);
+
     #endregion
 }

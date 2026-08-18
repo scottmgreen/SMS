@@ -4,6 +4,7 @@ using SMS_Infrastructure.Interfaces;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS_Domain.Enums;
 
 namespace SMS3.Components.Pages.SMSSystem.UserManagement;
 
@@ -14,13 +15,19 @@ namespace SMS3.Components.Pages.SMSSystem.UserManagement;
 /// </summary>
 public partial class StakeholderUsers : ComponentBase
 {
+    private sealed class LookupOption
+    {
+        public string Value { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+    }
+
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<StakeholderUsers> _logger { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
-    [Inject] private ISMSStakeholderUserTitleRepository _stakeholderUserTitleRepository { get; set; } = default!;
+    [Inject] private ISMSJobTitleRepository _jobTitleRepository { get; set; } = default!;
 
     // Data Properties
     private List<SMSStakeholderUser> StakeholderUsersList { get; set; } = new();
@@ -102,9 +109,9 @@ public partial class StakeholderUsers : ComponentBase
                 new List<SMSStakeholderGroup>();
 
 
-            var stakeholderTitlesResult = await _stakeholderUserTitleRepository.GetAllAsync();
-            StakeholderTypes = stakeholderTitlesResult.IsSuccess
-                ? stakeholderTitlesResult.Value
+            var titleResult = await _jobTitleRepository.GetAllAsync();
+            StakeholderTypes = titleResult.IsSuccess
+                ? titleResult.Value
                     .Select(st => st.Value)
                     .ToArray()
                 : Array.Empty<string>();
@@ -153,6 +160,7 @@ public partial class StakeholderUsers : ComponentBase
 
             // Create user entity
             var userId = new SMSStakeholderUserID($"SU-0000");
+            var normalizedTitle = NormalizeTitleSelection(_newUser.Title);
             var user = new SMSStakeholderUser(userId)
             {
                 Code = userId.Value,
@@ -160,10 +168,10 @@ public partial class StakeholderUsers : ComponentBase
                 LastName = LastName.Create(_newUser.LastName).Value,
                 UserName = UserName.Create(_newUser.UserName).Value,
                 Password = Password.Create(_newUser.Password).Value,
-                StakeholderType = _newUser.StakeholderType,
+                StakeholderType = normalizedTitle,
                 Organization = _newUser.Organization,
                 Company = _newUser.Company,
-                Title = _newUser.Title,
+                Title = normalizedTitle,
                 JobFunction = _newUser.JobFunction,
                 IsActive = _newUser.IsActive,
                 IsPOPEmployee = _newUser.IsPOPEmployee,
@@ -232,7 +240,7 @@ public partial class StakeholderUsers : ComponentBase
         !string.IsNullOrWhiteSpace(_newUser.UserName) &&
         !string.IsNullOrWhiteSpace(_newUser.Password) &&
         _newUser.Password == _newUser.ConfirmPassword &&
-        !string.IsNullOrWhiteSpace(_newUser.StakeholderType) &&
+        !string.IsNullOrWhiteSpace(_newUser.Title) &&
         !string.IsNullOrWhiteSpace(_newUser.Organization);
 
     // Transform stakeholder types for dropdown
@@ -242,18 +250,67 @@ public partial class StakeholderUsers : ComponentBase
         Text = GetStakeholderTypeDisplay(type)
     });
 
+    private List<LookupOption> CompanyOptions =>
+        SMSCompany.GetAllValues()
+            .OrderBy(c => c.Company)
+            .Select(c => new LookupOption { Value = c.Value, Text = c.Company })
+            .ToList();
+
+    private List<LookupOption> OrganizationOptions =>
+        SMSOrganization.GetAllValues()
+            .OrderBy(o => o.Name)
+            .Select(o => new LookupOption { Value = o.Value, Text = o.Name })
+            .ToList();
+
+    private static string NormalizeCompanySelection(string? rawValue)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return string.Empty;
+        }
+
+        var byValue = SMSCompany.FromValue(rawValue);
+        if (byValue is not null)
+        {
+            return byValue.Value;
+        }
+
+        var byName = SMSCompany.FromCompany(rawValue);
+        return byName?.Value ?? rawValue;
+    }
+
+    private static string NormalizeOrganizationSelection(string? rawValue)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return string.Empty;
+        }
+
+        var byValue = SMSOrganization.FromValue(rawValue);
+        if (byValue is not null)
+        {
+            return byValue.Value;
+        }
+
+        var byName = SMSOrganization.FromName(rawValue);
+        return byName?.Value ?? rawValue;
+    }
+
     private async Task ShowEditDialog(SMSStakeholderUser user)
     {
+        var normalizedTitle = NormalizeTitleSelection(
+            string.IsNullOrWhiteSpace(user.StakeholderType) ? user.Title : user.StakeholderType);
+
         _currentEditUser = user;
         _editUser = new EditStakeholderUserModel
         {
             UserId = user.Code,
             FirstName = user.FirstName?.Value ?? "",
             LastName = user.LastName?.Value ?? "",
-            StakeholderType = user.StakeholderType,
-            Organization = user.Organization,
-            Company = user.Company,
-            Title = user.Title,
+            StakeholderType = normalizedTitle,
+            Organization = NormalizeOrganizationSelection(user.Organization),
+            Company = NormalizeCompanySelection(user.Company),
+            Title = normalizedTitle,
             JobFunction = user.JobFunction,
             UserRoleCode = user.UserRole?.Code ?? "",
             IsActive = user.IsActive,
@@ -284,12 +341,13 @@ public partial class StakeholderUsers : ComponentBase
             }
 
             // ? FIXED: Only set business fields - let pipeline handle audit fields
+            var normalizedTitle = NormalizeTitleSelection(_editUser.Title);
             _currentEditUser.FirstName = FirstName.Create(_editUser.FirstName).Value;
             _currentEditUser.LastName = LastName.Create(_editUser.LastName).Value;
-            _currentEditUser.StakeholderType = _editUser.StakeholderType;
+            _currentEditUser.StakeholderType = normalizedTitle;
             _currentEditUser.Organization = _editUser.Organization;
             _currentEditUser.Company = _editUser.Company;
-            _currentEditUser.Title = _editUser.Title;
+            _currentEditUser.Title = normalizedTitle;
             _currentEditUser.JobFunction = _editUser.JobFunction;
             _currentEditUser.IsActive = _editUser.IsActive;
             _currentEditUser.IsPOPEmployee = _editUser.IsPOPEmployee;
@@ -351,9 +409,26 @@ public partial class StakeholderUsers : ComponentBase
     private bool _isEditFormValid =>
         !string.IsNullOrWhiteSpace(_editUser.FirstName) &&
         !string.IsNullOrWhiteSpace(_editUser.LastName) &&
-        !string.IsNullOrWhiteSpace(_editUser.StakeholderType) &&
+        !string.IsNullOrWhiteSpace(_editUser.Title) &&
         !string.IsNullOrWhiteSpace(_editUser.Organization) &&
         !string.IsNullOrWhiteSpace(_editUser.UserRoleCode);
+
+    private static string NormalizeTitleSelection(string? rawValue)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return string.Empty;
+        }
+
+        var byValue = SMSJobTitle.FromValue(rawValue);
+        if (byValue is not null)
+        {
+            return byValue.Value;
+        }
+
+        var byName = SMSJobTitle.FromName(rawValue);
+        return byName?.Value ?? rawValue;
+    }
 
     private async Task ShowDeleteDialog(string userId, string displayName)
     {
@@ -837,8 +912,8 @@ public partial class StakeholderUsers : ComponentBase
 
     private string GetStakeholderTypeDisplay(string stakeholderType)
     {
-        var stakeholderTitle = SMSStakeholderUserTitle.FromValue(stakeholderType);
-        return stakeholderTitle?.Name ?? stakeholderType;
+        var title = SMSJobTitle.FromValue(stakeholderType);
+        return title?.Name ?? stakeholderType;
     }
 
     #endregion

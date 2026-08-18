@@ -315,6 +315,12 @@ public static class FieldNames
     private static readonly Lazy<string> _fSMSCompanyPortRep = new Lazy<string>(() => "fldv_PortRep");
     public static string fSMSCompanyPortRep => _fSMSCompanyPortRep.Value;
 
+    private static readonly Lazy<string> _fSMSJobTitleCode = new Lazy<string>(() => "fldv_Code");
+    public static string fSMSJobTitleCode => _fSMSJobTitleCode.Value;
+
+    private static readonly Lazy<string> _fSMSJobTitleName = new Lazy<string>(() => "fldv_Name");
+    public static string fSMSJobTitleName => _fSMSJobTitleName.Value;
+
     /// <summary>
     /// SMS Stakeholder Groups table (tbld_SMSStakeholderGroups)
     /// </summary>

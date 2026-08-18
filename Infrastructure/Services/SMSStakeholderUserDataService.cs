@@ -145,23 +145,6 @@ public class SMSStakeholderUserDataService : BaseDataService<SMSStakeholderUserD
     }
 
     /// <summary>
-    /// Gets SMS Stakeholder Users by stakeholder type
-    /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetByStakeholderTypeAsync(string stakeholderType, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogInfrastructureInformation("Retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
-            return await _repository.GetByStakeholderTypeAsync(stakeholderType);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
-            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
-
-    /// <summary>
     /// Gets SMS Stakeholder Users by organization
     /// </summary>
     public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetByOrganizationAsync(string organization, CancellationToken ct = default)

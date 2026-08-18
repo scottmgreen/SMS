@@ -64,6 +64,13 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
 
             if (result.IsSuccess)
             {
+                await _dataService.ReplaceAllowedCompaniesByGroupCodeAsync(
+                    result.Value.Code,
+                    group.AllowedCompanyCodes ?? new List<string>(),
+                    group.CreatedBy ?? string.Empty,
+                    ct).ConfigureAwait(false);
+
+                await PopulateAllowedCompaniesAsync(result.Value, ct).ConfigureAwait(false);
                 _logger.LogApplicationInformation("Successfully created SMS Organizational Group with code: {Code}", result.Value?.Code);
             }
             else
@@ -88,7 +95,13 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
         try
         {
             _logger.LogApplicationInformation("Retrieving SMS Organizational Group with code: {Code}", code);
-            return await _dataService.GetByCodeAsync(code, ct).ConfigureAwait(false);
+            var result = await _dataService.GetByCodeAsync(code, ct).ConfigureAwait(false);
+            if (result.IsSuccess && result.Value is not null)
+            {
+                await PopulateAllowedCompaniesAsync(result.Value, ct).ConfigureAwait(false);
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -105,7 +118,16 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
         try
         {
             _logger.LogApplicationInformation("Retrieving all SMS Organizational Groups");
-            return await _dataService.GetAllAsync(ct).ConfigureAwait(false);
+            var result = await _dataService.GetAllAsync(ct).ConfigureAwait(false);
+            if (result.IsSuccess && result.Value is not null)
+            {
+                foreach (var group in result.Value)
+                {
+                    await PopulateAllowedCompaniesAsync(group, ct).ConfigureAwait(false);
+                }
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -192,6 +214,13 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
 
             if (result.IsSuccess)
             {
+                await _dataService.ReplaceAllowedCompaniesByGroupCodeAsync(
+                    group.Code,
+                    group.AllowedCompanyCodes ?? new List<string>(),
+                    group.UpdatedBy ?? group.CreatedBy ?? string.Empty,
+                    ct).ConfigureAwait(false);
+
+                await PopulateAllowedCompaniesAsync(result.Value, ct).ConfigureAwait(false);
                 _logger.LogApplicationInformation("Successfully updated SMS Organizational Group with code: {Code}", group.Code);
             }
             else
@@ -299,6 +328,29 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
                     groupCode,
                     groupAuthorityLevel);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.HierarchyViolation);
+            }
+
+            var allowedCompaniesResult = await _dataService.GetAllowedCompaniesByGroupCodeAsync(groupCode, ct).ConfigureAwait(false);
+            if (allowedCompaniesResult.IsFailure)
+            {
+                _logger.LogApplicationWarning("Failed loading allowed companies for group {GroupCode}; rejecting assignment", groupCode);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.AssignmentFailed);
+            }
+
+            var allowedCompanies = allowedCompaniesResult.Value?.ToList() ?? new List<string>();
+            if (allowedCompanies.Count > 0 && !string.IsNullOrWhiteSpace(userResult.Value.Company))
+            {
+                var isAllowed = allowedCompanies.Any(c => c.Equals(userResult.Value.Company, StringComparison.OrdinalIgnoreCase));
+                if (!isAllowed)
+                {
+                    _logger.LogApplicationWarning("User {UserCode} company {Company} is not allowed for group {GroupCode}", userCode, userResult.Value.Company, groupCode);
+                    return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.CompanyNotAllowed);
+                }
+            }
+            else if (allowedCompanies.Count > 0 && string.IsNullOrWhiteSpace(userResult.Value.Company))
+            {
+                _logger.LogApplicationWarning("User {UserCode} has no company and group {GroupCode} has explicit allowed companies", userCode, groupCode);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationalGroupError.CompanyNotAllowed);
             }
 
             var result = await _dataService.AssignUserToGroupAsync(userCode, groupCode, assignedBy, ct).ConfigureAwait(false);
@@ -475,6 +527,19 @@ public sealed class SMSOrganizationalGroupService : ISMSOrganizationalGroupServi
         };
 
         return validAuthorityLevels.Contains(authorityLevel, StringComparer.OrdinalIgnoreCase);
+    }
+
+    private async Task PopulateAllowedCompaniesAsync(SMSOrganizationalGroup group, CancellationToken ct)
+    {
+        var companiesResult = await _dataService.GetAllowedCompaniesByGroupCodeAsync(group.Code, ct).ConfigureAwait(false);
+        if (companiesResult.IsSuccess)
+        {
+            group.AllowedCompanyCodes = companiesResult.Value?
+                .Where(code => !string.IsNullOrWhiteSpace(code))
+                .Select(code => code.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList() ?? new List<string>();
+        }
     }
 
     #endregion

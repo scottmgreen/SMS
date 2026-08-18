@@ -115,32 +115,6 @@ public sealed class SMSStakeholderUserService : ISMSStakeholderUserService
     }
 
     /// <summary>
-    /// Gets stakeholders by type with business logic
-    /// </summary>
-    public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetSMSStakeholderUsersByTypeAsync(string stakeholderType, CancellationToken ct = default)
-    {
-        try
-        {
-            _logger.LogApplicationInformation("Retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
-
-            // Business validation - ensure stakeholder type is valid
-            if (!IsValidStakeholderType(stakeholderType))
-            {
-                _logger.LogApplicationWarning("Invalid stakeholder type requested: {StakeholderType}", stakeholderType);
-                return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(GeneralError.UnProcessableRequest);
-            }
-
-            return await _dataService.GetByStakeholderTypeAsync(stakeholderType, ct).ConfigureAwait(false);
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError(ex, "Unexpected error retrieving SMS Stakeholder Users by type: {StakeholderType}", stakeholderType);
-            return Result<IEnumerable<SMSStakeholderUser>>.Failure<IEnumerable<SMSStakeholderUser>>(DomainErrors.SMSStakeholderUserError.NotFound);
-        }
-    }
-
-    
-    /// <summary>
     /// Gets users requiring AOA access with security validation
     /// </summary>
     public async Task<Result<IEnumerable<SMSStakeholderUser>>> GetUsersRequiringAOAAccessAsync(CancellationToken ct = default)

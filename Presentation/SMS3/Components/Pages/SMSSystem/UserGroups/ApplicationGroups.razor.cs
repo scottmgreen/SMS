@@ -3,6 +3,7 @@ using SMS_Application.Commands;
 using SMS_Application.Queries;
 
 using SMS_Domain.Events;
+using SMS_Domain.Enums;
 using SMS_Domain.ValueObjects;
 
 using SMS_Shared.Common;
@@ -39,6 +40,7 @@ public partial class ApplicationGroups : ComponentBase
 
     private List<SMSApplicationGroup> SMSApplicationGroups { get; set; } = new();
     private List<SMSApplicationUser> SMSApplicationUsers { get; set; } = new();
+    private List<SMSCompany> CompanyOptions { get; set; } = new();
     private Dictionary<string, int> GroupMemberCounts { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     private List<SMSApplicationUser> GroupMembers { get; set; } = new();
     private List<SMSApplicationUser> AvailableUsers { get; set; } = new();
@@ -68,9 +70,11 @@ public partial class ApplicationGroups : ComponentBase
     private string _newGroupName { get; set; } = string.Empty;
     private string _newDescription { get; set; } = string.Empty;
     private string _newContactEmail { get; set; } = string.Empty;
+    private HashSet<string> _newAllowedCompanyCodes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     private string _editGroupName { get; set; } = string.Empty;
     private string _editDescription { get; set; } = string.Empty;
     private string _editContactEmail { get; set; } = string.Empty;
+    private HashSet<string> _editAllowedCompanyCodes { get; set; } = new(StringComparer.OrdinalIgnoreCase);
     private bool _editIsActive { get; set; } = true;
     private string _deleteGroupCode { get; set; } = string.Empty;
     private string _deleteGroupName { get; set; } = string.Empty;
@@ -117,6 +121,11 @@ public partial class ApplicationGroups : ComponentBase
             SMSApplicationUsers = usersResult.IsSuccess ?
                 usersResult.Value?.ToList() ?? new List<SMSApplicationUser>() :
                 new List<SMSApplicationUser>();
+
+            CompanyOptions = SMSCompany.GetAllValuesList()
+                .Where(c => c is not null && !string.IsNullOrWhiteSpace(c.Value))
+                .OrderBy(c => c.Company)
+                .ToList();
 
             await LoadGroupMemberCountsAsync();
 
@@ -201,6 +210,9 @@ public partial class ApplicationGroups : ComponentBase
             _editGroupName = _currentGroup.Name ?? string.Empty;
             _editDescription = _currentGroup.Description ?? string.Empty;
             _editContactEmail = _currentGroup.ContactEmail ?? string.Empty;
+            _editAllowedCompanyCodes = new HashSet<string>(
+                _currentGroup.AllowedCompanyCodes ?? new List<string>(),
+                StringComparer.OrdinalIgnoreCase);
             _editIsActive = _currentGroup.IsActive;
 
             // Open edit modal
@@ -220,6 +232,7 @@ public partial class ApplicationGroups : ComponentBase
         _editGroupName = string.Empty;
         _editDescription = string.Empty;
         _editContactEmail = string.Empty;
+        _editAllowedCompanyCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         _editIsActive = true;
         _navigation.NavigateToSecure("/System/UserGroups/ApplicationGroups");
     }
@@ -230,6 +243,8 @@ public partial class ApplicationGroups : ComponentBase
         _currentGroup = null;
         _editGroupName = string.Empty;
         _editDescription = string.Empty;
+        _editContactEmail = string.Empty;
+        _editAllowedCompanyCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         _editIsActive = true;
     }
 
@@ -265,7 +280,8 @@ public partial class ApplicationGroups : ComponentBase
                 Name = _newGroupName,
                 Description = _newDescription,
                 ContactEmail = string.IsNullOrWhiteSpace(_newContactEmail) ? null : _newContactEmail.Trim(),
-                IsActive = true
+                IsActive = true,
+                AllowedCompanyCodes = _newAllowedCompanyCodes.ToList()
             };
 
             var command = new CreateSMSApplicationGroupCommand(group);
@@ -276,6 +292,7 @@ public partial class ApplicationGroups : ComponentBase
                 await ShowSuccessAsyncNotification($"Application group '{_newGroupName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
+                await RefreshMembersAfterCompanyAssignmentSaveAsync(result.Value?.Code);
                 if (_groupsGrid != null)
                     await _groupsGrid.Reload();
             }
@@ -319,6 +336,7 @@ public partial class ApplicationGroups : ComponentBase
             _currentGroup.Name = _editGroupName;
             _currentGroup.Description = _editDescription;
             _currentGroup.ContactEmail = string.IsNullOrWhiteSpace(_editContactEmail) ? null : _editContactEmail.Trim();
+            _currentGroup.AllowedCompanyCodes = _editAllowedCompanyCodes.ToList();
             _currentGroup.IsActive = _editIsActive;
             
             var updateCommand = new UpdateSMSApplicationGroupCommand(_currentGroup);
@@ -327,8 +345,10 @@ public partial class ApplicationGroups : ComponentBase
             if (result.IsSuccess)
             {
                 await ShowSuccessAsyncNotification($"Application group '{_editGroupName}' updated successfully.");
+                var updatedGroupCode = _currentGroup.Code;
                 CloseEditModal();
                 await LoadDataAsync();
+                await RefreshMembersAfterCompanyAssignmentSaveAsync(updatedGroupCode);
                 if (_groupsGrid != null)
                     await _groupsGrid.Reload();
             }
@@ -411,6 +431,7 @@ public partial class ApplicationGroups : ComponentBase
         _newGroupName = string.Empty;
         _newDescription = string.Empty;
         _newContactEmail = string.Empty;
+        _newAllowedCompanyCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         _showCreateModal = true;
     }
 
@@ -420,6 +441,7 @@ public partial class ApplicationGroups : ComponentBase
         _newGroupName = string.Empty;
         _newDescription = string.Empty;
         _newContactEmail = string.Empty;
+        _newAllowedCompanyCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
     }
 
     private async Task ConfirmDelete(string groupCode, string groupName)
@@ -440,6 +462,54 @@ public partial class ApplicationGroups : ComponentBase
         _showDeleteModal = false;
         _deleteGroupCode = string.Empty;
         _deleteGroupName = string.Empty;
+    }
+
+    private bool IsCreateCompanySelected(string companyCode) =>
+        _newAllowedCompanyCodes.Contains(companyCode);
+
+    private bool IsEditCompanySelected(string companyCode) =>
+        _editAllowedCompanyCodes.Contains(companyCode);
+
+    private void SetCreateCompanySelection(string companyCode, bool isSelected)
+    {
+        if (isSelected)
+        {
+            _newAllowedCompanyCodes.Add(companyCode);
+            return;
+        }
+
+        _newAllowedCompanyCodes.Remove(companyCode);
+    }
+
+    private void SetEditCompanySelection(string companyCode, bool isSelected)
+    {
+        if (isSelected)
+        {
+            _editAllowedCompanyCodes.Add(companyCode);
+            return;
+        }
+
+        _editAllowedCompanyCodes.Remove(companyCode);
+    }
+
+    private async Task RefreshMembersAfterCompanyAssignmentSaveAsync(string? groupCode)
+    {
+        if (string.IsNullOrWhiteSpace(groupCode)
+            || !_showMembersModal
+            || string.IsNullOrWhiteSpace(_currentGroupCode)
+            || !string.Equals(_currentGroupCode, groupCode, StringComparison.OrdinalIgnoreCase))
+        {
+            return;
+        }
+
+        _currentGroup = SMSApplicationGroups.FirstOrDefault(g =>
+            string.Equals(g.Code, groupCode, StringComparison.OrdinalIgnoreCase));
+
+        if (_currentGroup is not null)
+        {
+            await LoadGroupMembersAsync(groupCode);
+            StateHasChanged();
+        }
     }
 
     #endregion
@@ -483,8 +553,11 @@ public partial class ApplicationGroups : ComponentBase
             _currentGroupCode = groupCode;
             _isManagingMembers = true;
 
-            // Find the current group
-            _currentGroup = SMSApplicationGroups.FirstOrDefault(g => g.Code == groupCode);
+            var groupQuery = new GetSMSApplicationGroupByCodeQuery(groupCode);
+            var groupResult = await _mediator.SendAsync(groupQuery, CancellationToken.None);
+            _currentGroup = groupResult.IsSuccess
+                ? groupResult.Value
+                : SMSApplicationGroups.FirstOrDefault(g => g.Code == groupCode);
 
             await LoadGroupMembersAsync(groupCode);
 
@@ -516,7 +589,16 @@ public partial class ApplicationGroups : ComponentBase
             }
 
             var memberCodes = GroupMembers.Select(m => m.Code).ToHashSet();
-            AvailableUsers = SMSApplicationUsers.Where(u => !memberCodes.Contains(u.Code)).ToList();
+            var allowedCompanies = (_currentGroup?.AllowedCompanyCodes ?? new List<string>())
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c.Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+            AvailableUsers = SMSApplicationUsers
+                .Where(u => !memberCodes.Contains(u.Code))
+                .Where(u => !string.IsNullOrWhiteSpace(u.Company)
+                    && allowedCompanies.Contains(u.Company.Trim()))
+                .ToList();
 
             // Initialize selection tracking
             SelectedUsers.Clear();

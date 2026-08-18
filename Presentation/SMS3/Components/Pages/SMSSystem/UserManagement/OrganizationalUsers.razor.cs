@@ -8,6 +8,8 @@ using SMS_Domain.Events;
 using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
+using SMS_Domain.Enums;
+using SMS_Infrastructure.Interfaces;
 
 namespace SMS3.Components.Pages.SMSSystem.UserManagement;
 
@@ -23,6 +25,7 @@ public partial class OrganizationalUsers : ComponentBase
     [Inject] private DialogService _dialogService { get; set; } = default!;
 
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private ISMSJobTitleRepository _jobTitleRepository { get; set; } = default!;
     #endregion
 
     #region Properties
@@ -139,6 +142,18 @@ public partial class OrganizationalUsers : ComponentBase
 
     private List<DropdownOption> OrganizationOptions => DepartmentOptions;
 
+    private List<DropdownOption> TitleOptions { get; set; } = new();
+
+    private List<DropdownOption> CompanyOptions =>
+        SMSCompany.GetAllValues()
+            .OrderBy(c => c.Company)
+            .Select(c => new DropdownOption
+            {
+                Text = c.Company,
+                Value = c.Value
+            })
+            .ToList();
+
     // Updated to use centralized helper for SMS Organization Level options
     private List<DropdownOption> _organizationLevelOptions => DropdownHelper.GetOrganizationLevelOptions();
 
@@ -203,6 +218,23 @@ public partial class OrganizationalUsers : ComponentBase
 
         return SMSOrganization.GetAllValues()
             .Any(level => level.Value.Equals(department, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static string NormalizeTitleSelection(string? rawValue)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return string.Empty;
+        }
+
+        var byValue = SMSJobTitle.FromValue(rawValue);
+        if (byValue is not null)
+        {
+            return byValue.Value;
+        }
+
+        var byName = SMSJobTitle.FromName(rawValue);
+        return byName?.Value ?? rawValue;
     }
     #endregion
 
@@ -279,6 +311,18 @@ public partial class OrganizationalUsers : ComponentBase
 
             // Load SMS User Roles for dropdown
             await LoadSMSRoleOptions();
+
+            var titleResult = await _jobTitleRepository.GetAllAsync();
+            TitleOptions = titleResult.IsSuccess
+                ? titleResult.Value?
+                    .OrderBy(t => t.Name)
+                    .Select(t => new DropdownOption
+                    {
+                        Text = t.Name,
+                        Value = t.Value
+                    })
+                    .ToList() ?? new List<DropdownOption>()
+                : new List<DropdownOption>();
 
             _logger.LogInformation("Loaded {UserCount} organizational users, {GroupCount} organizational groups, and {RoleCount} user roles",
                 OrganizationalUsersList.Count, AllOrganizationalGroups.Count, AvailableRoles.Count);
@@ -372,7 +416,7 @@ public partial class OrganizationalUsers : ComponentBase
                 Password = Password.Create(_newPassword).Value,
                 Department = SMSOrganization.FromValue(_newDepartmentId) ?? SMSOrganization.Create(string.Empty, string.Empty, string.Empty, Array.Empty<string>()),
                 Company = _newCompany,
-                Organization = SMSOrganization.FromValue(_newDepartmentId)?.Name ?? string.Empty,
+                Organization = _newDepartmentId,
                 Title = _newPosition,
                 JobFunction = _newJobFunction,
                 Position = _newPosition,
@@ -440,9 +484,11 @@ public partial class OrganizationalUsers : ComponentBase
             _editFirstName = _currentUser.FirstName?.Value ?? string.Empty;
             _editLastName = _currentUser.LastName?.Value ?? string.Empty;
             _editDepartmentId = _currentUser.Department.Value ?? string.Empty;
-            _editCompany = _currentUser.Company ?? string.Empty;
+            _editCompany = SMSCompany.FromCompany(_currentUser.Company ?? string.Empty)?.Value ?? (_currentUser.Company ?? string.Empty);
             _editJobFunction = _currentUser.JobFunction ?? string.Empty;
-            _editPosition = _currentUser.Position ?? string.Empty;
+            _editPosition = NormalizeTitleSelection(string.IsNullOrWhiteSpace(_currentUser.Title)
+                ? (_currentUser.Position ?? string.Empty)
+                : _currentUser.Title);
             _editOrganizationLevelId = _currentUser.OrganizationLevel.Name ?? SMSOrganizationalLevel.UnassignedLevel;
             _editIsActive = _currentUser.IsActive;
             _editTwoFactorEnabled = _currentUser.TwoFactorEnabled;
@@ -492,7 +538,7 @@ public partial class OrganizationalUsers : ComponentBase
             _currentUser.LastName = LastName.Create(_editLastName).Value;
             _currentUser.Department = SMSOrganization.FromValue(_editDepartmentId) ?? SMSOrganization.Create(string.Empty, string.Empty, string.Empty, Array.Empty<string>());
             _currentUser.Company = _editCompany;
-            _currentUser.Organization = SMSOrganization.FromValue(_editDepartmentId)?.Name ?? string.Empty;
+            _currentUser.Organization = _editDepartmentId;
             _currentUser.Title = _editPosition;
             _currentUser.JobFunction = _editJobFunction;
             _currentUser.Position = _editPosition;

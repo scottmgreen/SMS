@@ -20,11 +20,16 @@ namespace SMS_Application.Services;
 public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
 {
     private readonly SMSApplicationGroupDataService _dataService;
+    private readonly ISMSApplicationUserService _applicationUserService;
     private readonly ILogger<SMSApplicationGroupService> _logger;
 
-    public SMSApplicationGroupService(SMSApplicationGroupDataService dataService, ILogger<SMSApplicationGroupService> logger)
+    public SMSApplicationGroupService(
+        SMSApplicationGroupDataService dataService,
+        ISMSApplicationUserService applicationUserService,
+        ILogger<SMSApplicationGroupService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
+        _applicationUserService = applicationUserService ?? throw new ArgumentNullException(nameof(applicationUserService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -58,6 +63,13 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
 
             if (result.IsSuccess)
             {
+                await _dataService.ReplaceAllowedCompaniesByGroupCodeAsync(
+                    result.Value.Code,
+                    group.AllowedCompanyCodes ?? new List<string>(),
+                    group.CreatedBy ?? string.Empty,
+                    ct).ConfigureAwait(false);
+
+                await PopulateAllowedCompaniesAsync(result.Value, ct).ConfigureAwait(false);
                 _logger.LogApplicationInformation("Successfully created SMS Application Group with code: {Code}", result.Value?.Code);
             }
             else
@@ -82,7 +94,13 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
         try
         {
             _logger.LogApplicationInformation("Retrieving SMS Application Group with code: {Code}", code);
-            return await _dataService.GetByCodeAsync(code, ct).ConfigureAwait(false);
+            var result = await _dataService.GetByCodeAsync(code, ct).ConfigureAwait(false);
+            if (result.IsSuccess && result.Value is not null)
+            {
+                await PopulateAllowedCompaniesAsync(result.Value, ct).ConfigureAwait(false);
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -99,7 +117,16 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
         try
         {
             _logger.LogApplicationInformation("Retrieving all SMS Application Groups");
-            return await _dataService.GetAllAsync(ct).ConfigureAwait(false);
+            var result = await _dataService.GetAllAsync(ct).ConfigureAwait(false);
+            if (result.IsSuccess && result.Value is not null)
+            {
+                foreach (var group in result.Value)
+                {
+                    await PopulateAllowedCompaniesAsync(group, ct).ConfigureAwait(false);
+                }
+            }
+
+            return result;
         }
         catch (Exception ex)
         {
@@ -186,6 +213,13 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
 
             if (result.IsSuccess)
             {
+                await _dataService.ReplaceAllowedCompaniesByGroupCodeAsync(
+                    group.Code,
+                    group.AllowedCompanyCodes ?? new List<string>(),
+                    group.UpdatedBy ?? group.CreatedBy ?? string.Empty,
+                    ct).ConfigureAwait(false);
+
+                await PopulateAllowedCompaniesAsync(result.Value, ct).ConfigureAwait(false);
                 _logger.LogApplicationInformation("Successfully updated SMS Application Group with code: {Code}", group.Code);
             }
             else
@@ -272,6 +306,36 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
             {
                 _logger.LogApplicationWarning("Cannot assign user to inactive group: {GroupCode}", groupCode);
                 return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.CannotAssignToInactiveGroup);
+            }
+
+            var userResult = await _applicationUserService.GetSMSApplicationUserByCodeAsync(userCode, ct).ConfigureAwait(false);
+            if (userResult.IsFailure || userResult.Value is null)
+            {
+                _logger.LogApplicationWarning("Cannot assign non-existent application user {UserCode} to group {GroupCode}", userCode, groupCode);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.UserNotFound);
+            }
+
+            var allowedCompaniesResult = await _dataService.GetAllowedCompaniesByGroupCodeAsync(groupCode, ct).ConfigureAwait(false);
+            if (allowedCompaniesResult.IsFailure)
+            {
+                _logger.LogApplicationWarning("Failed loading allowed companies for group {GroupCode}; rejecting assignment", groupCode);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.AssignmentFailed);
+            }
+
+            var allowedCompanies = allowedCompaniesResult.Value?.ToList() ?? new List<string>();
+            if (allowedCompanies.Count > 0 && !string.IsNullOrWhiteSpace(userResult.Value.Company))
+            {
+                var isAllowed = allowedCompanies.Any(c => c.Equals(userResult.Value.Company, StringComparison.OrdinalIgnoreCase));
+                if (!isAllowed)
+                {
+                    _logger.LogApplicationWarning("User {UserCode} company {Company} is not allowed for group {GroupCode}", userCode, userResult.Value.Company, groupCode);
+                    return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.CompanyNotAllowed);
+                }
+            }
+            else if (allowedCompanies.Count > 0 && string.IsNullOrWhiteSpace(userResult.Value.Company))
+            {
+                _logger.LogApplicationWarning("User {UserCode} has no company and group {GroupCode} has explicit allowed companies", userCode, groupCode);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.CompanyNotAllowed);
             }
 
             var result = await _dataService.AssignUserToGroupAsync(userCode, groupCode, assignedBy, ct).ConfigureAwait(false);
@@ -443,6 +507,19 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
         {
             _logger.LogApplicationError(ex, "Error validating group membership limits for: {GroupCode}", groupCode);
             return true; // Allow operation to continue
+        }
+    }
+
+    private async Task PopulateAllowedCompaniesAsync(SMSApplicationGroup group, CancellationToken ct)
+    {
+        var companiesResult = await _dataService.GetAllowedCompaniesByGroupCodeAsync(group.Code, ct).ConfigureAwait(false);
+        if (companiesResult.IsSuccess)
+        {
+            group.AllowedCompanyCodes = companiesResult.Value?
+                .Where(code => !string.IsNullOrWhiteSpace(code))
+                .Select(code => code.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList() ?? new List<string>();
         }
     }
 

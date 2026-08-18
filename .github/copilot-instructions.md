@@ -24,6 +24,8 @@
 - SMSStakeholderType should not include an IsActive property/column; stakeholder type values are DB-driven without IsActive filtering.
 - Use 'Title' instead of 'Type' for stakeholder lookup domain/repository/procedure naming (Type is deprecated).
 - Rename stored procedure usage from `pr_SMSDepartment_GetAll` to `pr_SMSOrganization_GetAll` in this codebase.
+- For Application Group company mapping, the remove stored procedure is named `pr_SMSApplicationGroupCompany_Remove` (not `pr_SMSApplicationGroupCompany_RemoveByGroupCode`).
+- Follow repository parameter naming patterns by using constants from `ParameterNames.cs` instead of hardcoded SQL parameter strings.
 
 ## Logging and Error Handling
 - Use `Application/Common/ApplicationLogMessages.cs` consistently for logging.
@@ -48,6 +50,8 @@
 ## User Management
 - For SMS user management dialogs, SMS User Role/Permissions is required and must not be labeled as optional. Bindings and parameters for user role must be 100% consistent across ApplicationUsers, StakeholderUsers, and OrganizationalUsers.
 - BaseUser must carry common identity fields: Company, Organization (renamed from Department), Title, and JobFunction shared by ApplicationUser, OrganizationalUser, and StakeholderUser. Do not map legacy OrganizationalUser Department or Position in the mapper.
+- For all three user-group types (Application, Organizational, Stakeholder), each group must manage an Allowed Companies list on create/edit modals. User assignment into a group must be filtered so only users whose Company is in that group's Allowed Companies are assignable, and user type must match group type (e.g., Stakeholder users only in Stakeholder groups).
+- Use normalized relationship tables for group-to-company permissions (e.g., tblr_SMSApplicationUserGroupCompanies), and apply the same allowed-companies model consistently across all three user/group types.
 
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.
