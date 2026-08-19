@@ -710,7 +710,7 @@ public static class DomainErrors
     {
         public static Error NullOrEmpty => new Error("LastName.NullOrEmpty", "The last name is required.");
         public static Error LongerThanAllowed => new Error("LastName.LongerThanAllowed", "The last name is longer than allowed.");
-        public static Error ContainsSpecialCharactersOrNumbers => new Error("LastName.ContainsSpecialCharactersOrNumbers", "The last name must not contain special characters or numeric values");
+        public static Error ContainsSpecialCharactersOrNumbers => new Error("LastName.ContainsSpecialCharactersOrNumbers", "The last name may contain letters, spaces, and periods only, and must not contain numeric values.");
     }
 
     /// <summary>

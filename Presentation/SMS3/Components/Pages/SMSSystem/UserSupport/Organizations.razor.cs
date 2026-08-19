@@ -1,13 +1,14 @@
 using SMS_Application.Interfaces;
+using SMS_Application.Commands;
+using SMS_Application.Queries;
 
 using SMS_Domain.Enums;
-using SMS_Infrastructure.Interfaces;
 
 namespace SMS3.Components.Pages.SMSSystem.UserSupport;
 
 public partial class Organizations : ComponentBase
 {
-    [Inject] private ISMSOrganizationRepository _organizationRepository { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private ILogger<Organizations> _logger { get; set; } = default!;
 
@@ -34,7 +35,7 @@ public partial class Organizations : ComponentBase
 
     private async Task LoadOrganizationsAsync()
     {
-        var result = await _organizationRepository.GetAllAsync();
+        var result = await _mediator.SendAsync(new GetAllSMSOrganizationsQuery(), CancellationToken.None);
         if (result.IsSuccess)
         {
             _organizations = result.Value?.OrderBy(o => o.Name).ToList() ?? new List<SMSOrganization>();
@@ -70,9 +71,7 @@ public partial class Organizations : ComponentBase
         {
             _isSaving = true;
             var org = SMSOrganization.Create(_newValue.Trim(), _newName.Trim(), _newDescription?.Trim() ?? string.Empty, Array.Empty<string>());
-            var createdBy = string.IsNullOrWhiteSpace(_currentUserService.UserCode) ? "SYSTEM" : _currentUserService.UserCode;
-
-            var result = await _organizationRepository.CreateAsync(org, createdBy);
+            var result = await _mediator.SendAsync(new CreateSMSOrganizationCommand(org), CancellationToken.None);
             if (result.IsFailure)
             {
                 _errorMessage = result.Error?.Message ?? "Failed to create organization.";
@@ -123,9 +122,7 @@ public partial class Organizations : ComponentBase
         {
             _isSaving = true;
             var org = SMSOrganization.Create(_editValue.Trim(), _editName.Trim(), _editDescription?.Trim() ?? string.Empty, Array.Empty<string>());
-            var updatedBy = string.IsNullOrWhiteSpace(_currentUserService.UserCode) ? "SYSTEM" : _currentUserService.UserCode;
-
-            var result = await _organizationRepository.UpdateAsync(_editOriginalValue, org, updatedBy);
+            var result = await _mediator.SendAsync(new UpdateSMSOrganizationCommand(_editOriginalValue, org), CancellationToken.None);
             if (result.IsFailure)
             {
                 _errorMessage = result.Error?.Message ?? "Failed to update organization.";
@@ -160,8 +157,7 @@ public partial class Organizations : ComponentBase
 
         try
         {
-            var deletedBy = string.IsNullOrWhiteSpace(_currentUserService.UserCode) ? "SYSTEM" : _currentUserService.UserCode;
-            var result = await _organizationRepository.DeleteAsync(organization.Value, deletedBy);
+            var result = await _mediator.SendAsync(new DeleteSMSOrganizationCommand(organization.Value), CancellationToken.None);
             if (result.IsFailure)
             {
                 _errorMessage = result.Error?.Message ?? "Failed to delete organization.";

@@ -56,12 +56,32 @@
                 <RadzenDataGridColumn TItem="SMSCompany" Property="Company" Title="Name" Width="260px" />
                 <RadzenDataGridColumn TItem="SMSCompany" Property="ServiceProvided" Title="Description" Width="320px" />
                 <RadzenDataGridColumn TItem="SMSCompany" Property="ContactName" Title="Contact Name" Width="220px" />
-                <RadzenDataGridColumn TItem="SMSCompany" Property="Email" Title="Contact Email" Width="240px" />
+                <RadzenDataGridColumn TItem="SMSCompany" Property="Email" Title="Contact Email" Width="240px">
+                    <Template Context="company">
+                        @if (!string.IsNullOrWhiteSpace(company.Email))
+                        {
+                            @if (IsEmailFormat(company.Email))
+                            {
+                                <a href="@($"mailto:{company.Email}")">@company.Email</a>
+                            }
+                            else
+                            {
+                                <span>@company.Email</span>
+                            }
+                        }
+                        else
+                        {
+                            <em style="color: var(--rz-text-secondary-color);">No email</em>
+                        }
+                    </Template>
+                </RadzenDataGridColumn>
                 <RadzenDataGridColumn TItem="SMSCompany" Property="Phone" Title="Contact Phone" Width="180px" />
                 <RadzenDataGridColumn TItem="SMSCompany" Property="PortRep" Title="Internal Representative" Width="240px" />
                 <RadzenDataGridColumn TItem="SMSCompany" Title="Actions" Width="120px" Sortable="false" Filterable="false">
                     <Template Context="company">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
+                            <RadzenButton Icon="groups" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                          Click="@(() => ShowAssignedUsers(company))" title="Show Assigned Users" />
                             <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
                                           Click="@(() => OpenEditModal(company))" title="Edit Company" />
                             <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
@@ -72,6 +92,67 @@
             </Columns>
         </RadzenDataGrid>
     }
+
+@if (_showAssignedUsersModal)
+{
+    <div class="modal-backdrop">
+        <div class="modal-dialog user-mgmt-modal user-mgmt-modal-wide">
+            <RadzenCard class="modal-content">
+                <div class="modal-header" style="background-color: #212e61; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
+                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
+                        <RadzenIcon Icon="groups" Style="margin-right: 0.5rem;" />
+                        Assigned Users - @_selectedCompanyDisplay
+                    </RadzenText>
+                </div>
+
+                @if (_assignedUsers.Any())
+                {
+                    <RadzenDataGrid Data="@_assignedUsers" TItem="CompanyAssignedUserItem"
+                                    AllowFiltering="true" AllowSorting="true" AllowPaging="true"
+                                    PageSize="10" ShowPagingSummary="true"
+                                    FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="CompanyAssignedUserItem" Property="UserType" Title="Type" Width="130px" />
+                            <RadzenDataGridColumn TItem="CompanyAssignedUserItem" Property="UserCode" Title="User ID" Width="120px" />
+                            <RadzenDataGridColumn TItem="CompanyAssignedUserItem" Property="DisplayName" Title="Name" Width="220px" />
+                            <RadzenDataGridColumn TItem="CompanyAssignedUserItem" Property="UserName" Title="Username" Width="260px">
+                                <Template Context="assignedUser">
+                                    @if (IsEmailFormat(assignedUser.UserName))
+                                    {
+                                        <a href="@($"mailto:{assignedUser.UserName}")">@assignedUser.UserName</a>
+                                    }
+                                    else
+                                    {
+                                        @assignedUser.UserName
+                                    }
+                                </Template>
+                            </RadzenDataGridColumn>
+                            <RadzenDataGridColumn TItem="CompanyAssignedUserItem" Property="Organization" Title="Organization" Width="220px" />
+                            <RadzenDataGridColumn TItem="CompanyAssignedUserItem" Property="Title" Title="Title" Width="180px" />
+                            <RadzenDataGridColumn TItem="CompanyAssignedUserItem" Property="IsActive" Title="Active" Width="90px">
+                                <Template Context="assignedUser">
+                                    <RadzenIcon Icon="@(assignedUser.IsActive ? "check_box" : "check_box_outline_blank")"
+                                                Style="@(assignedUser.IsActive ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                }
+                else
+                {
+                    <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                        <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
+                        No users are assigned to this company.
+                    </RadzenAlert>
+                }
+
+                <div class="d-flex justify-content-end gap-2 mt-3">
+                    <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Light" Click="@CloseAssignedUsersModal" />
+                </div>
+            </RadzenCard>
+        </div>
+    </div>
+}
     else
     {
         <RadzenStack Orientation="Orientation.Vertical" AlignItems="AlignItems.Center" Gap="1rem" Style="padding: 3rem;">
@@ -248,5 +329,10 @@
     width: min(92vw, 900px);
     max-width: 900px;
     margin: 1rem;
+}
+
+.modal-dialog.user-mgmt-modal.user-mgmt-modal-wide {
+    width: min(98vw, 1400px);
+    max-width: 1400px;
 }
 </style>

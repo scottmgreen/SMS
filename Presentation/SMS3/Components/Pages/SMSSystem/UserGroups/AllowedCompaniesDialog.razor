@@ -1,0 +1,24 @@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenCard>
+    <RadzenDataGrid Data="@AllowedCompanies" TItem="AllowedCompanyDisplayItem" AllowPaging="true" PageSize="10" AllowSorting="true" AllowFiltering="false">
+        <Columns>
+            <RadzenDataGridColumn TItem="AllowedCompanyDisplayItem" Property="Code" Title="Code" Width="140px" />
+            <RadzenDataGridColumn TItem="AllowedCompanyDisplayItem" Property="Name" Title="Company" />
+        </Columns>
+    </RadzenDataGrid>
+    <div class="d-flex justify-content-end mt-3">
+        <RadzenButton Text="Close" ButtonStyle="ButtonStyle.Light" Click="@CloseDialog" />
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public List<AllowedCompanyDisplayItem> AllowedCompanies { get; set; } = new();
+    [Inject] private DialogService _dialogService { get; set; } = default!;
+
+    private void CloseDialog()
+    {
+        _dialogService.Close();
+    }
+}

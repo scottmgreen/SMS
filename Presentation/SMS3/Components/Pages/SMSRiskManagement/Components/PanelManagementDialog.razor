@@ -1,6 +1,7 @@
 @using Radzen
 @using Radzen.Blazor
 @using SMS_Domain.Entities
+@using SMS_Domain.Enums
 
 <!-- Panel Management Modal -->
 <div class="panel-management-overlay" @onclick="@(e => CloseIfClickedOutside(e))" @onclick:stopPropagation="false">
@@ -71,7 +72,7 @@
                                 </Template>
                             </RadzenDataGridColumn>
                             
-                            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="DisplayName" Title="Name" Width="200px">
+                            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="DisplayName" Title="Name" Width="320px">
                                 <HeaderTemplate>
                                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
                                         <RadzenIcon Icon="person" Style="font-size: 1rem;" />
@@ -80,7 +81,9 @@
                                 </HeaderTemplate>
                                 <Template Context="stakeholder">
                                     <RadzenStack Orientation="Orientation.Vertical" Gap="0.1rem">
-                                        <RadzenText Text="@stakeholder.DisplayName" TextStyle="TextStyle.Body2" Style="font-weight: 500;" />
+                                        <RadzenText Text="@GetStakeholderDisplayLabel(stakeholder)"
+                                                    TextStyle="TextStyle.Body2"
+                                                    Style="font-weight: 500;" />
                                         <RadzenText Text="@stakeholder.UserName?.Value" TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);" />
                                     </RadzenStack>
                                 </Template>
@@ -93,6 +96,9 @@
                                         <span>Organization</span>
                                     </RadzenStack>
                                 </HeaderTemplate>
+                                <Template Context="stakeholder">
+                                    <RadzenText Text="@GetOrganizationDisplayName(stakeholder.Organization)" TextStyle="TextStyle.Body2" />
+                                </Template>
                             </RadzenDataGridColumn>
                             
                             @* <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="StakeholderType" Title="Role" Width="140px">
@@ -394,5 +400,38 @@
     {
         Console.WriteLine($"Saving changes with {WorkingSelectedCodes.Count} selected codes: {string.Join(", ", WorkingSelectedCodes)}");
         DialogService.Close(WorkingSelectedCodes);
+    }
+
+    private static string GetOrganizationDisplayName(string? organizationCode)
+    {
+        if (string.IsNullOrWhiteSpace(organizationCode))
+        {
+            return string.Empty;
+        }
+
+        var organization = SMSOrganization.FromValue(organizationCode.Trim());
+        return organization?.Name ?? organizationCode.Trim();
+    }
+
+    private static string GetStakeholderDisplayLabel(SMSStakeholderUser stakeholder)
+    {
+        if (string.IsNullOrWhiteSpace(stakeholder?.Title))
+        {
+            return stakeholder?.DisplayName ?? string.Empty;
+        }
+
+        var titleDisplay = GetJobTitleDisplayName(stakeholder.Title);
+        return $"{stakeholder.DisplayName} - {titleDisplay}";
+    }
+
+    private static string GetJobTitleDisplayName(string? titleValue)
+    {
+        if (string.IsNullOrWhiteSpace(titleValue))
+        {
+            return string.Empty;
+        }
+
+        var jobTitle = SMSJobTitle.FromValue(titleValue.Trim());
+        return jobTitle?.Name ?? titleValue.Trim();
     }
 }

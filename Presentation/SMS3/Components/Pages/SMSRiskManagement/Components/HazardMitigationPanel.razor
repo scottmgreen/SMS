@@ -815,6 +815,7 @@
 
             // Update Step5 model directly for now (TODO: Implement proper command later)
             Step5.ResidualRiskPanels[Hazard.Code] = selectedMembers;
+            Step5.HazardResidualPanelMembers[Hazard.Code] = selectedMembers.ToList();
             
             ShowResidualPanelDialog = false;
             ShowSuccessAsyncNotification($"Updated residual risk panel for {Hazard.Code} with {selectedMembers.Count} members");

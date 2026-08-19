@@ -87,7 +87,14 @@
                         <Template Context="group">
                             @if (!string.IsNullOrEmpty(group.ContactEmail))
                             {
-                                <span>@group.ContactEmail</span>
+                                @if (IsEmailFormat(group.ContactEmail))
+                                {
+                                    <a href="@($"mailto:{group.ContactEmail}")">@group.ContactEmail</a>
+                                }
+                                else
+                                {
+                                    <span>@group.ContactEmail</span>
+                                }
                             }
                             else
                             {
@@ -114,7 +121,7 @@
                         </Template>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="SMSApplicationGroup" Title="Actions" Width="220px" Sortable="false" Filterable="false">
+                    <RadzenDataGridColumn TItem="SMSApplicationGroup" Title="Actions" Width="300px" Sortable="false" Filterable="false">
                         <Template Context="group">
                             <div class="d-flex gap-1">
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
@@ -123,6 +130,8 @@
                                               Click="@(() => ManageMembers(group.Code))" title="Manage Members" />
                                 <RadzenButton Text="@(GetAssignedUsersCount(group.Code).ToString())" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
                                               Click="@(() => ManageMembers(group.Code))" title="View Assigned Users" />
+                                <RadzenButton Text="@(GetAllowedCompaniesCount(group).ToString())" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                              Click="@(() => ShowAllowedCompanies(group))" title="View Allowed Companies" />
                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
                                               Disabled="@IsGroupDeleteDisabled(group.Code)"
                                               Click="@(() => ConfirmDelete(group.Code, group.Name))" title="@GetDeleteTooltip(group.Code)" />

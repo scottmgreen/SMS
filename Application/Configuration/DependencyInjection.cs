@@ -74,6 +74,11 @@ namespace SMS_Application.Configuration
             services.AddScoped<SMSOrganizationalGroupService>();
             services.AddScoped<SMSStakeholderGroupService>();
 
+            // SMS User Support Lookup Services - CONCRETE REGISTRATIONS (CQRS handlers)
+            services.AddScoped<SMSOrganizationService>();
+            services.AddScoped<SMSCompanyService>();
+            services.AddScoped<SMSJobTitleService>();
+
             // SMS Role Management
             services.AddScoped<SMSUserRoleService>();
 

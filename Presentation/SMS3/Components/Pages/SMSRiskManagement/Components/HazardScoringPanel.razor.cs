@@ -110,6 +110,9 @@ public partial class HazardScoringPanel : ComponentBase
 
                 _hazardScoringPanels = filteredPanels;
 
+                SyncStep4PanelStateFromLoadedPanels(filteredPanels);
+                SyncStep5ResidualPanelStateFromLoadedPanels(filteredPanels);
+
                 Logger.LogInformation("Filtered to {Count} scoring panels for hazard {HazardCode} and assessment {AssessmentCode}", filteredPanels.Count, Hazard.Code, targetRiskAssessmentCode);
 
                 // Recalculate scoring data after loading panels
@@ -132,6 +135,73 @@ public partial class HazardScoringPanel : ComponentBase
             // Clear scoring data on error
             await RecalculateHazardScoringData();
         }
+    }
+
+    private void SyncStep4PanelStateFromLoadedPanels(List<ScoringPanel> panels)
+    {
+        if (CurrentStep != 4 || Step4 is null || string.IsNullOrWhiteSpace(Hazard?.Code))
+        {
+            return;
+        }
+
+        var memberCodes = panels
+            .Where(p => !string.IsNullOrWhiteSpace(p.SMSUserCode))
+            .Select(p => p.SMSUserCode!.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        Step4.HazardPanelMembers[Hazard.Code] = memberCodes;
+
+        Step4.PanelScores[Hazard.Code] = panels
+            .Where(p => !string.IsNullOrWhiteSpace(p.SMSUserCode))
+            .Select(p =>
+            {
+                var severity = p.InitialSeverity ?? p.Severity ?? 0;
+                var likelihood = p.InitialLikelihood ?? p.Likelihood ?? 0;
+                return new Step4Model.PanelMemberScoreData
+                {
+                    HazardId = Hazard.Code,
+                    MemberId = (p.SMSUserCode ?? string.Empty).Trim(),
+                    MemberName = GetMemberName(p.SMSUserCode),
+                    SeverityScore = severity,
+                    LikelihoodScore = likelihood,
+                    SubmittedDate = (p.UpdatedDate ?? p.CreatedDate) ?? DateTime.UtcNow
+                };
+            })
+            .GroupBy(p => p.MemberId, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderByDescending(x => x.SubmittedDate).First())
+            .ToList();
+
+        Step4.RecalculateHazardAverage(Hazard.Code);
+    }
+
+    private void SyncStep5ResidualPanelStateFromLoadedPanels(List<ScoringPanel> panels)
+    {
+        if (CurrentStep != 5 || Step5 is null || string.IsNullOrWhiteSpace(Hazard?.Code))
+        {
+            return;
+        }
+
+        Step5.HazardResidualPanelMembers[Hazard.Code] = panels
+            .Where(p => !string.IsNullOrWhiteSpace(p.SMSUserCode))
+            .Select(p => p.SMSUserCode!)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        Step5.ResidualPanelScores[Hazard.Code] = panels
+            .Where(p => !string.IsNullOrWhiteSpace(p.SMSUserCode))
+            .Select(p => new Step5Model.ResidualPanelMemberScoreData
+            {
+                HazardId = Hazard.Code,
+                MemberId = p.SMSUserCode ?? string.Empty,
+                MemberName = GetMemberName(p.SMSUserCode),
+                SeverityScore = p.ResidualSeverity ?? p.Severity ?? 0,
+                LikelihoodScore = p.ResidualLikelihood ?? p.Likelihood ?? 0,
+                SubmittedDate = (p.UpdatedDate ?? p.CreatedDate) ?? DateTime.UtcNow
+            })
+            .GroupBy(p => p.MemberId, StringComparer.OrdinalIgnoreCase)
+            .Select(g => g.OrderByDescending(x => x.SubmittedDate).First())
+            .ToList();
     }
 
     private string GetMemberName(string? userCode)

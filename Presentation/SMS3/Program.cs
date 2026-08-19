@@ -66,6 +66,12 @@ public class Program
             {
                 await companyRepository.GetAllAsync();
             }
+
+            var jobTitleRepository = preloadScope.ServiceProvider.GetService<ISMSJobTitleRepository>();
+            if (jobTitleRepository is not null)
+            {
+                await jobTitleRepository.GetAllAsync();
+            }
         }
 
         if (builder.Configuration.GetValue<bool>("FeatureManagement:ExternalApiEnabled", true))

@@ -6,6 +6,7 @@ using SMS_Application.Queries;
 using SMS_Application.Interfaces;
 using SMS_Domain.Events;
 using SMS_Shared.Configuration;
+using System.Net.Mail;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS_Domain.Enums;
@@ -1087,6 +1088,24 @@ public partial class OrganizationalUsers : ComponentBase
 
         var groupAuthorityLevel = group.EffectiveAuthorityLevel;
         return groupAuthorityLevel <= _groupManagementUserAuthorityLevel;
+    }
+
+    private static bool IsEmailFormat(string? userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return false;
+        }
+
+        try
+        {
+            var addr = new MailAddress(userName.Trim());
+            return string.Equals(addr.Address, userName.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     #endregion

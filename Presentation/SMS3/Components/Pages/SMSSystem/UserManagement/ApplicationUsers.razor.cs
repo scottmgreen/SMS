@@ -7,6 +7,7 @@ using SMS_Domain.ValueObjects;
 
 using SMS_Shared.Common;
 using SMS_Shared.Configuration;
+using System.Net.Mail;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
@@ -815,6 +816,24 @@ public partial class ApplicationUsers : ComponentBase
 
         var byName = SMSJobTitle.FromName(rawValue);
         return byName?.Value ?? rawValue;
+    }
+
+    private static bool IsEmailFormat(string? userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return false;
+        }
+
+        try
+        {
+            var addr = new MailAddress(userName.Trim());
+            return string.Equals(addr.Address, userName.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
     }
 
     #endregion

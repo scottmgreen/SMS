@@ -13,6 +13,7 @@ using SMS_Shared.Configuration;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 using System.ComponentModel.DataAnnotations;
+using System.Net.Mail;
 
 namespace SMS3.Components.Pages.SMSSystem.UserGroups;
 
@@ -26,6 +27,24 @@ public partial class StakeholderGroups : ComponentBase
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
+
+    private static bool IsEmailFormat(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            return false;
+        }
+
+        try
+        {
+            var address = new MailAddress(email.Trim());
+            return string.Equals(address.Address, email.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
+        }
+    }
 
     #region Parameters
 
@@ -165,6 +184,42 @@ public partial class StakeholderGroups : ComponentBase
         }
 
         return GroupMemberCounts.TryGetValue(groupCode, out var count) ? count : 0;
+    }
+
+    private static int GetAllowedCompaniesCount(SMSStakeholderGroup? group)
+    {
+        return group?.AllowedCompanyCodes?.Count(c => !string.IsNullOrWhiteSpace(c)) ?? 0;
+    }
+
+    private async Task ShowAllowedCompanies(SMSStakeholderGroup group)
+    {
+        var allowedCodes = group.AllowedCompanyCodes?
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList() ?? new List<string>();
+
+        if (!allowedCodes.Any())
+        {
+            await DialogService.Alert(
+                "No specific allowed companies configured. All companies are currently allowed.",
+                $"Allowed Companies - {group.Name}",
+                new AlertOptions { OkButtonText = "Close" });
+            return;
+        }
+
+        var allowedCompanies = CompanyOptions
+            .Where(c => allowedCodes.Contains(c.Value, StringComparer.OrdinalIgnoreCase))
+            .Select(c => new AllowedCompanyDisplayItem { Code = c.Value, Name = c.Company })
+            .OrderBy(c => c.Name)
+            .ToList();
+
+        await DialogService.OpenAsync<AllowedCompaniesDialog>($"Allowed Companies - {group.Name}",
+            new Dictionary<string, object?>
+            {
+                { "AllowedCompanies", allowedCompanies }
+            },
+            new DialogOptions { Width = "600px", Height = "480px", Resizable = true, Draggable = true });
     }
 
     private bool IsGroupDeleteDisabled(string? groupCode)

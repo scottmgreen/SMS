@@ -251,8 +251,6 @@ namespace SMS3.Components.Shared
             // Aviation standard: Average severity and likelihood separately
             var averageSeverity = severityValues.Average();
             var averageLikelihood = likelihoodValues.Average();
-            var averageScore = scoreValues.Average();
-
             // Round to get final values for matrix calculation
             var roundedSeverity = (int)Math.Round(averageSeverity);
             var roundedLikelihood = (int)Math.Round(averageLikelihood);
@@ -263,11 +261,14 @@ namespace SMS3.Components.Shared
             var backgroundColor = GetAviationMatrixColor(roundedSeverity, roundedLikelihood);
             var textColor = IsLightColor(backgroundColor) ? "#000000" : "#ffffff";
 
+            // Persist score as matrix-derived value to align with matrix buckets (e.g., 9.00, 16.00, 25.00).
+            var matrixDerivedScore = roundedSeverity * roundedLikelihood;
+
             return new HazardRiskCalculation
             {
                 AverageSeverity = averageSeverity,
                 AverageLikelihood = averageLikelihood,
-                AverageScore = (decimal)averageScore, // FIX: Cast double to decimal
+                AverageScore = matrixDerivedScore,
                 RoundedSeverity = roundedSeverity,
                 RoundedLikelihood = roundedLikelihood,
                 MatrixCode = matrixCode,

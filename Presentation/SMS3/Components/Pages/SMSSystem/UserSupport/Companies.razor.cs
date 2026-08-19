@@ -1,13 +1,26 @@
 using SMS_Application.Interfaces;
+using SMS_Application.Commands;
+using SMS_Application.Queries;
 
 using SMS_Domain.Enums;
-using SMS_Infrastructure.Interfaces;
+using System.Net.Mail;
 
 namespace SMS3.Components.Pages.SMSSystem.UserSupport;
 
 public partial class Companies : ComponentBase
 {
-    [Inject] private ISMSCompanyRepository _companyRepository { get; set; } = default!;
+    private sealed class CompanyAssignedUserItem
+    {
+        public string UserType { get; set; } = string.Empty;
+        public string UserCode { get; set; } = string.Empty;
+        public string DisplayName { get; set; } = string.Empty;
+        public string UserName { get; set; } = string.Empty;
+        public string Organization { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public bool IsActive { get; set; }
+    }
+
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private ILogger<Companies> _logger { get; set; } = default!;
 
@@ -16,9 +29,12 @@ public partial class Companies : ComponentBase
 
     private bool _showCreateModal;
     private bool _showEditModal;
+    private bool _showAssignedUsersModal;
     private bool _isSaving;
     private string _successMessage = string.Empty;
     private string _errorMessage = string.Empty;
+    private string _selectedCompanyDisplay = string.Empty;
+    private List<CompanyAssignedUserItem> _assignedUsers = new();
 
     private string _newName = string.Empty;
     private string _newDescription = string.Empty;
@@ -43,7 +59,7 @@ public partial class Companies : ComponentBase
     private async Task LoadCompaniesAsync()
     {
         _errorMessage = string.Empty;
-        var result = await _companyRepository.GetAllAsync();
+        var result = await _mediator.SendAsync(new GetAllSMSCompaniesQuery(), CancellationToken.None);
         if (result.IsSuccess)
         {
             _companies = result.Value?.OrderBy(c => c.Company).ToList() ?? new List<SMSCompany>();
@@ -99,8 +115,7 @@ public partial class Companies : ComponentBase
                 _newContactPhone,
                 _newInternalRepresentative);
 
-            var createdBy = string.IsNullOrWhiteSpace(_currentUserService.UserCode) ? "SYSTEM" : _currentUserService.UserCode;
-            var result = await _companyRepository.CreateAsync(company, createdBy);
+            var result = await _mediator.SendAsync(new CreateSMSCompanyCommand(company), CancellationToken.None);
 
             if (result.IsFailure)
             {
@@ -173,8 +188,7 @@ public partial class Companies : ComponentBase
                 _editContactPhone,
                 _editInternalRepresentative);
 
-            var updatedBy = string.IsNullOrWhiteSpace(_currentUserService.UserCode) ? "SYSTEM" : _currentUserService.UserCode;
-            var result = await _companyRepository.UpdateAsync(company, updatedBy);
+            var result = await _mediator.SendAsync(new UpdateSMSCompanyCommand(company), CancellationToken.None);
 
             if (result.IsFailure)
             {
@@ -211,8 +225,7 @@ public partial class Companies : ComponentBase
 
         try
         {
-            var deletedBy = string.IsNullOrWhiteSpace(_currentUserService.UserCode) ? "SYSTEM" : _currentUserService.UserCode;
-            var result = await _companyRepository.DeleteAsync(company.Value, deletedBy);
+            var result = await _mediator.SendAsync(new DeleteSMSCompanyCommand(company.Value), CancellationToken.None);
 
             if (result.IsFailure)
             {
@@ -232,6 +245,115 @@ public partial class Companies : ComponentBase
         {
             _logger.LogError(ex, "Error deleting company {Code}", company.Value);
             _errorMessage = "Error deleting company.";
+        }
+    }
+
+    private async Task ShowAssignedUsers(SMSCompany company)
+    {
+        try
+        {
+            _errorMessage = string.Empty;
+            _selectedCompanyDisplay = $"{company.Company} ({company.Value})";
+
+            var appUsersResult = await _mediator.SendAsync(new GetAllSMSApplicationUsersQuery(), CancellationToken.None);
+            var orgUsersResult = await _mediator.SendAsync(new GetAllSMSOrganizationalUsersQuery(), CancellationToken.None);
+            var stakeholderUsersResult = await _mediator.SendAsync(new GetAllSMSStakeholderUsersQuery(), CancellationToken.None);
+
+            var companyCode = company.Value?.Trim() ?? string.Empty;
+            var companyName = company.Company?.Trim() ?? string.Empty;
+
+            var applicationUsers = (appUsersResult.IsSuccess ? appUsersResult.Value : Enumerable.Empty<SMSApplicationUser>())
+                .Where(u => IsUserAssignedToCompany(u.Company, companyCode, companyName))
+                .Select(u => new CompanyAssignedUserItem
+                {
+                    UserType = "Application",
+                    UserCode = u.Code,
+                    DisplayName = u.DisplayName,
+                    UserName = u.UserName?.Value ?? string.Empty,
+                    Organization = SMSOrganization.FromValue(u.Organization ?? string.Empty)?.Name ?? u.Organization ?? string.Empty,
+                    Title = SMSJobTitle.FromValue(u.Title ?? string.Empty)?.Name ?? u.Title ?? string.Empty,
+                    IsActive = u.IsActive
+                });
+
+            var organizationalUsers = (orgUsersResult.IsSuccess ? orgUsersResult.Value : Enumerable.Empty<SMSOrganizationalUser>())
+                .Where(u => IsUserAssignedToCompany(u.Company, companyCode, companyName))
+                .Select(u => new CompanyAssignedUserItem
+                {
+                    UserType = "Organizational",
+                    UserCode = u.Code,
+                    DisplayName = u.DisplayName,
+                    UserName = u.UserName?.Value ?? string.Empty,
+                    Organization = SMSOrganization.FromValue(u.Organization ?? string.Empty)?.Name ?? u.Organization ?? string.Empty,
+                    Title = SMSJobTitle.FromValue(string.IsNullOrWhiteSpace(u.Title) ? u.Position : u.Title)?.Name
+                            ?? u.Title
+                            ?? u.Position
+                            ?? string.Empty,
+                    IsActive = u.IsActive
+                });
+
+            var stakeholderUsers = (stakeholderUsersResult.IsSuccess ? stakeholderUsersResult.Value : Enumerable.Empty<SMSStakeholderUser>())
+                .Where(u => IsUserAssignedToCompany(u.Company, companyCode, companyName))
+                .Select(u => new CompanyAssignedUserItem
+                {
+                    UserType = "Stakeholder",
+                    UserCode = u.Code,
+                    DisplayName = u.DisplayName,
+                    UserName = u.UserName?.Value ?? string.Empty,
+                    Organization = SMSOrganization.FromValue(u.Organization ?? string.Empty)?.Name ?? u.Organization ?? string.Empty,
+                    Title = SMSJobTitle.FromValue(u.Title ?? string.Empty)?.Name ?? u.Title ?? string.Empty,
+                    IsActive = u.IsActive
+                });
+
+            _assignedUsers = applicationUsers
+                .Concat(organizationalUsers)
+                .Concat(stakeholderUsers)
+                .OrderBy(u => u.DisplayName)
+                .ToList();
+
+            _showAssignedUsersModal = true;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error loading assigned users for company {CompanyCode}", company.Value);
+            _errorMessage = "Error loading assigned users.";
+        }
+    }
+
+    private void CloseAssignedUsersModal()
+    {
+        _showAssignedUsersModal = false;
+        _selectedCompanyDisplay = string.Empty;
+        _assignedUsers = new();
+    }
+
+    private static bool IsUserAssignedToCompany(string? userCompany, string companyCode, string companyName)
+    {
+        if (string.IsNullOrWhiteSpace(userCompany))
+        {
+            return false;
+        }
+
+        var normalizedUserCompany = userCompany.Trim();
+
+        return string.Equals(normalizedUserCompany, companyCode, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(normalizedUserCompany, companyName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool IsEmailFormat(string? userName)
+    {
+        if (string.IsNullOrWhiteSpace(userName))
+        {
+            return false;
+        }
+
+        try
+        {
+            var addr = new MailAddress(userName.Trim());
+            return string.Equals(addr.Address, userName.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+        catch
+        {
+            return false;
         }
     }
 }

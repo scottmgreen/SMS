@@ -45,7 +45,7 @@ public sealed class LastName : BaseValueObject
         Result.Create(lastName.Trim(), DomainErrors.LastNameError.NullOrEmpty)
             .Ensure(l => !string.IsNullOrWhiteSpace(l), DomainErrors.LastNameError.NullOrEmpty)
             .Ensure(l => l.Length <= MaxLength, DomainErrors.LastNameError.LongerThanAllowed)
-            .Ensure(f => Regex.IsMatch(f, @"^[a-zA-Z]+$"), DomainErrors.LastNameError.ContainsSpecialCharactersOrNumbers)
+            .Ensure(l => Regex.IsMatch(l, @"^[a-zA-Z]+(?:[ .][a-zA-Z]+)*\.?$"), DomainErrors.LastNameError.ContainsSpecialCharactersOrNumbers)
             .Map(l => new LastName(l));
 
     /// <inheritdoc />

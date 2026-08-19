@@ -24,6 +24,8 @@ public class Step5Model
     public Dictionary<string, List<string>> SavedMitigationStrategies { get; set; } = new();
     public Dictionary<string, List<Mitigation>> HazardMitigations { get; set; } = new();
     public Dictionary<string, List<string>> ResidualRiskPanels { get; set; } = new();
+    public Dictionary<string, List<string>> HazardResidualPanelMembers { get; set; } = new();
+    public Dictionary<string, List<ResidualPanelMemberScoreData>> ResidualPanelScores { get; set; } = new();
         
     // Dictionary mapping hazard codes to their corresponding Residual RiskAnalysis entities
     public Dictionary<string, RiskAnalysis> HazardResidualRiskAnalyses { get; set; } = new();
@@ -153,6 +155,7 @@ public class Step5Model
             if (!string.IsNullOrEmpty(assessment.Code))
             {
                 await LoadRiskAnalysisAsync(availableHazards, assessment.Code);
+                await LoadExistingResidualScoringPanelsAsync(availableHazards, assessment.Code);
             }
 
             // Then load mitigations
@@ -197,7 +200,132 @@ public class Step5Model
             return (false, $"Residual analysis/mitigation incomplete for {incompleteHazards.Count} hazard(s)");
         }
 
+        var incompleteResidualScoringHazards = HazardResidualPanelMembers
+            .Where(kvp => kvp.Value.Any())
+            .Where(kvp => !ResidualPanelScores.TryGetValue(kvp.Key, out var scores)
+                          || !kvp.Value.All(memberId =>
+                              scores.Any(s => s.MemberId == memberId && s.IsComplete)))
+            .Select(kvp => kvp.Key)
+            .Distinct()
+            .ToList();
+
+        if (incompleteResidualScoringHazards.Any())
+        {
+            return (false, $"Residual scoring incomplete for {incompleteResidualScoringHazards.Count} hazard(s)");
+        }
+
         return (true, "Step 5 validation passed");
+    }
+
+    public async Task LoadExistingResidualScoringPanelsAsync(List<Hazard> availableHazards, string? riskAssessmentCode = null)
+    {
+        if (Mediator is null || availableHazards is null)
+        {
+            return;
+        }
+
+        HazardResidualPanelMembers.Clear();
+        ResidualPanelScores.Clear();
+
+        foreach (var hazard in availableHazards)
+        {
+            try
+            {
+                var query = new GetScoringPanelsByHazardCodeQuery(hazard.Code);
+                var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+                if (!result.IsSuccess || result.Value is null)
+                {
+                    continue;
+                }
+
+                var panels = string.IsNullOrWhiteSpace(riskAssessmentCode)
+                    ? result.Value
+                    : result.Value.Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), riskAssessmentCode.Trim(), StringComparison.OrdinalIgnoreCase)).ToList();
+
+                if (!panels.Any())
+                {
+                    continue;
+                }
+
+                if (!HazardResidualPanelMembers.ContainsKey(hazard.Code))
+                {
+                    HazardResidualPanelMembers[hazard.Code] = new List<string>();
+                }
+
+                if (!ResidualPanelScores.ContainsKey(hazard.Code))
+                {
+                    ResidualPanelScores[hazard.Code] = new List<ResidualPanelMemberScoreData>();
+                }
+
+                foreach (var panel in panels)
+                {
+                    if (!string.IsNullOrWhiteSpace(panel.SMSUserCode) && !HazardResidualPanelMembers[hazard.Code].Contains(panel.SMSUserCode))
+                    {
+                        HazardResidualPanelMembers[hazard.Code].Add(panel.SMSUserCode);
+                    }
+
+                    var severity = panel.ResidualSeverity ?? panel.Severity;
+                    var likelihood = panel.ResidualLikelihood ?? panel.Likelihood;
+
+                    if (severity.HasValue && likelihood.HasValue)
+                    {
+                        var existingScore = ResidualPanelScores[hazard.Code]
+                            .FirstOrDefault(s => s.MemberId == panel.SMSUserCode);
+
+                        if (existingScore is not null)
+                        {
+                            existingScore.SeverityScore = severity.Value;
+                            existingScore.LikelihoodScore = likelihood.Value;
+                            existingScore.SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.UtcNow;
+                        }
+                        else
+                        {
+                            ResidualPanelScores[hazard.Code].Add(new ResidualPanelMemberScoreData
+                            {
+                                HazardId = hazard.Code,
+                                MemberId = panel.SMSUserCode ?? string.Empty,
+                                MemberName = panel.SMSUserCode ?? string.Empty,
+                                SeverityScore = severity.Value,
+                                LikelihoodScore = likelihood.Value,
+                                SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.UtcNow
+                            });
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error loading residual scoring panels for hazard {hazard.Code}: {ex.Message}");
+            }
+        }
+
+        foreach (var panelKvp in ResidualRiskPanels)
+        {
+            if (!HazardResidualPanelMembers.ContainsKey(panelKvp.Key))
+            {
+                HazardResidualPanelMembers[panelKvp.Key] = new List<string>();
+            }
+
+            foreach (var memberId in panelKvp.Value)
+            {
+                if (!HazardResidualPanelMembers[panelKvp.Key].Contains(memberId))
+                {
+                    HazardResidualPanelMembers[panelKvp.Key].Add(memberId);
+                }
+            }
+        }
+    }
+
+    public class ResidualPanelMemberScoreData
+    {
+        public string MemberId { get; set; } = string.Empty;
+        public string MemberName { get; set; } = string.Empty;
+        public string HazardId { get; set; } = string.Empty;
+        public int SeverityScore { get; set; }
+        public int LikelihoodScore { get; set; }
+        public DateTime SubmittedDate { get; set; } = DateTime.UtcNow;
+        public bool IsComplete => SeverityScore > 0 && LikelihoodScore > 0;
     }
 
     

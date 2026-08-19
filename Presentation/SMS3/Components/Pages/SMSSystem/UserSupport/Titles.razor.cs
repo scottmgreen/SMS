@@ -1,13 +1,14 @@
 using SMS_Application.Interfaces;
+using SMS_Application.Commands;
+using SMS_Application.Queries;
 
 using SMS_Domain.Enums;
-using SMS_Infrastructure.Interfaces;
 
 namespace SMS3.Components.Pages.SMSSystem.UserSupport;
 
 public partial class Titles : ComponentBase
 {
-    [Inject] private ISMSJobTitleRepository _titleRepository { get; set; } = default!;
+    [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private ILogger<Titles> _logger { get; set; } = default!;
 
@@ -33,7 +34,7 @@ public partial class Titles : ComponentBase
     private async Task LoadTitlesAsync()
     {
         _errorMessage = string.Empty;
-        var result = await _titleRepository.GetAllAsync();
+        var result = await _mediator.SendAsync(new GetAllSMSJobTitlesQuery(), CancellationToken.None);
         if (result.IsSuccess)
         {
             _titles = result.Value?.OrderBy(t => t.Name).ToList() ?? new List<SMSJobTitle>();
@@ -71,9 +72,7 @@ public partial class Titles : ComponentBase
             _errorMessage = string.Empty;
             var generatedCode = "JT-0000";
             var title = SMSJobTitle.Create(generatedCode, _newName.Trim());
-            var createdBy = _currentUserService.UserCode?.Trim() ?? string.Empty;
-
-            var result = await _titleRepository.CreateAsync(title, createdBy);
+            var result = await _mediator.SendAsync(new CreateSMSJobTitleCommand(title), CancellationToken.None);
             if (result.IsFailure)
             {
                 _errorMessage = result.Error?.Message ?? "Failed to create title.";
@@ -125,9 +124,7 @@ public partial class Titles : ComponentBase
             _isSaving = true;
             _errorMessage = string.Empty;
             var title = SMSJobTitle.Create(_editOriginalCode.Trim(), _editName.Trim());
-            var updatedBy = _currentUserService.UserCode?.Trim() ?? string.Empty;
-
-            var result = await _titleRepository.UpdateAsync(_editOriginalCode, title, updatedBy);
+            var result = await _mediator.SendAsync(new UpdateSMSJobTitleCommand(_editOriginalCode, title), CancellationToken.None);
             if (result.IsFailure)
             {
                 _errorMessage = result.Error?.Message ?? "Failed to update title.";
@@ -162,8 +159,7 @@ public partial class Titles : ComponentBase
 
         try
         {
-            var deletedBy = _currentUserService.UserCode?.Trim() ?? string.Empty;
-            var result = await _titleRepository.DeleteAsync(title.Value, deletedBy);
+            var result = await _mediator.SendAsync(new DeleteSMSJobTitleCommand(title.Value), CancellationToken.None);
             if (result.IsFailure)
             {
                 _errorMessage = result.Error?.Message ?? "Failed to delete title.";

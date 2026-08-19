@@ -26,6 +26,7 @@
 - Rename stored procedure usage from `pr_SMSDepartment_GetAll` to `pr_SMSOrganization_GetAll` in this codebase.
 - For Application Group company mapping, the remove stored procedure is named `pr_SMSApplicationGroupCompany_Remove` (not `pr_SMSApplicationGroupCompany_RemoveByGroupCode`).
 - Follow repository parameter naming patterns by using constants from `ParameterNames.cs` instead of hardcoded SQL parameter strings.
+- Prefer root-cause fixes over workaround-style parameter coercion when debugging SQL type errors.
 
 ## Logging and Error Handling
 - Use `Application/Common/ApplicationLogMessages.cs` consistently for logging.
