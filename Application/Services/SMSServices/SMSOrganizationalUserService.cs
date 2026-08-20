@@ -52,8 +52,8 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
                 user.Activate();
             }
 
-            // Business validation - validate department and position combination
-            await ValidateDepartmentPositionCombination(user.Department?.Value ?? string.Empty, user.Position);
+            // Business validation - validate organization and position combination
+            await ValidateDepartmentPositionCombination(user.Organization ?? string.Empty, user.Position);
 
             user.SyncAuthorityFromOrganizationLevel();
 
@@ -192,8 +192,8 @@ public sealed class SMSOrganizationalUserService : ISMSOrganizationalUserService
                 return Result<SMSOrganizationalUser>.Failure<SMSOrganizationalUser>(DomainErrors.SMSOrganizationalUserError.NotFound);
             }
 
-            // Business validation - validate department and position combination
-            await ValidateDepartmentPositionCombination(user.Department?.Value ?? string.Empty, user.Position);
+            // Business validation - validate organization and position combination
+            await ValidateDepartmentPositionCombination(user.Organization ?? string.Empty, user.Position);
 
             user.SyncAuthorityFromOrganizationLevel();
 

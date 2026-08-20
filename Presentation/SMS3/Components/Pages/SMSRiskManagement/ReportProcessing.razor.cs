@@ -1657,7 +1657,9 @@ public partial class ReportProcessing : ComponentBase
             DisplayName = $"{approver.FirstName?.Value} {approver.LastName?.Value} ({approver.Position})",
             AuthorityLevel = approver.AuthorityLevel?.ToString() ?? "Not specified",
             RiskApprovalAuthority = approver.RiskApprovalAuthority ?? "Not specified",
-            Department = approver.Department?.Name ?? "Not specified",
+            Department = SMSOrganization.FromValue(approver.Organization ?? string.Empty)?.Name
+                ?? approver.Organization
+                ?? "Not specified",
             Position = approver.Position ?? "Not specified"
         };
     }
@@ -2562,7 +2564,9 @@ public partial class ReportProcessing : ComponentBase
                 DisplayName = $"{user.FirstName?.Value} {user.LastName?.Value} ({user.OrganizationLevel.Value})",
                 AuthorityLevel = user.AuthorityLevel?.ToString() ?? "Not specified",
                 RiskApprovalAuthority = user.RiskApprovalAuthority ?? "Not specified",
-                Department = user.Department?.Name ?? "Not specified",
+                Department = SMSOrganization.FromValue(user.Organization ?? string.Empty)?.Name
+                    ?? user.Organization
+                    ?? "Not specified",
                 Position = user.Position ?? "Not specified"
             };
         }

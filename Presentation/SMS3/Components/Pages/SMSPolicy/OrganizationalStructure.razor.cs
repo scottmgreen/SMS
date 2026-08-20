@@ -264,6 +264,16 @@ public partial class OrganizationalStructure : ComponentBase
         return OrganizationalUsers.Count(user => !string.IsNullOrEmpty(user.OrganizationLevel));
     }
 
+    private static string GetOrganizationDisplay(string? organizationCode)
+    {
+        if (string.IsNullOrWhiteSpace(organizationCode))
+        {
+            return "Not specified";
+        }
+
+        return SMSOrganization.FromValue(organizationCode)?.Name ?? organizationCode;
+    }
+
     #endregion
 
     #region UI Rendering Helpers
@@ -388,7 +398,7 @@ public partial class OrganizationalStructure : ComponentBase
 
                     builder.OpenElement(52, "div");
                     builder.AddAttribute(53, "style", "color: var(--rz-text-secondary-color); font-size: 0.75rem; margin: 0;");
-                    builder.AddContent(54, $"{user.Department} - {user.Position}");
+                    builder.AddContent(54, $"{GetOrganizationDisplay(user.Organization)} - {user.Position}");
                     builder.CloseElement();
 
                     builder.CloseElement(); // User info

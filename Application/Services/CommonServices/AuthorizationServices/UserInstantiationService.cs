@@ -291,7 +291,7 @@ public class UserInstantiationService : IUserInstantiationService
                     userData["SMS_ApplicationUserCode"] = appUser.Code ?? string.Empty;
                     break;
                 case "ORGANIZATIONAL" when user is SMSOrganizationalUser orgUser:
-                    userData["SMS_Department"] = orgUser.Department?.Value ?? string.Empty;
+                    userData["SMS_Department"] = orgUser.Organization ?? string.Empty;
                     userData["SMS_Position"] = orgUser.Position ?? string.Empty;
                     userData["SMS_OrganizationLevel"] = orgUser.OrganizationLevel ?? string.Empty;
                     break;

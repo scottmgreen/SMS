@@ -73,7 +73,7 @@
                                         <div class="d-flex align-items-center">
                                             <div>
                                                 <div><strong>@user.DisplayName</strong></div>
-                                                @if (IsEmailFormat(user.UserName?.Value))
+                                               @*  @if (IsEmailFormat(user.UserName?.Value))
                                                 {
                                                     <small>
                                                         <a href="@($"mailto:{user.UserName?.Value}")" style="color: var(--rz-text-secondary-color);">
@@ -84,7 +84,7 @@
                                                 else
                                                 {
                                                     <small style="color: var(--rz-text-secondary-color);">@user.UserName?.Value</small>
-                                                }
+                                                } *@
                                             </div>
                                         </div>
                                     </Template>

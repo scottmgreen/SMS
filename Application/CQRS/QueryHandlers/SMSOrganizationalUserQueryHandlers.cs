@@ -209,7 +209,7 @@ public class GetSMSOrganizationalUsersByDepartmentQueryHandler : BaseQueryBundle
                 return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(allUsersResult.Error);
             }
 
-            var filteredUsers = allUsersResult.Value?.Where(u => string.Equals(u.Department?.Value, request.Department, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSOrganizationalUser>();
+            var filteredUsers = allUsersResult.Value?.Where(u => string.Equals(u.Organization, request.Department, StringComparison.OrdinalIgnoreCase)) ?? Enumerable.Empty<SMSOrganizationalUser>();
 
             _logger.LogApplicationInformation("Successfully retrieved {Count} SMS Organizational Users for Department: {Department}", filteredUsers.Count(), request.Department);
             return Result<IEnumerable<SMSOrganizationalUser>>.Success(filteredUsers);

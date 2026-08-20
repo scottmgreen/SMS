@@ -11,7 +11,7 @@
 
 <PageTitle>Stakeholder User Management - SMS3</PageTitle>
 <PageHeader Title="Stakeholder User Management"
-            Subtitle="@($"Manage SMS Stakeholder Users ({@StakeholderUsersList.Count()})")"
+            Subtitle="@($"Manage SMS Stakeholders ({@StakeholderUsersList.Count()})")"
             Icon="fas fa-user-tie">
             <AdditionalContent>
                 <div class="d-flex justify-content-end align-items-center w-100">
@@ -71,7 +71,7 @@
                                         <div class="d-flex align-items-center">
                                             <div>
                                                 <div><strong>@user.DisplayName</strong></div>
-                                                @if (IsEmailFormat(user.UserName?.Value))
+                                               @*  @if (IsEmailFormat(user.UserName?.Value))
                                                 {
                                                     <small>
                                                         <a href="@($"mailto:{user.UserName?.Value}")" style="color: var(--rz-text-secondary-color);">
@@ -82,7 +82,7 @@
                                                 else
                                                 {
                                                     <small style="color: var(--rz-text-secondary-color);">@user.UserName?.Value</small>
-                                                }
+                                                } *@
                                             </div>
                                         </div>
                                     </Template>

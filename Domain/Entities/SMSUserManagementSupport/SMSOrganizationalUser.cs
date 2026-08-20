@@ -20,31 +20,11 @@ public sealed class SMSOrganizationalUser : BaseUser
         OrganizationalUserId = id;
     }
     public SMSOrganizationalUserID OrganizationalUserId { get; private set; }
-    public SMSOrganization Department { get; set; } 
     public string Position { get; set; } = string.Empty;
 
-    public string? DepartmentCode
+    public string OrganizationCode
     {
-        get => Department?.Value;
-        set
-        {
-            if (string.IsNullOrWhiteSpace(value))
-            {
-                Department = null;
-                Organization = string.Empty;
-                return;
-            }
-
-            Department = SMSOrganization.FromValue(value)
-                ?? SMSOrganization.Create(value, value, string.Empty, Array.Empty<string>());
-
-            Organization = Department.Name;
-        }
-    }
-
-    public string? DepartmentName
-    {
-        get => Department?.Name;
+        get => Organization;
         set => Organization = value?.Trim() ?? string.Empty;
     }
     /// <summary>

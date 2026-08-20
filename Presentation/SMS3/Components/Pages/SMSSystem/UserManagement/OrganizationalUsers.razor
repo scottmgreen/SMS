@@ -10,7 +10,7 @@
 
 <!-- SMS Page Header -->
 <PageHeader Title="Organizational User Management"
-            Subtitle="@($"Manage SMS Organizational Users ({@OrganizationalUsersList.Count()})")"
+            Subtitle="@($"Manage SMS Organizational Structure ({@OrganizationalUsersList.Count()})")"
            Icon="fas fa-user-tie">
 
            <AdditionalContent>
@@ -64,7 +64,7 @@
                             <div class="d-flex align-items-center">
                                 <div>
                                     <div><strong>@user.DisplayName</strong></div>
-                                    @if (IsEmailFormat(user.UserName?.Value))
+                                    @* @if (IsEmailFormat(user.UserName?.Value))
                                     {
                                         <small>
                                             <a href="@($"mailto:{user.UserName?.Value}")" style="color: var(--rz-text-secondary-color);">
@@ -75,7 +75,7 @@
                                     else
                                     {
                                         <small style="color: var(--rz-text-secondary-color);">@user.UserName?.Value</small>
-                                    }
+                                    } *@
                                 </div>
                             </div>
                         </Template>
@@ -90,7 +90,6 @@
                     <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="Organization" Title="Organization" Width="150px" Sortable="true" Filterable="true" SortProperty="Organization" FilterProperty="Organization">
                         <Template Context="user">
                             @((SMSOrganization.FromValue(user.Organization ?? string.Empty)?.Name
-                                ?? user.Department?.Name
                                 ?? user.Organization
                                 ?? string.Empty).ToUpper())
                         </Template>
@@ -105,7 +104,7 @@
 
                     <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="JobFunction" Title="Job Function" Width="150px" Sortable="true" Filterable="true" />
 
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="OrganizationLevel.Name" Title="SMS Organization Level" Width="250px" Sortable="true" Filterable="true" SortProperty="OrganizationLevel.Name" FilterProperty="OrganizationLevel.Name">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="OrganizationLevel.Name" Title="SMS Organization Level" Width="350px" Sortable="true" Filterable="true" SortProperty="OrganizationLevel.Name" FilterProperty="OrganizationLevel.Name">
                         <Template Context="user">
                             @if (user.OrganizationLevel !=null)
                             {
@@ -118,7 +117,7 @@
                         </Template>
                     </RadzenDataGridColumn>
 
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="UserRole" Title="SMS Role/Permissions" Width="170px" Sortable="false" Filterable="false">
+                    @* <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="UserRole" Title="SMS Role/Permissions" Width="170px" Sortable="false" Filterable="false">
                         <Template Context="user">
                             @if (user.UserRole is not null)
                             {
@@ -129,7 +128,7 @@
                                 <RadzenBadge Variant="Variant.Filled" BadgeStyle="BadgeStyle.Light" Text="No Role Assigned" />
                             }
                         </Template>
-                    </RadzenDataGridColumn>
+                    </RadzenDataGridColumn> *@
 
                     <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="TwoFactorEnabled" Title="2FA Required" Width="120px">
                         <Template Context="user">
@@ -137,7 +136,7 @@
                                         Style="@(user.TwoFactorEnabled ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />
                         </Template>
                     </RadzenDataGridColumn>
-                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="IsActive" Title="Active" Width="75px" Sortable="true" Filterable="true">
+                    <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="IsActive" Title="Active" Width="100px" Sortable="true" Filterable="true">
                         <Template Context="user">
                             <RadzenIcon Icon="@(user.IsActive ? "check_box" : "check_box_outline_blank")"
                                         Style="@(user.IsActive ? "color: var(--rz-success);" : "color: var(--rz-danger);")" />

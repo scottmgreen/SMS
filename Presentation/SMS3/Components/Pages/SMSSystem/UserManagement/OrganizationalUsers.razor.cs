@@ -415,7 +415,6 @@ public partial class OrganizationalUsers : ComponentBase
                 LastName = LastName.Create(_newLastName).Value,
                 UserName = UserName.Create(_newUserName).Value,
                 Password = Password.Create(_newPassword).Value,
-                Department = SMSOrganization.FromValue(_newDepartmentId) ?? SMSOrganization.Create(string.Empty, string.Empty, string.Empty, Array.Empty<string>()),
                 Company = _newCompany,
                 Organization = _newDepartmentId,
                 Title = _newPosition,
@@ -484,7 +483,7 @@ public partial class OrganizationalUsers : ComponentBase
             // Set edit form values
             _editFirstName = _currentUser.FirstName?.Value ?? string.Empty;
             _editLastName = _currentUser.LastName?.Value ?? string.Empty;
-            _editDepartmentId = _currentUser.Department.Value ?? string.Empty;
+            _editDepartmentId = _currentUser.Organization ?? string.Empty;
             _editCompany = SMSCompany.FromCompany(_currentUser.Company ?? string.Empty)?.Value ?? (_currentUser.Company ?? string.Empty);
             _editJobFunction = _currentUser.JobFunction ?? string.Empty;
             _editPosition = NormalizeTitleSelection(string.IsNullOrWhiteSpace(_currentUser.Title)
@@ -537,7 +536,6 @@ public partial class OrganizationalUsers : ComponentBase
             // Update user properties
             _currentUser.FirstName = FirstName.Create(_editFirstName).Value;
             _currentUser.LastName = LastName.Create(_editLastName).Value;
-            _currentUser.Department = SMSOrganization.FromValue(_editDepartmentId) ?? SMSOrganization.Create(string.Empty, string.Empty, string.Empty, Array.Empty<string>());
             _currentUser.Company = _editCompany;
             _currentUser.Organization = _editDepartmentId;
             _currentUser.Title = _editPosition;

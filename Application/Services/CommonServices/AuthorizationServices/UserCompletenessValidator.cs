@@ -159,7 +159,7 @@ public class UserCompletenessValidator : IUserCompletenessValidator
             case "ORGANIZATIONAL":
                 if (user is SMSOrganizationalUser orgUser)
                 {
-                    return orgUser.Department?.Value != null &&
+                    return !string.IsNullOrEmpty(orgUser.Organization) &&
                            !string.IsNullOrEmpty(orgUser.Position) &&
                            !string.IsNullOrEmpty(orgUser.OrganizationLevel);
                 }
