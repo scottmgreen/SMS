@@ -12,7 +12,7 @@ using SMS3.Components.Pages.SMSRiskManagement.Models;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
-public partial class HazardScoringPanel : ComponentBase
+public partial class HazardScoring : ComponentBase
 {
     [Parameter] public Hazard Hazard { get; set; } = new(new HazardID("HZ-0000"));
     [Parameter] public Step4Model? Step4 { get; set; }  // Made nullable to handle null cases
@@ -24,7 +24,7 @@ public partial class HazardScoringPanel : ComponentBase
     [Parameter] public EventCallback OnHazardScored { get; set; }
     
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
-    [Inject] private ILogger<HazardScoringPanel> Logger { get; set; } = default!;
+    [Inject] private ILogger<HazardScoring> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
 
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
@@ -492,7 +492,7 @@ public partial class HazardScoringPanel : ComponentBase
         Logger.LogInformation("Opening panel dialog for hazard {HazardCode} with {Count} existing panel members: {Members}",
         Hazard.Code, selectedCodes.Count, string.Join(", ", selectedCodes));
 
-        var result = await DialogService.OpenAsync<PanelManagementDialog>($" <br/> Manage  Panel for {Hazard.Code}",
+        var result = await DialogService.OpenAsync<ScoringPanelManagementDialog>($" <br/> Manage  Panel for {Hazard.Code}", 
         new Dictionary<string, object?>
         {
                 { "HazardCode", Hazard.Code },

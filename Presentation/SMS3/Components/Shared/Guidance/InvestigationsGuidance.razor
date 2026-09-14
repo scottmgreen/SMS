@@ -1,10 +1,9 @@
 @using Radzen
 @using Radzen.Blazor
-@namespace SMS3.Components.Shared
-<!-- SMS Investigations Guidance Panel -->
+@namespace SMS3.Components.Shared.Components
+
 <RadzenCard Variant="Variant.Outlined" Style="position: sticky; top: 1rem;">
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-        <!-- Header -->
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
             <RadzenIcon Icon="search" Style="color: var(--rz-primary);" />
             <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
@@ -12,7 +11,6 @@
             </RadzenText>
         </RadzenStack>
 
-        <!-- Regulatory Requirements -->
         <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -25,7 +23,7 @@
                 <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
                     <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Text" Size="AlertSize.Small">
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                            <strong>§139.309</strong> Safety Management System
+                            <strong>ï¿½139.309</strong> Safety Management System
                         </RadzenText>
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
                             Establish investigation procedures for safety incidents, accidents, and hazards affecting airport operations.
@@ -34,7 +32,7 @@
 
                     <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Text" Size="AlertSize.Small">
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                            <strong>§139.301(d)</strong> Investigation Requirements
+                            <strong>ï¿½139.301(d)</strong> Investigation Requirements
                         </RadzenText>
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
                             Investigate safety occurrences to identify causal factors and implement corrective actions.
@@ -44,7 +42,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Investigation Process -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -55,21 +52,21 @@
                 </RadzenStack>
 
                 <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-primary-rgb), 0.1); border-left: 3px solid var(--rz-primary);">
+                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-success-rgb), 0.1); border-left: 3px solid var(--rz-primary);">
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-weight: 600;">1. Assignment</RadzenText>
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
                             Assign qualified investigator and define investigation scope and objectives
                         </RadzenText>
                     </RadzenCard>
 
-                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-info-rgb), 0.1); border-left: 3px solid var(--rz-info);">
+                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-success-rgb), 0.1); border-left: 3px solid var(--rz-info);">
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-weight: 600;">2. Evidence Collection</RadzenText>
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
                             Gather physical evidence, documentation, witness statements, and interviews
                         </RadzenText>
                     </RadzenCard>
 
-                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-warning-rgb), 0.1); border-left: 3px solid var(--rz-warning);">
+                    <RadzenCard Variant="Variant.Text" Style="padding: 0.5rem; background-color: rgba(var(--rz-success-rgb), 0.1); border-left: 3px solid var(--rz-warning);">
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; font-weight: 600;">3. Analysis</RadzenText>
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
                             Analyze collected data to identify causal factors and contributing conditions
@@ -86,7 +83,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Investigation Types -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -128,49 +124,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Quick Actions -->
-        @* <RadzenCard Variant="Variant.Text">
-            <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
-                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                    <RadzenIcon Icon="bolt" Style="color: var(--rz-success);" />
-                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0; font-weight: 600;">
-                        Quick Actions
-                    </RadzenText>
-                </RadzenStack>
-
-                <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
-                    <RadzenButton Text="New Investigation" 
-                                Icon="add_circle" 
-                                ButtonStyle="ButtonStyle.Success" 
-                                Size="ButtonSize.Small"
-                                Style="width: 100%;"
-                                Click="@(() => CreateNewInvestigation())" />
-                    
-                    <RadzenButton Text="My Interviews" 
-                                Icon="assignment_ind" 
-                                ButtonStyle="ButtonStyle.Primary" 
-                                Size="ButtonSize.Small"
-                                Style="width: 100%;"
-                                Click="@(() => NavigateToMyInterviews())" />
-                    
-                    <RadzenButton Text="View All Investigations" 
-                                Icon="list" 
-                                ButtonStyle="ButtonStyle.Info" 
-                                Size="ButtonSize.Small"
-                                Style="width: 100%;"
-                                Click="@(() => NavigateToInvestigationList())" />
-                    
-                    <RadzenButton Text="Investigation Reports" 
-                                Icon="assessment" 
-                                ButtonStyle="ButtonStyle.Light" 
-                                Size="ButtonSize.Small"
-                                Style="width: 100%;"
-                                Click="@(() => NavigateToInvestigationReports())" />
-                </RadzenStack>
-            </RadzenStack>
-        </RadzenCard> *@
-
-        <!-- Decision Types -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -205,7 +158,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Best Practices -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -254,7 +206,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Contact Information -->
         <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-100);">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -263,11 +214,11 @@
                         Need Help?
                     </RadzenText>
                 </RadzenStack>
-                
+
                 <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
                     Contact SMS Manager or Safety Team for investigation guidance and support.
                 </RadzenText>
-                
+
                 <RadzenButton Text="Contact SMS Team" 
                             Icon="support_agent" 
                             ButtonStyle="ButtonStyle.Light" 

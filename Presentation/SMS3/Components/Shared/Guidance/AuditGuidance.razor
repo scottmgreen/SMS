@@ -1,10 +1,9 @@
 @using Radzen
 @using Radzen.Blazor
+@namespace SMS3.Components.Shared.Components
 
-<!-- SMS Audit Detail Guidance Panel -->
 <RadzenCard Variant="Variant.Outlined" Style="position: sticky; top: 1rem;">
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-        <!-- Header -->
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
             <RadzenIcon Icon="help_outline" Style="color: var(--rz-primary);" />
             <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
@@ -12,7 +11,6 @@
             </RadzenText>
         </RadzenStack>
 
-        <!-- Audit Execution Process -->
         <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -56,7 +54,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Quick Actions -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -73,21 +70,21 @@
                                 Size="ButtonSize.Small"
                                 Style="width: 100%;"
                                 Click="@OnAddFinding" />
-                    
+
                     <RadzenButton Text="Upload Evidence" 
                                 Icon="cloud_upload" 
                                 ButtonStyle="ButtonStyle.Primary" 
                                 Size="ButtonSize.Small"
                                 Style="width: 100%;"
                                 Click="@OnUploadEvidence" />
-                    
+
                     <RadzenButton Text="Generate Report" 
                                 Icon="description" 
                                 ButtonStyle="ButtonStyle.Info" 
                                 Size="ButtonSize.Small"
                                 Style="width: 100%;"
                                 Click="@OnGenerateReport" />
-                    
+
                     <RadzenButton Text="Complete Audit" 
                                 Icon="task_alt" 
                                 ButtonStyle="ButtonStyle.Success" 
@@ -98,7 +95,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Finding Management -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -140,7 +136,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Evidence Collection Guidelines -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -182,7 +177,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Corrective Actions Guide -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -194,25 +188,24 @@
 
                 <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        • Assign specific, measurable actions
+                        ï¿½ Assign specific, measurable actions
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        • Set realistic target completion dates
+                        ï¿½ Set realistic target completion dates
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        • Define clear acceptance criteria
+                        ï¿½ Define clear acceptance criteria
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        • Track progress through to closure
+                        ï¿½ Track progress through to closure
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        • Verify effectiveness of implementation
+                        ï¿½ Verify effectiveness of implementation
                     </RadzenText>
                 </RadzenStack>
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Status Reference -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -246,7 +239,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Contact Information -->
         <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-100);">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -255,11 +247,11 @@
                         Need Assistance?
                     </RadzenText>
                 </RadzenStack>
-                
+
                 <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
                     Contact the Lead Auditor or SMS Manager for guidance on audit execution and finding resolution.
                 </RadzenText>
-                
+
                 <RadzenButton Text="Contact Support" 
                             Icon="support_agent" 
                             ButtonStyle="ButtonStyle.Light" 

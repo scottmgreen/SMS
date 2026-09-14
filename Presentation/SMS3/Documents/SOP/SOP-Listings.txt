@@ -1,0 +1,26 @@
+STANDARD OPERATING PROCEDURE
+Module: Listings
+
+Purpose
+Provide standardized list-based management for reports, hazards, assessments, mitigations, and investigations.
+
+Scope
+Applies to authorized users of SMS Listings pages.
+
+Responsibilities
+- Analyst/User: Search/filter/review.
+- Editor/Owner: Maintain records.
+- Approver: Execute approvals where authorized.
+- Admin: Maintain access controls.
+
+Procedure
+1) Open target listing
+2) Filter/search/sort/page
+3) View/edit/approve as permitted
+4) Export as needed
+
+Controls
+- Permission-based action visibility
+- Validation on edit/update actions
+- Consistent listing pagination/search behavior
+- Audit traceability

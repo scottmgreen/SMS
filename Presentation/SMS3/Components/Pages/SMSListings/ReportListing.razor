@@ -135,31 +135,46 @@
             <Template Context="report">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
 
-                    @if ((report.Status?.Trim() != ReportStatus.NeedsValidation.Value))
+                    @if (_currentUserService.CanUpdate("SMS_Listings_Reports"))
                     {
-                        <RadzenButton ButtonStyle="ButtonStyle.Success"
-                                      Size="ButtonSize.Small"
-                                      Click="@(() => OnResetReportAsync(report))"
-                                      title="Reset Report"
-                                      Icon="visibility" />
+                        if ((report.Status?.Trim() != ReportStatus.NeedsValidation.Value))
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Success"
+                                          Size="ButtonSize.Small"
+                                          Click="@(() => OnResetReportAsync(report))"
+                                          title="Reset Report"
+                                          Icon="visibility" />
+                        }
                     }
 
-                
+                  @if (_currentUserService.CanRead("SMS_Listings_Reports"))
+                  {
                     <RadzenButton ButtonStyle="ButtonStyle.Base" 
                                 Size="ButtonSize.Small"
                                 Click="@(() => OnViewReportAsync(report))"
                                 title="View Details"
                                 Icon="visibility" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Primary" 
-                                Size="ButtonSize.Small"
-                                Click="@(() => OnEditReportAsync(report))"
-                                title="Edit Report"
-                                Icon="edit" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Danger" 
-                                Size="ButtonSize.Small"
-                                Click="@(() => OnDeleteReportAsync(report))"
-                                title="Delete Report"
-                                Icon="delete" />
+                  }
+
+
+                  @if (_currentUserService.CanUpdate("SMS_Listings_Reports"))
+                  {
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary" 
+                                    Size="ButtonSize.Small"
+                                    Click="@(() => OnEditReportAsync(report))"
+                                    title="Edit Report"
+                                    Icon="edit" />
+                  }
+
+                  @if (_currentUserService.CanDelete("SMS_Listings_Reports"))
+                  {
+
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" 
+                                    Size="ButtonSize.Small"
+                                    Click="@(() => OnDeleteReportAsync(report))"
+                                    title="Delete Report"
+                                    Icon="delete" />
+                  }
                 </RadzenStack>
             </Template>
         </RadzenDataGridColumn>
@@ -367,12 +382,17 @@
                 </div>
                 <div class="sms-modal-footer">
                     <div class="d-flex justify-content-end gap-2">
-                        <RadzenButton ButtonStyle="ButtonStyle.Warning" 
+                        
+                        @if (_currentUserService.CanUpdate("SMS_Listings_Reports"))
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Warning" 
                                     Text="Edit Report" 
                                     Icon="edit"
                                     Click="@(() => EditFromDetailsModal(SelectedReport))"
                                     Size="ButtonSize.Medium" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Secondary" 
+                        }
+                        
+                        <RadzenButton ButtonStyle="ButtonStyle.Danger" 
                                     Text="Close" 
                                     Icon="close"
                                     Click="CloseDetailsModal"

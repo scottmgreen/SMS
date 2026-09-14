@@ -153,7 +153,7 @@
                                         {
                                             AvailableStakeholders = AvailableStakeholders.Where(predicate => predicate.IsPOPEmployee == true).ToList();
                                             <div class="collapsible-content">
-                                                <HazardMitigationPanel Hazard="@hazard"
+                                                <HazardMitigationCard Hazard="@hazard"
                                                                       Step4="@Step4"
                                                                       Step5="@Step5"
                                                                       NeedsMitigation="@needsMitigation"
@@ -192,7 +192,7 @@
                                         @if (!IsSectionCollapsed(hazard.Code, "scoring"))
                                         {
                                             <div class="collapsible-content">
-                                                <HazardScoringPanel Hazard="@hazard"
+                                                <HazardScoring Hazard="@hazard"
                                                                    Step4="@Step4"
                                                                    Step5="@Step5"
                                                                    AvailableStakeholders="@AvailableStakeholders"
@@ -322,7 +322,7 @@
         <RadzenStack Gap="1rem">
             @if (HasAnyExpandedSection("mitigation"))
             {
-                <TechnicalAssessmentGuidancePanel StepNumber="5" />
+                    <TechnicalAssessmentGuidance StepNumber="5" />
             }
 
             @if (HasAnyExpandedSection("scoring"))
@@ -388,12 +388,12 @@
                     </RadzenCard>
                 }
 
-                <TechnicalAssessmentGuidancePanel StepNumber="4" />
+                <TechnicalAssessmentGuidance StepNumber="4" />
             }
 
             @if (HasAnyExpandedSection("analysis"))
             {
-                <TechnicalAssessmentGuidancePanel StepNumber="3" />
+                <TechnicalAssessmentGuidance StepNumber="3" />
             }
         </RadzenStack>
     </RadzenColumn>

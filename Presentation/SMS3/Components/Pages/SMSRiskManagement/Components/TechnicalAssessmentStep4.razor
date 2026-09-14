@@ -33,7 +33,7 @@
                 @foreach (var hazard in Step4Hazards)
                 {
                     AvailableStakeholders = AvailableStakeholders.Where(predicate => predicate.IsPOPEmployee == true).ToList();
-                    <HazardScoringPanel @key="@($"panel-{hazard.Code}")" 
+                    <HazardScoring @key="@($"panel-{hazard.Code}")" 
                                         Hazard="@hazard" 
                                         Step4="@Step4"
                                         AvailableStakeholders="@AvailableStakeholders"
@@ -170,7 +170,7 @@
             
 
             <!-- Guidance Panel -->
-            <TechnicalAssessmentGuidancePanel StepNumber="4" />
+            <TechnicalAssessmentGuidance StepNumber="4" />
         </RadzenStack>
     </RadzenColumn>
 </RadzenRow>

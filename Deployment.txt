@@ -1,5 +1,6 @@
-﻿To Do Port 443 from Her Device for Test and Prod to Destination and Send to Russle 
-Need Her IP Pinned for this 
+﻿To Do Port 
+443 from the Device for Test and Prod to Destination and Send to Russle 
+Need IPs Pinned for this 
 
 PORT 443 from both 
 

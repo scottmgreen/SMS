@@ -1,16 +1,15 @@
 @using Radzen
 @using Radzen.Blazor
+@namespace SMS3.Components.Shared.Components
 
-<!-- Airport Shared Data Guidance Component -->
 <RadzenCard Variant="Variant.Outlined">
     <RadzenStack Gap="1rem" Style="padding: 1rem;">
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 0.5rem; background: var(--rz-info-lighter); margin: -1rem -1rem 1rem -1rem; padding: 1rem;">
             <RadzenIcon Icon="help" Style="color: var(--rz-info-dark);" />
             <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">ADAM Dataset Guidance</RadzenText>
         </RadzenStack>
-        
+
         <RadzenStack Gap="1rem">
-            <!-- Purpose Section -->
             <RadzenStack Gap="0.5rem">
                 <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; color: var(--rz-info-dark);">
                     <RadzenIcon Icon="info" Style="margin-right: 0.5rem;" />
@@ -21,7 +20,6 @@
                 </RadzenText>
             </RadzenStack>
 
-            <!-- Key Guidelines -->
             <RadzenStack Gap="0.5rem">
                 <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; color: var(--rz-success-dark);">
                     <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
@@ -29,21 +27,20 @@
                 </RadzenText>
                 <RadzenStack Gap="0.25rem">
                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
-                        • Use <strong>shared narrative</strong> for information visible to all ADAM users
+                        ï¿½ Use <strong>shared narrative</strong> for information visible to all ADAM users
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
-                        • Use <strong>private narrative</strong> for airport-specific details
+                        ï¿½ Use <strong>private narrative</strong> for airport-specific details
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
-                        • Anonymize using [brackets] for individuals, airlines, vendors
+                        ï¿½ Anonymize using [brackets] for individuals, airlines, vendors
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
-                        • Include relevant weather and operational context
+                        ï¿½ Include relevant weather and operational context
                     </RadzenText>
                 </RadzenStack>
             </RadzenStack>
 
-            <!-- Location Categories -->
             <RadzenStack Gap="0.5rem">
                 <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; color: var(--rz-warning-dark);">
                     <RadzenIcon Icon="place" Style="margin-right: 0.5rem;" />
@@ -65,7 +62,6 @@
                 </RadzenStack>
             </RadzenStack>
 
-            <!-- Contributing Factors -->
             <RadzenStack Gap="0.5rem">
                 <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; color: var(--rz-danger-dark);">
                     <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
@@ -87,7 +83,6 @@
                 </RadzenStack>
             </RadzenStack>
 
-            <!-- Category Path Examples -->
             <RadzenStack Gap="0.5rem">
                 <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; color: var(--rz-secondary-dark);">
                     <RadzenIcon Icon="category" Style="margin-right: 0.5rem;" />
@@ -109,7 +104,6 @@
                 </RadzenStack>
             </RadzenStack>
 
-            <!-- Data Privacy Notice -->
             <RadzenAlert Variant="Variant.Outlined" AlertStyle="AlertStyle.Info" AllowClose="false" Style="margin-top: 1rem;">
                 <RadzenStack Gap="0.5rem">
                     <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;">
@@ -122,7 +116,6 @@
                 </RadzenStack>
             </RadzenAlert>
 
-            <!-- Best Practices -->
             <RadzenAccordion Style="margin-top: 1rem;">
                 <Items>
                     <RadzenAccordionItem Text="Best Practices & Tips" Icon="tips_and_updates">
@@ -131,16 +124,16 @@
                                 <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">Writing Effective Narratives:</RadzenText>
                                 <RadzenStack Gap="0.25rem">
                                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
-                                        • Focus on facts, not opinions or assumptions
+                                        ï¿½ Focus on facts, not opinions or assumptions
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
-                                        • Include sequence of events and timeline
+                                        ï¿½ Include sequence of events and timeline
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
-                                        • Describe conditions that may have contributed
+                                        ï¿½ Describe conditions that may have contributed
                                     </RadzenText>
                                     <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; padding-left: 1rem;">
-                                        • Use clear, professional language
+                                        ï¿½ Use clear, professional language
                                     </RadzenText>
                                 </RadzenStack>
                             </RadzenStack>
@@ -186,5 +179,4 @@
 </RadzenCard>
 
 @code {
-    // No code-behind needed for this guidance component
 }

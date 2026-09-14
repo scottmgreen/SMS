@@ -84,3 +84,9 @@
 
 ## Domain Enums
 - When adding Company in Domain, model it as a data-driven enum in Domain/Enums (SMSCompany pattern), not as a Domain entity.
+
+## Dashboard Module
+- Treat the Dashboard Module as inactive and ignore it in future system/module abstractions for this codebase.
+
+## Documentation Preferences
+- Prefer simple text files (.txt) over Markdown (.md) for module SOP documentation outputs.

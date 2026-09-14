@@ -2,16 +2,16 @@
 @using SMS_Domain.Enums
 @using Radzen
 @using Radzen.Blazor
+@namespace SMS3.Components.Shared.Components
 
 <RadzenCard Style="position: sticky; top: 20px;">
     <RadzenStack Gap="1rem">
-        <!-- Header -->
         <RadzenRow AlignItems="AlignItems.Center">
             <RadzenColumn Size="8">
                 <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-warning); margin: 0;">
                     <RadzenIcon Icon="help_outline" Style="margin-right: 0.5rem;" />
                     @GetGuidanceTitle()
-                    
+
                 </RadzenText>
             </RadzenColumn>
             <RadzenColumn Size="4">
@@ -25,7 +25,6 @@
             </RadzenColumn>
         </RadzenRow>
 
-        <!-- Content -->
         @if (isExpanded)
         {
             <RadzenStack Gap="1rem">
@@ -42,7 +41,6 @@
                         </ul>
                     </div>
 
-                    <!-- 5M Framework Quick Reference -->
                     <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
                         <RadzenText TextStyle="TextStyle.Subtitle2" Text="5M Framework Quick Reference:" Style="margin-bottom: 0.5rem;" />
                         <RadzenRow Gap="0.5rem">
@@ -90,9 +88,6 @@
                 }
                 else if (StepNumber == 4)
                 {
-                   
-
-                    <!-- Risk Matrix Guide -->
                     <RadzenCard Variant="Variant.Outlined">
                         <RadzenStack Gap="1rem">
                             <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-info); margin: 0;">
@@ -103,26 +98,24 @@
                             <RadzenStack Gap="0.5rem">
                                 <RadzenText TextStyle="TextStyle.Subtitle2" Text="Severity Scale:" Style="margin: 0;" />
                                 <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                    • <strong>5 - Catastrophic:</strong> Multiple fatalities, total loss<br />
-                                    • <strong>4 - Major:</strong> Single fatality, major damage<br />
-                                    • <strong>3 - Serious:</strong> Serious injury, significant damage<br />
-                                    • <strong>2 - Moderate:</strong> Minor injury, minor damage<br />
-                                    • <strong>1 - Minor:</strong> No injury, negligible damage
+                                    ï¿½ <strong>5 - Catastrophic:</strong> Multiple fatalities, total loss<br />
+                                    ï¿½ <strong>4 - Major:</strong> Single fatality, major damage<br />
+                                    ï¿½ <strong>3 - Serious:</strong> Serious injury, significant damage<br />
+                                    ï¿½ <strong>2 - Moderate:</strong> Minor injury, minor damage<br />
+                                    ï¿½ <strong>1 - Minor:</strong> No injury, negligible damage
                                 </RadzenText>
                             </RadzenStack>
 
                             <RadzenStack Gap="0.5rem">
                                 <RadzenText TextStyle="TextStyle.Subtitle2" Text="Likelihood Scale:" Style="margin: 0;" />
                                 <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                    • <strong>5 - Frequent:</strong> Will occur repeatedly<br />
-                                    • <strong>4 - Likely:</strong> Will occur several times<br />
-                                    • <strong>3 - Possible:</strong> Will occur sometimes<br />
-                                    • <strong>2 - Unlikely:</strong> Will occur rarely<br />
-                                    • <strong>1 - Rare:</strong> Will occur very rarely
+                                    ï¿½ <strong>5 - Frequent:</strong> Will occur repeatedly<br />
+                                    ï¿½ <strong>4 - Likely:</strong> Will occur several times<br />
+                                    ï¿½ <strong>3 - Possible:</strong> Will occur sometimes<br />
+                                    ï¿½ <strong>2 - Unlikely:</strong> Will occur rarely<br />
+                                    ï¿½ <strong>1 - Rare:</strong> Will occur very rarely
                                 </RadzenText>
                             </RadzenStack>
-
-                           
                         </RadzenStack>
                     </RadzenCard>
                 }
@@ -139,7 +132,6 @@
                         </ul>
                     </div>
 
-                    <!-- Hierarchy of Controls -->
                     <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
                         <RadzenText TextStyle="TextStyle.Subtitle2" Text="Hierarchy of Controls (Most to Least Effective):" Style="margin-bottom: 0.5rem;" />
                         <ol style="margin: 0; padding-left: 1rem; font-size: 0.75rem;">
@@ -151,8 +143,6 @@
                         </ol>
                     </RadzenCard>
                 }
-
-                                
             </RadzenStack>
         }
     </RadzenStack>

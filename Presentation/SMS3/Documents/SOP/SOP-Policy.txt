@@ -1,0 +1,26 @@
+STANDARD OPERATING PROCEDURE
+Module: Policy
+
+Purpose
+Standardize policy document control and organizational structure governance.
+
+Scope
+Applies to policy owners, reviewers/approvers, and structure admins.
+
+Responsibilities
+- Policy Owner: Draft/revise content.
+- Reviewer/Approver: Govern approval workflow.
+- Admin: Maintain org structure accuracy.
+- End Users: Consume current approved versions.
+
+Procedure
+1) Draft or revise policy
+2) Submit for review/approval
+3) Publish approved version
+4) Maintain organizational structure updates
+
+Controls
+- Version control and approval gates
+- Change-history tracking
+- Restricted publish/edit permissions
+- Controlled distribution of approved policy

@@ -1,0 +1,29 @@
+STANDARD OPERATING PROCEDURE
+Module: Risk Management
+
+Purpose
+Define hazard reporting, report processing, technical assessment, investigations, and mitigation tracking.
+
+Scope
+Applies to authorized users in SMS Risk workflows.
+
+Responsibilities
+- Reporter: Submit complete hazard reports.
+- Validator/Reviewer: Validate and route reports.
+- Risk Assessor: Complete Technical Assessment Step 1-5.
+- Investigator: Manage interviews/evidence and case decisions.
+- Mitigation Owner/Approver: Implement and approve mitigations.
+
+Procedure
+1) Create Hazard Report
+2) Process/Validate Report
+3) Complete Technical Assessment (Step 1-5)
+4) Execute Investigation (if required)
+5) Create/Track/Approve Mitigations
+6) Search and track by report/tracking ID
+
+Controls
+- RBAC on module pages/actions
+- Required-field validation
+- Controlled state transitions
+- Audit metadata (CreatedBy/UpdatedBy/timestamps)

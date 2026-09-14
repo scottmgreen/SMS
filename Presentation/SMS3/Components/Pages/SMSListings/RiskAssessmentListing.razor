@@ -114,18 +114,33 @@
         <RadzenDataGridColumn TItem="RiskAssessment" Title="Actions" Width="250px" Sortable="false" Filterable="false">
             <Template Context="assessment">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                    <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small" 
-                                Tooltip="View Assessment Details"
-                                Click="@(() => ViewAssessment(assessment))" />
                     
-                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
-                                Tooltip="Edit Assessment"
-                                Click="@(() => EditAssessment(assessment))" />
+                    @if (_currentUserService.CanRead("SMS_Listings_RiskAssessments"))
+                    {
+                        <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
+                                      Tooltip="View Assessment Details"
+                                      Click="@(() => ViewAssessment(assessment))" />
+                    }
+                    @if (_currentUserService.CanUpdate("SMS_Listings_RiskAssessments"))
+                    {
+                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                      Tooltip="Edit Assessment"
+                                      Click="@(() => EditAssessment(assessment))" />
+                    }
+
+                    @if (_currentUserService.CanDelete("SMS_Listings_RiskAssessments"))
+                    {
+                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                      Tooltip="Delete Assessment"
+                                      Click="@(() => DeleteAssessment(assessment))" />
+                    }
+
+                    
+                    
+                    
                     
                                        
-                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
-                                Tooltip="Delete Assessment"
-                                Click="@(() => DeleteAssessment(assessment))" />
+                    
                 </RadzenStack>
             </Template>
         </RadzenDataGridColumn>
@@ -249,16 +264,21 @@
                 </div>
                 <div class="sms-modal-footer">
                     <div class="d-flex justify-content-end gap-2">
+                        @if (_currentUserService.CanUpdate("SMS_Listings_RiskAssessments"))
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                          Text="Edit Assessment"
+                                          Icon="edit"
+                                          Click="@OnEditAssessmentFromDialog"
+                                          Size="ButtonSize.Medium" />
+                        }
                         <RadzenButton ButtonStyle="ButtonStyle.Base" 
                                     Text="Close" 
                                     Icon="close"
                                     Click="@(() => { _showViewDialog = false; _selectedAssessment = null; })"
                                     Size="ButtonSize.Medium" />
-                        <RadzenButton ButtonStyle="ButtonStyle.Primary" 
-                                    Text="Edit Assessment" 
-                                    Icon="edit"
-                                    Click="@OnEditAssessmentFromDialog"
-                                    Size="ButtonSize.Medium" />
+                        
+                    
                     </div>
                 </div>
             </div>

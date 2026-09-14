@@ -2,10 +2,10 @@
 @using SMS_Domain.Enums
 @using Radzen
 @using Radzen.Blazor
+@namespace SMS3.Components.Shared.Components
 
 <RadzenCard Style="position: sticky; top: 20px;">
     <RadzenStack Gap="1rem">
-        <!-- Header -->
         <RadzenRow AlignItems="AlignItems.Center">
             <RadzenColumn Size="8">
                 <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
@@ -24,11 +24,9 @@
             </RadzenColumn>
         </RadzenRow>
 
-        <!-- Content -->
         @if (isExpanded)
         {
             <RadzenStack Gap="1rem">
-                <!-- SMS Organizational Structure Overview -->
                 <div>
                     <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">SMS Organizational Requirements:</RadzenText>
                     <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.875rem;">
@@ -39,7 +37,6 @@
                         <li>Maintain competency requirements</li>
                     </ul>
                 </div>
-                <!-- Role Categories -->
                 <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
                     <RadzenText TextStyle="TextStyle.Subtitle2" Text="SMS Role Categories:" Style="margin-bottom: 0.5rem;" />
                     <RadzenStack Gap="0.25rem">
@@ -57,7 +54,6 @@
                         </div>
                     </RadzenStack>
                 </RadzenCard>
-                <!-- Authority Levels Quick Reference -->
                 <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
                     <RadzenText TextStyle="TextStyle.Subtitle2" Text="Authority Level Structure:" Style="margin-bottom: 0.5rem;" />
                     <RadzenStack Gap="0.25rem">
@@ -75,8 +71,7 @@
                         </div>
                     </RadzenStack>
                 </RadzenCard>
-               
-                <!-- Assignment Best Practices -->
+
                 <div>
                     <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">Assignment Best Practices:</RadzenText>
                     <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.875rem;">
@@ -88,9 +83,6 @@
                     </ul>
                 </div>
 
-                
-
-                <!-- Compliance Monitoring -->
                 <div>
                     <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin-bottom: 0.5rem;">Compliance Monitoring:</RadzenText>
                     <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.875rem;">
@@ -102,11 +94,10 @@
                     </ul>
                 </div>
 
-                <!-- Regulatory Reference -->
                 <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-info-lighter);">
                     <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-info-darker);">
                         <RadzenIcon Icon="gavel" Style="margin-right: 0.25rem;" />
-                        <strong>Regulatory:</strong> 14 CFR §139.103 requires airports to establish and maintain 
+                        <strong>Regulatory:</strong> 14 CFR ï¿½139.103 requires airports to establish and maintain 
                         an SMS with clearly defined organizational structure and authority levels.
                     </RadzenText>
                 </RadzenCard>

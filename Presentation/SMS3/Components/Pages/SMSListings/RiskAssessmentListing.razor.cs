@@ -44,6 +44,8 @@ public partial class RiskAssessmentListing : ComponentBase
  
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
+
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Properties

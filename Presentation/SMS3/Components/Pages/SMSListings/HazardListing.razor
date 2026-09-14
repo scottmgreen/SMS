@@ -90,25 +90,36 @@
         <RadzenDataGridColumn TItem="Hazard" Title="Actions" Width="150px" Sortable="false" Filterable="false">
             <Template Context="hazard">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
-                    <RadzenButton ButtonStyle="ButtonStyle.Base"
+                    
+                    @if (_currentUserService.CanRead("SMS_Listings_Hazards"))
+                    {
+                        <RadzenButton ButtonStyle="ButtonStyle.Base"
                                   Size="ButtonSize.Small"
                                   Click="@(() => OnViewHazardAsync(hazard))"
                                   title="View Hazard"
                                   Icon="visibility" />
-                    <RadzenButton ButtonStyle="ButtonStyle.Primary"
-                                  Size="ButtonSize.Small"
-                                  Click="@(() => OnEditHazardAsync(hazard))"
-                                  title="Edit Hazard"
-                                  Icon="edit" />
-                    @if (!hazard.IsInitialHazard)
-                    {
-                        <RadzenButton ButtonStyle="ButtonStyle.Danger"
-                                      Size="ButtonSize.Small"
-                                      Click="@(() => OnDeleteHazardAsync(hazard))"
-                                      title="Delete Hazard"
-                                      Icon="delete" />
                     }
-                    
+                    @if (_currentUserService.CanUpdate("SMS_Listings_Hazards"))
+                    {
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                        Size="ButtonSize.Small"
+                        Click="@(() => OnEditHazardAsync(hazard))"
+                        title="Edit Hazard"
+                        Icon="edit" />
+                    }
+
+                    @if (_currentUserService.CanDelete("SMS_Listings_Hazards"))
+                    {
+                        if (!hazard.IsInitialHazard)
+                        {
+                            <RadzenButton ButtonStyle="ButtonStyle.Danger"
+                            Size="ButtonSize.Small"
+                            Click="@(() => OnDeleteHazardAsync(hazard))"
+                            title="Delete Hazard"
+                            Icon="delete" />
+                        }
+                    }
+
                 </RadzenStack>
             </Template>
         </RadzenDataGridColumn>

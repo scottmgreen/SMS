@@ -1,0 +1,28 @@
+STANDARD OPERATING PROCEDURE
+Module: Assurance
+
+Purpose
+Define audit lifecycle and SPI monitoring operations.
+
+Scope
+Applies to audit, compliance, and assurance users.
+
+Responsibilities
+- Audit Manager: Plan/schedule audits.
+- Auditor: Execute audits and capture findings/evidence.
+- Compliance Owner: Corrective action tracking.
+- Assurance Lead: SPI performance oversight.
+
+Procedure
+1) Plan audits
+2) Schedule resources/dates
+3) Execute audits
+4) Record findings and actions
+5) Monitor closure/effectiveness
+6) Review SPI dashboards/configuration
+
+Controls
+- State-based audit workflow
+- Evidence/findings requirements
+- Corrective action due-date tracking
+- RBAC for assurance functions

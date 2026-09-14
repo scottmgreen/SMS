@@ -15,6 +15,7 @@ using SMS_Shared.Configuration;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
+using SMS3.Components.Pages.SMSRiskManagement.Models;
 
 namespace SMS3.Components.Pages.SMSRiskManagement;
 
@@ -27,238 +28,6 @@ public enum ProcessingStatusCategory
     Investigation,
     Mitigation,
     Closed
-}
-
-public class ReportProcessingSummary
-{
-    public string ReportId { get; set; } = string.Empty;
-    public string ReportDescription { get; set; } = string.Empty;
-    public string ReportStatus { get; set; } = string.Empty;
-
-    public string ReportStage { get; set; } = string.Empty;
-    public string CreatedBy { get; set; } = string.Empty;
-    public DateTime CreatedDate { get; set; }
-
-    public string? HazardId { get; set; }
-    public string HazardType { get; set; } = string.Empty;
-    public string HazardCategory { get; set; } = string.Empty;
-    public string HazardDescription { get; set; } = string.Empty;
-    public decimal? HazardInitialAverageScore { get; set; }
-    public decimal? HazardResidualAverageScore { get; set; }
-    public string Location { get; set; } = string.Empty;
-    public string Priority { get; set; } = string.Empty;
-    public string SubmittedBy { get; set; } = string.Empty;
-    public DateTime ReportedDate { get; set; }
-    public bool IsAnonymous { get; set; }
-
-    // ENHANCED: Risk Assessment Information
-    public string? RiskAssessmentId { get; set; }
-    public string? RiskAssessmentCreatedBy { get; set; }
-    public DateTime? RiskAssessmentCreatedDate { get; set; }
-    public int CurrentAssessmentStep { get; set; } = 0;
-    public string RiskAssessmentStatus { get; set; } = string.Empty;
-    public string AssessmentStage { get; set; } = string.Empty;
-    public string AssessmentType { get; set; } = string.Empty; // NEW: Technical vs Preliminary
-    public bool HasRiskAssessment => !string.IsNullOrEmpty(RiskAssessmentId);
-
-    // ENHANCED: Report Validation Information
-    public string? ReportValidationId { get; set; }
-    public string ValidationType { get; set; } = string.Empty; // NEW: Preliminary vs Technical
-    public string ValidationDecision { get; set; } = string.Empty;
-    public bool HasReportValidation => !string.IsNullOrEmpty(ReportValidationId);
-
-    // NEW: Investigation Information
-    public string? InvestigationId { get; set; }
-    public string InvestigationStatus { get; set; } = string.Empty;
-    public string? AssignedInvestigator { get; set; }
-    public string? InvestigationNotes { get; set; }
-    public int InterviewCount { get; set; } = 0;
-    public DateTime? InvestigationStartDate { get; set; }
-    public bool HasInvestigation => !string.IsNullOrEmpty(InvestigationId);
-    public int DaysInInvestigation => InvestigationStartDate.HasValue 
-        ? (DateTime.UtcNow - InvestigationStartDate.Value).Days 
-        : 0;
-
-    // ? NEW: All Mitigations for All Hazards in Report
-    public List<MitigationSummary> AllMitigations { get; set; } = new();
-    public bool HasMitigations => AllMitigations?.Any() == true;
-    public int MitigationCount => AllMitigations?.Count ?? 0;
-
-    public ProcessingStatusCategory StatusCategory { get; set; }
-    public int DaysInStage { get; set; }
-    public string? AssignedTo { get; set; }
-    public string ValidationUrl { get; set; } = string.Empty;
-
-    public string DisplayId => !string.IsNullOrEmpty(HazardId) ? HazardId : ReportId;
-
-    // NEW: Default hazard classification detection
-    public bool HasDefaultHazardCategory => HazardCategory == SMS_Domain.Enums.HazardCategory.Default.Value;
-    public bool HasDefaultHazardType => HazardType == SMS_Domain.Enums.HazardType.Default.Value; 
-    public bool RequiresHazardClassificationUpdate => HasDefaultHazardCategory || HasDefaultHazardType;
-    public bool IsRiskRegistryOnly =>
-        string.Equals(AssessmentType?.Trim(), SMS_Domain.Enums.RiskAssessmentType.RiskRegistryOnly.Value, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(AssessmentType?.Trim(), SMS_Domain.Enums.RiskAssessmentType.RiskRegistryOnly.Name, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(ReportStatus?.Trim(), SMS_Domain.Enums.ReportStatus.RiskRegistryOnly, StringComparison.OrdinalIgnoreCase)
-        || string.Equals(ReportStatus?.Trim(), SMS_Domain.Enums.ReportStatus.RiskRegistryOnly.Value, StringComparison.OrdinalIgnoreCase);
-    public bool IsRiskRegistryOnlyScored =>
-        HazardInitialAverageScore.HasValue
-        && HazardResidualAverageScore.HasValue
-        && HazardInitialAverageScore.Value > 0
-        && HazardResidualAverageScore.Value > 0;
-
-    // ENHANCED: Smart validation URL based on validation type and assessment progress
-    public string SmartUrl
-    {
-        get
-        {
-            // NEW: Handle reports with default hazard classifications first
-            if (RequiresHazardClassificationUpdate)
-            {
-                // Redirect to HazardReporting for hazard editing
-                return $"/SMSRiskManagement/HazardReporting/{HazardId}?returnTo=report-processing";
-            }
-
-            // VALIDATION TAB: Reports without ReportValidation record
-            if (StatusCategory == ProcessingStatusCategory.Validation)
-            {
-                return $"/SMSRiskManagement/ReportValidation/{ReportId}";
-            }
-
-            // RISK ASSESSMENT TAB: Reports with ReportValidation - route based on ValidationType
-            if (StatusCategory == ProcessingStatusCategory.RiskAssessment)
-            {
-                if (IsRiskRegistryOnly)
-                {
-                    var encodedReportId = Uri.EscapeDataString((ReportId ?? string.Empty).Trim());
-                    var encodedHazardId = Uri.EscapeDataString((HazardId ?? string.Empty).Trim());
-                    return $"/SMSRiskManagement/TechnicalAssessment/{encodedReportId}/{encodedHazardId}/4?returnTo=report-processing";
-                }
-
-                if (ValidationType?.ToLower() == "technical")
-                {
-                    // Technical Assessment - multi-step, smart navigation
-                    if (HasRiskAssessment && CurrentAssessmentStep > 0)
-                    {
-                        // Continue to next step of existing assessment
-                        var nextStep = CurrentAssessmentStep < 5 ? CurrentAssessmentStep : CurrentAssessmentStep;
-                        return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/{nextStep}?returnTo=report-processing";
-                    }
-                    else if (!string.IsNullOrEmpty(HazardId))
-                    {
-                        // Start new technical assessment
-                        return $"/SMSRiskManagement/TechnicalAssessment/{ReportId}/{HazardId}/1?returnTo=report-processing";
-                    }
-                }
-            }
-
-            // INVESTIGATION TAB: Navigate to investigation if available
-            if (StatusCategory == ProcessingStatusCategory.Investigation)
-            {
-                if (HasInvestigation && !string.IsNullOrEmpty(HazardId))
-                {
-                    return $"/SMSRiskManagement/Investigations/{InvestigationId}/{HazardId}";
-                }
-            }
-
-            // Fallback to report validation
-            return $"/SMSRiskManagement/ReportValidation/{ReportId}";
-        }
-    }
-
-    // ENHANCED: Smart button text based on validation type and progress
-    public string ActionButtonText
-    {
-        get
-        {
-            // NEW: Handle reports with default hazard classifications first
-            if (RequiresHazardClassificationUpdate)
-            {
-                return "Validate Report";
-            }
-
-            return StatusCategory switch
-            {
-                ProcessingStatusCategory.Validation => "Start Processing",
-                ProcessingStatusCategory.RiskAssessment => GetRiskAssessmentButtonText(),
-                ProcessingStatusCategory.Investigation => HasInvestigation ? "Continue Investigation" : "Start Investigation",
-                ProcessingStatusCategory.Mitigation => "View Mitigation",
-                ProcessingStatusCategory.Closed => "View Closed",
-                _ => "Process"
-            };
-        }
-    }
-
-    // NEW: Button style for default hazard classification
-    public string ActionButtonStyle
-    {
-        get
-        {
-            if (RequiresHazardClassificationUpdate)
-            {
-                return "ButtonStyle.Warning"; // Orange for defaults requiring attention
-            }
-
-            return StatusCategory switch
-            {
-                ProcessingStatusCategory.Validation => "ButtonStyle.Primary",
-                ProcessingStatusCategory.RiskAssessment => "ButtonStyle.Success", 
-                ProcessingStatusCategory.Investigation => "ButtonStyle.Info",
-                ProcessingStatusCategory.Mitigation => "ButtonStyle.Secondary",
-                ProcessingStatusCategory.Closed => "ButtonStyle.Light",
-                _ => "ButtonStyle.Primary"
-            };
-        }
-    }
-
-    private string GetRiskAssessmentButtonText()
-    {
-        if (IsRiskRegistryOnly)
-        {
-            return "Score Risk Only";
-        }
-
-        // Determine button text based on ValidationType
-        if (ValidationType?.ToLower() == "preliminary")
-        {
-            return "Start Preliminary Assessment";
-        }
-        else if (ValidationType?.ToLower() == "technical")
-        {
-            if (HasRiskAssessment && CurrentAssessmentStep > 0)
-            {
-                return $"Continue Step {CurrentAssessmentStep}";
-            }
-            else
-            {
-                return "Start Technical Assessment";
-            }
-        }
-        else
-        {
-            return "Start Risk Assessment";
-        }
-    }
-}
-
-/// <summary>
-/// ? NEW: Summary information for a mitigation within a report context
-/// </summary>
-public class MitigationSummary
-{
-    public string MitigationCode { get; set; } = string.Empty;
-    public string MitigationName { get; set; } = string.Empty;
-    public string HazardCode { get; set; } = string.Empty;
-    public RiskLevel HazardRiskLevel { get; set; } = default!;
-    public string HazardDescription { get; set; } = string.Empty;
-    public MitigationStatus Status { get; set; } = MitigationStatus.PendingApproval;
-    public string AssignedTo { get; set; } = string.Empty;
-
-    public string ApprovedBy { get; set; } = string.Empty;
-
-    public string AssignedDepartment { get; set; } = string.Empty;
-    public DateTime? TargetDate { get; set; }
-    
-    public bool IsOverdue => TargetDate.HasValue && TargetDate.Value < DateTime.UtcNow && Status != MitigationStatus.Complete;
 }
 
 #endregion
@@ -277,22 +46,20 @@ public partial class ReportProcessing : ComponentBase
     [Inject] private ILogger<ReportProcessing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
-
-
-
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     // Data Properties
-    private List<ReportProcessingSummary> PendingValidation { get; set; } = new();
-    private List<ReportProcessingSummary> PendingRiskAssessment { get; set; } = new();
-    private List<ReportProcessingSummary> PendingInvestigation { get; set; } = new();
-    private List<ReportProcessingSummary> PendingMitigation { get; set; } = new();
-    private List<ReportProcessingSummary> ClosedReferred { get; set; } = new();
+    private List<ReportProcessingSummary> _pendingValidation { get; set; } = new();
+    private List<ReportProcessingSummary> _pendingRiskAssessment { get; set; } = new();
+    private List<ReportProcessingSummary> _pendingInvestigation { get; set; } = new();
+    private List<ReportProcessingSummary> _pendingMitigation { get; set; } = new();
+    private List<ReportProcessingSummary> _closedReferred { get; set; } = new();
     private readonly Dictionary<string, string> _userIdToFullName = new(StringComparer.OrdinalIgnoreCase);
 
     private int _selectedTabIndex = 0;
     private bool _isLoading { get; set; } = true;
-    private List<SMSOrganizationalUser> AvailableApprovers { get; set; } = new();
+    private List<SMSOrganizationalUser> _availableApprovers { get; set; } = new();
+
     private readonly Dictionary<string, int> _userGroupAuthorityByUserCode = new(StringComparer.OrdinalIgnoreCase);
     private string? _selectedApprover { get; set; }
 
@@ -304,7 +71,6 @@ public partial class ReportProcessing : ComponentBase
     private bool _showDescriptionModal { get; set; } = false;
     private string _selectedDescription { get; set; } = string.Empty;
     private string _selectedReportId { get; set; } = string.Empty;
-
 
     private string _basicTextStyle = "font-size:smaller;font-weight: 600";
 
@@ -343,25 +109,25 @@ public partial class ReportProcessing : ComponentBase
 
             if (usersResult.IsSuccess && usersResult.Value is not null)
             {
-                AvailableApprovers = usersResult.Value
+                _availableApprovers = usersResult.Value
                 .Where(u => u.IsActive)
                 .ToList();
 
-                await LoadApproverGroupAuthorityAsync(AvailableApprovers);
+                await LoadApproverGroupAuthorityAsync(_availableApprovers);
 
-                _logger.LogInformation("Loaded {Count} available approvers", AvailableApprovers.Count);
+                _logger.LogInformation("Loaded {Count} available approvers", _availableApprovers.Count);
             }
             else
             {
                 _logger.LogWarning("Failed to load approvers: {Error}", usersResult.Error?.Message);
-                AvailableApprovers = new List<SMSOrganizationalUser>();
+                _availableApprovers = new List<SMSOrganizationalUser>();
                 _userGroupAuthorityByUserCode.Clear();
             }
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error loading available approvers");
-            AvailableApprovers = new List<SMSOrganizationalUser>();
+            _availableApprovers = new List<SMSOrganizationalUser>();
             _userGroupAuthorityByUserCode.Clear();
         }
     }
@@ -886,28 +652,13 @@ public partial class ReportProcessing : ComponentBase
 
     private void CategorizeReports(List<ReportProcessingSummary> reports)
     {
-        PendingValidation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Validation).ToList();
-        PendingRiskAssessment = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.RiskAssessment).ToList();
-        PendingInvestigation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Investigation).ToList();
-        PendingMitigation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Mitigation  && r.MitigationCount >0).ToList();
+        _pendingValidation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Validation).ToList();
+        _pendingRiskAssessment = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.RiskAssessment).ToList();
+        _pendingInvestigation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Investigation).ToList();
+        _pendingMitigation = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Mitigation  && r.MitigationCount >0).ToList();
 
-        ClosedReferred = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Closed).ToList();
+        _closedReferred = reports.Where(r => r.StatusCategory == ProcessingStatusCategory.Closed).ToList();
 
-        // ? ADD DEBUG LOGGING to see what's being categorized
-        //_logger.LogWarning("CATEGORIZATION RESULTS:");
-        //_logger.LogWarning("   ?? Pending Validation: {Count}", PendingValidation.Count);
-        //_logger.LogWarning("   ?? Pending Risk Assessment: {Count}", PendingRiskAssessment.Count);
-        //_logger.LogWarning("   ?? Pending Investigation: {Count}", PendingInvestigation.Count);
-        //_logger.LogWarning("   ??? In Mitigation: {Count}", PendingMitigation.Count);
-        //_logger.LogWarning("   ? Closed/Referred: {Count}", ClosedReferred.Count);
-
-        // ? LOG EACH REPORT'S CATEGORIZATION
-        //foreach (var report in reports)
-        //{
-        //    _logger.LogWarning("   ?? Report {ReportId}-{HazardId}: {Category} (HasRA: {HasRA}, RAStatus: {RAStatus}, RAStep: {RAStep}, MitigationCount: {MC})",
-        //        report.ReportId, report.HazardId, report.StatusCategory, 
-        //        report.HasRiskAssessment, report.RiskAssessmentStatus, report.CurrentAssessmentStep, report.MitigationCount);
-        //}
     }
 
     #endregion
@@ -1123,11 +874,11 @@ public partial class ReportProcessing : ComponentBase
 
     private void InitializeEmptyLists()
     {
-        PendingValidation = new List<ReportProcessingSummary>();
-        PendingRiskAssessment = new List<ReportProcessingSummary>();
-        PendingInvestigation = new List<ReportProcessingSummary>();
-        PendingMitigation = new List<ReportProcessingSummary>();
-        ClosedReferred = new List<ReportProcessingSummary>();
+        _pendingValidation = new List<ReportProcessingSummary>();
+        _pendingRiskAssessment = new List<ReportProcessingSummary>();
+        _pendingInvestigation = new List<ReportProcessingSummary>();
+        _pendingMitigation = new List<ReportProcessingSummary>();
+        _closedReferred = new List<ReportProcessingSummary>();
     }
 
     #endregion
@@ -1146,14 +897,14 @@ public partial class ReportProcessing : ComponentBase
                 return;
             }
 
-            if (!PendingValidation.Any())
+            if (!_pendingValidation.Any())
             {
                 RenderEmptyState(builder, "check_circle", "No reports pending validation", "New reports will appear here for SMS risk determination");
                 return;
             }
 
             builder.OpenComponent<RadzenDataGrid<ReportProcessingSummary>>(0);
-            builder.AddAttribute(1, "Data", PendingValidation);
+            builder.AddAttribute(1, "Data", _pendingValidation);
             builder.AddAttribute(2, "AllowSorting", true);
             builder.AddAttribute(3, "AllowPaging", true);
             builder.AddAttribute(4, "PageSize", 10);
@@ -1178,14 +929,14 @@ public partial class ReportProcessing : ComponentBase
                 return;
             }
 
-            if (!PendingRiskAssessment.Any())
+            if (!_pendingRiskAssessment.Any())
             {
                 RenderEmptyState(builder, "assessment", "No reports pending risk assessment", "Validated reports will appear here for risk assessment");
                 return;
             }
 
             builder.OpenComponent<RadzenDataGrid<ReportProcessingSummary>>(0);
-            builder.AddAttribute(1, "Data", PendingRiskAssessment);
+            builder.AddAttribute(1, "Data", _pendingRiskAssessment);
             builder.AddAttribute(2, "AllowSorting", true);
             builder.AddAttribute(3, "AllowPaging", true);
             builder.AddAttribute(4, "PageSize", 10);
@@ -1210,14 +961,14 @@ public partial class ReportProcessing : ComponentBase
                 return;
             }
 
-            if (!PendingInvestigation.Any())
+            if (!_pendingInvestigation.Any())
             {
                 RenderEmptyState(builder, "search", "No reports requiring investigation", "Reports needing more information will appear here");
                 return;
             }
 
             builder.OpenComponent<RadzenDataGrid<ReportProcessingSummary>>(0);
-            builder.AddAttribute(1, "Data", PendingInvestigation);
+            builder.AddAttribute(1, "Data", _pendingInvestigation);
             builder.AddAttribute(2, "AllowSorting", true);
             builder.AddAttribute(3, "AllowPaging", true);
             builder.AddAttribute(4, "PageSize", 10);
@@ -1242,7 +993,7 @@ public partial class ReportProcessing : ComponentBase
                 return;
             }
 
-            if (!PendingMitigation.Any())
+            if (!_pendingMitigation.Any())
             {
                 RenderEmptyState(builder, "build", "No reports in mitigation phase", "Approved risk assessments will appear here");
                 return;
@@ -1259,7 +1010,7 @@ public partial class ReportProcessing : ComponentBase
         builder.AddAttribute(1, "Gap", "1.5rem");
         builder.AddAttribute(2, "ChildContent", (RenderFragment)(stackBuilder =>
         {
-            foreach (var report in PendingMitigation)
+            foreach (var report in _pendingMitigation)
             {
                 // Render each report as a card with its mitigations
                 RenderReportMitigationCard(stackBuilder, report);
@@ -1621,7 +1372,7 @@ public partial class ReportProcessing : ComponentBase
     {
         var highestRiskLevel = GetHighestRiskLevelAcrossAllHazards(report);
 
-        var authorizedApprovers = AvailableApprovers
+        var authorizedApprovers = _availableApprovers
             .Where(user => CanApproveRiskLevel(user, highestRiskLevel))
             .Select(user => ApproverOption.FromUser(user))
             .OrderBy(a => a.DisplayName)
@@ -1647,7 +1398,7 @@ public partial class ReportProcessing : ComponentBase
     /// </summary>
     private ApproverOption GetApproverDetails(string approverCode)
     {
-        var approver = AvailableApprovers.FirstOrDefault(a => a.Code == approverCode);
+        var approver = _availableApprovers.FirstOrDefault(a => a.Code == approverCode);
         if (approver is null)
             return new ApproverOption { Code = approverCode, DisplayName = "Unknown" };
 
@@ -1976,7 +1727,13 @@ public partial class ReportProcessing : ComponentBase
             })));
         builder.CloseComponent();
 
-        RenderRiskAssessmentActionColumn(builder);
+        if (_currentUserService.CanUpdate("SMS_Listings_RiskAssessments"))
+            {
+                RenderRiskAssessmentActionColumn(builder);
+            }
+
+
+       
     }
 
     private void RenderRiskAssessmentActionColumn(RenderTreeBuilder builder)
@@ -2474,7 +2231,7 @@ public partial class ReportProcessing : ComponentBase
 
         // ?? CRITICAL: Verify approver has authority for the highest risk level using enum
         var highestRiskLevel = GetHighestRiskLevelAcrossAllHazards(_selectedReportForApproval);
-        var approver = AvailableApprovers.FirstOrDefault(a => a.Code == _selectedApprover);
+        var approver = _availableApprovers.FirstOrDefault(a => a.Code == _selectedApprover);
 
         if (approver is null || !CanApproveRiskLevel(approver, highestRiskLevel))
         {

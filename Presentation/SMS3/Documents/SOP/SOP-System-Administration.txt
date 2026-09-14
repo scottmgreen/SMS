@@ -1,0 +1,27 @@
+STANDARD OPERATING PROCEDURE
+Module: System Administration
+
+Purpose
+Define user/group/role/security/notification administration standards.
+
+Scope
+Applies to authorized system administrators and support staff.
+
+Responsibilities
+- System Admin: Users, groups, roles.
+- Security Admin: Authentication/session controls.
+- Support Admin: Companies/Organizations/Titles data.
+- Notification Admin: Queue/notification operations.
+
+Procedure
+1) Manage users (Application/Stakeholder/Organizational)
+2) Manage groups and allowed companies
+3) Manage roles and module permissions
+4) Monitor notification queue
+5) Maintain support reference data
+
+Controls
+- RBAC enforcement
+- Required data validations
+- Admin action audit trail
+- Config-driven security/session behavior

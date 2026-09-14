@@ -1,10 +1,9 @@
 @using Radzen
 @using Radzen.Blazor
-@namespace SMS3.Components.Shared
-<!-- SMS Audit Management Guidance Panel -->
+@namespace SMS3.Components.Shared.Components
+
 <RadzenCard Variant="Variant.Outlined" Style="position: sticky; top: 1rem;">
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-        <!-- Header -->
         <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
             <RadzenIcon Icon="help_outline" Style="color: var(--rz-primary);" />
             <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
@@ -12,7 +11,6 @@
             </RadzenText>
         </RadzenStack>
 
-        <!-- Regulatory Requirements -->
         <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -25,7 +23,7 @@
                 <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
                     <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Text" Size="AlertSize.Small">
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                            <strong>§139.301(d)</strong> Internal Evaluation Program
+                            <strong>ï¿½139.301(d)</strong> Internal Evaluation Program
                         </RadzenText>
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
                             Conduct regular self-inspections and audits to assess SMS implementation and effectiveness.
@@ -34,7 +32,7 @@
 
                     <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Text" Size="AlertSize.Small">
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                            <strong>§139.301(e)</strong> Management Review
+                            <strong>ï¿½139.301(e)</strong> Management Review
                         </RadzenText>
                         <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
                             Annual management review of SMS to ensure continuing suitability and effectiveness.
@@ -44,7 +42,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Quick Actions -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -61,21 +58,21 @@
                                 Size="ButtonSize.Small"
                                 Style="width: 100%;"
                                 Click="@(() => CreateAnnualAuditPlan())" />
-                    
+
                     <RadzenButton Text="Schedule Internal Audit" 
                                 Icon="schedule" 
                                 ButtonStyle="ButtonStyle.Primary" 
                                 Size="ButtonSize.Small"
                                 Style="width: 100%;"
                                 Click="@(() => CreateInternalAudit())" />
-                    
+
                     <RadzenButton Text="Upload Evidence" 
                                 Icon="cloud_upload" 
                                 ButtonStyle="ButtonStyle.Info" 
                                 Size="ButtonSize.Small"
                                 Style="width: 100%;"
                                 Click="@(() => NavigateToEvidence())" />
-                    
+
                     <RadzenButton Text="Generate Report" 
                                 Icon="assessment" 
                                 ButtonStyle="ButtonStyle.Light" 
@@ -86,7 +83,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Best Practices -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -128,7 +124,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Audit Types Guide -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -163,7 +158,6 @@
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Key Metrics -->
         <RadzenCard Variant="Variant.Text">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -175,25 +169,24 @@
 
                 <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        • Audit Plan Completion Rate
+                        ï¿½ Audit Plan Completion Rate
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        • Finding Closure Time
+                        ï¿½ Finding Closure Time
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        • Corrective Action Effectiveness
+                        ï¿½ Corrective Action Effectiveness
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        • Repeat Finding Frequency
+                        ï¿½ Repeat Finding Frequency
                     </RadzenText>
                     <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                        • Audit Quality Scores
+                        ï¿½ Audit Quality Scores
                     </RadzenText>
                 </RadzenStack>
             </RadzenStack>
         </RadzenCard>
 
-        <!-- Contact Information -->
         <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-100);">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.5rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -202,11 +195,11 @@
                         Need Help?
                     </RadzenText>
                 </RadzenStack>
-                
+
                 <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
                     Contact SMS Manager or Quality Assurance for audit guidance and support.
                 </RadzenText>
-                
+
                 <RadzenButton Text="Contact Support" 
                             Icon="support_agent" 
                             ButtonStyle="ButtonStyle.Light" 
