@@ -1,4 +1,4 @@
-using SMS_Domain.Entities;
+﻿using SMS_Domain.Entities;
 using SMS_Domain.Events;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -10,6 +10,7 @@ public partial class ReportValidationListing : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<ReportValidationListing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     
 
     private RadzenDataGrid<ReportValidation>? _validationsGrid;

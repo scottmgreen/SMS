@@ -1,4 +1,4 @@
-using SMS_Domain.Entities;
+﻿using SMS_Domain.Entities;
 using SMS_Domain.Events;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -13,6 +13,7 @@ public partial class ReportCalendar : ComponentBase
     [Inject] private ILogger<ReportCalendar> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Component State

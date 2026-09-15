@@ -1492,7 +1492,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
+                templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.SubmittedBy) ? report.SubmittedBy : "Not Specified");
                 templateBuilder.CloseComponent();
             })));
@@ -1512,8 +1512,10 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
-
-           RenderValidationActionColumn(builder);
+        if (_currentUserService.CanUpdate("SMS_Listings_Reports"))
+        {
+            RenderValidationActionColumn(builder);
+        }
     }
 
     private void RenderHazardCategoryTypeColumn(RenderTreeBuilder builder)
@@ -1552,30 +1554,32 @@ public partial class ReportProcessing : ComponentBase
 
     private void RenderValidationActionColumn(RenderTreeBuilder builder)
     {
-        // Actions Column - NEW: Enhanced to handle default hazard classification scenario
-        builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(80);
-        builder.AddAttribute(81, "Title", "Actions");
-        builder.AddAttribute(82, "Width", "170px"); // Slightly wider for "Validate Report" text
-        builder.AddAttribute(83, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
-            (templateBuilder =>
-            {
-                // NEW: Determine button properties based on default hazard classification
-                var buttonText = report.ActionButtonText;
-                var buttonStyle = report.RequiresHazardClassificationUpdate ? ButtonStyle.Warning : ButtonStyle.Success;
-                var buttonIcon = report.RequiresHazardClassificationUpdate ? "warning" : "check_circle";
-                var navigationUrl = report.SmartUrl;
+        // Actions Column 
+        
+            builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(80);
+            builder.AddAttribute(81, "Title", "Actions");
+            builder.AddAttribute(82, "Width", "170px"); // Slightly wider for "Validate Report" text
+            builder.AddAttribute(83, "Template", (RenderFragment<ReportProcessingSummary>)(report =>
+                (templateBuilder =>
+                {
+                    // NEW: Determine button properties based on default hazard classification
+                    var buttonText = report.ActionButtonText;
+                    var buttonStyle = report.RequiresHazardClassificationUpdate ? ButtonStyle.Warning : ButtonStyle.Success;
+                    var buttonIcon = report.RequiresHazardClassificationUpdate ? "warning" : "check_circle";
+                    var navigationUrl = report.SmartUrl;
 
-                templateBuilder.OpenComponent<RadzenButton>(0);
-            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
-                templateBuilder.AddAttribute(2, "Text", buttonText);
-                templateBuilder.AddAttribute(3, "Icon", buttonIcon);
-                templateBuilder.AddAttribute(4, "ButtonStyle", buttonStyle);
-                templateBuilder.AddAttribute(5, "Size", ButtonSize.Small);
-                templateBuilder.AddAttribute(6, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
-                    (args) => _navigation.NavigateToSecure(navigationUrl)));
-                templateBuilder.CloseComponent();
-            })));
-        builder.CloseComponent();
+                    templateBuilder.OpenComponent<RadzenButton>(0);
+                    templateBuilder.AddAttribute(1, "style", _basicTextStyle);
+                    templateBuilder.AddAttribute(2, "Text", buttonText);
+                    templateBuilder.AddAttribute(3, "Icon", buttonIcon);
+                    templateBuilder.AddAttribute(4, "ButtonStyle", buttonStyle);
+                    templateBuilder.AddAttribute(5, "Size", ButtonSize.Small);
+                    templateBuilder.AddAttribute(6, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,
+                        (args) => _navigation.NavigateToSecure(navigationUrl)));
+                    templateBuilder.CloseComponent();
+                })));
+            builder.CloseComponent();
+        
     }
 
     private void RenderReportIdColumn(RenderTreeBuilder builder)
@@ -1738,7 +1742,8 @@ public partial class ReportProcessing : ComponentBase
 
     private void RenderRiskAssessmentActionColumn(RenderTreeBuilder builder)
     {
-        // Actions Column - NEW: Moved the action button to the far right
+        // Actions Column 
+
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(100);
         builder.AddAttribute(101, "Title", "Actions");
         builder.AddAttribute(102, "Width", "200px");
@@ -1777,7 +1782,7 @@ public partial class ReportProcessing : ComponentBase
                 var statusText = report.HasInvestigation ? report.InvestigationStatus : "Not Started";
 
                 templateBuilder.OpenComponent<RadzenText>(0);
-            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
+                templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", !string.IsNullOrEmpty(report.InvestigationStatus) ? report.InvestigationStatus : "Not Specified");
                 templateBuilder.CloseComponent();
             }
@@ -1793,7 +1798,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
+                templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", GetUserDisplayName(report.AssignedInvestigator));
                 templateBuilder.CloseComponent();
             })));
@@ -1808,7 +1813,7 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
+                templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", report.InterviewCount.ToString() ?? "Not Assigned");
                 templateBuilder.CloseComponent();
             })));
@@ -1823,13 +1828,21 @@ public partial class ReportProcessing : ComponentBase
             (templateBuilder =>
             {
                 templateBuilder.OpenComponent<RadzenText>(0);
-            templateBuilder.AddAttribute(1, "style", _basicTextStyle);
+                templateBuilder.AddAttribute(1, "style", _basicTextStyle);
                 templateBuilder.AddAttribute(2, "Text", report.HasInvestigation ? report.DaysInInvestigation.ToString() : "N/A");
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
 
         // Actions Column
+        if (_currentUserService.CanUpdate("SMS_Listings_Investigations"))
+        {
+            RenderInvestigationActionColumn(builder);
+        }
+    }
+
+    private void RenderInvestigationActionColumn(RenderTreeBuilder builder)
+    {
         builder.OpenComponent<RadzenDataGridColumn<ReportProcessingSummary>>(50);
         builder.AddAttribute(51, "Title", "Actions");
         builder.AddAttribute(52, "Width", "175px");
@@ -1846,7 +1859,7 @@ public partial class ReportProcessing : ComponentBase
                 templateBuilder.AddAttribute(2, "Icon", buttonIcon);
                 templateBuilder.AddAttribute(3, "ButtonStyle", buttonStyle);
                 templateBuilder.AddAttribute(4, "Size", ButtonSize.Small);
-                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this,(args) => _navigation.NavigateTo(report.SmartUrl)));
+                templateBuilder.AddAttribute(5, "Click", EventCallback.Factory.Create<MouseEventArgs>(this, (args) => _navigation.NavigateTo(report.SmartUrl)));
                 templateBuilder.CloseComponent();
             })));
         builder.CloseComponent();
@@ -1857,7 +1870,7 @@ public partial class ReportProcessing : ComponentBase
 
     #region Helper Methods for Rendering
 
-    
+
     private void ShowBulkApprovalConfirmation(ReportProcessingSummary report)
     {
         try

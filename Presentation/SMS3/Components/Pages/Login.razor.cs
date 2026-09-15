@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 using SMS_Domain.Entities;
 
@@ -20,6 +20,7 @@ public partial class Login : ComponentBase
     [Inject] private IAuthenticationService AuthenticationService { get; set; } = default!;
     [Inject] private SessionTimerService SessionTimerService { get; set; } = default!;
     [Inject] private TwoFactorAuthService TwoFactorAuthService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     private LoginFormModel LoginModel { get; set; } = new();
     private string ErrorMessage { get; set; } = string.Empty;

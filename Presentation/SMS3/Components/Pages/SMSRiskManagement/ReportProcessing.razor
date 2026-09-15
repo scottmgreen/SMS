@@ -24,10 +24,13 @@
 <!-- Main Tabs -->
 <RadzenTabs @bind-SelectedIndex="_selectedTabIndex">
     <Tabs>
-        <RadzenTabsItem Text="@($"Validation ({_pendingValidation.Count})")" Icon="check_circle">
-            @RenderValidationTab()
-        </RadzenTabsItem>
-        
+        @if (_currentUserService.CanRead("SMS_Listings_RiskAssessments") )
+        {
+            <RadzenTabsItem Text="@($"Validation ({_pendingValidation.Count})")" Icon="check_circle">
+                @RenderValidationTab()
+            </RadzenTabsItem>
+        }
+              
         @if (_currentUserService.CanRead("SMS_Listings_RiskAssessments"))
         {
             <RadzenTabsItem Text="@($"Risk Assessment ({_pendingRiskAssessment.Count})")" Icon="assessment">
@@ -35,13 +38,19 @@
             </RadzenTabsItem>
         }
 
+        @if (_currentUserService.CanRead("SMS_Listings_Investigations"))
+        {
+            <RadzenTabsItem Text="@($"Investigation ({_pendingInvestigation.Count})")" Icon="search">
+                @RenderInvestigationTab()
+            </RadzenTabsItem>
+        }
+        @if (_currentUserService.CanRead("SMS_Listings_Mitigations"))
+        {
+            <RadzenTabsItem Text="@($"Mitigation ({_pendingMitigation.Count()})")" Icon="build">
+                @RenderMitigationTab()
+            </RadzenTabsItem>
+        }
         
-        <RadzenTabsItem Text="@($"Investigation ({_pendingInvestigation.Count})")" Icon="search">
-            @RenderInvestigationTab()
-        </RadzenTabsItem>
-        <RadzenTabsItem Text="@($"Mitigation ({_pendingMitigation.Count()})")" Icon="build">
-            @RenderMitigationTab()
-        </RadzenTabsItem>
     </Tabs>
 </RadzenTabs>
 

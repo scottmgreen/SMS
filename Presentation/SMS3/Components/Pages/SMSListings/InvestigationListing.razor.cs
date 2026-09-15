@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Commands;
@@ -34,6 +34,7 @@ public partial class InvestigationListing : ComponentBase
     [Inject] private ILogger<InvestigationListing> _logger { get; set; } = default!;
 
     [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Properties

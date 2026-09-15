@@ -1,4 +1,4 @@
-// <copyright file="EventDataSourceDiscoveryTest.cs" company="SMS Safety Management System">
+﻿// <copyright file="EventDataSourceDiscoveryTest.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
 //     Description: Test demonstration of dynamic event data source discovery.
@@ -20,6 +20,7 @@ namespace SMS3.Components.Pages.SMSSystem.EventBus;
 public partial class EventDataSourceDiscoveryTest
 {
     [Inject] private ILogger<EventDataSourceDiscoveryTest> Logger { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     private List<EventDataSourceInfo> _eventDataSources = new();
     private Dictionary<string, List<EventDataSourceInfo>> _groupedSources = new();

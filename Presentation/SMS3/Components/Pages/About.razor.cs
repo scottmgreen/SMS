@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Reflection;
 
 using Microsoft.AspNetCore.Components;
@@ -21,6 +21,7 @@ public partial class About : ComponentBase
     [Inject] private INotificationHelper  NotificationHelper { get; set; } = default!;
     
     [Inject] private IJSRuntime JSRuntime { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     // Page Header Properties
     public string PageTitle => "PDX Safety Management System (SMS3)";

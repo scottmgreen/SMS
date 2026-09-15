@@ -1,4 +1,4 @@
-
+﻿
 using SMS3.Components.Shared.UIHelpers;
 
 namespace SMS3.Components.Pages.SMSPolicy;
@@ -10,6 +10,7 @@ public partial class OrganizationalStructure : ComponentBase
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     // Data Properties
     private List<SMSOrganizationalUser> OrganizationalUsers { get; set; } = new();

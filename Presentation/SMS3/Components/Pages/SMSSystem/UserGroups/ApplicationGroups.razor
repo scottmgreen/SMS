@@ -15,8 +15,12 @@
             <AdditionalContent>
                 <div class="d-flex justify-content-end align-items-center w-100">
                     <div class="d-flex gap-2">
-                        <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                                      Click="@OpenCreateModal" />
+                        @* SMS_System_UserGroups_Application *@
+                        @if (_currentUserService.CanCreate("SMS_System_UserGroups_Application"))
+                        {
+                            <RadzenButton Text="Add Group" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                          Click="@OpenCreateModal" />
+                        }
                     </div>
                 </div>
             </AdditionalContent>
@@ -24,13 +28,6 @@
     </PageHeader>
 
 <!-- Success/Error Messages -->
-@if (!string.IsNullOrEmpty(_successMessage))
-{
-    @* <RadzenAlert AlertStyle="AlertStyle.Success" Variant="Variant.Flat" Shade="Shade.Lighter" class="mb-3">
-        <RadzenIcon Icon="check_circle" Style="margin-right: 0.5rem;" />
-        @_successMessage
-    </RadzenAlert> *@
-}
 
 @if (!string.IsNullOrEmpty(_errorMessage))
 {
@@ -124,17 +121,33 @@
                     <RadzenDataGridColumn TItem="SMSApplicationGroup" Title="Actions" Width="300px" Sortable="false" Filterable="false">
                         <Template Context="group">
                             <div class="d-flex gap-1">
-                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
-                                              Click="@(() => EditGroup(group.Code))" title="Edit Group" />
-                                <RadzenButton Icon="people" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall"
-                                              Click="@(() => ManageMembers(group.Code))" title="Manage Members" />
-                                <RadzenButton Text="@(GetAssignedUsersCount(group.Code).ToString())" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
-                                              Click="@(() => ManageMembers(group.Code))" title="View Assigned Users" />
-                                <RadzenButton Text="@(GetAllowedCompaniesCount(group).ToString())" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
-                                              Click="@(() => ShowAllowedCompanies(group))" title="View Allowed Companies" />
-                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
-                                              Disabled="@IsGroupDeleteDisabled(group.Code)"
-                                              Click="@(() => ConfirmDelete(group.Code, group.Name))" title="@GetDeleteTooltip(group.Code)" />
+                                @* SMS_System_UserGroups_Application *@
+                                @if (_currentUserService.CanUpdate("SMS_System_UserGroups_Application"))
+                                {
+                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
+                                                  Click="@(() => EditGroup(group.Code))" title="Edit Group" />
+                                }
+                                @if (_currentUserService.CanUpdate("SMS_System_UserGroups_Application"))
+                                {
+                                    <RadzenButton Icon="people" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.ExtraSmall"
+                                                  Click="@(() => ManageMembers(group.Code))" title="Manage Members" />
+                                }
+                                @if (_currentUserService.CanRead("SMS_System_UserGroups_Application"))
+                                {
+                                    <RadzenButton Text="@(GetAssignedUsersCount(group.Code).ToString())" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                                  Click="@(() => ManageMembers(group.Code))" title="View Assigned Users" />
+                                }
+                                @if (_currentUserService.CanUpdate("SMS_System_UserGroups_Application"))
+                                {
+                                    <RadzenButton Text="@(GetAllowedCompaniesCount(group).ToString())" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.ExtraSmall"
+                                                  Click="@(() => ShowAllowedCompanies(group))" title="View Allowed Companies" />
+                                }
+                                @if (_currentUserService.CanDelete("SMS_System_UserGroups_Application"))
+                                {
+                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
+                                                  Disabled="@IsGroupDeleteDisabled(group.Code)"
+                                                  Click="@(() => ConfirmDelete(group.Code, group.Name))" title="@GetDeleteTooltip(group.Code)" />
+                                }
                             </div>
                         </Template>
                     </RadzenDataGridColumn>
@@ -151,8 +164,11 @@
                 <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-disabled-color);">
                     Click "Add Group" to create your first application group.
                 </RadzenText>
-                <RadzenButton Text="Add First Group" Icon="add" ButtonStyle="ButtonStyle.Success"
-                              Click="@OpenCreateModal" />
+                @if (_currentUserService.CanCreate("SMS_System_UserGroups_Application"))
+                {
+                    <RadzenButton Text="Add First Group" Icon="add" ButtonStyle="ButtonStyle.Success"
+                                  Click="@OpenCreateModal" />
+                }
             </RadzenStack>
         }
     </RadzenCard>

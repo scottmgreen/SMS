@@ -1,4 +1,4 @@
-using SMS_Domain.Services;
+﻿using SMS_Domain.Services;
 
 using SMS3.Components.Pages.SMSAssurance.Components;
 using SMS3.Components.Shared;
@@ -19,6 +19,7 @@ public partial class RiskRegistry : ComponentBase
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region State Properties

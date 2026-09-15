@@ -1,4 +1,4 @@
-using SMS_Domain.Entities;
+﻿using SMS_Domain.Entities;
 using SMS_Domain.Events;
 
 using Radzen;
@@ -26,6 +26,7 @@ public partial class AuditDetail : ComponentBase
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Component State

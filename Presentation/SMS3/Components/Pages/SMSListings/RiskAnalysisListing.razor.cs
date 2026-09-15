@@ -1,4 +1,4 @@
-using SMS_Domain.Entities;
+﻿using SMS_Domain.Entities;
 using SMS_Domain.Events;
 
 using SMS3.Components.Shared.UIHelpers;
@@ -10,6 +10,7 @@ public partial class RiskAnalysisListing : ComponentBase
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<RiskAnalysisListing> _logger { get; set; } = default!;
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     private RadzenDataGrid<RiskAnalysis>? _analysisGrid;
     private IEnumerable<RiskAnalysis> _analysisResults = new List<RiskAnalysis>();

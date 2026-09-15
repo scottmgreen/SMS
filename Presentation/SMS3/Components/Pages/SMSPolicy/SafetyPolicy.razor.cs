@@ -1,4 +1,4 @@
-using Microsoft.JSInterop;
+﻿using Microsoft.JSInterop;
 
 using SMS3.Configuration.Extensions;
 
@@ -9,6 +9,7 @@ public partial class SafetyPolicy : ComponentBase
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private IJSRuntime _jsRuntime { get; set; } = default!;
     [Inject] private ILogger<SafetyPolicy> _logger { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     // Document management properties
     private List<PolicyDocument> PolicyDocuments { get; set; } = new();

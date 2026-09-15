@@ -12,8 +12,11 @@
             Icon="fas fa-id-badge">
     <AdditionalContent>
         <div class="d-flex justify-content-end align-items-center w-100">
-            <RadzenButton Text="New Title" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                          Click="@OpenCreateModal" />
+            @if (_currentUserService.CanCreate("SMS_System_UserSupport_Titles"))
+            {
+                <RadzenButton Text="New Title" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                              Click="@OpenCreateModal" />
+            }
         </div>
     </AdditionalContent>
 </PageHeader>
@@ -37,10 +40,17 @@
             <RadzenDataGridColumn TItem="SMSJobTitle" Title="Actions" Width="120px" Sortable="false" Filterable="false">
                 <Template Context="title">
                     <div class="d-flex gap-1">
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
-                                      Click="@(() => OpenEditModal(title))" />
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
-                                      Click="@(() => DeleteTitle(title))" />
+                        @* SMS_System_UserSupport_Titles *@
+                        @if (_currentUserService.CanUpdate("SMS_System_UserSupport_Titles"))
+                        {
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
+                                          Click="@(() => OpenEditModal(title))" />
+                        }
+                        @if (_currentUserService.CanDelete("SMS_System_UserSupport_Titles"))
+                        {
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
+                                          Click="@(() => DeleteTitle(title))" />
+                        }
                     </div>
                 </Template>
             </RadzenDataGridColumn>

@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
 using Microsoft.AspNetCore.Components;
 
@@ -36,6 +36,7 @@ public partial class HazardLocationListing : ComponentBase
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
  
     [Inject] private DialogService _dialogService { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Properties

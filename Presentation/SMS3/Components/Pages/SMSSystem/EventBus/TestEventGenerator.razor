@@ -7,6 +7,7 @@
 @using SMS_Domain.Events.Test
 @using SMS_Domain.Events
 @using SMS3.Components.Shared
+@inject ICurrentUserService _currentUserService
 @inject IEventQueueService EventQueueService
 @inject IBaseEventBus EventBus
 @inject ILogger<TestEventGenerator> Logger

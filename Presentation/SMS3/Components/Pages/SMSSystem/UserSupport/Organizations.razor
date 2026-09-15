@@ -12,8 +12,11 @@
             Icon="fas fa-sitemap">
     <AdditionalContent>
         <div class="d-flex justify-content-end align-items-center w-100">
-            <RadzenButton Text="New Organization" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                          Click="@OpenCreateModal" />
+            @if (_currentUserService.CanCreate("SMS_System_UserSupport_Organizations"))
+            {
+                <RadzenButton Text="New Organization" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                              Click="@OpenCreateModal" />
+            }
         </div>
     </AdditionalContent>
 </PageHeader>
@@ -38,10 +41,17 @@
             <RadzenDataGridColumn TItem="SMSOrganization" Title="Actions" Width="120px" Sortable="false" Filterable="false">
                 <Template Context="organization">
                     <div class="d-flex gap-1">
-                        <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
-                                      Click="@(() => OpenEditModal(organization))" />
-                        <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
-                                      Click="@(() => DeleteOrganization(organization))" />
+                        @* SMS_System_UserSupport_Organizations *@
+                        @if (_currentUserService.CanUpdate("SMS_System_UserSupport_Organizations"))
+                        {
+                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.ExtraSmall"
+                                          Click="@(() => OpenEditModal(organization))" />
+                        }
+                        @if (_currentUserService.CanDelete("SMS_System_UserSupport_Organizations"))
+                        {
+                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
+                                          Click="@(() => DeleteOrganization(organization))" />
+                        }
                     </div>
                 </Template>
             </RadzenDataGridColumn>

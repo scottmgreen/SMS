@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------
+﻿//-----------------------------------------------------------------------
 // <copyright file="EventBusQueueManager.razor.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -34,6 +34,7 @@ public partial class EventBusQueueManager
     private const string FailedSendManualResendNote = "FAILED SEND - READY FOR MANUAL RESEND";
 
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
     private IEnumerable<QueuedEvent> _queuedEvents = new List<QueuedEvent>();
     private QueueStatistics? _statistics;

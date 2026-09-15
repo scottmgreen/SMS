@@ -53,6 +53,7 @@
 - BaseUser must carry common identity fields: Company, Organization (renamed from Department), Title, and JobFunction shared by ApplicationUser, OrganizationalUser, and StakeholderUser. Do not map legacy OrganizationalUser Department or Position in the mapper.
 - For all three user-group types (Application, Organizational, Stakeholder), each group must manage an Allowed Companies list on create/edit modals. User assignment into a group must be filtered so only users whose Company is in that group's Allowed Companies are assignable, and user type must match group type (e.g., Stakeholder users only in Stakeholder groups).
 - Use normalized relationship tables for group-to-company permissions (e.g., tblr_SMSApplicationUserGroupCompanies), and apply the same allowed-companies model consistently across all three user/group types.
+- For routable pages with code-behind, inject `ICurrentUserService` in the .razor.cs file (not only in .razor markup).
 
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.

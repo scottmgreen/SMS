@@ -1,4 +1,4 @@
-using System.Linq.Expressions;
+﻿using System.Linq.Expressions;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Events;
@@ -36,6 +36,7 @@ public partial class AirportSharedDatasetListing : ComponentBase
 
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private NavigationManager Navigation { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region State Properties

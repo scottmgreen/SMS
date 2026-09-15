@@ -16,8 +16,12 @@
            <AdditionalContent>
                 <div class="d-flex justify-content-end align-items-center w-100">
                     <div class="d-flex gap-2">
-                        <RadzenButton Text="Add User" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                                      Click="@OpenCreateModal" />
+                        @* SMS_System_UserManagement_Organization *@
+                        @if (_currentUserService.CanCreate("SMS_System_UserManagement_Organization"))
+                        {
+                            <RadzenButton Text="Add User" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                          Click="@OpenCreateModal" />
+                        }
                     </div>
                 </div>
            </AdditionalContent>
@@ -64,18 +68,7 @@
                             <div class="d-flex align-items-center">
                                 <div>
                                     <div><strong>@user.DisplayName</strong></div>
-                                    @* @if (IsEmailFormat(user.UserName?.Value))
-                                    {
-                                        <small>
-                                            <a href="@($"mailto:{user.UserName?.Value}")" style="color: var(--rz-text-secondary-color);">
-                                                @user.UserName?.Value
-                                            </a>
-                                        </small>
-                                    }
-                                    else
-                                    {
-                                        <small style="color: var(--rz-text-secondary-color);">@user.UserName?.Value</small>
-                                    } *@
+                                    
                                 </div>
                             </div>
                         </Template>
@@ -117,19 +110,7 @@
                         </Template>
                     </RadzenDataGridColumn>
 
-                    @* <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="UserRole" Title="SMS Role/Permissions" Width="170px" Sortable="false" Filterable="false">
-                        <Template Context="user">
-                            @if (user.UserRole is not null)
-                            {
-                                @user.UserRole.Name
-                            }
-                            else
-                            {
-                                <RadzenBadge Variant="Variant.Filled" BadgeStyle="BadgeStyle.Light" Text="No Role Assigned" />
-                            }
-                        </Template>
-                    </RadzenDataGridColumn> *@
-
+                  
                     <RadzenDataGridColumn TItem="SMSOrganizationalUser" Property="TwoFactorEnabled" Title="2FA Required" Width="120px">
                         <Template Context="user">
                             <RadzenIcon Icon="@(user.TwoFactorEnabled ? "check_box" : "check_box_outline_blank")"
@@ -143,24 +124,47 @@
                         </Template>
                     </RadzenDataGridColumn>
 
-                    
+               
                     <RadzenDataGridColumn TItem="SMSOrganizationalUser" Title="Actions" Width="200px" Sortable="false" Filterable="false">
                         <Template Context="user">
                             <div class="d-flex gap-1">
+                            @* SMS_System_UserManagement_Organization *@
+
+                            @if (_currentUserService.CanUpdate("SMS_System_UserManagement_Organization"))
+                            {
                                 <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
                                               Click="@(() => EditUser(user.Code))" title="Edit User" />
-
-                                <!-- Role Assignment Button -->
+                                
+                            }
+                            @if (_currentUserService.CanUpdate("SMS_System_UserManagement_Organization"))
+                            {
                                 <RadzenButton Icon="admin_panel_settings" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                               Click="@(() => OpenRoleAssignmentModal(user.Code, user.DisplayName, user.UserRole?.Code))"
                                               title="Assign Role" />
-
+                                
+                            }
+                            @if (_currentUserService.CanUpdate("SMS_System_UserManagement_Organization"))
+                            {
                                 <RadzenButton Icon="vpn_key" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
-                                              Click="@(() => OpenPasswordModal(user.Code, user.DisplayName))" title="Change Password" />
+                                              Click="@(() => OpenPasswordModal(user.Code, user.DisplayName))" 
+                                              title="Change Password" />
+                                
+                            }
+                            @if (_currentUserService.CanUpdate("SMS_System_UserManagement_Organization"))
+                            {
                                 <RadzenButton Icon="group" ButtonStyle="ButtonStyle.Warning" Size="ButtonSize.Small"
-                                              Click="@(() => ManageGroups(user.Code, user.DisplayName))" title="Manage Groups" />
+                                              Click="@(() => ManageGroups(user.Code, user.DisplayName))" 
+                                              title="Manage Groups" />
+                                
+                            }
+                            @if (_currentUserService.CanDelete("SMS_System_UserManagement_Organization"))
+                            {
                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                              Click="@(() => ConfirmDelete(user.Code, user.DisplayName))" title="Delete User" />
+                                              Click="@(() => ConfirmDelete(user.Code, user.DisplayName))" 
+                                              title="Delete User" />
+                                
+                            }
+                                                                          
                             </div>
                         </Template>
                     </RadzenDataGridColumn>
@@ -177,8 +181,11 @@
                 <RadzenText TextStyle="TextStyle.Body1" Style="color: var(--rz-text-disabled-color);">
                     Click "Add User" to create your first organizational user.
                 </RadzenText>
-                <RadzenButton Text="Add First User" Icon="add" ButtonStyle="ButtonStyle.Success"
-                              Click="@OpenCreateModal" />
+                @if (_currentUserService.CanCreate("SMS_System_UserManagement_Organization"))
+                {
+                    <RadzenButton Text="Add First User" Icon="add" ButtonStyle="ButtonStyle.Success"
+                                  Click="@OpenCreateModal" />
+                }
             </RadzenStack>
         }
     </RadzenCard>

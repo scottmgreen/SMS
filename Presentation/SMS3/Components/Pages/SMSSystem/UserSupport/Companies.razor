@@ -13,8 +13,11 @@
     <AdditionalContent>
         <div class="d-flex justify-content-end align-items-center w-100">
             <div class="d-flex gap-2">
-                <RadzenButton Text="New Company" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                              Click="@OpenCreateModal" />
+                @if (_currentUserService.CanCreate("SMS_System_UserSupport_Companies"))
+                {
+                    <RadzenButton Text="New Company" Icon="add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
+                                  Click="@OpenCreateModal" />
+                }
             </div>
         </div>
     </AdditionalContent>
@@ -80,12 +83,22 @@
                 <RadzenDataGridColumn TItem="SMSCompany" Title="Actions" Width="120px" Sortable="false" Filterable="false">
                     <Template Context="company">
                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                            <RadzenButton Icon="groups" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
-                                          Click="@(() => ShowAssignedUsers(company))" title="Show Assigned Users" />
-                            <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
-                                          Click="@(() => OpenEditModal(company))" title="Edit Company" />
-                            <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                          Click="@(() => ConfirmDelete(company))" title="Delete Company" />
+                            @* SMS_System_UserSupport_Companies *@
+                            @if (_currentUserService.CanRead("SMS_System_UserSupport_Companies"))
+                            {
+                                <RadzenButton Icon="groups" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small"
+                                              Click="@(() => ShowAssignedUsers(company))" title="Show Assigned Users" />
+                            }
+                            @if (_currentUserService.CanUpdate("SMS_System_UserSupport_Companies"))
+                            {
+                                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+                                              Click="@(() => OpenEditModal(company))" title="Edit Company" />
+                            }
+                            @if (_currentUserService.CanDelete("SMS_System_UserSupport_Companies"))
+                            {
+                                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+                                              Click="@(() => ConfirmDelete(company))" title="Delete Company" />
+                            }
                         </RadzenStack>
                     </Template>
                 </RadzenDataGridColumn>

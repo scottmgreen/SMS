@@ -1,4 +1,4 @@
-using SMS3.Components.Shared.UIHelpers;
+﻿using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 using SMS_Domain.Entities; // Add explicit domain entities
 
@@ -11,6 +11,7 @@ public partial class SPIDashboard : ComponentBase, SMS3.Components.Shared.ISPIDa
     [Inject] private ILogger<SPIDashboard> _logger { get; set; } = default!;
     [Inject] private INotificationHelper _notificationHelper { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Component State
