@@ -22,6 +22,7 @@ public partial class EvidenceFilesManager : ComponentBase
     #region Parameters
     [Parameter] public string HazardCode { get; set; } = default!;
     [Parameter] public string InvestigationCode { get; set; } = default!;
+    [Parameter] public string? ReportCode { get; set; }
     #endregion
 
     #region State Properties
@@ -146,11 +147,12 @@ public partial class EvidenceFilesManager : ComponentBase
         var parameters = new Dictionary<string, object?>
         {
             { "HazardCode", HazardCode },
-            { "InvestigationCode", InvestigationCode }
+            { "InvestigationCode", InvestigationCode },
+            { "ReportCode", ReportCode }
         };
 
-        var result = await DialogService.OpenAsync<UploadEvidenceDialog>(
-            "Upload Evidence File",
+        var result = await DialogService.OpenAsync<UploadFileDialog>(
+            "Upload File",
             parameters,
             options);
 

@@ -1,14 +1,15 @@
 using SMS3.Components.Shared.UIHelpers;
+using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Configuration;
 
 namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
-public partial class UploadEvidenceDialog : ComponentBase
+public partial class UploadFileDialog : ComponentBase
 {
     #region Injected Services
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
-    [Inject] private ILogger<UploadEvidenceDialog> Logger { get; set; } = default!;
+    [Inject] private ILogger<UploadFileDialog> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
     [Inject] private ISMSSessionService SessionService { get; set; } = default!;
     #endregion
@@ -16,6 +17,7 @@ public partial class UploadEvidenceDialog : ComponentBase
     #region Parameters
     [Parameter] public string HazardCode { get; set; } = default!;
     [Parameter] public string InvestigationCode { get; set; } = default!;
+    [Parameter] public string? ReportCode { get; set; }
     #endregion
 
     #region State Properties
@@ -28,6 +30,8 @@ public partial class UploadEvidenceDialog : ComponentBase
 
     public UploadFileModel Model { get; set; } = new();
     public List<AttachedFile> AttachedFiles { get; set; } = new();
+    private string UploadHazardCode { get; set; } = string.Empty;
+    private string UploadReportCode { get; set; } = string.Empty;
     #endregion
 
     #region Computed Properties
@@ -48,7 +52,8 @@ public partial class UploadEvidenceDialog : ComponentBase
     #region Initialization
     private void InitializeModel()
     {
-        var currentUser = SessionService.GetCurrentUserId() ?? SystemConstants.FlyPdxApiSource;
+        UploadHazardCode = HazardCode ?? string.Empty;
+        UploadReportCode = ReportCode ?? string.Empty;
 
         Model = new UploadFileModel
         {
@@ -159,14 +164,22 @@ public partial class UploadEvidenceDialog : ComponentBase
     #endregion
 
     #region Validation
+    private bool HasMissingFileDescriptions => AttachedFiles.Any(file => string.IsNullOrWhiteSpace(file.Description));
+
     private bool CanUpload()
     {
-        return AttachedFiles.Any();
+        return !string.IsNullOrWhiteSpace(UploadHazardCode)
+            && !string.IsNullOrWhiteSpace(UploadReportCode)
+            && AttachedFiles.Any()
+            && !HasMissingFileDescriptions;
     }
 
     private string GetValidationMessage()
     {
+        if (string.IsNullOrWhiteSpace(UploadReportCode)) return "Report ID is required";
+        if (string.IsNullOrWhiteSpace(UploadHazardCode)) return "Hazard ID is required";
         if (!AttachedFiles.Any()) return "Please select at least one file";
+        if (HasMissingFileDescriptions) return "Each attached file requires a description";
 
         return "Ready to upload";
     }
@@ -222,8 +235,8 @@ public partial class UploadEvidenceDialog : ComponentBase
                     var hazardFile = new HazardFile(new HazardFileID(fileCode))
                     {
                         Code = fileCode,
-                        HazardCode = HazardCode,
-                        ReportCode = string.Empty,
+                        HazardCode = UploadHazardCode.Trim(),
+                        ReportCode = UploadReportCode.Trim(),
                         FileName = file.FileName,
                         FileType = GetFileTypeFromExtension(file.FileName),
                         ContentType = file.ContentType ?? "application/octet-stream",
@@ -234,6 +247,7 @@ public partial class UploadEvidenceDialog : ComponentBase
                         CreatedBy = currentUser,
                         UploadedDate = DateTime.UtcNow,
                         IsActive = true,
+                        Description = file.Description?.Trim(),
                         Category = "Evidence"
                     };
 
@@ -422,15 +436,6 @@ public partial class UploadEvidenceDialog : ComponentBase
 
   
 
-    public class AttachedFile
-    {
-        public string FileName { get; set; } = string.Empty;
-        public long FileSizeBytes { get; set; }
-        public string SizeDisplay { get; set; } = string.Empty;
-        public string ContentType { get; set; } = string.Empty;
-        public byte[] Data { get; set; } = Array.Empty<byte>();
-        public long Size { get; set; }
-    }
     #endregion
 
     #region File Management Methods

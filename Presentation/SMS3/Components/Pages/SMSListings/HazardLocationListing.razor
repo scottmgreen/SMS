@@ -30,14 +30,7 @@
                 IsLoading="@_isLoading">
     
     <Columns>
-        @* <RadzenDataGridColumn TItem="HazardLocation" Width="60px" Sortable="false" Filterable="false">
-            <HeaderTemplate>
-                <input type="checkbox" />
-            </HeaderTemplate>
-            <Template Context="location">
-                <input type="checkbox" @onclick:stopPropagation="true" />
-            </Template>
-        </RadzenDataGridColumn> *@
+        
         <RadzenDataGridColumn TItem="HazardLocation" Property="HazardCode" FilterProperty="ReportCode" SortProperty="ReportCode" Type="typeof(string)" FilterOperator="FilterOperator.Contains" Title="Report ID" Width="100px">
             <Template Context="location">
                 <div title="@GetReportCodeForLocation(location)" style="@_basicTextStyle">
@@ -113,30 +106,30 @@
         </RadzenDataGridColumn>
         
 
-        <RadzenDataGridColumn TItem="HazardLocation" Title="Actions" Width="100px" Sortable="false" Filterable="false">
+        <RadzenDataGridColumn TItem="HazardLocation" Title="Actions" Width="140px" Sortable="false" Filterable="false">
             <Template Context="location">
-                <RadzenButton Icon="map" 
-                            ButtonStyle="ButtonStyle.Base" 
-                            Size="ButtonSize.Small" 
-                            Text="View"
-                            Click="@(() => ViewLocationMap(location))"
-                            Disabled="@(!HasValidCoordinates(location))"
-                            title="@(HasValidCoordinates(location) ? "View location on map" : "No valid coordinates available")" />
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
+                    @if (_currentUserService.CanRead("SMS_Listings_HazardLocations"))
+                    {
+                        <RadzenButton ButtonStyle="ButtonStyle.Base"
+                                      Size="ButtonSize.Small"
+                                      Click="@(() => ViewLocationMap(location))"
+                                      Disabled="@(!HasValidCoordinates(location))"
+                                      title="@(HasValidCoordinates(location) ? "View location on map" : "No valid coordinates available")"
+                                      Icon="visibility" />
+                    }
 
+                    @if (_currentUserService.CanUpdate("SMS_Listings_HazardLocations"))
+                    {
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                      Size="ButtonSize.Small"
+                                      Click="@(() => ValidateLocation(location))"
+                                      Disabled="@(!HasValidCoordinates(location))"
+                                      title="@(HasValidCoordinates(location) ? "Validate location" : "No valid coordinates available")"
+                                      Icon="edit" />
+                    }
+                </RadzenStack>
             </Template>
         </RadzenDataGridColumn>       
-        
-
-        <RadzenDataGridColumn TItem="HazardLocation" Title="" Width="100px" Sortable="false" Filterable="false">
-            <Template Context="location">
-                <RadzenButton Icon="map"
-                              ButtonStyle="ButtonStyle.Base"
-                              Size="ButtonSize.Small"
-                              Text="Validate"
-                              Click="@(() => ValidateLocation(location))"
-                              Disabled="@(!HasValidCoordinates(location))"
-                              title="@(HasValidCoordinates(location) ? "Validate location" : "No valid coordinates available")" />
-            </Template>
-        </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>

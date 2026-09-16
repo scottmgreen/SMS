@@ -171,29 +171,82 @@
                                     <!-- EVENT BUS /SMSSystem/EventBus/QueueManager-->
                                     <RadzenMenuItem Text="Notification Management" Value='"/SMSSystem/EventBus/QueueManager"' Icon="person"></RadzenMenuItem>
                                     <!-- User Management -->
-                                    <RadzenMenuItem Text="User Management" Icon="people">
-                                        <RadzenMenuItem Text="Application Users" Value='"/SMSSystem/UserManagement/ApplicationUsers"' Icon="person"></RadzenMenuItem>
-                                        <RadzenMenuItem Text="Stakeholders" Value='"/SMSSystem/UserManagement/StakeholderUsers"' Icon="group"></RadzenMenuItem>
-                                        <RadzenMenuItem Text="Organizational Members" Value='"/SMSSystem/UserManagement/OrganizationalUsers"' Icon="corporate_fare"></RadzenMenuItem>
-                                    </RadzenMenuItem>
+                                    @if (_currentUserService.CanRead("SMS_System_UserManagement_Application") || _currentUserService.CanRead("SMS_System_UserManagement_Stakeholder") || _currentUserService.CanRead("SMS_System_UserManagement_Organization"))
+                                    {
+                                        <RadzenMenuItem Text="User Management" Icon="people">
+                                            @if (_currentUserService.CanRead("SMS_System_UserManagement_Application"))
+                                            {
+                                                <RadzenMenuItem Text="Application Users" Value='"/SMSSystem/UserManagement/ApplicationUsers"' Icon="person"></RadzenMenuItem>
+                                            }
+
+                                            @if (_currentUserService.CanRead("SMS_System_UserManagement_Stakeholder"))
+                                            {
+                                                <RadzenMenuItem Text="Stakeholders" Value='"/SMSSystem/UserManagement/StakeholderUsers"' Icon="group"></RadzenMenuItem>
+                                            }
+
+                                            @if (_currentUserService.CanRead("SMS_System_UserManagement_Organization"))
+                                            {
+                                                <RadzenMenuItem Text="Organizational Members" Value='"/SMSSystem/UserManagement/OrganizationalUsers"' Icon="corporate_fare"></RadzenMenuItem>
+                                            }
+                                        </RadzenMenuItem>
+                                    }
+                                    
 
                                     <!-- User Groups -->
-                                    <RadzenMenuItem Text="User Groups" Icon="groups">
-                                        <RadzenMenuItem Text="Application Groups" Value='"/SMSSystem/UserGroups/ApplicationGroups"' Icon="corporate_fare" ></RadzenMenuItem>
-                                        <RadzenMenuItem Text="Stakeholder Groups" Value='"/SMSSystem/UserGroups/StakeholderGroups"' Icon="diversity_3" ></RadzenMenuItem>
-                                        <RadzenMenuItem Text="Organizational Groups" Value='"/SMSSystem/UserGroups/OrganizationalGroups"' Icon="diversity_3" ></RadzenMenuItem>
-                                    </RadzenMenuItem>
+                                    @if (_currentUserService.CanRead("SMS_System_UserGroups_Application") || _currentUserService.CanRead("SMS_System_UserGroups_Stakeholder") || _currentUserService.CanRead("SMS_System_UserGroups_Organization"))
+                                    {
+                                        <RadzenMenuItem Text="User Groups" Icon="groups">
+                                            @if (_currentUserService.CanRead("SMS_System_UserGroups_Application"))
+                                            {
+                                                <RadzenMenuItem Text="Application Groups" Value='"/SMSSystem/UserGroups/ApplicationGroups"' Icon="corporate_fare"></RadzenMenuItem>
+                                            }
+                                            @if (_currentUserService.CanRead("SMS_System_UserGroups_Stakeholder"))
+                                            {
+                                                <RadzenMenuItem Text="Stakeholder Groups" Value='"/SMSSystem/UserGroups/StakeholderGroups"' Icon="diversity_3"></RadzenMenuItem>
+                                            }
+                                            @if (_currentUserService.CanRead("SMS_System_UserGroups_Organization"))
+                                            {
+                                                <RadzenMenuItem Text="Organizational Groups" Value='"/SMSSystem/UserGroups/OrganizationalGroups"' Icon="diversity_3"></RadzenMenuItem>
+                                            }
+                                        </RadzenMenuItem>
+                                        
+                                    }
+                                    
 
                                     <!-- User Roles -->
-                                    <RadzenMenuItem Text="User Roles" Icon="admin_panel_settings">
-                                        <RadzenMenuItem Text="User Roles" Value='"/SMSSystem/UserRoles/UserRoles"' Icon="badge"></RadzenMenuItem>
-                                    </RadzenMenuItem>
+                                    @if (_currentUserService.CanRead("SMS_System_UserRoles"))
+                                    {
+                                        <RadzenMenuItem Text="User Roles" Icon="admin_panel_settings">
+                                            <RadzenMenuItem Text="User Roles" Value='"/SMSSystem/UserRoles/UserRoles"' Icon="badge"></RadzenMenuItem>
+                                        </RadzenMenuItem>
+                                    
+                                    }
+                                    
 
                                     <!-- User Support -->
+                                    @if (_currentUserService.CanRead("SMS_System_UserSupport_Companies") || _currentUserService.CanRead("SMS_System_UserSupport_Organizations") || _currentUserService.CanRead("SMS_System_UserSupport_Titles"))
+                                    {
+                                        
+                                        
+                                    }
+
                                     <RadzenMenuItem Text="User Support" Icon="business">
-                                        <RadzenMenuItem Text="Companies" Value='"/SMSSystem/UserSupport/Companies"' Icon="apartment"></RadzenMenuItem>
-                                        <RadzenMenuItem Text="Organizations" Value='"/SMSSystem/UserSupport/Organizations"' Icon="account_tree"></RadzenMenuItem>
-                                        <RadzenMenuItem Text="Titles" Value='"/SMSSystem/UserSupport/Titles"' Icon="badge"></RadzenMenuItem>
+                                        @if (_currentUserService.CanRead("SMS_System_UserSupport_Companies"))
+                                        {
+                                            <RadzenMenuItem Text="Companies" Value='"/SMSSystem/UserSupport/Companies"' Icon="apartment"></RadzenMenuItem>
+                                        }
+                                        @if (_currentUserService.CanRead("SMS_System_UserSupport_Organizations"))
+                                        {
+                                            <RadzenMenuItem Text="Organizations" Value='"/SMSSystem/UserSupport/Organizations"' Icon="account_tree"></RadzenMenuItem>
+                                        }
+                                        @if (_currentUserService.CanRead("SMS_System_UserSupport_Titles"))
+                                        {
+                                            <RadzenMenuItem Text="Titles" Value='"/SMSSystem/UserSupport/Titles"' Icon="badge"></RadzenMenuItem>
+                                        }
+
+                                        
+                                        
+                                        
                                     </RadzenMenuItem>
 
 

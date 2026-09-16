@@ -162,7 +162,38 @@ public partial class HazardFileListing : ComponentBase
 
     private void OpenAddModal()
     {
-        _showAddModal = true;
+        _ = OpenAddUploadDialogAsync();
+    }
+
+    private async Task OpenAddUploadDialogAsync()
+    {
+        var options = new DialogOptions
+        {
+            Width = "1098px",
+            Height = "584px",
+            Resizable = true,
+            Draggable = true,
+            CloseDialogOnOverlayClick = false,
+            CloseDialogOnEsc = true
+        };
+
+        var parameters = new Dictionary<string, object?>
+        {
+            { "HazardCode", string.Empty },
+            { "ReportCode", string.Empty },
+            { "InvestigationCode", string.Empty }
+        };
+
+        var result = await _dialogService.OpenAsync<SMS3.Components.Pages.SMSRiskManagement.Components.UploadFileDialog>(
+            "Upload File",
+            parameters,
+            options);
+
+        if (result == true)
+        {
+            await ShowSuccessAsyncNotification("Hazard file uploaded successfully.");
+            await LoadInitialData();
+        }
     }
 
     private void CloseAddModal()
@@ -773,6 +804,14 @@ public partial class HazardFileListing : ComponentBase
         try
         {
             _logger.LogInformation("Reading file: {Code} - {FileName}", file.Code, file.FileName);
+
+            if (ShouldUseStoredExternalPath(file))
+            {
+                var resolvedPath = ResolveExternalFilePath(file.FilePath);
+                await _jsRuntime.InvokeVoidAsync("open", resolvedPath, "_blank");
+                await ShowInfoAsyncNotification($"Opened '{file.FileName}' in a new tab.");
+                return;
+            }
 
             _showEditModal = false;
             _editingFile = null;

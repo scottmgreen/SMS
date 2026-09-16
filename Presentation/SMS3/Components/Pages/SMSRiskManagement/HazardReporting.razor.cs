@@ -217,6 +217,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     public bool HasValidCoordinates => SelectedLatitude != 0 && SelectedLongitude != 0;
     public bool HasLocationDescription => !string.IsNullOrWhiteSpace(SelectedLocationDescription);
     public bool CanUseSelectedMapLocation => HasValidCoordinates && HasLocationDescription && !IsMapReadOnlyMode;
+    public bool HasMissingFileDescriptions => AttachedFiles.Any(f => (f.Data?.Length ?? 0) > 0 && string.IsNullOrWhiteSpace(f.Description));
     public string GeoLocationDisplay => HasGeoLocation ? $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" : "No coordinates selected";
     public int HazardTitleCharacterCount => HazardReport?.HazardTitle?.Length ?? 0;
     public int DescriptionCharacterCount => HazardReport?.Description?.Length ?? 0;
@@ -237,11 +238,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
             return IsFormValidForPreview &&
                 !string.IsNullOrEmpty(HazardReport.ReportContactName) &&
                 !string.IsNullOrEmpty(HazardReport.ReportContactEmail) &&
-                HasGeoLocation && hasLocationDescription && DescriptionCharacterCount <= 3000;
+                HasGeoLocation && hasLocationDescription && DescriptionCharacterCount <= 3000 && !HasMissingFileDescriptions;
         }
 
         return IsFormValidForPreview &&
-            HasGeoLocation && hasLocationDescription && DescriptionCharacterCount <= 3000;
+            HasGeoLocation && hasLocationDescription && DescriptionCharacterCount <= 3000 && !HasMissingFileDescriptions;
     }
 
     public void CancelEdit()
