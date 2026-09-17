@@ -665,13 +665,14 @@ public partial class StakeholderGroups : ComponentBase
             }
 
             var memberCodes = GroupMembers.Select(m => m.Code).ToHashSet();
-            var allowedCompanies = _currentGroup?.AllowedCompanyCodes ?? new List<string>();
+            var allowedCompanies = (_currentGroup?.AllowedCompanyCodes ?? new List<string>())
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c.Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             AvailableUsers = SMSStakeholderUsers
                 .Where(u => !memberCodes.Contains(u.Code))
-                .Where(u => allowedCompanies.Count == 0
-                    || (!string.IsNullOrWhiteSpace(u.Company)
-                        && allowedCompanies.Any(c => c.Equals(u.Company, StringComparison.OrdinalIgnoreCase))))
+                .Where(u => allowedCompanies.Count == 0 || IsUserInAllowedCompany(u.Company, allowedCompanies))
                 .ToList();
 
             // Initialize selection tracking
@@ -780,7 +781,10 @@ public partial class StakeholderGroups : ComponentBase
                     if (result.IsSuccess)
                         successCount++;
                     else
+                    {
+                        Logger.LogWarning("Failed to assign user {UserCode} to stakeholder group {GroupCode}: {Error}", userCode, _currentGroupCode, result.Error?.Message);
                         failureCount++;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -801,7 +805,7 @@ public partial class StakeholderGroups : ComponentBase
             }
             else
             {
-                await ShowErrorAsyncNotification("Failed to assign users to group.");
+                await ShowErrorAsyncNotification("Failed to assign users to group. Please verify allowed companies and user company values.");
             }
         }
         catch (Exception ex)
@@ -841,6 +845,29 @@ public partial class StakeholderGroups : ComponentBase
             Logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, _currentGroupCode);
             await ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
+    }
+
+    private static bool IsUserInAllowedCompany(string? userCompany, HashSet<string> allowedCompanies)
+    {
+        if (string.IsNullOrWhiteSpace(userCompany))
+        {
+            return false;
+        }
+
+        var companyValue = userCompany.Trim();
+        if (allowedCompanies.Contains(companyValue))
+        {
+            return true;
+        }
+
+        var resolvedCompany = SMSCompany.FromValue(companyValue) ?? SMSCompany.FromCompany(companyValue);
+        if (resolvedCompany is null)
+        {
+            return false;
+        }
+
+        return allowedCompanies.Contains(resolvedCompany.Value)
+            || allowedCompanies.Contains(resolvedCompany.Company);
     }
 
     #endregion

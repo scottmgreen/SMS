@@ -119,7 +119,7 @@
                                       Icon="visibility" />
                     }
 
-                    @if (_currentUserService.CanUpdate("SMS_Listings_HazardLocations"))
+                    @if (_currentUserService.CanUpdate("SMS_Listings_HazardLocations") && !location.IsValidated)
                     {
                         <RadzenButton ButtonStyle="ButtonStyle.Primary"
                                       Size="ButtonSize.Small"

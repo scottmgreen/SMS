@@ -29,7 +29,7 @@
                 }
 
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                    <strong>Queued files (@AttachedFiles.Count):</strong>
+                    <strong>Related files (@AttachedFiles.Count):</strong>
                     <RadzenButton ButtonStyle="ButtonStyle.Base"
                                   Variant="Variant.Text"
                                   Icon="clear_all"
@@ -69,6 +69,7 @@
                                 <RadzenTextArea @bind-Value="file.Description"
                                                 Rows="2"
                                                 Placeholder="Enter a description for this file..."
+                                                Change="@(_ => OnFilesChanged.InvokeAsync())"
                                                 class="@(string.IsNullOrWhiteSpace(file.Description) ? "default-validation-dropdown" : string.Empty)"
                                                 Style="width: 100%;" />
                             </RadzenFormField>
@@ -95,4 +96,5 @@
     [Parameter] public EventCallback<UploadChangeEventArgs> OnInputFileChange { get; set; }
     [Parameter] public EventCallback<int> OnRemoveFile { get; set; }
     [Parameter] public EventCallback OnClearAllFiles { get; set; }
+    [Parameter] public EventCallback OnFilesChanged { get; set; }
 }

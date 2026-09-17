@@ -245,11 +245,13 @@ public partial class StakeholderUsers : ComponentBase
         !string.IsNullOrWhiteSpace(_newUser.Organization);
 
     // Transform stakeholder types for dropdown
-    private IEnumerable<object> StakeholderTypesForDropdown => StakeholderTypes.Select(type => new
-    {
-        Value = type,
-        Text = GetStakeholderTypeDisplay(type)
-    });
+    private List<LookupOption> StakeholderTypesForDropdown => StakeholderTypes
+        .Select(type => new LookupOption
+        {
+            Value = type,
+            Text = GetStakeholderTypeDisplay(type)
+        })
+        .ToList();
 
     private List<LookupOption> CompanyOptions =>
         SMSCompany.GetAllValues()
@@ -297,6 +299,21 @@ public partial class StakeholderUsers : ComponentBase
         return byName?.Value ?? rawValue;
     }
 
+    private static string ResolveDropdownValue(string? rawValue, IEnumerable<LookupOption> options)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = rawValue.Trim();
+        var matchedOption = options.FirstOrDefault(option =>
+            string.Equals(option.Value, trimmed, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(option.Text, trimmed, StringComparison.OrdinalIgnoreCase));
+
+        return matchedOption?.Value ?? trimmed;
+    }
+
     private async Task ShowEditDialog(SMSStakeholderUser user)
     {
         var normalizedTitle = NormalizeTitleSelection(
@@ -308,10 +325,10 @@ public partial class StakeholderUsers : ComponentBase
             UserId = user.Code,
             FirstName = user.FirstName?.Value ?? "",
             LastName = user.LastName?.Value ?? "",
-            StakeholderType = normalizedTitle,
-            Organization = NormalizeOrganizationSelection(user.Organization),
-            Company = NormalizeCompanySelection(user.Company),
-            Title = normalizedTitle,
+            StakeholderType = ResolveDropdownValue(normalizedTitle, StakeholderTypesForDropdown),
+            Organization = ResolveDropdownValue(NormalizeOrganizationSelection(user.Organization), OrganizationOptions),
+            Company = ResolveDropdownValue(NormalizeCompanySelection(user.Company), CompanyOptions),
+            Title = ResolveDropdownValue(normalizedTitle, StakeholderTypesForDropdown),
             JobFunction = user.JobFunction,
             UserRoleCode = user.UserRole?.Code ?? "",
             IsActive = user.IsActive,

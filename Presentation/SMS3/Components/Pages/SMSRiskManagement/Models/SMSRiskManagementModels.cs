@@ -37,8 +37,11 @@ public class HazardReportForm
 /// </summary>
 public class AttachedFile
 {
+    public string? Code { get; set; }
     public string FileName { get; set; } = string.Empty;
     public string? Description { get; set; }
+    public string? Category { get; set; }
+    public bool IsConfidential { get; set; }
     public long Size { get; set; }
     public long FileSizeBytes { get; set; }
     public string SizeDisplay { get; set; } = string.Empty;

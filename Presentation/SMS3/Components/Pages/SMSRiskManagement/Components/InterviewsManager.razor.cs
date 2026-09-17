@@ -13,6 +13,8 @@ public partial class InterviewsManager : ComponentBase
     [Inject] private IBaseEventBus EventBus { get; set; } = default!;
     [Inject] private ILogger<InterviewsManager> Logger { get; set; } = default!;
     [Inject] private DialogService DialogService { get; set; } = default!;
+
+    [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     #endregion
 
     #region Parameters

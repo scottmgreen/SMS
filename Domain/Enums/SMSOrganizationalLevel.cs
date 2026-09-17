@@ -97,7 +97,7 @@ public abstract class SMSOrganizationalLevel : BaseEnum<SMSOrganizationalLevel>
 
     private sealed class SMSCoordinatorLevel : SMSOrganizationalLevel
     {
-        public SMSCoordinatorLevel() : base("SMS_COORDINATOR", "SMS Coordinator", "Management",
+        public SMSCoordinatorLevel() : base("SMS_COORDINATOR", "SMS Coordinator", "Operational",
             "Supports SMS Manager in data collection, trend analysis, report preparation, safety investigations, and training coordination.", 6)
         {
         }

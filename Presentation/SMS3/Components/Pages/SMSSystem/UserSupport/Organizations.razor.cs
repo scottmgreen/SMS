@@ -18,6 +18,7 @@ public partial class Organizations : ComponentBase
     private bool _showEditModal;
     private bool _isSaving;
     private string _errorMessage = string.Empty;
+    private HashSet<string> _organizationUsageKeys = new(StringComparer.OrdinalIgnoreCase);
 
     private string _newValue = string.Empty;
     private string _newName = string.Empty;
@@ -35,6 +36,7 @@ public partial class Organizations : ComponentBase
 
     private async Task LoadOrganizationsAsync()
     {
+        await LoadOrganizationUsageAsync();
         var result = await _mediator.SendAsync(new GetAllSMSOrganizationsQuery(), CancellationToken.None);
         if (result.IsSuccess)
         {
@@ -155,6 +157,12 @@ public partial class Organizations : ComponentBase
             return;
         }
 
+        if (IsOrganizationInUse(organization))
+        {
+            _errorMessage = "Organization cannot be deleted because it is assigned to one or more users.";
+            return;
+        }
+
         try
         {
             var result = await _mediator.SendAsync(new DeleteSMSOrganizationCommand(organization.Value), CancellationToken.None);
@@ -175,5 +183,65 @@ public partial class Organizations : ComponentBase
             _logger.LogError(ex, "Error deleting organization {Code}", organization.Value);
             _errorMessage = "Error deleting organization.";
         }
+    }
+
+    private bool IsOrganizationInUse(SMSOrganization organization)
+    {
+        if (organization is null)
+        {
+            return false;
+        }
+
+        var valueKey = NormalizeUsageKey(organization.Value);
+        var nameKey = NormalizeUsageKey(organization.Name);
+
+        return (!string.IsNullOrWhiteSpace(valueKey) && _organizationUsageKeys.Contains(valueKey))
+            || (!string.IsNullOrWhiteSpace(nameKey) && _organizationUsageKeys.Contains(nameKey));
+    }
+
+    private async Task LoadOrganizationUsageAsync()
+    {
+        try
+        {
+            _organizationUsageKeys.Clear();
+
+            var appUsersResult = await _mediator.SendAsync(new GetAllSMSApplicationUsersQuery(), CancellationToken.None);
+            var orgUsersResult = await _mediator.SendAsync(new GetAllSMSOrganizationalUsersQuery(), CancellationToken.None);
+            var stakeholderUsersResult = await _mediator.SendAsync(new GetAllSMSStakeholderUsersQuery(), CancellationToken.None);
+
+            foreach (var appUser in appUsersResult.IsSuccess ? appUsersResult.Value ?? Enumerable.Empty<SMSApplicationUser>() : Enumerable.Empty<SMSApplicationUser>())
+            {
+                AddUsageKey(_organizationUsageKeys, appUser.Organization);
+            }
+
+            foreach (var orgUser in orgUsersResult.IsSuccess ? orgUsersResult.Value ?? Enumerable.Empty<SMSOrganizationalUser>() : Enumerable.Empty<SMSOrganizationalUser>())
+            {
+                AddUsageKey(_organizationUsageKeys, orgUser.Organization);
+            }
+
+            foreach (var stakeholderUser in stakeholderUsersResult.IsSuccess ? stakeholderUsersResult.Value ?? Enumerable.Empty<SMSStakeholderUser>() : Enumerable.Empty<SMSStakeholderUser>())
+            {
+                AddUsageKey(_organizationUsageKeys, stakeholderUser.Organization);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to load organization usage metadata for delete guard");
+            _organizationUsageKeys.Clear();
+        }
+    }
+
+    private static void AddUsageKey(HashSet<string> usageSet, string? rawValue)
+    {
+        var normalized = NormalizeUsageKey(rawValue);
+        if (!string.IsNullOrWhiteSpace(normalized))
+        {
+            usageSet.Add(normalized);
+        }
+    }
+
+    private static string NormalizeUsageKey(string? rawValue)
+    {
+        return string.IsNullOrWhiteSpace(rawValue) ? string.Empty : rawValue.Trim();
     }
 }

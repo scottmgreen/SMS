@@ -62,13 +62,13 @@ public class UpdateHazardFileCommand : BaseCommandBundle, IRequest<Result<Hazard
 
 public class DeactivateHazardFileCommand : BaseCommandBundle, IRequest<Result<bool>>, IUpdateCommand
 {
-    public int FileId { get; set; }
+    public string FileCode { get; set; }
     public string Reason { get; set; }
     public string DeactivatedBy { get; set; }
 
-    public DeactivateHazardFileCommand(int fileId, string reason)
+    public DeactivateHazardFileCommand(string fileCode, string reason)
     {
-        FileId = fileId;
+        FileCode = fileCode ?? throw new ArgumentNullException(nameof(fileCode));
         Reason = reason ?? throw new ArgumentNullException(nameof(reason));
     }
 
@@ -85,12 +85,12 @@ public class DeactivateHazardFileCommand : BaseCommandBundle, IRequest<Result<bo
 
 public class ReactivateHazardFileCommand : BaseCommandBundle, IRequest<Result<bool>>, IUpdateCommand
 {
-    public int FileId { get; set; }
+    public string FileCode { get; set; }
     public string ReactivatedBy { get; set; }
 
-    public ReactivateHazardFileCommand(int fileId)
+    public ReactivateHazardFileCommand(string fileCode)
     {
-        FileId = fileId;
+        FileCode = fileCode ?? throw new ArgumentNullException(nameof(fileCode));
     }
 
     public void SetCreatedBy(string userId, DateTime timestamp)

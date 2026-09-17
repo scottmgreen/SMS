@@ -199,9 +199,9 @@ public partial class ApplicationUsers : ComponentBase
             {
                 FirstName = _currentUser?.FirstName?.Value ?? "",
                 LastName = _currentUser?.LastName?.Value ?? "",
-                Company = NormalizeCompanySelection(_currentUser?.Company),
-                Organization = NormalizeOrganizationSelection(_currentUser?.Organization),
-                Title = NormalizeTitleSelection(_currentUser?.Title),
+                Company = ResolveDropdownValue(NormalizeCompanySelection(_currentUser?.Company), CompanyOptions),
+                Organization = ResolveDropdownValue(NormalizeOrganizationSelection(_currentUser?.Organization), OrganizationOptions),
+                Title = ResolveDropdownValue(NormalizeTitleSelection(_currentUser?.Title), TitleOptions),
                 JobFunction = _currentUser?.JobFunction ?? string.Empty
             };
 
@@ -816,6 +816,21 @@ public partial class ApplicationUsers : ComponentBase
 
         var byName = SMSJobTitle.FromName(rawValue);
         return byName?.Value ?? rawValue;
+    }
+
+    private static string ResolveDropdownValue(string? rawValue, IEnumerable<LookupOption> options)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = rawValue.Trim();
+        var matchedOption = options.FirstOrDefault(option =>
+            string.Equals(option.Value, trimmed, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(option.Text, trimmed, StringComparison.OrdinalIgnoreCase));
+
+        return matchedOption?.Value ?? trimmed;
     }
 
     private static bool IsEmailFormat(string? userName)

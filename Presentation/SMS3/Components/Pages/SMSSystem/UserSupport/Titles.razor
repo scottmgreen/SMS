@@ -49,7 +49,9 @@
                         @if (_currentUserService.CanDelete("SMS_System_UserSupport_Titles"))
                         {
                             <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
-                                          Click="@(() => DeleteTitle(title))" />
+                                          Click="@(() => DeleteTitle(title))"
+                                          Disabled="@IsTitleInUse(title)"
+                                          title="@(IsTitleInUse(title) ? "Cannot delete: title is in use by users" : "Delete Title")" />
                         }
                     </div>
                 </Template>

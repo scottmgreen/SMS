@@ -55,6 +55,7 @@
 - Use normalized relationship tables for group-to-company permissions (e.g., tblr_SMSApplicationUserGroupCompanies), and apply the same allowed-companies model consistently across all three user/group types.
 - For routable pages with code-behind, inject `ICurrentUserService` in the .razor.cs file (not only in .razor markup).
 - UploadFileDialog must require Report ID; it cannot be optional.
+- In OrganizationalStructure, the unassign action must be per assigned person in the Assigned Personnel column, not in the role-level Actions column.
 
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.

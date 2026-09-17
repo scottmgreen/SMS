@@ -148,11 +148,12 @@
                                     <div style="width: 12px; height: 12px; background: var(--rz-warning); border-radius: 2px;"></div>
                                     <RadzenText TextStyle="TextStyle.Caption">Vacant</RadzenText>
                                 </RadzenStack>
-                            <RadzenButton Icon="@(_showOrganizationalHierarchy ? "expand_less" : "expand_more")" 
+                                
+                                            <RadzenButton Icon="@(_showOrganizationalHierarchy ? "expand_less" : "expand_more")" 
                                              ButtonStyle="ButtonStyle.Light" 
                                              Size="ButtonSize.Small"
-                                         Click="@(() => _showOrganizationalHierarchy = !_showOrganizationalHierarchy)" 
-                                         title="@(_showOrganizationalHierarchy ? "Collapse" : "Expand")" />
+                                             Click="@(() => _showOrganizationalHierarchy = !_showOrganizationalHierarchy)" 
+                                             title="@(_showOrganizationalHierarchy ? "Collapse" : "Expand")" />
                             </RadzenStack>
                         </RadzenStack>
                     </RadzenCard>
@@ -224,7 +225,7 @@
                                                 </RadzenStack>
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="SMSOrganizationalLevelInfo" Title="Assigned Personnel" Width="400px">
+                                        <RadzenDataGridColumn TItem="SMSOrganizationalLevelInfo" Title="Assigned Personnel" Width="500px">
                                             <Template Context="roleInfo">
                                                 @if (roleInfo.AssignedUsers.Any())
                                                 {
@@ -233,14 +234,17 @@
                                                         {
                                                             <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
                                                                 <RadzenStack Orientation="Orientation.Vertical" Gap="0" Style="flex: 1;">
-                                                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 500;">@user.DisplayName</RadzenText>
-                                                                    <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">@GetOrganizationDisplay(user.Organization) @(!string.IsNullOrEmpty(user.Position) ? $"- {user.Position}" : "")</RadzenText>
+                                                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 500;" Text="@($"{user.DisplayName} {user.Company} {user.Organization}, {user.Title}")"></RadzenText>
+                                                                    @* <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">@GetOrganizationDisplay(user.Organization) @(!string.IsNullOrEmpty(user.Position) ? $"- {user.Position}" : "")</RadzenText> *@
                                                                 </RadzenStack>
-                                                                <RadzenBadge Text="Active" BadgeStyle="BadgeStyle.Success" Variant="Variant.Text" />
-                                                                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
-                                                                            Click="@((args) => UnassignUserFromLevel(user))" 
-                                                                            title="Remove from role" 
-                                                Disabled="@_isSaving" />
+                                                                @* <RadzenBadge Text="Active" BadgeStyle="BadgeStyle.Success" Variant="Variant.Text" /> *@
+                                                                @if (_currentUserService.CanUpdate("SMS_Policy_OrganizationalStructure"))
+                                                                {
+                                                                    <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
+                                                                        Click="@((args) => UnassignUserFromLevel(user))" 
+                                                                        title="Remove user from this role" 
+                                                                        Disabled="@_isSaving" />
+                                                                }
                                                             </RadzenStack>
                                                         }
                                                         @if (roleInfo.AssignedUsers.Count > 2)
@@ -260,32 +264,15 @@
                                                 }
                                             </Template>
                                         </RadzenDataGridColumn>
-                                        <RadzenDataGridColumn TItem="SMSOrganizationalLevelInfo" Title="Actions" Width="200px">
+                                        <RadzenDataGridColumn TItem="SMSOrganizationalLevelInfo" Title="Actions" Width="100px">
                                             <Template Context="roleInfo">
                                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                                    @if (roleInfo.AssignedUsers.Any())
+                                                    @if (_currentUserService.CanUpdate("SMS_Policy_OrganizationalStructure") && roleInfo.EligibleUsers.Any())
                                                     {
-                                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                                            <RadzenIcon Icon="check_circle" Style="color: var(--rz-success);" />
-                                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 600; color: var(--rz-success);">
-                                                                @roleInfo.AssignedUsers.Count Assigned
-                                                            </RadzenText>
-                                                        </RadzenStack>
-                                                    }
-                                                    else
-                                                    {
-                                                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                                            <RadzenIcon Icon="warning" Style="color: var(--rz-warning);" />
-                                                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; font-weight: 600; color: var(--rz-warning);">
-                                                                Vacant
-                                                            </RadzenText>
-                                                        </RadzenStack>
-                                                    }
-                                                    @if (roleInfo.EligibleUsers.Any())
-                                                    {
-                                                        <RadzenButton Text="Assign" Icon="person_add" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
-                                                                    Click="@((args) => OpenAssignmentModal(roleInfo.Level))" 
-                                                Disabled="@_isSaving" />
+                                                        <RadzenButton Text="" Icon="person_add" 
+                                                            ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" 
+                                                            Click="@((args) => OpenAssignmentModal(roleInfo.Level))" 
+                                                            Disabled="@_isSaving" />
                                                     }
                                                 </RadzenStack>
                                             </Template>
@@ -342,9 +329,9 @@
                     
                     <!-- Modal Body -->
                     <RadzenStack Gap="1rem">
-                        <RadzenAlert AlertStyle="AlertStyle.Info" Variant="Variant.Flat" Shade="Shade.Lighter">
+                        <RadzenAlert AlertStyle="AlertStyle.Base" Variant="Variant.Flat" Shade="Shade.Lighter">
                                 <strong>@_selectedLevelForAssignment.Category Level:</strong> @_selectedLevelForAssignment.Description
-                                <br><small><strong>Authority Level:</strong> @_selectedLevelForAssignment.AuthorityLevel</small>
+                                <br><br /><strong>Authority Level:</strong> @_selectedLevelForAssignment.AuthorityLevel
                         </RadzenAlert>
 
                         <RadzenFormField Text="Select User to Assign" Variant="Variant.Outlined">
@@ -360,7 +347,7 @@
                                         <RadzenStack Orientation="Orientation.Vertical" Gap="0">
                                             <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0; font-weight: 600;">@user.DisplayName</RadzenText>
                                             <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0; color: var(--rz-text-secondary-color);">
-                                                @user.Department @(!string.IsNullOrEmpty(user.Position) ? $"- {user.Position}" : "")
+                                                @user.Organization @(!string.IsNullOrEmpty(user.Organization) ? $"- {user.Title}" : "")
                                             </RadzenText>
                                         </RadzenStack>
                                     </RadzenStack>

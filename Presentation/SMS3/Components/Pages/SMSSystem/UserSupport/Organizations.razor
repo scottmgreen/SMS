@@ -50,7 +50,9 @@
                         @if (_currentUserService.CanDelete("SMS_System_UserSupport_Organizations"))
                         {
                             <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.ExtraSmall"
-                                          Click="@(() => DeleteOrganization(organization))" />
+                                          Click="@(() => DeleteOrganization(organization))"
+                                          Disabled="@IsOrganizationInUse(organization)"
+                                          title="@(IsOrganizationInUse(organization) ? "Cannot delete: organization is in use by users" : "Delete Organization")" />
                         }
                     </div>
                 </Template>

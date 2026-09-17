@@ -18,11 +18,15 @@
             <RadzenIcon Icon="people" Style="margin-right: 0.5rem;" />
             Investigation Interviews (@Interviews.Count)
         </RadzenText>
-        <RadzenButton Text="Schedule Interview" 
-                    Icon="add" 
-                    ButtonStyle="ButtonStyle.Primary"
-                    Click="@ShowCreateInterviewDialog" 
-                    Size="ButtonSize.Small" />
+        @if (_currentUserService.CanUpdate("SMS_Listings_Investigations"))
+        {
+            <RadzenButton Text="Schedule Interview"
+                          Icon="add"
+                          ButtonStyle="ButtonStyle.Primary"
+                          Click="@ShowCreateInterviewDialog"
+                          Size="ButtonSize.Small" />
+        }
+        
     </RadzenStack>
 
     @if (IsLoading)

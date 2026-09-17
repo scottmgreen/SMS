@@ -59,7 +59,7 @@ public abstract class RiskAssessmentStage : BaseEnum<RiskAssessmentStage>
     }
     private sealed class AnalyizingRiskStage : RiskAssessmentStage
     {
-        public AnalyizingRiskStage() : base("ANALYIZING_RISK", "Analyizing Risk")
+        public AnalyizingRiskStage() : base("ANALYIZING_RISK", "Analyzing Risk")
         {
         }
     }

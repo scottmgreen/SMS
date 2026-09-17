@@ -34,6 +34,111 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHan
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+public class DeactivateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeactivateHazardFileCommand, Result<bool>>
+{
+    private readonly IHazardFileService _hazardFileService;
+    private readonly ILogger<DeactivateHazardFileCommandHandler> _logger;
+
+    public DeactivateHazardFileCommandHandler(IHazardFileService hazardFileService, ILogger<DeactivateHazardFileCommandHandler> logger)
+    {
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(DeactivateHazardFileCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null || string.IsNullOrWhiteSpace(request.FileCode))
+            {
+                _logger.LogApplicationError("DeactivateHazardFileCommand received with null request or file code", ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.NullOrEmpty);
+            }
+
+            _logger.LogApplicationInformation("Processing DeactivateHazardFileCommand for Code: {Code}", request.FileCode);
+
+            var result = await _hazardFileService.DeactivateHazardFileAsync(
+                request.FileCode,
+                request.Reason,
+                request.DeactivatedBy,
+                cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogApplicationInformation("Successfully deactivated HazardFile with Code: {Code}", request.FileCode);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to deactivate HazardFile with Code: {Code}. Error: {Error}", ApplicationEventIds.Error, null);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogApplicationWarning("DeactivateHazardFileCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while deactivating HazardFile with Code: {Code}", ApplicationEventIds.Error, ex);
+            return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.UpdateFailed);
+        }
+    }
+}
+
+public class ReactivateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHandler<ReactivateHazardFileCommand, Result<bool>>
+{
+    private readonly IHazardFileService _hazardFileService;
+    private readonly ILogger<ReactivateHazardFileCommandHandler> _logger;
+
+    public ReactivateHazardFileCommandHandler(IHazardFileService hazardFileService, ILogger<ReactivateHazardFileCommandHandler> logger)
+    {
+        _hazardFileService = hazardFileService ?? throw new ArgumentNullException(nameof(hazardFileService));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
+    }
+
+    public async Task<Result<bool>> HandleAsync(ReactivateHazardFileCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request is null || string.IsNullOrWhiteSpace(request.FileCode))
+            {
+                _logger.LogApplicationError("ReactivateHazardFileCommand received with null request or file code", ApplicationEventIds.Error, null);
+                return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.NullOrEmpty);
+            }
+
+            _logger.LogApplicationInformation("Processing ReactivateHazardFileCommand for Code: {Code}", request.FileCode);
+
+            var result = await _hazardFileService.ReactivateHazardFileAsync(
+                request.FileCode,
+                request.ReactivatedBy,
+                cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogApplicationInformation("Successfully reactivated HazardFile with Code: {Code}", request.FileCode);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to reactivate HazardFile with Code: {Code}. Error: {Error}", ApplicationEventIds.Error, null);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogApplicationWarning("ReactivateHazardFileCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while reactivating HazardFile with Code: {Code}", ApplicationEventIds.Error, ex);
+            return Result<bool>.Failure<bool>(DomainErrors.HazardFileError.UpdateFailed);
+        }
+    }
+}
+
     public async Task<Result<HazardFile>> HandleAsync(CreateHazardFileCommand request, CancellationToken cancellationToken)
     {
         try

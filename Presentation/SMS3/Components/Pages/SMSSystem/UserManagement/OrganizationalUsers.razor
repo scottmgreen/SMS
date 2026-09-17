@@ -271,7 +271,16 @@
                         </RadzenFormField>
                     </RadzenColumn>
                 </RadzenRow>
-
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="6">
+                        <RadzenFormField Text="SMS Organizational Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenDropDown @bind-Value="@_newOrganizationLevelId" Data="@_organizationLevelOptions"
+                                            TextProperty="Text" ValueProperty="Value"
+                                            Style="width: 100%;" Placeholder="Select SMS organizational role"
+                                            title="Select the Organization Level that determines authority and approval permissions" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                </RadzenRow>
                 <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="5">
                         <RadzenFormField Text="SMS Role *" Variant="Variant.Outlined" AllowFloatingLabel="false">
@@ -280,14 +289,7 @@
                                             Style="width: 100%;" Placeholder="Select SMS role" />
                         </RadzenFormField>
                     </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="3">
-                        <RadzenFormField Text="SMS Organizational Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                            <RadzenDropDown @bind-Value="@_newOrganizationLevelId" Data="@_organizationLevelOptions"
-                                            TextProperty="Text" ValueProperty="Value"
-                                            Style="width: 100%;" Placeholder="Select SMS organizational role"
-                                            title="Select the Organization Level that determines authority and approval permissions" />
-                        </RadzenFormField>
-                    </RadzenColumn>
+                    
                     <RadzenColumn Size="12" SizeMD="2">
                         <RadzenFormField Text="Require 2FA" Variant="Variant.Outlined">
                             <div class="d-flex align-items-center p-2">
@@ -385,9 +387,6 @@
                                             Style="width: 100%;" />
                         </RadzenFormField>
                     </RadzenColumn>
-                </RadzenRow>
-
-                <RadzenRow Gap="1rem">
                     <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="Job Function" Variant="Variant.Outlined" AllowFloatingLabel="false">
                             <RadzenTextBox @bind-Value="@_editJobFunction" Placeholder="Enter job function" Style="width: 100%;" />
@@ -396,14 +395,7 @@
                 </RadzenRow>
 
                 <RadzenRow Gap="1rem">
-                    <RadzenColumn Size="12" SizeMD="5">
-                        <RadzenFormField Text="SMS User Role/Permissions *" Variant="Variant.Outlined" AllowFloatingLabel="false">
-                            <RadzenDropDown @bind-Value="@_editUserRoleCode" Data="@SMSRoleOptions"
-                                            TextProperty="Text" ValueProperty="Value"
-                                            Style="width: 100%;" Placeholder="Select SMS role" />
-                        </RadzenFormField>
-                    </RadzenColumn>
-                    <RadzenColumn Size="12" SizeMD="3">
+                    <RadzenColumn Size="12" SizeMD="6">
                         <RadzenFormField Text="SMS Organization Level" Variant="Variant.Outlined" AllowFloatingLabel="false">
                             <RadzenDropDown @bind-Value="@_editOrganizationLevelId" Data="@_organizationLevelOptions"
                                             TextProperty="Text" ValueProperty="Value"
@@ -411,6 +403,16 @@
                                             title="Select the SMS role that determines authority and approval permissions" />
                         </RadzenFormField>
                     </RadzenColumn>
+                </RadzenRow>
+                <RadzenRow Gap="1rem">
+                    <RadzenColumn Size="12" SizeMD="5">
+                        <RadzenFormField Text="SMS User Role/Permissions *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                            <RadzenDropDown @bind-Value="@_editUserRoleCode" Data="@SMSRoleOptions"
+                                            TextProperty="Text" ValueProperty="Value"
+                                            Style="width: 100%;" Placeholder="Select SMS role" />
+                        </RadzenFormField>
+                    </RadzenColumn>
+                    
                     <RadzenColumn Size="12" SizeMD="2">
                         <RadzenFormField Text="Require 2FA" Variant="Variant.Outlined">
                             <div class="d-flex align-items-center p-2">
@@ -442,58 +444,6 @@
     </div>
 }
 
-<!-- Password Change Modal -->
-@* @if (_showPasswordModal)
-{
-    <div class="modal-backdrop">
-        <div class="modal-dialog">
-            <RadzenCard class="modal-content">
-                <!-- Modal Header -->
-                <div class="modal-header" style="background-color: #17a2b8; color: white; padding: 1rem; margin: -1rem -1rem 1rem -1rem; border-radius: 6px 6px 0 0;">
-                    <RadzenText TextStyle="TextStyle.H5" Style="margin: 0; color: white;">
-                        <RadzenIcon Icon="vpn_key" Style="margin-right: 0.5rem;" />
-                        Change Password
-                    </RadzenText>
-                </div>
-                
-                <!-- Modal Body -->
-                <RadzenStack Gap="1rem">
-                    <RadzenText>
-                        Changing password for: <strong>@_passwordUserDisplayName</strong>
-                    </RadzenText>
-                    
-                    <RadzenFormField Text="New Password *" Variant="Variant.Outlined">
-                        <RadzenPassword @bind-Value="@_newPassword" 
-                                       Placeholder="Enter new password" 
-                                       Style="width: 100%;" />
-                    </RadzenFormField>
-                    
-                    <RadzenFormField Text="Confirm Password *" Variant="Variant.Outlined">
-                        <RadzenPassword @bind-Value="@_confirmPassword" 
-                                       Placeholder="Confirm new password" 
-                                       Style="width: 100%;" />
-                    </RadzenFormField>
-                    
-                    @if (!string.IsNullOrEmpty(_passwordValidationMessage))
-                    {
-                        <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat" Shade="Shade.Lighter">
-                            <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
-                            @_passwordValidationMessage
-                        </RadzenAlert>
-                    }
-                </RadzenStack>
-                
-                <!-- Modal Footer -->
-                <div class="d-flex justify-content-end gap-2 mt-3">
-                    <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@ClosePasswordModal" />
-                    <RadzenButton Text="Update Password" Icon="save" ButtonStyle="ButtonStyle.Primary" 
-                                  Click="@UpdatePassword" Disabled="@(!IsPasswordFormValid || _isSaving)" />
-                </div>
-            </RadzenCard>
-        </div>
-    </div>
-}
- *@
 <!-- Delete Confirmation Modal -->
 @if (_showDeleteModal)
 {

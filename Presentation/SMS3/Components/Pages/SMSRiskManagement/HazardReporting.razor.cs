@@ -286,7 +286,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
     }
         
 
-    public string PageTitle => IsEditMode ? $"Edit Report - {EditReportCode}" : "Submit Hazard Report";
+    public string PageTitle => IsEditMode ? $"Edit Report - {EditReportCode} - {EditHazardCode}" : "Submit Hazard Report";
     public string PageSubtitle => IsEditMode ? "Modify existing hazard report information" : "Report safety hazards and incidents for SMS processing and risk assessment";
 
     /// <summary>
@@ -899,8 +899,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     .Where(f => !string.IsNullOrWhiteSpace(f.FileName))
                     .Select(f => new AttachedFile
                     {
+                        Code = f.Code,
                         FileName = f.FileName,
                         Description = f.Description,
+                        Category = f.Category,
+                        IsConfidential = f.IsConfidential,
                         FileSizeBytes = f.FileSizeBytes,
                         Size = f.FileSizeBytes,
                         SizeDisplay = FormatFileSize(f.FileSizeBytes),
@@ -1265,15 +1268,17 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 ? "selected location"
                 : SelectedGeoLocation.Code;
 
-            var confirmResult = await _dialogService.Confirm(
-                //$"Validate location '{locationCode}'? This will set IsValidated to true.",
-                "",
-                "Hazard Location Confirmed",
-                new ConfirmOptions
-                {
-                    OkButtonText = "Valid",
-                    CancelButtonText = "Cancel"
-                });
+            //var confirmResult = await _dialogService.Confirm(
+            //    //$"Validate location '{locationCode}'? This will set IsValidated to true.",
+            //    "",
+            //    "Hazard Location Confirmed",
+            //    new ConfirmOptions
+            //    {
+            //        OkButtonText = "Valid",
+            //        CancelButtonText = "Cancel"
+            //    });
+
+            var confirmResult = true; // short circuited the validation check .. whatever!
 
             if (confirmResult != true)
             {
@@ -2271,6 +2276,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
         {
             if (AttachedFiles?.Any() == true)
             {
+                await UpdateExistingFileDescriptionsAsync();
+
                 _logger.LogInformation("Processing {Count} cached files for Hazard: {HazardCode}",
                     AttachedFiles.Count, hazard.Code);
 
@@ -2331,6 +2338,48 @@ public partial class HazardReporting : ComponentBase, IDisposable
         catch (Exception fileEx)
         {
             _logger.LogError(fileEx, "Error processing files, but continuing with hazard operation");
+        }
+    }
+
+    private async Task UpdateExistingFileDescriptionsAsync()
+    {
+        var existingFilesToUpdate = AttachedFiles
+            .Where(f => !string.IsNullOrWhiteSpace(f.Code))
+            .ToList();
+
+        if (!existingFilesToUpdate.Any())
+        {
+            return;
+        }
+
+        _logger.LogInformation("Updating descriptions for {Count} existing hazard files", existingFilesToUpdate.Count);
+
+        foreach (var existingFile in existingFilesToUpdate)
+        {
+            try
+            {
+                var fileResult = await _mediator.SendAsync(new GetHazardFileByCodeQuery(existingFile.Code!), CancellationToken.None);
+                if (fileResult.IsFailure || fileResult.Value is null)
+                {
+                    _logger.LogWarning("Unable to load existing hazard file {FileCode} for description update", existingFile.Code);
+                    continue;
+                }
+
+                var fileToUpdate = fileResult.Value;
+                fileToUpdate.Description = existingFile.Description?.Trim();
+                fileToUpdate.UpdatedBy = _currentUserService.UserCode;
+                fileToUpdate.UpdatedDate = DateTime.UtcNow;
+
+                var updateResult = await _mediator.SendAsync(new UpdateHazardFileCommand(fileToUpdate), CancellationToken.None);
+                if (updateResult.IsFailure)
+                {
+                    _logger.LogWarning("Failed updating hazard file {FileCode} description: {Error}", existingFile.Code, updateResult.Error?.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Exception while updating hazard file description for {FileCode}", existingFile.Code);
+            }
         }
     }
 
@@ -2556,6 +2605,35 @@ public partial class HazardReporting : ComponentBase, IDisposable
         if (index >= 0 && index < AttachedFiles.Count)
         {
             var fileToRemove = AttachedFiles[index];
+
+            if (!string.IsNullOrWhiteSpace(fileToRemove.Code))
+            {
+                try
+                {
+                    var deactivateCommand = new DeactivateHazardFileCommand(
+                        fileToRemove.Code,
+                        "Removed from Hazard Reporting"
+                    );
+
+                    var deactivateResult = await _mediator.SendAsync(deactivateCommand, CancellationToken.None);
+                    if (deactivateResult.IsFailure)
+                    {
+                        await _eventBus.PublishUIEventAsync(UINotificationEvent.Error(
+                            "Error",
+                            $"Failed to remove file '{fileToRemove.FileName}': {deactivateResult.Error?.Message}"));
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Failed to deactivate hazard file {FileCode} from HazardReporting", fileToRemove.Code);
+                    await _eventBus.PublishUIEventAsync(UINotificationEvent.Error(
+                        "Error",
+                        $"Failed to remove file '{fileToRemove.FileName}'."));
+                    return;
+                }
+            }
+
             AttachedFiles.RemoveAt(index);
 
             // Also remove from SelectedFiles for consistency
@@ -2579,6 +2657,33 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     public async Task ClearAllFiles()
     {
+        var persistedFiles = AttachedFiles
+            .Where(f => !string.IsNullOrWhiteSpace(f.Code))
+            .ToList();
+
+        foreach (var persistedFile in persistedFiles)
+        {
+            try
+            {
+                var deactivateCommand = new DeactivateHazardFileCommand(
+                    persistedFile.Code!,
+                    "Cleared from Hazard Reporting"
+                );
+
+                var deactivateResult = await _mediator.SendAsync(deactivateCommand, CancellationToken.None);
+                if (deactivateResult.IsFailure)
+                {
+                    _logger.LogWarning("Failed to deactivate hazard file {FileCode} during clear-all: {Error}",
+                        persistedFile.Code,
+                        deactivateResult.Error?.Message);
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Exception deactivating hazard file {FileCode} during clear-all", persistedFile.Code);
+            }
+        }
+
         AttachedFiles.Clear();
         SelectedFiles = new List<IBrowserFile>().AsReadOnly();
         _logger.LogInformation("Cleared all files from queue");

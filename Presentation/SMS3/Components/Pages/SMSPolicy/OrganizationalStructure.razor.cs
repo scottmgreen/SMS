@@ -318,32 +318,9 @@ public partial class OrganizationalStructure : ComponentBase
             builder.AddAttribute(23, "Variant", Variant.Text);
             builder.AddAttribute(24, "Style", "font-size: 0.75em;");
             builder.CloseComponent();
+                                 
 
-            //builder.OpenComponent<RadzenBadge>(20);
-            //builder.AddAttribute(21, "Text", roleInfo.Level.Name);
-            //builder.AddAttribute(22, "BadgeStyle", GetCategoryBadgeStyle(roleInfo.Level.Category));
-            //builder.AddAttribute(23, "Variant", Variant.Text);
-            //builder.AddAttribute(24, "Style", $"font-size: 0.75em; margin-right: 0.5rem;");
-            //builder.CloseComponent();
-
-            //builder.OpenComponent<RadzenBadge>(25);
-            //builder.AddAttribute(26, "Text", $"Authority {roleInfo.Level.AuthorityLevel}");
-            //builder.AddAttribute(27, "BadgeStyle", BadgeStyle.Info);
-            //builder.AddAttribute(28, "Variant", Variant.Outlined);
-            //builder.AddAttribute(29, "Style", $"font-size: 0.75em; {GetAuthorityLevelCustomStyle(roleInfo.Level.AuthorityLevel)}");
-            //builder.CloseComponent();
-
-
-            //builder.OpenComponent<RadzenBadge>(15);
-            //builder.AddAttribute(16, "Text", $"Authority {roleInfo.Level.AuthorityLevel}");
-            //builder.AddAttribute(17, "BadgeStyle", @GetAuthorityLevelBadgeStyle(roleInfo.Level.AuthorityLevel));
-            //builder.AddAttribute(18, "Variant", Variant.Outlined);
-            //builder.AddAttribute(19, "Style", "font-size: 0.75em;");
-            //builder.CloseComponent();
-
-           
-
-            builder.CloseElement(); // Title row
+            builder.CloseElement(); 
 
             // Description
             builder.OpenElement(25, "p");
@@ -359,15 +336,19 @@ public partial class OrganizationalStructure : ComponentBase
 
             if (roleInfo.EligibleUsers.Any())
             {
-                builder.OpenComponent<RadzenButton>(30);
-                builder.AddAttribute(31, "Text", "Assign User");
-                builder.AddAttribute(32, "Icon", "person_add");
-                builder.AddAttribute(33, "ButtonStyle", ButtonStyle.Success);
-                builder.AddAttribute(34, "Size", ButtonSize.Small);
-                builder.AddAttribute(35, "Click", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, (args) => OpenAssignmentModal(roleInfo.Level)));
-            builder.AddAttribute(36, "Disabled", _isSaving);
-                builder.AddAttribute(37, "title", "Assign a user to this role");
-                builder.CloseComponent();
+                if (_currentUserService.CanUpdate("SMS_Policy_OrganizationalStructure"))
+                {
+                    builder.OpenComponent<RadzenButton>(30);
+                    builder.AddAttribute(31, "Text", "");
+                    builder.AddAttribute(32, "Icon", "person_add");
+                    builder.AddAttribute(33, "ButtonStyle", ButtonStyle.Success);
+                    builder.AddAttribute(34, "Size", ButtonSize.Small);
+                    builder.AddAttribute(35, "Click", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, (args) => OpenAssignmentModal(roleInfo.Level)));
+                    builder.AddAttribute(36, "Disabled", _isSaving);
+                    builder.AddAttribute(37, "title", "Assign a user to this role");
+                    builder.CloseComponent();
+                }
+                
             }
 
             builder.CloseElement(); // Right side
@@ -384,41 +365,33 @@ public partial class OrganizationalStructure : ComponentBase
                     builder.OpenElement(42, "div");
                     builder.AddAttribute(43, "style", "display: flex; align-items: center; gap: 0.5rem; padding: 0.5rem; background: var(--rz-success-lighter); border-radius: 4px; margin-bottom: 0.25rem;");
 
-                    //builder.OpenComponent<RadzenGravatar>(44);
-                    //builder.AddAttribute(45, "Email", $"{user.FirstName?.Value?.ToLower()}.{user.LastName?.Value?.ToLower()}@organization.com");
-                    //builder.AddAttribute(46, "Size", 32);
-                    //builder.CloseComponent();
-
                     builder.OpenElement(47, "div");
                     builder.AddAttribute(48, "style", "flex: 1;");
 
                     builder.OpenElement(49, "div");
                     builder.AddAttribute(50, "style", "font-weight: 600; margin: 0; font-size: 0.875rem;");
-                    builder.AddContent(51, user.DisplayName);
+                    builder.AddContent(51, $"{user.DisplayName} {user.Company} {user.Organization}, {user.Title}" );
                     builder.CloseElement();
 
-                    builder.OpenElement(52, "div");
-                    builder.AddAttribute(53, "style", "color: var(--rz-text-secondary-color); font-size: 0.75rem; margin: 0;");
-                    builder.AddContent(54, $"{GetOrganizationDisplay(user.Organization)} - {user.Position}");
-                    builder.CloseElement();
+                    //builder.OpenElement(52, "div");
+                    //builder.AddAttribute(53, "style", "color: var(--rz-text-secondary-color); font-size: 0.75rem; margin: 0;");
+                    //builder.AddContent(54, $"{GetOrganizationDisplay(user.Organization)} - {user.Position}");
+                    //builder.CloseElement();
 
                     builder.CloseElement(); // User info
 
-                    //builder.OpenComponent<RadzenBadge>(55);
-                    //builder.AddAttribute(56, "Text", "Assigned");
-                    //builder.AddAttribute(57, "BadgeStyle", BadgeStyle.Success);
-                    //builder.AddAttribute(58, "Variant", Variant.Filled);
-                    //builder.AddAttribute(59, "Style", "font-size: 0.75em;");
-                    //builder.CloseComponent();
+                    if (_currentUserService.CanUpdate("SMS_Policy_OrganizationalStructure"))
+                    {
+                        builder.OpenComponent<RadzenButton>(60);
+                        builder.AddAttribute(61, "Icon", "close");
+                        builder.AddAttribute(62, "ButtonStyle", ButtonStyle.Danger);
+                        builder.AddAttribute(63, "Size", ButtonSize.ExtraSmall);
+                        builder.AddAttribute(64, "Click", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, (args) => UnassignUserFromLevel(user)));
+                        builder.AddAttribute(65, "title", "Remove user from this role");
+                        builder.AddAttribute(66, "Disabled", _isSaving);
+                        builder.CloseComponent();
+                    }
 
-                    builder.OpenComponent<RadzenButton>(60);
-                    builder.AddAttribute(61, "Icon", "close");
-                    builder.AddAttribute(62, "ButtonStyle", ButtonStyle.Danger);
-                    builder.AddAttribute(63, "Size", ButtonSize.ExtraSmall);
-                    builder.AddAttribute(64, "Click", EventCallback.Factory.Create<Microsoft.AspNetCore.Components.Web.MouseEventArgs>(this, (args) => UnassignUserFromLevel(user)));
-                    builder.AddAttribute(65, "title", "Remove user from this role");
-            builder.AddAttribute(66, "Disabled", _isSaving);
-                    builder.CloseComponent();
 
                     builder.CloseElement(); // User row
                 }
@@ -624,13 +597,13 @@ public partial class OrganizationalStructure : ComponentBase
         public double FillPercentage => TotalRoles > 0 ? (double)FilledRoles / TotalRoles * 100 : 0;
     }
 
-    public class UserAssignmentOption
-    {
-        public string Code { get; set; } = "";
-        public string DisplayName { get; set; } = "";
-        public string Department { get; set; } = "";
-        public string Position { get; set; } = "";
-    }
+    //public class UserAssignmentOption
+    //{
+    //    public string Code { get; set; } = "";
+    //    public string DisplayName { get; set; } = "";
+    //    public string Department { get; set; } = "";
+    //    public string Position { get; set; } = "";
+    //}
 
     #endregion
 }

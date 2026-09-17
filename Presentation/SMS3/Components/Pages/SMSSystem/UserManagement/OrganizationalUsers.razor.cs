@@ -237,6 +237,21 @@ public partial class OrganizationalUsers : ComponentBase
         var byName = SMSJobTitle.FromName(rawValue);
         return byName?.Value ?? rawValue;
     }
+
+    private static string ResolveDropdownValue(string? rawValue, IEnumerable<DropdownOption> options)
+    {
+        if (string.IsNullOrWhiteSpace(rawValue))
+        {
+            return string.Empty;
+        }
+
+        var trimmed = rawValue.Trim();
+        var matchedOption = options.FirstOrDefault(option =>
+            string.Equals(option.Value, trimmed, StringComparison.OrdinalIgnoreCase) ||
+            string.Equals(option.Text, trimmed, StringComparison.OrdinalIgnoreCase));
+
+        return matchedOption?.Value ?? trimmed;
+    }
     #endregion
 
     #region Lifecycle Methods
@@ -483,12 +498,14 @@ public partial class OrganizationalUsers : ComponentBase
             // Set edit form values
             _editFirstName = _currentUser.FirstName?.Value ?? string.Empty;
             _editLastName = _currentUser.LastName?.Value ?? string.Empty;
-            _editDepartmentId = _currentUser.Organization ?? string.Empty;
-            _editCompany = SMSCompany.FromCompany(_currentUser.Company ?? string.Empty)?.Value ?? (_currentUser.Company ?? string.Empty);
+            _editDepartmentId = ResolveDropdownValue(_currentUser.Organization, OrganizationOptions);
+            _editCompany = ResolveDropdownValue(_currentUser.Company, CompanyOptions);
             _editJobFunction = _currentUser.JobFunction ?? string.Empty;
-            _editPosition = NormalizeTitleSelection(string.IsNullOrWhiteSpace(_currentUser.Title)
-                ? (_currentUser.Position ?? string.Empty)
-                : _currentUser.Title);
+            _editPosition = ResolveDropdownValue(
+                NormalizeTitleSelection(string.IsNullOrWhiteSpace(_currentUser.Title)
+                    ? (_currentUser.Position ?? string.Empty)
+                    : _currentUser.Title),
+                TitleOptions);
             _editOrganizationLevelId = _currentUser.OrganizationLevel.Name ?? SMSOrganizationalLevel.UnassignedLevel;
             _editIsActive = _currentUser.IsActive;
             _editTwoFactorEnabled = _currentUser.TwoFactorEnabled;

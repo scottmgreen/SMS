@@ -18,6 +18,7 @@ public partial class Titles : ComponentBase
     private bool _showEditModal;
     private bool _isSaving;
     private string _errorMessage = string.Empty;
+    private HashSet<string> _titleUsageKeys = new(StringComparer.OrdinalIgnoreCase);
 
     private string _newCode = string.Empty;
     private string _newName = string.Empty;
@@ -34,6 +35,7 @@ public partial class Titles : ComponentBase
     private async Task LoadTitlesAsync()
     {
         _errorMessage = string.Empty;
+        await LoadTitleUsageAsync();
         var result = await _mediator.SendAsync(new GetAllSMSJobTitlesQuery(), CancellationToken.None);
         if (result.IsSuccess)
         {
@@ -157,6 +159,12 @@ public partial class Titles : ComponentBase
             return;
         }
 
+        if (IsTitleInUse(title))
+        {
+            _errorMessage = "Title cannot be deleted because it is assigned to one or more users.";
+            return;
+        }
+
         try
         {
             var result = await _mediator.SendAsync(new DeleteSMSJobTitleCommand(title.Value), CancellationToken.None);
@@ -177,5 +185,65 @@ public partial class Titles : ComponentBase
             _logger.LogError(ex, "Error deleting title {Code}", title.Value);
             _errorMessage = "Error deleting title.";
         }
+    }
+
+    private bool IsTitleInUse(SMSJobTitle title)
+    {
+        if (title is null)
+        {
+            return false;
+        }
+
+        var codeKey = NormalizeUsageKey(title.Value);
+        var nameKey = NormalizeUsageKey(title.Name);
+
+        return (!string.IsNullOrWhiteSpace(codeKey) && _titleUsageKeys.Contains(codeKey))
+            || (!string.IsNullOrWhiteSpace(nameKey) && _titleUsageKeys.Contains(nameKey));
+    }
+
+    private async Task LoadTitleUsageAsync()
+    {
+        try
+        {
+            _titleUsageKeys.Clear();
+
+            var appUsersResult = await _mediator.SendAsync(new GetAllSMSApplicationUsersQuery(), CancellationToken.None);
+            var orgUsersResult = await _mediator.SendAsync(new GetAllSMSOrganizationalUsersQuery(), CancellationToken.None);
+            var stakeholderUsersResult = await _mediator.SendAsync(new GetAllSMSStakeholderUsersQuery(), CancellationToken.None);
+
+            foreach (var appUser in appUsersResult.IsSuccess ? appUsersResult.Value ?? Enumerable.Empty<SMSApplicationUser>() : Enumerable.Empty<SMSApplicationUser>())
+            {
+                AddUsageKey(_titleUsageKeys, appUser.Title);
+            }
+
+            foreach (var orgUser in orgUsersResult.IsSuccess ? orgUsersResult.Value ?? Enumerable.Empty<SMSOrganizationalUser>() : Enumerable.Empty<SMSOrganizationalUser>())
+            {
+                AddUsageKey(_titleUsageKeys, string.IsNullOrWhiteSpace(orgUser.Title) ? orgUser.Position : orgUser.Title);
+            }
+
+            foreach (var stakeholderUser in stakeholderUsersResult.IsSuccess ? stakeholderUsersResult.Value ?? Enumerable.Empty<SMSStakeholderUser>() : Enumerable.Empty<SMSStakeholderUser>())
+            {
+                AddUsageKey(_titleUsageKeys, stakeholderUser.Title);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to load title usage metadata for delete guard");
+            _titleUsageKeys.Clear();
+        }
+    }
+
+    private static void AddUsageKey(HashSet<string> usageSet, string? rawValue)
+    {
+        var normalized = NormalizeUsageKey(rawValue);
+        if (!string.IsNullOrWhiteSpace(normalized))
+        {
+            usageSet.Add(normalized);
+        }
+    }
+
+    private static string NormalizeUsageKey(string? rawValue)
+    {
+        return string.IsNullOrWhiteSpace(rawValue) ? string.Empty : rawValue.Trim();
     }
 }

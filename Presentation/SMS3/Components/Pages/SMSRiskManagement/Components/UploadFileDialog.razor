@@ -35,12 +35,24 @@
                         <RadzenRow Gap="1rem">
                             <RadzenColumn Size="12" SizeMD="6">
                                 <RadzenFormField Text="Report ID *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                    <RadzenTextBox @bind-Value="UploadReportCode" Placeholder="Enter report code..." Style="width: 100%;" Disabled="@IsUploading" class="@(string.IsNullOrWhiteSpace(UploadReportCode) ? "default-validation-dropdown" : string.Empty)" />
+                                    <RadzenTextBox Value="@UploadReportCode"
+                                                   Change="@OnReportCodeChanged"
+                                                   Placeholder="Enter report code..."
+                                                   Style="width: 100%;"
+                                                   ReadOnly="@IsReportCodeReadOnly"
+                                                   Disabled="@IsUploading"
+                                                   class="@(string.IsNullOrWhiteSpace(UploadReportCode) ? "default-validation-dropdown" : string.Empty)" />
                                 </RadzenFormField>
                             </RadzenColumn>
                             <RadzenColumn Size="12" SizeMD="6">
                                 <RadzenFormField Text="Hazard ID *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
-                                    <RadzenTextBox @bind-Value="UploadHazardCode" Placeholder="Enter hazard code..." Style="width: 100%;" Disabled="@IsUploading" class="@(string.IsNullOrWhiteSpace(UploadHazardCode) ? "default-validation-dropdown" : string.Empty)" />
+                                    <RadzenTextBox Value="@UploadHazardCode"
+                                                   Change="@OnHazardCodeChanged"
+                                                   Placeholder="Enter hazard code..."
+                                                   Style="width: 100%;"
+                                                   ReadOnly="@IsHazardCodeReadOnly"
+                                                   Disabled="@IsUploading"
+                                                   class="@(string.IsNullOrWhiteSpace(UploadHazardCode) ? "default-validation-dropdown" : string.Empty)" />
                                 </RadzenFormField>
                             </RadzenColumn>
                         </RadzenRow>
@@ -50,12 +62,19 @@
                                            MissingDescriptionMessage="Each attached file requires a description."
                                            OnInputFileChange="@OnInputFileChange"
                                            OnRemoveFile="@RemoveFile"
-                                           OnClearAllFiles="@ClearAllFiles" />
+                                           OnClearAllFiles="@ClearAllFiles"
+                                           OnFilesChanged="@OnFilesChanged" />
 
-                        @if (AttachedFiles.Any() && !IsUploading)
+                        @if (AttachedFiles.Any() && !IsUploading && CanUpload())
                         {
                             <RadzenAlert AlertStyle="AlertStyle.Success" Size="AlertSize.Small" Variant="Variant.Flat" Icon="check_circle">
                                 <strong>Ready to Upload:</strong> @AttachedFiles.Count file(s) selected, total size @GetTotalSizeDisplay()
+                            </RadzenAlert>
+                        }
+                        else if (AttachedFiles.Any() && !IsUploading)
+                        {
+                            <RadzenAlert AlertStyle="AlertStyle.Warning" Size="AlertSize.Small" Variant="Variant.Flat" Icon="warning">
+                                <strong>Not ready:</strong> @GetValidationMessage()
                             </RadzenAlert>
                         }
                     </RadzenStack>

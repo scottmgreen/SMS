@@ -97,7 +97,8 @@
                             @if (_currentUserService.CanDelete("SMS_System_UserSupport_Companies"))
                             {
                                 <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                              Click="@(() => ConfirmDelete(company))" title="Delete Company" />
+                                              Click="@(() => ConfirmDelete(company))" title="@(IsCompanyInUse(company) ? "Cannot delete: company is in use by users" : "Delete Company")"
+                                              Disabled="@IsCompanyInUse(company)" />
                             }
                         </RadzenStack>
                     </Template>

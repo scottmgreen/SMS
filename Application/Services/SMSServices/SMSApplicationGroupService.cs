@@ -10,6 +10,7 @@
 
 using Microsoft.Extensions.Logging;
 using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 
 namespace SMS_Application.Services;
 
@@ -323,19 +324,31 @@ public sealed class SMSApplicationGroupService : ISMSApplicationGroupService
             }
 
             var allowedCompanies = allowedCompaniesResult.Value?.ToList() ?? new List<string>();
-            if (allowedCompanies.Count > 0 && !string.IsNullOrWhiteSpace(userResult.Value.Company))
+            if (allowedCompanies.Count > 0 && string.IsNullOrWhiteSpace(userResult.Value.Company))
             {
-                var isAllowed = allowedCompanies.Any(c => c.Equals(userResult.Value.Company, StringComparison.OrdinalIgnoreCase));
+                _logger.LogApplicationWarning("User {UserCode} has no company and group {GroupCode} has explicit allowed companies", userCode, groupCode);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.CompanyNotAllowed);
+            }
+
+            if (allowedCompanies.Count > 0)
+            {
+                var userCompanyRaw = userResult.Value.Company!.Trim();
+                var resolvedUserCompany = SMSCompany.FromValue(userCompanyRaw) ?? SMSCompany.FromCompany(userCompanyRaw);
+
+                var isAllowed = allowedCompanies
+                    .Where(c => !string.IsNullOrWhiteSpace(c))
+                    .Select(c => c.Trim())
+                    .Any(allowed =>
+                        allowed.Equals(userCompanyRaw, StringComparison.OrdinalIgnoreCase)
+                        || (resolvedUserCompany is not null &&
+                            (allowed.Equals(resolvedUserCompany.Value, StringComparison.OrdinalIgnoreCase)
+                             || allowed.Equals(resolvedUserCompany.Company, StringComparison.OrdinalIgnoreCase))));
+
                 if (!isAllowed)
                 {
                     _logger.LogApplicationWarning("User {UserCode} company {Company} is not allowed for group {GroupCode}", userCode, userResult.Value.Company, groupCode);
                     return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.CompanyNotAllowed);
                 }
-            }
-            else if (allowedCompanies.Count > 0 && string.IsNullOrWhiteSpace(userResult.Value.Company))
-            {
-                _logger.LogApplicationWarning("User {UserCode} has no company and group {GroupCode} has explicit allowed companies", userCode, groupCode);
-                return Result<bool>.Failure<bool>(DomainErrors.SMSApplicationGroupError.CompanyNotAllowed);
             }
 
             var result = await _dataService.AssignUserToGroupAsync(userCode, groupCode, assignedBy, ct).ConfigureAwait(false);

@@ -651,8 +651,7 @@ public partial class ApplicationGroups : ComponentBase
 
             AvailableUsers = SMSApplicationUsers
                 .Where(u => !memberCodes.Contains(u.Code))
-                .Where(u => !string.IsNullOrWhiteSpace(u.Company)
-                    && allowedCompanies.Contains(u.Company.Trim()))
+                .Where(u => IsUserInAllowedCompany(u.Company, allowedCompanies))
                 .ToList();
 
             // Initialize selection tracking
@@ -676,6 +675,29 @@ public partial class ApplicationGroups : ComponentBase
             AvailableUsers = SMSApplicationUsers?.ToList() ?? new List<SMSApplicationUser>();
             GroupMemberCounts[groupCode] = 0;
         }
+    }
+
+    private static bool IsUserInAllowedCompany(string? userCompany, HashSet<string> allowedCompanies)
+    {
+        if (string.IsNullOrWhiteSpace(userCompany) || allowedCompanies.Count == 0)
+        {
+            return false;
+        }
+
+        var companyValue = userCompany.Trim();
+        if (allowedCompanies.Contains(companyValue))
+        {
+            return true;
+        }
+
+        var resolvedCompany = SMSCompany.FromValue(companyValue) ?? SMSCompany.FromCompany(companyValue);
+        if (resolvedCompany is null)
+        {
+            return false;
+        }
+
+        return allowedCompanies.Contains(resolvedCompany.Value)
+            || allowedCompanies.Contains(resolvedCompany.Company);
     }
 
     private void ExitMemberManagement()
@@ -755,7 +777,10 @@ public partial class ApplicationGroups : ComponentBase
                     if (result.IsSuccess)
                         successCount++;
                     else
+                    {
+                        _logger.LogWarning("Failed to assign user {UserCode} to group {GroupCode}: {Error}", userCode, _currentGroupCode, result.Error?.Message);
                         failureCount++;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -776,7 +801,7 @@ public partial class ApplicationGroups : ComponentBase
             }
             else
             {
-                await ShowErrorAsyncNotification("Failed to assign users to group.");
+                await ShowErrorAsyncNotification("Failed to assign users to group. Please verify allowed companies and user company values.");
             }
         }
         catch (Exception ex)

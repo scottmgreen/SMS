@@ -897,7 +897,7 @@ public partial class HazardFileListing : ComponentBase
 
                 // Use correct CQRS command for deactivation (soft delete)
                 var command = new DeactivateHazardFileCommand(
-                    ExtractIdFromCode(file.Code),
+                    file.Code,
                     "Deleted by user from HazardFileListing"
                 );
 

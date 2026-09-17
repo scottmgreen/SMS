@@ -32,6 +32,8 @@ public partial class UploadFileDialog : ComponentBase
     public List<AttachedFile> AttachedFiles { get; set; } = new();
     private string UploadHazardCode { get; set; } = string.Empty;
     private string UploadReportCode { get; set; } = string.Empty;
+    private bool IsHazardCodeReadOnly => !string.IsNullOrWhiteSpace(HazardCode);
+    private bool IsReportCodeReadOnly => !string.IsNullOrWhiteSpace(ReportCode);
     #endregion
 
     #region Computed Properties
@@ -165,6 +167,18 @@ public partial class UploadFileDialog : ComponentBase
 
     #region Validation
     private bool HasMissingFileDescriptions => AttachedFiles.Any(file => string.IsNullOrWhiteSpace(file.Description));
+
+    private void OnReportCodeChanged(string? value)
+    {
+        UploadReportCode = value ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnHazardCodeChanged(string? value)
+    {
+        UploadHazardCode = value ?? string.Empty;
+        StateHasChanged();
+    }
 
     private bool CanUpload()
     {
@@ -465,6 +479,12 @@ public partial class UploadFileDialog : ComponentBase
 
         Logger.LogInformation("Cleared all files from upload queue");
         StateHasChanged();
+    }
+
+    private Task OnFilesChanged()
+    {
+        StateHasChanged();
+        return Task.CompletedTask;
     }
 
     #endregion

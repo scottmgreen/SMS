@@ -50,6 +50,7 @@ public partial class Companies : ComponentBase
     private string _editContactEmail = string.Empty;
     private string _editContactPhone = string.Empty;
     private string _editInternalRepresentative = string.Empty;
+    private HashSet<string> _companyUsageKeys = new(StringComparer.OrdinalIgnoreCase);
 
     protected override async Task OnInitializedAsync()
     {
@@ -59,6 +60,7 @@ public partial class Companies : ComponentBase
     private async Task LoadCompaniesAsync()
     {
         _errorMessage = string.Empty;
+        await LoadCompanyUsageAsync();
         var result = await _mediator.SendAsync(new GetAllSMSCompaniesQuery(), CancellationToken.None);
         if (result.IsSuccess)
         {
@@ -223,6 +225,12 @@ public partial class Companies : ComponentBase
             return;
         }
 
+        if (IsCompanyInUse(company))
+        {
+            _errorMessage = "Company cannot be deleted because it is assigned to one or more users.";
+            return;
+        }
+
         try
         {
             var result = await _mediator.SendAsync(new DeleteSMSCompanyCommand(company.Value), CancellationToken.None);
@@ -337,6 +345,66 @@ public partial class Companies : ComponentBase
 
         return string.Equals(normalizedUserCompany, companyCode, StringComparison.OrdinalIgnoreCase)
             || string.Equals(normalizedUserCompany, companyName, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool IsCompanyInUse(SMSCompany company)
+    {
+        if (company is null)
+        {
+            return false;
+        }
+
+        var codeKey = NormalizeUsageKey(company.Value);
+        var nameKey = NormalizeUsageKey(company.Company);
+
+        return (!string.IsNullOrWhiteSpace(codeKey) && _companyUsageKeys.Contains(codeKey))
+            || (!string.IsNullOrWhiteSpace(nameKey) && _companyUsageKeys.Contains(nameKey));
+    }
+
+    private async Task LoadCompanyUsageAsync()
+    {
+        try
+        {
+            _companyUsageKeys.Clear();
+
+            var appUsersResult = await _mediator.SendAsync(new GetAllSMSApplicationUsersQuery(), CancellationToken.None);
+            var orgUsersResult = await _mediator.SendAsync(new GetAllSMSOrganizationalUsersQuery(), CancellationToken.None);
+            var stakeholderUsersResult = await _mediator.SendAsync(new GetAllSMSStakeholderUsersQuery(), CancellationToken.None);
+
+            foreach (var appUser in appUsersResult.IsSuccess ? appUsersResult.Value ?? Enumerable.Empty<SMSApplicationUser>() : Enumerable.Empty<SMSApplicationUser>())
+            {
+                AddUsageKey(_companyUsageKeys, appUser.Company);
+            }
+
+            foreach (var orgUser in orgUsersResult.IsSuccess ? orgUsersResult.Value ?? Enumerable.Empty<SMSOrganizationalUser>() : Enumerable.Empty<SMSOrganizationalUser>())
+            {
+                AddUsageKey(_companyUsageKeys, orgUser.Company);
+            }
+
+            foreach (var stakeholderUser in stakeholderUsersResult.IsSuccess ? stakeholderUsersResult.Value ?? Enumerable.Empty<SMSStakeholderUser>() : Enumerable.Empty<SMSStakeholderUser>())
+            {
+                AddUsageKey(_companyUsageKeys, stakeholderUser.Company);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to load company usage metadata for delete guard");
+            _companyUsageKeys.Clear();
+        }
+    }
+
+    private static void AddUsageKey(HashSet<string> usageSet, string? rawValue)
+    {
+        var normalized = NormalizeUsageKey(rawValue);
+        if (!string.IsNullOrWhiteSpace(normalized))
+        {
+            usageSet.Add(normalized);
+        }
+    }
+
+    private static string NormalizeUsageKey(string? rawValue)
+    {
+        return string.IsNullOrWhiteSpace(rawValue) ? string.Empty : rawValue.Trim();
     }
 
     private static bool IsEmailFormat(string? userName)

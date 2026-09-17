@@ -229,8 +229,8 @@ public partial class EvidenceFilesManager : ComponentBase
                 // Use a default reason since Radzen doesn't have a built-in prompt
                 var reason = "File no longer relevant to investigation";
 
-                // Use the file code instead of Id since HazardFile uses string codes
-                var deleteCommand = new DeactivateHazardFileCommand(file.Code.GetHashCode(), reason);
+                // Use the file code so deactivation maps to pr_HazardFile_Deactivate
+                var deleteCommand = new DeactivateHazardFileCommand(file.Code, reason);
                 var result = await Mediator.SendAsync(deleteCommand, CancellationToken.None);
 
                 if (result.IsSuccess)
@@ -402,7 +402,7 @@ public partial class EvidenceFilesManager : ComponentBase
             return fileName;
         }
 
-        return $"{file.Description.Trim()} {fileName}";
+        return $"{fileName}";
     }
     #endregion
 }

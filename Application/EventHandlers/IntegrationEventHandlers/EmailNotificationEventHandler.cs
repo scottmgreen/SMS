@@ -101,7 +101,7 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
             }
             else
             {
-                _logger.LogApplicationError("[EMAIL HANDLER] Email notification failed: '{Subject}' - {Error}",integrationEvent.Subject, deliveryResult.Error.Message);
+                _logger.LogApplicationError("[EMAIL HANDLER] Email notification failed: '{Subject}' - {Error}", integrationEvent.Subject, deliveryResult.Error.Message);
             }
 
             return deliveryResult;

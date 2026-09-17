@@ -710,14 +710,15 @@ public partial class OrganizationalGroups : ComponentBase
 
             var memberCodes = GroupMembers.Select(m => m.Code).ToHashSet();
             var groupAuthorityLevel = _currentGroup?.EffectiveAuthorityLevel ?? 0;
-            var allowedCompanies = _currentGroup?.AllowedCompanyCodes ?? new List<string>();
+            var allowedCompanies = (_currentGroup?.AllowedCompanyCodes ?? new List<string>())
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c.Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
             AvailableUsers = SMSOrganizationalUsers
                 .Where(u => !memberCodes.Contains(u.Code))
                 .Where(u => u.EffectiveAuthorityLevel >= groupAuthorityLevel)
-                .Where(u => allowedCompanies.Count == 0
-                    || (!string.IsNullOrWhiteSpace(u.Company)
-                        && allowedCompanies.Any(c => c.Equals(u.Company, StringComparison.OrdinalIgnoreCase))))
+                .Where(u => allowedCompanies.Count == 0 || IsUserInAllowedCompany(u.Company, allowedCompanies))
                 .ToList();
 
             // Initialize selection tracking
@@ -739,12 +740,13 @@ public partial class OrganizationalGroups : ComponentBase
             // For now, if the query fails, just load empty collections
             GroupMembers = new List<SMSOrganizationalUser>();
             var groupAuthorityLevel = _currentGroup?.EffectiveAuthorityLevel ?? 0;
-            var allowedCompanies = _currentGroup?.AllowedCompanyCodes ?? new List<string>();
+            var allowedCompanies = (_currentGroup?.AllowedCompanyCodes ?? new List<string>())
+                .Where(c => !string.IsNullOrWhiteSpace(c))
+                .Select(c => c.Trim())
+                .ToHashSet(StringComparer.OrdinalIgnoreCase);
             AvailableUsers = SMSOrganizationalUsers?
                 .Where(u => u.EffectiveAuthorityLevel >= groupAuthorityLevel)
-                .Where(u => allowedCompanies.Count == 0
-                    || (!string.IsNullOrWhiteSpace(u.Company)
-                        && allowedCompanies.Any(c => c.Equals(u.Company, StringComparison.OrdinalIgnoreCase))))
+                .Where(u => allowedCompanies.Count == 0 || IsUserInAllowedCompany(u.Company, allowedCompanies))
                 .ToList() ?? new List<SMSOrganizationalUser>();
             GroupMemberCounts[groupCode] = 0;
         }
@@ -831,7 +833,10 @@ public partial class OrganizationalGroups : ComponentBase
                     if (result.IsSuccess)
                         successCount++;
                     else
+                    {
+                        _logger.LogWarning("Failed to assign user {UserCode} to organizational group {GroupCode}: {Error}", userCode, _currentGroupCode, result.Error?.Message);
                         failureCount++;
+                    }
                 }
                 catch (Exception ex)
                 {
@@ -852,7 +857,7 @@ public partial class OrganizationalGroups : ComponentBase
             }
             else
             {
-                await ShowErrorAsyncNotification("Failed to assign users to group.");
+                await ShowErrorAsyncNotification("Failed to assign users to group. Please verify allowed companies and user company values.");
             }
         }
         catch (Exception ex)
@@ -892,6 +897,29 @@ public partial class OrganizationalGroups : ComponentBase
             _logger.LogError(ex, "Error assigning user {UserCode} to group {GroupCode}", userCode, _currentGroupCode);
             await ShowErrorAsyncNotification("Error assigning user to group. Please try again.");
         }
+    }
+
+    private static bool IsUserInAllowedCompany(string? userCompany, HashSet<string> allowedCompanies)
+    {
+        if (string.IsNullOrWhiteSpace(userCompany))
+        {
+            return false;
+        }
+
+        var companyValue = userCompany.Trim();
+        if (allowedCompanies.Contains(companyValue))
+        {
+            return true;
+        }
+
+        var resolvedCompany = SMSCompany.FromValue(companyValue) ?? SMSCompany.FromCompany(companyValue);
+        if (resolvedCompany is null)
+        {
+            return false;
+        }
+
+        return allowedCompanies.Contains(resolvedCompany.Value)
+            || allowedCompanies.Contains(resolvedCompany.Company);
     }
 
     #endregion

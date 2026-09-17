@@ -27,6 +27,7 @@ public sealed class MitigationStatus : BaseEnum<MitigationStatus>
     public static readonly MitigationStatus Rejected = new("REJECTED", "Mitigation Rejected");
     public static readonly MitigationStatus Complete = new("COMPLETE", "Mitigation Complete");
     public static readonly MitigationStatus MonitoringHazard = new("MONITORING_HAZARD", "Monitoring Hazard");
+    public static readonly MitigationStatus HazardEliminated = new("HAZARD_ELIMINATED", "Hazard Eliminated");
 
     private MitigationStatus(string value, string name) : base(value, name)
     {
