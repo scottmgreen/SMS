@@ -126,11 +126,11 @@
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                                 <RadzenMenuItem Text="Assurance" Icon="verified_user" class="sms-menu-item">
                                     <RadzenMenuItem Text="Risk Registry" Value='"/SMSAssurance/RiskRegistry"' Icon="assignment"></RadzenMenuItem>
-                                    <RadzenMenuItem Text="SPI Dashboard" Value='"/SMSAssurance/SPIDashboard"' Icon="dashboard"></RadzenMenuItem>
-                                    <RadzenMenuItem Text="SPI Configuration" Value='"/SMSAssurance/SPIConfiguration"' Icon="settings"></RadzenMenuItem>
+                                    @* <RadzenMenuItem Text="SPI Dashboard" Value='"/SMSAssurance/SPIDashboard"' Icon="dashboard"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="SPI Configuration" Value='"/SMSAssurance/SPIConfiguration"' Icon="settings"></RadzenMenuItem> *@
                                     <RadzenMenuItem Text="Audit Management" Value='"/SMSAssurance/AuditManagement"' Icon="assignment"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Audit Calendar" Value='"/SMSAssurance/AuditCalendar"' Icon="event"></RadzenMenuItem>
-                                    @* <RadzenMenuItem Text="Audit Workflow Demo" Value='"/SMSAssurance/AuditWorkflowDemo"' Icon="trending_up"></RadzenMenuItem> *@
+                                    
                                 </RadzenMenuItem>
                             </RadzenMenu>
                         </div>
@@ -260,6 +260,22 @@
                 </div>
 
                 <div class="navbar-nav ms-auto d-flex flex-row align-items-center">
+                    @if (_currentUserService.CanRead("SMS_System"))
+                    {
+                        <div class="nav-item me-2">
+                            <button type="button"
+                                    class="sms-notification-bell"
+                                    title="Pending integration notifications"
+                                    @onclick="NavigateToNotificationManagement">
+                                <RadzenIcon Icon="notifications" class="sms-notification-icon" />
+                                @if (_pendingIntegrationEventCount > 0)
+                                {
+                                    <span class="sms-notification-badge">@_pendingIntegrationEventCount</span>
+                                }
+                            </button>
+                        </div>
+                    }
+
                     <!-- User Profile Menu -->
                     <div class="nav-item">
                         <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
@@ -322,12 +338,15 @@
 @code {
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private SessionTimerService _sessionTimerService { get; set; } = default!;
+    [Inject] private IEventQueueService _eventQueueService { get; set; } = default!;
 
     [Parameter]
     public EventCallback OnLogoutRequested { get; set; }
 
     // Session Timer
     private CancellationTokenSource _cancellationTokenSource = new();
+    private int _pendingIntegrationEventCount;
+    private Task? _notificationPollingTask;
 
     // Environment Detection - Always production appearance
     private string BrandCssClass => "";
@@ -396,6 +415,7 @@
             if (_currentUserService?.IsFullyAuthenticated == true)
             {
                 _sessionTimerService.StartTimer();
+                await LoadPendingIntegrationEventCountAsync();
                 _logger.LogDebug("NavMenu initialized with session timer for user: {UserCode}", _currentUserService.UserCode);
             }
         }
@@ -411,6 +431,8 @@
         if (firstRender && _currentUserService?.IsFullyAuthenticated == true)
         {
             _sessionTimerService.StartTimer();
+            await LoadPendingIntegrationEventCountAsync();
+            _notificationPollingTask ??= PollPendingIntegrationEventCountAsync(_cancellationTokenSource.Token);
         }
     }
 
@@ -418,6 +440,7 @@
     {
         _ = InvokeAsync(() =>
         {
+            _ = LoadPendingIntegrationEventCountAsync();
             StateHasChanged();
         });
     }
@@ -428,7 +451,67 @@
         if (_currentUserService.IsFullyAuthenticated)
         {
             _sessionTimerService.UpdateActivity();
+                await LoadPendingIntegrationEventCountAsync();
         }
+    }
+
+    private async Task LoadPendingIntegrationEventCountAsync()
+    {
+        try
+        {
+            if (_currentUserService?.IsFullyAuthenticated != true || !_currentUserService.CanRead("SMS_System"))
+            {
+                _pendingIntegrationEventCount = 0;
+                return;
+            }
+
+            var result = await _eventQueueService.GetQueuedEventsAsync(
+                status: QueuedEventStatus.Pending,
+                eventType: EventCategory.IntegrationEvent,
+                maxResults: 2000);
+
+            _pendingIntegrationEventCount = result.IsSuccess && result.Value is not null
+                ? result.Value.Count()
+                : 0;
+
+            await InvokeAsync(StateHasChanged);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to load pending integration event count for nav bell.");
+            _pendingIntegrationEventCount = 0;
+        }
+    }
+
+    private async Task PollPendingIntegrationEventCountAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(60));
+
+            while (await timer.WaitForNextTickAsync(cancellationToken))
+            {
+                await LoadPendingIntegrationEventCountAsync();
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected during disposal
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Notification polling failed in NavMenu.");
+        }
+    }
+
+    private void NavigateToNotificationManagement()
+    {
+        if (_currentUserService.IsFullyAuthenticated)
+        {
+            _sessionTimerService.UpdateActivity();
+        }
+
+        _navigation.NavigateToSecure("/SMSSystem/EventBus/QueueManager");
     }
 
     /// <summary>

@@ -6,6 +6,8 @@ public partial class InvestigationsGuidance : ComponentBase
 {
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
+    private bool isExpanded = false;
+
     private void CreateNewInvestigation()
     {
         Navigation.NavigateToSecure("/SMSRiskManagement/Investigations/Create");

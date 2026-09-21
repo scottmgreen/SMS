@@ -21,6 +21,10 @@ public partial class Login : ComponentBase
     [Inject] private SessionTimerService SessionTimerService { get; set; } = default!;
     [Inject] private TwoFactorAuthService TwoFactorAuthService { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private IMitigationTargetDateNotificationService _mitigationTargetDateNotificationService { get; set; } = default!;
+
+    private static readonly SemaphoreSlim _dailyMitigationScanLock = new(1, 1);
+    private static DateOnly? _lastMitigationScanUtcDate;
 
     private LoginFormModel LoginModel { get; set; } = new();
     private string ErrorMessage { get; set; } = string.Empty;
@@ -176,9 +180,46 @@ public partial class Login : ComponentBase
         // ?? START SESSION TIMER - Begin countdown for automatic logout
         SessionTimerService.StartTimer();
 
+        await TryRunDailyMitigationTargetDateScanAsync();
+
         // Navigate to default page /SMSRiskManagement/ReportProcessing
         Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing", forceLoad: false);
     }
+
+    private async Task TryRunDailyMitigationTargetDateScanAsync()
+    {
+        await _dailyMitigationScanLock.WaitAsync();
+
+        try
+        {
+            var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (_lastMitigationScanUtcDate == todayUtc)
+            {
+                return;
+            }
+
+            var scanResult = await _mitigationTargetDateNotificationService
+                .ScanAllMitigationsAsync("LoginDailyScan")
+                .ConfigureAwait(false);
+
+            if (scanResult.IsFailure)
+            {
+                Logger.LogWarning("Daily mitigation target-date scan failed during login: {Error}", scanResult.Error?.Message);
+                return;
+            }
+
+            _lastMitigationScanUtcDate = todayUtc;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed running daily mitigation target-date scan during login.");
+        }
+        finally
+        {
+            _dailyMitigationScanLock.Release();
+        }
+    }
+
 
     private async Task HandleLoginFailureAsync(string username, string errorMessage)
     {
@@ -214,5 +255,6 @@ public partial class Login : ComponentBase
         [Required(ErrorMessage = "Password is required")]
         public string Password { get; set; } = string.Empty;
     }
+
 }
 

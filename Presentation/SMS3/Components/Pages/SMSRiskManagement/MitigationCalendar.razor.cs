@@ -13,6 +13,8 @@ public partial class MitigationCalendar : ComponentBase
     [Inject] private DialogService _dialogService { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private IConfiguration _configuration { get; set; } = default!;
+    [Inject] private IMitigationTargetDateNotificationService _mitigationTargetDateNotificationService { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -27,12 +29,17 @@ public partial class MitigationCalendar : ComponentBase
     // Enhanced UI state properties
     public bool ShowDetailsModal { get; set; } = false;
     private bool _showHeader = true;
+
+    private int _notifyDaysInAdvance = 14;
+    private int _notifyHoursBefore = 24;
     #endregion
 
     #region Lifecycle Methods
     protected override async Task OnInitializedAsync()
     {
+        LoadMitigationNotificationConfig();
         await LoadMitigationsAsync();
+        await CheckMitigationTargetDateNotificationsAsync();
     }
     #endregion
 
@@ -89,6 +96,7 @@ public partial class MitigationCalendar : ComponentBase
     {
         _logger.LogInformation("Refreshing mitigation calendar data...");
         await LoadMitigationsAsync();
+        await CheckMitigationTargetDateNotificationsAsync();
 
         // Reload the scheduler
         if (_scheduler is not null)
@@ -104,12 +112,20 @@ public partial class MitigationCalendar : ComponentBase
     #region Data Mapping
     private MitigationSchedulerItem MapMitigationToSchedulerItem(Mitigation mitigation)
     {
+        var timingState = GetMitigationTimingState(mitigation.TargetDate, mitigation.Status?.Value);
+
         return new MitigationSchedulerItem
         {
             Start = mitigation.TargetDate ?? DateTime.Today,
             End = mitigation.TargetDate?.AddDays(1) ?? DateTime.Today.AddDays(1),
             Text = $"{mitigation.Name} (Status: {mitigation.Status})",
-            MitigationCode = mitigation.Code
+            MitigationCode = mitigation.Code,
+            Status = mitigation.Status?.Value ?? string.Empty,
+            HazardCode = mitigation.HazardCode ?? string.Empty,
+            AssignedTo = mitigation.AssignedTo ?? string.Empty,
+            Progress = mitigation.Progress,
+            IsOverdue = timingState == MitigationTimingState.Overdue,
+            TimingState = timingState
         };
     }
 
@@ -189,57 +205,74 @@ public partial class MitigationCalendar : ComponentBase
             var cssClasses = new List<string>();
 
             // Base status class
-            var statusClass = (mitigationItem?.Status) switch
+            var statusClass = mitigationItem?.TimingState switch
             {
-                "PENDING_APPROVAL" => "mitigation-pending",
-                "APPROVED" => "mitigation-approved",
-                "IN_PROGRESS_DUE_DATE" => "mitigation-inprogress",
-                "COMPLETE" => "mitigation-complete",
-                "MONITORING_HAZARD" => "mitigation-monitoring",
-                "REJECTED" => "mitigation-rejected",
-                _ => "mitigation-pending" // Default to pending
+                MitigationTimingState.Due14Days => "mitigation-due-14days",
+                MitigationTimingState.Due24Hours => "mitigation-due-24hours",
+                MitigationTimingState.Overdue => "mitigation-due-overdue",
+                _ => (mitigationItem?.Status) switch
+                {
+                    "PENDING_APPROVAL" => "mitigation-pending",
+                    "APPROVED" => "mitigation-approved",
+                    "IN_PROGRESS" => "mitigation-inprogress",
+                    "COMPLETE" => "mitigation-complete",
+                    "MONITORING_HAZARD" => "mitigation-monitoring",
+                    "REJECTED" => "mitigation-rejected",
+                    _ => "mitigation-pending" // Default to pending
+                }
             };
             cssClasses.Add(statusClass);
 
             // Add overdue class if needed
-            if (mitigationItem?.IsOverdue == true)
+            if (mitigationItem?.TimingState == MitigationTimingState.Overdue)
             {
                 cssClasses.Add("overdue");
             }
 
-            // Add high priority class for critical mitigations
-            if (mitigationItem?.Priority == "High" || mitigationItem?.Priority == "Critical")
+            // Set background color based on date-alert priority first
+            var backgroundColor = mitigationItem?.TimingState switch
             {
-                cssClasses.Add("high-priority");
-            }
-
-            args.Attributes["class"] = string.Join(" ", cssClasses);
-
-            // Set background color based on status for better visibility
-            var backgroundColor = mitigationItem?.Status switch
-            {
-                "PENDING_APPROVAL" => "#ffc107",
-                "APPROVED" => "#17a2b8",
-                "IN_PROGRESS_DUE_DATE" => "#007bff",
-                "COMPLETE" => "#28a745",
-                "MONITORING_HAZARD" => "#6c757d",
-                "REJECTED" => "#dc3545",
-                _ => "#ffc107" // Default to pending color
+                MitigationTimingState.Due14Days => "#17a2b8",
+                MitigationTimingState.Due24Hours => "#ffc107",
+                MitigationTimingState.Overdue => "#dc3545",
+                _ => mitigationItem?.Status switch
+                {
+                    "PENDING_APPROVAL" => "#ffc107",
+                    "APPROVED" => "#17a2b8",
+                    "IN_PROGRESS" => "#007bff",
+                    "COMPLETE" => "#28a745",
+                    "MONITORING_HAZARD" => "#6c757d",
+                    "REJECTED" => "#dc3545",
+                    _ => "#ffc107" // Default to pending color
+                }
             };
 
-            var textColor = mitigationItem?.Status == "PENDING_APPROVAL" ? "#212529" : "white";
+            var textColor = mitigationItem?.TimingState == MitigationTimingState.Due24Hours
+                || mitigationItem?.Status == "PENDING_APPROVAL"
+                ? "#212529"
+                : "white";
             args.Attributes["style"] = $"background: {backgroundColor}; color: {textColor};";
 
             // Add enhanced tooltip with additional information
+            var timingLabel = mitigationItem?.TimingState switch
+            {
+                MitigationTimingState.Due14Days => "14 days before target date",
+                MitigationTimingState.Due24Hours => "24 hours before target date",
+                MitigationTimingState.Overdue => "Overdue",
+                _ => "No alert"
+            };
+
+            args.Attributes["class"] = string.Join(" ", cssClasses);
+
             var tooltip = $"Mitigation: {mitigationItem?.MitigationCode}\\n" +
                          $"Status: {mitigationItem?.Status}\\n" +
                          $"Hazard: {mitigationItem?.HazardCode}\\n" +
                          $"Assigned to: {mitigationItem?.AssignedTo}\\n" +
-                         $"Priority: {mitigationItem?.Priority}\\n" +
+                         $"Timing Alert: {timingLabel}\\n" +
                          $"Progress: {mitigationItem?.Progress}%";
 
-            if (mitigationItem?.IsOverdue == true)
-                tooltip += "\\n?? OVERDUE";
+            if (mitigationItem?.TimingState == MitigationTimingState.Overdue)
+                tooltip += "\\nOVERDUE";
 
             args.Attributes["title"] = tooltip;
 
@@ -467,7 +500,11 @@ public partial class MitigationCalendar : ComponentBase
     private int GetOverdueMitigations()
     {
         var today = DateTime.Today;
-        return Mitigations.Count(m => m.TargetDate.HasValue && m.TargetDate.Value.Date < today && m.Status != "COMPLETE");
+        return Mitigations.Count(m =>
+            m.TargetDate.HasValue
+            && m.TargetDate.Value.Date < today
+            && !string.Equals(m.Status?.Value, MitigationStatus.Complete.Value, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(m.Status?.Value, MitigationStatus.HazardEliminated.Value, StringComparison.OrdinalIgnoreCase));
     }
     #endregion
 
@@ -557,6 +594,58 @@ public partial class MitigationCalendar : ComponentBase
             _ => BadgeStyle.Light
         };
     }
+
+    private void LoadMitigationNotificationConfig()
+    {
+        _notifyDaysInAdvance = _configuration.GetValue<int?>("MitigationTargetDateNotifications:DaysInAdvance") ?? 14;
+        _notifyHoursBefore = _configuration.GetValue<int?>("MitigationTargetDateNotifications:HoursBefore") ?? 24;
+    }
+
+    private async Task CheckMitigationTargetDateNotificationsAsync()
+    {
+        var result = await _mitigationTargetDateNotificationService
+            .ScanAllMitigationsAsync("MitigationCalendar")
+            .ConfigureAwait(false);
+
+        if (result.IsFailure)
+        {
+            _logger.LogWarning("Mitigation target-date notification scan failed from calendar: {Error}", result.Error?.Message);
+        }
+    }
+
+    private MitigationTimingState GetMitigationTimingState(DateTime? targetDate, string? mitigationStatusValue)
+    {
+        if (!targetDate.HasValue)
+        {
+            return MitigationTimingState.None;
+        }
+
+        if (string.Equals(mitigationStatusValue, MitigationStatus.Complete.Value, StringComparison.OrdinalIgnoreCase)
+            || string.Equals(mitigationStatusValue, MitigationStatus.HazardEliminated.Value, StringComparison.OrdinalIgnoreCase))
+        {
+            return MitigationTimingState.None;
+        }
+
+        var now = DateTime.UtcNow;
+        var timeUntilTarget = targetDate.Value - now;
+
+        if (timeUntilTarget.TotalHours < 0)
+        {
+            return MitigationTimingState.Overdue;
+        }
+
+        if (timeUntilTarget.TotalHours <= _notifyHoursBefore)
+        {
+            return MitigationTimingState.Due24Hours;
+        }
+
+        if (timeUntilTarget.TotalDays <= _notifyDaysInAdvance)
+        {
+            return MitigationTimingState.Due14Days;
+        }
+
+        return MitigationTimingState.None;
+    }
     #endregion
 }
 
@@ -578,5 +667,14 @@ public class MitigationSchedulerItem
     public int Progress { get; set; }
     public bool IsOverdue { get; set; }
     public string Description { get; set; } = string.Empty;
+    public MitigationTimingState TimingState { get; set; } = MitigationTimingState.None;
+}
+
+public enum MitigationTimingState
+{
+    None,
+    Due14Days,
+    Due24Hours,
+    Overdue
 }
 #endregion

@@ -4,13 +4,28 @@
 
 <RadzenCard Variant="Variant.Outlined" Style="position: sticky; top: 1rem;">
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-            <RadzenIcon Icon="help_outline" Style="color: var(--rz-primary);" />
-            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
-                Audit Management Guidance
-            </RadzenText>
-        </RadzenStack>
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="9">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
+                    <RadzenIcon Icon="help_outline" Style="color: var(--rz-primary);" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-warning); margin: 0;">
+                        Audit Management Guidance
+                    </RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="3">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                    <RadzenButton Icon="@(isExpanded ? "expand_less" : "expand_more")"
+                                 ButtonStyle="ButtonStyle.Light"
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => isExpanded = !isExpanded)"
+                                 title="@(isExpanded ? "Collapse" : "Expand")" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
 
+        @if (isExpanded)
+        {
         <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -207,5 +222,6 @@
                             Style="margin-top: 0.5rem;" />
             </RadzenStack>
         </RadzenCard>
+        }
     </RadzenStack>
 </RadzenCard>

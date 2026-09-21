@@ -91,7 +91,7 @@ public partial class ReportCalendar : ComponentBase
         return new ReportSchedulerItem
         {
             ReportCode = report.Code ?? "Unknown",
-            Text = $"{report.Code}", // - {GetShortDescription(report)}",
+            Text = $"{report.Code} - {report.Status}",
             Start = reportDate,
             End = reportDate.AddHours(1), // Default 1 hour duration for display
             HazardCategory = "", //initialHazard?.HazardCategory ?? "Unknown",
@@ -190,8 +190,24 @@ public partial class ReportCalendar : ComponentBase
                 return;
             }
 
-            
-            args.Attributes["class"] = "report-hazard";
+            var status = reportItem.Status?.Trim().ToUpperInvariant() ?? string.Empty;
+            var cssClass = status switch
+            {
+                "REPORT_NEEDS_VALIDATION" => "report-needs-validation",
+                "READY_FOR_PROCESSING" => "report-ready-for-processing",
+                _ => "report-hazard"
+            };
+
+            args.Attributes["class"] = cssClass;
+
+            var backgroundColor = status switch
+            {
+                "REPORT_NEEDS_VALIDATION" => "#fd7e14",
+                "READY_FOR_PROCESSING" => "#28a745",
+                _ => "var(--rz-primary)"
+            };
+
+            args.Attributes["style"] = $"background-color: {backgroundColor}; border-color: {backgroundColor}; color: #ffffff !important;";
                   
             
             //Add tooltip with additional information

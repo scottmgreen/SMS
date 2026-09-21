@@ -24,15 +24,12 @@
     <RadzenButton Icon="refresh" Text="Refresh" Click="@RefreshData" ButtonStyle="ButtonStyle.Secondary" Size="ButtonSize.Small" Disabled="@IsLoading" />
     <RadzenButton Icon="add" Text="Schedule Mitigation" Click="@(() => ShowCreateMitigationDialog())" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small" />
     
-    <!-- Legend - Status-based styling -->
+    <!-- Legend - Target-date alert styling -->
     <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Style="margin-left: 2rem;">
         <RadzenText TextStyle="TextStyle.Caption">Legend:</RadzenText>
-        <RadzenBadge Text="Pending Approval" BadgeStyle="BadgeStyle.Warning" />
-        <RadzenBadge Text="Approved" BadgeStyle="BadgeStyle.Info" />
-        <RadzenBadge Text="In Progress" BadgeStyle="BadgeStyle.Primary" />
-        <RadzenBadge Text="Complete" BadgeStyle="BadgeStyle.Success" />
-        <RadzenBadge Text="Monitoring" BadgeStyle="BadgeStyle.Light" />
-        <RadzenBadge Text="Rejected" BadgeStyle="BadgeStyle.Danger" />
+        <RadzenBadge Text="14 Days Out" BadgeStyle="BadgeStyle.Info" />
+        <RadzenBadge Text="24 Hours Out" BadgeStyle="BadgeStyle.Warning" />
+        <RadzenBadge Text="Overdue" BadgeStyle="BadgeStyle.Danger" />
     </RadzenStack>
 </RadzenStack>
 
@@ -315,6 +312,26 @@
         color: white;
         text-decoration: line-through;
         opacity: 0.8;
+    }
+
+    .mitigation-scheduler .rz-scheduler-appointment.mitigation-due-14days {
+        background: linear-gradient(135deg, #17a2b8, #138496);
+        border-color: #17a2b8;
+        color: white;
+    }
+
+    .mitigation-scheduler .rz-scheduler-appointment.mitigation-due-24hours {
+        background: linear-gradient(135deg, #ffc107, #e0a800);
+        border-color: #ffc107;
+        color: #212529;
+        font-weight: 700;
+    }
+
+    .mitigation-scheduler .rz-scheduler-appointment.mitigation-due-overdue {
+        background: linear-gradient(135deg, #dc3545, #b21f2d);
+        border-color: #dc3545;
+        color: white;
+        font-weight: 700;
     }
 
     /* High priority mitigations get a special indicator */

@@ -6,6 +6,8 @@ public partial class AuditManagementGuidance : ComponentBase
 {
     [Inject] private NavigationManager Navigation { get; set; } = default!;
 
+    private bool isExpanded = false;
+
     private void CreateAnnualAuditPlan()
     {
         Navigation.NavigateToSecure("/SMSAssurance/AuditPlans/CreateAnnual");

@@ -151,7 +151,7 @@ public sealed class MitigationService : IMitigationService
 
             if (mitigation is not null)
             {
-                var isOverdue = mitigation.TargetDate.HasValue && mitigation.TargetDate.Value.Date <= DateTime.UtcNow.Date;
+                var isOverdue = mitigation.TargetDate.HasValue && mitigation.TargetDate.Value < DateTime.UtcNow;
 
                 if (mitigation.Progress >= 100)
                 {
@@ -167,9 +167,11 @@ public sealed class MitigationService : IMitigationService
                 {
                     mitigation.Status = MitigationStatus.InProgress;
                 }
-                else if (!isOverdue && mitigation.Status == MitigationStatus.PastExpectedTargetDate)
+                else if (!isOverdue)
                 {
-                    mitigation.Status = MitigationStatus.Approved;
+                    mitigation.Status = !string.IsNullOrWhiteSpace(mitigation.ApprovedBy)
+                        ? MitigationStatus.Approved
+                        : MitigationStatus.PendingApproval;
                 }
             }
 

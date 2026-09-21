@@ -4,13 +4,26 @@
 
 <RadzenCard Variant="Variant.Outlined" Style="position: sticky; top: 1rem;">
     <RadzenStack Orientation="Orientation.Vertical" Gap="1rem">
-        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-            <RadzenIcon Icon="search" Style="color: var(--rz-primary);" />
-            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0; color: var(--rz-primary);">
-                Investigation Guidance
-            </RadzenText>
-        </RadzenStack>
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="8">
+                <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-warning); margin: 0;">
+                    <RadzenIcon Icon="help_outline" Style="margin-right: 0.5rem;" />
+                    Investigation Guidance
+                </RadzenText>
+            </RadzenColumn>
+            <RadzenColumn Size="4">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                    <RadzenButton Icon="@(isExpanded ? "expand_less" : "expand_more")"
+                                 ButtonStyle="ButtonStyle.Light"
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => isExpanded = !isExpanded)"
+                                 title="@(isExpanded ? "Collapse" : "Expand")" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
 
+        @if (isExpanded)
+        {
         <RadzenCard Variant="Variant.Text" Style="background-color: var(--rz-base-50);">
             <RadzenStack Orientation="Orientation.Vertical" Gap="0.75rem">
                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
@@ -227,5 +240,6 @@
                             Click="@(() => ContactSupport())" />
             </RadzenStack>
         </RadzenCard>
+        }
     </RadzenStack>
 </RadzenCard>

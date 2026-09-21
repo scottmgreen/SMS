@@ -80,17 +80,20 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
     private readonly IMitigationService _mitigationService;
     private readonly IBaseMediator _mediator;
     private readonly IBaseEventBus _eventBus;
+    private readonly IMitigationTargetDateNotificationService _mitigationTargetDateNotificationService;
     private readonly ILogger<UpdateMitigationCommandHandler> _logger;
 
     public UpdateMitigationCommandHandler(
         IMitigationService mitigationService,
         IBaseMediator mediator,
         IBaseEventBus eventBus,
+        IMitigationTargetDateNotificationService mitigationTargetDateNotificationService,
         ILogger<UpdateMitigationCommandHandler> logger)
     {
         _mitigationService = mitigationService ?? throw new ArgumentNullException(nameof(mitigationService));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _mitigationTargetDateNotificationService = mitigationTargetDateNotificationService ?? throw new ArgumentNullException(nameof(mitigationTargetDateNotificationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -201,6 +204,18 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                                     completedPublishResult.Error?.Message ?? "Unknown publish error");
                             }
                         }
+                    }
+
+                    var targetDateNotificationResult = await _mitigationTargetDateNotificationService
+                        .ProcessMitigationUpdateAsync(updatedMitigation, reportId, cancellationToken)
+                        .ConfigureAwait(false);
+
+                    if (targetDateNotificationResult.IsFailure)
+                    {
+                        _logger.LogApplicationWarning(
+                            "Failed processing mitigation target-date notifications for {MitigationCode}: {Error}",
+                            updatedMitigation.Code,
+                            targetDateNotificationResult.Error?.Message ?? "Unknown error");
                     }
                 }
             }

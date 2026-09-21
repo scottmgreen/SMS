@@ -120,6 +120,46 @@
     margin-left: 0.5rem !important;
 }
 
+.sms-notification-bell {
+    position: relative;
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid transparent;
+    border-radius: 0.5rem;
+    color: white;
+    padding: 0.45rem 0.65rem;
+    transition: all 0.2s ease-in-out;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.sms-notification-bell:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
+}
+
+.sms-notification-bell:focus {
+    outline: none;
+    box-shadow: 0 0 0 0.2rem rgba(255, 255, 255, 0.25);
+}
+
+.sms-notification-badge {
+    position: absolute;
+    top: -6px;
+    right: -6px;
+    min-width: 18px;
+    height: 18px;
+    border-radius: 999px;
+    background-color: #dc3545;
+    color: white;
+    font-size: 0.65rem;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    padding: 0 4px;
+}
+
 /* Profile Menu Button/Template */
 .sms-profile-menu ::deep .rz-profilemenu > .rz-button {
     background-color: rgba(255, 255, 255, 0.1) !important;
