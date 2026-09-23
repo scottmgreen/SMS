@@ -21,10 +21,12 @@ public partial class Login : ComponentBase
     [Inject] private SessionTimerService SessionTimerService { get; set; } = default!;
     [Inject] private TwoFactorAuthService TwoFactorAuthService { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
-    [Inject] private IMitigationTargetDateNotificationService _mitigationTargetDateNotificationService { get; set; } = default!;
+    [Inject] private INotificationsScanService _notificationsScanService { get; set; } = default!;
 
     private static readonly SemaphoreSlim _dailyMitigationScanLock = new(1, 1);
     private static DateOnly? _lastMitigationScanUtcDate;
+    private static readonly SemaphoreSlim _dailyReportStatusScanLock = new(1, 1);
+    private static DateOnly? _lastReportStatusScanUtcDate;
 
     private LoginFormModel LoginModel { get; set; } = new();
     private string ErrorMessage { get; set; } = string.Empty;
@@ -181,9 +183,44 @@ public partial class Login : ComponentBase
         SessionTimerService.StartTimer();
 
         await TryRunDailyMitigationTargetDateScanAsync();
+        await TryRunDailyReportStatusEscalationScanAsync();
 
         // Navigate to default page /SMSRiskManagement/ReportProcessing
         Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing", forceLoad: false);
+    }
+
+    private async Task TryRunDailyReportStatusEscalationScanAsync()
+    {
+        await _dailyReportStatusScanLock.WaitAsync();
+
+        try
+        {
+            var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
+            if (_lastReportStatusScanUtcDate == todayUtc)
+            {
+                return;
+            }
+
+            var scanResult = await _notificationsScanService
+                .ScanReportsNeedingStatusEscalationAsync("LoginDailyScan")
+                .ConfigureAwait(false);
+
+            if (scanResult.IsFailure)
+            {
+                Logger.LogWarning("Daily report status escalation scan failed during login: {Error}", scanResult.Error?.Message);
+                return;
+            }
+
+            _lastReportStatusScanUtcDate = todayUtc;
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError(ex, "Failed running daily report status escalation scan during login.");
+        }
+        finally
+        {
+            _dailyReportStatusScanLock.Release();
+        }
     }
 
     private async Task TryRunDailyMitigationTargetDateScanAsync()
@@ -198,7 +235,7 @@ public partial class Login : ComponentBase
                 return;
             }
 
-            var scanResult = await _mitigationTargetDateNotificationService
+            var scanResult = await _notificationsScanService
                 .ScanAllMitigationsAsync("LoginDailyScan")
                 .ConfigureAwait(false);
 

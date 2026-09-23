@@ -17,7 +17,6 @@ using SMS_Shared.Configuration;
 using SMS3.Components.Shared;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
-using SMS3.Components.Pages.SMSListings.Models;
 
 namespace SMS3.Components.Pages.SMSListings;
 
@@ -47,18 +46,21 @@ public partial class MitigationListing : ComponentBase
     #endregion
 
     #region Properties
-    private RadzenDataGrid<MitigationModel>? _mitigationsGrid;
+    private RadzenDataGrid<Mitigation>? _mitigationsGrid;
     private IEnumerable<Mitigation> _mitigations = new List<Mitigation>();
     private List<Mitigation> _allMitigations = new List<Mitigation>(); // Store all mitigations for client-side filtering
-    private IEnumerable<MitigationModel> _mitigationModels = new List<MitigationModel>();
-    private List<MitigationModel> _allMitigationModels = new List<MitigationModel>(); // Store all models for client-side filtering
+    private IEnumerable<Mitigation> _mitigationModels = new List<Mitigation>();
+    private List<Mitigation> _allMitigationModels = new List<Mitigation>(); // Store all models for client-side filtering
     private IEnumerable<Mitigation> _selectedMitigations = new List<Mitigation>();
     private int _totalCount;
     private bool _isLoading = false;
     private bool _showViewDialog = false;
+    private bool _showDescriptionModal = false;
     private bool _showBulkApprovalDialog = false;
     private bool _isProcessingBulkApproval = false;
     private Mitigation? _selectedMitigation = null;
+    private string _selectedDescription = string.Empty;
+    private string _selectedDescriptionTitle = string.Empty;
 
     // For context display
     private Hazard? _contextHazard = null;
@@ -179,7 +181,7 @@ public partial class MitigationListing : ComponentBase
 
             // Initially show first page
             _mitigationModels = _allMitigationModels.Take(15).ToList();
-            _mitigations = _mitigationModels.Select(m => m.Mitigation).ToList();
+            _mitigations = _mitigationModels.ToList();
             _totalCount = _allMitigationModels.Count();
 
             // Show success/info notification based on loaded row count
@@ -248,7 +250,7 @@ public partial class MitigationListing : ComponentBase
             {
                 // Default sorting by CreatedDate descending
                 _logger.LogInformation("Applying default sort by CreatedDate");
-                query = query.OrderByDescending(m => m.Mitigation.CreatedDate ?? DateTime.MinValue);
+                query = query.OrderByDescending(m => m.CreatedDate ?? DateTime.MinValue);
             }
 
             // Apply paging
@@ -263,7 +265,7 @@ public partial class MitigationListing : ComponentBase
             query = query.Take(pageSize);
 
             _mitigationModels = query.ToList();
-            _mitigations = _mitigationModels.Select(m => m.Mitigation).ToList();
+            _mitigations = _mitigationModels.ToList();
 
             _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} mitigations", 
                 _mitigationModels.Count(), _totalCount);
@@ -277,14 +279,14 @@ public partial class MitigationListing : ComponentBase
             // Fallback to show all data without filtering/sorting
             try
             {
-                _mitigationModels = _allMitigationModels ?? new List<MitigationModel>();
+                _mitigationModels = _allMitigationModels ?? new List<Mitigation>();
                 _mitigations = _allMitigations ?? new List<Mitigation>();
                 _totalCount = _mitigationModels.Count();
             }
             catch (Exception fallbackEx)
             {
                 _logger.LogError(fallbackEx, "Error in LoadData fallback");
-                _mitigationModels = new List<MitigationModel>();
+                _mitigationModels = new List<Mitigation>();
                 _mitigations = new List<Mitigation>();
                 _totalCount = 0;
             }
@@ -298,7 +300,7 @@ public partial class MitigationListing : ComponentBase
     #endregion
 
     #region Filtering and Sorting Methods
-    private IQueryable<MitigationModel> ApplyFiltering(IQueryable<MitigationModel> query, LoadDataArgs args)
+    private IQueryable<Mitigation> ApplyFiltering(IQueryable<Mitigation> query, LoadDataArgs args)
     {
         try
         {
@@ -324,11 +326,14 @@ public partial class MitigationListing : ComponentBase
                         case "code":
                             query = ApplyStringFilter(query, m => m.Code, filterValue, filterOperator);
                             break;
+                        case "name":
+                            query = ApplyStringFilter(query, m => m.Name, filterValue, filterOperator);
+                            break;
                         case "description":
                             query = ApplyStringFilter(query, m => m.Description, filterValue, filterOperator);
                             break;
                         case "status":
-                            query = ApplyEnumFilter(query, m => m.Status.ToString(), filterValue, filterOperator);
+                            query = ApplyEnumFilter(query, m => m.Status.Value, filterValue, filterOperator);
                             break;
                         case "progress":
                             if (int.TryParse(filter.FilterValue?.ToString(), out var progressValue))
@@ -355,7 +360,7 @@ public partial class MitigationListing : ComponentBase
         }
     }
 
-    private IQueryable<MitigationModel> ApplyStringFilter(IQueryable<MitigationModel> query, Expression<Func<MitigationModel, string?>> propertySelector, string filterValue, FilterOperator filterOperator)
+    private IQueryable<Mitigation> ApplyStringFilter(IQueryable<Mitigation> query, Expression<Func<Mitigation, string?>> propertySelector, string filterValue, FilterOperator filterOperator)
     {
         return filterOperator switch
         {
@@ -368,7 +373,7 @@ public partial class MitigationListing : ComponentBase
         };
     }
 
-    private IQueryable<MitigationModel> ApplyEnumFilter(IQueryable<MitigationModel> query, Expression<Func<MitigationModel, string?>> propertySelector, string filterValue, FilterOperator filterOperator)
+    private IQueryable<Mitigation> ApplyEnumFilter(IQueryable<Mitigation> query, Expression<Func<Mitigation, string?>> propertySelector, string filterValue, FilterOperator filterOperator)
     {
         return filterOperator switch
         {
@@ -379,7 +384,7 @@ public partial class MitigationListing : ComponentBase
         };
     }
 
-    private IQueryable<MitigationModel> ApplyNumericFilter(IQueryable<MitigationModel> query, Expression<Func<MitigationModel, int>> propertySelector, int filterValue, FilterOperator filterOperator)
+    private IQueryable<Mitigation> ApplyNumericFilter(IQueryable<Mitigation> query, Expression<Func<Mitigation, int>> propertySelector, int filterValue, FilterOperator filterOperator)
     {
         return filterOperator switch
         {
@@ -393,7 +398,7 @@ public partial class MitigationListing : ComponentBase
         };
     }
 
-    private IQueryable<MitigationModel> ApplyDateFilter(IQueryable<MitigationModel> query, Expression<Func<MitigationModel, DateTime?>> propertySelector, DateTime filterValue, FilterOperator filterOperator)
+    private IQueryable<Mitigation> ApplyDateFilter(IQueryable<Mitigation> query, Expression<Func<Mitigation, DateTime?>> propertySelector, DateTime filterValue, FilterOperator filterOperator)
     {
         return filterOperator switch
         {
@@ -407,7 +412,7 @@ public partial class MitigationListing : ComponentBase
         };
     }
 
-    private Expression<Func<MitigationModel, bool>> CombineExpressions<T>(Expression<Func<MitigationModel, T>> propertySelector, Expression<Func<T, bool>> condition)
+    private Expression<Func<Mitigation, bool>> CombineExpressions<T>(Expression<Func<Mitigation, T>> propertySelector, Expression<Func<T, bool>> condition)
     {
         var parameter = propertySelector.Parameters[0];
         var property = propertySelector.Body;
@@ -418,10 +423,10 @@ public partial class MitigationListing : ComponentBase
         var visitor = new ParameterReplacementVisitor(conditionParameter, property);
         var newConditionBody = visitor.Visit(conditionBody);
 
-        return Expression.Lambda<Func<MitigationModel, bool>>(newConditionBody, parameter);
+        return Expression.Lambda<Func<Mitigation, bool>>(newConditionBody, parameter);
     }
 
-    private IQueryable<MitigationModel> ApplySorting(IQueryable<MitigationModel> query, string orderBy)
+    private IQueryable<Mitigation> ApplySorting(IQueryable<Mitigation> query, string orderBy)
     {
         try
         {
@@ -436,17 +441,18 @@ public partial class MitigationListing : ComponentBase
                 "reportcode" => isDescending ? query.OrderByDescending(m => m.ReportCode ?? "") : query.OrderBy(m => m.ReportCode ?? ""),
                 "hazardcode" => isDescending ? query.OrderByDescending(m => m.HazardCode ?? "") : query.OrderBy(m => m.HazardCode ?? ""),
                 "code" => isDescending ? query.OrderByDescending(m => m.Code ?? "") : query.OrderBy(m => m.Code ?? ""),
+                "name" => isDescending ? query.OrderByDescending(m => m.Name ?? "") : query.OrderBy(m => m.Name ?? ""),
                 "description" => isDescending ? query.OrderByDescending(m => m.Description ?? "") : query.OrderBy(m => m.Description ?? ""),
-                "status" => isDescending ? query.OrderByDescending(m => m.Status.ToString()) : query.OrderBy(m => m.Status.ToString()),
+                "status" => isDescending ? query.OrderByDescending(m => m.Status.Value) : query.OrderBy(m => m.Status.Value),
                 "progress" => isDescending ? query.OrderByDescending(m => m.Progress) : query.OrderBy(m => m.Progress),
                 "targetdate" => isDescending ? query.OrderByDescending(m => m.TargetDate) : query.OrderBy(m => m.TargetDate),
-                _ => query.OrderByDescending(m => m.Mitigation.CreatedDate ?? DateTime.MinValue) // Default sort
+                _ => query.OrderByDescending(m => m.CreatedDate ?? DateTime.MinValue) // Default sort
             };
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error applying sorting for OrderBy: {OrderBy}", orderBy);
-            return query.OrderByDescending(m => m.Mitigation.CreatedDate ?? DateTime.MinValue); // Fallback to default sort
+            return query.OrderByDescending(m => m.CreatedDate ?? DateTime.MinValue); // Fallback to default sort
         }
     }
     #endregion
@@ -456,7 +462,7 @@ public partial class MitigationListing : ComponentBase
     {
         try
         {
-            var viewModels = new List<MitigationModel>();
+            var viewModels = new List<Mitigation>();
 
             // Group mitigations by hazard code for efficient loading
             var hazardCodes = _allMitigations.Select(m => m.HazardCode).Distinct().ToList();
@@ -499,15 +505,18 @@ public partial class MitigationListing : ComponentBase
             {
                 var hazardCode = mitigation.HazardCode ?? "Unknown";
                 var reportId = "Unknown";
+                Hazard? resolvedHazard = null;
 
                 // Try to get report ID from hazard
                 if (!string.IsNullOrEmpty(mitigation.HazardCode) && 
                     hazardLookup.TryGetValue(mitigation.HazardCode, out var hazard))
                 {
+                    resolvedHazard = hazard;
                     reportId = hazard.ReportCode ?? "Unknown";
                 }
                 else if (_contextHazard is not null)
                 {
+                    resolvedHazard = _contextHazard;
                     reportId = _contextHazard.ReportCode ?? "Unknown";
                 }
                 else if (!string.IsNullOrEmpty(ReportId))
@@ -515,17 +524,10 @@ public partial class MitigationListing : ComponentBase
                     reportId = ReportId;
                 }
 
-                viewModels.Add(new MitigationModel
-                {
-                    Mitigation = mitigation,
-                    Code = mitigation.Code,
-                    HazardCode = hazardCode,
-                    ReportCode = reportId,
-                    Description = mitigation.Description,
-                    Status = mitigation.Status,
-                    Progress = mitigation.Progress,
-                    TargetDate = mitigation.TargetDate
-                });
+                mitigation.HazardCode = hazardCode;
+                mitigation.ReportCode = reportId;
+                mitigation.HazardDescription = resolvedHazard?.Description;
+                viewModels.Add(mitigation);
             }
 
             _allMitigationModels = viewModels;
@@ -534,18 +536,24 @@ public partial class MitigationListing : ComponentBase
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error creating mitigation view models");
-            _allMitigationModels = new List<MitigationModel>();
+            _allMitigationModels = new List<Mitigation>();
         }
     }
-    #endregion
 
-    #region Helper Methods
-    private static Expression<Func<MitigationModel, object>> GetViewModelPropertyExpression(string propertyName)
+    private void ShowDescriptionDialog(string title, string? description)
     {
-        var parameter = Expression.Parameter(typeof(MitigationModel), "x");
-        var property = Expression.Property(parameter, propertyName);
-        var conversion = Expression.Convert(property, typeof(object));
-        return Expression.Lambda<Func<MitigationModel, object>>(conversion, parameter);
+        _selectedDescriptionTitle = title;
+        _selectedDescription = string.IsNullOrWhiteSpace(description)
+            ? "No description available."
+            : description;
+        _showDescriptionModal = true;
+    }
+
+    private void CloseDescriptionDialog()
+    {
+        _showDescriptionModal = false;
+        _selectedDescriptionTitle = string.Empty;
+        _selectedDescription = string.Empty;
     }
     #endregion
 

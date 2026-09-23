@@ -279,23 +279,24 @@ public partial class HazardScoring : ComponentBase
             bool dialogResult = false;
 
             // Show rationale dialog using proper component
-            var rationaleResult = await DialogService.OpenAsync("Score Rationale",
+            var rationaleResult = await DialogService.OpenAsync("",
                 ds => 
                 {
                     return builder =>
                     {
-                        builder.OpenComponent<RationaleInputDialog>(0);
-                        builder.AddAttribute(1, "MemberName", GetMemberName(panel.SMSUserCode));
-                        builder.AddAttribute(2, "HazardCode", Hazard.Code);
-                        builder.AddAttribute(3, "MatrixCode", GetPreviewMatrixCode(panel));
-                        builder.AddAttribute(4, "RationaleInput", rationaleInput);
-                        builder.AddAttribute(5, "RationaleInputChanged", EventCallback.Factory.Create<string>(this, value => 
+                        builder.OpenComponent<ScoreRationale>(0);
+                        builder.AddAttribute(1, "IsReadOnly", false);
+                        builder.AddAttribute(2, "MemberName", GetMemberName(panel.SMSUserCode));
+                        builder.AddAttribute(3, "HazardCode", Hazard.Code);
+                        builder.AddAttribute(4, "MatrixCode", GetPreviewMatrixCode(panel));
+                        builder.AddAttribute(5, "RationaleInput", rationaleInput);
+                        builder.AddAttribute(6, "RationaleInputChanged", EventCallback.Factory.Create<string>(this, value => 
                         {
                             rationaleInput = value;
                             var logText = value?.Length > 50 ? value.Substring(0, 50) + "..." : value ?? "";
                             Logger.LogInformation("Rationale updated: {Rationale}", logText);
                         }));
-                        builder.AddAttribute(6, "OnResult", EventCallback.Factory.Create<bool>(this, result => 
+                        builder.AddAttribute(7, "OnResult", EventCallback.Factory.Create<bool>(this, result => 
                         {
                             dialogResult = result;
                             var rationaleLength = rationaleInput?.Length ?? 0;
@@ -305,7 +306,7 @@ public partial class HazardScoring : ComponentBase
                         builder.CloseComponent();
                     };
                 },
-                new DialogOptions { Width = "750px", Height = "400px", Resizable = true });
+                new DialogOptions { Width = "750px", Height = "370px", Resizable = true });
 
             var hasRationale = !string.IsNullOrWhiteSpace(rationaleInput);
             
@@ -461,15 +462,16 @@ public partial class HazardScoring : ComponentBase
         {
             return builder =>
             {
-                builder.OpenComponent<RationaleViewDialog>(0);
-                builder.AddAttribute(1, "HazardCode", Hazard.Code);
-                builder.AddAttribute(2, "MatrixCode", GetPanelMatrixCode(panel));
-                builder.AddAttribute(3, "Rationale", panel.Rationale);
-                builder.AddAttribute(4, "OnClose", EventCallback.Factory.Create(this, () => ds.Close()));
+                builder.OpenComponent<ScoreRationale>(0);
+                builder.AddAttribute(1, "IsReadOnly", true);
+                builder.AddAttribute(2, "HazardCode", Hazard.Code);
+                builder.AddAttribute(3, "MatrixCode", GetPanelMatrixCode(panel));
+                builder.AddAttribute(4, "Rationale", panel.Rationale);
+                builder.AddAttribute(5, "OnClose", EventCallback.Factory.Create(this, () => ds.Close()));
                 builder.CloseComponent();
             };
         },
-        new DialogOptions { Width = "700px", Height = "450px", Resizable = true });
+        new DialogOptions { Width = "700px", Height = "370px", Resizable = false });
     }
 
     private double? GetAverageScore()

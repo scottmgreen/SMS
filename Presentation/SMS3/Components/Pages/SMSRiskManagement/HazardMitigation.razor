@@ -15,7 +15,26 @@
 <!-- SMS Page Header -->
 <PageHeader Title="@PageTitle"
            Subtitle="@PageSubtitle"
-           Icon="fas fa-shield-alt" />
+            Icon="fas fa-exclamation-triangle" />
+
+<RadzenCard Variant="Variant.Outlined" Style="margin-bottom: 1rem;">
+    <RadzenCard>
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="12">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Gap="0.5rem">
+                    <RadzenButton Text="Hazard Description"
+                                  Icon="description"
+                                  ButtonStyle="ButtonStyle.Base"
+                                  Variant="Variant.Filled"
+                                  Size="ButtonSize.Small"
+                                  Title="Click to view related hazard description"
+                                  Class="description-button"
+                                  Click="@ShowHazardDescriptionDialog" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+    </RadzenCard>
+</RadzenCard>
 
 @if (IsLoading)
 {
@@ -32,28 +51,6 @@ else
         <RadzenColumn Size="8">
             <RadzenCard>
                 <RadzenStack Gap="1rem" Class="rz-p-3">
-                    
-@if (_isEditMode && CurrentMitigation is not null)
-                    {
-                        <!-- Edit Mode Header -->
-                        <RadzenAlert Size="AlertSize.Small" Variant="Variant.Flat" AlertStyle="AlertStyle.Info">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem">
-                                <RadzenIcon Icon="edit" />
-                                <RadzenStack Gap="0.25rem">
-                                    <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">
-                                        <strong>Editing Mitigation:</strong> @CurrentMitigation.Code
-                                    </RadzenText>
-                                    @if (!string.IsNullOrEmpty(CurrentMitigation.HazardCode))
-                                    {
-                                        <RadzenText TextStyle="TextStyle.Caption" Style="margin: 0;">
-                                            <span>Hazard: @CurrentMitigation.HazardCode</span>
-                                        </RadzenText>
-                                    }
-                                </RadzenStack>
-                            </RadzenStack>
-                        </RadzenAlert>
-                    }
-
                     <RadzenTemplateForm Data="@CurrentMitigation" Submit="@HandleFormSubmit" TItem="SMS_Domain.Entities.Mitigation">
                         
                         <!-- Basic Information Section -->
@@ -219,7 +216,7 @@ else
 
                         <!-- Action Buttons -->
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" Gap="1rem">
-                            <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Secondary"
+                            <RadzenButton Text="Cancel" Icon="cancel" ButtonStyle="ButtonStyle.Danger"
                                         Click="@CancelAndReturn" />
                             
                             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
@@ -242,109 +239,111 @@ else
 
         <!-- Guidance Panel Column (4/12) -->
         <RadzenColumn Size="4">
-            <Guidance Title="Mitigation Guidelines" Icon="shield">
-                
-                <!-- Mitigation Types Guidance -->
-                <RadzenStack Gap="1rem">
-                    <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-primary); margin: 0;">Mitigation Types:</RadzenText>
-                        <RadzenStack Gap="0.25rem">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                <RadzenIcon Icon="block" Style="color: var(--rz-danger); font-size: 0.9rem;" />
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Eliminate:</strong> Remove the hazard completely</RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                <RadzenIcon Icon="engineering" Style="color: var(--rz-warning); font-size: 0.9rem;" />
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Engineering:</strong> Physical controls (barriers, alarms)</RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                <RadzenIcon Icon="policy" Style="color: var(--rz-info); font-size: 0.9rem;" />
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>Administrative:</strong> Procedures, training, signs</RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                <RadzenIcon Icon="security" Style="color: var(--rz-success); font-size: 0.9rem;" />
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;"><strong>PPE:</strong> Personal protective equipment</RadzenText>
-                            </RadzenStack>
-                        </RadzenStack>
-                    </RadzenStack>
-
-                    <!-- Priority Guidelines -->
-                    <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-primary); margin: 0;">Priority Levels:</RadzenText>
-                        <RadzenStack Gap="0.25rem">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                <RadzenBadge Text="Critical" BadgeStyle="BadgeStyle.Danger" />
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Immediate action required</RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                <RadzenBadge Text="High" BadgeStyle="BadgeStyle.Warning" />
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Within 30 days</RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                <RadzenBadge Text="Medium" BadgeStyle="BadgeStyle.Info" />
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Within 90 days</RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                <RadzenBadge Text="Low" BadgeStyle="BadgeStyle.Success" />
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Within 1 year</RadzenText>
-                            </RadzenStack>
-                        </RadzenStack>
-                    </RadzenStack>
-
-                    <!-- Best Practices -->
-                    <RadzenStack Gap="0.5rem">
-                        <RadzenText TextStyle="TextStyle.Subtitle1" Style="color: var(--rz-primary); margin: 0;">Best Practices:</RadzenText>
-                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Follow the hierarchy of controls:</RadzenText>
-                        <RadzenStack Gap="0.25rem">
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text-secondary-color);">1.</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Eliminate hazards first</RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text-secondary-color);">2.</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Use engineering controls</RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text-secondary-color);">3.</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Implement administrative controls</RadzenText>
-                            </RadzenStack>
-                            <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; color: var(--rz-text-secondary-color);">4.</RadzenText>
-                                <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">Use PPE as last resort</RadzenText>
-                            </RadzenStack>
-                        </RadzenStack>
-                    </RadzenStack>
-
-                    <!-- Implementation Tips -->
-                    <RadzenAlert AlertStyle="AlertStyle.Info" Size="AlertSize.Small" Variant="Variant.Flat">
-                        <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center">
-                            <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Implementation Tips:</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; text-align: center;">
-                                • Set realistic target dates<br/>
-                                • Assign clear responsibilities<br/>
-                                • Define measurable outcomes<br/>
-                                • Monitor progress regularly
-                            </RadzenText>
-                        </RadzenStack>
-                    </RadzenAlert>
-
-                    <!-- Contact Info -->
-                    <RadzenAlert AlertStyle="AlertStyle.Base" Size="AlertSize.Small" Variant="Variant.Flat">
-                        <RadzenStack Gap="0.5rem" AlignItems="AlignItems.Center">
-                            <RadzenText TextStyle="TextStyle.Subtitle2" Style="margin: 0;">Need Help?</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; text-align: center;">SMS Team: (503) 555-0100</RadzenText>
-                            <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0; text-align: center;">sms@flypdx.com</RadzenText>
-                        </RadzenStack>
-                    </RadzenAlert>
-
-                </RadzenStack>
-
-            </Guidance>
+            <MitigationGuidance />
         </RadzenColumn>
     </RadzenRow>
 }
 
+@if (_showHazardDescriptionModal)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-md">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-exclamation-triangle"></i> Hazard Description - @_selectedHazardCode
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Text"
+                                      Icon="close"
+                                      Size="ButtonSize.Small"
+                                      Click="@CloseHazardDescriptionModal" />
+                    </div>
+                </div>
+                <div class="sms-modal-body">
+                    <RadzenCard Variant="Variant.Outlined">
+                        <div class="p-3">
+                            <div style="line-height: 1.6; white-space: normal;">
+                                @((MarkupString)_selectedHazardDescription)
+                            </div>
+                        </div>
+                    </RadzenCard>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end">
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                      Text="Close"
+                                      Icon="close"
+                                      Click="@CloseHazardDescriptionModal"
+                                      Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
 <style>
+    .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1050;
+        padding: 1rem;
+    }
+
+    .sms-modal-dialog {
+        position: relative;
+        margin: 0 auto;
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+    }
+
+    .sms-modal-md {
+        max-width: 700px;
+        width: 100%;
+    }
+
+    .sms-modal-content {
+        background: white;
+        border-radius: 0.5rem;
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.25);
+    }
+
+    .sms-modal-header {
+        padding: 1rem 1.5rem;
+        border-bottom: 1px solid #e9ecef;
+        border-radius: 0.5rem 0.5rem 0 0;
+    }
+
+    .sms-header-primary {
+        background-color: #212e61;
+        color: white;
+    }
+
+    .sms-modal-title {
+        margin: 0;
+        font-weight: 600;
+    }
+
+    .sms-modal-body {
+        max-height: calc(100vh - 200px);
+        overflow-y: auto;
+    }
+
+    .sms-modal-footer {
+        padding: 1rem 1.5rem;
+        border-top: 1px solid #e9ecef;
+        border-radius: 0 0 0.5rem 0.5rem;
+    }
+
     .text-muted {
         color: var(--rz-text-disabled-color);
         font-style: italic;

@@ -34,6 +34,69 @@ public class CreateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHan
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
+    public async Task<Result<HazardFile>> HandleAsync(CreateHazardFileCommand request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (request?.HazardFile is null)
+            {
+                _logger.LogApplicationError("CreateHazardFileCommand received with null request or hazard file", ApplicationEventIds.Error, null);
+                return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NullOrEmpty);
+            }
+
+            _logger.LogApplicationInformation(" Processing CreateHazardFileCommand for Code: {Code}", request.HazardFile.Code);
+
+            var shouldPrepareExternalStorage =
+                !string.IsNullOrWhiteSpace(request.HazardFile.HazardCode)
+                && request.HazardFile.FileData is { Length: > 0 };
+
+            if (shouldPrepareExternalStorage)
+            {
+                var preparationResult = await _externalStorageService.PrepareHazardFileForStorageAsync(
+                    request.HazardFile,
+                    request.HazardFile.FileData!,
+                    cancellationToken);
+
+                if (preparationResult.IsFailure || preparationResult.Value is null)
+                {
+                    _logger.LogApplicationError("Failed to prepare hazard file storage for Code: {Code}. Error: {Error}",
+                        request.HazardFile.Code,
+                        preparationResult.Error?.Message);
+
+                    return Result<HazardFile>.Failure<HazardFile>(
+                        preparationResult.Error ?? DomainErrors.HazardFileError.CreateFailed);
+                }
+
+                request.HazardFile = preparationResult.Value;
+            }
+
+            var result = await _hazardFileService.CreateHazardFileAsync(request.HazardFile, cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                _logger.LogApplicationInformation(" Successfully created HazardFile with ID: {Id}, Code: {Code}",
+                    result.Value?.Id, result.Value?.Code);
+            }
+            else
+            {
+                _logger.LogApplicationError("Failed to create HazardFile with Code: {Code}. Error: {Error}",
+                    ApplicationEventIds.Error, null);
+            }
+
+            return result;
+        }
+        catch (OperationCanceledException)
+        {
+            _logger.LogApplicationWarning("CreateHazardFileCommand operation was cancelled");
+            throw;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError("Unexpected error occurred while creating HazardFile", ApplicationEventIds.Error, ex);
+            return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.CreateFailed);
+        }
+    }
+}
 public class DeactivateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeactivateHazardFileCommand, Result<bool>>
 {
     private readonly IHazardFileService _hazardFileService;
@@ -138,71 +201,6 @@ public class ReactivateHazardFileCommandHandler : BaseCommandBundle, IBaseReques
         }
     }
 }
-
-    public async Task<Result<HazardFile>> HandleAsync(CreateHazardFileCommand request, CancellationToken cancellationToken)
-    {
-        try
-        {
-            if (request?.HazardFile is null)
-            {
-                _logger.LogApplicationError("CreateHazardFileCommand received with null request or hazard file", ApplicationEventIds.Error, null);
-                return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.NullOrEmpty);
-            }
-
-            _logger.LogApplicationInformation(" Processing CreateHazardFileCommand for Code: {Code}", request.HazardFile.Code);
-
-            var shouldPrepareExternalStorage =
-                !string.IsNullOrWhiteSpace(request.HazardFile.HazardCode)
-                && request.HazardFile.FileData is { Length: > 0 };
-
-            if (shouldPrepareExternalStorage)
-            {
-                var preparationResult = await _externalStorageService.PrepareHazardFileForStorageAsync(
-                    request.HazardFile,
-                    request.HazardFile.FileData!,
-                    cancellationToken);
-
-                if (preparationResult.IsFailure || preparationResult.Value is null)
-                {
-                    _logger.LogApplicationError("Failed to prepare hazard file storage for Code: {Code}. Error: {Error}",
-                        request.HazardFile.Code,
-                        preparationResult.Error?.Message);
-
-                    return Result<HazardFile>.Failure<HazardFile>(
-                        preparationResult.Error ?? DomainErrors.HazardFileError.CreateFailed);
-                }
-
-                request.HazardFile = preparationResult.Value;
-            }
-
-            var result = await _hazardFileService.CreateHazardFileAsync(request.HazardFile, cancellationToken);
-
-            if (result.IsSuccess)
-            {
-                _logger.LogApplicationInformation(" Successfully created HazardFile with ID: {Id}, Code: {Code}",
-                    result.Value?.Id, result.Value?.Code);
-            }
-            else
-            {
-                _logger.LogApplicationError("Failed to create HazardFile with Code: {Code}. Error: {Error}",
-                    ApplicationEventIds.Error, null);
-            }
-
-            return result;
-        }
-        catch (OperationCanceledException)
-        {
-            _logger.LogApplicationWarning("CreateHazardFileCommand operation was cancelled");
-            throw;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationError("Unexpected error occurred while creating HazardFile", ApplicationEventIds.Error, ex);
-            return Result<HazardFile>.Failure<HazardFile>(DomainErrors.HazardFileError.CreateFailed);
-        }
-    }
-}
-
 public class UpdateHazardFileCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateHazardFileCommand, Result<HazardFile>>
 {
     private readonly IHazardFileService _hazardFileService;

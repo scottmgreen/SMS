@@ -10,6 +10,7 @@
 
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using System.Text.Json;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Queries;
@@ -68,6 +69,11 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
     {
         try
         {
+            if (await ShouldSkipHazardSubmissionStatusEscalationAsync(integrationEvent, cancellationToken))
+            {
+                return Result.Success();
+            }
+
             await ResolveGroupContactRecipientsAsync(integrationEvent, cancellationToken);
 
             _logger.LogApplicationInformation("[EMAIL HANDLER] Processing email notification: '{Subject}' to {RecipientCount} recipients (Priority: {Priority}) - UseSimulation: {UseSimulation}",
@@ -111,6 +117,99 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
             _logger.LogApplicationError(ex, "[EMAIL HANDLER] Failed to process email notification: '{Subject}'", integrationEvent.Subject);
             return Result.Failure(new Error("EMAIL_NOTIFICATION_FAILED", $"Email notification failed: {ex.Message}"));
         }
+    }
+
+    private async Task<bool> ShouldSkipHazardSubmissionStatusEscalationAsync(EmailNotificationEvent integrationEvent, CancellationToken cancellationToken)
+    {
+        if (!string.Equals(integrationEvent.WorkflowType, "HazardSubmissionStatusEscalation", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
+        var dueUtc = TryGetMetadataDateTime(integrationEvent.EmailMetadata, "StatusCheckDueUtc");
+        if (dueUtc.HasValue && DateTime.UtcNow < dueUtc.Value)
+        {
+            _logger.LogApplicationInformation("[EMAIL HANDLER] Skipping hazard status escalation email for report {ReportCode}; SLA checkpoint not reached yet ({DueUtc:O}).",
+                ResolveReportCode(integrationEvent),
+                dueUtc.Value);
+            return true;
+        }
+
+        var reportCode = ResolveReportCode(integrationEvent);
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            _logger.LogApplicationWarning("[EMAIL HANDLER] Hazard status escalation email has no report code; proceeding with delivery.");
+            return false;
+        }
+
+        var reportResult = await _mediator.SendAsync(new GetReportByCodeQuery(new ReportID(reportCode.Trim())), cancellationToken);
+        if (reportResult.IsFailure || reportResult.Value is null)
+        {
+            _logger.LogApplicationWarning("[EMAIL HANDLER] Could not resolve report {ReportCode} for hazard status escalation email; proceeding with delivery.", reportCode);
+            return false;
+        }
+
+        if (string.Equals(reportResult.Value.Status, ReportStatus.ReadyForProcessing.Value, StringComparison.OrdinalIgnoreCase))
+        {
+            _logger.LogApplicationInformation("[EMAIL HANDLER] Suppressing hazard status escalation email for report {ReportCode}; status already {Status}.",
+                reportCode,
+                ReportStatus.ReadyForProcessing.Value);
+            return true;
+        }
+
+        return false;
+    }
+
+    private static string ResolveReportCode(EmailNotificationEvent integrationEvent)
+    {
+        if (!string.IsNullOrWhiteSpace(integrationEvent.RelatedEntityId) &&
+            string.Equals(integrationEvent.RelatedEntityType, "Report", StringComparison.OrdinalIgnoreCase))
+        {
+            return integrationEvent.RelatedEntityId.Trim();
+        }
+
+        if (!string.IsNullOrWhiteSpace(integrationEvent.ReportId))
+        {
+            return integrationEvent.ReportId.Trim();
+        }
+
+        return TryGetMetadataString(integrationEvent.EmailMetadata, "ReportCode") ?? string.Empty;
+    }
+
+    private static DateTime? TryGetMetadataDateTime(Dictionary<string, object> metadata, string key)
+    {
+        var raw = TryGetMetadataString(metadata, key);
+        return DateTime.TryParse(raw, out var parsed)
+            ? parsed.ToUniversalTime()
+            : null;
+    }
+
+    private static string? TryGetMetadataString(Dictionary<string, object> metadata, string key)
+    {
+        if (metadata is null || !metadata.TryGetValue(key, out var value) || value is null)
+        {
+            return null;
+        }
+
+        if (value is string text)
+        {
+            return string.IsNullOrWhiteSpace(text) ? null : text.Trim();
+        }
+
+        if (value is JsonElement element)
+        {
+            if (element.ValueKind == JsonValueKind.String)
+            {
+                var elementText = element.GetString();
+                return string.IsNullOrWhiteSpace(elementText) ? null : elementText.Trim();
+            }
+
+            var raw = element.ToString();
+            return string.IsNullOrWhiteSpace(raw) ? null : raw.Trim();
+        }
+
+        var converted = value.ToString();
+        return string.IsNullOrWhiteSpace(converted) ? null : converted.Trim();
     }
 
     // Helper methods...

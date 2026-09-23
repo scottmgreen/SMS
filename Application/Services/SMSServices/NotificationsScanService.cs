@@ -2,6 +2,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
 using SMS_Application.Common;
+using SMS_Application.Queries;
+using SMS_Domain.Common;
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Events;
@@ -9,22 +11,25 @@ using SMS_Domain.ValueObjects;
 
 namespace SMS_Application.Services;
 
-public sealed class MitigationTargetDateNotificationService : IMitigationTargetDateNotificationService
+public sealed class NotificationsScanService : INotificationsScanService
 {
     private readonly IMitigationService _mitigationService;
+    private readonly IBaseMediator _mediator;
     private readonly IBaseEventBus _eventBus;
     private readonly IEventQueueService _eventQueueService;
-    private readonly ILogger<MitigationTargetDateNotificationService> _logger;
+    private readonly ILogger<NotificationsScanService> _logger;
     private readonly IConfiguration _configuration;
 
-    public MitigationTargetDateNotificationService(
+    public NotificationsScanService(
         IMitigationService mitigationService,
+        IBaseMediator mediator,
         IBaseEventBus eventBus,
         IEventQueueService eventQueueService,
-        ILogger<MitigationTargetDateNotificationService> logger,
+        ILogger<NotificationsScanService> logger,
         IConfiguration configuration)
     {
         _mitigationService = mitigationService ?? throw new ArgumentNullException(nameof(mitigationService));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _eventQueueService = eventQueueService ?? throw new ArgumentNullException(nameof(eventQueueService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -33,7 +38,7 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
 
     public async Task<Result<int>> ScanAllMitigationsAsync(string triggeredBy, CancellationToken cancellationToken = default)
     {
-        var recipientGroups = GetRecipientGroups();
+        var recipientGroups = GetMitigationRecipientGroups();
         if (!recipientGroups.Any())
         {
             _logger.LogApplicationInformation("Mitigation target-date scan skipped because no recipient groups are configured.");
@@ -66,7 +71,7 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
 
         foreach (var mitigation in mitigationResult.Value)
         {
-            if (mitigation.TargetDate is null || IsMutedStatus(mitigation.Status?.Value))
+            if (mitigation.TargetDate is null || IsMutedMitigationStatus(mitigation.Status?.Value))
             {
                 continue;
             }
@@ -92,7 +97,7 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
                 continue;
             }
 
-            var emailEvent = BuildEmailEvent(mitigation, mitigation.HazardCode ?? string.Empty, recipientGroups, timingState, daysInAdvance, hoursBefore);
+            var emailEvent = BuildMitigationEmailEvent(mitigation, mitigation.HazardCode ?? string.Empty, recipientGroups, timingState, daysInAdvance, hoursBefore);
             var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Manual, cancellationToken).ConfigureAwait(false);
             if (publishResult.IsSuccess)
             {
@@ -118,13 +123,13 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
             return cancelResult;
         }
 
-        var isCompleted = mitigation.Progress >= 100 || IsMutedStatus(mitigation.Status?.Value);
+        var isCompleted = mitigation.Progress >= 100 || IsMutedMitigationStatus(mitigation.Status?.Value);
         if (isCompleted || mitigation.TargetDate is null)
         {
             return Result.Success();
         }
 
-        var recipientGroups = GetRecipientGroups();
+        var recipientGroups = GetMitigationRecipientGroups();
         if (!recipientGroups.Any())
         {
             return Result.Success();
@@ -158,9 +163,101 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
             return Result.Success();
         }
 
-        var emailEvent = BuildEmailEvent(mitigation, reportId, recipientGroups, timingState, daysInAdvance, hoursBefore);
-        var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Manual, cancellationToken).ConfigureAwait(false);
-        return publishResult;
+        var emailEvent = BuildMitigationEmailEvent(mitigation, reportId, recipientGroups, timingState, daysInAdvance, hoursBefore);
+        return await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Manual, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async Task<Result<int>> ScanReportsNeedingStatusEscalationAsync(string triggeredBy, CancellationToken cancellationToken = default)
+    {
+        var enabled = _configuration.GetValue<bool?>("HazardReportNotifications:EnableStatusEscalationNotification") ?? true;
+        if (!enabled)
+        {
+            _logger.LogApplicationInformation("Report status escalation scan skipped because feature is disabled.");
+            return Result.Success(0);
+        }
+
+        var recipientGroups = GetReportRecipientGroups();
+        if (!recipientGroups.Any())
+        {
+            _logger.LogApplicationInformation("Report status escalation scan skipped because no recipient groups are configured.");
+            return Result.Success(0);
+        }
+
+        var reportsResult = await _mediator.SendAsync(new GetAllReportsQuery(), cancellationToken).ConfigureAwait(false);
+        if (reportsResult.IsFailure || reportsResult.Value is null)
+        {
+            return Result.Failure<int>(reportsResult.Error ?? new Error("REPORT_STATUS_ESCALATION_LOAD_FAILED", "Failed to load reports for escalation scan."));
+        }
+
+        var pendingEventsResult = await _eventQueueService.GetQueuedEventsAsync(
+            status: QueuedEventStatus.Pending,
+            eventType: EventCategory.IntegrationEvent,
+            maxResults: 5000).ConfigureAwait(false);
+
+        if (pendingEventsResult.IsFailure)
+        {
+            return Result.Failure<int>(pendingEventsResult.Error ?? new Error("REPORT_STATUS_ESCALATION_QUEUE_LOAD_FAILED", "Failed to load pending queue events."));
+        }
+
+        var pendingEvents = pendingEventsResult.Value?.ToList() ?? new List<QueuedEvent>();
+        var thresholdHours = _configuration.GetValue<int?>("HazardReportNotifications:StatusEscalationThresholdHours") ?? 48;
+        if (thresholdHours <= 0)
+        {
+            thresholdHours = 48;
+        }
+
+        var executionMode = ResolveReportExecutionMode();
+        var nowUtc = DateTime.UtcNow;
+        var queuedCount = 0;
+
+        foreach (var report in reportsResult.Value)
+        {
+            if (!IsNeedsValidation(report?.Status) || string.IsNullOrWhiteSpace(report?.Code))
+            {
+                continue;
+            }
+
+            var createdUtc = (report.CreatedDate ?? report.SubmittedDate).ToUniversalTime();
+            var dueUtc = createdUtc.AddHours(thresholdHours);
+            if (dueUtc > nowUtc)
+            {
+                continue;
+            }
+
+            var reportCode = report.Code.Trim();
+            var alreadyPending = pendingEvents.Any(qe => IsPendingReportStatusEscalation(qe.EventData, reportCode));
+            if (alreadyPending)
+            {
+                continue;
+            }
+
+            var hazardResult = await _mediator.SendAsync(
+                new GetHazardsByReportCodeQuery(new ReportID(reportCode)),
+                cancellationToken).ConfigureAwait(false);
+
+            var primaryHazard = hazardResult.IsSuccess && hazardResult.Value is not null
+                ? hazardResult.Value.FirstOrDefault(h => h.IsInitialHazard) ?? hazardResult.Value.FirstOrDefault()
+                : null;
+
+            var escalationEvent = BuildReportEscalationEmailEvent(
+                report,
+                primaryHazard,
+                recipientGroups,
+                thresholdHours,
+                dueUtc);
+
+            var publishResult = await _eventBus.PublishIntegrationEventAsync(escalationEvent, executionMode, cancellationToken).ConfigureAwait(false);
+            if (!publishResult.IsSuccess)
+            {
+                _logger.LogApplicationWarning("Failed publishing report status escalation notification for report {ReportCode}: {Error}", reportCode, publishResult.Error?.Message);
+                continue;
+            }
+
+            pendingEvents.Add(QueuedEvent.FromIntegrationEvent(escalationEvent, triggeredBy));
+            queuedCount++;
+        }
+
+        return Result.Success(queuedCount);
     }
 
     private async Task<Result> CancelPendingMitigationTargetDateNotificationsAsync(string mitigationCode, CancellationToken cancellationToken)
@@ -196,7 +293,7 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
         return Result.Success();
     }
 
-    private List<string> GetRecipientGroups()
+    private List<string> GetMitigationRecipientGroups()
     {
         return _configuration
             .GetSection("MitigationTargetDateNotifications:RecipientGroups")
@@ -213,16 +310,39 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
             ?? new List<string>();
     }
 
+    private List<string> GetReportRecipientGroups()
+    {
+        return _configuration
+            .GetSection("HazardReportNotifications:RecipientGroups")
+            .Get<string[]>()?
+            .Where(x => !string.IsNullOrWhiteSpace(x))
+            .Select(x => x.Trim())
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList()
+            ?? new List<string>();
+    }
+
+    private EventExecutionMode ResolveReportExecutionMode()
+    {
+        var configured = _configuration.GetValue<string>("HazardReportNotifications:StatusEscalationExecutionMode");
+        if (Enum.TryParse<EventExecutionMode>(configured, true, out var parsed))
+        {
+            return parsed;
+        }
+
+        return EventExecutionMode.Manual;
+    }
+
     private static string GetMitigationCode(Mitigation mitigation)
         => (mitigation.Code ?? mitigation.Id.Value ?? string.Empty).Trim();
 
-    private static bool IsMutedStatus(string? statusValue)
+    private static bool IsMutedMitigationStatus(string? statusValue)
         => string.Equals(statusValue, MitigationStatus.Complete.Value, StringComparison.OrdinalIgnoreCase)
             || string.Equals(statusValue, MitigationStatus.HazardEliminated.Value, StringComparison.OrdinalIgnoreCase);
 
     private static MitigationTimingState GetMitigationTimingState(DateTime targetDate, string? statusValue, int daysInAdvance, int hoursBefore)
     {
-        if (IsMutedStatus(statusValue))
+        if (IsMutedMitigationStatus(statusValue))
         {
             return MitigationTimingState.None;
         }
@@ -259,7 +379,16 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
             && eventData.Contains("MitigationTargetDateNotification", StringComparison.OrdinalIgnoreCase)
             && eventData.Contains(mitigationCode, StringComparison.OrdinalIgnoreCase);
 
-    private static string BuildMitigationTargetDateAlertSubject(string mitigationCode, MitigationTimingState timingState)
+    private static bool IsNeedsValidation(string? status)
+        => string.Equals(status, ReportStatus.NeedsValidation.Value, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status, ReportStatus.NeedsValidation.Name, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsPendingReportStatusEscalation(string? eventData, string reportCode)
+        => !string.IsNullOrWhiteSpace(eventData)
+           && eventData.Contains("HazardSubmissionStatusEscalation", StringComparison.OrdinalIgnoreCase)
+           && eventData.Contains(reportCode, StringComparison.OrdinalIgnoreCase);
+
+    private static string BuildMitigationAlertSubject(string mitigationCode, MitigationTimingState timingState)
     {
         var title = timingState switch
         {
@@ -310,7 +439,7 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
             footerHtml: "This notification was generated by SMS3 mitigation target-date monitoring.");
     }
 
-    private static EmailNotificationEvent BuildEmailEvent(
+    private static EmailNotificationEvent BuildMitigationEmailEvent(
         Mitigation mitigation,
         string reportId,
         List<string> recipientGroups,
@@ -323,7 +452,7 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
 
         return new EmailNotificationEvent(
             toRecipients: recipientGroups,
-            subject: BuildMitigationTargetDateAlertSubject(mitigationCode, timingState),
+            subject: BuildMitigationAlertSubject(mitigationCode, timingState),
             body: BuildMitigationTargetDateNotificationEmailHtml(mitigation, timingState, daysInAdvance, hoursBefore),
             isHtmlContent: true,
             priority: timingState == MitigationTimingState.Overdue ? EmailPriority.High : EmailPriority.Normal,
@@ -337,6 +466,63 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
                 { "HazardCode", mitigation.HazardCode ?? string.Empty },
                 { "TargetDate", mitigation.TargetDate?.ToString("O") ?? string.Empty },
                 { "TimingAlert", alertKey }
+            });
+    }
+
+    private static EmailNotificationEvent BuildReportEscalationEmailEvent(
+        Report report,
+        Hazard? hazard,
+        List<string> recipientGroups,
+        int thresholdHours,
+        DateTime dueUtc)
+    {
+        var reportCode = report.Code?.Trim() ?? string.Empty;
+        var hazardCode = hazard?.Code ?? string.Empty;
+        var hazardDescription = hazard?.Description ?? report.Description ?? string.Empty;
+
+        var body = SMSEmailTemplateBuilder.BuildStandardEmail(
+            title: "Hazard Report Inaction Notification",
+            introHtml: $"Report remains in <strong>{ReportStatus.NeedsValidation.Value}</strong> after {thresholdHours} hour(s).",
+            summaryFields:
+            [
+                new SMSEmailField { Label = "Report ID", Value = reportCode },
+                new SMSEmailField { Label = "Hazard ID", Value = hazardCode },
+                new SMSEmailField { Label = "Current Status", Value = report.Status ?? string.Empty },
+                new SMSEmailField { Label = "Expected Status", Value = ReportStatus.ReadyForProcessing.Value }
+            ],
+            sections:
+            [
+                new SMSEmailSection
+                {
+                    Title = "Status Escalation Details",
+                    Fields =
+                    [
+                        new SMSEmailField { Label = "Report Inaction Threshold", Value = $"{thresholdHours} hour(s)" },
+                        new SMSEmailField { Label = "Report Inaction Checkpoint (UTC)", Value = dueUtc.ToString("yyyy-MM-dd HH:mm:ss") },
+                        new SMSEmailField { Label = "Hazard Description", Value = hazardDescription, IsFullWidth = true }
+                    ]
+                }
+            ],
+            footerHtml: "This escalation was generated by report status monitoring.");
+
+        return new EmailNotificationEvent(
+            toRecipients: recipientGroups,
+            subject: $"SMS Hazard Report Inaction Notification - {reportCode} / {hazardCode}",
+            body: body,
+            isHtmlContent: true,
+            priority: EmailPriority.High,
+            reportId: reportCode,
+            workflowType: "HazardSubmissionStatusEscalation",
+            relatedEntityType: "Report",
+            relatedEntityId: reportCode,
+            emailMetadata: new Dictionary<string, object>
+            {
+                { "ReportCode", reportCode },
+                { "HazardCode", hazardCode },
+                { "ExpectedStatus", ReportStatus.ReadyForProcessing.Value },
+                { "CurrentStatus", report.Status ?? string.Empty },
+                { "StatusEscalationThresholdHours", thresholdHours },
+                { "StatusCheckDueUtc", dueUtc.ToString("O") }
             });
     }
 

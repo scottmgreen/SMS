@@ -14,7 +14,7 @@ public partial class MitigationCalendar : ComponentBase
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private IConfiguration _configuration { get; set; } = default!;
-    [Inject] private IMitigationTargetDateNotificationService _mitigationTargetDateNotificationService { get; set; } = default!;
+    [Inject] private INotificationsScanService _notificationsScanService { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -603,7 +603,7 @@ public partial class MitigationCalendar : ComponentBase
 
     private async Task CheckMitigationTargetDateNotificationsAsync()
     {
-        var result = await _mitigationTargetDateNotificationService
+        var result = await _notificationsScanService
             .ScanAllMitigationsAsync("MitigationCalendar")
             .ConfigureAwait(false);
 

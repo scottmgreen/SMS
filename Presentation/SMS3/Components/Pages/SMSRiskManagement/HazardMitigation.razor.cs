@@ -30,12 +30,25 @@ public partial class HazardMitigation : ComponentBase
     private bool IsLoading { get; set; } = true;
     private bool IsSaving { get; set; } = false;
     private bool _isEditMode => !string.IsNullOrWhiteSpace(MitigationCode);
+    private bool _showHazardDescriptionModal = false;
+    private string _selectedHazardDescription = string.Empty;
+    private string _selectedHazardCode = string.Empty;
 
     // Use the Domain Entity directly - NO MODELS!
     public Mitigation CurrentMitigation { get; set; } = new(new MitigationID(Guid.NewGuid().ToString()));
+    public Hazard? RelatedHazard { get; set; }
 
-    public string PageTitle => _isEditMode ? "Edit Hazard Mitigation" : "Create Hazard Mitigation";
-    public string PageSubtitle => _isEditMode ? $"Modify hazard mitigation strategy {MitigationCode}" : "Create new hazard mitigation strategy";
+    private string DisplayHazardCode =>
+        !string.IsNullOrWhiteSpace(CurrentMitigation?.HazardCode)
+            ? CurrentMitigation.HazardCode
+            : !string.IsNullOrWhiteSpace(RelatedHazard?.Code)
+                ? RelatedHazard.Code
+                : _selectedHazardCode;
+
+    public string PageTitle => _isEditMode
+        ? $"Edit Hazard Mitigation - {DisplayHazardCode} - {MitigationCode}"
+        : "Create Hazard Mitigation";
+    public string PageSubtitle => _isEditMode ? "Modify existing hazard mitigation information" : "Create new hazard mitigation strategy";
     #endregion
 
     #region Dropdown Options
@@ -128,6 +141,8 @@ public partial class HazardMitigation : ComponentBase
             {
                 CurrentMitigation = mitigationResult.Value;
                 _selectedMitigationStatus = CurrentMitigation.Status?.Value;
+                _selectedHazardCode = CurrentMitigation.HazardCode ?? string.Empty;
+                await LoadRelatedHazardAsync(CurrentMitigation.HazardCode);
                 _logger.LogInformation("Successfully loaded existing hazard mitigation: {Code}", MitigationCode);
             }
             else
@@ -143,6 +158,33 @@ public partial class HazardMitigation : ComponentBase
             _logger.LogError(ex, "Error loading existing hazard mitigation: {Code}", MitigationCode);
             await _notificationHelper.ShowErrorAsync("Error loading existing hazard mitigation");
             _navigation.NavigateToSecure("/SMSListings/Mitigations");
+        }
+    }
+
+    private async Task LoadRelatedHazardAsync(string? hazardCode)
+    {
+        RelatedHazard = null;
+
+        if (string.IsNullOrWhiteSpace(hazardCode))
+        {
+            return;
+        }
+
+        _selectedHazardCode = hazardCode;
+
+        try
+        {
+            var hazardQuery = new GetHazardByCodeQuery(new HazardID(hazardCode));
+            var hazardResult = await _mediator.SendAsync(hazardQuery, CancellationToken.None);
+
+            if (hazardResult.IsSuccess)
+            {
+                RelatedHazard = hazardResult.Value;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Unable to load related hazard {HazardCode} for mitigation {MitigationCode}", hazardCode, MitigationCode);
         }
     }
     #endregion
@@ -288,6 +330,26 @@ public partial class HazardMitigation : ComponentBase
     public string GetSaveButtonIcon()
     {
         return _isEditMode ? "save" : "add";
+    }
+
+    private void ShowHazardDescriptionDialog()
+    {
+        _selectedHazardCode = string.IsNullOrWhiteSpace(CurrentMitigation.HazardCode)
+            ? "Unknown"
+            : CurrentMitigation.HazardCode;
+
+        _selectedHazardDescription = string.IsNullOrWhiteSpace(RelatedHazard?.Description)
+            ? "No hazard description available."
+            : RelatedHazard.Description;
+
+        _showHazardDescriptionModal = true;
+    }
+
+    private void CloseHazardDescriptionModal()
+    {
+        _showHazardDescriptionModal = false;
+        _selectedHazardDescription = string.Empty;
+        _selectedHazardCode = string.Empty;
     }
     #endregion
 

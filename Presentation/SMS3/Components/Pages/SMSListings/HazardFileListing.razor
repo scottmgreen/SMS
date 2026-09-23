@@ -134,7 +134,7 @@
                                   Tooltip="Edit File Metadata"
                                   Style="margin-right: 5px;" />
                 }
-                @if (_currentUserService.CanUpdate("SMS_Listings_HazardFiles"))
+                @if (_currentUserService.CanDelete("SMS_Listings_HazardFiles"))
                 {
                     <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
                                   Click="@(() => DeleteFile(file))"

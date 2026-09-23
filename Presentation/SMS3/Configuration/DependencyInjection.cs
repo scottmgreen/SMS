@@ -103,6 +103,7 @@ public static class DependencyInjection
     {
         // Notification system with feature management integration
         services.AddScoped<INotificationHelper, NotificationHelper>();
+        services.AddScoped<INotificationBellRefreshService, NotificationBellRefreshService>();
 
         // EventBus UI Event Handlers
         services.AddScoped<UIEventHandler>();

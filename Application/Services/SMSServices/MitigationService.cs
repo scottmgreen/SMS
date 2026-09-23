@@ -155,9 +155,7 @@ public sealed class MitigationService : IMitigationService
 
                 if (mitigation.Progress >= 100)
                 {
-                    mitigation.Status = mitigation.Status == MitigationStatus.MonitoringHazard
-                        ? MitigationStatus.MonitoringHazard
-                        : MitigationStatus.Complete;
+                    mitigation.Status = MitigationStatus.MonitoringHazard;
                 }
                 else if (isOverdue && mitigation.Progress < 100)
                 {

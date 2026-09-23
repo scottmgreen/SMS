@@ -80,20 +80,20 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
     private readonly IMitigationService _mitigationService;
     private readonly IBaseMediator _mediator;
     private readonly IBaseEventBus _eventBus;
-    private readonly IMitigationTargetDateNotificationService _mitigationTargetDateNotificationService;
+    private readonly INotificationsScanService _notificationsScanService;
     private readonly ILogger<UpdateMitigationCommandHandler> _logger;
 
     public UpdateMitigationCommandHandler(
         IMitigationService mitigationService,
         IBaseMediator mediator,
         IBaseEventBus eventBus,
-        IMitigationTargetDateNotificationService mitigationTargetDateNotificationService,
+        INotificationsScanService notificationsScanService,
         ILogger<UpdateMitigationCommandHandler> logger)
     {
         _mitigationService = mitigationService ?? throw new ArgumentNullException(nameof(mitigationService));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
-        _mitigationTargetDateNotificationService = mitigationTargetDateNotificationService ?? throw new ArgumentNullException(nameof(mitigationTargetDateNotificationService));
+        _notificationsScanService = notificationsScanService ?? throw new ArgumentNullException(nameof(notificationsScanService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -206,7 +206,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                         }
                     }
 
-                    var targetDateNotificationResult = await _mitigationTargetDateNotificationService
+                    var targetDateNotificationResult = await _notificationsScanService
                         .ProcessMitigationUpdateAsync(updatedMitigation, reportId, cancellationToken)
                         .ConfigureAwait(false);
 

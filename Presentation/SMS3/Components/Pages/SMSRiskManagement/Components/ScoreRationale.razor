@@ -1,0 +1,127 @@
+@using Radzen
+@using Radzen.Blazor
+
+<RadzenStack Gap="1rem">
+    <div style="background-color: #212e61 !important; color: white; padding: 1rem 1.25rem; margin: -1rem -1rem 0 -1rem; border-radius: 8px 8px 0 0;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+            <i class="@GetHeaderIcon()" style="font-size: 1.25rem; opacity: 0.9;"></i>
+            <div>
+                <h5 style="margin: 0; font-weight: 600; font-size: 1.1rem;">
+                    @GetHeaderText()
+                </h5>
+            </div>
+        </div>
+    </div>
+
+    <RadzenFormField Text="Rationale" Variant="Variant.Outlined" AllowFloatingLabel="@IsReadOnly">
+        <RadzenTextArea Value="@CurrentRationale"
+                        ValueChanged="@OnRationaleChanged"
+                        ReadOnly="@IsReadOnly"
+                        Rows="@(IsReadOnly ? 4 : 6)"
+                        Style="@GetTextAreaStyle()"
+                        Placeholder="@(IsReadOnly ? string.Empty : "Enter your rationale for this risk assessment score...")" />
+    </RadzenFormField>
+
+    <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
+        @if (IsReadOnly)
+        {
+            <RadzenButton Text="Close"
+                          Icon="close"
+                          ButtonStyle="ButtonStyle.Primary"
+                          Click="@HandleClose" />
+        }
+        else
+        {
+            <RadzenButton Text="Cancel"
+                          ButtonStyle="ButtonStyle.Light"
+                          Click="@HandleCancel" />
+
+            <RadzenButton Text="Submit Score"
+                          Icon="save"
+                          ButtonStyle="ButtonStyle.Success"
+                          Click="@HandleSubmit"
+                          Disabled="@string.IsNullOrWhiteSpace(CurrentRationale)" />
+        }
+    </RadzenStack>
+</RadzenStack>
+
+@code {
+    [Parameter] public bool IsReadOnly { get; set; }
+    [Parameter] public string MemberName { get; set; } = string.Empty;
+    [Parameter] public string HazardCode { get; set; } = string.Empty;
+    [Parameter] public string MatrixCode { get; set; } = string.Empty;
+    [Parameter] public string RationaleInput { get; set; } = string.Empty;
+    [Parameter] public string Rationale { get; set; } = string.Empty;
+    [Parameter] public EventCallback<string> RationaleInputChanged { get; set; }
+    [Parameter] public EventCallback<bool> OnResult { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+
+    private string CurrentRationale { get; set; } = string.Empty;
+
+    protected override void OnParametersSet()
+    {
+        CurrentRationale = IsReadOnly
+            ? (Rationale ?? string.Empty)
+            : (RationaleInput ?? string.Empty);
+    }
+
+    private string GetHeaderIcon() => IsReadOnly ? "fas fa-user-check" : "fas fa-comment-dots";
+
+    private string GetHeaderText()
+    {
+        return IsReadOnly
+            ? $"Rationale for {HazardCode} risk assessment {MatrixCode} score"
+            : $"Please provide {MemberName} rationale for scoring {HazardCode} as {MatrixCode}";
+    }
+
+    private string GetTextAreaStyle()
+    {
+        return IsReadOnly
+            ? "width: 100%; background-color: #f8f9fa; border: 2px solid #e9ecef;"
+            : "width: 100%;";
+    }
+
+    private async Task OnRationaleChanged(string value)
+    {
+        if (IsReadOnly)
+        {
+            return;
+        }
+
+        CurrentRationale = value ?? string.Empty;
+
+        if (RationaleInputChanged.HasDelegate)
+        {
+            await RationaleInputChanged.InvokeAsync(CurrentRationale);
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        if (RationaleInputChanged.HasDelegate)
+        {
+            await RationaleInputChanged.InvokeAsync(CurrentRationale);
+        }
+
+        if (OnResult.HasDelegate)
+        {
+            await OnResult.InvokeAsync(!string.IsNullOrWhiteSpace(CurrentRationale));
+        }
+    }
+
+    private async Task HandleCancel()
+    {
+        if (OnResult.HasDelegate)
+        {
+            await OnResult.InvokeAsync(false);
+        }
+    }
+
+    private async Task HandleClose()
+    {
+        if (OnClose.HasDelegate)
+        {
+            await OnClose.InvokeAsync();
+        }
+    }
+}

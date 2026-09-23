@@ -14,9 +14,9 @@
 <RadzenTemplateForm Data="@Model" Submit="@SendAsync" TItem="EmailComposeModel" class="compose-root">
 
     <!-- Title bar -->
-    <div class="compose-titlebar">
+    @* <div class="compose-titlebar">
         <div class="compose-title">@DialogTitle</div>
-    </div>
+    </div> *@
 
     <!-- Header fields (Outlook-like) -->
     <div class="compose-header">
@@ -164,19 +164,19 @@
     </div>
 
     <!-- Actions -->
-    <div class="compose-actions">
-        @if (!PreviewOnly)
-        {
-            <RadzenButton Text="Send" Icon="send" ButtonStyle="ButtonStyle.Primary" Click="@SendAsync" Disabled="@IsSending" />
-            <RadzenButton Text="Discard" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@Close" class="ms-8" />
-        }
-        else
-        {
-            <RadzenButton Text="Close" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@Close" class="ms-8" />
-        }
+    <div class="compose-actions" style="display:flex; justify-content:flex-end; align-items:center; gap:0.5rem;">
         @if (IsSending)
         {
             <span class="sending-indicator">Sending…</span>
+        }
+        @if (!PreviewOnly)
+        {
+            <RadzenButton Text="Discard" Icon="cancel" ButtonStyle="ButtonStyle.Light" Click="@Close" />
+            <RadzenButton Text="Send" Icon="send" ButtonStyle="ButtonStyle.Primary" Click="@SendAsync" Disabled="@IsSending" />
+        }
+        else
+        {
+            <RadzenButton Text="Close" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@Close" />
         }
     </div>
 

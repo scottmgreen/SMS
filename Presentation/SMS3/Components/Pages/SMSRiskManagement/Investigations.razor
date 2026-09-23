@@ -194,28 +194,7 @@ else
                             </Tabs>
                         </RadzenTabs>
 
-                        <!-- Investigation Actions -->
-                        @* <RadzenCard Style="background-color: var(--rz-base-100);">
-                            <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="AlignItems.Center">
-                                <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                    <RadzenButton Text="Start Investigation" Icon="play_arrow" ButtonStyle="ButtonStyle.Success" 
-                                                 Click="@(() => InvestigationEntity.Start())" 
-                                                 Disabled="@(!InvestigationEntity.IsAssigned || IsSaving)" />
-                                    <RadzenButton Text="Put On Hold" Icon="pause" ButtonStyle="ButtonStyle.Warning" 
-                                                 Click="@(() => InvestigationEntity.PutOnHold())" 
-                                                 Disabled="@(InvestigationEntity.IsCompleted || IsSaving)" />
-                                    <RadzenButton Text="Cancel Investigation" Icon="cancel" ButtonStyle="ButtonStyle.Danger" 
-                                                 Click="@(() => InvestigationEntity.Cancel())" 
-                                                 Disabled="@(InvestigationEntity.IsCompleted || IsSaving)" />
-                                </RadzenStack>
-                                
-                                @if (InvestigationEntity.HasDecision && !InvestigationEntity.IsCompleted)
-                                {
-                                    <RadzenButton Text="Complete Investigation" Icon="check_circle" ButtonStyle="ButtonStyle.Primary" 
-                                                 Click="CompleteInvestigation" Disabled="@IsSaving" Size="ButtonSize.Large" />
-                                }
-                            </RadzenStack>
-                        </RadzenCard> *@
+                        
                     </RadzenStack>
                 </RadzenCard>
             }

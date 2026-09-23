@@ -140,7 +140,7 @@ namespace SMS_Application.Configuration
             services.AddScoped<IRiskAnalysisService, RiskAnalysisService>();
             services.AddScoped<IInterviewService, InterviewService>();
             services.AddScoped<IMitigationService, MitigationService>();
-            services.AddScoped<IMitigationTargetDateNotificationService, MitigationTargetDateNotificationService>();
+            services.AddScoped<INotificationsScanService, NotificationsScanService>();
             services.AddScoped<IScoringPanelService, ScoringPanelService>();
             services.AddScoped<ISafetyPerformanceIndicatorService, SafetyPerformanceIndicatorService>();
 

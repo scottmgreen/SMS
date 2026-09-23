@@ -12,7 +12,8 @@
                 <div class="panel-management-header-content">
                     <div class="panel-management-title">
                         <RadzenIcon Icon="group" Style="margin-right: 0.5rem; color: var(--rz-primary);" />
-                        Panel Management @($"Managing scoring panel for: {HazardCode}")"
+                        @* Panel Management @($"Managing scoring panel for: {HazardCode}")" *@
+                        <RadzenText Text="@($"Managing scoring panel for Hazard : {HazardCode}")" TextStyle="TextStyle.H6" Style="color:white" />
                     </div>
                     <div class="panel-management-actions">
                         <RadzenButton Icon="close" 
@@ -22,33 +23,14 @@
                                     Title="Close dialog" />
                     </div>
                 </div>
-                <div class="panel-management-subtitle">
+                @* <div class="panel-management-subtitle">
                     <br/>
                     <RadzenText Text="@($"Managing scoring panel for: {HazardCode}")" TextStyle="TextStyle.H6" Style="color:white"/>
-                </div>
+                </div> *@
             </div>
 
             <!-- Modal Body -->
             <div class="panel-management-body">
-                <!-- Info Alert -->
-                @* <RadzenAlert AlertStyle="AlertStyle.Info" Icon="info" Variant="Variant.Flat" 
-                           Style="margin-bottom: 1rem; background-color: #e7f3ff; border-color: #b3d9ff;">
-                    <RadzenStack Orientation="Orientation.Vertical" Gap="0.25rem">
-                        <RadzenText Text="Select stakeholders to participate in the scoring panel for this hazard" TextStyle="TextStyle.Body2" />
-                        <RadzenText Text="@($"Currently selected: {WorkingSelectedCodes.Count} member(s)")" 
-                                  TextStyle="TextStyle.Caption" 
-                                  Style="color: var(--rz-info);" />
-                    </RadzenStack>
-                </RadzenAlert> *@
-
-                <!-- Debug info (remove in production) -->
-              @*   @if (ShowDebugInfo)
-                {
-                    <RadzenCard Variant="Variant.Text" Style="background-color: #f8f9fa; padding: 0.5rem; margin-bottom: 1rem;">
-                        <RadzenText TextStyle="TextStyle.Caption" Text="@($"Debug: Received {SelectedStakeholderCodes.Count} pre-selected codes: {string.Join(", ", SelectedStakeholderCodes)}")" />
-                        <RadzenText TextStyle="TextStyle.Caption" Text="@($"Debug: Working with {WorkingSelectedCodes.Count} codes: {string.Join(", ", WorkingSelectedCodes)}")" />
-                    </RadzenCard>
-                } *@
 
                 <!-- Stakeholders Grid -->
                 <div class="stakeholders-grid-container">
@@ -72,7 +54,7 @@
                                 </Template>
                             </RadzenDataGridColumn>
                             
-                            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="DisplayName" Title="Name" Width="320px">
+                            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="DisplayName" Title="Name" Width="500px">
                                 <HeaderTemplate>
                                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
                                         <RadzenIcon Icon="person" Style="font-size: 1rem;" />
@@ -84,12 +66,12 @@
                                         <RadzenText Text="@GetStakeholderDisplayLabel(stakeholder)"
                                                     TextStyle="TextStyle.Body2"
                                                     Style="font-weight: 500;" />
-                                        <RadzenText Text="@stakeholder.UserName?.Value" TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);" />
+                                        @* <RadzenText Text="@stakeholder.UserName?.Value" TextStyle="TextStyle.Caption" Style="color: var(--rz-text-disabled-color);" /> *@
                                     </RadzenStack>
                                 </Template>
                             </RadzenDataGridColumn>
                             
-                            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="Organization" Title="Organization" Width="280px">
+                            <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="Organization" Title="Organization" Width="300px">
                                 <HeaderTemplate>
                                     <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
                                         <RadzenIcon Icon="business" Style="font-size: 1rem;" />
@@ -100,37 +82,8 @@
                                     <RadzenText Text="@GetOrganizationDisplayName(stakeholder.Organization)" TextStyle="TextStyle.Body2" />
                                 </Template>
                             </RadzenDataGridColumn>
-                            
-                            @* <RadzenDataGridColumn TItem="SMSStakeholderUser" Property="StakeholderType" Title="Role" Width="140px">
-                                <HeaderTemplate>
-                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                        <RadzenIcon Icon="badge" Style="font-size: 1rem;" />
-                                        <span>Role</span>
-                                    </RadzenStack>
-                                </HeaderTemplate>
-                                <Template Context="stakeholder">
-                                    <RadzenBadge Text="@stakeholder.StakeholderType" BadgeStyle="BadgeStyle.Secondary" Variant="Variant.Flat" />
-                                </Template>
-                            </RadzenDataGridColumn> *@
-                            
-                            <RadzenDataGridColumn TItem="SMSStakeholderUser" Title="Status" Width="120px" Sortable="false">
-                                <HeaderTemplate>
-                                    <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
-                                        <RadzenIcon Icon="flag" Style="font-size: 1rem;" />
-                                        <span>Status</span>
-                                    </RadzenStack>
-                                </HeaderTemplate>
-                                <Template Context="stakeholder">
-                                    @if (IsStakeholderSelected(stakeholder.Code))
-                                    {
-                                        <RadzenBadge Text="Selected" BadgeStyle="BadgeStyle.Success" Variant="Variant.Flat" />
-                                    }
-                                    else
-                                    {
-                                        <RadzenBadge Text="Available" BadgeStyle="BadgeStyle.Light" Variant="Variant.Flat" />
-                                    }
-                                </Template>
-                            </RadzenDataGridColumn>
+               
+                           
                         </Columns>
                     </RadzenDataGrid>
                 </div>

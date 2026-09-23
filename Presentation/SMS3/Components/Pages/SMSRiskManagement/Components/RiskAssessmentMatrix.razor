@@ -1,0 +1,99 @@
+@using Radzen
+@using Radzen.Blazor
+@using SMS3.Components.Shared
+@using SMS_Domain.Enums
+
+<RadzenCard Variant="Variant.Outlined" Style="@CardStyle">
+    <RadzenStack Gap="1rem">
+        <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
+            <RadzenIcon Icon="grid_on" Style="margin-right: 0.5rem;" />
+            @Title
+        </RadzenText>
+
+        <div style="display: grid; grid-template-columns: auto repeat(5, 1fr); gap: 1px; font-size: 0.8rem; border: 2px solid #000;">
+            <div style="background: #f8f9fa; padding: 8px; border: 1px solid #000; font-weight: bold; text-align: center;">
+                Severity ↓<br/>Likelihood →
+            </div>
+            <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;"><strong>A</strong><br/>RARE</div>
+            <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;"><strong>B</strong><br/>UNLIKELY</div>
+            <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;"><strong>C</strong><br/>POSSIBLE</div>
+            <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;"><strong>D</strong><br/>LIKELY</div>
+            <div style="text-align: center; font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000;"><strong>E</strong><br/>FREQUENT</div>
+
+            @for (int severity = 5; severity >= 1; severity--)
+            {
+                var severityLabel = GetSeverityLabel(severity);
+
+                <div style="font-weight: bold; padding: 8px; background: #f9f9fa; border: 1px solid #000; text-align: center;">
+                    <strong>@severity</strong><br/>@severityLabel.ToUpper()
+                </div>
+
+                @for (int likelihood = 1; likelihood <= 5; likelihood++)
+                {
+                    var matrixCode = AviationRiskMatrixCalculator.GetMatrixCode(severity, likelihood);
+                    var cellStyle = AviationRiskMatrixCalculator.GetMatrixCellStyle(severity, likelihood);
+                    var hazardsAtThisCode = GetHazardsAtMatrixCode(severity, likelihood);
+
+                    <div style="@cellStyle min-height: 60px; position: relative; border: 1px solid #000;"
+                         title="@($"{matrixCode} - {AviationRiskMatrixCalculator.GetAviationRiskLevel(severity, likelihood)} Risk - {hazardsAtThisCode.Count} hazard(s)")">
+                        <div style="position: absolute; top: 4px; left: 4px; font-size: 0.9rem; font-weight: bold; color: #000;">
+                            @matrixCode
+                        </div>
+                        @if (hazardsAtThisCode.Any())
+                        {
+                            <div style="position: absolute; bottom: 4px; right: 4px; display: flex; flex-wrap: wrap; gap: 2px; max-width: 80%;">
+                                @foreach (var hazardCode in hazardsAtThisCode.Take(MaxBadgesPerCell))
+                                {
+                                    <span style="background: rgba(0,0,0,0.8); color: white; padding: 2px 4px; border-radius: 3px; font-size: 0.7rem; line-height: 1; font-weight: bold;">
+                                        @hazardCode
+                                    </span>
+                                }
+                                @if (hazardsAtThisCode.Count > MaxBadgesPerCell)
+                                {
+                                    <span style="background: rgba(0,0,0,0.9); color: white; padding: 2px 4px; border-radius: 3px; font-size: 0.7rem; line-height: 1; font-weight: bold;">
+                                        +@(hazardsAtThisCode.Count - MaxBadgesPerCell)
+                                    </span>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            }
+        </div>
+
+        @if (ShowRiskLevelsLegend)
+        {
+            <RadzenStack Gap="0.5rem">
+                <RadzenText TextStyle="TextStyle.Subtitle2" Text="Risk Levels:" Style="margin: 0;" />
+                <RadzenStack Orientation="Orientation.Horizontal" Gap="1rem" Wrap="FlexWrap.Wrap">
+                    @foreach (var riskLevel in RiskLevel.GetOrderedBySeverity())
+                    {
+                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.25rem">
+                            <div style="@riskLevel.GetIndicatorStyle()"></div>
+                            <RadzenText TextStyle="TextStyle.Caption" Text="@riskLevel.Name" />
+                        </RadzenStack>
+                    }
+                </RadzenStack>
+            </RadzenStack>
+        }
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Risk Assessment Matrix";
+    [Parameter] public string CardStyle { get; set; } = string.Empty;
+    [Parameter] public bool ShowRiskLevelsLegend { get; set; }
+    [Parameter] public int MaxBadgesPerCell { get; set; } = 3;
+    [Parameter] public Func<int, string>? SeverityLabelProvider { get; set; }
+    [Parameter] public Func<int, int, List<string>>? HazardsAtMatrixCodeProvider { get; set; }
+
+    private string GetSeverityLabel(int severity)
+    {
+        return SeverityLabelProvider?.Invoke(severity) ?? HazardSeverity.GetDisplayName(severity);
+    }
+
+    private List<string> GetHazardsAtMatrixCode(int severity, int likelihood)
+    {
+        return HazardsAtMatrixCodeProvider?.Invoke(severity, likelihood) ?? new List<string>();
+    }
+}

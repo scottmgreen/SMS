@@ -7,7 +7,6 @@
 @using SMS_Application.Commands
 @using SMS_Application.Interfaces
 @using SMS_Shared.Common
-@using SMS3.Components.Pages.SMSListings.Models
 @using Radzen
 @using Radzen.Blazor
 @using SMS3.Components.Shared
@@ -67,7 +66,7 @@
 
     <Columns>
         <!-- Report ID Column -->
-        <RadzenDataGridColumn TItem="MitigationModel" Property="ReportCode" Title="Report ID" Width="120px">
+        <RadzenDataGridColumn TItem="Mitigation" Property="ReportCode" Title="Report ID" Width="120px">
             <Template Context="mitigation">
                 <div title="@mitigation.ReportCode" style="@_basicTextStyle">
                     @(mitigation.ReportCode)
@@ -76,7 +75,7 @@
         </RadzenDataGridColumn>
 
         <!-- Hazard ID Column -->
-        <RadzenDataGridColumn TItem="MitigationModel" Property="HazardCode" Title="Hazard ID" Width="120px">
+        <RadzenDataGridColumn TItem="Mitigation" Property="HazardCode" Title="Hazard ID" Width="120px">
             <Template Context="mitigation">
                 <div title="@mitigation.HazardCode" style="@_basicTextStyle">
                     @(mitigation.HazardCode)
@@ -85,7 +84,7 @@
         </RadzenDataGridColumn>
 
         <!-- Mitigation ID Column -->
-        <RadzenDataGridColumn TItem="MitigationModel" Property="Code" Title="Mitigation ID" Width="120px">
+        <RadzenDataGridColumn TItem="Mitigation" Property="Code" Title="Mitigation ID" Width="120px">
             <Template Context="mitigation">
                 <div title="@mitigation.Code" style="@_basicTextStyle">
                     @(mitigation.Code)
@@ -93,15 +92,45 @@
             </Template>
         </RadzenDataGridColumn>
 
-        <!-- Mitigation Description -->
-        <RadzenDataGridColumn TItem="MitigationModel" Property="Description" Title="Description" Width="320px">
+        <!-- Mitigation Name Column -->
+        <RadzenDataGridColumn TItem="Mitigation" Property="Name" Title="Name" Width="160px">
             <Template Context="mitigation">
-                @(mitigation.Description?.Length > 100 ? mitigation.Description.Substring(0, 100) + "..." : mitigation.Description)"
+                <div title="@mitigation.Name" style="@_basicTextStyle">
+                    @(mitigation.Name)
+                </div>
+            </Template>
+        </RadzenDataGridColumn>
+
+        <!-- Mitigation Description -->
+        <RadzenDataGridColumn TItem="Mitigation" Title="Mitigation" Width="115px" Sortable="false" Filterable="false">
+            <Template Context="mitigation">
+                <RadzenButton Text="Description"
+                              Icon="description"
+                              ButtonStyle="ButtonStyle.Base"
+                              Variant="Variant.Text"
+                              Size="ButtonSize.ExtraSmall"
+                              Title="Click to view mitigation description"
+                              Class="description-button"
+                              Click="@(() => ShowDescriptionDialog($"Mitigation Description - {mitigation.Code}", mitigation.Description))" />
+            </Template>
+        </RadzenDataGridColumn>
+
+        <!-- Related Hazard Description -->
+        <RadzenDataGridColumn TItem="Mitigation" Title="Hazard" Width="115px" Sortable="false" Filterable="false">
+            <Template Context="mitigation">
+                <RadzenButton Text="Description"
+                              Icon="description"
+                              ButtonStyle="ButtonStyle.Base"
+                              Variant="Variant.Text"
+                              Size="ButtonSize.ExtraSmall"
+                              Title="Click to view related hazard description"
+                              Class="description-button"
+                              Click="@(() => ShowDescriptionDialog($"Hazard Description - {mitigation.HazardCode}", mitigation.HazardDescription))" />
             </Template>
         </RadzenDataGridColumn>
 
         <!-- Status Column -->
-        <RadzenDataGridColumn TItem="MitigationModel" Property="Status" Title="Status" Width="120px">
+        <RadzenDataGridColumn TItem="Mitigation" Property="Status" Title="Status" Width="120px">
             <Template Context="mitigation">
                 <div title="@mitigation.Status.ToString()" style="@_basicTextStyle">
                     @mitigation.Status.Value
@@ -112,7 +141,7 @@
        
         
         <!-- Progress Column -->
-        <RadzenDataGridColumn TItem="MitigationModel" Property="Progress" Title="Progress" Width="100px">
+        <RadzenDataGridColumn TItem="Mitigation" Property="Progress" Title="Progress" Width="100px">
             <Template Context="mitigation">
                 <RadzenProgressBar Value="@mitigation.Progress" Max="100" Style="width: 100%;" />
                 @* <RadzenText TextStyle="TextStyle.Caption" Text="@($"{mitigationViewModel.Progress}%")" /> *@
@@ -120,7 +149,7 @@
         </RadzenDataGridColumn>
 
         <!-- Target Date Column -->
-        <RadzenDataGridColumn TItem="MitigationModel" Property="TargetDate" Title="Target Date" Width="120px" FormatString="{0:MM/dd/yyyy}">
+        <RadzenDataGridColumn TItem="Mitigation" Property="TargetDate" Title="Target Date" Width="120px" FormatString="{0:MM/dd/yyyy}">
             <Template Context="mitigation">
                 @if (mitigation.TargetDate.HasValue)
                 {
@@ -136,32 +165,60 @@
         </RadzenDataGridColumn>
 
         <!-- Actions Column -->
-        <RadzenDataGridColumn TItem="MitigationModel" Title="Actions" Width="200px" Sortable="false" Filterable="false">
+        <RadzenDataGridColumn TItem="Mitigation" Title="Actions" Width="200px" Sortable="false" Filterable="false">
             <Template Context="mitigation">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
                     <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
                                   Tooltip="View Mitigation Details"
-                                  Click="@(() => ViewMitigation(mitigation.Mitigation))" />
+                                  Click="@(() => ViewMitigation(mitigation))" />
 
                     <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
                                   Tooltip="Edit Mitigation"
-                                  Click="@(() => EditMitigation(mitigation.Mitigation))" />
+                                  Click="@(() => EditMitigation(mitigation))" />
 
                     @if (mitigation.Status != MitigationStatus.Approved)
                     {
                         <RadzenButton Icon="verified" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Small"
                                       Tooltip="Quick Approve"
-                                      Click="@(async () => await QuickApproveMitigation(mitigation.Mitigation))" />
+                                      Click="@(async () => await QuickApproveMitigation(mitigation))" />
                     }
 
                     <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
                                   Tooltip="Delete Mitigation"
-                                  Click="@(() => DeleteMitigation(mitigation.Mitigation))" />
+                                  Click="@(() => DeleteMitigation(mitigation))" />
                 </RadzenStack>
             </Template>
         </RadzenDataGridColumn>
     </Columns>
 </RadzenDataGrid>
+
+@if (_showDescriptionModal)
+{
+    <div class="modal-overlay" @onclick="CloseDescriptionDialog">
+        <div class="sms-modal-dialog sms-modal-lg" @onclick:stopPropagation="true">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary d-flex justify-content-between align-items-center">
+                    <h5 class="sms-modal-title mb-0">@_selectedDescriptionTitle</h5>
+                    <RadzenButton Icon="close"
+                                  Size="ButtonSize.Small"
+                                  ButtonStyle="ButtonStyle.Light"
+                                  Click="@CloseDescriptionDialog" />
+                </div>
+                <div class="sms-modal-body p-3">
+                    <div style="white-space: pre-wrap; line-height: 1.5;">
+                        @((MarkupString)_selectedDescription)
+                    </div>
+                </div>
+                <div class="sms-modal-footer d-flex justify-content-end">
+                    <RadzenButton Text="Close"
+                                  Icon="close"
+                                  ButtonStyle="ButtonStyle.Secondary"
+                                  Click="@CloseDescriptionDialog" />
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 <!-- Bulk Approval Dialog -->
 @if (_showBulkApprovalDialog && _selectedMitigations.Any())

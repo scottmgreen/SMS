@@ -52,6 +52,12 @@ public sealed class Mitigation : BaseAuditableEntity
     /// <summary>Associated risk assessment code</summary>
     public string? RiskAssessmentCode { get; set; }
 
+    /// <summary>Related report code (listing support)</summary>
+    public string? ReportCode { get; set; }
+
+    /// <summary>Related hazard description (listing support)</summary>
+    public string? HazardDescription { get; set; }
+
     #endregion
 
     #region Timeline Properties

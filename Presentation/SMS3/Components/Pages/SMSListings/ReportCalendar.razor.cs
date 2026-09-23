@@ -14,6 +14,8 @@ public partial class ReportCalendar : ComponentBase
     [Inject] private IBaseEventBus _eventBus { get; set; } = default!;
     [Inject] private NavigationManager _navigation { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private INotificationsScanService _notificationsScanService { get; set; } = default!;
+    [Inject] private INotificationBellRefreshService _notificationBellRefreshService { get; set; } = default!;
     #endregion
 
     #region Component State
@@ -27,6 +29,7 @@ public partial class ReportCalendar : ComponentBase
     protected override async Task OnInitializedAsync()
     {
         await LoadReportsAsync();
+        await CheckReportStatusEscalationNotificationsAsync();
     }
     #endregion
 
@@ -74,7 +77,35 @@ public partial class ReportCalendar : ComponentBase
     private async Task RefreshData()
     {
         await LoadReportsAsync();
+        await CheckReportStatusEscalationNotificationsAsync();
         await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", "Calendar data refreshed"));
+    }
+
+    private async Task CheckReportStatusEscalationNotificationsAsync()
+    {
+        try
+        {
+            var result = await _notificationsScanService
+                .ScanReportsNeedingStatusEscalationAsync("ReportCalendar")
+                .ConfigureAwait(false);
+
+            if (result.IsFailure)
+            {
+                _logger.LogWarning("Report status escalation scan failed from ReportCalendar: {Error}", result.Error?.Message);
+            }
+            else
+            {
+                _logger.LogInformation("Report status escalation scan completed from ReportCalendar. Queued {Count} notification(s).", result.Value);
+                if (result.Value > 0)
+                {
+                    _notificationBellRefreshService.RequestRefresh();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during report status escalation scan from ReportCalendar");
+        }
     }
     #endregion
 

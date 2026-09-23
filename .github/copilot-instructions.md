@@ -61,12 +61,15 @@
 ## Email Routing
 - Implement a hard business rule for email routing: emails must only be sent to group contacts as primary To recipients; if the recipient is not part of a group, no email should be sent via fallback methods. Allow CC/BCC as exceptions for manually added individual recipients.
 
+## Notifications
+- In NotificationsScanService escalation email fields, keep labels exactly as: "Report Status Threshold" and "Report Status Checkpoint (UTC)"; do not revert to prior SLA label text.
+
 ## Code Style
 - Private variables in SMS3 code-behind files must consistently follow the _variableName naming convention (e.g., _memberName). 
 - Cleanup should continue in targeted batches with build validation.
 - Use enums only for display styles; do not use hard-coded strings for event source display naming.
 - Standardize data-reader string mapping to `GetValue<string>` with trimming handled in the extension method rather than direct `GetString` calls.
-- Use Domain Entities rather than introducing DTOs when realigning code to clean architecture patterns in this codebase.
+- Use Domain Entities rather than introducing DTOs when realigning code to clean architecture patterns in this codebase. Avoid separate UI model classes when domain entities can be used; if data is missing, prefer updating/using entity-based approach rather than creating many Models files.
 - Use a generic shared constants file name `SystemConstants.cs` in SMS3 for reusable constant values rather than a feature-specific constants file name.
 - Use UserCode (not UserDisplayName) for all CreatedBy and UpdatedBy audit assignments across the codebase. Avoid magic string defaults like "SYSTEM"/"SYSTEM-2FA".
 - Use UserCode (not display name or other identifiers) for ReportValidation.ValidatedBy and related audit actor fields.

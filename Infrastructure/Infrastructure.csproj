@@ -9,9 +9,9 @@
 	<WarningsNotAsErrors />
     
     <!-- Version Information -->
-    <Version>1.1.4</Version>
-    <AssemblyVersion>1.1.4.0</AssemblyVersion>
-    <FileVersion>1.1.4.0</FileVersion>
+    <Version>1.1.9</Version>
+    <AssemblyVersion>1.1.9.0</AssemblyVersion>
+    <FileVersion>1.1.9.0</FileVersion>
     <AssemblyTitle>SMS Infrastructure Layer</AssemblyTitle>
     <Product>PDX Safety Management System</Product>
     <Company>Portland International Airport</Company>
