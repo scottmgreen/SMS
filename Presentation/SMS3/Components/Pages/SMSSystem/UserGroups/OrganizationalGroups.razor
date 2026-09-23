@@ -431,10 +431,13 @@
                                             <div class="d-flex justify-content-between align-items-center">
                                                 <div>
                                                     <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
-                                                        @member.FirstName.Value @member.LastName.Value
+                                                        @member.Company
+                                                    </RadzenText>
+                                                    <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
+                                                        @member.FirstName.Value @member.LastName.Value @member.Organization @member.Title
                                                     </RadzenText>
                                                     <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
-                                                        @member.Position (@member.Code)
+                                                        @GetAuthorityLevelDisplay(member.AuthorityLevel)
                                                     </RadzenText>
                                                 </div>
                                                 <RadzenButton Icon="person_remove" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
@@ -478,10 +481,13 @@
                                                     <RadzenCheckBox @bind-Value="SelectedUsers[user.Code]" class="me-2" />
                                                     <div>
                                                         <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
-                                                            @user.FirstName.Value @user.LastName.Value
+                                                            @user.Company
+                                                        </RadzenText>
+                                                        <RadzenText TextStyle="TextStyle.Body1" Style="margin: 0;">
+                                                            @user.FirstName.Value @user.LastName.Value @user.Organization @user.Title
                                                         </RadzenText>
                                                         <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-text-secondary-color);">
-                                                            @user.Position (@user.Code)
+                                                            @GetAuthorityLevelDisplay(user.AuthorityLevel)
                                                         </RadzenText>
                                                     </div>
                                                 </div>
@@ -494,7 +500,6 @@
                                 else
                                 {
                                     <RadzenAlert AlertStyle="AlertStyle.Warning" Variant="Variant.Flat">
-                                        <RadzenIcon Icon="warning" Style="margin-right: 0.5rem;" />
                                         All available users are already assigned to this group.
                                     </RadzenAlert>
                                 }
@@ -589,8 +594,8 @@
 }
 
 .modal-dialog.modal-xl {
-    max-width: 1200px;
-    width: 95%;
+    max-width: 1300px;
+    width: 100%;
 }
 
 .modal-content {

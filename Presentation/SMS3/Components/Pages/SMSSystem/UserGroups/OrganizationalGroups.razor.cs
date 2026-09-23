@@ -922,6 +922,23 @@ public partial class OrganizationalGroups : ComponentBase
             || allowedCompanies.Contains(resolvedCompany.Company);
     }
 
+    private static string GetAuthorityLevelDisplay(int? authorityLevel)
+    {
+        if (!authorityLevel.HasValue || authorityLevel.Value <= 0)
+        {
+            return "No authority level";
+        }
+
+        var resolvedLevel = SMSOrganizationalLevel.GetAllValues()
+            .FirstOrDefault(level => level.AuthorityLevel == authorityLevel.Value);
+        if (resolvedLevel is not null)
+        {
+            return $"{resolvedLevel.Name} ({resolvedLevel.Category} - Level {resolvedLevel.AuthorityLevel})";
+        }
+
+        return $"Level {authorityLevel.Value}";
+    }
+
     #endregion
 
     #region Dropdown Initialization
