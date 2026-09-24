@@ -2,7 +2,6 @@
 @using Radzen
 @using Radzen.Blazor
 @using SMS3.Components.Shared.Components
-@using SMS3.Components.Shared.UIHelpers
 @using SMS3.Configuration.Extensions
 @using SMS3.Security
 
@@ -340,7 +339,6 @@
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private SessionTimerService _sessionTimerService { get; set; } = default!;
     [Inject] private IEventQueueService _eventQueueService { get; set; } = default!;
-    [Inject] private INotificationBellRefreshService _notificationBellRefreshService { get; set; } = default!;
 
     [Parameter]
     public EventCallback OnLogoutRequested { get; set; }
@@ -408,7 +406,6 @@
     protected override async Task OnInitializedAsync()
     {
         _navigation.LocationChanged += OnLocationChanged;
-        _notificationBellRefreshService.RefreshRequested += OnNotificationBellRefreshRequested;
 
         try
         {
@@ -421,21 +418,11 @@
                 await LoadPendingIntegrationEventCountAsync();
                 _logger.LogDebug("NavMenu initialized with session timer for user: {UserCode}", _currentUserService.UserCode);
             }
-
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error in NavMenu OnInitializedAsync");
         }
-    }
-
-    private void OnNotificationBellRefreshRequested()
-    {
-        _ = InvokeAsync(async () =>
-        {
-            await LoadPendingIntegrationEventCountAsync();
-            StateHasChanged();
-        });
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -685,7 +672,6 @@
     public void Dispose()
     {
         _navigation.LocationChanged -= OnLocationChanged;
-        _notificationBellRefreshService.RefreshRequested -= OnNotificationBellRefreshRequested;
         _sessionTimerService?.StopTimer();
         _cancellationTokenSource?.Cancel();
         _cancellationTokenSource?.Dispose();

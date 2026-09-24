@@ -144,10 +144,13 @@ else
                             </RadzenFieldset>
 
                             <!-- Validation Comments -->
-                            <RadzenFieldset Text="Validation Comments">
-                                <RadzenTextArea @bind-Value="@_validationComments" Rows="4"
-                                                Placeholder="Provide detailed reasoning for your validation decision..."
-                                                Style="width: 100%;" />
+                            <RadzenStack Gap="0.25rem">
+                                <RadzenFormField Text="Validation Comments *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                    <RadzenTextArea @bind-Value="@_validationComments" Rows="4"
+                                                    Placeholder="Provide detailed reasoning for your validation decision..."
+                                                    Style="width: 100%; min-width: 100%;"
+                                                    class="@(string.IsNullOrWhiteSpace(_validationComments) ? "default-validation-textarea" : "default-success-textarea")" />
+                                </RadzenFormField>
                                 @if (string.IsNullOrWhiteSpace(_validationComments))
                                 {
                                     <RadzenText TextStyle="TextStyle.Caption" Style="color: var(--rz-danger); margin-top: 0.25rem;">
@@ -155,7 +158,7 @@ else
                                         Validation comments are required
                                     </RadzenText>
                                 }
-                            </RadzenFieldset>
+                            </RadzenStack>
 
                             <!-- SMS Risk Fields (Conditional) -->
                             @if (_selectedValidationDecision == ValidationDecision.SmsRisk)
@@ -229,56 +232,7 @@ else
 
             <!-- Right Column - Guidance -->
             <RadzenColumn Size="12" SizeLG="4">
-                <!-- Validation Guidance -->
-                <RadzenCard Variant="Variant.Outlined">
-                    <RadzenStack Gap="1rem" Style="padding: 1rem;">
-                        <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 0.5rem; background: var(--rz-warning-lighter); margin: -1rem -1rem 1rem -1rem; padding: 1rem;">
-                            <RadzenIcon Icon="lightbulb" Style="color: var(--rz-warning-dark);" />
-                            <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Validation Guidance</RadzenText>
-                        </RadzenStack>
-                        <RadzenStack Gap="1rem">
-                            <RadzenStack Gap="0.5rem">
-                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">A report should be classified as SMS Risk if:</RadzenText>
-                                <RadzenStack Gap="0.25rem">
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                        <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
-                                        Could affect safety of flight operations
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                        <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
-                                        Involves safety-critical systems
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                        <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
-                                        Has potential for serious consequences
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                        <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
-                                        Indicates system deficiency
-                                    </RadzenText>
-                                </RadzenStack>
-                            </RadzenStack>
-
-                            <RadzenStack Gap="0.5rem">
-                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">Not SMS Risk if:</RadzenText>
-                                <RadzenStack Gap="0.25rem">
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                        <RadzenIcon Icon="close" Style="color: var(--rz-danger); margin-right: 0.5rem;" />
-                                        Routine maintenance issue only
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                        <RadzenIcon Icon="close" Style="color: var(--rz-danger); margin-right: 0.5rem;" />
-                                        Administrative matter only
-                                    </RadzenText>
-                                    <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
-                                        <RadzenIcon Icon="close" Style="color: var(--rz-danger); margin-right: 0.5rem;" />
-                                        Outside SMS scope
-                                    </RadzenText>
-                                </RadzenStack>
-                            </RadzenStack>
-                        </RadzenStack>
-                    </RadzenStack>
-                </RadzenCard>
+                <ReportValidationGuidance />
             </RadzenColumn>
         </RadzenRow>
     </div>
@@ -308,6 +262,18 @@ else
 
     .rz-dropdown .rz-dropdown-label {
         width: calc(100% - 32px) !important;
+    }
+
+    .default-validation-textarea {
+        border: 2px solid #dc3545 !important;
+        background-color: #fff5f5 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    .default-success-textarea {
+        border: 2px solid #28a745 !important;
+        background-color: #f3fff6 !important;
+        box-shadow: 0 0 0 0.2rem rgba(40, 167, 69, 0.2) !important;
     }
 </style>
 

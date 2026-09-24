@@ -1754,7 +1754,7 @@ public partial class TechnicalAssessment : ComponentBase
         var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
         await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
-        var reportCompletionStatus = IsRiskRegistryOnly ? ReportStatus.Closed : ReportStatus.ValidationCompleted;
+        var reportCompletionStatus = IsRiskRegistryOnly ? ReportStatus.RiskRegistryOnly : ReportStatus.ValidationCompleted;
         var cmd = new UpdateReportStatusCommand(ReportId ?? "", reportCompletionStatus, _currentUserService.UserCode);
         var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
 
@@ -2018,9 +2018,14 @@ public partial class TechnicalAssessment : ComponentBase
         }
 
         var shouldSave = await _dialogService.Confirm(
-            $"Step {CurrentStep} has unsaved changes. Do you want to save before leaving this step?",
+            $"Step {CurrentStep} has unsaved changes.\nDo you want to save before leaving this step?",
             "Unsaved Changes",
-            new ConfirmOptions { OkButtonText = "Save", CancelButtonText = "Don't Save" });
+            new ConfirmOptions
+            {
+                OkButtonText = "Save",
+                CancelButtonText = "Don't Save",
+                Style = "white-space: pre-line;"
+            });
 
         if (shouldSave != true)
         {

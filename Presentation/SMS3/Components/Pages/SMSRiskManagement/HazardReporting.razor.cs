@@ -220,6 +220,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
     public bool HasMissingFileDescriptions => AttachedFiles.Any(f => (f.Data?.Length ?? 0) > 0 && string.IsNullOrWhiteSpace(f.Description));
     public string GeoLocationDisplay => HasGeoLocation ? $"Lat: {SelectedGeoLocation.Latitude:F6}, Lng: {SelectedGeoLocation.Longitude:F6}" : "No coordinates selected";
     public int HazardTitleCharacterCount => HazardReport?.HazardTitle?.Length ?? 0;
+    public int HazardTitleWordCount => string.IsNullOrWhiteSpace(HazardReport?.HazardTitle)
+        ? 0
+        : HazardReport.HazardTitle
+            .Split(' ', StringSplitOptions.RemoveEmptyEntries)
+            .Length;
     public int DescriptionCharacterCount => HazardReport?.Description?.Length ?? 0;
         
     
@@ -294,8 +299,10 @@ public partial class HazardReporting : ComponentBase, IDisposable
     /// </summary>
     public bool IsHazardCategoryDefault => HazardReport?.HazardCategory == HazardCategory.Default.Value;
     public bool IsHazardTypeDefault => HazardReport?.HazardType == HazardType.Default.Value;
+    public bool IsHazardTypeInvalid => string.IsNullOrWhiteSpace(HazardReport?.HazardType) || IsHazardTypeDefault;
     public bool IsHazardTitleMissing => string.IsNullOrWhiteSpace(HazardReport?.HazardTitle);
-    public bool IsHazardTitleValidationAlert => IsEditMode && IsHazardTitleMissing;
+    public bool IsHazardTitleWordCountValid => HazardTitleWordCount >= 4;
+    public bool IsHazardTitleValidationAlert => IsHazardTitleMissing || !IsHazardTitleWordCountValid;
     public bool HasDefaultHazardClassification => IsHazardCategoryDefault || IsHazardTypeDefault;
     public bool IsUpdateBlockedByValidation => IsEditMode && (RequiresLocationValidation || HasDefaultHazardClassification || IsHazardTitleMissing);
     public bool ShowEditValidationAlert => IsEditMode && (HasDefaultHazardClassification || RequiresLocationValidation || IsHazardTitleMissing);

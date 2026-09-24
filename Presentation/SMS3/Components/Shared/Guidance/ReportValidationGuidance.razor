@@ -1,0 +1,74 @@
+@using Radzen
+@using Radzen.Blazor
+@namespace SMS3.Components.Shared.Components
+
+<RadzenCard Variant="Variant.Outlined">
+    <RadzenStack Gap="1rem" Style="padding: 1rem;">
+        <RadzenRow AlignItems="AlignItems.Center">
+            <RadzenColumn Size="8">
+                <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="border-bottom: 1px solid var(--rz-border-color); background: var(--rz-warning-lighter); margin: -1rem -1rem 1rem -1rem; padding: 1rem;">
+                    <RadzenIcon Icon="lightbulb" Style="color: var(--rz-warning-dark);" />
+                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Validation Guidance</RadzenText>
+                </RadzenStack>
+            </RadzenColumn>
+            <RadzenColumn Size="4">
+                <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End">
+                    <RadzenButton Icon="@(isExpanded ? "expand_less" : "expand_more")"
+                                 ButtonStyle="ButtonStyle.Light"
+                                 Size="ButtonSize.Small"
+                                 Click="@(() => isExpanded = !isExpanded)"
+                                 title="@(isExpanded ? "Collapse" : "Expand")" />
+                </RadzenStack>
+            </RadzenColumn>
+        </RadzenRow>
+
+        @if (isExpanded)
+        {
+            <RadzenStack Gap="1rem">
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">A report should be classified as SMS Risk if:</RadzenText>
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                            <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
+                            Could affect safety of flight operations
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                            <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
+                            Involves safety-critical systems
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                            <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
+                            Has potential for serious consequences
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                            <RadzenIcon Icon="check" Style="color: var(--rz-success); margin-right: 0.5rem;" />
+                            Indicates system deficiency
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+
+                <RadzenStack Gap="0.5rem">
+                    <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600;">Not SMS Risk if:</RadzenText>
+                    <RadzenStack Gap="0.25rem">
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                            <RadzenIcon Icon="close" Style="color: var(--rz-danger); margin-right: 0.5rem;" />
+                            Routine maintenance issue only
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                            <RadzenIcon Icon="close" Style="color: var(--rz-danger); margin-right: 0.5rem;" />
+                            Administrative matter only
+                        </RadzenText>
+                        <RadzenText TextStyle="TextStyle.Body2" Style="margin: 0;">
+                            <RadzenIcon Icon="close" Style="color: var(--rz-danger); margin-right: 0.5rem;" />
+                            Outside SMS scope
+                        </RadzenText>
+                    </RadzenStack>
+                </RadzenStack>
+            </RadzenStack>
+        }
+    </RadzenStack>
+</RadzenCard>
+
+@code {
+    private bool isExpanded = false;
+}

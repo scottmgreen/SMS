@@ -456,7 +456,8 @@ public partial class HazardListing : ComponentBase
                 new ConfirmOptions()
                 {
                     OkButtonText = "Yes, Edit Hazard",
-                    CancelButtonText = "Cancel"
+                    CancelButtonText = "Cancel",
+                    Style = "white-space: pre-line;"
                 });
 
             if (confirmed == true)

@@ -601,13 +601,15 @@ public sealed class MitigationApprovalRequestedEventHandler : BaseDomainEventHan
             }
         }
 
+        var requestedByDisplayName = await ResolveUserDisplayNameFromCodeAsync(domainEvent.RequestedBy, cancellationToken);
+
         var summaryFields = new List<SMSEmailField>
         {
             new() { Label = "Mitigation Code", Value = domainEvent.MitigationCode },
             new() { Label = "Mitigation ID", Value = domainEvent.MitigationId },
             new() { Label = "Hazard ID", Value = domainEvent.HazardCode },
             new() { Label = "Priority", Value = domainEvent.Priority.ToString() },
-            new() { Label = "Requested By", Value = domainEvent.RequestedBy },
+            new() { Label = "Requested By", Value = requestedByDisplayName },
             new() { Label = "Requested Date", Value = domainEvent.RequestDate.ToString("MMMM dd, yyyy h:mm tt") },
             new() { Label = "Approval Deadline", Value = domainEvent.ApprovalDeadline.ToString("MMMM dd, yyyy h:mm tt") }
         };
@@ -667,6 +669,31 @@ public sealed class MitigationApprovalRequestedEventHandler : BaseDomainEventHan
             sections: sections,
             footerHtml: "Please review this mitigation in SMS and take the appropriate approval action.",
             logoUrl: SMSEmailTemplateBuilder.DefaultLogoUrl);
+    }
+
+    private async Task<string> ResolveUserDisplayNameFromCodeAsync(string? userCode, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrWhiteSpace(userCode))
+        {
+            return string.Empty;
+        }
+
+        var normalizedCode = userCode.Trim();
+        var userResult = await _mediator.SendAsync(new GetSMSApplicationUserByCodeQuery(normalizedCode), cancellationToken);
+        if (userResult.IsSuccess && userResult.Value is not null)
+        {
+            if (!string.IsNullOrWhiteSpace(userResult.Value.DisplayName))
+            {
+                return userResult.Value.DisplayName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(userResult.Value.UserName?.Value))
+            {
+                return userResult.Value.UserName.Value;
+            }
+        }
+
+        return normalizedCode;
     }
 
     protected override async Task<Result> HandleUIEventAsync(MitigationApprovalRequestedEvent domainEvent, CancellationToken cancellationToken)

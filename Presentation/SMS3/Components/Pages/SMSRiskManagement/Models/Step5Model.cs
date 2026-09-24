@@ -8,6 +8,8 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 /// </summary>
 public class Step5Model
 {
+    private const string Step5ExcludedMarker = "__STEP5_EXCLUDED_PANEL__";
+
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
@@ -239,9 +241,11 @@ public class Step5Model
                     continue;
                 }
 
-                var panels = string.IsNullOrWhiteSpace(riskAssessmentCode)
+                var panels = (string.IsNullOrWhiteSpace(riskAssessmentCode)
                     ? result.Value
-                    : result.Value.Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), riskAssessmentCode.Trim(), StringComparison.OrdinalIgnoreCase)).ToList();
+                    : result.Value.Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), riskAssessmentCode.Trim(), StringComparison.OrdinalIgnoreCase)).ToList())
+                    .Where(p => !string.Equals(p.ResidualRationale, Step5ExcludedMarker, StringComparison.Ordinal))
+                    .ToList();
 
                 if (!panels.Any())
                 {

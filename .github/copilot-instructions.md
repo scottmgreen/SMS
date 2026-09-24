@@ -48,6 +48,7 @@
 - When rendering HazardDescription in modals or static display areas, treat it as HTML markup (e.g., via MarkupString) so RadzenHtmlEditor formatting is preserved.
 - Use Radzen DialogService for confirmation prompts; do not use IJSRuntime/JavaScript confirm dialogs in this codebase.
 - For Shared Guidance panels, default collapsed state is required: private bool isExpanded = false.
+- For ReportValidation comments, apply validation styling only on the RadzenTextArea (red invalid, green valid), not on the RadzenFormField wrapper.
 
 ## User Management
 - For SMS user management dialogs, SMS User Role/Permissions is required and must not be labeled as optional. Bindings and parameters for user role must be 100% consistent across ApplicationUsers, StakeholderUsers, and OrganizationalUsers.

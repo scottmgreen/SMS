@@ -152,8 +152,16 @@ public sealed class MitigationService : IMitigationService
             if (mitigation is not null)
             {
                 var isOverdue = mitigation.TargetDate.HasValue && mitigation.TargetDate.Value < DateTime.UtcNow;
+                var isExplicitApprovalUpdate = string.Equals(
+                    mitigation.Status?.Value,
+                    MitigationStatus.Approved.Value,
+                    StringComparison.OrdinalIgnoreCase);
 
-                if (mitigation.Progress >= 100)
+                if (isExplicitApprovalUpdate && !string.IsNullOrWhiteSpace(mitigation.ApprovedBy))
+                {
+                    mitigation.Status = MitigationStatus.Approved;
+                }
+                else if (mitigation.Progress >= 100)
                 {
                     mitigation.Status = MitigationStatus.MonitoringHazard;
                 }

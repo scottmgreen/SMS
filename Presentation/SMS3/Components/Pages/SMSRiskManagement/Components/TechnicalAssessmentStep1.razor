@@ -20,7 +20,7 @@
                         <RadzenRow Gap="0.5rem">
                             <RadzenColumn Size="2" >
                                 <RadzenStack Gap="0.5rem">
-                                    <RadzenFormField Text="Lead Assessor *" Variant="Variant.Outlined">
+                                    <RadzenFormField Text="Lead Assessor *" Variant="Variant.Outlined" class="@(IsLeadAssessorInvalid() ? "validation-error-field" : string.Empty)">
                                         @if (AvailableAssessors is not null && AvailableAssessors.Any())
                                         {
                                             <RadzenDropDown @bind-Value="@Step1.LeadAssessor" 
@@ -33,6 +33,7 @@
                                                             AllowFiltering="true"
                                                             FilterCaseSensitivity="FilterCaseSensitivity.CaseInsensitive"
                                                             title="Person responsible for conducting this risk assessment"
+                                                            class="@(IsLeadAssessorInvalid() ? "default-validation-dropdown" : string.Empty)"
                                                             Change="@OnLeadAssessorChanged" />
                                         }
                                         else
@@ -47,21 +48,23 @@
                             </RadzenColumn>
                             <RadzenColumn Size="5" >
                                 <RadzenStack Gap="0.5rem">
-                                    <RadzenFormField Text="System Description *" Variant="Variant.Outlined">
-                                        <RadzenTextArea @bind-Value="@Step1.SystemDescription" Rows="4" Placeholder="Provide a comprehensive description of the system being assessed..." Style="width: 100%;"
-                                                    title="Describe what the system does, its primary functions, and operational context" />
+                                    <RadzenFormField Text="System Description *" AllowFloatingLabel="false" Variant="Variant.Outlined" class="@(IsInvalid(Step1.SystemDescription, 10) ? "validation-error-field" : string.Empty)">
+                                        <RadzenTextArea @bind-Value="@Step1.SystemDescription" @oninput="OnStep1FieldChanged" Rows="4" Placeholder="Provide a comprehensive description of the system being assessed..." Style="width: 100%;"
+                                                    title="Provide a comprehensive description of the system being assessed"
+                                                    class="@(IsInvalid(Step1.SystemDescription, 10) ? "default-validation-textarea" : string.Empty)" />
                                     </RadzenFormField>
-                                    <RadzenText TextStyle="TextStyle.Caption" Text="Describe what the system does, its primary functions, and operational context" />
+                                    @* <RadzenText TextStyle="TextStyle.Caption" Text="Describe what the system does, its primary functions, and operational context" /> *@
                                     <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.SystemDescription, 10)" />
                                 </RadzenStack>
                             </RadzenColumn>
                             <RadzenColumn Size="5" >
                                 <RadzenStack Gap="0.5rem">
-                                    <RadzenFormField Text="System Boundaries *" Variant="Variant.Outlined">
-                                        <RadzenTextArea @bind-Value="@Step1.SystemBoundaries" Rows="4" Placeholder="Define what is included and excluded from this assessment..." Style="width: 100%;"
-                                                    title="Clearly define the scope - what's in and what's out of this assessment" />
+                                    <RadzenFormField Text="System Boundaries *" AllowFloatingLabel="false" Variant="Variant.Outlined" class="@(IsInvalid(Step1.SystemBoundaries, 10) ? "validation-error-field" : string.Empty)">
+                                        <RadzenTextArea @bind-Value="@Step1.SystemBoundaries" @oninput="OnStep1FieldChanged" Rows="4" Placeholder="Clearly define the scope - what's in and what's out of this assessment..." Style="width: 100%;"
+                                                    title="Clearly define the scope - what's in and what's out of this assessment"
+                                                    class="@(IsInvalid(Step1.SystemBoundaries, 10) ? "default-validation-textarea" : string.Empty)" />
                                     </RadzenFormField>
-                                    <RadzenText TextStyle="TextStyle.Caption" Text="Clearly define the scope - what's in and what's out of this assessment" />
+                                    @* <RadzenText TextStyle="TextStyle.Caption" Text="Clearly define the scope - what's in and what's out of this assessment" /> *@
                                     <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.SystemBoundaries, 10)" />
                                 </RadzenStack>
                             </RadzenColumn>
@@ -70,12 +73,13 @@
                         <RadzenRow Gap="1rem" Style="margin-top: 1rem;">
                             <RadzenColumn Size="12">
                                 <RadzenStack Gap="0.5rem">
-                                    <RadzenFormField Text="System Purpose & Objectives *" Variant="Variant.Outlined">
-                                        <RadzenTextArea @bind-Value="@Step1.SystemPurpose" Rows="3" Placeholder="What is the system designed to achieve? What are its key objectives?" 
+                                    <RadzenFormField Text="System Purpose & Objectives *" AllowFloatingLabel="false" Variant="Variant.Outlined" class="@(IsInvalid(Step1.SystemPurpose, 5) ? "validation-error-field" : string.Empty)">
+                                        <RadzenTextArea @bind-Value="@Step1.SystemPurpose" @oninput="OnStep1FieldChanged" Rows="3" Placeholder="What is the system designed to achieve? What are its key objectives?" 
                                         Style="width: 100%;"
-                                                    title="Define the intended purpose and key performance objectives" />
+                                                    title="Define the intended purpose and key performance objectives"
+                                                    class="@(IsInvalid(Step1.SystemPurpose, 5) ? "default-validation-textarea" : string.Empty)" />
                                     </RadzenFormField>
-                                    <RadzenText TextStyle="TextStyle.Caption" Text="Define the intended purpose and key performance objectives" />
+                                    @* <RadzenText TextStyle="TextStyle.Caption" Text="Define the intended purpose and key performance objectives" /> *@
                                     <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.SystemPurpose, 5)" />
                                 </RadzenStack>
                             </RadzenColumn>
@@ -93,11 +97,11 @@
                                 <RadzenStack Gap=".5rem" Style="padding: .5rem;">
                                     <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
                                         <RadzenIcon Icon="people" Style="margin-right: 0.5rem;" />
-                                        Man (People)
+                                        Man (People - Personnel & Human Factors)
                                     </RadzenText>
                                     <RadzenStack Gap="0.5rem">
-                                        <RadzenFormField Text="Personnel & Human Factors *" Variant="Variant.Outlined">
-                                            <RadzenTextArea @bind-Value="@Step1.FiveMPersonnel" Rows="4" Placeholder="Who are the people involved? What human factors apply?" Style="width: 100%;" />
+                                        <RadzenFormField Text="*" AllowFloatingLabel="false" Variant="Variant.Outlined" class="@(IsInvalid(Step1.FiveMPersonnel, 10) ? "validation-error-field" : string.Empty)">
+                                            <RadzenTextArea @bind-Value="@Step1.FiveMPersonnel" @oninput="OnStep1FieldChanged" Rows="4" Placeholder="Who are the people involved? What human factors apply?" Style="width: 100%;" class="@(IsInvalid(Step1.FiveMPersonnel, 10) ? "default-validation-textarea" : string.Empty)" />
                                         </RadzenFormField>
                                         <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.FiveMPersonnel, 10)" />
                                     </RadzenStack>
@@ -109,11 +113,11 @@
                                 <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
                                     <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
                                         <RadzenIcon Icon="settings" Style="margin-right: 0.5rem;" />
-                                        Machine (Equipment)
+                                        Machine (Equipment & Technology )
                                     </RadzenText>
                                     <RadzenStack Gap="0.5rem">
-                                        <RadzenFormField Text="Equipment & Technology *" Variant="Variant.Outlined">
-                                            <RadzenTextArea @bind-Value="@Step1.FiveMEquipment" Rows="4" Placeholder="What equipment and technology is involved?" Style="width: 100%;" />
+                                        <RadzenFormField Text="*" AllowFloatingLabel="false" Variant="Variant.Outlined" class="@(IsInvalid(Step1.FiveMEquipment, 10) ? "validation-error-field" : string.Empty)">
+                                            <RadzenTextArea @bind-Value="@Step1.FiveMEquipment" @oninput="OnStep1FieldChanged" Rows="4" Placeholder="What equipment and technology is involved?" Style="width: 100%;" class="@(IsInvalid(Step1.FiveMEquipment, 10) ? "default-validation-textarea" : string.Empty)" />
                                         </RadzenFormField>
                                         <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.FiveMEquipment, 10)" />
                                     </RadzenStack>
@@ -125,11 +129,11 @@
                                 <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
                                     <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
                                         <RadzenIcon Icon="list_alt" Style="margin-right: 0.5rem;" />
-                                        Method (Procedures)
+                                        Method (Procedures & Processes )
                                     </RadzenText>
                                     <RadzenStack Gap="0.5rem">
-                                        <RadzenFormField Text="Procedures & Processes *" Variant="Variant.Outlined">
-                                            <RadzenTextArea @bind-Value="@Step1.FiveMProcedures" Rows="4" Placeholder="What procedures and processes are followed?" Style="width: 100%;" />
+                                        <RadzenFormField Text="*" AllowFloatingLabel="false" Variant="Variant.Outlined" class="@(IsInvalid(Step1.FiveMProcedures, 10) ? "validation-error-field" : string.Empty)">
+                                            <RadzenTextArea @bind-Value="@Step1.FiveMProcedures" @oninput="OnStep1FieldChanged" Rows="4" Placeholder="What procedures and processes are followed?" Style="width: 100%;" class="@(IsInvalid(Step1.FiveMProcedures, 10) ? "default-validation-textarea" : string.Empty)" />
                                         </RadzenFormField>
                                         <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.FiveMProcedures, 10)" />
                                     </RadzenStack>
@@ -141,11 +145,11 @@
                                 <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
                                     <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
                                         <RadzenIcon Icon="inventory" Style="margin-right: 0.5rem;" />
-                                        Material (Resources)
+                                        Material (Materials & Resources)
                                     </RadzenText>
                                     <RadzenStack Gap="0.5rem">
-                                        <RadzenFormField Text="Materials & Resources *" Variant="Variant.Outlined">
-                                            <RadzenTextArea @bind-Value="@Step1.FiveMResources" Rows="4" Placeholder="What materials and resources are required?" Style="width: 100%;" />
+                                        <RadzenFormField Text="*" AllowFloatingLabel="false" Variant="Variant.Outlined" class="@(IsInvalid(Step1.FiveMResources, 10) ? "validation-error-field" : string.Empty)">
+                                            <RadzenTextArea @bind-Value="@Step1.FiveMResources" @oninput="OnStep1FieldChanged" Rows="4" Placeholder="What materials and resources are required?" Style="width: 100%;" class="@(IsInvalid(Step1.FiveMResources, 10) ? "default-validation-textarea" : string.Empty)" />
                                         </RadzenFormField>
                                         <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.FiveMResources, 10)" />
                                     </RadzenStack>
@@ -157,21 +161,21 @@
                                 <RadzenStack Gap="0.5rem" Style="padding: 0.5rem;">
                                     <RadzenText TextStyle="TextStyle.H6" Style="color: var(--rz-primary); margin: 0;">
                                         <RadzenIcon Icon="public" Style="margin-right: 0.5rem;" />
-                                        Milieu (Environment)
+                                        Milieu (Physical and Operational Environment)
                                     </RadzenText>
                                     <RadzenRow Gap="0.5rem">
                                         <RadzenColumn Size="12" SizeMD="6">
                                             <RadzenStack Gap="0.5rem">
-                                                <RadzenFormField Text="Physical Environment *" Variant="Variant.Outlined">
-                                                    <RadzenTextArea @bind-Value="@Step1.FiveMPhysicalEnvironment" Rows="3" Placeholder="Physical environmental factors..." Style="width: 100%;" />
+                                                <RadzenFormField Text="Physical*" AllowFloatingLabel="false" Variant="Variant.Outlined" class="@(IsInvalid(Step1.FiveMPhysicalEnvironment, 10) ? "validation-error-field" : string.Empty)">
+                                                    <RadzenTextArea @bind-Value="@Step1.FiveMPhysicalEnvironment" @oninput="OnStep1FieldChanged" Rows="3" Placeholder="Physical environmental factors..." Style="width: 100%;" class="@(IsInvalid(Step1.FiveMPhysicalEnvironment, 10) ? "default-validation-textarea" : string.Empty)" />
                                                 </RadzenFormField>
                                                 <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.FiveMPhysicalEnvironment, 10)" />
                                             </RadzenStack>
                                         </RadzenColumn>
                                         <RadzenColumn Size="12" SizeMD="6">
                                             <RadzenStack Gap="0.5rem">
-                                                <RadzenFormField Text="Operational Environment *" Variant="Variant.Outlined">
-                                                    <RadzenTextArea @bind-Value="@Step1.FiveMOperationalEnvironment" Rows="3" Placeholder="Operational environmental factors..." Style="width: 100%;" />
+                                                <RadzenFormField Text="Operational*" AllowFloatingLabel="false" Variant="Variant.Outlined" class="@(IsInvalid(Step1.FiveMOperationalEnvironment, 10) ? "validation-error-field" : string.Empty)">
+                                                    <RadzenTextArea @bind-Value="@Step1.FiveMOperationalEnvironment" @oninput="OnStep1FieldChanged" Rows="3" Placeholder="Operational environmental factors..." Style="width: 100%;" class="@(IsInvalid(Step1.FiveMOperationalEnvironment, 10) ? "default-validation-textarea" : string.Empty)" />
                                                 </RadzenFormField>
                                                 <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step1.FiveMOperationalEnvironment, 10)" />
                                             </RadzenStack>
@@ -331,6 +335,27 @@
     </RadzenRow>
 </RadzenStack>
 
+<style>
+    .validation-error-field .rz-dropdown {
+        border: 2px solid #dc3545 !important;
+        background-color: #fff5f5 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    .validation-error-field .rz-textarea,
+    .default-validation-textarea {
+        border: 2px solid #dc3545 !important;
+        background-color: #fff5f5 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+
+    .default-validation-dropdown {
+        border: 2px solid #dc3545 !important;
+        background-color: #fff5f5 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+</style>
+
 @code {
     [Parameter] public Step1Model Step1 { get; set; } = new();
     [Parameter] public EventCallback<Step1Model> Step1Changed { get; set; }
@@ -355,6 +380,16 @@
         {
             Step1.SelectedIndividualStakeholderIds = new List<string>();
         }
+    }
+
+    private static bool IsInvalid(string? value, int minLength)
+    {
+        return string.IsNullOrWhiteSpace(value) || value.Trim().Length < minLength;
+    }
+
+    private bool IsLeadAssessorInvalid()
+    {
+        return string.IsNullOrWhiteSpace(Step1?.LeadAssessor);
     }
 
     private string GetFieldValidation(string? text, int minLength)
@@ -392,6 +427,11 @@
             Step1.LeadAssessor = value.ToString() ?? string.Empty;
             await Step1Changed.InvokeAsync(Step1);
         }
+    }
+
+    private async Task OnStep1FieldChanged(ChangeEventArgs _)
+    {
+        await Step1Changed.InvokeAsync(Step1);
     }
 
     private async Task AddStakeholderGroup(string groupCode)

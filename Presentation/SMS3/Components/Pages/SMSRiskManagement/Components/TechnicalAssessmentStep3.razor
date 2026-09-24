@@ -73,12 +73,15 @@
                                         <!-- Worst Credible Outcome -->
                                         <RadzenColumn Size="12" SizeMD="6">
                                             <RadzenStack Gap="0.5rem">
-                                                <RadzenFormField Text="Worst Credible Outcome *" Variant="Variant.Outlined">
+                                                <RadzenFormField Text="Worst Credible Outcome *"
+                                                                 Variant="Variant.Outlined"
+                                                                 class="@(IsInitialFieldInvalid(analysis.InitialWorstCredibleOutcome) ? "validation-error-field" : string.Empty)">
                                                     <RadzenTextArea @bind-Value="@analysis.InitialWorstCredibleOutcome"
                                                                     @oninput="@((args) => OnAnalysisFieldChanged(hazard.Code, "WorstCredibleOutcome", args))"
                                                                     Rows="3"
                                                                     Placeholder="Describe the worst reasonable outcome that could result from this hazard..."
-                                                                    Style="width: 100%;" />
+                                                                    Style="width: 100%;"
+                                                                    class="@(IsInitialFieldInvalid(analysis.InitialWorstCredibleOutcome) ? "default-validation-textarea" : string.Empty)" />
                                                 </RadzenFormField>
                                                 <RadzenText TextStyle="TextStyle.Caption" Text="Focus on the most severe but realistic consequence - what could actually happen?" />
                                             <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(analysis.InitialWorstCredibleOutcome, 10)" />
@@ -88,12 +91,15 @@
                                         <!-- Root Cause Analysis -->
                                         <RadzenColumn Size="12" SizeMD="6">
                                             <RadzenStack Gap="0.5rem">
-                                                <RadzenFormField Text="Root Cause Analysis *" Variant="Variant.Outlined">
+                                                <RadzenFormField Text="Root Cause Analysis *"
+                                                                 Variant="Variant.Outlined"
+                                                                 class="@(IsInitialFieldInvalid(analysis.InitialRootCause) ? "validation-error-field" : string.Empty)">
                                                 <RadzenTextArea @bind-Value="@analysis.InitialRootCause"
                                                                     @oninput="@((args) => OnAnalysisFieldChanged(hazard.Code, "RootCause", args))"
                                                                     Rows="3"
                                                                     Placeholder="Identify the underlying root causes that could lead to this hazard..."
-                                                                    Style="width: 100%;" />
+                                                                    Style="width: 100%;"
+                                                                    class="@(IsInitialFieldInvalid(analysis.InitialRootCause) ? "default-validation-textarea" : string.Empty)" />
                                                 </RadzenFormField>
                                                 <RadzenText TextStyle="TextStyle.Caption" Text="Identify underlying causes, not just symptoms - ask 'why' multiple times" />
                                             <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(analysis.InitialRootCause, 10)" />
@@ -102,12 +108,15 @@
                                     </RadzenRow>
 
                                     <!-- Additional Comments -->
-                                    <RadzenFormField Text="Additional Analysis Comments" Variant="Variant.Outlined">
+                                    <RadzenFormField Text="Additional Analysis Comments *"
+                                                     Variant="Variant.Outlined"
+                                                     class="@(IsInitialFieldInvalid(analysis.InitialAdditionalComments) ? "validation-error-field" : string.Empty)">
                                     <RadzenTextArea @bind-Value="@analysis.InitialAdditionalComments"
                                                         @oninput="@((args) => OnAnalysisFieldChanged(hazard.Code, "AdditionalComments", args))"
                                                         Rows="2"
                                                         Placeholder="Document any additional context, assumptions, or observations..."
-                                                        Style="width: 100%;" />
+                                                        Style="width: 100%;"
+                                                        class="@(IsInitialFieldInvalid(analysis.InitialAdditionalComments) ? "default-validation-textarea" : string.Empty)" />
                                     </RadzenFormField>
                                     <RadzenText TextStyle="TextStyle.Caption" Text="Document any additional context, assumptions, or observations relevant to this hazard" />
                                 </RadzenStack>
@@ -138,6 +147,15 @@
     </RadzenColumn>
 </RadzenRow>
 
+<style>
+    .validation-error-field .rz-textarea,
+    .default-validation-textarea {
+        border: 2px solid #dc3545 !important;
+        background-color: #fff5f5 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+</style>
+
 @code {
     #region Parameters
 
@@ -157,6 +175,11 @@
     {
         // Step3 data loading is handled by parent component's LoadStepDataFromAssessment method
         // This ensures proper timing and avoids race conditions with data loading
+    }
+
+    private static bool IsInitialFieldInvalid(string? value)
+    {
+        return string.IsNullOrWhiteSpace(value) || value.Trim().Length < 10;
     }
 
     #endregion

@@ -14,6 +14,9 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Components;
 
 public partial class HazardScoring : ComponentBase
 {
+    private const string Step5OnlyMarker = "__STEP5_ONLY_PANEL__";
+    private const string Step5ExcludedMarker = "__STEP5_EXCLUDED_PANEL__";
+
     [Parameter] public Hazard Hazard { get; set; } = new(new HazardID("HZ-0000"));
     [Parameter] public Step4Model? Step4 { get; set; }  // Made nullable to handle null cases
     [Parameter] public Step5Model? Step5 { get; set; } // Made nullable to handle null cases
@@ -100,6 +103,7 @@ public partial class HazardScoring : ComponentBase
 
                 var filteredPanels = (result.Value ?? new List<ScoringPanel>())
                     .Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), targetRiskAssessmentCode, StringComparison.Ordinal))
+                    .Where(IsVisibleInCurrentStep)
                     .ToList();
 
                 // Map properties based on CurrentStep for all loaded panels
@@ -202,6 +206,23 @@ public partial class HazardScoring : ComponentBase
             .GroupBy(p => p.MemberId, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.OrderByDescending(x => x.SubmittedDate).First())
             .ToList();
+    }
+
+    private bool IsVisibleInCurrentStep(ScoringPanel panel)
+    {
+        if (CurrentStep == 4)
+        {
+            // Step 4 should not show members created only for Step 5 panel composition
+            return !string.Equals(panel.InitialRationale, Step5OnlyMarker, StringComparison.Ordinal);
+        }
+
+        if (CurrentStep == 5)
+        {
+            // Step 5 should not show members explicitly removed from the residual panel
+            return !string.Equals(panel.ResidualRationale, Step5ExcludedMarker, StringComparison.Ordinal);
+        }
+
+        return true;
     }
 
     private string GetMemberName(string? userCode)
@@ -530,6 +551,7 @@ public partial class HazardScoring : ComponentBase
 
             var targetAssessmentCode = CurrentRiskAssessment.Code.Trim();
             Logger.LogInformation("Using risk assessment code: {AssessmentCode}", targetAssessmentCode);
+            var assessmentPanels = new List<ScoringPanel>();
 
             // Get ALL panels for this hazard for deletion
             var query = new GetScoringPanelsByHazardCodeQuery(Hazard.Code);
@@ -538,30 +560,144 @@ public partial class HazardScoring : ComponentBase
             if (allPanelsResult.IsSuccess && allPanelsResult.Value is not null)
             {
                 // Find panels for this assessment that should be removed
-                var panelsToRemove = (allPanelsResult.Value ?? new List<ScoringPanel>())
+                assessmentPanels = (allPanelsResult.Value ?? new List<ScoringPanel>())
+                    .Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), targetAssessmentCode, StringComparison.Ordinal))
+                    .ToList();
+
+                var step5HasIndependentState = HasStep5IndependentState(assessmentPanels);
+
+                var panelsToRemove = assessmentPanels
                     .Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), targetAssessmentCode, StringComparison.Ordinal) && 
                                !selectedStakeholderCodes.Contains(p.SMSUserCode!))
+                    .Where(IsVisibleInCurrentStep)
                     .ToList();
 
                 Logger.LogInformation("Removing {Count} panels for unselected stakeholders in assessment {AssessmentCode}", 
                     panelsToRemove.Count, targetAssessmentCode);
 
-                // Delete panels for unselected stakeholders
                 foreach (var panel in panelsToRemove)
                 {
-                    Logger.LogInformation("Deleting panel {PanelCode} for stakeholder {StakeholderCode}", panel.Code, panel.SMSUserCode);
+                    if (CurrentStep == 5)
+                    {
+                        if (string.Equals(panel.InitialRationale, Step5OnlyMarker, StringComparison.Ordinal))
+                        {
+                            Logger.LogInformation("Deleting Step 5-only panel {PanelCode} for stakeholder {StakeholderCode}", panel.Code, panel.SMSUserCode);
+                            var deleteCommand = new DeleteScoringPanelCommand(new ScoringPanelID(panel.Id.Value));
+                            await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+                            continue;
+                        }
 
-                    var deleteCommand = new DeleteScoringPanelCommand(new ScoringPanelID(panel.Id.Value));
-                    await Mediator.SendAsync(deleteCommand, CancellationToken.None);
+                        // Preserve Step 4 panel membership while removing member from Step 5 only
+                        panel.ResidualSeverity = null;
+                        panel.ResidualLikelihood = null;
+                        panel.ResidualScore = null;
+                        panel.ResidualRationale = Step5ExcludedMarker;
+                        panel.UpdatedDate = DateTime.UtcNow;
+                        panel.UpdatedBy = _currentUserService.UserCode;
+
+                        Logger.LogInformation("Marking panel {PanelCode} as excluded from Step 5 for stakeholder {StakeholderCode}", panel.Code, panel.SMSUserCode);
+                        var updateCommand = new UpdateScoringPanelCommand(panel);
+                        await Mediator.SendAsync(updateCommand, CancellationToken.None);
+                        continue;
+                    }
+
+                    if (step5HasIndependentState)
+                    {
+                        // Once Step 5 has been initialized/edited, Step 4 changes must not mutate Step 5 composition.
+                        panel.InitialSeverity = null;
+                        panel.InitialLikelihood = null;
+                        panel.InitialScore = null;
+                        panel.InitialRationale = Step5OnlyMarker;
+                        panel.UpdatedDate = DateTime.UtcNow;
+                        panel.UpdatedBy = _currentUserService.UserCode;
+
+                        Logger.LogInformation("Step 4 removal kept Step 5 independent: marking panel {PanelCode} as Step 5-only for stakeholder {StakeholderCode}",
+                            panel.Code, panel.SMSUserCode);
+
+                        var preserveStep5Command = new UpdateScoringPanelCommand(panel);
+                        await Mediator.SendAsync(preserveStep5Command, CancellationToken.None);
+                        continue;
+                    }
+
+                    var hasStep5Data = panel.ResidualSeverity.HasValue
+                        || panel.ResidualLikelihood.HasValue
+                        || panel.ResidualScore.HasValue
+                        || (!string.IsNullOrWhiteSpace(panel.ResidualRationale)
+                            && !string.Equals(panel.ResidualRationale, Step5ExcludedMarker, StringComparison.Ordinal));
+
+                    if (hasStep5Data)
+                    {
+                        // Keep Step 5 membership/data and remove from Step 4 only.
+                        panel.InitialSeverity = null;
+                        panel.InitialLikelihood = null;
+                        panel.InitialScore = null;
+                        panel.InitialRationale = Step5OnlyMarker;
+                        panel.UpdatedDate = DateTime.UtcNow;
+                        panel.UpdatedBy = _currentUserService.UserCode;
+
+                        Logger.LogInformation("Marking panel {PanelCode} as Step 5-only while removing from Step 4 for stakeholder {StakeholderCode}", panel.Code, panel.SMSUserCode);
+                        var step4ToStep5OnlyCommand = new UpdateScoringPanelCommand(panel);
+                        await Mediator.SendAsync(step4ToStep5OnlyCommand, CancellationToken.None);
+                        continue;
+                    }
+
+                    Logger.LogInformation("Deleting panel {PanelCode} for stakeholder {StakeholderCode}", panel.Code, panel.SMSUserCode);
+                    var step4DeleteCommand = new DeleteScoringPanelCommand(new ScoringPanelID(panel.Id.Value));
+                    await Mediator.SendAsync(step4DeleteCommand, CancellationToken.None);
                 }
             }
 
             // Add panels for newly selected stakeholders
-            var existingCodes = _hazardScoringPanels.Select(p => p.SMSUserCode).ToList();
-            var newStakeholderCodes = selectedStakeholderCodes.Except(existingCodes).ToList();
+            var existingCodes = _hazardScoringPanels
+                .Where(p => !string.IsNullOrWhiteSpace(p.SMSUserCode))
+                .Select(p => p.SMSUserCode!.Trim())
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .ToList();
+
+            var newStakeholderCodes = selectedStakeholderCodes
+                .Where(code => !existingCodes.Contains(code.Trim(), StringComparer.OrdinalIgnoreCase))
+                .ToList();
 
             foreach (var stakeholderCode in newStakeholderCodes)
             {
+                var step5HasIndependentState = HasStep5IndependentState(assessmentPanels);
+                var existingAssessmentPanel = assessmentPanels.FirstOrDefault(p =>
+                    string.Equals(p.SMSUserCode?.Trim(), stakeholderCode.Trim(), StringComparison.OrdinalIgnoreCase));
+
+                if (CurrentStep == 4 && existingAssessmentPanel is not null)
+                {
+                    // Reactivate hidden Step 5-only member back into Step 4 without creating duplicates.
+                    existingAssessmentPanel.InitialRationale = null;
+                    existingAssessmentPanel.UpdatedDate = DateTime.UtcNow;
+                    existingAssessmentPanel.UpdatedBy = _currentUserService.UserCode;
+
+                    Logger.LogInformation("Reactivated existing panel {PanelCode} for Step 4 stakeholder {StakeholderCode}",
+                        existingAssessmentPanel.Code, stakeholderCode);
+
+                    var reactivateForStep4Command = new UpdateScoringPanelCommand(existingAssessmentPanel);
+                    await Mediator.SendAsync(reactivateForStep4Command, CancellationToken.None);
+                    continue;
+                }
+
+                if (CurrentStep == 5)
+                {
+                    var existingStep4Panel = existingAssessmentPanel;
+
+                    if (existingStep4Panel is not null)
+                    {
+                        existingStep4Panel.ResidualRationale = null;
+                        existingStep4Panel.UpdatedDate = DateTime.UtcNow;
+                        existingStep4Panel.UpdatedBy = _currentUserService.UserCode;
+
+                        Logger.LogInformation("Reactivated existing panel {PanelCode} for Step 5 stakeholder {StakeholderCode}",
+                            existingStep4Panel.Code, stakeholderCode);
+
+                        var reactivateCommand = new UpdateScoringPanelCommand(existingStep4Panel);
+                        await Mediator.SendAsync(reactivateCommand, CancellationToken.None);
+                        continue;
+                    }
+                }
+
                 // Create new panel for the current assessment
                 var newPanel = new ScoringPanel(new ScoringPanelID("SP-0000"))
                 {
@@ -579,11 +715,57 @@ public partial class HazardScoring : ComponentBase
                     RiskAssessmentCode = targetAssessmentCode
                 };
 
+                if (CurrentStep == 5)
+                {
+                    // Marker to keep Step 5-only members from appearing in Step 4 panel list
+                    newPanel.InitialRationale = Step5OnlyMarker;
+                }
+                else if (CurrentStep == 4 && step5HasIndependentState)
+                {
+                    // Once Step 5 is independent, Step 4 additions should not appear in Step 5.
+                    newPanel.ResidualRationale = Step5ExcludedMarker;
+                }
+
                 Logger.LogInformation("Creating panel for stakeholder {StakeholderCode} in assessment {AssessmentCode}",
                     stakeholderCode, targetAssessmentCode);
 
                 var createCommand = new CreateScoringPanelCommand(newPanel);
-                await Mediator.SendAsync(createCommand, CancellationToken.None);
+                var createResult = await Mediator.SendAsync(createCommand, CancellationToken.None);
+
+                // Some persistence paths do not retain rationale fields on initial insert.
+                // Force-persist Step 5 marker so Step 5-only members never appear in Step 4.
+                if (CurrentStep == 5 && createResult.IsSuccess && createResult.Value is not null)
+                {
+                    var createdPanel = createResult.Value;
+                    if (!string.Equals(createdPanel.InitialRationale, Step5OnlyMarker, StringComparison.Ordinal))
+                    {
+                        createdPanel.InitialRationale = Step5OnlyMarker;
+                        createdPanel.UpdatedDate = DateTime.UtcNow;
+                        createdPanel.UpdatedBy = _currentUserService.UserCode;
+
+                        Logger.LogInformation("Post-create marker sync: setting Step 5-only marker on panel {PanelCode} for stakeholder {StakeholderCode}",
+                            createdPanel.Code, stakeholderCode);
+
+                        var persistMarkerCommand = new UpdateScoringPanelCommand(createdPanel);
+                        await Mediator.SendAsync(persistMarkerCommand, CancellationToken.None);
+                    }
+                }
+                else if (CurrentStep == 4 && step5HasIndependentState && createResult.IsSuccess && createResult.Value is not null)
+                {
+                    var createdPanel = createResult.Value;
+                    if (!string.Equals(createdPanel.ResidualRationale, Step5ExcludedMarker, StringComparison.Ordinal))
+                    {
+                        createdPanel.ResidualRationale = Step5ExcludedMarker;
+                        createdPanel.UpdatedDate = DateTime.UtcNow;
+                        createdPanel.UpdatedBy = _currentUserService.UserCode;
+
+                        Logger.LogInformation("Post-create marker sync: setting Step 5-excluded marker on panel {PanelCode} for stakeholder {StakeholderCode}",
+                            createdPanel.Code, stakeholderCode);
+
+                        var persistMarkerCommand = new UpdateScoringPanelCommand(createdPanel);
+                        await Mediator.SendAsync(persistMarkerCommand, CancellationToken.None);
+                    }
+                }
             }
 
             // Reload the panels
@@ -595,6 +777,16 @@ public partial class HazardScoring : ComponentBase
         {
             Logger.LogError(ex, "Error updating panel for hazard {HazardCode}", Hazard.Code);
         }
+    }
+
+    private static bool HasStep5IndependentState(IEnumerable<ScoringPanel> assessmentPanels)
+    {
+        return (assessmentPanels ?? Enumerable.Empty<ScoringPanel>()).Any(panel =>
+            panel.ResidualSeverity.HasValue
+            || panel.ResidualLikelihood.HasValue
+            || panel.ResidualScore.HasValue
+            || string.Equals(panel.ResidualRationale, Step5ExcludedMarker, StringComparison.Ordinal)
+            || string.Equals(panel.InitialRationale, Step5OnlyMarker, StringComparison.Ordinal));
     }
 
     private string GetSeverityLabel(int severity)
@@ -1060,6 +1252,8 @@ public partial class HazardScoring : ComponentBase
                 .Where(p =>
                     // Has Technical scores from Step 4
                     p.InitialSeverity.HasValue && p.InitialLikelihood.HasValue && p.InitialScore.HasValue &&
+                    // Skip members explicitly excluded from Step 5
+                    !string.Equals(p.ResidualRationale, Step5ExcludedMarker, StringComparison.Ordinal) &&
                     // AND Residual scores are empty (haven't been set in Step 5 yet)
                     !p.ResidualSeverity.HasValue && !p.ResidualLikelihood.HasValue && !p.ResidualScore.HasValue)
                 .ToList();

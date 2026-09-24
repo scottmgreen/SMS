@@ -379,7 +379,11 @@ public partial class ReportValidation : ComponentBase
                 {
                     throw new Exception($"Failed to update existing validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.UpdateFailed.Message}");
                 }
-                bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.ValidationRevised);
+                var updateStatus = _selectedValidationDecision == ValidationDecision.SmsRisk && _riskRegistryOnly
+                    ? ReportStatus.RiskRegistryOnly
+                    : ReportStatus.ValidationRevised;
+
+                bool flowControl = await UpdateReportStatus(ReportId, updateStatus);
                 if (!flowControl)
                 {
                     throw new Exception($"Failed to Update Report Status during Update Validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.UpdateFailed.Message}");
@@ -418,7 +422,11 @@ public partial class ReportValidation : ComponentBase
                 {
                     throw new Exception($"Failed to create new validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.CreateFailed.Message}");
                 }
-                bool flowControl = await UpdateReportStatus(ReportId, ReportStatus.ValidationCompleted);
+                var createStatus = _selectedValidationDecision == ValidationDecision.SmsRisk && _riskRegistryOnly
+                    ? ReportStatus.RiskRegistryOnly
+                    : ReportStatus.ValidationCompleted;
+
+                bool flowControl = await UpdateReportStatus(ReportId, createStatus);
                 if (!flowControl)
                 {
                     throw new Exception($"Failed to Update Report Status during Create new validation: {result.Error?.Message ?? DomainErrors.ReportValidationError.CreateFailed.Message}");

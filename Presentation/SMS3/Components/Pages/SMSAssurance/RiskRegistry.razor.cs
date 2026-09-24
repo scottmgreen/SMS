@@ -103,13 +103,15 @@ public partial class RiskRegistry : ComponentBase
             var hazardsTask = LoadAllHazardsAsync();
             var assessmentsTask = LoadAllRiskAssessmentsAsync();
             var mitigationsTask = LoadAllMitigationsAsync();
+            var usersTask = LoadAllApplicationUsersAsync();
 
-            await Task.WhenAll(reportsTask,hazardsTask, assessmentsTask, mitigationsTask);
+            await Task.WhenAll(reportsTask, hazardsTask, assessmentsTask, mitigationsTask, usersTask);
 
             var reports = await reportsTask;
             var hazards = await hazardsTask;
             var assessments = await assessmentsTask;
             var mitigations = await mitigationsTask;
+            var users = await usersTask;
 
             _logger.LogInformation("Risk Registry: Data loaded - Hazards: {HazardCount}, Assessments: {AssessmentCount}, Mitigations: {MitigationCount}",
                 hazards.Count, assessments.Count, mitigations.Count);
@@ -123,7 +125,7 @@ public partial class RiskRegistry : ComponentBase
             }
 
             // Build risk registry entries
-            RiskRegistryEntries = BuildRiskRegistryEntries(reports,hazards, assessments, mitigations);
+            RiskRegistryEntries = BuildRiskRegistryEntries(reports, hazards, assessments, mitigations, users);
 
             _logger.LogInformation("Risk Registry: Built {EntryCount} registry entries", RiskRegistryEntries.Count);
 
@@ -275,6 +277,32 @@ public partial class RiskRegistry : ComponentBase
         return new List<Mitigation>();
     }
 
+    private async Task<List<SMSApplicationUser>> LoadAllApplicationUsersAsync()
+    {
+        try
+        {
+            _logger.LogInformation("Loading all application users...");
+            var query = new GetAllSMSApplicationUsersQuery();
+            var result = await _mediator.SendAsync(query, CancellationToken.None);
+
+            if (result.IsSuccess && result.Value is not null)
+            {
+                var users = result.Value.ToList();
+                _logger.LogInformation("Loaded {Count} application users successfully", users.Count);
+                return users;
+            }
+
+            _logger.LogWarning("GetAllSMSApplicationUsersQuery failed or returned null. IsSuccess: {IsSuccess}, Error: {Error}",
+                result.IsSuccess, result.Error?.Message);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Exception loading application users");
+        }
+
+        return new List<SMSApplicationUser>();
+    }
+
     #endregion
 
     #region Data Processing Methods
@@ -282,9 +310,13 @@ public partial class RiskRegistry : ComponentBase
     /// <summary>
     /// Build risk registry entries by correlating hazards, assessments, and mitigations
     /// </summary>
-    private List<RiskRegistryEntry> BuildRiskRegistryEntries(List<Report> reports,List<Hazard> hazards,List<RiskAssessment> assessments,List<Mitigation> mitigations)
+    private List<RiskRegistryEntry> BuildRiskRegistryEntries(List<Report> reports, List<Hazard> hazards, List<RiskAssessment> assessments, List<Mitigation> mitigations, List<SMSApplicationUser> users)
     {
-        
+        var usersByCode = users
+            .Where(u => !string.IsNullOrWhiteSpace(u.Code))
+            .GroupBy(u => u.Code.Trim(), StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.First(), StringComparer.OrdinalIgnoreCase);
+
         var entries = new List<RiskRegistryEntry>();
 
         foreach (var hazard in hazards)
@@ -327,7 +359,7 @@ public partial class RiskRegistry : ComponentBase
                     var overallMitigationStatus = MitigationStatusAggregationService.ResolveOverallStatus(hazardMitigations);
                     var governingMitigation = MitigationStatusAggregationService.SelectGoverningMitigation(hazardMitigations);
 
-                    var entry = CreateRiskRegistryEntry(report, hazard, assessment, governingMitigation, overallMitigationStatus);
+                    var entry = CreateRiskRegistryEntry(report, hazard, assessment, governingMitigation, overallMitigationStatus, usersByCode);
                     entry.MitigationCount = hazardMitigations.Count;
                     entries.Add(entry);
                     _logger.LogDebug("Added aggregate entry for hazard {HazardCode} with overall mitigation status {MitigationStatus}", hazard.Code, overallMitigationStatus?.Value);
@@ -335,7 +367,7 @@ public partial class RiskRegistry : ComponentBase
                 else
                 {
                     // Create entry without mitigation
-                    var entry = CreateRiskRegistryEntry(report, hazard, assessment, null, null);
+                    var entry = CreateRiskRegistryEntry(report, hazard, assessment, null, null, usersByCode);
                     entry.MitigationCount = 0;
                     entries.Add(entry);
                     _logger.LogDebug("Added entry for hazard {HazardCode} without mitigation", hazard.Code);
@@ -359,7 +391,8 @@ public partial class RiskRegistry : ComponentBase
         Hazard hazard,
         RiskAssessment? assessment,
         Mitigation? mitigation,
-        MitigationStatus? overallMitigationStatus)
+        MitigationStatus? overallMitigationStatus,
+        IReadOnlyDictionary<string, SMSApplicationUser> usersByCode)
     {
         var initialResolution = AviationRiskMatrixCalculator.ResolveRiskFromMatrixCode(hazard.InitialRiskMatrixCode);
         var residualResolution = AviationRiskMatrixCalculator.ResolveRiskFromMatrixCode(hazard.ResidualRiskMatrixCode);
@@ -386,7 +419,7 @@ public partial class RiskRegistry : ComponentBase
             MitigationStatus = overallMitigationStatus,
             MitigationCount = mitigation is null ? 0 : 1,
             TargetDate = mitigation?.TargetDate,
-            AssignedTo = mitigation?.AssignedTo ?? assessment?.LeadAssessorId ?? "Unassigned",
+            AssignedTo = ResolveOwnerDisplayName(mitigation?.AssignedTo ?? assessment?.LeadAssessorId, usersByCode),
             LastUpdated = assessment?.UpdatedDate ?? hazard.UpdatedDate ?? hazard.CreatedDate ?? DateTime.UtcNow,
 
             // Additional context for navigation and details
@@ -398,6 +431,30 @@ public partial class RiskRegistry : ComponentBase
 
         _logger.LogDebug("Created entry: {HazardId} -> MitigationStatus: '{Status}'", hazard.Code, entry.MitigationStatus);
         return entry;
+    }
+
+    private static string ResolveOwnerDisplayName(string? ownerCode, IReadOnlyDictionary<string, SMSApplicationUser> usersByCode)
+    {
+        if (string.IsNullOrWhiteSpace(ownerCode))
+        {
+            return "Unassigned";
+        }
+
+        var normalizedCode = ownerCode.Trim();
+        if (usersByCode.TryGetValue(normalizedCode, out var user))
+        {
+            if (!string.IsNullOrWhiteSpace(user.DisplayName))
+            {
+                return user.DisplayName;
+            }
+
+            if (!string.IsNullOrWhiteSpace(user.UserName?.Value))
+            {
+                return user.UserName.Value;
+            }
+        }
+
+        return normalizedCode;
     }
 
     /// <summary>

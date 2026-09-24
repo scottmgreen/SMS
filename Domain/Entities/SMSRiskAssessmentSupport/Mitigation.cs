@@ -31,6 +31,12 @@ public sealed class Mitigation : BaseAuditableEntity
     /// <summary>Associated hazard code - links to Hazard entity</summary>
     public string HazardCode { get; set; } = string.Empty;
 
+    /// <summary>Associated report code for listing/context scenarios</summary>
+    public string? ReportCode { get; set; }
+
+    /// <summary>Associated hazard description for listing/context scenarios</summary>
+    public string? HazardDescription { get; set; }
+
     /// <summary>Descriptive name of the mitigation</summary>
     public string? Name { get; set; }
 
@@ -51,12 +57,6 @@ public sealed class Mitigation : BaseAuditableEntity
 
     /// <summary>Associated risk assessment code</summary>
     public string? RiskAssessmentCode { get; set; }
-
-    /// <summary>Related report code (listing support)</summary>
-    public string? ReportCode { get; set; }
-
-    /// <summary>Related hazard description (listing support)</summary>
-    public string? HazardDescription { get; set; }
 
     #endregion
 

@@ -49,18 +49,16 @@ public partial class MitigationListing : ComponentBase
     private RadzenDataGrid<Mitigation>? _mitigationsGrid;
     private IEnumerable<Mitigation> _mitigations = new List<Mitigation>();
     private List<Mitigation> _allMitigations = new List<Mitigation>(); // Store all mitigations for client-side filtering
-    private IEnumerable<Mitigation> _mitigationModels = new List<Mitigation>();
-    private List<Mitigation> _allMitigationModels = new List<Mitigation>(); // Store all models for client-side filtering
     private IEnumerable<Mitigation> _selectedMitigations = new List<Mitigation>();
     private int _totalCount;
     private bool _isLoading = false;
     private bool _showViewDialog = false;
-    private bool _showDescriptionModal = false;
     private bool _showBulkApprovalDialog = false;
     private bool _isProcessingBulkApproval = false;
     private Mitigation? _selectedMitigation = null;
-    private string _selectedDescription = string.Empty;
+    private bool _showDescriptionModal = false;
     private string _selectedDescriptionTitle = string.Empty;
+    private string _selectedDescription = string.Empty;
 
     // For context display
     private Hazard? _contextHazard = null;
@@ -176,13 +174,12 @@ public partial class MitigationListing : ComponentBase
                 }
             }
 
-            // Create view models with Report ID and Hazard ID information
-            await CreateMitigationViewModels();
+            // Enrich mitigations with related hazard/report fields used by the listing UI
+            await EnrichMitigationsWithContextFields();
 
             // Initially show first page
-            _mitigationModels = _allMitigationModels.Take(15).ToList();
-            _mitigations = _mitigationModels.ToList();
-            _totalCount = _allMitigationModels.Count();
+            _mitigations = _allMitigations.Take(15).ToList();
+            _totalCount = _allMitigations.Count;
 
             // Show success/info notification based on loaded row count
             if (_totalCount > 0)
@@ -217,17 +214,17 @@ public partial class MitigationListing : ComponentBase
             _logger.LogInformation("LoadData called with Skip: {Skip}, Top: {Top}, OrderBy: {OrderBy}, Filters: {FiltersCount}", 
                 args.Skip, args.Top, args.OrderBy, args.Filters?.Count() ?? 0);
 
-            // If we don't have all mitigation models yet, load them first
-            if (_allMitigationModels is null || !_allMitigationModels.Any())
+            // If we don't have mitigations cached yet, load them first
+            if (_allMitigations is null || !_allMitigations.Any())
             {
-                _logger.LogInformation("No mitigation models cached, loading initial data");
+                _logger.LogInformation("No mitigations cached, loading initial data");
                 await LoadInitialData();
                 return;
             }
 
-            // Start with all mitigation models
-            var query = _allMitigationModels.AsQueryable();
-            _logger.LogInformation("Starting with {Count} total mitigation models", query.Count());
+            // Start with all mitigations
+            var query = _allMitigations.AsQueryable();
+            _logger.LogInformation("Starting with {Count} total mitigations", query.Count());
 
             // Apply filtering
             if (args.Filters is not null && args.Filters.Any())
@@ -264,11 +261,10 @@ public partial class MitigationListing : ComponentBase
             _logger.LogInformation("Applying take: {Top}", pageSize);
             query = query.Take(pageSize);
 
-            _mitigationModels = query.ToList();
-            _mitigations = _mitigationModels.ToList();
+            _mitigations = query.ToList();
 
             _logger.LogInformation("Applied filtering/sorting/paging. Showing {Count} of {Total} mitigations", 
-                _mitigationModels.Count(), _totalCount);
+                _mitigations.Count(), _totalCount);
         }
         catch (Exception ex)
         {
@@ -279,14 +275,12 @@ public partial class MitigationListing : ComponentBase
             // Fallback to show all data without filtering/sorting
             try
             {
-                _mitigationModels = _allMitigationModels ?? new List<Mitigation>();
                 _mitigations = _allMitigations ?? new List<Mitigation>();
-                _totalCount = _mitigationModels.Count();
+                _totalCount = _mitigations.Count();
             }
             catch (Exception fallbackEx)
             {
                 _logger.LogError(fallbackEx, "Error in LoadData fallback");
-                _mitigationModels = new List<Mitigation>();
                 _mitigations = new List<Mitigation>();
                 _totalCount = 0;
             }
@@ -333,7 +327,7 @@ public partial class MitigationListing : ComponentBase
                             query = ApplyStringFilter(query, m => m.Description, filterValue, filterOperator);
                             break;
                         case "status":
-                            query = ApplyEnumFilter(query, m => m.Status.Value, filterValue, filterOperator);
+                            query = ApplyEnumFilter(query, m => m.Status.ToString(), filterValue, filterOperator);
                             break;
                         case "progress":
                             if (int.TryParse(filter.FilterValue?.ToString(), out var progressValue))
@@ -443,7 +437,7 @@ public partial class MitigationListing : ComponentBase
                 "code" => isDescending ? query.OrderByDescending(m => m.Code ?? "") : query.OrderBy(m => m.Code ?? ""),
                 "name" => isDescending ? query.OrderByDescending(m => m.Name ?? "") : query.OrderBy(m => m.Name ?? ""),
                 "description" => isDescending ? query.OrderByDescending(m => m.Description ?? "") : query.OrderBy(m => m.Description ?? ""),
-                "status" => isDescending ? query.OrderByDescending(m => m.Status.Value) : query.OrderBy(m => m.Status.Value),
+                "status" => isDescending ? query.OrderByDescending(m => m.Status.ToString()) : query.OrderBy(m => m.Status.ToString()),
                 "progress" => isDescending ? query.OrderByDescending(m => m.Progress) : query.OrderBy(m => m.Progress),
                 "targetdate" => isDescending ? query.OrderByDescending(m => m.TargetDate) : query.OrderBy(m => m.TargetDate),
                 _ => query.OrderByDescending(m => m.CreatedDate ?? DateTime.MinValue) // Default sort
@@ -457,13 +451,11 @@ public partial class MitigationListing : ComponentBase
     }
     #endregion
 
-    #region View Model Creation
-    private async Task CreateMitigationViewModels()
+    #region Mitigation Enrichment
+    private async Task EnrichMitigationsWithContextFields()
     {
         try
         {
-            var viewModels = new List<Mitigation>();
-
             // Group mitigations by hazard code for efficient loading
             var hazardCodes = _allMitigations.Select(m => m.HazardCode).Distinct().ToList();
             var hazardLookup = new Dictionary<string, Hazard>();
@@ -500,24 +492,24 @@ public partial class MitigationListing : ComponentBase
                 }
             }
 
-            // Create view models
+            // Enrich mitigations
             foreach (var mitigation in _allMitigations)
             {
                 var hazardCode = mitigation.HazardCode ?? "Unknown";
                 var reportId = "Unknown";
-                Hazard? resolvedHazard = null;
+                var hazardDescription = string.Empty;
 
                 // Try to get report ID from hazard
                 if (!string.IsNullOrEmpty(mitigation.HazardCode) && 
                     hazardLookup.TryGetValue(mitigation.HazardCode, out var hazard))
                 {
-                    resolvedHazard = hazard;
                     reportId = hazard.ReportCode ?? "Unknown";
+                    hazardDescription = hazard.Description ?? string.Empty;
                 }
                 else if (_contextHazard is not null)
                 {
-                    resolvedHazard = _contextHazard;
                     reportId = _contextHazard.ReportCode ?? "Unknown";
+                    hazardDescription = _contextHazard.Description ?? string.Empty;
                 }
                 else if (!string.IsNullOrEmpty(ReportId))
                 {
@@ -526,26 +518,23 @@ public partial class MitigationListing : ComponentBase
 
                 mitigation.HazardCode = hazardCode;
                 mitigation.ReportCode = reportId;
-                mitigation.HazardDescription = resolvedHazard?.Description;
-                viewModels.Add(mitigation);
+                mitigation.HazardDescription = hazardDescription;
             }
 
-            _allMitigationModels = viewModels;
-            _logger.LogInformation("Created {Count} mitigation view models", viewModels.Count);
+            _logger.LogInformation("Enriched {Count} mitigations with listing context fields", _allMitigations.Count);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error creating mitigation view models");
-            _allMitigationModels = new List<Mitigation>();
+            _logger.LogError(ex, "Error enriching mitigations with context fields");
         }
     }
+    #endregion
 
+    #region Description Dialog Methods
     private void ShowDescriptionDialog(string title, string? description)
     {
         _selectedDescriptionTitle = title;
-        _selectedDescription = string.IsNullOrWhiteSpace(description)
-            ? "No description available."
-            : description;
+        _selectedDescription = description ?? string.Empty;
         _showDescriptionModal = true;
     }
 

@@ -21,12 +21,16 @@
                     <RadzenIcon Icon="assignment" Style="margin-right: 0.5rem;" />
                     Hazard Risk Scoring (@Step4Hazards.Count Hazards)
                 </RadzenText>
-                <RadzenFormField Text="Additional Comments *" Variant="Variant.Outlined" AllowFloatingLabel ="false">
+                <RadzenFormField Text="Additional Comments *"
+                                 Variant="Variant.Outlined"
+                                 AllowFloatingLabel="false"
+                                 class="@(IsAdditionalCommentsInvalid() ? "validation-error-field" : string.Empty)">
                     <RadzenTextArea @bind-Value="@Step4.AdditionalComments"
                                     Name="AdditionalComments"
                                     @oninput="OnAdditionalCommentsChanged"
                                     Rows="4" Placeholder="Provide additional comments..." Style="width: 100%;"
-                                    title="Additional Comments" />
+                                    title="Additional Comments"
+                                    class="@(IsAdditionalCommentsInvalid() ? "default-validation-textarea" : string.Empty)" />
                     <RadzenRequiredValidator Component="AdditionalComments" Text="Additional Comments is required." Popup="false" Style="position: static; display: block;" />
                 </RadzenFormField>
                 <RadzenText TextStyle="TextStyle.Caption" Text="@GetFieldValidation(Step4.AdditionalComments, 10)" />
@@ -56,7 +60,7 @@
     <RadzenColumn Size="12" SizeLG="4">
         <RadzenStack Gap="1rem">
             <!-- 5x5 Risk Matrix Visualization -->
-            @if (Step4Hazards?.Any() == true && Step4.HazardAverageScores.Any())
+            @if (Step4Hazards?.Any() == true)
             {
                 <RiskAssessmentMatrix Title="Risk Assessment Matrix"
                                       ShowRiskLevelsLegend="true"
@@ -71,6 +75,15 @@
         </RadzenStack>
     </RadzenColumn>
 </RadzenRow>
+
+<style>
+    .validation-error-field .rz-textarea,
+    .default-validation-textarea {
+        border: 2px solid #dc3545 !important;
+        background-color: #fff5f5 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
+</style>
 
 @code {
     [Parameter] public Step4Model Step4 { get; set; } = default!;
@@ -96,6 +109,12 @@
             await InitializeStep4Data();
             _isInitialized = true;
         }
+    }
+
+    private bool IsAdditionalCommentsInvalid()
+    {
+        return string.IsNullOrWhiteSpace(Step4?.AdditionalComments)
+            || Step4.AdditionalComments.Trim().Length < 10;
     }
 
     protected override async Task OnParametersSetAsync()
@@ -365,9 +384,14 @@
     private List<string> GetHazardsAtMatrixCode(int severity, int likelihood)
     {
         var targetMatrixCode = AviationRiskMatrixCalculator.GetMatrixCode(severity, likelihood);
-        return Step4.HazardMatrixCodes
-            .Where(kvp => kvp.Value.Trim() == targetMatrixCode.Trim())
-            .Select(kvp => kvp.Key)
+        return Step4Hazards
+            .Where(h => Step4.HazardAverageScores.ContainsKey(h.Code) || h.InitialAverageScore.HasValue)
+            .Where(h =>
+            {
+                var matrixCode = Step4.HazardMatrixCodes.GetValueOrDefault(h.Code, h.InitialRiskMatrixCode ?? string.Empty);
+                return string.Equals(matrixCode?.Trim(), targetMatrixCode.Trim(), StringComparison.OrdinalIgnoreCase);
+            })
+            .Select(h => h.Code)
             .OrderBy(h => h)
             .ToList();
     }

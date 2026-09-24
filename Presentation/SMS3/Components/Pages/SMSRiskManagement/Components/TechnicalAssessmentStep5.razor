@@ -40,6 +40,13 @@
         from { opacity: 0; transform: translateY(-10px); }
         to { opacity: 1; transform: translateY(0); }
     }
+
+    .validation-error-field .rz-textarea,
+    .default-validation-textarea {
+        border: 2px solid #dc3545 !important;
+        background-color: #fff5f5 !important;
+        box-shadow: 0 0 0 0.2rem rgba(220, 53, 69, 0.25) !important;
+    }
 </style>
 
 <RadzenRow Gap="1rem">
@@ -252,24 +259,30 @@
                                                 <RadzenRow Gap="1rem">
                                                     <RadzenColumn Size="12" SizeMD="6">
                                                         <RadzenStack Gap="0.5rem">
-                                                            <RadzenFormField Text="Residual Worst Credible Outcome *" Variant="Variant.Outlined">
+                                                            <RadzenFormField Text="Residual Worst Credible Outcome *"
+                                                                             Variant="Variant.Outlined"
+                                                                             class="@(IsResidualFieldInvalid(hazard.Code, "WorstCredibleOutcome") ? "validation-error-field" : string.Empty)">
                                                                 <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).ResidualWorstCredibleOutcome)"
                                                                                 @oninput="@((args) => OnAnalysisFieldChanged(hazard.Code, "WorstCredibleOutcome", args))"
                                                                                 Rows="3"
                                                                                 Placeholder="After mitigation implementation, what is the worst outcome that could still occur..."
-                                                                                Style="width: 100%;" />
+                                                                                Style="width: 100%;"
+                                                                                class="@(IsResidualFieldInvalid(hazard.Code, "WorstCredibleOutcome") ? "default-validation-textarea" : string.Empty)" />
                                                             </RadzenFormField>
                                                             <RadzenText TextStyle="TextStyle.Caption" Text="Consider the effectiveness of planned mitigation strategies" />
                                                         </RadzenStack>
                                                     </RadzenColumn>
                                                     <RadzenColumn Size="12" SizeMD="6">
                                                         <RadzenStack Gap="0.5rem">
-                                                            <RadzenFormField Text="Residual Root Cause Analysis *" Variant="Variant.Outlined">
+                                                            <RadzenFormField Text="Residual Root Cause Analysis *"
+                                                                             Variant="Variant.Outlined"
+                                                                             class="@(IsResidualFieldInvalid(hazard.Code, "RootCause") ? "validation-error-field" : string.Empty)">
                                                                 <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).ResidualRootCause)"
                                                                                 @oninput="@((args) => OnAnalysisFieldChanged(hazard.Code, "RootCause", args))"
                                                                                 Rows="3"
                                                                                 Placeholder="What root causes remain after mitigation implementation..."
-                                                                                Style="width: 100%;" />
+                                                                                Style="width: 100%;"
+                                                                                class="@(IsResidualFieldInvalid(hazard.Code, "RootCause") ? "default-validation-textarea" : string.Empty)" />
                                                             </RadzenFormField>
                                                             <RadzenText TextStyle="TextStyle.Caption" Text="Identify root causes that mitigation strategies do not fully address" />
                                                         </RadzenStack>
@@ -278,12 +291,17 @@
                                                 <br />
                                                 <RadzenRow>
                                                     <RadzenColumn Size="12" SizeMD="12">
-                                                        <RadzenFormField Text="Additional Residual Analysis Comments" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                                        <RadzenFormField Text="Additional Residual Analysis Comments *"
+                                                                         Variant="Variant.Outlined"
+                                                                         Style="width: 100%;"
+                                                                         AllowFloatingLabel="false"
+                                                                         class="@(IsResidualFieldInvalid(hazard.Code, "AdditionalComments") ? "validation-error-field" : string.Empty)">
                                                             <RadzenTextArea @bind-Value="@(Step5.GetHazardResidualAnalysis(hazard.Code).ResidualAdditionalComments)"
                                                                             @oninput="@((args) => OnAnalysisFieldChanged(hazard.Code, "AdditionalComments", args))"
                                                                             Rows="2"
                                                                             Placeholder="Document assumptions about mitigation effectiveness, residual vulnerabilities, or monitoring requirements..."
-                                                                            Style="width: 100%;min-width:100%" />
+                                                                            Style="width: 100%;min-width:100%"
+                                                                            class="@(IsResidualFieldInvalid(hazard.Code, "AdditionalComments") ? "default-validation-textarea" : string.Empty)" />
                                                         </RadzenFormField>
                                                     </RadzenColumn>
                                                 </RadzenRow>
@@ -320,6 +338,15 @@
     <!-- Guidance Panel -->
     <RadzenColumn Size="4" SizeLG="4">
         <RadzenStack Gap="1rem">
+            @if (Step5Hazards?.Any() == true)
+            {
+                <RiskAssessmentMatrix Title="Residual Risk Matrix"
+                                      CardStyle="position: sticky; top: 20px;"
+                                      ShowRiskLevelsLegend="true"
+                                      SeverityLabelProvider="@GetSeverityLabel"
+                                      HazardsAtMatrixCodeProvider="@GetHazardsAtMatrixCode" />
+            }
+
             @if (HasAnyExpandedSection("mitigation"))
             {
                     <TechnicalAssessmentGuidance StepNumber="5" />
@@ -327,15 +354,6 @@
 
             @if (HasAnyExpandedSection("scoring"))
             {
-                @if (Step5Hazards?.Any() == true && Step4.HazardAverageScores.Any())
-                {
-                    <RiskAssessmentMatrix Title="Risk Assessment Matrix"
-                                          CardStyle="position: sticky; top: 20px;"
-                                          ShowRiskLevelsLegend="false"
-                                          SeverityLabelProvider="@GetSeverityLabel"
-                                          HazardsAtMatrixCodeProvider="@GetHazardsAtMatrixCode" />
-                }
-
                 <TechnicalAssessmentGuidance StepNumber="4" />
             }
 
@@ -423,8 +441,17 @@
     {
         var targetMatrixCode = AviationRiskMatrixCalculator.GetMatrixCode(severity, likelihood);
         return Step5Hazards
-            .Where(h => string.Equals(h.ResidualRiskMatrixCode?.Trim(), targetMatrixCode, StringComparison.OrdinalIgnoreCase)
-                        || string.Equals(h.InitialRiskMatrixCode?.Trim(), targetMatrixCode, StringComparison.OrdinalIgnoreCase))
+            .Where(h => Step4.HazardAverageScores.ContainsKey(h.Code) || h.InitialAverageScore.HasValue || h.ResidualAverageScore.HasValue)
+            .Where(h =>
+            {
+                var matrixCode = h.ResidualRiskMatrixCode;
+                if (string.IsNullOrWhiteSpace(matrixCode))
+                {
+                    matrixCode = Step4.HazardMatrixCodes.GetValueOrDefault(h.Code, h.InitialRiskMatrixCode ?? string.Empty);
+                }
+
+                return string.Equals(matrixCode?.Trim(), targetMatrixCode, StringComparison.OrdinalIgnoreCase);
+            })
             .Select(h => h.Code)
             .OrderBy(c => c)
             .ToList();
@@ -524,6 +551,24 @@
         // SET TO AWLAYS REQUIRE
         // Default to needing mitigation if no score available
         return true;
+    }
+
+    private bool IsResidualFieldInvalid(string hazardCode, string fieldName)
+    {
+        if (!Step5.HazardResidualRiskAnalyses.TryGetValue(hazardCode, out var analysis) || analysis is null)
+        {
+            return true;
+        }
+
+        var value = fieldName switch
+        {
+            "WorstCredibleOutcome" => analysis.ResidualWorstCredibleOutcome,
+            "RootCause" => analysis.ResidualRootCause,
+            "AdditionalComments" => analysis.ResidualAdditionalComments,
+            _ => string.Empty
+        };
+
+        return string.IsNullOrWhiteSpace(value) || value.Trim().Length < 10;
     }
 
     private bool HasMitigations(Hazard hazard)

@@ -10,6 +10,8 @@ namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 /// </summary>
 public class Step4Model
 {
+    private const string Step5OnlyMarker = "__STEP5_ONLY_PANEL__";
+
     [Inject] private IBaseMediator Mediator { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
 
@@ -230,9 +232,11 @@ public class Step4Model
 
                 if (result.IsSuccess && result.Value?.Any() == true)
                 {
-                    var panels = string.IsNullOrWhiteSpace(riskAssessmentCode)
+                    var panels = (string.IsNullOrWhiteSpace(riskAssessmentCode)
                         ? result.Value
-                        : result.Value.Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), riskAssessmentCode.Trim(), StringComparison.OrdinalIgnoreCase)).ToList();
+                        : result.Value.Where(p => string.Equals(p.RiskAssessmentCode?.Trim(), riskAssessmentCode.Trim(), StringComparison.OrdinalIgnoreCase)).ToList())
+                        .Where(p => !string.Equals(p.InitialRationale, Step5OnlyMarker, StringComparison.Ordinal))
+                        .ToList();
 
                     if (!panels.Any())
                     {

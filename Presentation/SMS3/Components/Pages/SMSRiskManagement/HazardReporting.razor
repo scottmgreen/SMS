@@ -278,7 +278,7 @@ else
                                    
                                 </RadzenColumn>
                                 <RadzenColumn Size="4">
-                                    <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false" class="@(IsHazardTypeDefault ? "validation-error-field" : "")">
+                                    <RadzenFormField Text="Hazard Type *" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false" class="@(IsHazardTypeInvalid ? "validation-error-field" : "")">
                                         <RadzenDropDown @bind-Value="@HazardReport.HazardType" 
                                                       Data="@HazardTypeOptions" 
                                                       TextProperty="Text" 
@@ -287,7 +287,7 @@ else
                                                       Change="@(async (object value) => await OnHazardTypeChanged(value?.ToString()))"
                                                       Disabled="@(HazardTypeOptions.Count == 0)"
                                                       AllowClear="true"
-                                                      class="@(IsHazardTypeDefault ? "default-validation-dropdown" : "")"
+                                                      class="@(IsHazardTypeInvalid ? "default-validation-dropdown" : "")"
                                                       Style="width: 100%; min-width: 100%;" />
                                     </RadzenFormField>
                                     <RadzenRequiredValidator Component="HazardType" Text="Hazard type is required" />
@@ -362,7 +362,7 @@ else
                                                            Name="HazardTitle"
                                                            MaxLength="60"
                                                            class="@(IsHazardTitleValidationAlert ? "default-validation-dropdown" : string.Empty)"
-                                                           Placeholder="Enter a short hazard title (5-6 words)..."
+                                                           Placeholder="Enter a short hazard title (minimum 4 words)..."
                                                            Style="width: 50%; min-width: 50%;" />
                                         
                                     </RadzenFormField>
@@ -370,6 +370,10 @@ else
                                         <RadzenText TextStyle="TextStyle.Caption"
                                                     Class="@($"rz-mt-1 {(HazardTitleCharacterCount > 55 ? "rz-color-danger" : HazardTitleCharacterCount > 45 ? "rz-color-warning" : "rz-color-base-500")}")">
                                             @HazardTitleCharacterCount/60 characters
+                                        </RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Caption"
+                                                    Class="@($"rz-mt-1 {(IsHazardTitleValidationAlert ? "rz-color-danger" : "rz-color-success")}")">
+                                            @HazardTitleWordCount words (minimum: 4)
                                         </RadzenText>
                                 </RadzenCard>
                             </RadzenColumn>
