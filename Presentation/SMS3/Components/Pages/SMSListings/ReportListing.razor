@@ -72,21 +72,33 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Report" Property="Name" Title="Name" Width="300px">
+        <RadzenDataGridColumn TItem="Report" Property="Name" Title="Name" Width="200px">
             <Template Context="report">
                 <div title="@report.Name" style="@_basicTextStyle">
                     @(report.Name)
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Report" Title="Description" Width="100px" Sortable="false" Filterable="false">
+        <RadzenDataGridColumn TItem="Report" Title="Initial Hazard Description" Width="150px" Sortable="false" Filterable="false">
             <Template Context="report">
                 <RadzenButton Text="Description"
                               Icon="description"
                               ButtonStyle="ButtonStyle.Base"
                               Variant="Variant.Text"
                               Size="ButtonSize.ExtraSmall"
-                              Title="Click to view full description"
+                              Title="Click to view initial hazard description"
+                              Class="description-button"
+                              Click="@(() => ShowInitialHazardDescriptionDialog(report))" />
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="Report" Title="Tracking Comment" Width="120px" Sortable="false" Filterable="false">
+            <Template Context="report">
+                <RadzenButton Text="Comments"
+                              Icon="description"
+                              ButtonStyle="ButtonStyle.Base"
+                              Variant="Variant.Text"
+                              Size="ButtonSize.ExtraSmall"
+                              Title="Click to view full tracking comment"
                               Class="description-button"
                               Click="@(() => ShowDescriptionDialog(report))" />
             </Template>
@@ -130,7 +142,7 @@
         </RadzenDataGridColumn>
        
         <!-- Enhanced Actions Column -->
-        <RadzenDataGridColumn TItem="Report" Title="Actions" Width="150px" Sortable="false" Filterable="false">
+        <RadzenDataGridColumn TItem="Report" Title="Actions" Width="190px" Sortable="false" Filterable="false">
             <Template Context="report">
                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.25rem">
 
@@ -158,13 +170,18 @@
 
                   @if (_currentUserService.CanUpdate("SMS_Listings_Reports"))
                   {
+                        <RadzenButton ButtonStyle="ButtonStyle.Warning"
+                                    Size="ButtonSize.Small"
+                                    Click="@(() => OpenEditDescriptionDialog(report))"
+                                    title="Edit Tracking Comment"
+                                    Icon="edit_note" />
+
                         <RadzenButton ButtonStyle="ButtonStyle.Primary" 
                                     Size="ButtonSize.Small"
                                     Click="@(() => OnEditReportAsync(report))"
                                     title="Edit Report"
                                     Icon="edit" />
                   }
-
                   @if (_currentUserService.CanDelete("SMS_Listings_Reports"))
                   {
 
@@ -458,7 +475,7 @@
                 <div class="sms-modal-header sms-header-primary">
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <h5 class="sms-modal-title mb-0">
-                            <i class="fas fa-file-alt"></i> Report Description - @_selectedReportId
+                            <i class="fas fa-file-alt"></i> @_selectedDescriptionTitle - @_selectedReportId
                         </h5>
                         <RadzenButton ButtonStyle="ButtonStyle.Light"
                                       Variant="Variant.Text"
@@ -482,6 +499,56 @@
                                       Text="Close"
                                       Icon="close"
                                       Click="@CloseDescriptionModal"
+                                      Size="ButtonSize.Medium" />
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (_showEditDescriptionModal && _reportForDescriptionEdit is not null)
+{
+    <div class="modal-overlay">
+        <div class="sms-modal-dialog sms-modal-md">
+            <div class="sms-modal-content">
+                <div class="sms-modal-header sms-header-primary">
+                    <div class="d-flex justify-content-between align-items-center w-100">
+                        <h5 class="sms-modal-title mb-0">
+                            <i class="fas fa-edit"></i> Edit Report Description - @_reportForDescriptionEdit.Code
+                        </h5>
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Variant="Variant.Text"
+                                      Icon="close"
+                                      Size="ButtonSize.Small"
+                                      Click="@CloseEditDescriptionModal" />
+                    </div>
+                </div>
+                <div class="sms-modal-body">
+                    <RadzenCard Variant="Variant.Outlined">
+                        <div class="p-3">
+                            <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%;">
+                                <RadzenTextArea @bind-Value="_editableReportDescription"
+                                                Rows="8"
+                                                Placeholder="Enter report description..."
+                                                Style="width: 100%;" />
+                            </RadzenFormField>
+                        </div>
+                    </RadzenCard>
+                </div>
+                <div class="sms-modal-footer">
+                    <div class="d-flex justify-content-end gap-2">
+                        <RadzenButton ButtonStyle="ButtonStyle.Light"
+                                      Text="Cancel"
+                                      Icon="close"
+                                      Click="@CloseEditDescriptionModal"
+                                      Disabled="@_isSavingDescription"
+                                      Size="ButtonSize.Medium" />
+                        <RadzenButton ButtonStyle="ButtonStyle.Primary"
+                                      Text="Save"
+                                      Icon="save"
+                                      Click="@SaveReportDescriptionAsync"
+                                      Disabled="@_isSavingDescription"
                                       Size="ButtonSize.Medium" />
                     </div>
                 </div>

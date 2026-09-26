@@ -287,7 +287,7 @@ namespace SMS3.Api.Services
                 {
                     Code = "RP-0000",
                     Name = SystemConstants.FlyPdxApiSource,
-                    Description = request.HazardDescription,
+                    Description = $"Tracking Status : {ReportStatus.NeedsValidation.Name}",
                     SubmittedBy = SystemConstants.FlyPdxApiSource,
                     SubmittedDate = request.ReportSubmittedDate ?? DateTime.UtcNow,
                     SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,

@@ -106,6 +106,12 @@ public partial class ReportListing : ComponentBase
     private bool _showDescriptionModal = false;
     private string _selectedDescription = string.Empty;
     private string _selectedReportId = string.Empty;
+    private string _selectedDescriptionTitle = "Description";
+    private readonly Dictionary<string, (string HazardCode, string Description)> _initialHazardDescriptionByReport = new(StringComparer.OrdinalIgnoreCase);
+    private bool _showEditDescriptionModal = false;
+    private Report? _reportForDescriptionEdit;
+    private string _editableReportDescription = string.Empty;
+    private bool _isSavingDescription = false;
 
     private static readonly PropertyInfo[] ReportExportProperties = typeof(Report)
         .GetProperties(BindingFlags.Public | BindingFlags.Instance)
@@ -168,6 +174,102 @@ public partial class ReportListing : ComponentBase
     {
         await LoadInitialData();
     }
+
+    private void OpenEditDescriptionDialog(Report report)
+    {
+        _reportForDescriptionEdit = report;
+        _editableReportDescription = report.Description ?? string.Empty;
+        _showEditDescriptionModal = true;
+        StateHasChanged();
+    }
+
+    private void CloseEditDescriptionModal()
+    {
+        _showEditDescriptionModal = false;
+        _reportForDescriptionEdit = null;
+        _editableReportDescription = string.Empty;
+        _isSavingDescription = false;
+        StateHasChanged();
+    }
+
+    private async Task SaveReportDescriptionAsync()
+    {
+        if (_reportForDescriptionEdit is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _isSavingDescription = true;
+            StateHasChanged();
+
+            var reportToUpdateResult = await _mediator.SendAsync(
+                new GetReportByCodeQuery(new ReportID(_reportForDescriptionEdit.Code)),
+                CancellationToken.None);
+
+            if (!reportToUpdateResult.IsSuccess || reportToUpdateResult.Value is null)
+            {
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", $"Unable to load report {_reportForDescriptionEdit.Code} for update."));
+                return;
+            }
+
+            var reportToUpdate = reportToUpdateResult.Value;
+            reportToUpdate.Description = _editableReportDescription?.Trim() ?? string.Empty;
+            reportToUpdate.UpdatedBy = string.IsNullOrWhiteSpace(_currentUserService?.UserCode)
+                ? SystemConstants.FlyPdxApiSource
+                : _currentUserService.UserCode;
+            reportToUpdate.UpdatedDate = DateTime.UtcNow;
+
+            var updateResult = await _mediator.SendAsync(new UpdateReportCommand(reportToUpdate), CancellationToken.None);
+
+            if (!updateResult.IsSuccess)
+            {
+                await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", updateResult.Error?.Message ?? "Failed to update report description."));
+                return;
+            }
+
+            var updatedDescription = reportToUpdate.Description ?? string.Empty;
+
+            var matchingInAll = _allReports.FirstOrDefault(r => string.Equals(r.Code, reportToUpdate.Code, StringComparison.OrdinalIgnoreCase));
+            if (matchingInAll is not null)
+            {
+                matchingInAll.Description = updatedDescription;
+                matchingInAll.UpdatedBy = reportToUpdate.UpdatedBy;
+                matchingInAll.UpdatedDate = reportToUpdate.UpdatedDate;
+            }
+
+            var matchingInCurrent = _reports.FirstOrDefault(r => string.Equals(r.Code, reportToUpdate.Code, StringComparison.OrdinalIgnoreCase));
+            if (matchingInCurrent is not null)
+            {
+                matchingInCurrent.Description = updatedDescription;
+                matchingInCurrent.UpdatedBy = reportToUpdate.UpdatedBy;
+                matchingInCurrent.UpdatedDate = reportToUpdate.UpdatedDate;
+            }
+
+            if (SelectedReport is not null && string.Equals(SelectedReport.Code, reportToUpdate.Code, StringComparison.OrdinalIgnoreCase))
+            {
+                SelectedReport.Description = updatedDescription;
+                SelectedReport.UpdatedBy = reportToUpdate.UpdatedBy;
+                SelectedReport.UpdatedDate = reportToUpdate.UpdatedDate;
+            }
+
+            _selectedDescription = updatedDescription;
+
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Report {_reportForDescriptionEdit.Code} description updated."));
+            CloseEditDescriptionModal();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating description for report {ReportCode}", _reportForDescriptionEdit.Code);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error updating report description."));
+        }
+        finally
+        {
+            _isSavingDescription = false;
+            StateHasChanged();
+        }
+    }
     #endregion
 
     #region Data Loading Methods
@@ -188,6 +290,7 @@ public partial class ReportListing : ComponentBase
             if (result.IsSuccess && result.Value is not null)
             {
                 _allReports = result.Value; // Store all reports for filtering/sorting
+                await LoadInitialHazardDescriptionsAsync();
                 _reports = _allReports.Take(15).ToList(); // Initially show first page
                 _totalCount = _allReports.Count();
                 _logger.LogInformation("Loaded {Count} reports for listing", _totalCount);
@@ -209,6 +312,33 @@ public partial class ReportListing : ComponentBase
         {
             _isLoading = false;
             StateHasChanged();
+        }
+    }
+
+    private async Task LoadInitialHazardDescriptionsAsync()
+    {
+        _initialHazardDescriptionByReport.Clear();
+
+        var hazardsResult = await _mediator.SendAsync(new GetAllHazardsQuery(), CancellationToken.None);
+        if (!hazardsResult.IsSuccess || hazardsResult.Value is null)
+        {
+            return;
+        }
+
+        foreach (var hazard in hazardsResult.Value)
+        {
+            if (!hazard.IsInitialHazard || string.IsNullOrWhiteSpace(hazard.ReportCode))
+            {
+                continue;
+            }
+
+            if (_initialHazardDescriptionByReport.ContainsKey(hazard.ReportCode))
+            {
+                continue;
+            }
+
+            _initialHazardDescriptionByReport[hazard.ReportCode] =
+                (hazard.Code, string.IsNullOrWhiteSpace(hazard.Description) ? "No description available" : hazard.Description);
         }
     }
 
@@ -2526,6 +2656,7 @@ public async Task OnResetReportAsync(Report report)
         {
             _selectedDescription = report.Description ?? "No description available";
             _selectedReportId = report.Code ?? "Unknown";
+            _selectedDescriptionTitle = "Tracking Comment";
             _showDescriptionModal = true;
             StateHasChanged();
 
@@ -2538,6 +2669,33 @@ public async Task OnResetReportAsync(Report report)
         }
     }
 
+    private async Task ShowInitialHazardDescriptionDialog(Report report)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(report.Code) ||
+                !_initialHazardDescriptionByReport.TryGetValue(report.Code, out var hazardInfo))
+            {
+                _selectedDescription = "No initial hazard description available";
+                _selectedReportId = report.Code ?? "Unknown";
+            }
+            else
+            {
+                _selectedDescription = hazardInfo.Description;
+                _selectedReportId = hazardInfo.HazardCode;
+            }
+
+            _selectedDescriptionTitle = "Initial Hazard Description";
+            _showDescriptionModal = true;
+            StateHasChanged();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error showing initial hazard description modal for report {ReportId}", report.Code);
+            await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Error showing initial hazard description details"));
+        }
+    }
+
     /// <summary>
     /// Close the description modal
     /// </summary>
@@ -2546,6 +2704,7 @@ public async Task OnResetReportAsync(Report report)
         _showDescriptionModal = false;
         _selectedDescription = string.Empty;
         _selectedReportId = string.Empty;
+        _selectedDescriptionTitle = "Description";
         StateHasChanged();
     }
 
