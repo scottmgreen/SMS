@@ -1204,11 +1204,11 @@ public partial class EventBusQueueManager
     {
         return status switch
         {
-            QueuedEventStatus.Pending => BadgeStyle.Warning,
-            QueuedEventStatus.Processing => BadgeStyle.Base,
-            QueuedEventStatus.Processed => BadgeStyle.Success,
-            QueuedEventStatus.Failed => BadgeStyle.Danger,
-            QueuedEventStatus.Cancelled => BadgeStyle.Secondary,
+            var s when s == QueuedEventStatus.Pending => BadgeStyle.Warning,
+            var s when s == QueuedEventStatus.Processing => BadgeStyle.Base,
+            var s when s == QueuedEventStatus.Processed => BadgeStyle.Success,
+            var s when s == QueuedEventStatus.Failed => BadgeStyle.Danger,
+            var s when s == QueuedEventStatus.Cancelled => BadgeStyle.Secondary,
             _ => BadgeStyle.Light
         };
     }

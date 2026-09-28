@@ -12,10 +12,12 @@ namespace SMS_Domain.Enums;
 
 public abstract class ReportStatus : BaseEnum<ReportStatus>
 {
-    protected ReportStatus(string value, string name) : base(value, name)
+    protected ReportStatus(string value, string name, string description) : base(value, name)
     {
-
+        Description = description;
     }
+
+    public string Description { get; }
 
 
 
@@ -25,7 +27,8 @@ public abstract class ReportStatus : BaseEnum<ReportStatus>
     /// <summary>Report New</summary>
     public static readonly ReportStatus Created = new ReportCreatedStatus();
     public static readonly ReportStatus Updated = new ReportUpdatedStatus();
-    public static readonly ReportStatus Closed = new ReportClosedStatus();
+    public static readonly ReportStatus ReportCloserHazardEliminated = new ReportCloserHazardEliminatedStatus();
+    public static readonly ReportStatus ReportCloserNonSMSRisk = new ReportCloserNonSMSRiskStatus();
     public static readonly ReportStatus InMitigation = new ReportInMitigationStatus();
     public static readonly ReportStatus MitigationComplete = new ReportMitigationCompleteStatus();
     public static readonly ReportStatus UnderInvestigation  = new ReportUnderInvestigationStatus();
@@ -42,85 +45,91 @@ public abstract class ReportStatus : BaseEnum<ReportStatus>
     #region Implementations
     private sealed class ReportUnknownStatus : ReportStatus
     {
-        public ReportUnknownStatus() : base("REPORT_UNKNOWN", "REPORT_UNKNOWN")
+        public ReportUnknownStatus() : base("REPORT_UNKNOWN", "REPORT_UNKNOWN", "Report status has not been determined")
         {
         }
     }
     private sealed class ReportCreatedStatus : ReportStatus
     {
-        public ReportCreatedStatus() : base("REPORT_CREATED", "REPORT_CREATED")
+        public ReportCreatedStatus() : base("REPORT_CREATED", "REPORT_CREATED", "Report has been created")
         {
         }
     }
     private sealed class ReportUpdatedStatus : ReportStatus
     {
-        public ReportUpdatedStatus() : base("REPORT_UPDATED", "REPORT_UPDATED")
+        public ReportUpdatedStatus() : base("REPORT_UPDATED", "REPORT_UPDATED", "Report has been updated")
         {
         }
     }
-    private sealed class ReportClosedStatus : ReportStatus
+    private sealed class ReportCloserHazardEliminatedStatus : ReportStatus
     {
-        public ReportClosedStatus() : base("REPORT_CLOSED", "REPORT_CLOSED")
+        public ReportCloserHazardEliminatedStatus() : base("REPORT_CLOSED_HAZARD_ELIMINATED", "REPORT_CLOSED_HAZARD_ELIMINATED", "Report has been closed, Hazard Eliminated")
+        {
+        }
+    }
+    private sealed class ReportCloserNonSMSRiskStatus : ReportStatus
+    {
+        public ReportCloserNonSMSRiskStatus() : base("REPORT_CLOSED_NON_SMS_RISK", "REPORT_CLOSED_NON_SMS_RISK", "Report has been closed, Non SMS Risk")
         {
         }
     }
     private sealed class ReportNeedsValidationStatus : ReportStatus
     {
-        public ReportNeedsValidationStatus() : base("REPORT_NEEDS_VALIDATION", "REPORT_NEEDS_VALIDATION")
+        public ReportNeedsValidationStatus() : base("REPORT_NEEDS_VALIDATION", "REPORT_NEEDS_VALIDATION", "Report requires validation")
         {
         }
     }
     private sealed class ReportReadyForProcessingStatus : ReportStatus
     {
-        public ReportReadyForProcessingStatus() : base("READY_FOR_PROCESSING", "READY_FOR_PROCESSING")
+        public ReportReadyForProcessingStatus() : base("READY_FOR_PROCESSING", "READY_FOR_PROCESSING", "Report is ready for processing")
         {
         }
     }
     private sealed class RiskRegistryOnlyStatus : ReportStatus
     {
-        public RiskRegistryOnlyStatus() : base("RISK_REGISTRY_ONLY", "RISK_REGISTRY_ONLY")
+        public RiskRegistryOnlyStatus() : base("RISK_REGISTRY_ONLY", "RISK_REGISTRY_ONLY", "Report is tracked in risk registry only")
         {
         }
     }
     private sealed class ReportValidationCompletedStatus : ReportStatus
     {
-        public ReportValidationCompletedStatus() : base("REPORT_VALIDATION_COMPLETED", "REPORT_VALIDATION_COMPLETED")
+        public ReportValidationCompletedStatus() : base("REPORT_VALIDATION_COMPLETED", "REPORT_VALIDATION_COMPLETED", "Report validation has been completed")
         {
         }
     }
     private sealed class ReportValidationRevisedStatus : ReportStatus
     {
-        public ReportValidationRevisedStatus() : base("REPORT_VALIDATION_REVISED", "REPORT_VALIDATION_REVISED")
+        public ReportValidationRevisedStatus() : base("REPORT_VALIDATION_REVISED", "REPORT_VALIDATION_REVISED", "Report validation has been revised")
         {
         }
     }
     private sealed class ReportRiskAssessmentInProgressStatus : ReportStatus
     {
-        public ReportRiskAssessmentInProgressStatus() : base("REPORT_RISKASSESSMENT_IN_PROGRESS", "REPORT_RISKASSESSMENT_IN_PROGRESS")
+        public ReportRiskAssessmentInProgressStatus() : base("REPORT_RISKASSESSMENT_IN_PROGRESS", "REPORT_RISKASSESSMENT_IN_PROGRESS", "Risk assessment for report is in progress")
         {
         }
     }
     private sealed class ReportRiskAssessmentSubmittedStatus : ReportStatus
     {
-        public ReportRiskAssessmentSubmittedStatus() : base("REPORT_RISKASSESSMENT_SUBMITTED", "REPORT_RISKASSESSMENT_SUBMITTED")
+        public ReportRiskAssessmentSubmittedStatus() : base("REPORT_RISKASSESSMENT_SUBMITTED", "REPORT_RISKASSESSMENT_SUBMITTED", "Risk assessment for report has been submitted")
         {
         }
     }
     private sealed class ReportUnderInvestigationStatus : ReportStatus
     {
-        public ReportUnderInvestigationStatus() : base("REPORT_UNDER_INVESTIGATION", "REPORT_UNDER_INVESTIGATION")
+        public ReportUnderInvestigationStatus() : base("REPORT_UNDER_INVESTIGATION", "REPORT_UNDER_INVESTIGATION", "Report is under investigation")
         {
         }
     }
     private sealed class ReportInMitigationStatus : ReportStatus
     {
-        public ReportInMitigationStatus() : base("REPORT_IN_MITIGATION", "REPORT_IN_MITIGATION")
+        public ReportInMitigationStatus() : base("REPORT_IN_MITIGATION", "REPORT_IN_MITIGATION", "Report is in mitigation")
         {
         }
     }
     private sealed class ReportMitigationCompleteStatus : ReportStatus
     {
-        public ReportMitigationCompleteStatus() : base("REPORT_MITIGATION_COMPLETE", "REPORT_MITIGATION_COMPLETE")
+        public ReportMitigationCompleteStatus() : base("REPORT_MITIGATION_COMPLETE", "REPORT_MITIGATION_COMPLETE", "Report mitigation has been completed")
         {
         }
     }

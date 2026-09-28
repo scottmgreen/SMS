@@ -165,11 +165,11 @@ public class EventQueueService : IEventQueueService
             var max = maxResults ?? 100;
             IEnumerable<QueuedEvent> events;
 
-            if (status.HasValue)
+            if (status is not null)
             {
-                Result<List<QueuedEvent>> result = status.Value == QueuedEventStatus.Pending
+                Result<List<QueuedEvent>> result = status == QueuedEventStatus.Pending
                     ? await _eventQueueDataService.GetPendingEventsAsync(max, eventType)
-                    : await _eventQueueDataService.GetEventsByStatusAsync(status.Value, max, eventType);
+                    : await _eventQueueDataService.GetEventsByStatusAsync(status, max, eventType);
 
                 if (result.IsFailure)
                 {
@@ -218,9 +218,9 @@ public class EventQueueService : IEventQueueService
                     .ToList();
             }
 
-            if (status.HasValue)
+            if (status is not null)
             {
-                events = events.Where(e => e.Status == status.Value);
+                events = events.Where(e => e.Status == status);
             }
 
             var filtered = events.ToList();

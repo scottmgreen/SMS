@@ -98,3 +98,6 @@
 
 ## Documentation Preferences
 - Prefer simple text files (.txt) over Markdown (.md) for module SOP documentation outputs.
+
+## Status Synchronization
+- Centralize status synchronization logic outside SMS3 Presentation; prefer consistent and reliable status orchestration in Application/Domain layers.

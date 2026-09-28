@@ -15,10 +15,12 @@ namespace SMS_Domain.Enums;
 /// </summary>
 public abstract class RiskAssessmentStage : BaseEnum<RiskAssessmentStage>
 {
-    protected RiskAssessmentStage(string value, string name) : base(value, name)
+    protected RiskAssessmentStage(string value, string name, string description) : base(value, name)
     {
-
+        Description = description;
     }
+
+    public string Description { get; }
 
 
     #region APPROVED FINAL RISK ASSESSMENT STATUS VALUES FROM StatusList.txt
@@ -47,38 +49,38 @@ public abstract class RiskAssessmentStage : BaseEnum<RiskAssessmentStage>
 
     private sealed class DescribeSystemStage : RiskAssessmentStage
     {
-        public DescribeSystemStage() : base("DESCRIBING_SYSTEM", "Describing System")
+        public DescribeSystemStage() : base("DESCRIBING_SYSTEM", "Describing System", "System is being described")
         {
         }
     }
     private sealed class IdentifyingHazardsStage : RiskAssessmentStage
     {
-        public IdentifyingHazardsStage() : base("IDENTIFYING_HAZARDS", "Identifying Hazards")
+        public IdentifyingHazardsStage() : base("IDENTIFYING_HAZARDS", "Identifying Hazards", "Hazards are being identified")
         {
         }
     }
     private sealed class AnalyizingRiskStage : RiskAssessmentStage
     {
-        public AnalyizingRiskStage() : base("ANALYIZING_RISK", "Analyzing Risk")
+        public AnalyizingRiskStage() : base("ANALYIZING_RISK", "Analyzing Risk", "Risk is being analyzed")
         {
         }
     }
     private sealed class AssessingRiskStage : RiskAssessmentStage
     {
-        public AssessingRiskStage() : base("ASSESSING_RISK", "Assessing Risk")
+        public AssessingRiskStage() : base("ASSESSING_RISK", "Assessing Risk", "Risk is being assessed")
         {
         }
     }
     private sealed class MitigatingRiskStage : RiskAssessmentStage
     {
-        public MitigatingRiskStage() : base("MITIGATING_RISK", "Mitigating Risk")
+        public MitigatingRiskStage() : base("MITIGATING_RISK", "Mitigating Risk", "Risk mitigation is in progress")
         {
         }
     }
 
     private sealed class CompletedStage : RiskAssessmentStage
     {
-        public CompletedStage() : base("COMPLETED", "Completed")
+        public CompletedStage() : base("COMPLETED", "Completed", "Risk assessment workflow is completed")
         {
         }
     }

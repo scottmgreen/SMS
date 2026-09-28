@@ -617,7 +617,7 @@ public partial class ReportValidation : ComponentBase
             }
 
             // Update report status to Closed
-            bool flowControl = await UpdateReportStatus(_reportDetails.Code, ReportStatus.Closed);
+            bool flowControl = await UpdateReportStatus(_reportDetails.Code, ReportStatus.ReportCloserNonSMSRisk    );
             if (!flowControl)
             {
                 throw new Exception($"Failed to Update Report Status during exsiting investigation: {DomainErrors.ReportValidationError.CreateFailed.Message}");

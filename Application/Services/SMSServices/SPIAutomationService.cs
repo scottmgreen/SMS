@@ -721,7 +721,7 @@ public class SPIAutomationService : ISPIAutomationService
             var overdueCount = mitigationsResult.Value.Count(m =>
                 m.TargetDate.HasValue &&
                 m.TargetDate.Value.Date < asOfDate.Date &&
-                m.Status != MitigationStatus.Complete);
+                m.Status != MitigationStatus.MitigationImplemented);
 
             _logger.LogApplicationInformation("SPI Automation: Found {Count} overdue mitigations as of {Date}", overdueCount, asOfDate.ToString("yyyy-MM-dd"));
             return overdueCount;
@@ -749,7 +749,7 @@ public class SPIAutomationService : ISPIAutomationService
                 return 1;
             }
 
-            var activeCount = mitigationsResult.Value.Count(m => m.Status != MitigationStatus.Complete);
+            var activeCount = mitigationsResult.Value.Count(m => m.Status != MitigationStatus.MitigationImplemented);
             if (activeCount <= 0)
             {
                 activeCount = 1;

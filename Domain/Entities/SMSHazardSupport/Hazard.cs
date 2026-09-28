@@ -29,7 +29,7 @@ public sealed class Hazard : BaseAuditableEntity
 
     public RiskLevel HazardRiskLevel { get; set; } = RiskLevel.Unkonwn;
     
-    public HazardStatus Status { get; set; } = HazardStatus.InitialRiskAssessment;
+    public HazardStatus Status { get; set; } = HazardStatus.Unknown;
     
     public bool IsInitialHazard { get; set; }
     #endregion

@@ -84,8 +84,8 @@ public class HazardStatusChangedEvent : BaseDomainEvent, IEventSource
     {
         HazardId = hazardId ?? throw new ArgumentNullException(nameof(hazardId));
         HazardCode = hazardCode ?? throw new ArgumentNullException(nameof(hazardCode));
-        PreviousStatus = previousStatus ?? HazardStatus.StatusUnknown;
-        NewStatus = newStatus ?? HazardStatus.StatusUnknown;
+        PreviousStatus = previousStatus ?? HazardStatus.Unknown;
+        NewStatus = newStatus ?? HazardStatus.Unknown;
         StatusChangeReason = statusChangeReason ?? string.Empty;
         ChangedBy = string.IsNullOrWhiteSpace(changedBy) ? string.Empty : changedBy;
         StatusChangeDate = statusChangeDate;

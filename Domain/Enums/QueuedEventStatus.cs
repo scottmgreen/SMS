@@ -1,32 +1,77 @@
-﻿namespace SMS_Domain.Enums;
+namespace SMS_Domain.Enums;
 
-/// <summary>
-/// Status of a queued event
-/// </summary>
-public enum QueuedEventStatus
+public abstract class QueuedEventStatus : BaseEnum<QueuedEventStatus>
 {
-    /// <summary>
-    /// Event is waiting to be processed
-    /// </summary>
-    Pending = 0,
+    protected QueuedEventStatus(int id, string value, string name, string description) : base(value, name)
+    {
+        Id = id;
+        Description = description;
+    }
 
-    /// <summary>
-    /// Event is currently being processed
-    /// </summary>
-    Processing = 1,
+    public int Id { get; }
+    public string Description { get; }
 
-    /// <summary>
-    /// Event was processed successfully
-    /// </summary>
-    Processed = 2,
+    public static readonly QueuedEventStatus Pending = new PendingStatus();
+    public static readonly QueuedEventStatus Processing = new ProcessingStatus();
+    public static readonly QueuedEventStatus Processed = new ProcessedStatus();
+    public static readonly QueuedEventStatus Failed = new FailedStatus();
+    public static readonly QueuedEventStatus Cancelled = new CancelledStatus();
 
-    /// <summary>
-    /// Event processing failed
-    /// </summary>
-    Failed = 3,
+    public static QueuedEventStatus? FromId(int id)
+    {
+        return id switch
+        {
+            0 => Pending,
+            1 => Processing,
+            2 => Processed,
+            3 => Failed,
+            4 => Cancelled,
+            _ => null
+        };
+    }
 
-    /// <summary>
-    /// Event was cancelled
-    /// </summary>
-    Cancelled = 4
+    public static explicit operator int(QueuedEventStatus status)
+    {
+        return status.Id;
+    }
+
+    public static explicit operator QueuedEventStatus(int id)
+    {
+        return FromId(id) ?? throw new InvalidCastException($"Unknown QueuedEventStatus id '{id}'.");
+    }
+
+    private sealed class PendingStatus : QueuedEventStatus
+    {
+        public PendingStatus() : base(0, "PENDING", "Pending", "Event is waiting to be processed")
+        {
+        }
+    }
+
+    private sealed class ProcessingStatus : QueuedEventStatus
+    {
+        public ProcessingStatus() : base(1, "PROCESSING", "Processing", "Event is currently being processed")
+        {
+        }
+    }
+
+    private sealed class ProcessedStatus : QueuedEventStatus
+    {
+        public ProcessedStatus() : base(2, "PROCESSED", "Processed", "Event was processed successfully")
+        {
+        }
+    }
+
+    private sealed class FailedStatus : QueuedEventStatus
+    {
+        public FailedStatus() : base(3, "FAILED", "Failed", "Event processing failed")
+        {
+        }
+    }
+
+    private sealed class CancelledStatus : QueuedEventStatus
+    {
+        public CancelledStatus() : base(4, "CANCELLED", "Cancelled", "Event was cancelled")
+        {
+        }
+    }
 }

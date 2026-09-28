@@ -670,7 +670,7 @@ public partial class RiskRegistry : ComponentBase
     //        _ when status == MitigationStatus.PendingApproval => "warning",
     //        _ when status == MitigationStatus.Approved => "success",
     //        _ when status == MitigationStatus.InProgressDueDate => "primary",
-    //        _ when status == MitigationStatus.Complete => "success",
+    //        _ when status == MitigationStatus.MitigationImplemented => "success",
     //        _ when status == MitigationStatus.MonitoringHazard => "success",
     //        _ when status == MitigationStatus.Rejected => "danger",
     //        _ => "secondary"

@@ -12,6 +12,7 @@ using Microsoft.IdentityModel.Tokens;
 
 using SMS_Application.Interfaces;
 using SMS_Application.Commands;
+using SMS_Application.Services;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
@@ -36,13 +37,20 @@ namespace SMS3.Api.Services
     {
         private readonly IBaseMediator _mediator;
         private readonly IBaseEventBus _eventBus;
+        private readonly WorkflowStatusSyncService _workflowStatusSyncService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<PDXSMSApiService> _logger;
 
-        public PDXSMSApiService(IBaseMediator mediator, IBaseEventBus eventBus, IConfiguration configuration, ILogger<PDXSMSApiService> logger)
+        public PDXSMSApiService(
+            IBaseMediator mediator,
+            IBaseEventBus eventBus,
+            WorkflowStatusSyncService workflowStatusSyncService,
+            IConfiguration configuration,
+            ILogger<PDXSMSApiService> logger)
         {
             _mediator = mediator;
             _eventBus = eventBus;
+            _workflowStatusSyncService = workflowStatusSyncService;
             _configuration = configuration;
             _logger = logger;
         }
@@ -66,6 +74,17 @@ namespace SMS3.Api.Services
                 }
 
                 var tracking = trackingResult.Value;
+
+                var syncResult = await _workflowStatusSyncService
+                    .SyncForHazardAsync(tracking.HazardCode, "PDXSMSApiService", CancellationToken.None)
+                    .ConfigureAwait(false);
+
+                if (syncResult.IsFailure)
+                {
+                    _logger.LogWarning("Workflow status sync failed for TrackingId {TrackingId}: {Error}",
+                        trackingId,
+                        syncResult.Error?.Message ?? "Unknown error");
+                }
 
                 var hazardResult = await _mediator.SendAsync(new GetHazardByCodeQuery(new HazardID(tracking.HazardCode)), CancellationToken.None);
                 var reportResult = await _mediator.SendAsync(new GetReportByCodeQuery(new ReportID(tracking.ReportCode)), CancellationToken.None);
@@ -113,6 +132,15 @@ namespace SMS3.Api.Services
                     validationDecisionDisplay = validationDecision?.Name ?? string.Empty;
                 }
 
+                var reportStatusDisplay = ResolveReportStatusDescription(report?.Status);
+                var riskAssessmentStatusDisplay = ResolveRiskAssessmentStatusDescription(currentRiskAssessment?.Status);
+                var mitigationStatusDisplay = ResolveMitigationStatusDescription(currentMitigation?.Status);
+
+                if (string.Equals(reportValidation?.ValidationDecision?.Trim(), ValidationDecision.NotSmsRisk.Value, StringComparison.OrdinalIgnoreCase))
+                {
+                    reportStatusDisplay = ReportStatus.ReportCloserNonSMSRisk.Description;
+                }
+
                 var response = new PDXSMSReportStatusApiResponseV2
                 {
                     TrackingId = tracking.TrackingCode,
@@ -126,8 +154,9 @@ namespace SMS3.Api.Services
                     HazardCategory = hazardCategoryValue,
                     HazardType = hazardTypeValue,
                     HazardDescription = hazard?.Description ?? report?.Description ?? string.Empty,
-                    ReportStatus = report?.Status ?? string.Empty,
-                    HazardStatus = hazard?.Status ?? report?.Status ?? string.Empty,
+                    ReportDescription = string.Empty,
+                    ReportStatus = reportStatusDisplay,
+                    // HazardStatus = hazardStatusDisplay,
                     ContactName = report?.ReportContactName ?? string.Empty,
                     ContactCell = report?.ReportContactCell ?? string.Empty,
                     ContactEmail = report?.ReportContactEmail ?? string.Empty,
@@ -142,12 +171,12 @@ namespace SMS3.Api.Services
                     HazardLocationValidationText = latestLocation is null ? "No mapped location" : (latestLocation.IsValidated ? "Validated" : "Validation Required"),
                     RiskAssessmentCode = currentRiskAssessment?.Code ?? string.Empty,
                     RiskAssessmentAssessmentType = currentRiskAssessment?.AssessmentType ?? string.Empty,
-                    RiskAssessmentStatus = currentRiskAssessment?.Status ?? string.Empty,
-                    RiskAssessmentStage = currentRiskAssessment?.Stage ?? string.Empty,
-                    RiskAssessmentCurrentStep = currentRiskAssessment?.CurrentStep,
+                    RiskAssessmentStatus = riskAssessmentStatusDisplay,
+                    // RiskAssessmentStage = riskAssessmentStageDisplay,
+                    // RiskAssessmentCurrentStep = currentRiskAssessment?.CurrentStep,
                     RiskAssessmentUpdatedDate = currentRiskAssessment?.UpdatedDate,
                     MitigationCode = currentMitigation?.Code ?? string.Empty,
-                    MitigationStatus = currentMitigation?.Status ?? string.Empty,
+                    MitigationStatus = mitigationStatusDisplay,
                     MitigationProgress = currentMitigation?.Progress,
                     MitigationUpdatedDate = currentMitigation?.UpdatedDate,
                     LocationCode = latestLocation?.Code ?? string.Empty,
@@ -168,6 +197,71 @@ namespace SMS3.Api.Services
                 return Result<PDXSMSReportStatusApiResponseV2>.Failure<PDXSMSReportStatusApiResponseV2>(
                     new Error("PDXSMS.ProcessingFailed", "An unexpected error occurred while retrieving report status."));
             }
+        }
+
+        private static string ResolveReportStatusDescription(string? statusValue)
+        {
+            if (string.IsNullOrWhiteSpace(statusValue))
+            {
+                return string.Empty;
+            }
+
+            return ReportStatus.TryFromValue(statusValue, out var status)
+                ? status?.Description ?? statusValue
+                : statusValue;
+        }
+
+        private static string ResolveHazardStatusDescription(string? hazardStatusValue, string? reportStatusValue)
+        {
+            var normalizedHazardStatus = hazardStatusValue?.Trim() ?? string.Empty;
+            var normalizedReportStatus = reportStatusValue?.Trim() ?? string.Empty;
+
+            if (string.Equals(normalizedReportStatus, ReportStatus.ReadyForProcessing.Value, StringComparison.OrdinalIgnoreCase))
+            {
+                return HazardStatus.HazardValidated.Description;
+            }
+
+            if (string.Equals(normalizedReportStatus, ReportStatus.NeedsValidation.Value, StringComparison.OrdinalIgnoreCase))
+            {
+                return HazardStatus.HazardValidationRequired.Description;
+            }
+
+            if (string.IsNullOrWhiteSpace(normalizedHazardStatus))
+            {
+                return string.Empty;
+            }
+
+            return HazardStatus.FromValue(normalizedHazardStatus)?.Description ?? normalizedHazardStatus;
+        }
+
+        private static string ResolveRiskAssessmentStatusDescription(string? statusValue)
+        {
+            if (string.IsNullOrWhiteSpace(statusValue))
+            {
+                return string.Empty;
+            }
+
+            return RiskAssessmentStatus.FromValue(statusValue)?.Description ?? statusValue;
+        }
+
+        private static string ResolveRiskAssessmentStageDescription(string? stageValue)
+        {
+            if (string.IsNullOrWhiteSpace(stageValue))
+            {
+                return string.Empty;
+            }
+
+            return RiskAssessmentStage.FromValue(stageValue)?.Description ?? stageValue;
+        }
+
+        private static string ResolveMitigationStatusDescription(string? statusValue)
+        {
+            if (string.IsNullOrWhiteSpace(statusValue))
+            {
+                return string.Empty;
+            }
+
+            return MitigationStatus.FromValue(statusValue)?.Description ?? statusValue;
         }
 
         public async Task<Result<PDXSMSReportApiResponse>> ProcessReportSubmissionAsyncV1(
@@ -287,7 +381,7 @@ namespace SMS3.Api.Services
                 {
                     Code = "RP-0000",
                     Name = SystemConstants.FlyPdxApiSource,
-                    Description = $"Tracking Status : {ReportStatus.NeedsValidation.Name}",
+                    Description = string.Empty,
                     SubmittedBy = SystemConstants.FlyPdxApiSource,
                     SubmittedDate = request.ReportSubmittedDate ?? DateTime.UtcNow,
                     SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
@@ -321,7 +415,7 @@ namespace SMS3.Api.Services
                     HazardType = HazardType.Default.Value,
                     ReportCode = actualReportCode,
                     IsInitialHazard = true,
-                    Status = HazardStatus.InitialRiskAssessment,
+                    Status = HazardStatus.Unknown,
                     CreatedBy = SystemConstants.FlyPdxApiSource,
                     CreatedDate = DateTime.UtcNow
                 };
@@ -827,7 +921,7 @@ namespace SMS3.Api.Services
             {
                 Code = "RP-0000", // Database will generate actual code
                 Name = $"{request.HazardCategory}/{request.HazardType}",
-                Description = request.HazardDescription,
+                Description = string.Empty,
                 SubmittedBy = SystemConstants.FlyPdxApiSource,
                 SubmittedDate = request.ReportSubmittedDate.Value,
                 SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,

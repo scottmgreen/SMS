@@ -80,6 +80,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
     private readonly IMitigationService _mitigationService;
     private readonly IBaseMediator _mediator;
     private readonly IBaseEventBus _eventBus;
+    private readonly WorkflowStatusSyncService _workflowStatusSyncService;
     private readonly IMitigationTargetDateNotificationService _mitigationTargetDateNotificationService;
     private readonly ILogger<UpdateMitigationCommandHandler> _logger;
 
@@ -87,12 +88,14 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
         IMitigationService mitigationService,
         IBaseMediator mediator,
         IBaseEventBus eventBus,
+        WorkflowStatusSyncService workflowStatusSyncService,
         IMitigationTargetDateNotificationService mitigationTargetDateNotificationService,
         ILogger<UpdateMitigationCommandHandler> logger)
     {
         _mitigationService = mitigationService ?? throw new ArgumentNullException(nameof(mitigationService));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _workflowStatusSyncService = workflowStatusSyncService ?? throw new ArgumentNullException(nameof(workflowStatusSyncService));
         _mitigationTargetDateNotificationService = mitigationTargetDateNotificationService ?? throw new ArgumentNullException(nameof(mitigationTargetDateNotificationService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -149,6 +152,21 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                 
                 if (updatedMitigation is not null)
                 {
+                    if (!string.IsNullOrWhiteSpace(updatedMitigation.HazardCode))
+                    {
+                        var workflowSyncResult = await _workflowStatusSyncService
+                            .SyncForHazardAsync(updatedMitigation.HazardCode, updatedMitigation.UpdatedBy ?? updatedMitigation.CreatedBy, cancellationToken)
+                            .ConfigureAwait(false);
+
+                        if (workflowSyncResult.IsFailure)
+                        {
+                            _logger.LogApplicationWarning(
+                                "Failed to sync workflow statuses after mitigation update for {MitigationCode}: {Error}",
+                                updatedMitigation.Code,
+                                workflowSyncResult.Error?.Message ?? "Unknown error");
+                        }
+                    }
+
                     var previousStatusValue = previousStatus?.Value?.Trim() ?? string.Empty;
                     var currentStatusValue = updatedMitigation.Status.Value?.Trim() ?? string.Empty;
                     var statusChanged = !string.IsNullOrWhiteSpace(currentStatusValue)
@@ -175,7 +193,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                                 statusPublishResult.Error?.Message ?? "Unknown publish error");
                         }
 
-                        if (string.Equals(currentStatusValue, MitigationStatus.Complete.Value, StringComparison.OrdinalIgnoreCase))
+                        if (string.Equals(currentStatusValue, MitigationStatus.MitigationImplemented.Value, StringComparison.OrdinalIgnoreCase))
                         {
                             var mitigationCode = (updatedMitigation.Code ?? updatedMitigation.Id.Value ?? string.Empty).Trim();
                             var completedDate = updatedMitigation.UpdatedDate ?? DateTime.UtcNow;

@@ -91,14 +91,14 @@
                               Click="@(() => ShowInitialHazardDescriptionDialog(report))" />
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Report" Title="Tracking Comment" Width="120px" Sortable="false" Filterable="false">
+        <RadzenDataGridColumn TItem="Report" Title="Report Comment" Width="120px" Sortable="false" Filterable="false">
             <Template Context="report">
                 <RadzenButton Text="Comments"
                               Icon="description"
                               ButtonStyle="ButtonStyle.Base"
                               Variant="Variant.Text"
                               Size="ButtonSize.ExtraSmall"
-                              Title="Click to view full tracking comment"
+                              Title="Click to view full Report comment"
                               Class="description-button"
                               Click="@(() => ShowDescriptionDialog(report))" />
             </Template>

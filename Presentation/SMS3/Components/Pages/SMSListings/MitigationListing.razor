@@ -132,8 +132,8 @@
         <!-- Status Column -->
         <RadzenDataGridColumn TItem="Mitigation" Property="Status" Title="Status" Width="120px">
             <Template Context="mitigation">
-                <div title="@mitigation.Status.ToString()" style="@_basicTextStyle">
-                    @mitigation.Status.Value
+                <div title="@(mitigation.Status?.ToString() ?? string.Empty)" style="@_basicTextStyle">
+                    @(mitigation.Status?.Value ?? string.Empty)
                 </div>
             </Template>
         </RadzenDataGridColumn>

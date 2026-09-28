@@ -12,10 +12,12 @@ namespace SMS_Domain.Enums;
 
 public abstract class ReportValidationStatus : BaseEnum<ReportValidationStatus>
 {
-    protected ReportValidationStatus(string value, string name) : base(value, name)
+    protected ReportValidationStatus(string value, string name, string description) : base(value, name)
     {
-
+        Description = description;
     }
+
+    public string Description { get; }
 
 
 
@@ -36,20 +38,20 @@ public abstract class ReportValidationStatus : BaseEnum<ReportValidationStatus>
 
     private sealed class NeedsValidationStatus : ReportValidationStatus
     {
-        public NeedsValidationStatus() : base("NEEDS_VALIDATION", "NEEDS_VALIDATION")
+        public NeedsValidationStatus() : base("NEEDS_VALIDATION", "NEEDS_VALIDATION", "Report requires validation")
         {
         }
     }
 
     private sealed class ValidationCompletedStatus : ReportValidationStatus
     {
-        public ValidationCompletedStatus() : base("VALIDATION_COMPLETED", "VALIDATION_COMPLETED")
+        public ValidationCompletedStatus() : base("VALIDATION_COMPLETED", "VALIDATION_COMPLETED", "Report validation has been completed")
         {
         }
     }
     private sealed class ValidationRevisedStatus : ReportValidationStatus
     {
-        public ValidationRevisedStatus() : base("VALIDATION_REVISED", "VALIDATION_REVISED")
+        public ValidationRevisedStatus() : base("VALIDATION_REVISED", "VALIDATION_REVISED", "Report validation has been revised")
         {
         }
     }

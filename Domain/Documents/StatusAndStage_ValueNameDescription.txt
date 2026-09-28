@@ -1,0 +1,79 @@
+Status and Stage SmartEnum Reference
+Generated from Domain/Enums/*Status.cs and *Stage.cs
+
+[HazardStatus.cs]
+- StatusUnknown | Value: UNKNOWN_STATUS | Name: Unknown Status | Description: Hazard is Unknown
+- InitialRiskAssessment | Value: INITIAL_RISK_ASSESSMENT | Name: Technical Risk Assessment | Description: Hazard is in initial risk assessment phase covering system description and hazard identification (Steps 1-2)
+- InitialRiskAnalysis | Value: INITIAL_RISK_ANALYSIS | Name: Technical Risk Analysis | Description: Hazard is undergoing initial risk analysis to identify contributing factors and consequences (Step 3)
+- InitialHazardScoring | Value: INITIAL_HAZARD_SCORING | Name: Technical Hazard Scoring | Description: Hazard is being scored for initial risk assessment with stakeholder input (Step 4)
+- ResidualRiskAssessment | Value: RESIDUAL_RISK_ASSESSMENT | Name: Residual Risk Assessment | Description: Hazard is in residual risk assessment phase after mitigation planning (Step 5)
+- ResidualRiskMitigation | Value: RESIDUAL_RISK_MITIGATION | Name: Residual Risk Mitigation | Description: Hazard mitigations are being implemented and managed (Step 5)
+- ResidualHazardScoring | Value: RESIDUAL_HAZARD_SCORING | Name: Residual Hazard Scoring | Description: Hazard is being scored for residual risk after mitigation implementation (Step 5)
+- ResidualRiskAnalysis | Value: RESIDUAL_RISK_ANALYSIS | Name: Residual Risk Analysis | Description: Hazard is undergoing residual risk analysis to identify contributing factors and consequences (Step 5)
+
+[InterviewStatus.cs]
+- IntervieweeIdentified | Value: INTERVIEWEE_IDENTIFIED | Name: Interviewee Identified | Description: Interviewee has been identified and contacted for the interview
+- InterviewScheduled | Value: INTERVIEW_SCHEDULED | Name: Interview Scheduled | Description: Interview has been scheduled with specific date and time
+- InterviewInProgress | Value: INTERVIEW_INPROGRESS | Name: Interview In Progress | Description: Interview is currently being conducted
+- InterviewComplete | Value: INTERVIEW_COMPLETE | Name: Interview Complete | Description: Interview has been completed successfully with all required information captured
+- UnableToConduct | Value: UNABLE_TO_CONDUCT | Name: Unable to Conduct | Description: Interview could not be conducted due to unavailability, refusal, or other circumstances
+- InterviewCanceled | Value: INTERVIEW_CANCELED | Name: Interview Canceled | Description: Interview was canceled before completion by investigator or interviewee
+
+[InvestigationStatus.cs]
+- StatusUnknown | Value: STATUS_UNKNOWN | Name: Status Unknown | Description: Investigation status has not yet been determined
+- InvestigatorAssigned | Value: INVESTIGATOR_ASSIGNED | Name: Investigator Assigned | Description: Investigator has been assigned and ready to begin investigation
+- InvestigationUnderway | Value: INVESTIGATION_UNDERWAY | Name: Investigation Underway | Description: Investigation is actively in progress
+- InvestigationComplete | Value: INVESTIGATION_COMPLETE | Name: Investigation Complete | Description: Investigation has been completed with final findings
+
+[MitigationStatus.cs]
+- PendingApproval | Value: PENDING_APPROVAL | Name: Mitigation Pending Approval | Description: Mitigation is pending approval
+- Approved | Value: APPROVED | Name: Mitigation Approved | Description: Mitigation has been approved
+- InProgress | Value: IN_PROGRESS | Name: Mitigation in Progress | Description: Mitigation work is in progress
+- PastExpectedTargetDate | Value: PAST_EXPECTED_TARGET_DATE | Name: Mitigation Completion Past Expected Target Date | Description: Mitigation has passed the expected target completion date
+- Rejected | Value: REJECTED | Name: Mitigation Rejected | Description: Mitigation has been rejected
+- Complete | Value: COMPLETE | Name: Mitigation Complete | Description: Mitigation has been completed
+- MonitoringHazard | Value: MONITORING_HAZARD | Name: Monitoring Hazard | Description: Hazard is being monitored after mitigation action
+- HazardEliminated | Value: HAZARD_ELIMINATED | Name: Hazard Eliminated | Description: Hazard has been eliminated
+
+[QueuedEventStatus.cs]
+- Pending | Value: PENDING | Name: Pending | Description: Event is waiting to be processed
+- Processing | Value: PROCESSING | Name: Processing | Description: Event is currently being processed
+- Processed | Value: PROCESSED | Name: Processed | Description: Event was processed successfully
+- Failed | Value: FAILED | Name: Failed | Description: Event processing failed
+- Cancelled | Value: CANCELLED | Name: Cancelled | Description: Event was cancelled
+
+[ReportStatus.cs]
+- Created | Value: REPORT_CREATED | Name: REPORT_CREATED | Description: Report has been created
+- Updated | Value: REPORT_UPDATED | Name: REPORT_UPDATED | Description: Report has been updated
+- Closed | Value: REPORT_CLOSED | Name: REPORT_CLOSED | Description: Report has been closed
+- InMitigation | Value: REPORT_IN_MITIGATION | Name: REPORT_IN_MITIGATION | Description: Report is in mitigation
+- MitigationComplete | Value: REPORT_MITIGATION_COMPLETE | Name: REPORT_MITIGATION_COMPLETE | Description: Report mitigation has been completed
+- UnderInvestigation | Value: REPORT_UNDER_INVESTIGATION | Name: REPORT_UNDER_INVESTIGATION | Description: Report is under investigation
+- RiskAssessmentSubmitted | Value: REPORT_RISKASSESSMENT_SUBMITTED | Name: REPORT_RISKASSESSMENT_SUBMITTED | Description: Risk assessment for report has been submitted
+- RiskAssessmentInProgress | Value: REPORT_RISKASSESSMENT_IN_PROGRESS | Name: REPORT_RISKASSESSMENT_IN_PROGRESS | Description: Risk assessment for report is in progress
+- ValidationRevised | Value: REPORT_VALIDATION_REVISED | Name: REPORT_VALIDATION_REVISED | Description: Report validation has been revised
+- ValidationCompleted | Value: REPORT_VALIDATION_COMPLETED | Name: REPORT_VALIDATION_COMPLETED | Description: Report validation has been completed
+- NeedsValidation | Value: REPORT_NEEDS_VALIDATION | Name: REPORT_NEEDS_VALIDATION | Description: Report requires validation
+- ReadyForProcessing | Value: READY_FOR_PROCESSING | Name: READY_FOR_PROCESSING | Description: Report is ready for processing
+- RiskRegistryOnly | Value: RISK_REGISTRY_ONLY | Name: RISK_REGISTRY_ONLY | Description: Report is tracked in risk registry only
+- Unknown | Value: REPORT_UNKNOWN | Name: REPORT_UNKNOWN | Description: Report status has not been determined
+
+[ReportValidationStatus.cs]
+- ValidationNeeded | Value: NEEDS_VALIDATION | Name: NEEDS_VALIDATION | Description: Report requires validation
+- ValidationComplete | Value: VALIDATION_COMPLETED | Name: VALIDATION_COMPLETED | Description: Report validation has been completed
+- Revised | Value: VALIDATION_REVISED | Name: VALIDATION_REVISED | Description: Report validation has been revised
+
+[RiskAssessmentStatus.cs]
+- AssignedToAssessor | Value: ASSIGNED_TO_ASSESSOR | Name: Assigned to Assessor | Description: Risk assessment has been assigned to an assessor
+- AssessmentScheduled | Value: ASSESSMENT_SCHEDULED | Name: Assessment Scheduled | Description: Risk assessment has been scheduled
+- AssessmentUnderway | Value: ASSESSMENT_UNDERWAY | Name: Assessment Underway | Description: Risk assessment is currently underway
+- AssessmentComplete | Value: ASSESSMENT_COMPLETE | Name: Assessment Complete | Description: Risk assessment has been completed
+- AssessmentCreate | Value: ASSESSMENT_CREATED | Name: Assessment Created | Description: Risk assessment has been created
+
+[RiskAssessmentStage.cs]
+- DescribingSystem | Value: DESCRIBING_SYSTEM | Name: Describing System | Description: System is being described
+- IdentifyingHazards | Value: IDENTIFYING_HAZARDS | Name: Identifying Hazards | Description: Hazards are being identified
+- AnalyizingRisk | Value: ANALYIZING_RISK | Name: Analyzing Risk | Description: Risk is being analyzed
+- AssessingRisk | Value: ASSESSING_RISK | Name: Assessing Risk | Description: Risk is being assessed
+- MitigatingRisk | Value: MITIGATING_RISK | Name: Mitigating Risk | Description: Risk mitigation is in progress
+- Completed | Value: COMPLETED | Name: Completed | Description: Risk assessment workflow is completed

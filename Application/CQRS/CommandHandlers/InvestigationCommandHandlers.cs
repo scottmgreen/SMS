@@ -75,15 +75,18 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
 {
     private readonly InvestigationService _investigationService;
     private readonly IBaseEventBus _eventBus;
+    private readonly WorkflowStatusSyncService _workflowStatusSyncService;
     private readonly ILogger<UpdateInvestigationCommandHandler> _logger;
 
     public UpdateInvestigationCommandHandler(
         InvestigationService investigationService,
         IBaseEventBus eventBus,
+        WorkflowStatusSyncService workflowStatusSyncService,
         ILogger<UpdateInvestigationCommandHandler> logger)
     {
         _investigationService = investigationService ?? throw new ArgumentNullException(nameof(investigationService));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _workflowStatusSyncService = workflowStatusSyncService ?? throw new ArgumentNullException(nameof(workflowStatusSyncService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -122,6 +125,21 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
                 var updatedInvestigation = result.Value;
                 if (updatedInvestigation is not null)
                 {
+                    if (!string.IsNullOrWhiteSpace(updatedInvestigation.HazardCode))
+                    {
+                        var workflowSyncResult = await _workflowStatusSyncService
+                            .SyncForHazardAsync(updatedInvestigation.HazardCode, updatedInvestigation.UpdatedBy ?? updatedInvestigation.CreatedBy, ct)
+                            .ConfigureAwait(false);
+
+                        if (workflowSyncResult.IsFailure)
+                        {
+                            _logger.LogApplicationWarning(
+                                "Failed to sync workflow statuses after investigation update for {InvestigationCode}: {Error}",
+                                updatedInvestigation.Code,
+                                workflowSyncResult.Error?.Message ?? "Unknown error");
+                        }
+                    }
+
                     await TransitionEventPublisher.PublishIfChangedAsync(
                         _eventBus,
                         previousStatus,

@@ -18,7 +18,7 @@ public class MitigationSummary
     public string AssignedDepartment { get; set; } = string.Empty;
     public DateTime? TargetDate { get; set; }
     
-    public bool IsOverdue => TargetDate.HasValue && TargetDate.Value < DateTime.UtcNow && Status != MitigationStatus.Complete;
+    public bool IsOverdue => TargetDate.HasValue && TargetDate.Value < DateTime.UtcNow && Status != MitigationStatus.MitigationImplemented;
 }
 
 

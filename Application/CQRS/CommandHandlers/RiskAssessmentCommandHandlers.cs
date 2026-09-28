@@ -77,17 +77,20 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
     private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly IBaseMediator _mediator;
     private readonly IBaseEventBus _eventBus;
+    private readonly WorkflowStatusSyncService _workflowStatusSyncService;
     private readonly ILogger<UpdateRiskAssessmentCommandHandler> _logger;
 
     public UpdateRiskAssessmentCommandHandler(
         IRiskAssessmentService riskAssessmentService,
         IBaseMediator mediator,
         IBaseEventBus eventBus,
+        WorkflowStatusSyncService workflowStatusSyncService,
         ILogger<UpdateRiskAssessmentCommandHandler> logger)
     {
         _riskAssessmentService = riskAssessmentService ?? throw new ArgumentNullException(nameof(riskAssessmentService));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _workflowStatusSyncService = workflowStatusSyncService ?? throw new ArgumentNullException(nameof(workflowStatusSyncService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -122,6 +125,21 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                 var assessment = result.Value;
                 if (assessment is not null)
                 {
+                    if (!string.IsNullOrWhiteSpace(assessment.HazardCode))
+                    {
+                        var workflowSyncResult = await _workflowStatusSyncService
+                            .SyncForHazardAsync(assessment.HazardCode, assessment.UpdatedBy ?? assessment.CreatedBy, ct)
+                            .ConfigureAwait(false);
+
+                        if (workflowSyncResult.IsFailure)
+                        {
+                            _logger.LogApplicationWarning(
+                                "Failed to sync workflow statuses after risk assessment update for {AssessmentCode}: {Error}",
+                                assessment.Code,
+                                workflowSyncResult.Error?.Message ?? "Unknown error");
+                        }
+                    }
+
                     var updatedEvent = new RiskAssessmentUpdatedEvent(
                         id: new SMSEventID("EV-0000"),
                         riskAssessmentId: assessment.Id.Value,

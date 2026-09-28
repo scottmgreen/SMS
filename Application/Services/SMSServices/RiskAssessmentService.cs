@@ -94,6 +94,12 @@ public sealed class RiskAssessmentService : IRiskAssessmentService
         try
         {
             _logger.LogApplicationInformation("Updating risk assessment with ID: {Id}", assessment?.Id);
+
+            if (assessment is not null && assessment.Status == RiskAssessmentStatus.AssessmentComplete)
+            {
+                assessment.Stage = RiskAssessmentStage.Completed;
+            }
+
             var result = await _dataService.UpdateRiskAssessmentAsync(assessment, ct).ConfigureAwait(false);
 
             if (result.IsSuccess)

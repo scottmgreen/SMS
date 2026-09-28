@@ -26,17 +26,20 @@ public sealed class MitigationService : IMitigationService
     private readonly MitigationDataService _dataService;
     private readonly IBaseMediator _mediator;
     private readonly ICurrentUserService _currentUserService;
+    private readonly WorkflowStatusSyncService _workflowStatusSyncService;
     private readonly ILogger<MitigationService> _logger;
 
     public MitigationService(
         MitigationDataService dataService,
         IBaseMediator mediator,
         ICurrentUserService currentUserService,
+        WorkflowStatusSyncService workflowStatusSyncService,
         ILogger<MitigationService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
         _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
+        _workflowStatusSyncService = workflowStatusSyncService ?? throw new ArgumentNullException(nameof(workflowStatusSyncService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -161,6 +164,10 @@ public sealed class MitigationService : IMitigationService
                 {
                     mitigation.Status = MitigationStatus.Approved;
                 }
+                else if (mitigation.Status == MitigationStatus.Rejected)
+                {
+                    mitigation.Progress = 0;
+                }
                 else if (mitigation.Progress >= 100)
                 {
                     mitigation.Status = MitigationStatus.MonitoringHazard;
@@ -189,7 +196,17 @@ public sealed class MitigationService : IMitigationService
 
                 if (mitigation is not null && !string.IsNullOrWhiteSpace(mitigation.HazardCode))
                 {
-                    await RecalculateReportStatusForHazardAsync(mitigation.HazardCode.Trim(), ct).ConfigureAwait(false);
+                    var syncResult = await _workflowStatusSyncService
+                        .SyncForHazardAsync(mitigation.HazardCode.Trim(), mitigation.UpdatedBy ?? mitigation.CreatedBy, ct)
+                        .ConfigureAwait(false);
+
+                    if (syncResult.IsFailure)
+                    {
+                        _logger.LogApplicationWarning(
+                            "Failed to sync workflow statuses after mitigation update for hazard {HazardCode}: {Error}",
+                            mitigation.HazardCode,
+                            syncResult.Error?.Message ?? "Unknown error");
+                    }
                 }
             }
             else
@@ -204,98 +221,6 @@ public sealed class MitigationService : IMitigationService
             _logger.LogApplicationError(ex, "Unexpected error updating mitigation with Code: {Code}", mitigation?.Code);
             return Result<Mitigation>.Failure<Mitigation>(DomainErrors.MitigationError.UpdateFailed);
         }
-    }
-
-    private async Task RecalculateReportStatusForHazardAsync(string hazardCode, CancellationToken ct)
-    {
-        try
-        {
-            var hazardResult = await _mediator.SendAsync(new GetHazardByCodeQuery(new HazardID(hazardCode)), ct).ConfigureAwait(false);
-            if (hazardResult.IsFailure || hazardResult.Value is null || string.IsNullOrWhiteSpace(hazardResult.Value.ReportCode))
-            {
-                _logger.LogApplicationWarning("Could not resolve report for mitigation hazard: {HazardCode}", hazardCode);
-                return;
-            }
-
-            var reportCode = hazardResult.Value.ReportCode;
-            var reportHazardsResult = await _mediator.SendAsync(new GetHazardsByReportCodeQuery(new ReportID(reportCode)), ct).ConfigureAwait(false);
-            if (reportHazardsResult.IsFailure || reportHazardsResult.Value is null)
-            {
-                _logger.LogApplicationWarning("Could not load hazards for report {ReportCode} during mitigation status rollup", reportCode);
-                return;
-            }
-
-            var allMitigations = new List<Mitigation>();
-            foreach (var reportHazard in reportHazardsResult.Value)
-            {
-                if (string.IsNullOrWhiteSpace(reportHazard?.Code))
-                {
-                    continue;
-                }
-
-                var mitigationsByHazardResult = await _mediator
-                    .SendAsync(new GetMitigationsByHazardCodeQuery(reportHazard.Code.Trim()), ct)
-                    .ConfigureAwait(false);
-
-                if (mitigationsByHazardResult.IsSuccess && mitigationsByHazardResult.Value is not null)
-                {
-                    allMitigations.AddRange(mitigationsByHazardResult.Value);
-                }
-            }
-
-            var overallMitigationStatus = MitigationStatusAggregationService.ResolveOverallStatus(allMitigations);
-            var targetReportStatus = MapMitigationStatusToReportStatus(overallMitigationStatus);
-            if (targetReportStatus is null)
-            {
-                return;
-            }
-
-            var reportResult = await _mediator.SendAsync(new GetReportByCodeQuery(new ReportID(reportCode)), ct).ConfigureAwait(false);
-            if (reportResult.IsFailure || reportResult.Value is null)
-            {
-                _logger.LogApplicationWarning("Could not load report {ReportCode} for mitigation status rollup update", reportCode);
-                return;
-            }
-
-            if (reportResult.Value.Status == targetReportStatus)
-            {
-                return;
-            }
-
-            var updatedBy = string.IsNullOrWhiteSpace(_currentUserService.UserCode)
-                ? _currentUserService.UserDisplayName
-                : _currentUserService.UserCode;
-
-            var statusResult = await _mediator.SendAsync(new UpdateReportStatusCommand(reportCode, targetReportStatus, updatedBy),ct).ConfigureAwait(false);
-
-            if (statusResult.IsSuccess)
-            {
-                _logger.LogApplicationInformation("Updated report {ReportCode} status to {Status} after mitigation status rollup", reportCode, targetReportStatus.Value);
-            }
-            else
-            {
-                _logger.LogApplicationWarning("Failed to update report {ReportCode} status during mitigation status rollup. Error: {Error}", reportCode, statusResult.Error?.Message);
-            }
-        }
-        catch (Exception ex)
-        {
-            _logger.LogApplicationWarning(ex, "Error updating report status from mitigation rollup for hazard {HazardCode}", hazardCode);
-        }
-    }
-
-    private static ReportStatus? MapMitigationStatusToReportStatus(MitigationStatus? mitigationStatus)
-    {
-        if (mitigationStatus is null)
-        {
-            return null;
-        }
-
-        if (mitigationStatus == MitigationStatus.Complete || mitigationStatus == MitigationStatus.MonitoringHazard)
-        {
-            return ReportStatus.MitigationComplete;
-        }
-
-        return ReportStatus.InMitigation;
     }
 
     public async Task<Result<bool>> DeleteMitigationAsync(MitigationID code, CancellationToken ct = default)
@@ -403,7 +328,7 @@ public sealed class MitigationService : IMitigationService
             }
 
             var mitigation = mitigationResult.Value;
-            mitigation.Status = MitigationStatus.Complete; // Use correct enum value
+            mitigation.Status = MitigationStatus.MitigationImplemented;
             mitigation.UpdatedBy = closedBy;
             mitigation.UpdatedDate = DateTime.UtcNow;
             // Note: Set closure notes if field is available in the entity

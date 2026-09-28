@@ -2123,7 +2123,7 @@ public partial class ReportListing : ComponentBase
         if (reportStatus == ReportStatus.ValidationCompleted ||
             reportStatus == ReportStatus.ReadyForProcessing ||
             reportStatus == ReportStatus.MitigationComplete ||
-            reportStatus == ReportStatus.Closed)
+            reportStatus == ReportStatus.ReportCloserNonSMSRisk)
             return BadgeStyle.Success;
         if (reportStatus == ReportStatus.ValidationRevised ||
             reportStatus == ReportStatus.RiskAssessmentInProgress ||

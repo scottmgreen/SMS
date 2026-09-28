@@ -525,8 +525,6 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         hazard.IsInitialHazard = false;
         hazard.ReportCode = ReportId ?? "";
         
-        hazard.Status = HazardStatus.InitialRiskAssessment;
-        
         hazard.CreatedBy = _currentUserService?.UserCode;
         hazard.CreatedDate = DateTime.UtcNow;
         // Handle location for new hazard - EXACTLY like HazardReporting

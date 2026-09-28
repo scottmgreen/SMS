@@ -97,6 +97,7 @@ namespace SMS_Application.Configuration
             services.AddScoped<InvestigationService>();
             services.AddScoped<InterviewService>();
             services.AddScoped<MitigationService>();
+            services.AddScoped<WorkflowStatusSyncService>();
             services.AddScoped<MitigationAssignmentService>();
             services.AddScoped<RiskAnalysisService>();
             services.AddScoped<RiskAssessmentService>();

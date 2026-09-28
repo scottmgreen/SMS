@@ -503,7 +503,7 @@ public partial class MitigationCalendar : ComponentBase
         return Mitigations.Count(m =>
             m.TargetDate.HasValue
             && m.TargetDate.Value.Date < today
-            && !string.Equals(m.Status?.Value, MitigationStatus.Complete.Value, StringComparison.OrdinalIgnoreCase)
+            && !string.Equals(m.Status?.Value, MitigationStatus.MitigationImplemented.Value, StringComparison.OrdinalIgnoreCase)
             && !string.Equals(m.Status?.Value, MitigationStatus.HazardEliminated.Value, StringComparison.OrdinalIgnoreCase));
     }
     #endregion
@@ -575,7 +575,7 @@ public partial class MitigationCalendar : ComponentBase
             "PENDING_APPROVAL" => BadgeStyle.Warning,
             "APPROVED" => BadgeStyle.Info,
             "IN_PROGRESS_DUE_DATE" => BadgeStyle.Primary,
-            "COMPLETE" => BadgeStyle.Success,
+            "IMPLEMENTED" => BadgeStyle.Success,
             "MONITORING_HAZARD" => BadgeStyle.Light,
             "REJECTED" => BadgeStyle.Danger,
             "On Hold" => BadgeStyle.Secondary,
@@ -620,7 +620,7 @@ public partial class MitigationCalendar : ComponentBase
             return MitigationTimingState.None;
         }
 
-        if (string.Equals(mitigationStatusValue, MitigationStatus.Complete.Value, StringComparison.OrdinalIgnoreCase)
+        if (string.Equals(mitigationStatusValue, MitigationStatus.MitigationImplemented.Value, StringComparison.OrdinalIgnoreCase)
             || string.Equals(mitigationStatusValue, MitigationStatus.HazardEliminated.Value, StringComparison.OrdinalIgnoreCase))
         {
             return MitigationTimingState.None;

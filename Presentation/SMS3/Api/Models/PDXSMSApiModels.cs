@@ -192,8 +192,9 @@ namespace SMS3.Api.Models;
         public string HazardCategory { get; init; } = string.Empty;
         public string HazardType { get; init; } = string.Empty;
         public string HazardDescription { get; init; } = string.Empty;
+        public string ReportDescription { get; init; } = string.Empty;
         public string ReportStatus { get; init; } = string.Empty;
-        public string HazardStatus { get; init; } = string.Empty;
+        // public string HazardStatus { get; init; } = string.Empty;
 
         public string ContactName { get; init; } = string.Empty;
         public string ContactCell { get; init; } = string.Empty;
@@ -214,8 +215,8 @@ namespace SMS3.Api.Models;
         public string RiskAssessmentCode { get; init; } = string.Empty;
         public string RiskAssessmentAssessmentType { get; init; } = string.Empty;
         public string RiskAssessmentStatus { get; init; } = string.Empty;
-        public string RiskAssessmentStage { get; init; } = string.Empty;
-        public int? RiskAssessmentCurrentStep { get; init; }
+        // public string RiskAssessmentStage { get; init; } = string.Empty;
+        // public int? RiskAssessmentCurrentStep { get; init; }
         public DateTime? RiskAssessmentUpdatedDate { get; init; }
 
         public string MitigationCode { get; init; } = string.Empty;

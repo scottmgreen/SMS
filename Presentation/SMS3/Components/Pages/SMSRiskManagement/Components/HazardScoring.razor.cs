@@ -1040,7 +1040,6 @@ public partial class HazardScoring : ComponentBase
             if (CurrentStep == 4)
             {
                 // Step 4: Update Technical assessment data AND base HazardRiskLevel
-                Hazard.Status = HazardStatus.InitialHazardScoring;
                 Hazard.InitialAverageScore = calculation.IsValid ? calculation.AverageScore : null;
                 Hazard.InitialRiskMatrixCode = calculation.IsValid ? calculation.MatrixCode : null;
 
@@ -1091,7 +1090,6 @@ public partial class HazardScoring : ComponentBase
             else if (CurrentStep == 5)
             {
                 // Step 5: Update Residual assessment data AND update HazardRiskLevel to final residual risk
-                Hazard.Status = HazardStatus.ResidualHazardScoring;
                 Hazard.ResidualAverageScore = calculation.IsValid ? calculation.AverageScore : null;
                 Hazard.ResidualRiskMatrixCode = calculation.IsValid ? calculation.MatrixCode : null;
 

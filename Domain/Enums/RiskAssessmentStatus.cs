@@ -18,10 +18,12 @@ namespace SMS_Domain.Enums;
 /// </summary>
 public abstract class RiskAssessmentStatus : BaseEnum<RiskAssessmentStatus>
 {
-    protected RiskAssessmentStatus(string value, string name) : base(value, name)
+    protected RiskAssessmentStatus(string value, string name, string description) : base(value, name)
     {
-        
+        Description = description;
     }
+
+    public string Description { get; }
 
     
     #region APPROVED FINAL RISK ASSESSMENT STATUS VALUES FROM StatusList.txt
@@ -47,31 +49,31 @@ public abstract class RiskAssessmentStatus : BaseEnum<RiskAssessmentStatus>
 
     private sealed class AssignedToAssessorStatus : RiskAssessmentStatus
     {
-        public AssignedToAssessorStatus() : base("ASSIGNED_TO_ASSESSOR", "Assigned to Assessor")
+        public AssignedToAssessorStatus() : base("ASSIGNED_TO_ASSESSOR", "Assigned to Assessor", "Risk assessment has been assigned to an assessor")
         {
         }
     }
     private sealed class AssessmentScheduledStatus : RiskAssessmentStatus
     {
-        public AssessmentScheduledStatus() : base("ASSESSMENT_SCHEDULED", "Assessment Scheduled")
+        public AssessmentScheduledStatus() : base("ASSESSMENT_SCHEDULED", "Assessment Scheduled", "Risk assessment has been scheduled")
         {
         }
     }
     private sealed class AssessmentUnderwayStatus : RiskAssessmentStatus
     {
-        public AssessmentUnderwayStatus() : base("ASSESSMENT_UNDERWAY", "Assessment Underway")
+        public AssessmentUnderwayStatus() : base("ASSESSMENT_UNDERWAY", "Assessment Underway", "Risk assessment is currently underway")
         {
         }
     }
     private sealed class AssessmentCompleteStatus : RiskAssessmentStatus
     {
-        public AssessmentCompleteStatus() : base("ASSESSMENT_COMPLETE", "Assessment Complete")
+        public AssessmentCompleteStatus() : base("ASSESSMENT_COMPLETE", "Assessment Complete", "Risk assessment has been completed")
         {
         }
     }
     private sealed class AssessmentCreated : RiskAssessmentStatus
     {
-        public AssessmentCreated() : base("ASSESSMENT_CREATED", "Assessment Created")
+        public AssessmentCreated() : base("ASSESSMENT_CREATED", "Assessment Created", "Risk assessment has been created")
         {
         }
     }

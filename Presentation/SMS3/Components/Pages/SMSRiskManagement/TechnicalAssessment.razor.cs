@@ -1239,30 +1239,28 @@ public partial class TechnicalAssessment : ComponentBase
                 var scoringPanels = await LoadScoringPanelsForHazard(HazardId, CurrentStep, TechRiskAssessment?.Code);
                 var (averageScore, matrixCode, riskLevel) = CalculateHazardScoringData(scoringPanels, HazardId);
 
-                // Update hazard status based on assessment progress
-                var originalStatus = hazard.Status?.ToString();
-                hazard.Status = DetermineHazardStatusFromStep(CurrentStep);
-                
                 // Use calculated risk level from scoring panels
+                var originalRiskLevel = hazard.HazardRiskLevel?.Value ?? string.Empty;
                 hazard.HazardRiskLevel = riskLevel;
 
                 hazard.UpdatedBy = _currentUserService?.UserCode;  
                 hazard.UpdatedDate = DateTime.UtcNow;   
 
-                // Only update if status changed
-                if (hazard.Status?.ToString() != originalStatus)
+                // Only update if risk level changed
+                var updatedRiskLevel = hazard.HazardRiskLevel?.Value ?? string.Empty;
+                if (!string.Equals(updatedRiskLevel, originalRiskLevel, StringComparison.OrdinalIgnoreCase))
                 {
                     var updateHazardCommand = new UpdateHazardCommand(hazard);
                     var updateResult = await _mediator.SendAsync(updateHazardCommand, CancellationToken.None);
 
                     if (updateResult.IsSuccess)
                     {
-                        _logger.LogInformation("Updated hazard {HazardId} status from {OldStatus} to {NewStatus}",
-                            HazardId, originalStatus, hazard.Status?.ToString());
+                        _logger.LogInformation("Updated hazard {HazardId} risk level from {OldRiskLevel} to {NewRiskLevel}",
+                            HazardId, originalRiskLevel, updatedRiskLevel);
                     }
                     else
                     {
-                        _logger.LogWarning("Failed to update hazard status: {Error}", updateResult.Error?.Message);
+                        _logger.LogWarning("Failed to update hazard risk level: {Error}", updateResult.Error?.Message);
                     }
                 }
             }
@@ -1271,22 +1269,6 @@ public partial class TechnicalAssessment : ComponentBase
         {
             _logger.LogError(ex, "Error updating hazard status for progress");
         }
-    }
-
-    /// <summary>
-    /// Determine appropriate hazard status based on assessment step
-    /// </summary>
-    private HazardStatus DetermineHazardStatusFromStep(int step)
-    {
-        return step switch
-        {
-            1 => HazardStatus.InitialRiskAssessment, // System description
-            2 => HazardStatus.InitialRiskAssessment, // Hazard identification
-            3 => HazardStatus.InitialRiskAnalysis, // Risk analysis
-            4 => HazardStatus.InitialHazardScoring, // Risk assessment
-            5 => HazardStatus.ResidualRiskAnalysis, // Risk mitigation
-            _ => HazardStatus.InitialRiskAssessment
-        };
     }
 
    

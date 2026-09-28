@@ -12,7 +12,7 @@ public static class MitigationStatusAggregationService
         [MitigationStatus.Approved.Value] = 2,
         [MitigationStatus.InProgress.Value] = 3,
         [MitigationStatus.PastExpectedTargetDate.Value] = 4,
-        [MitigationStatus.Complete.Value] = 5,
+        [MitigationStatus.MitigationImplemented.Value] = 5,
         [MitigationStatus.MonitoringHazard.Value] = 6
     };
 
@@ -47,7 +47,7 @@ public static class MitigationStatusAggregationService
         if (hasMonitoringHazard)
         {
             var allAreCompleteOrMonitoring = normalizedStatuses.All(s =>
-                s == MitigationStatus.Complete ||
+                s == MitigationStatus.MitigationImplemented ||
                 s == MitigationStatus.MonitoringHazard);
 
             if (allAreCompleteOrMonitoring)

@@ -337,7 +337,7 @@ public sealed class NotificationsScanService : INotificationsScanService
         => (mitigation.Code ?? mitigation.Id.Value ?? string.Empty).Trim();
 
     private static bool IsMutedMitigationStatus(string? statusValue)
-        => string.Equals(statusValue, MitigationStatus.Complete.Value, StringComparison.OrdinalIgnoreCase)
+        => string.Equals(statusValue, MitigationStatus.MitigationImplemented.Value, StringComparison.OrdinalIgnoreCase)
             || string.Equals(statusValue, MitigationStatus.HazardEliminated.Value, StringComparison.OrdinalIgnoreCase);
 
     private static MitigationTimingState GetMitigationTimingState(DateTime targetDate, string? statusValue, int daysInAdvance, int hoursBefore)

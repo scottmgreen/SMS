@@ -72,11 +72,16 @@ public class CreateRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestH
 public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateRiskAnalysisCommand, Result<RiskAnalysis>>
 {
     private readonly IRiskAnalysisService _riskAnalysisService;
+    private readonly WorkflowStatusSyncService _workflowStatusSyncService;
     private readonly ILogger<UpdateRiskAnalysisCommandHandler> _logger;
 
-    public UpdateRiskAnalysisCommandHandler(IRiskAnalysisService riskAnalysisService, ILogger<UpdateRiskAnalysisCommandHandler> logger)
+    public UpdateRiskAnalysisCommandHandler(
+        IRiskAnalysisService riskAnalysisService,
+        WorkflowStatusSyncService workflowStatusSyncService,
+        ILogger<UpdateRiskAnalysisCommandHandler> logger)
     {
         _riskAnalysisService = riskAnalysisService ?? throw new ArgumentNullException(nameof(riskAnalysisService));
+        _workflowStatusSyncService = workflowStatusSyncService ?? throw new ArgumentNullException(nameof(workflowStatusSyncService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -98,6 +103,21 @@ public class UpdateRiskAnalysisCommandHandler : BaseCommandBundle, IBaseRequestH
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation(" Successfully updated RiskAnalysis with ID: {Id}", request.RiskAnalysis.Id);
+
+                if (result.Value is not null && !string.IsNullOrWhiteSpace(result.Value.HazardCode))
+                {
+                    var workflowSyncResult = await _workflowStatusSyncService
+                        .SyncForHazardAsync(result.Value.HazardCode, result.Value.UpdatedBy ?? result.Value.CreatedBy, ct)
+                        .ConfigureAwait(false);
+
+                    if (workflowSyncResult.IsFailure)
+                    {
+                        _logger.LogApplicationWarning(
+                            "Failed to sync workflow statuses after risk analysis update for {RiskAnalysisCode}: {Error}",
+                            result.Value.Code,
+                            workflowSyncResult.Error?.Message ?? "Unknown error");
+                    }
+                }
             }
             else
             {
