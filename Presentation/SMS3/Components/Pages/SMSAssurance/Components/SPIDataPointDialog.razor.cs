@@ -145,7 +145,7 @@ public partial class SPIDataPointDialog : ComponentBase
             // Set verification details if verified
             if (_currentDataPoint.IsVerified)
             {
-                _currentDataPoint.VerifiedDate = DateTime.UtcNow;
+                _currentDataPoint.VerifiedDate = DateTime.Now;
                 if (string.IsNullOrWhiteSpace(_currentDataPoint.VerifiedBy))
                 {
                     _currentDataPoint.VerifiedBy = _currentUserService.UserCode;
@@ -245,3 +245,4 @@ public partial class SPIDataPointDialog : ComponentBase
 
     #endregion
 }
+

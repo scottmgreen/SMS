@@ -1,4 +1,4 @@
-﻿using SMS_Application.Services;
+using SMS_Application.Services;
 using SMS_Application.Interfaces;
 
 using SMS_Domain.Errors;
@@ -248,7 +248,7 @@ public partial class Verify2FA : ComponentBase
                 pendingUser.TwoFactorSecretKey = _userSecretKey;
                 pendingUser.TwoFactorEnabled = true;
                 pendingUser.BackupCodes = backupCodesJson;
-                pendingUser.TwoFactorSetupDate = DateTime.UtcNow;
+                pendingUser.TwoFactorSetupDate = DateTime.Now;
             }
             else
             {
@@ -320,7 +320,7 @@ public partial class Verify2FA : ComponentBase
 
                 if (failedAttempts >= 5)
                 {
-                    lockoutUntil = DateTime.UtcNow.AddMinutes(15);
+                    lockoutUntil = DateTime.Now.AddMinutes(15);
                     _logger.LogWarning("User {User} ({UserType}) locked out due to too many failed 2FA attempts", 
                         pendingUser.Code, userType.Value);
                 }
@@ -731,5 +731,6 @@ public partial class Verify2FA : ComponentBase
         public string Code { get; set; } = string.Empty;
     }
 }
+
 
 

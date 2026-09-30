@@ -193,7 +193,7 @@ public class AssignRoleToUserCommandHandler : BaseCommandBundle, IBaseRequestHan
                 request.UserId, request.RoleCode);
 
             // Create a new user role assignment
-            var userRoleId = new SMSUserRoleID($"UR-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
+            var userRoleId = new SMSUserRoleID($"UR-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
             var userRole = new SMSUserRole(userRoleId)
             {
                 Code = userRoleId.Value,
@@ -264,7 +264,7 @@ public class ActivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseRequest
             // Note: Add activation logic to your domain model if needed
             // For now, we'll just update the timestamps
             userRole.UpdatedBy = request.ActivatedBy ?? string.Empty;
-            userRole.UpdatedDate = DateTime.UtcNow;
+            userRole.UpdatedDate = DateTime.Now;
 
             var result = await _userRoleService.UpdateUserRoleAsync(userRole);
 
@@ -329,7 +329,7 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseReque
             // userRole.Deactivate(request.DeactivatedBy, request.DeactivationReason);
             
             userRole.UpdatedBy = request.DeactivatedBy ?? string.Empty;
-            userRole.UpdatedDate = DateTime.UtcNow;
+            userRole.UpdatedDate = DateTime.Now;
 
             var result = await _userRoleService.UpdateUserRoleAsync(userRole);
 
@@ -357,4 +357,5 @@ public class DeactivateSMSUserRoleCommandHandler : BaseCommandBundle, IBaseReque
         }
     }
 }
+
 

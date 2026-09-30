@@ -1,0 +1,603 @@
+================================================================================
+PowerShell File Transfer Script Variants
+================================================================================
+This file consolidates all proposed script versions from the review thread.
+
+
+================================================================================
+Version 1 - Proposed Revised Version (stays close to original behavior)
+================================================================================
+
+[CmdletBinding()]
+param (
+	[Parameter()]
+	[switch]$EnableDebug
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+
+# Required folders
+$hereFolder    = 'c:\newsys\data\xml\'
+$archiveFolder = 'c:\newsys\data\xml\uploaded\'
+$thereFolder   = '\\destsvr\c$\temp\sub\'
+$allFolders    = @($hereFolder, $archiveFolder, $thereFolder)
+
+# Monthly log file in script directory
+$scriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $PSCommandPath }
+$scriptName = if ($MyInvocation.MyCommand.Name) { $MyInvocation.MyCommand.Name } else { 'file_transfer.ps1' }
+$logFile    = Join-Path $scriptRoot ("{0}_{1}.log" -f [IO.Path]::GetFileNameWithoutExtension($scriptName), (Get-Date -Format 'yyyyMM'))
+
+$line            = '-' * 80
+$finishLine      = '=' * 80
+$logTailLength   = 10
+
+# Email
+$recipient = 'me@business.com'
+$smtpServer = 'smtp.business.com'
+$smtpPort = 25
+$senderAddr = 'send@business.com'
+
+$canSendEmail = $false
+try {
+	$canSendEmail = Test-NetConnection -ComputerName $smtpServer -Port $smtpPort -InformationLevel Quiet -WarningAction SilentlyContinue
+} catch {
+	$canSendEmail = $false
+}
+
+function Write-ScriptLog {
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory)]
+		[string]$Message,
+
+		[ValidateSet('I','E','W','D','S')]
+		[string]$Level = 'S'
+	)
+
+	$timestamp = Get-Date -Format 'yyyy-MM-dd HH:mm:ss.fff'
+	$levelText = switch ($Level) {
+		'I' { 'INFO' }
+		'E' { 'ERR ' }
+		'W' { 'WARN' }
+		'D' { 'DBUG' }
+		default { 'OKAY' }
+	}
+
+	"$timestamp [$levelText] $Message" | Out-File -FilePath $logFile -Append -Encoding utf8
+}
+
+function Send-Email {
+	[CmdletBinding()]
+	param (
+		[Parameter(Mandatory)]
+		[string]$Subject,
+
+		[Parameter(Mandatory)]
+		[string]$Body
+	)
+
+	if (-not $canSendEmail) { return }
+
+	Send-MailMessage -SmtpServer $smtpServer -Port $smtpPort -To $recipient -From $senderAddr -Subject $Subject -Body $Body
+}
+
+if ($EnableDebug) {
+	Send-Email -Subject 'Test Subject Line' -Body "Test email body from [$scriptName]"
+	Write-ScriptLog -Message 'Test email debug flag.' -Level 'D'
+}
+
+$hadErrors = $false
+$filesProcessed = 0
+
+# Check required folders
+foreach ($path in $allFolders) {
+	if (-not (Test-Path -Path $path)) {
+		Write-ScriptLog -Message "Path not found [$path]" -Level 'E'
+		$hadErrors = $true
+	} elseif ($EnableDebug) {
+		Write-ScriptLog -Message "Path okay [$path]" -Level 'D'
+	}
+}
+
+if ($hadErrors) {
+	Write-ScriptLog -Message $finishLine
+	exit 2
+}
+
+# Get files to move
+try {
+	$filesToMove = @(Get-ChildItem -Path $hereFolder -Filter '*.pdf' -File)
+} catch {
+	Write-ScriptLog -Message ("Error getting files from source [{0}]. {1}" -f $hereFolder, $_.Exception.Message) -Level 'E'
+	Write-ScriptLog -Message $finishLine
+	exit 2
+}
+
+if ($filesToMove.Count -eq 0) {
+	Write-ScriptLog -Message "Zero files found in [$hereFolder]." -Level 'W'
+	Write-ScriptLog -Message $finishLine
+	exit 2
+}
+
+Write-ScriptLog -Message ("Found [{0}] file(s) in [{1}]." -f $filesToMove.Count, $hereFolder) -Level 'I'
+
+foreach ($pdfFile in $filesToMove) {
+	$here = $pdfFile.FullName
+	$there = Join-Path -Path $thereFolder -ChildPath $pdfFile.Name
+	$archiveTarget = Join-Path -Path $archiveFolder -ChildPath $pdfFile.Name
+
+	try {
+		Copy-Item -Path $here -Destination $there -Force
+		Write-ScriptLog -Message "Copy complete for [$($pdfFile.Name)]" -Level 'I'
+
+		$hereHash  = (Get-FileHash -Path $here -Algorithm SHA256).Hash
+		$thereHash = (Get-FileHash -Path $there -Algorithm SHA256).Hash
+
+		if ($hereHash -ne $thereHash) {
+			Write-ScriptLog -Message "Hash mismatch. File [$($pdfFile.Name)] NOT copied successfully." -Level 'E'
+			$hadErrors = $true
+			continue
+		}
+
+		Write-ScriptLog -Message "Hashes match. File [$($pdfFile.Name)] copied successfully to [$thereFolder]." -Level 'S'
+
+		Move-Item -Path $here -Destination $archiveTarget -Force
+		Write-ScriptLog -Message "Archive successful. File [$($pdfFile.Name)] moved to [$archiveFolder]." -Level 'S'
+
+		$filesProcessed++
+	} catch {
+		Write-ScriptLog -Message ("Error processing file [{0}]. {1}" -f $pdfFile.Name, $_.Exception.Message) -Level 'E'
+		$hadErrors = $true
+	}
+}
+
+Write-ScriptLog -Message ("Processing complete. Files archived: [{0}]." -f $filesProcessed) -Level 'I'
+
+if ($canSendEmail) {
+	$logTail = (Get-Content -Path $logFile -Tail $logTailLength) -join "`n"
+	$body = @"
+[$scriptName] completed.
+Errors detected: $hadErrors
+
+$line
+Log Tail:
+
+$logTail
+$finishLine
+"@
+
+	$subject = if ($hadErrors) { 'ERROR - file transfer' } else { 'File transfer' }
+	Send-Email -Subject $subject -Body $body
+}
+
+Write-ScriptLog -Message $finishLine
+if ($hadErrors) { exit 2 } else { exit 0 }
+
+
+================================================================================
+Version 2 - From Scratch Version
+================================================================================
+
+[CmdletBinding()]
+param(
+	[Parameter(Mandatory = $false)]
+	[string]$SourceFolder = "C:\newsys\data\xml\",
+
+	[Parameter(Mandatory = $false)]
+	[string]$DestinationFolder = "\\destsvr\c$\temp\sub\",
+
+	[Parameter(Mandatory = $false)]
+	[string]$ArchiveFolder = "C:\newsys\data\xml\uploaded\",
+
+	[Parameter(Mandatory = $false)]
+	[string]$FileFilter = "*.pdf",
+
+	[Parameter(Mandatory = $false)]
+	[string]$Recipient = "me@business.com",
+
+	[Parameter(Mandatory = $false)]
+	[string]$Sender = "send@business.com",
+
+	[Parameter(Mandatory = $false)]
+	[string]$SmtpServer = "smtp.business.com",
+
+	[Parameter(Mandatory = $false)]
+	[int]$SmtpPort = 25
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+$scriptName = $MyInvocation.MyCommand.Name
+$scriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $PSCommandPath }
+$logFile = Join-Path $scriptRoot ("file_transfer_{0}.log" -f (Get-Date -Format "yyyyMM"))
+$line = "-" * 80
+$finishLine = "=" * 80
+$logTailLength = 30
+
+$hadErrors = $false
+$filesCopied = 0
+$filesArchived = 0
+$filesSkipped = 0
+
+function Write-ScriptLog {
+	param(
+		[Parameter(Mandatory)]
+		[string]$Message,
+
+		[ValidateSet("INFO","WARN","ERROR","DEBUG","OK")]
+		[string]$Level = "INFO"
+	)
+
+	$stamp = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
+	"$stamp [$Level] $Message" | Out-File -FilePath $logFile -Append -Encoding utf8
+}
+
+function Send-RunEmail {
+	param(
+		[Parameter(Mandatory)]
+		[string]$Subject
+	)
+
+	try {
+		$canSend = Test-NetConnection -ComputerName $SmtpServer -Port $SmtpPort -InformationLevel Quiet -WarningAction SilentlyContinue
+		if (-not $canSend) {
+			Write-ScriptLog -Message "SMTP not reachable ($SmtpServer:$SmtpPort). Email not sent." -Level "WARN"
+			return
+		}
+
+		$tail = (Get-Content -Path $logFile -Tail $logTailLength) -join "`r`n"
+		$body = @"
+Script: $scriptName
+Completed: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+Errors: $hadErrors
+Copied: $filesCopied
+Archived: $filesArchived
+Skipped: $filesSkipped
+
+$line
+Log Tail:
+$tail
+$finishLine
+"@
+
+		Send-MailMessage -SmtpServer $SmtpServer -Port $SmtpPort -To $Recipient -From $Sender -Subject $Subject -Body $body
+		Write-ScriptLog -Message "Summary email sent to [$Recipient]." -Level "OK"
+	}
+	catch {
+		Write-ScriptLog -Message "Failed to send email. $($_.Exception.Message)" -Level "ERROR"
+	}
+}
+
+try {
+	Write-ScriptLog -Message $line -Level "INFO"
+	Write-ScriptLog -Message "Starting file transfer run." -Level "INFO"
+	Write-ScriptLog -Message "Source=[$SourceFolder], Destination=[$DestinationFolder], Archive=[$ArchiveFolder], Filter=[$FileFilter]" -Level "INFO"
+
+	# Folder checks
+	foreach ($path in @($SourceFolder, $DestinationFolder, $ArchiveFolder)) {
+		if (-not (Test-Path -Path $path)) {
+			Write-ScriptLog -Message "Required path not found: [$path]" -Level "ERROR"
+			$hadErrors = $true
+		} else {
+			Write-ScriptLog -Message "Path exists: [$path]" -Level "OK"
+		}
+	}
+
+	if ($hadErrors) {
+		throw "One or more required folders do not exist."
+	}
+
+	$files = Get-ChildItem -Path $SourceFolder -File -Filter $FileFilter
+	if (-not $files -or $files.Count -eq 0) {
+		Write-ScriptLog -Message "No files found matching [$FileFilter] in [$SourceFolder]." -Level "WARN"
+	} else {
+		Write-ScriptLog -Message "Found [$($files.Count)] file(s) to process." -Level "INFO"
+	}
+
+	foreach ($file in $files) {
+		$src = $file.FullName
+		$dst = Join-Path $DestinationFolder $file.Name
+		$arc = Join-Path $ArchiveFolder $file.Name
+
+		try {
+			Copy-Item -Path $src -Destination $dst -Force
+			Write-ScriptLog -Message "Copied [$($file.Name)] to destination." -Level "INFO"
+
+			$srcHash = (Get-FileHash -Path $src -Algorithm SHA256).Hash
+			$dstHash = (Get-FileHash -Path $dst -Algorithm SHA256).Hash
+
+			if ($srcHash -ne $dstHash) {
+				Write-ScriptLog -Message "Hash mismatch for [$($file.Name)]. Source and destination differ." -Level "ERROR"
+				$hadErrors = $true
+				$filesSkipped++
+				continue
+			}
+
+			Write-ScriptLog -Message "Hash verified for [$($file.Name)]." -Level "OK"
+			$filesCopied++
+
+			Move-Item -Path $src -Destination $arc -Force
+			Write-ScriptLog -Message "Archived original file [$($file.Name)] to [$ArchiveFolder]." -Level "OK"
+			$filesArchived++
+		}
+		catch {
+			Write-ScriptLog -Message "Failed processing [$($file.Name)]. $($_.Exception.Message)" -Level "ERROR"
+			$hadErrors = $true
+			$filesSkipped++
+		}
+	}
+
+	Write-ScriptLog -Message "Run complete. Copied=$filesCopied, Archived=$filesArchived, Skipped=$filesSkipped" -Level "INFO"
+}
+catch {
+	Write-ScriptLog -Message "Fatal error. $($_.Exception.Message)" -Level "ERROR"
+	$hadErrors = $true
+}
+finally {
+	Write-ScriptLog -Message $finishLine -Level "INFO"
+	$subject = if ($hadErrors) { "ERROR - File Transfer [$env:COMPUTERNAME]" } else { "SUCCESS - File Transfer [$env:COMPUTERNAME]" }
+	Send-RunEmail -Subject $subject
+	if ($hadErrors) { exit 2 } else { exit 0 }
+}
+
+
+================================================================================
+Version 3 - Production Ready Version
+================================================================================
+
+[CmdletBinding()]
+param(
+	[Parameter()][ValidateNotNullOrEmpty()][string]$SourceFolder      = "C:\newsys\data\xml\",
+	[Parameter()][ValidateNotNullOrEmpty()][string]$DestinationFolder = "\\destsvr\c$\temp\sub\",
+	[Parameter()][ValidateNotNullOrEmpty()][string]$ArchiveFolder     = "C:\newsys\data\xml\uploaded\",
+	[Parameter()][ValidateNotNullOrEmpty()][string]$FileFilter        = "*.pdf",
+
+	[Parameter()][ValidateRange(1,10)][int]$RetryCount = 3,
+	[Parameter()][ValidateRange(1,60)][int]$RetryDelaySeconds = 3,
+
+	[Parameter()][ValidateNotNullOrEmpty()][string]$Recipient  = "me@business.com",
+	[Parameter()][ValidateNotNullOrEmpty()][string]$Sender     = "send@business.com",
+	[Parameter()][ValidateNotNullOrEmpty()][string]$SmtpServer = "smtp.business.com",
+	[Parameter()][ValidateRange(1,65535)][int]$SmtpPort = 25,
+	[Parameter()][switch]$UseSsl,
+	[Parameter()][System.Management.Automation.PSCredential]$SmtpCredential,
+	[Parameter()][switch]$AttachLogToEmail,
+
+	[Parameter()][switch]$CreateMissingFolders
+)
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = "Stop"
+
+$scriptName = if ($MyInvocation.MyCommand.Name) { $MyInvocation.MyCommand.Name } else { "file_transfer.ps1" }
+$scriptRoot = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $PSCommandPath }
+$logFile    = Join-Path $scriptRoot ("file_transfer_{0:yyyyMM}.log" -f (Get-Date))
+$runId      = [guid]::NewGuid().ToString("N")
+$line       = "-" * 90
+
+$script:HadErrors = $false
+$script:Summary = [System.Collections.Generic.List[pscustomobject]]::new()
+
+function Write-Log {
+	param(
+		[Parameter(Mandatory)][string]$Message,
+		[Parameter()][ValidateSet("INFO","WARN","ERROR","DEBUG","OK")][string]$Level = "INFO"
+	)
+
+	$ts = Get-Date -Format "yyyy-MM-dd HH:mm:ss.fff"
+	$entry = "$ts [$Level] [Run:$runId] $Message"
+	$entry | Out-File -FilePath $logFile -Append -Encoding utf8
+	Write-Host $entry
+}
+
+function Invoke-WithRetry {
+	param(
+		[Parameter(Mandatory)][scriptblock]$Action,
+		[Parameter(Mandatory)][string]$ActionName
+	)
+
+	for ($attempt = 1; $attempt -le $RetryCount; $attempt++) {
+		try {
+			& $Action
+			return
+		}
+		catch {
+			if ($attempt -ge $RetryCount) {
+				throw
+			}
+			Write-Log -Level "WARN" -Message "$ActionName failed (attempt $attempt/$RetryCount): $($_.Exception.Message). Retrying in $RetryDelaySeconds sec."
+			Start-Sleep -Seconds $RetryDelaySeconds
+		}
+	}
+}
+
+function Ensure-Folder {
+	param([Parameter(Mandatory)][string]$Path)
+
+	if (Test-Path -Path $Path) {
+		Write-Log -Level "OK" -Message "Path exists: [$Path]"
+		return
+	}
+
+	if ($CreateMissingFolders) {
+		New-Item -Path $Path -ItemType Directory -Force | Out-Null
+		Write-Log -Level "OK" -Message "Created missing path: [$Path]"
+	}
+	else {
+		throw "Required path not found: [$Path]"
+	}
+}
+
+function Get-UniqueArchivePath {
+	param(
+		[Parameter(Mandatory)][string]$Folder,
+		[Parameter(Mandatory)][string]$FileName
+	)
+
+	$baseName = [System.IO.Path]::GetFileNameWithoutExtension($FileName)
+	$ext      = [System.IO.Path]::GetExtension($FileName)
+	$target   = Join-Path $Folder $FileName
+
+	if (-not (Test-Path $target)) { return $target }
+
+	$stamp = Get-Date -Format "yyyyMMdd_HHmmssfff"
+	$i = 1
+	do {
+		$candidate = Join-Path $Folder ("{0}_{1}_{2}{3}" -f $baseName, $stamp, $i, $ext)
+		$i++
+	} while (Test-Path $candidate)
+
+	return $candidate
+}
+
+function Test-SmtpReachable {
+	try {
+		$client = New-Object System.Net.Sockets.TcpClient
+		$iar = $client.BeginConnect($SmtpServer, $SmtpPort, $null, $null)
+		$ok = $iar.AsyncWaitHandle.WaitOne(3000, $false)
+		if (-not $ok) {
+			$client.Close()
+			return $false
+		}
+		$client.EndConnect($iar)
+		$client.Close()
+		return $true
+	} catch {
+		return $false
+	}
+}
+
+function Send-SummaryEmail {
+	param([Parameter(Mandatory)][bool]$HasErrors)
+
+	if (-not (Test-SmtpReachable)) {
+		Write-Log -Level "WARN" -Message "SMTP not reachable ($SmtpServer:$SmtpPort). Summary email skipped."
+		return
+	}
+
+	$copied   = ($script:Summary | Where-Object Status -eq "Copied").Count
+	$archived = ($script:Summary | Where-Object Status -eq "Archived").Count
+	$failed   = ($script:Summary | Where-Object Status -eq "Failed").Count
+	$skipped  = ($script:Summary | Where-Object Status -eq "Skipped").Count
+
+	$subject = if ($HasErrors) { "ERROR - File Transfer [$env:COMPUTERNAME]" } else { "SUCCESS - File Transfer [$env:COMPUTERNAME]" }
+	$tail = (Get-Content -Path $logFile -Tail 40 -ErrorAction SilentlyContinue) -join "`r`n"
+
+	$body = @"
+Script: $scriptName
+RunId: $runId
+Completed: $(Get-Date -Format "yyyy-MM-dd HH:mm:ss")
+Source: $SourceFolder
+Destination: $DestinationFolder
+Archive: $ArchiveFolder
+Filter: $FileFilter
+
+Counts:
+- Copied:   $copied
+- Archived: $archived
+- Failed:   $failed
+- Skipped:  $skipped
+
+$line
+Log Tail
+$line
+$tail
+"@
+
+	$mail = New-Object System.Net.Mail.MailMessage
+	$mail.From = $Sender
+	$mail.To.Add($Recipient)
+	$mail.Subject = $subject
+	$mail.Body = $body
+
+	if ($AttachLogToEmail -and (Test-Path $logFile)) {
+		$attachment = New-Object System.Net.Mail.Attachment($logFile)
+		$mail.Attachments.Add($attachment)
+	}
+
+	$smtp = New-Object System.Net.Mail.SmtpClient($SmtpServer, $SmtpPort)
+	$smtp.EnableSsl = [bool]$UseSsl
+	if ($SmtpCredential) {
+		$smtp.Credentials = $SmtpCredential.GetNetworkCredential()
+	}
+
+	try {
+		$smtp.Send($mail)
+		Write-Log -Level "OK" -Message "Summary email sent to [$Recipient]."
+	}
+	finally {
+		$mail.Dispose()
+		$smtp.Dispose()
+	}
+}
+
+try {
+	Write-Log -Message $line
+	Write-Log -Message "Starting transfer run."
+	Write-Log -Message "Source=[$SourceFolder] Destination=[$DestinationFolder] Archive=[$ArchiveFolder] Filter=[$FileFilter]"
+
+	Ensure-Folder -Path $SourceFolder
+	Ensure-Folder -Path $DestinationFolder
+	Ensure-Folder -Path $ArchiveFolder
+
+	$files = @(Get-ChildItem -Path $SourceFolder -File -Filter $FileFilter)
+	if ($files.Count -eq 0) {
+		Write-Log -Level "WARN" -Message "No files found for filter [$FileFilter]."
+	} else {
+		Write-Log -Message "Found [$($files.Count)] file(s) to process."
+	}
+
+	foreach ($file in $files) {
+		$src = $file.FullName
+		$dst = Join-Path $DestinationFolder $file.Name
+		$arc = Get-UniqueArchivePath -Folder $ArchiveFolder -FileName $file.Name
+
+		try {
+			Invoke-WithRetry -ActionName "Copy [$($file.Name)]" -Action {
+				Copy-Item -Path $src -Destination $dst -Force
+			}
+
+			$srcHash = (Get-FileHash -Path $src -Algorithm SHA256).Hash
+			$dstHash = (Get-FileHash -Path $dst -Algorithm SHA256).Hash
+
+			if ($srcHash -ne $dstHash) {
+				Write-Log -Level "ERROR" -Message "Hash mismatch for [$($file.Name)]."
+				$script:HadErrors = $true
+				$script:Summary.Add([pscustomobject]@{ File = $file.Name; Status = "Failed"; Detail = "Hash mismatch" })
+				continue
+			}
+
+			Write-Log -Level "OK" -Message "Hash verified for [$($file.Name)]."
+			$script:Summary.Add([pscustomobject]@{ File = $file.Name; Status = "Copied"; Detail = "Copy+hash OK" })
+
+			Invoke-WithRetry -ActionName "Archive [$($file.Name)]" -Action {
+				Move-Item -Path $src -Destination $arc -Force
+			}
+
+			Write-Log -Level "OK" -Message "Archived [$($file.Name)] to [$arc]."
+			$script:Summary.Add([pscustomobject]@{ File = $file.Name; Status = "Archived"; Detail = $arc })
+		}
+		catch {
+			$script:HadErrors = $true
+			Write-Log -Level "ERROR" -Message "File [$($file.Name)] failed: $($_.Exception.Message)"
+			$script:Summary.Add([pscustomobject]@{ File = $file.Name; Status = "Failed"; Detail = $_.Exception.Message })
+		}
+	}
+
+	$copied = ($script:Summary | Where-Object Status -eq "Copied").Count
+	$archived = ($script:Summary | Where-Object Status -eq "Archived").Count
+	$failed = ($script:Summary | Where-Object Status -eq "Failed").Count
+
+	Write-Log -Message "Completed. Copied=$copied Archived=$archived Failed=$failed"
+}
+catch {
+	$script:HadErrors = $true
+	Write-Log -Level "ERROR" -Message "Fatal: $($_.Exception.Message)"
+}
+finally {
+	Write-Log -Message $line
+	Send-SummaryEmail -HasErrors:$script:HadErrors
+	if ($script:HadErrors) { exit 2 } else { exit 0 }
+}

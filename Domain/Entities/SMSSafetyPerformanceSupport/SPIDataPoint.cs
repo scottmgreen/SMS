@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SPIDataPoint.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class SPIDataPoint : BaseAuditableEntity
 {
-    public SPIDataPoint(SPIDataPointID id) : base(id, string.Empty, DateTime.UtcNow)
+    public SPIDataPoint(SPIDataPointID id) : base(id, string.Empty, DateTime.Now)
     {
         Code = id.Value;
 
@@ -35,4 +35,5 @@ public class SPIDataPoint : BaseAuditableEntity
     public string? VerifiedBy { get; set; }
     public DateTime? VerifiedDate { get; set; }
 }
+
 

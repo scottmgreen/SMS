@@ -97,7 +97,7 @@ public class AdminLoginHelper
         {
             try
             {
-                var passwordFromHash = Password.FromHash(adminHash, DateTime.UtcNow.AddDays(-30));
+                var passwordFromHash = Password.FromHash(adminHash, DateTime.Now.AddDays(-30));
                 var isValid = passwordFromHash.Verify(password);
                 
                 if (isValid)
@@ -221,7 +221,7 @@ public class AdminLoginHelper
         {
             try
             {
-                var passwordFromHash = Password.FromHash(hash, DateTime.UtcNow.AddDays(-30));
+                var passwordFromHash = Password.FromHash(hash, DateTime.Now.AddDays(-30));
                 var isValid = passwordFromHash.Verify(password);
                 
                 if (isValid)
@@ -287,3 +287,4 @@ public class DatabaseQueries
         WHERE fSMSApplicationUserUserName = 'admin@portofportland.com'  -- Replace with actual username
         AND fSMSApplicationUserIsActive = 1";
 }
+

@@ -153,8 +153,8 @@ namespace SMS3.Api.Services
                     SubmittingDepartmentJobFunction = report?.SubmittingDepartmentJobFunction ?? string.Empty,
                     HazardCategory = hazardCategoryValue,
                     HazardType = hazardTypeValue,
-                    HazardDescription = hazard?.Description ?? report?.Description ?? string.Empty,
-                    ReportDescription = string.Empty,
+                    HazardDescription = hazard?.Description ?? string.Empty,
+                    ReportDescription = report?.Description ?? string.Empty,
                     ReportStatus = reportStatusDisplay,
                     // HazardStatus = hazardStatusDisplay,
                     ContactName = report?.ReportContactName ?? string.Empty,
@@ -332,7 +332,7 @@ namespace SMS3.Api.Services
                     TrackingId = actualTrackingCode,
                     HazardId = createdHazard.Code,
                     ReportId = actualReportCode,
-                    ReportSubmissionDateTime = DateTime.UtcNow,
+                    ReportSubmissionDateTime = DateTime.Now,
                     Status = "Submitted",
                     Message = $"Confidential report submitted successfully. Tracking ID: {actualTrackingCode}",
                     ProcessedFiles = processedFiles,
@@ -383,10 +383,10 @@ namespace SMS3.Api.Services
                     Name = SystemConstants.FlyPdxApiSource,
                     Description = string.Empty,
                     SubmittedBy = SystemConstants.FlyPdxApiSource,
-                    SubmittedDate = request.ReportSubmittedDate ?? DateTime.UtcNow,
+                    SubmittedDate = request.ReportSubmittedDate ?? DateTime.Now,
                     SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
                     SubmittingDepartmentJobFunction = request.ReportSubmittingDepartmentJobFunction ?? string.Empty,
-                    IncidentDateTime = request.HazardIncidentDateTime ?? DateTime.UtcNow,
+                    IncidentDateTime = request.HazardIncidentDateTime ?? DateTime.Now,
                     IsAnonymous = request.ReportIsAnonymous.GetValueOrDefault(true),
                     ReportContactName = request.ReportContactName ?? string.Empty,
                     ReportContactCell = request.ReportContactCell ?? string.Empty,
@@ -395,7 +395,7 @@ namespace SMS3.Api.Services
                     Stage = "INITIAL",
                     Status = ReportStatus.NeedsValidation,
                     CreatedBy = SystemConstants.FlyPdxApiSource,
-                    CreatedDate = DateTime.UtcNow
+                    CreatedDate = DateTime.Now
                 };
                 var reportResult = await _mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
                 if (reportResult.IsFailure)
@@ -417,7 +417,7 @@ namespace SMS3.Api.Services
                     IsInitialHazard = true,
                     Status = HazardStatus.Unknown,
                     CreatedBy = SystemConstants.FlyPdxApiSource,
-                    CreatedDate = DateTime.UtcNow
+                    CreatedDate = DateTime.Now
                 };
                 var hazardResult = await _mediator.SendAsync(new CreateHazardCommand(hazard), CancellationToken.None);
                 if (hazardResult.IsFailure)
@@ -467,7 +467,7 @@ namespace SMS3.Api.Services
                     TrackingId = actualTrackingCode,
                     HazardId = createdHazard.Code,
                     ReportId = actualReportCode,
-                    ReportSubmissionDateTime = DateTime.UtcNow,
+                    ReportSubmissionDateTime = DateTime.Now,
                     Status = "Submitted",
                     Message = $"Confidential report submitted successfully. Tracking ID: {actualTrackingCode}",
                     ProcessedFiles = processedFiles,
@@ -658,11 +658,11 @@ namespace SMS3.Api.Services
                         FilePath = filePath,
                         FileData = fileData,
                         UploadedBy = SystemConstants.FlyPdxApiSource,
-                        UploadedDate = DateTime.UtcNow,
+                        UploadedDate = DateTime.Now,
                         IsActive = true,
                         IsConfidential = true,
                         CreatedBy = SystemConstants.FlyPdxApiSource,
-                        CreatedDate = DateTime.UtcNow
+                        CreatedDate = DateTime.Now
                     };
 
                     var createFileCommand = new CreateHazardFileCommand(hazardFile);
@@ -720,6 +720,10 @@ namespace SMS3.Api.Services
             }
 
             var autoSend = _configuration.GetValue<bool>("HazardReportNotifications:AutoSendHazardReportNotifications");
+            if (!autoSend)
+            {
+                _logger.LogInformation("API hazard submission notification skipped because AutoSendHazardReportNotifications is disabled.");
+            }
 
             var geoLocation = latitude.HasValue && longitude.HasValue
                 ? $"{latitude.Value:F6}, {longitude.Value:F6}"
@@ -756,13 +760,15 @@ namespace SMS3.Api.Services
                     { "LocationDescription", normalizedLocationDescription }
                 });
 
-            var executionMode = autoSend ? EventExecutionMode.Immediate : EventExecutionMode.Manual;
-            var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, executionMode);
-            if (publishResult.IsFailure)
+            if (autoSend)
             {
-                _logger.LogWarning("Failed to queue API hazard submission notification for report {ReportCode}: {Error}",
-                    createdHazard.ReportCode,
-                    publishResult.Error?.Message ?? "Unknown publish error");
+                var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Immediate);
+                if (publishResult.IsFailure)
+                {
+                    _logger.LogWarning("Failed to queue API hazard submission notification for report {ReportCode}: {Error}",
+                        createdHazard.ReportCode,
+                        publishResult.Error?.Message ?? "Unknown publish error");
+                }
             }
 
             await QueueHazardStatusEscalationNotificationAsync(
@@ -794,7 +800,7 @@ namespace SMS3.Api.Services
                 thresholdHours = 48;
             }
 
-            var dueUtc = DateTime.UtcNow.AddHours(thresholdHours);
+            var dueUtc = DateTime.Now.AddHours(thresholdHours);
 
             var configuredMode = _configuration.GetValue<string>("HazardReportNotifications:StatusEscalationExecutionMode");
             var executionMode = Enum.TryParse<EventExecutionMode>(configuredMode, ignoreCase: true, out var parsedMode)
@@ -926,7 +932,7 @@ namespace SMS3.Api.Services
                 SubmittedDate = request.ReportSubmittedDate.Value,
                 SubmittingDepartment = request.ReportSubmittingDepartment ?? string.Empty,
                 SubmittingDepartmentJobFunction = request.ReportSubmittingDepartmentJobFunction ?? string.Empty,
-                IncidentDateTime = request.HazardIncidentDateTime ?? DateTime.UtcNow,
+                IncidentDateTime = request.HazardIncidentDateTime ?? DateTime.Now,
                 IsAnonymous = request.ReportIsAnonymous.GetValueOrDefault(true),
                 ReportContactName = request.ReportContactName ?? string.Empty,
                 ReportContactCell = request.ReportContactCell ?? string.Empty,
@@ -935,7 +941,7 @@ namespace SMS3.Api.Services
                 Stage = "INITIAL",
                 Status = ReportStatus.NeedsValidation,
                 CreatedBy = SystemConstants.FlyPdxApiSource,
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = DateTime.Now
             };
 
             return await _mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
@@ -954,7 +960,7 @@ namespace SMS3.Api.Services
                 IsInitialHazard = true,
                 Status = HazardStatus.InitialRiskAssessment,
                 CreatedBy = SystemConstants.FlyPdxApiSource,
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = DateTime.Now
             };
 
             return await _mediator.SendAsync(new CreateHazardCommand(hazard), CancellationToken.None);
@@ -994,3 +1000,4 @@ namespace SMS3.Api.Services
         #endregion
     }
 }
+

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAssessmentValueObjects.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -26,7 +26,7 @@ public sealed class MonitoringRequirement
         MonitoringFrequency = frequency;
         ResponsibleDepartment = department;
         ReviewTrigger = trigger;
-        EstablishedDate = DateTime.UtcNow;
+        EstablishedDate = DateTime.Now;
     }
 
     public static Result<MonitoringRequirement> Create(string frequency, string department, string trigger)
@@ -42,3 +42,4 @@ public sealed class MonitoringRequirement
             trigger ?? "Annual"));
     }
 }
+

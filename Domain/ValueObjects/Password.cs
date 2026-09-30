@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="Password.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -41,7 +41,7 @@ public sealed class Password : BaseValueObject
             .Ensure(p => HasLowerCase(p), DomainErrors.PasswordError.MissingLowerCase)
             .Ensure(p => HasDigit(p), DomainErrors.PasswordError.MissingDigit)
             .Ensure(p => HasSpecialChar(p), DomainErrors.PasswordError.MissingSpecialChar)
-            .Map(p => new Password(HashPassword(p), DateTime.UtcNow, requiresChange));
+            .Map(p => new Password(HashPassword(p), DateTime.Now, requiresChange));
 
     /// <summary>
     /// Creates a password object from an already hashed value (for loading from database)
@@ -70,13 +70,13 @@ public sealed class Password : BaseValueObject
     /// </summary>
     public bool IsExpired(int maxAgeDays = 90)
     {
-        return DateTime.UtcNow > CreatedDate.AddDays(maxAgeDays);
+        return DateTime.Now > CreatedDate.AddDays(maxAgeDays);
     }
 
     /// <summary>
     /// Gets the age of the password in days
     /// </summary>
-    public int AgeDays => (int)(DateTime.UtcNow - CreatedDate).TotalDays;
+    public int AgeDays => (int)(DateTime.Now - CreatedDate).TotalDays;
 
     /// <summary>
     /// Creates a password that requires change on next login
@@ -104,3 +104,4 @@ public sealed class Password : BaseValueObject
 
     public override string ToString() => "[PROTECTED PASSWORD]";
 }
+

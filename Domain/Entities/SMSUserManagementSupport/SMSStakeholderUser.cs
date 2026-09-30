@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSStakeholderUser.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -17,7 +17,7 @@ public sealed class SMSStakeholderUser : BaseUser
 {
     // Simple constructors
 
-    public SMSStakeholderUser(SMSStakeholderUserID id) : base(id, string.Empty, DateTime.UtcNow)
+    public SMSStakeholderUser(SMSStakeholderUserID id) : base(id, string.Empty, DateTime.Now)
     {
         StakeholderUserId = id;
     }
@@ -35,3 +35,4 @@ public sealed class SMSStakeholderUser : BaseUser
 
 
 }
+

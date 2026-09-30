@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ReportValidation.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -19,7 +19,7 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
 {
 
     // Public constructor for domain usage
-    public ReportValidation(ReportValidationID id) : base(id, string.Empty, DateTime.UtcNow)
+    public ReportValidation(ReportValidationID id) : base(id, string.Empty, DateTime.Now)
     {
         Code = string.Empty;
         ReportCode = string.Empty;
@@ -118,3 +118,4 @@ public class ReportValidation : BaseAuditableEntity, IReportValidation
 
     #endregion
 }
+

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="BaseDomainEvent.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -19,10 +19,10 @@ namespace SMS_Domain.Common;
 public abstract class BaseDomainEvent :BaseAuditableEntity, IBaseDomainEvent
 {
     
-    protected BaseDomainEvent(SMSEventID id) : base(id, string.Empty, DateTime.UtcNow)
+    protected BaseDomainEvent(SMSEventID id) : base(id, string.Empty, DateTime.Now)
     {
         EventId = Guid.NewGuid();
-        OccurredOn = DateTime.UtcNow;
+        OccurredOn = DateTime.Now;
 
     }
 
@@ -50,4 +50,5 @@ public abstract class BaseDomainEvent :BaseAuditableEntity, IBaseDomainEvent
 
 
 }
+
 

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="Mitigation.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -19,7 +19,7 @@ public sealed class Mitigation : BaseAuditableEntity
     #region Constructors
 
     // Public constructor following domain pattern
-    public Mitigation(MitigationID id) : base(id, string.Empty, DateTime.UtcNow) {}
+    public Mitigation(MitigationID id) : base(id, string.Empty, DateTime.Now) {}
 
     #endregion
 
@@ -105,4 +105,5 @@ public sealed class Mitigation : BaseAuditableEntity
 
   
 }
+
 

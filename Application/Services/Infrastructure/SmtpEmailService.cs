@@ -53,7 +53,7 @@ public class SmtpEmailService : IEmailService
         var deliveryResult = new EmailDeliveryResult
         {
             MessageId = Guid.NewGuid().ToString(),
-            SentAt = DateTime.UtcNow
+            SentAt = DateTime.Now
         };
 
         try
@@ -330,4 +330,5 @@ public class SmtpEmailConfiguration
     public int RetryDelaySeconds { get; set; } = 2;
     public bool UseSimulation { get; set; } = false;
 }
+
 

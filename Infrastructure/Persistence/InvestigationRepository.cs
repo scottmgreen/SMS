@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="InvestigationRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -383,7 +383,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
 
             // Audit properties
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, investigation.UpdatedBy ?? investigation.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, investigation.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, investigation.UpdatedDate ?? DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -450,7 +450,7 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationCode, investigationCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, status.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -487,11 +487,11 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationDecisionType, decisionType));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationDecisionRationale, rationale));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationDecisionMaker, decisionMaker));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationDecisionDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationDecisionDate, DateTime.Now));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationNextSteps, nextSteps ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationReferralDetails, referralDetails ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, decisionMaker));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -525,9 +525,9 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationCode, investigationCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationStatus, InvestigationStatus.InvestigationComplete.ToString()));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationCompletedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInvestigationCompletedDate, DateTime.Now));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -542,3 +542,4 @@ public sealed class InvestigationRepository : BaseRepository<InvestigationReposi
         }
     }
 }
+

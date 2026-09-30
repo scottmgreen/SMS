@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditEvidence.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class SMSAuditEvidence : BaseAuditableEntity
 {
-    public SMSAuditEvidence(SMSAuditEvidenceID id, string createdBy) : base(id, createdBy, DateTime.UtcNow)
+    public SMSAuditEvidence(SMSAuditEvidenceID id, string createdBy) : base(id, createdBy, DateTime.Now)
     {
         Code = id.Value;
     }
@@ -29,7 +29,7 @@ public class SMSAuditEvidence : BaseAuditableEntity
     public string Title { get; set; } = string.Empty; // Added for repository compatibility
     public string Description { get; set; } = string.Empty; // Added for repository compatibility
     public string Source { get; set; } = string.Empty; // Added for repository compatibility
-    public DateTime CollectionDate { get; set; } = DateTime.UtcNow; // Added for repository compatibility
+    public DateTime CollectionDate { get; set; } = DateTime.Now; // Added for repository compatibility
     public string ContentType { get; set; } = string.Empty; // Added for repository compatibility
     public string StorageLocation { get; set; } = string.Empty; // Added for repository compatibility
     public int RetentionPeriodMonths { get; set; } = 84; // Added for repository compatibility (7 years)
@@ -84,7 +84,7 @@ public class SMSAuditEvidence : BaseAuditableEntity
     public string VerificationNotes { get; set; } = string.Empty;
 
     // Retention and Lifecycle
-    public DateTime RetentionDate { get; set; } = DateTime.UtcNow.AddYears(7); // Default 7-year retention
+    public DateTime RetentionDate { get; set; } = DateTime.Now.AddYears(7); // Default 7-year retention
     public string RetentionReason { get; set; } = string.Empty;
     public bool IsArchived { get; set; } = false;
     public DateTime? ArchivedDate { get; set; }
@@ -101,10 +101,10 @@ public class SMSAuditEvidence : BaseAuditableEntity
         {
             IsVerified = true;
             VerifiedBy = verifiedBy;
-            VerificationDate = DateTime.UtcNow;
+            VerificationDate = DateTime.Now;
             VerificationNotes = verificationNotes;
             UpdatedBy = verifiedBy;
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -119,11 +119,11 @@ public class SMSAuditEvidence : BaseAuditableEntity
         try
         {
             IsArchived = true;
-            ArchivedDate = DateTime.UtcNow;
+            ArchivedDate = DateTime.Now;
             if (!string.IsNullOrEmpty(reason))
                 RetentionReason = reason;
             UpdatedBy = archivedBy;
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -139,7 +139,7 @@ public class SMSAuditEvidence : BaseAuditableEntity
         {
             FindingCode = findingCode;
             UpdatedBy = linkedBy;
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -149,3 +149,4 @@ public class SMSAuditEvidence : BaseAuditableEntity
         }
     }
 }
+

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardReportTrackingRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -313,7 +313,7 @@ public sealed class HazardReportTrackingRepository : BaseRepository<HazardReport
 
             // Audit Fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazardReportTracking.UpdatedBy ?? hazardReportTracking.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, hazardReportTracking.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, hazardReportTracking.UpdatedDate ?? DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -361,3 +361,4 @@ public sealed class HazardReportTrackingRepository : BaseRepository<HazardReport
         }
     }
 }
+

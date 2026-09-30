@@ -693,7 +693,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
                     CurrentValue = currentValue,
                     ComplianceThreshold = spi.TargetValue,
                     LastMeasurementDate = lastMeasurement?.MeasurementDate,
-                    DaysWithoutData = lastMeasurement != null ? (int)(DateTime.UtcNow - lastMeasurement.MeasurementDate).TotalDays : 9999
+                    DaysWithoutData = lastMeasurement != null ? (int)(DateTime.Now - lastMeasurement.MeasurementDate).TotalDays : 9999
                 };
             }).ToList();
 
@@ -728,8 +728,8 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
                 .Where(spi => spi.NextReviewDate.HasValue)
                 .Select(spi =>
                 {
-                    var isOverdue = spi.NextReviewDate.HasValue && spi.NextReviewDate.Value < DateTime.UtcNow;
-                    var daysOverdue = isOverdue ? (int)(DateTime.UtcNow - spi.NextReviewDate.Value).TotalDays : 0;
+                    var isOverdue = spi.NextReviewDate.HasValue && spi.NextReviewDate.Value < DateTime.Now;
+                    var daysOverdue = isOverdue ? (int)(DateTime.Now - spi.NextReviewDate.Value).TotalDays : 0;
 
                     return new SPIReviewItem
                     {
@@ -834,7 +834,7 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
     {
         var trendAnalysis = new List<SPITrendAnalysis>();
 
-        var effectiveEndDate = endDate ?? DateTime.UtcNow;
+        var effectiveEndDate = endDate ?? DateTime.Now;
 
         foreach (var spi in spis)
         {
@@ -943,5 +943,6 @@ public class SafetyPerformanceIndicatorService : ISafetyPerformanceIndicatorServ
 
     #endregion
 }
+
 
 

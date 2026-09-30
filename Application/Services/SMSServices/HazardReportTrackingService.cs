@@ -103,7 +103,7 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
                 ReportCode = reportCode,
                 TrackingCode = trackingCode,
                 CreatedBy = SystemActorConstants.FlyPdxApiSource,
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = DateTime.Now
             };
 
             var result = await _dataService.CreateHazardReportTrackingAsync(hazardReportTracking, ct).ConfigureAwait(false);
@@ -377,7 +377,7 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
     private static string DetermineProcessingStage(HazardReportTracking tracking)
     {
         // This logic can be enhanced based on your business rules
-        var daysSinceSubmission = (DateTime.UtcNow - tracking.CreatedDate).Value.Days;
+        var daysSinceSubmission = (DateTime.Now - tracking.CreatedDate).Value.Days;
 
         return daysSinceSubmission switch
         {
@@ -404,7 +404,7 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
             notes.Add($"Last updated on {tracking.UpdatedDate:yyyy-MM-dd HH:mm} UTC");
         }
 
-        var daysSinceSubmission = (DateTime.UtcNow - tracking.CreatedDate).Value.Days;
+        var daysSinceSubmission = (DateTime.Now - tracking.CreatedDate).Value.Days;
         if (daysSinceSubmission > 0)
         {
             notes.Add($"Processing for {daysSinceSubmission} day(s)");
@@ -415,4 +415,5 @@ public sealed class HazardReportTrackingService : IHazardReportTrackingService
 
     #endregion
 }
+
 

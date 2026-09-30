@@ -151,7 +151,7 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
                             previousStatus: previousStatus!,
                             newStatus: updatedInvestigation.Status,
                             changedBy: updatedInvestigation.UpdatedBy ?? updatedInvestigation.CreatedBy ?? string.Empty,
-                            changedDate: updatedInvestigation.UpdatedDate ?? DateTime.UtcNow),
+                            changedDate: updatedInvestigation.UpdatedDate ?? DateTime.Now),
                         ct).ConfigureAwait(false);
                 }
             }
@@ -225,4 +225,5 @@ public class DeleteInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
         }
     }
 }
+
 

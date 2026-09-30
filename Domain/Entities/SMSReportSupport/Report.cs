@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="Report.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class Report : BaseAuditableEntity
 {
-    public Report(ReportID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public Report(ReportID id) : base(id, string.Empty, DateTime.Now) { }
 
     public string Code { get; set; } = string.Empty;
     public string? Name { get; set; }
@@ -39,4 +39,5 @@ public class Report : BaseAuditableEntity
 
     public bool IsAnonymous { get; set; }
 }
+
 

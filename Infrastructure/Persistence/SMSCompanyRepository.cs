@@ -129,7 +129,7 @@ public sealed class SMSCompanyRepository : BaseRepository<SMSCompanyRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSCompanyContactPhone, company.Phone ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSCompanyInternalRepresentative, company.PortRep ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, string.IsNullOrWhiteSpace(createdBy) ? "SYSTEM" : createdBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
             var newID = new SqlParameter(ParameterNames.pmNewID, SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCompanyCode = new SqlParameter(ParameterNames.pmNewCompanyCode, SqlDbType.VarChar, 50) { Direction = ParameterDirection.Output };
@@ -175,7 +175,7 @@ public sealed class SMSCompanyRepository : BaseRepository<SMSCompanyRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSCompanyContactPhone, company.Phone ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSCompanyInternalRepresentative, company.PortRep ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, string.IsNullOrWhiteSpace(updatedBy) ? "SYSTEM" : updatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -223,3 +223,4 @@ public sealed class SMSCompanyRepository : BaseRepository<SMSCompanyRepository, 
         }
     }
 }
+

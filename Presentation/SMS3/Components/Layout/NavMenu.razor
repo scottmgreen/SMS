@@ -46,7 +46,8 @@
                             <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                                 <RadzenMenuItem Text="Risk Management" Icon="shield" class="sms-menu-item">
                                     <RadzenMenuItem Text="Report Calendar" Value='"/SMSListings/ReportCalendar"' Icon="diversity_3"></RadzenMenuItem>
-                                    <RadzenMenuItem Text="Create Hazard Report" Value='"/SMSRiskManagement/HazardReporting"' Icon="add_circle"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Create Hazard Report" Path="@CreateHazardReportMenuValue" Target="_blank" Icon="add_circle"></RadzenMenuItem>
+                                    @* <RadzenMenuItem Text="Create Hazard Report" Value='"/SMSRiskManagement/HazardReporting"' Icon="add_circle"></RadzenMenuItem> *@
                                     <RadzenMenuItem Text="Report Processing" Value='"/SMSRiskManagement/ReportProcessing"' Icon="settings"></RadzenMenuItem>
                                     <RadzenMenuItem Text="Search Reports" Value='"/SMSRiskManagement/HazardReportSearch"' Icon="search"></RadzenMenuItem>
                                     <!-- Investigations -->
@@ -602,6 +603,12 @@
                     _logger.LogInformation("Navigating to secure URL: {Url}", value);
                     _navigation.NavigateToSecure(value);
                 }
+                else if (Uri.TryCreate(value, UriKind.Absolute, out var absoluteUri)
+                         && (absoluteUri.Scheme == Uri.UriSchemeHttps || absoluteUri.Scheme == Uri.UriSchemeHttp))
+                {
+                    _logger.LogInformation("Navigating to external URL: {Url}", value);
+                    _navigation.NavigateTo(value, forceLoad: true);
+                }
                 else
                 {
                     _logger.LogWarning("URL does not start with /: {Url}", value);
@@ -678,7 +685,20 @@
     }
 
     // Hide all menu items on PDX and Login pages
-    private bool IsOnRestrictedPage => _navigation.Uri.Contains("/pdx") || 
-                                      _navigation.Uri.Contains("/login") ||
-                                      IsObfuscatedLogin();
+    private bool IsOnRestrictedPage => _navigation.Uri.Contains("/pdx") || IsObfuscatedLogin();
+
+    
+    private string CreateHazardReportMenuValue
+    {
+        get
+        {
+            var configuredUrl = _configuration.GetValue<string>("Navigation:CreateHazardReportUrl");
+            if (string.IsNullOrWhiteSpace(configuredUrl))
+            {
+                return "/SMSRiskManagement/HazardReporting";
+            }
+
+            return configuredUrl.Trim();
+        }
+    }
 }

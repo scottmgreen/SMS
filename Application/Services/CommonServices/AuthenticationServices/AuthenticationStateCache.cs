@@ -66,7 +66,7 @@ public class AuthenticationStateCache : IAuthenticationStateCache
     {
         get
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             
             // Return cached value if still valid
             if (_cachedIsAuthenticated.HasValue && (now - _lastAuthCheck) < _authCacheTimeout)
@@ -99,7 +99,7 @@ public class AuthenticationStateCache : IAuthenticationStateCache
     {
         get
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             
             // Return cached value if still valid
             if (!string.IsNullOrEmpty(_cachedUserCode) && (now - _lastUserCheck) < _userCacheTimeout)
@@ -132,7 +132,7 @@ public class AuthenticationStateCache : IAuthenticationStateCache
     {
         get
         {
-            var now = DateTime.UtcNow;
+            var now = DateTime.Now;
             
             // Return cached value if still valid
             if (_cachedIsFullyAuthenticated.HasValue && (now - _lastFullAuthCheck) < _fullAuthCacheTimeout)
@@ -210,7 +210,7 @@ public class AuthenticationStateCache : IAuthenticationStateCache
     /// </summary>
     public Dictionary<string, object> GetCacheStatus()
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         
         return new Dictionary<string, object>
         {
@@ -228,3 +228,4 @@ public class AuthenticationStateCache : IAuthenticationStateCache
         };
     }
 }
+

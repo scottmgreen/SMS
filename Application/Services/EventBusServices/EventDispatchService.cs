@@ -11,6 +11,7 @@
 using SMS_Application.Interfaces;
 using SMS_Application.Interfaces;
 using SMS_Domain.Common;
+using SMS_Domain.Errors;
 using SMS_Domain.Events;
 using SMS_Domain.Interfaces;
 using SMS_Infrastructure.Interfaces;
@@ -26,8 +27,7 @@ namespace SMS_Application.Services;
 /// </summary>
 public sealed class EventDispatchService : IBaseEventBus
 {
-    private static readonly AsyncLocal<bool> SuppressDomainAuditPersistence = new();
-    private const string FailedSendManualResendNote = "FAILED SEND - READY FOR MANUAL RESEND";
+    private static readonly AsyncLocal<bool> _suppressDomainAuditPersistence = new();
 
     private readonly ILogger<EventDispatchService> _logger;
     private readonly IServiceProvider _serviceProvider;
@@ -36,9 +36,9 @@ public sealed class EventDispatchService : IBaseEventBus
 
     public static IDisposable BeginQueueReplayScope()
     {
-        var previous = SuppressDomainAuditPersistence.Value;
-        SuppressDomainAuditPersistence.Value = true;
-        return new ReplayScope(() => SuppressDomainAuditPersistence.Value = previous);
+        var previous = _suppressDomainAuditPersistence.Value;
+        _suppressDomainAuditPersistence.Value = true;
+        return new ReplayScope(() => _suppressDomainAuditPersistence.Value = previous);
     }
 
     private sealed class ReplayScope : IDisposable
@@ -172,7 +172,7 @@ public sealed class EventDispatchService : IBaseEventBus
             }
 
             var queueResult = await ExecuteWithQueueServiceAsync(queueService =>
-                queueService.QueueIntegrationEventAsync(integrationEvent, FailedSendManualResendNote)).ConfigureAwait(false);
+                queueService.QueueIntegrationEventAsync(integrationEvent, DomainErrors.EventDispatchError.FailedSendManualResend.Message)).ConfigureAwait(false);
 
             if (queueResult.IsSuccess)
             {
@@ -289,7 +289,7 @@ public sealed class EventDispatchService : IBaseEventBus
         };
 
         string? auditQueueCode = null;
-        if (!SuppressDomainAuditPersistence.Value && mode == EventExecutionMode.Immediate)
+            if (!_suppressDomainAuditPersistence.Value && mode == EventExecutionMode.Immediate)
         {
             auditQueueCode = await PersistDomainAuditEventAsync(domainEvent, queuedBy).ConfigureAwait(false);
         }
@@ -446,7 +446,7 @@ public sealed class EventDispatchService : IBaseEventBus
                     {
                         await MarkDomainAuditEventFailedAsync(
                             auditQueueCode,
-                            $"{failureMessage} | {FailedSendManualResendNote}").ConfigureAwait(false);
+                            $"{failureMessage} | {DomainErrors.EventDispatchError.FailedSendManualResend.Message}").ConfigureAwait(false);
                     }
                 }
             }

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSOrganizationalGroupRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -143,7 +143,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
                 assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompanyCode, companyCode));
                 assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmGroupCode, groupCode));
                 assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedBy, updatedBy ?? string.Empty));
-                assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.UtcNow));
+                assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.Now));
 
                 var newID = new SqlParameter(ParameterNames.pmNewID, SqlDbType.Int)
                 {
@@ -270,7 +270,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupAuthorityLevel, group.AuthorityLevel));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupIsActive, group.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, group.CreatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
@@ -318,7 +318,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupAuthorityLevel, group.AuthorityLevel));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupIsActive, group.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, group.UpdatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -387,7 +387,7 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupUserCode, userCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalGroupCodeForAssignment, groupCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedBy, assignedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.Now));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -552,3 +552,4 @@ public sealed class SMSOrganizationalGroupRepository : BaseRepository<SMSOrganiz
 
     #endregion
 }
+

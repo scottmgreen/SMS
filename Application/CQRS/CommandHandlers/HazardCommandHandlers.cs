@@ -234,7 +234,7 @@ namespace SMS_Application.CommandHandlers
                             newStatus: hazard.Status,
                             statusChangeReason: "Hazard status updated",
                             changedBy: hazard.UpdatedBy ?? hazard.CreatedBy ?? string.Empty,
-                            statusChangeDate: hazard.UpdatedDate ?? DateTime.UtcNow),
+                            statusChangeDate: hazard.UpdatedDate ?? DateTime.Now),
                         ct).ConfigureAwait(false);
 
                     if (HasHazardRiskLevelChanged(previousRiskLevelValue, hazard.HazardRiskLevel?.Value))
@@ -316,7 +316,7 @@ namespace SMS_Application.CommandHandlers
 
             var publishCount = 0;
             var requestedBy = !string.IsNullOrWhiteSpace(hazard.UpdatedBy) ? hazard.UpdatedBy : hazard.CreatedBy ?? string.Empty;
-            var requestDate = DateTime.UtcNow;
+            var requestDate = DateTime.Now;
 
             foreach (var mitigation in pendingMitigations)
             {
@@ -506,7 +506,7 @@ namespace SMS_Application.CommandHandlers
                 }
 
                 _logger.LogApplicationInformation("Processing ResetHazardScoresCommand for ID: {Id}, Code: {Code}", request.Hazard.Id, request.Hazard.Code);
-                request.Hazard.UpdatedDate = DateTime.UtcNow;
+                request.Hazard.UpdatedDate = DateTime.Now;
                 var result = await _hazardService.UpdateHazardAsync(request.Hazard, ct).ConfigureAwait(false);
 
                 if (result.IsSuccess)
@@ -621,7 +621,7 @@ namespace SMS_Application.CommandHandlers
                     created.LocationArea = hazard.LocationArea ?? "Unknown Location";
                     created.ReportCode = hazard.ReportCode ?? "Unknown Report";
                     created.CreatedBy = !string.IsNullOrWhiteSpace(hazard.CreatedBy) ? hazard.CreatedBy : string.Empty;
-                    created.CreatedDate = hazard.CreatedDate ?? DateTime.UtcNow;
+                    created.CreatedDate = hazard.CreatedDate ?? DateTime.Now;
                     created.IsInitialHazard = hazard.IsInitialHazard;
                     created.Priority = hazardPriority;
                     created.Latitude = hazard.HazardLocation?.Latitude;
@@ -632,7 +632,7 @@ namespace SMS_Application.CommandHandlers
                     updated.ReportId = hazard.ReportCode;
                     updated.HazardId = hazard.Code;
                     updated.UpdatedBy = !string.IsNullOrWhiteSpace(hazard.UpdatedBy) ? hazard.UpdatedBy : hazard.CreatedBy ?? string.Empty;
-                    updated.UpdatedDate = DateTime.UtcNow;
+                    updated.UpdatedDate = DateTime.Now;
                 }
                 if (evt is HazardDeletedEvent deleted)
                 {
@@ -665,4 +665,5 @@ namespace SMS_Application.CommandHandlers
 
 
     
+
 

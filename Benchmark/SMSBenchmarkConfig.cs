@@ -185,7 +185,7 @@ public static class SMSBenchmarkUtilities
     /// </summary>
     public static string CreateBenchmarkId()
     {
-        return $"SMS-BENCH-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Guid.NewGuid().ToString("N")[..8]}";
+        return $"SMS-BENCH-{DateTime.Now:yyyyMMdd-HHmmss}-{Guid.NewGuid().ToString("N")[..8]}";
     }
 
     /// <summary>
@@ -227,7 +227,7 @@ public static class SMSBenchmarkUtilities
     {
         return new BenchmarkSummary
         {
-            Timestamp = DateTime.UtcNow,
+            Timestamp = DateTime.Now,
             TotalBenchmarks = results.Count,
             Results = results,
             Environment = GetEnvironmentInfo()

@@ -154,11 +154,20 @@ public sealed class MitigationService : IMitigationService
 
             if (mitigation is not null)
             {
-                var isOverdue = mitigation.TargetDate.HasValue && mitigation.TargetDate.Value < DateTime.UtcNow;
-                var isExplicitApprovalUpdate = string.Equals(
+                var isExplicitHazardEliminatedUpdate = string.Equals(
                     mitigation.Status?.Value,
-                    MitigationStatus.Approved.Value,
+                    MitigationStatus.HazardEliminated.Value,
                     StringComparison.OrdinalIgnoreCase);
+
+                if (isExplicitHazardEliminatedUpdate)
+                {
+                    mitigation.Status = MitigationStatus.HazardEliminated;
+                    mitigation.Progress = 100;
+                }
+                else
+                {
+                var isOverdue = mitigation.TargetDate.HasValue && mitigation.TargetDate.Value < DateTime.Now;
+                var isExplicitApprovalUpdate = string.Equals(mitigation.Status?.Value, MitigationStatus.Approved.Value,StringComparison.OrdinalIgnoreCase);
 
                 if (isExplicitApprovalUpdate && !string.IsNullOrWhiteSpace(mitigation.ApprovedBy))
                 {
@@ -185,6 +194,7 @@ public sealed class MitigationService : IMitigationService
                     mitigation.Status = !string.IsNullOrWhiteSpace(mitigation.ApprovedBy)
                         ? MitigationStatus.Approved
                         : MitigationStatus.PendingApproval;
+                }
                 }
             }
 
@@ -264,7 +274,7 @@ public sealed class MitigationService : IMitigationService
             mitigation.Status = MitigationStatus.Approved;
             mitigation.ApprovedBy = approvedBy;  // ? FIXED: Set ApprovedBy property
             mitigation.UpdatedBy = approvedBy;
-            mitigation.UpdatedDate = DateTime.UtcNow;
+            mitigation.UpdatedDate = DateTime.Now;
             // Note: Add approval notes to existing notes or use a specific approval notes field if available
 
             var result = await _dataService.UpdateMitigationAsync(mitigation, ct);
@@ -297,7 +307,7 @@ public sealed class MitigationService : IMitigationService
             var mitigation = mitigationResult.Value;
             mitigation.Status = MitigationStatus.InProgress;
             mitigation.UpdatedBy = implementedBy;
-            mitigation.UpdatedDate = DateTime.UtcNow;
+            mitigation.UpdatedDate = DateTime.Now;
             // Note: Set implementation date and notes if fields are available in the entity
 
             var result = await _dataService.UpdateMitigationAsync(mitigation, ct);
@@ -330,7 +340,7 @@ public sealed class MitigationService : IMitigationService
             var mitigation = mitigationResult.Value;
             mitigation.Status = MitigationStatus.MitigationImplemented;
             mitigation.UpdatedBy = closedBy;
-            mitigation.UpdatedDate = DateTime.UtcNow;
+            mitigation.UpdatedDate = DateTime.Now;
             // Note: Set closure notes if field is available in the entity
 
             var result = await _dataService.UpdateMitigationAsync(mitigation, ct);
@@ -350,4 +360,5 @@ public sealed class MitigationService : IMitigationService
 
     #endregion
 }
+
 

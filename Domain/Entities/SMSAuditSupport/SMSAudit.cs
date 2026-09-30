@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class SMSAudit : BaseAuditableEntity
 {
-    public SMSAudit(SMSAuditID id, string createdBy) : base(id, createdBy, DateTime.UtcNow)
+    public SMSAudit(SMSAuditID id, string createdBy) : base(id, createdBy, DateTime.Now)
     {
         Code = id.Value;
         Findings = new List<SMSAuditFinding>();
@@ -97,12 +97,12 @@ public class SMSAudit : BaseAuditableEntity
                 return Result.Failure(new Error("INVALID_STATUS", "Can only start scheduled audits"));
 
             Status = "In Progress";
-            ActualStartDate = DateTime.UtcNow;
+            ActualStartDate = DateTime.Now;
             CurrentPhase = "Opening";
             
             // REMOVED: Manual audit field setting - pipeline handles this
             // UpdatedBy = startedBy;
-            // UpdatedDate = DateTime.UtcNow;
+            // UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -120,7 +120,7 @@ public class SMSAudit : BaseAuditableEntity
                 return Result.Failure(new Error("INVALID_STATUS", "Can only complete audits in progress"));
 
             Status = "Completed";
-            ActualEndDate = DateTime.UtcNow;
+            ActualEndDate = DateTime.Now;
             CurrentPhase = "Reporting";
             AuditSummary = auditSummary;
             KeyFindings = keyFindings;
@@ -128,7 +128,7 @@ public class SMSAudit : BaseAuditableEntity
             
             // REMOVED: Manual audit field setting - pipeline handles this
             // UpdatedBy = completedBy;
-            // UpdatedDate = DateTime.UtcNow;
+            // UpdatedDate = DateTime.Now;
 
             // Update finding counts
             UpdateFindingCounts();
@@ -146,14 +146,14 @@ public class SMSAudit : BaseAuditableEntity
         try
         {
             var finding = new SMSAuditFinding(
-                new SMSAuditFindingID($"FND-{DateTime.UtcNow:yyyyMMddHHmmss}-{Findings.Count + 1:D3}"),
+                new SMSAuditFindingID($"FND-{DateTime.Now:yyyyMMddHHmmss}-{Findings.Count + 1:D3}"),
                 foundBy)
             {
                 AuditCode = Code,
                 FindingDescription = findingDescription,
                 Severity = severity,
                 Status = "Open",
-                FoundDate = DateTime.UtcNow
+                FoundDate = DateTime.Now
             };
 
             Findings.Add(finding);
@@ -161,7 +161,7 @@ public class SMSAudit : BaseAuditableEntity
             
             // REMOVED: Manual audit field setting - pipeline handles this
             // UpdatedBy = foundBy;
-            // UpdatedDate = DateTime.UtcNow;
+            // UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -180,4 +180,5 @@ public class SMSAudit : BaseAuditableEntity
         Observations = Findings.Count(f => f.Severity == "Observation");
     }
 }
+
 

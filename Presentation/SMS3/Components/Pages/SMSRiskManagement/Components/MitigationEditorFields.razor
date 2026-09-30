@@ -1,0 +1,110 @@
+@using Radzen
+@using Radzen.Blazor
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
+
+<RadzenFieldset Text="Basic Information" Style="margin-bottom: 1rem;">
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="6">
+            <RadzenFormField Text="Mitigation Name" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenTextBox @bind-Value="@Model.Name" Placeholder="Enter mitigation name..." Style="width: 100%;min-width:100%" Disabled="@DisableInputs" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="6" SizeMD="6">
+            <RadzenFormField Text="Type" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenDropDown @bind-Value="@Model.Type" Data="@ControlTypeOptions" Placeholder="Select type..." Style="width: 100%;min-width:100%" Disabled="@DisableInputs" />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenFormField Text="Description" Variant="Variant.Outlined" Style="width: 100%; min-width: 100%;">
+        <RadzenTextArea @bind-Value="@Model.Description" Rows="3" Placeholder="Describe the mitigation strategy in detail..." Style="width: 100%; min-width: 100%;" Disabled="@DisableInputs" />
+    </RadzenFormField>
+</RadzenFieldset>
+
+<RadzenFieldset Text="Timeline">
+    <RadzenStack Gap="1rem">
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="4" SizeMD="4">
+                <RadzenFormField Text="Target Date" Variant="Variant.Outlined">
+                    <RadzenDatePicker @bind-Value="@Model.TargetDate" DateFormat="yyyy-MM-dd" Style="width: 100%;" Disabled="@DisableInputs" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="4" SizeMD="4">
+                <RadzenFormField Text="Progress %" Variant="Variant.Outlined">
+                    <RadzenNumeric @bind-Value="@Model.Progress" Min="0" Max="100" Style="width: 100%;" Disabled="@DisableInputs" />
+                </RadzenFormField>
+            </RadzenColumn>
+        </RadzenRow>
+        <RadzenRow Gap="1rem">
+            <RadzenColumn Size="4" SizeMD="4">
+                <RadzenFormField Text="Approved By" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                    <RadzenTextBox @bind-Value="@Model.ApprovedBy" Style="width: 100%; min-width: 100%;" Disabled="@DisableInputs" />
+                </RadzenFormField>
+            </RadzenColumn>
+            <RadzenColumn Size="4" SizeMD="4">
+                <RadzenFormField Text="Status" Variant="Variant.Outlined" Style="width: 100%; min-width: 100%;">
+                    @if (EnableStatusEdit)
+                    {
+                        <RadzenDropDown TValue="MitigationStatus"
+                                        @bind-Value="@Model.Status"
+                                        Data="@StatusOptions"
+                                        TextProperty="Name"
+                                        Placeholder="Select status..."
+                                        Style="width: 100%; min-width: 100%;"
+                                        Disabled="@DisableInputs" />
+                    }
+                    else
+                    {
+                        <RadzenTextBox Value="@Model.Status.Value" ReadOnly="true" Style="width: 100%; min-width: 100%;" />
+                    }
+                </RadzenFormField>
+            </RadzenColumn>
+            
+            
+        </RadzenRow>
+    </RadzenStack>
+</RadzenFieldset>
+
+<RadzenFieldset Text="Assignment & Resources" Style="margin-bottom: 1rem;">
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="12" SizeMD="7">
+            <RadzenFormField Text="Assigned Department" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenDropDown @bind-Value="@Model.AssignedDepartment" Data="@DepartmentOptions" Placeholder="Select department..." Style="width: 100%; min-width: 100%;" Disabled="@DisableInputs" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="12" SizeMD="5">
+            <RadzenFormField Text="Assigned To" AllowFloatingLabel="false" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenTextBox @bind-Value="@Model.AssignedTo" Placeholder="Person responsible..." Style="width: 100%;min-width:100%" Disabled="@DisableInputs" />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenRow Gap="1rem">
+        <RadzenColumn Size="2" SizeMD="2">
+            <RadzenFormField AllowFloatingLabel="false" Text="Estimated Cost" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenNumeric @bind-Value="@Model.EstimatedCost" Format="c" Style="width: 100%;min-width: 100%;" Disabled="@DisableInputs" />
+            </RadzenFormField>
+        </RadzenColumn>
+        <RadzenColumn Size="2" SizeMD="2">
+            <RadzenFormField AllowFloatingLabel="false" Text="Estimated Hours" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenNumeric @bind-Value="@Model.EstimatedHours" Style="width: 100%;min-width: 100%;" Disabled="@DisableInputs" />
+            </RadzenFormField>
+        </RadzenColumn>
+        
+    </RadzenRow>
+
+    <RadzenFormField AllowFloatingLabel="false" Text="Resource Requirements" Variant="Variant.Outlined" Style="width: 100%; min-width: 100%;">
+        <RadzenTextArea @bind-Value="@Model.ResourceRequirements" Rows="2" Placeholder="Describe required resources..." Style="width: 100%; min-width: 100%;" Disabled="@DisableInputs" />
+    </RadzenFormField>
+</RadzenFieldset>
+
+@code {
+    [Parameter] public Mitigation Model { get; set; } = default!;
+    [Parameter] public bool DisableInputs { get; set; }
+    [Parameter] public bool EnableStatusEdit { get; set; } = true;
+    [Parameter] public bool ShowGuidancePanel { get; set; }
+    [Parameter] public IEnumerable<string> ControlTypeOptions { get; set; } = Enumerable.Empty<string>();
+    [Parameter] public IEnumerable<MitigationStatus> StatusOptions { get; set; } = Enumerable.Empty<MitigationStatus>();
+    [Parameter] public IEnumerable<string> DepartmentOptions { get; set; } = Enumerable.Empty<string>();
+}

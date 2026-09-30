@@ -57,7 +57,7 @@ public class CreateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                     id: new SMSEventID("EV-0000"),
                     reportId: createdReport.Code,
                     createdBy: createdReport.CreatedBy ?? string.Empty,
-                    createdDate: createdReport.CreatedDate ?? DateTime.UtcNow);
+                    createdDate: createdReport.CreatedDate ?? DateTime.Now);
 
                 //var publishResult = await _eventBus.PublishDomainEventAsync(reportCreatedEvent, cancellationToken);
                 //if (publishResult.IsFailure)
@@ -149,7 +149,7 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                             previousStatus: previousStatus!,
                             newStatus: currentStatus!,
                             changedBy: updatedReport.UpdatedBy ?? updatedReport.CreatedBy ?? string.Empty,
-                            changedDate: updatedReport.UpdatedDate ?? DateTime.UtcNow),
+                            changedDate: updatedReport.UpdatedDate ?? DateTime.Now),
                         cancellationToken).ConfigureAwait(false);
                 }
 
@@ -169,7 +169,7 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                             previousStage: normalizedPreviousStage,
                             newStage: normalizedCurrentStage,
                             changedBy: updatedReport.UpdatedBy ?? updatedReport.CreatedBy ?? string.Empty,
-                            changedDate: updatedReport.UpdatedDate ?? DateTime.UtcNow),
+                            changedDate: updatedReport.UpdatedDate ?? DateTime.Now),
                         cancellationToken).ConfigureAwait(false);
                 }
             }
@@ -295,4 +295,5 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestH
         }
     }
 }
+
 

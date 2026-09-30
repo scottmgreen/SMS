@@ -74,7 +74,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
 
             // Audit fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, riskAssessment.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, riskAssessment.CreatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, riskAssessment.CreatedDate ?? DateTime.Now));
 
             // Output parameters
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
@@ -284,7 +284,7 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
 
             // Audit fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, riskAssessment.UpdatedBy ?? riskAssessment.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, riskAssessment.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, riskAssessment.UpdatedDate ?? DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -612,4 +612,5 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
 
     #endregion
 }
+
 

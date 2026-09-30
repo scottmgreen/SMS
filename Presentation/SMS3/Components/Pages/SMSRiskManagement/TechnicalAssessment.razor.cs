@@ -55,6 +55,8 @@ public partial class TechnicalAssessment : ComponentBase
     private bool IsRiskRegistryOnly =>
         TechRiskAssessment?.AssessmentType == RiskAssessmentType.RiskRegistryOnly ||
         string.Equals(SourceReport?.Status, ReportStatus.RiskRegistryOnly.Value, StringComparison.OrdinalIgnoreCase);
+    private bool IsClosedNonSmsRisk =>
+        string.Equals(SourceReport?.Status, ReportStatus.ReportCloserNonSMSRisk.Value, StringComparison.OrdinalIgnoreCase);
     private int MaxAssessmentStep
     {
         get
@@ -288,6 +290,15 @@ public partial class TechnicalAssessment : ComponentBase
                 return;
             }
 
+            if (IsClosedNonSmsRisk)
+            {
+                _logger.LogInformation("Report {ReportId} is closed as NON_SMS_RISK. Exiting Technical Assessment.", ReportId);
+                await _notificationHelper.ShowWarningAsync("This report is closed as NON_SMS_RISK and does not have a Technical Risk Assessment.");
+                var returnUrl = !string.IsNullOrWhiteSpace(ReturnTo) ? ReturnTo! : "/SMSRiskManagement/ReportProcessing";
+                _navigation.NavigateToSecure(returnUrl);
+                return;
+            }
+
             await LoadCoreAssessmentDataAsync();
             await LoadReportHazardsAsync(); // Load hazards BEFORE loading step data
             await LoadStepDataFromAssessment(); // Step models need ReportHazards to be populated
@@ -401,8 +412,8 @@ public partial class TechnicalAssessment : ComponentBase
 
         try
         {
-            // If ReportId looks like a Report ID (RP-xxxx), try to find assessments for this report
-            if (ReportId?.StartsWith("RP-") == true)
+            // If ReportId looks like a Report ID (RP-xxxx or HR-xxxx), try to find assessments for this report
+            if (ReportId?.StartsWith("RP-") == true || ReportId?.StartsWith("HR-") == true)
             {
                 await LoadAssessmentsByReportCodeAsync();
 
@@ -450,7 +461,7 @@ public partial class TechnicalAssessment : ComponentBase
                 Code = assessmentId,
                 Status = initialStatus,
                 CurrentStep = initialStep,
-                CreatedDate = DateTime.UtcNow,
+                CreatedDate = DateTime.Now,
                 CreatedBy  = _currentUserService?.UserCode
             };
 
@@ -930,7 +941,7 @@ public partial class TechnicalAssessment : ComponentBase
         TechRiskAssessment.CompletedBy = null;
         TechRiskAssessment.CompletedDate = null;
         TechRiskAssessment.UpdatedBy = _currentUserService?.UserCode;
-        TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
+        TechRiskAssessment.UpdatedDate = DateTime.Now;
 
         var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
         var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -980,9 +991,17 @@ public partial class TechnicalAssessment : ComponentBase
                     return;
                 }
 
+                var closeReportForHazardEliminated = false;
+                if (!IsRiskRegistryOnly && CurrentStep == 5)
+                {
+                    closeReportForHazardEliminated = await PromptToCloseReportForHazardEliminationAsync();
+                }
+
                 if (!IsRiskRegistryOnly)
                 {
-                    var saveResult = await SaveCurrentStepAsync();
+                    var saveResult = await SaveCurrentStepAsync(
+                        promptForHazardEliminatedClosure: false,
+                        closeReportOnHazardEliminated: closeReportForHazardEliminated);
                     if (!saveResult.success)
                     {
                         await _notificationHelper.ShowErrorAsync($"Failed to save final step: {saveResult.message}");
@@ -991,7 +1010,7 @@ public partial class TechnicalAssessment : ComponentBase
                 }
 
                 // Mark assessment as complete and save
-                await CompleteAssessmentProcess();
+                await CompleteAssessmentProcess(closeReportForHazardEliminated);
                 var successMessage = IsRiskRegistryOnly
                     ? "Risk Registry Only assessment completed successfully!"
                     : "Technical Assessment completed successfully!";
@@ -1091,7 +1110,10 @@ public partial class TechnicalAssessment : ComponentBase
         }
     }
 
-    private async Task<(bool success, string message)> SaveCurrentStepAsync(bool forceStayOnCurrentStep = false)
+    private async Task<(bool success, string message)> SaveCurrentStepAsync(
+        bool forceStayOnCurrentStep = false,
+        bool promptForHazardEliminatedClosure = true,
+        bool closeReportOnHazardEliminated = false)
     {
         if (TechRiskAssessment is null)
         {
@@ -1101,6 +1123,15 @@ public partial class TechnicalAssessment : ComponentBase
         try
         {
             var stepBeingSaved = CurrentStep;
+
+            var shouldCloseReportForHazardEliminated = closeReportOnHazardEliminated;
+            if (!shouldCloseReportForHazardEliminated
+                && promptForHazardEliminatedClosure
+                && CurrentStep == 5
+                && !IsRiskRegistryOnly)
+            {
+                shouldCloseReportForHazardEliminated = await PromptToCloseReportForHazardEliminationAsync();
+            }
 
             // Apply current step to assessment - ENHANCED: Use async method
             await ApplyCurrentStepToAssessmentAsync();
@@ -1123,12 +1154,12 @@ public partial class TechnicalAssessment : ComponentBase
             }
 
             // Update last modified info
-            TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
+            TechRiskAssessment.UpdatedDate = DateTime.Now;
             TechRiskAssessment.UpdatedBy = _currentUserService?.UserCode;
             if (CurrentStep == 5 && !isExplicitSaveOnFinalStep)
             {
                 TechRiskAssessment.CompletedBy = _currentUserService?.UserDisplayName;
-                TechRiskAssessment.CompletedDate = DateTime.UtcNow;
+                TechRiskAssessment.CompletedDate = DateTime.Now;
             }
             else
             {
@@ -1156,6 +1187,11 @@ public partial class TechnicalAssessment : ComponentBase
                 status = ReportStatus.RiskAssessmentInProgress;
             }
 
+            if (shouldCloseReportForHazardEliminated)
+            {
+                status = ReportStatus.ReportCloserHazardEliminated;
+            }
+
             var cmd = new UpdateReportStatusCommand(ReportId ?? "", status, _currentUserService.UserCode);
             var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
 
@@ -1177,12 +1213,73 @@ public partial class TechnicalAssessment : ComponentBase
                 _logger.LogError("Failed to save step {CurrentStep}: {Error}", CurrentStep, initalresult.Error?.Message);
                 return (false, initalresult.Error?.Message ?? "Save failed");
             }
+
         }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error saving step {Step}", CurrentStep);
             return (false, ex.Message);
         }
+    }
+
+    private async Task<bool> PromptToCloseReportForHazardEliminationAsync()
+    {
+        if (!await AreAllHazardMitigationsMarkedEliminatedAsync())
+        {
+            return false;
+        }
+
+        var confirmed = await _dialogService.Confirm(
+            "All mitigations for all identified hazards are marked HAZARD_ELIMINATED. Do you want to close this report?",
+            "Close Report",
+            new ConfirmOptions
+            {
+                OkButtonText = "Yes, Close Report",
+                CancelButtonText = "No, Keep Open",
+                Width = "520px"
+            });
+
+        return confirmed == true;
+    }
+
+    private async Task<bool> AreAllHazardMitigationsMarkedEliminatedAsync()
+    {
+        if (ReportHazards is null || !ReportHazards.Any())
+        {
+            return false;
+        }
+
+        var hazardCodes = ReportHazards
+            .Select(h => h.Code?.Trim())
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToList();
+
+        if (!hazardCodes.Any())
+        {
+            return false;
+        }
+
+        foreach (var hazardCode in hazardCodes)
+        {
+            var mitigationQuery = new GetMitigationsByHazardCodeQuery(hazardCode!);
+            var mitigationResult = await _mediator.SendAsync(mitigationQuery, CancellationToken.None);
+
+            if (!mitigationResult.IsSuccess || mitigationResult.Value is null || !mitigationResult.Value.Any())
+            {
+                return false;
+            }
+
+            var allHazardMitigationsEliminated = mitigationResult.Value
+                .All(m => m.Status == MitigationStatus.HazardEliminated);
+
+            if (!allHazardMitigationsEliminated)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
     private RiskAssessmentStage DetermineRiskAssessmentStageFromStep(int step)
     {
@@ -1244,7 +1341,7 @@ public partial class TechnicalAssessment : ComponentBase
                 hazard.HazardRiskLevel = riskLevel;
 
                 hazard.UpdatedBy = _currentUserService?.UserCode;  
-                hazard.UpdatedDate = DateTime.UtcNow;   
+                hazard.UpdatedDate = DateTime.Now;   
 
                 // Only update if risk level changed
                 var updatedRiskLevel = hazard.HazardRiskLevel?.Value ?? string.Empty;
@@ -1710,7 +1807,7 @@ public partial class TechnicalAssessment : ComponentBase
 
     #endregion
 
-    private async Task CompleteAssessmentProcess()
+    private async Task CompleteAssessmentProcess(bool closeReportForHazardEliminated = false)
     {
         if (TechRiskAssessment is null) return;
 
@@ -1718,7 +1815,7 @@ public partial class TechnicalAssessment : ComponentBase
         await ApplyCurrentStepToAssessmentAsync();
 
         // Capture completion details
-        var completedDate = DateTime.UtcNow;
+        var completedDate = DateTime.Now;
         var completedBy = string.IsNullOrWhiteSpace(_currentUserService?.UserCode)
             ? SystemConstants.FlyPdxApiSource
             : _currentUserService.UserCode;
@@ -1736,7 +1833,11 @@ public partial class TechnicalAssessment : ComponentBase
         var updateCommand = new UpdateRiskAssessmentCommand(TechRiskAssessment);
         await _mediator.SendAsync(updateCommand, CancellationToken.None);
 
-        var reportCompletionStatus = IsRiskRegistryOnly ? ReportStatus.RiskRegistryOnly : ReportStatus.ValidationCompleted;
+        var reportCompletionStatus = IsRiskRegistryOnly
+            ? ReportStatus.RiskRegistryOnly
+            : closeReportForHazardEliminated
+                ? ReportStatus.ReportCloserHazardEliminated
+                : ReportStatus.ValidationCompleted;
         var cmd = new UpdateReportStatusCommand(ReportId ?? "", reportCompletionStatus, _currentUserService.UserCode);
         var cmdResult = await _mediator.SendAsync(cmd, CancellationToken.None);
 
@@ -1747,7 +1848,7 @@ public partial class TechnicalAssessment : ComponentBase
     private async Task ApplyCurrentStepToAssessmentAsync()
     {
         // FIXED: Removed manual audit field assignments - pipeline handles automatically
-        // REMOVED: TechRiskAssessment.UpdatedDate = DateTime.UtcNow;
+        // REMOVED: TechRiskAssessment.UpdatedDate = DateTime.Now;
         // REMOVED: TechRiskAssessment.UpdatedBy = _currentUserService?.UserDisplayName;
 
         switch (CurrentStep)
@@ -2118,11 +2219,21 @@ public partial class TechnicalAssessment : ComponentBase
     {
         try
         {
-            _selectedDescription = SourceReport?.Description ?? "No description available";
+            var initialHazardDescription = ReportHazards?
+                .FirstOrDefault(h => h.IsInitialHazard == true)?.Description;
+
+            if (string.IsNullOrWhiteSpace(initialHazardDescription))
+            {
+                initialHazardDescription = PrimaryHazard?.Description;
+            }
+
+            _selectedDescription = string.IsNullOrWhiteSpace(initialHazardDescription)
+                ? "No initial hazard description available"
+                : initialHazardDescription;
             _selectedReportId = SourceReport?.Code ?? "Unknown";
             _showDescriptionModal = true;
             StateHasChanged();
-            _logger.LogInformation("Showing description modal for report {ReportId}", SourceReport?.Code);
+            _logger.LogInformation("Showing initial hazard description modal for report {ReportId}", SourceReport?.Code);
         }
         catch (Exception ex)
         {
@@ -2141,4 +2252,5 @@ public partial class TechnicalAssessment : ComponentBase
 
     #endregion
 }
+
 

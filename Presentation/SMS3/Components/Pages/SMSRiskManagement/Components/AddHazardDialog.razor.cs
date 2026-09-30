@@ -205,7 +205,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                 Longitude = location.Longitude ?? 0,
                 Description = location.Description,
                 IsValidated = true,
-                DateSelected = DateTime.UtcNow
+                DateSelected = DateTime.Now
             };
 
             _logger?.LogInformation("Populated location data for editing: {Lat}, {Lng}", 
@@ -468,7 +468,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         EditingHazard.HazardCategory = NewHazardCategory;
         EditingHazard.HazardType = NewHazardType;
         EditingHazard.IsInitialHazard = false;
-        EditingHazard.UpdatedDate = DateTime.UtcNow;
+        EditingHazard.UpdatedDate = DateTime.Now;
         EditingHazard.UpdatedBy = _currentUserService?.UserCode;
         await UpdateHazardLocationForHazard(EditingHazard);
 
@@ -526,7 +526,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
         hazard.ReportCode = ReportId ?? "";
         
         hazard.CreatedBy = _currentUserService?.UserCode;
-        hazard.CreatedDate = DateTime.UtcNow;
+        hazard.CreatedDate = DateTime.Now;
         // Handle location for new hazard - EXACTLY like HazardReporting
         await UpdateHazardLocationForHazard(hazard);
 
@@ -612,7 +612,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                 Longitude = SelectedGeoLocation.Longitude,
                 Description = SelectedGeoLocation.Description ?? "Map selected location",
                 CreatedBy = _currentUserService?.UserCode,
-                CreatedDate = DateTime.UtcNow,
+                CreatedDate = DateTime.Now,
                 IsValidated = true,
                 IsValid = true
             };
@@ -678,7 +678,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                     hazardLocation.Longitude = SelectedGeoLocation.Longitude;
                     hazardLocation.Description = SelectedGeoLocation.Description ?? "Map selected location";
                     hazardLocation.IsValidated = true;
-                    hazardLocation.UpdatedDate = DateTime.UtcNow;
+                    hazardLocation.UpdatedDate = DateTime.Now;
                     hazardLocation.UpdatedBy = _currentUserService?.UserCode;
                     hazard.HazardLocation = hazardLocation;
 
@@ -830,7 +830,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
             Description = LocationDescription,
             IsValid = true,
             IsValidated = true,
-            DateSelected = DateTime.UtcNow
+            DateSelected = DateTime.Now
         };
 
         // IMPORTANT: Verify that the location is now considered valid
@@ -1028,7 +1028,7 @@ public partial class AddHazardDialog : ComponentBase, IDisposable
                         FilePath = null,
                         FileData = attachedFile.Data,
                         UploadedBy = string.IsNullOrWhiteSpace(_currentUserService?.UserCode) ? SystemConstants.FlyPdxApiSource : _currentUserService.UserCode,
-                        UploadedDate = DateTime.UtcNow,
+                        UploadedDate = DateTime.Now,
                         IsActive = true,
                         IsConfidential = false,
                         Description = string.IsNullOrWhiteSpace(attachedFile.Description)

@@ -63,7 +63,7 @@ public class InvestigationDatabaseIntegrationTests : DatabaseTestBase
             ReportCode = GenerateTestId("RP"),
             InvestigationNotes = $"Test investigation notes - {testId}",
             CreatedBy = "INTEGRATION_TEST",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
 
         return investigation;
@@ -194,7 +194,7 @@ public class InvestigationDatabaseIntegrationTests : DatabaseTestBase
             // Modify the investigation
             //createdInvestigation.InvestigationNotes = "REPO_UPDATED - " + createdInvestigation.InvestigationNotes;
             createdInvestigation.UpdatedBy = "INTEGRATION_TEST_REPO_UPDATE";
-            createdInvestigation.UpdatedDate = DateTime.UtcNow;
+            createdInvestigation.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _investigationRepository.UpdateInvestigationAsync(createdInvestigation);
@@ -336,7 +336,7 @@ public class InvestigationDatabaseIntegrationTests : DatabaseTestBase
             // Modify the investigation
             createdInvestigation.InvestigationNotes = "DS_UPDATED - " + createdInvestigation.InvestigationNotes;
             createdInvestigation.UpdatedBy = "INTEGRATION_TEST_DS_UPDATE";
-            createdInvestigation.UpdatedDate = DateTime.UtcNow;
+            createdInvestigation.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _investigationDataService.UpdateInvestigationAsync(createdInvestigation);
@@ -524,7 +524,7 @@ public class InvestigationDatabaseIntegrationTests : DatabaseTestBase
         // Modify the investigation
         testInvestigation.InvestigationNotes = "Updated Notes"; // Use actual property
         testInvestigation.UpdatedBy = "UPDATED_USER";
-        testInvestigation.UpdatedDate = DateTime.UtcNow;
+        testInvestigation.UpdatedDate = DateTime.Now;
 
         // Act
         var updateResult = await _investigationRepository.UpdateInvestigationAsync(testInvestigation);

@@ -4,6 +4,7 @@
 @using SMS3.Components.Pages.SMSRiskManagement.Components
 @using SMS3.Components.Pages.SMSRiskManagement.Models
 @using SMS3.Components.Shared
+@using SMS3.Components.Shared.UIHelpers
 @using SMS_Application.Interfaces
 @using SMS_Application.Commands
 @using SMS_Application.Queries
@@ -13,6 +14,8 @@
 
 @inject IBaseMediator Mediator
 @inject ILogger<TechnicalAssessmentStep5> Logger
+@inject DialogService DialogService
+@inject INotificationHelper NotificationHelper
 
 <style>
     .collapsible-header {
@@ -85,6 +88,11 @@
                                 </RadzenColumn>
                                 <RadzenColumn Size="5" SizeMD="5">
                                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" >
+                                        <RadzenCheckBox TValue="bool"
+                                                        Value="@IsHazardMarkedEliminated(hazard.Code)"
+                                                        Change="@((bool value) => OnHazardEliminatedChanged(hazard.Code, value))"
+                                                        Name="@($"hazard-eliminated-{hazard.Code}")" />
+                                        <RadzenLabel Text="Hazard Eliminated" Style="margin-right: 0.75rem;" />
                                         <!-- ✅ NEW: Collapse All / Expand All Button -->
                                         <RadzenButton Icon="@(AreAllSectionsCollapsed(hazard.Code) ? "expand_more" : "expand_less")"
                                                       ButtonStyle="ButtonStyle.Light" 
@@ -164,6 +172,8 @@
                                                                       Step4="@Step4"
                                                                       Step5="@Step5"
                                                                       NeedsMitigation="@needsMitigation"
+                                                                      DisableAddMitigation="@IsHazardMarkedEliminated(hazard.Code)"
+                                                                      MitigationRefreshVersion="@GetMitigationRefreshVersion(hazard.Code)"
                                                                       AvailableStakeholders="@AvailableStakeholders"
                                                                       AvailableAssessors="@AvailableAssessors"
                                                                       CurrentRiskAssessment="@CurrentRiskAssessment"
@@ -388,6 +398,8 @@
     private Dictionary<string, bool> MitigationSectionsCollapsed { get; set; } = new();
     private Dictionary<string, bool> ScoringPanelSectionsCollapsed { get; set; } = new();
     private Dictionary<string, bool> AnalysisSectionsCollapsed { get; set; } = new();
+    private Dictionary<string, bool> HazardEliminatedSelections { get; set; } = new();
+    private Dictionary<string, int> HazardMitigationRefreshVersions { get; set; } = new();
     // Note: Analysis is now back in TechnicalAssessmentStep5
 
     private List<string> ImplementationStrategies = new()
@@ -531,11 +543,92 @@
             }
 
             Logger.LogInformation("Completed loading existing mitigations for all hazards");
+            InitializeHazardEliminatedSelections();
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error loading existing mitigations for all hazards");
         }
+    }
+
+    private void InitializeHazardEliminatedSelections()
+    {
+        foreach (var hazard in Step5Hazards)
+        {
+            var mitigations = Step5.HazardMitigations?.GetValueOrDefault(hazard.Code);
+            HazardEliminatedSelections[hazard.Code] = mitigations?.Any() == true
+                && mitigations.All(m => m.Status == MitigationStatus.HazardEliminated);
+        }
+    }
+
+    private bool IsHazardMarkedEliminated(string hazardCode)
+    {
+        return HazardEliminatedSelections.GetValueOrDefault(hazardCode, false);
+    }
+
+    private async Task OnHazardEliminatedChanged(string hazardCode, bool isChecked)
+    {
+        if (!isChecked)
+        {
+            HazardEliminatedSelections[hazardCode] = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        var confirmed = await DialogService.Confirm(
+            message: $"Set all mitigations for hazard {hazardCode} to HAZARD_ELIMINATED?",
+            title: "Confirm Hazard Elimination",
+            options: new ConfirmOptions
+            {
+                OkButtonText = "Yes, Set All",
+                CancelButtonText = "Cancel",
+                Width = "500px"
+            });
+
+        if (confirmed != true)
+        {
+            HazardEliminatedSelections[hazardCode] = false;
+            await InvokeAsync(StateHasChanged);
+            return;
+        }
+
+        try
+        {
+            var query = new GetMitigationsByHazardCodeQuery(hazardCode);
+            var result = await Mediator.SendAsync(query, CancellationToken.None);
+
+            if (!result.IsSuccess || result.Value is null || !result.Value.Any())
+            {
+                HazardEliminatedSelections[hazardCode] = false;
+                await NotificationHelper.ShowWarningAsync($"No mitigations found for hazard {hazardCode}.");
+                await InvokeAsync(StateHasChanged);
+                return;
+            }
+
+            foreach (var mitigation in result.Value)
+            {
+                mitigation.Status = MitigationStatus.HazardEliminated;
+                var updateCommand = new UpdateMitigationCommand(mitigation);
+                var updateResult = await Mediator.SendAsync(updateCommand, CancellationToken.None);
+
+                if (!updateResult.IsSuccess)
+                {
+                    throw new InvalidOperationException($"Failed updating mitigation {mitigation.Code}: {updateResult.Error?.Message}");
+                }
+            }
+
+            HazardEliminatedSelections[hazardCode] = true;
+            await OnMitigationUpdated(hazardCode);
+            await NotificationHelper.ShowSuccessAsync($"All mitigations for hazard {hazardCode} were set to HAZARD_ELIMINATED.");
+        }
+        catch (Exception ex)
+        {
+            HazardEliminatedSelections[hazardCode] = false;
+            Logger.LogError(ex, "Error setting all mitigations to HAZARD_ELIMINATED for hazard {HazardCode}", hazardCode);
+            await NotificationHelper.ShowErrorAsync("Failed to update mitigation statuses.");
+        }
+
+        await InvokeAsync(StateHasChanged);
     }
 
 
@@ -815,6 +908,8 @@
                 Logger.LogInformation("❌ Cleared Step5 mitigation data for {HazardCode} - no mitigations found", hazardId);
             }
             
+            HazardMitigationRefreshVersions[hazardId] = GetMitigationRefreshVersion(hazardId) + 1;
+
             // Notify parent component of changes
             await Step5Changed.InvokeAsync(Step5);
             await InvokeAsync(StateHasChanged);
@@ -825,6 +920,11 @@
         {
             Logger.LogError(ex, "Error in OnMitigationUpdated for hazard {HazardCode}", hazardId);
         }
+    }
+
+    private int GetMitigationRefreshVersion(string hazardCode)
+    {
+        return HazardMitigationRefreshVersions.GetValueOrDefault(hazardCode, 0);
     }
 
     /// <summary>

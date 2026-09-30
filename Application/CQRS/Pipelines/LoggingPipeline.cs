@@ -47,7 +47,7 @@ public class LoggingPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResul
 
         // Enhanced pre-execution logging
         _logger.LogApplicationInformation("Request Logging: {LogHeader} PreExecute => {CommandType} | User: {UserId} | Correlation: {CorrelationId} | Time: {Timestamp}", 
-            _logHeader, commandType, currentUserId, correlationId, DateTime.UtcNow.ToString("HH:mm:ss.fff"));
+            _logHeader, commandType, currentUserId, correlationId, DateTime.Now.ToString("HH:mm:ss.fff"));
 
         try
         {
@@ -128,6 +128,7 @@ public class LoggingPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResul
         }
     }
 }
+
 
 
 

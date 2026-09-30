@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditEvidenceRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -221,7 +221,7 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceArchivedDate, evidence.ArchivedDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditEvidenceNotes, evidence.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, evidence.UpdatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, evidence.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, evidence.UpdatedDate ?? DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -382,3 +382,4 @@ public sealed class SMSAuditEvidenceRepository : BaseRepository<SMSAuditEvidence
 
     #endregion
 }
+

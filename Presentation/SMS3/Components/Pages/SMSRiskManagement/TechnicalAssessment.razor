@@ -49,12 +49,12 @@
                     </RadzenColumn>
                     <RadzenColumn Size="12" SizeMD="4">
                         <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.Center" Gap="0.5rem">
-                            <RadzenButton Text="Report Description"
+                            <RadzenButton Text="Initial Hazard Description"
                                           Icon="description"
                                           ButtonStyle="ButtonStyle.Base"
                                           Variant="Variant.Filled"
                                           Size="ButtonSize.Small"
-                                          Title="Click to view full description"
+                                          Title="Click to view initial hazard description"
                                           Class="description-button"
                                           Click="@ShowDescriptionDialog" />
                         </RadzenStack>
@@ -240,7 +240,7 @@
                 <div class="sms-modal-header sms-header-primary">
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <h5 class="sms-modal-title mb-0">
-                            <i class="fas fa-file-alt"></i> Report Description - @_selectedReportId
+                            <i class="fas fa-file-alt"></i> Initial Hazard Description - @_selectedReportId
                         </h5>
                         <RadzenButton ButtonStyle="ButtonStyle.Light"
                                       Variant="Variant.Text"

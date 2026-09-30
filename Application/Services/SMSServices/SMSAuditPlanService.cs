@@ -245,7 +245,7 @@ public class SMSAuditPlanService
             if (auditPlan.PlannedStartDate >= auditPlan.PlannedEndDate)
                 return Result.Failure(new Error("INVALID_DATE_RANGE", "Planned end date must be after start date"));
 
-            if (auditPlan.PlannedStartDate < DateTime.UtcNow.Date)
+            if (auditPlan.PlannedStartDate < DateTime.Now.Date)
                 return Result.Failure(new Error("PAST_START_DATE", "Planned start date cannot be in the past"));
 
             return Result.Success();
@@ -319,7 +319,7 @@ public class SMSAuditPlanService
         catch (Exception ex)
         {
             _logger.LogApplicationError(ex, "Error calculating next recommended date");
-            return DateTime.UtcNow.AddYears(1); // Default to 1 year
+            return DateTime.Now.AddYears(1); // Default to 1 year
         }
     }
 
@@ -334,7 +334,7 @@ public class SMSAuditPlanService
             if (auditPlan.Status != "Approved")
                 return Result.Failure(new Error("PLAN_NOT_APPROVED", "Audit plan must be approved before scheduling"));
 
-            if (proposedDate < DateTime.UtcNow.Date)
+            if (proposedDate < DateTime.Now.Date)
                 return Result.Failure(new Error("PAST_DATE", "Cannot schedule audit in the past"));
 
             // Check for auditor availability (simplified check)
@@ -423,4 +423,5 @@ public class SMSAuditPlanService
 
     #endregion
 }
+
 

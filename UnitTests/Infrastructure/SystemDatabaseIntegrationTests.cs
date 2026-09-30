@@ -554,7 +554,7 @@ public class SystemDatabaseIntegrationTests : DatabaseTestBase
         {
             UserID = $"TEST_USER_{testId}",
             Workstation = "TEST_WORKSTATION",
-            EventDateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+            EventDateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
             MessageType = "Info",
             Severity = "Medium",
             Module = "SystemTests",

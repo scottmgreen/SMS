@@ -27,7 +27,7 @@ public abstract class ReportStatus : BaseEnum<ReportStatus>
     /// <summary>Report New</summary>
     public static readonly ReportStatus Created = new ReportCreatedStatus();
     public static readonly ReportStatus Updated = new ReportUpdatedStatus();
-    public static readonly ReportStatus ReportCloserHazardEliminated = new ReportCloserHazardEliminatedStatus();
+    public static readonly ReportStatus ReportCloserHazardEliminated = new ReportCloserHazardsEliminatedStatus();
     public static readonly ReportStatus ReportCloserNonSMSRisk = new ReportCloserNonSMSRiskStatus();
     public static readonly ReportStatus InMitigation = new ReportInMitigationStatus();
     public static readonly ReportStatus MitigationComplete = new ReportMitigationCompleteStatus();
@@ -61,9 +61,9 @@ public abstract class ReportStatus : BaseEnum<ReportStatus>
         {
         }
     }
-    private sealed class ReportCloserHazardEliminatedStatus : ReportStatus
+    private sealed class ReportCloserHazardsEliminatedStatus : ReportStatus
     {
-        public ReportCloserHazardEliminatedStatus() : base("REPORT_CLOSED_HAZARD_ELIMINATED", "REPORT_CLOSED_HAZARD_ELIMINATED", "Report has been closed, Hazard Eliminated")
+        public ReportCloserHazardsEliminatedStatus() : base("REPORT_CLOSED_HAZARDS_ELIMINATED", "REPORT_CLOSED_HAZARDS_ELIMINATED", "Report has been closed, All Hazards Eliminated")
         {
         }
     }
@@ -75,7 +75,7 @@ public abstract class ReportStatus : BaseEnum<ReportStatus>
     }
     private sealed class ReportNeedsValidationStatus : ReportStatus
     {
-        public ReportNeedsValidationStatus() : base("REPORT_NEEDS_VALIDATION", "REPORT_NEEDS_VALIDATION", "Report requires validation")
+        public ReportNeedsValidationStatus() : base("REPORT_NEEDS_VALIDATION", "REPORT_NEEDS_VALIDATION", "Report Hazard requires validation")
         {
         }
     }

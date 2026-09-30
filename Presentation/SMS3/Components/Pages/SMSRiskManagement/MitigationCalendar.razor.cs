@@ -205,12 +205,22 @@ public partial class MitigationCalendar : ComponentBase
             var cssClasses = new List<string>();
 
             // Base status class
-            var statusClass = mitigationItem?.TimingState switch
+            var statusClass = "mitigation-pending";
+            if (mitigationItem?.TimingState == MitigationTimingState.DueInAdvanceWindow)
             {
-                MitigationTimingState.Due14Days => "mitigation-due-14days",
-                MitigationTimingState.Due24Hours => "mitigation-due-24hours",
-                MitigationTimingState.Overdue => "mitigation-due-overdue",
-                _ => (mitigationItem?.Status) switch
+                statusClass = "mitigation-due-14days";
+            }
+            else if (mitigationItem?.TimingState == MitigationTimingState.DueInFinalWindow)
+            {
+                statusClass = "mitigation-due-24hours";
+            }
+            else if (mitigationItem?.TimingState == MitigationTimingState.Overdue)
+            {
+                statusClass = "mitigation-due-overdue";
+            }
+            else
+            {
+                statusClass = (mitigationItem?.Status) switch
                 {
                     "PENDING_APPROVAL" => "mitigation-pending",
                     "APPROVED" => "mitigation-approved",
@@ -218,9 +228,9 @@ public partial class MitigationCalendar : ComponentBase
                     "COMPLETE" => "mitigation-complete",
                     "MONITORING_HAZARD" => "mitigation-monitoring",
                     "REJECTED" => "mitigation-rejected",
-                    _ => "mitigation-pending" // Default to pending
-                }
-            };
+                    _ => "mitigation-pending"
+                };
+            }
             cssClasses.Add(statusClass);
 
             // Add overdue class if needed
@@ -230,12 +240,22 @@ public partial class MitigationCalendar : ComponentBase
             }
 
             // Set background color based on date-alert priority first
-            var backgroundColor = mitigationItem?.TimingState switch
+            var backgroundColor = "#ffc107";
+            if (mitigationItem?.TimingState == MitigationTimingState.DueInAdvanceWindow)
             {
-                MitigationTimingState.Due14Days => "#17a2b8",
-                MitigationTimingState.Due24Hours => "#ffc107",
-                MitigationTimingState.Overdue => "#dc3545",
-                _ => mitigationItem?.Status switch
+                backgroundColor = "#17a2b8";
+            }
+            else if (mitigationItem?.TimingState == MitigationTimingState.DueInFinalWindow)
+            {
+                backgroundColor = "#ffc107";
+            }
+            else if (mitigationItem?.TimingState == MitigationTimingState.Overdue)
+            {
+                backgroundColor = "#dc3545";
+            }
+            else
+            {
+                backgroundColor = mitigationItem?.Status switch
                 {
                     "PENDING_APPROVAL" => "#ffc107",
                     "APPROVED" => "#17a2b8",
@@ -243,24 +263,30 @@ public partial class MitigationCalendar : ComponentBase
                     "COMPLETE" => "#28a745",
                     "MONITORING_HAZARD" => "#6c757d",
                     "REJECTED" => "#dc3545",
-                    _ => "#ffc107" // Default to pending color
-                }
-            };
+                    _ => "#ffc107"
+                };
+            }
 
-            var textColor = mitigationItem?.TimingState == MitigationTimingState.Due24Hours
+            var textColor = mitigationItem?.TimingState == MitigationTimingState.DueInFinalWindow
                 || mitigationItem?.Status == "PENDING_APPROVAL"
                 ? "#212529"
                 : "white";
             args.Attributes["style"] = $"background: {backgroundColor}; color: {textColor};";
 
             // Add enhanced tooltip with additional information
-            var timingLabel = mitigationItem?.TimingState switch
+            var timingLabel = "No alert";
+            if (mitigationItem?.TimingState == MitigationTimingState.DueInAdvanceWindow)
             {
-                MitigationTimingState.Due14Days => "14 days before target date",
-                MitigationTimingState.Due24Hours => "24 hours before target date",
-                MitigationTimingState.Overdue => "Overdue",
-                _ => "No alert"
-            };
+                timingLabel = "14 days before target date";
+            }
+            else if (mitigationItem?.TimingState == MitigationTimingState.DueInFinalWindow)
+            {
+                timingLabel = "24 hours before target date";
+            }
+            else if (mitigationItem?.TimingState == MitigationTimingState.Overdue)
+            {
+                timingLabel = "Overdue";
+            }
 
             args.Attributes["class"] = string.Join(" ", cssClasses);
 
@@ -365,7 +391,7 @@ public partial class MitigationCalendar : ComponentBase
             {
                 // Update target date directly
                 mitigation.TargetDate = appointmentData.Start;
-                mitigation.UpdatedDate = DateTime.UtcNow;
+                mitigation.UpdatedDate = DateTime.Now;
 
                 // Save via CQRS
                 var updateCommand = new UpdateMitigationCommand(mitigation);
@@ -626,7 +652,7 @@ public partial class MitigationCalendar : ComponentBase
             return MitigationTimingState.None;
         }
 
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var timeUntilTarget = targetDate.Value - now;
 
         if (timeUntilTarget.TotalHours < 0)
@@ -636,12 +662,12 @@ public partial class MitigationCalendar : ComponentBase
 
         if (timeUntilTarget.TotalHours <= _notifyHoursBefore)
         {
-            return MitigationTimingState.Due24Hours;
+            return MitigationTimingState.DueInFinalWindow;
         }
 
         if (timeUntilTarget.TotalDays <= _notifyDaysInAdvance)
         {
-            return MitigationTimingState.Due14Days;
+            return MitigationTimingState.DueInAdvanceWindow;
         }
 
         return MitigationTimingState.None;
@@ -670,11 +696,4 @@ public class MitigationSchedulerItem
     public MitigationTimingState TimingState { get; set; } = MitigationTimingState.None;
 }
 
-public enum MitigationTimingState
-{
-    None,
-    Due14Days,
-    Due24Hours,
-    Overdue
-}
 #endregion

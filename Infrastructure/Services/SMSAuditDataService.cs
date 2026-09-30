@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditDataService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -181,7 +181,7 @@ public class SMSAuditDataService : BaseDataService<SMSAuditDataService>
             return Result<List<SMSAudit>>.Failure<List<SMSAudit>>(allAuditsResult.Error);
         }
 
-        var currentDate = DateTime.UtcNow;
+        var currentDate = DateTime.Now;
         var overdueAudits = allAuditsResult.Value
                 .Where(a => a.ScheduledEndDate < currentDate &&
                a.Status != "Completed" && a.Status != "Cancelled");
@@ -238,13 +238,13 @@ public class SMSAuditDataService : BaseDataService<SMSAuditDataService>
         // Calculate dashboard metrics
         var dashboard = new SMSAuditExecutionDashboard
         {
-            StartDate = startDate ?? DateTime.UtcNow.AddMonths(-12),
-            EndDate = endDate ?? DateTime.UtcNow,
+            StartDate = startDate ?? DateTime.Now.AddMonths(-12),
+            EndDate = endDate ?? DateTime.Now,
             TotalAuditPlans = 0, // Would need audit plan count
             TotalAuditsScheduled = audits.Count,
             AuditsCompleted = audits.Count(a => a.Status == "Completed"),
             AuditsInProgress = audits.Count(a => a.Status == "In Progress"),
-            AuditsOverdue = audits.Count(a => a.ScheduledEndDate < DateTime.UtcNow && a.Status != "Completed" && a.Status != "Cancelled"),
+            AuditsOverdue = audits.Count(a => a.ScheduledEndDate < DateTime.Now && a.Status != "Completed" && a.Status != "Cancelled"),
             AuditsCancelled = audits.Count(a => a.Status == "Cancelled"),
             TotalFindings = audits.Sum(a => a.TotalFindings),
             CriticalFindings = audits.Sum(a => a.CriticalFindings),
@@ -277,7 +277,7 @@ public class SMSAuditDataService : BaseDataService<SMSAuditDataService>
         string contactPerson = "", string auditLocation = "", CancellationToken ct = default)
     {
         // Create a new audit based on the audit plan
-        var auditId = new SMSAuditID($"AUD-{DateTime.UtcNow:yyyyMMddHHmmss}");
+        var auditId = new SMSAuditID($"AUD-{DateTime.Now:yyyyMMddHHmmss}");
         var audit = new SMSAudit(auditId, scheduledBy)
         {
             AuditPlanCode = auditPlanCode,
@@ -293,3 +293,4 @@ public class SMSAuditDataService : BaseDataService<SMSAuditDataService>
         return await _repo.CreateSMSAuditAsync(audit, ct);
     }
 }
+

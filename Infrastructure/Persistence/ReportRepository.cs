@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ReportRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -70,7 +70,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportDescription, report.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStatus, report.Status));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, report.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, report.CreatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, report.CreatedDate ?? DateTime.Now));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewReportCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -264,7 +264,7 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportDescription, report.Description));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportStatus, report.Status));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, report.UpdatedBy ?? report.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, report.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, report.UpdatedDate ?? DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -311,3 +311,4 @@ public sealed class ReportRepository : BaseRepository<ReportRepository, Report>
         }
     }
 }
+

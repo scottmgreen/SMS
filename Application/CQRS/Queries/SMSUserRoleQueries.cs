@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSUserRoleQueries.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -305,7 +305,7 @@ public class GetExpiringSMSUserRolesQuery : BaseQueryBundle, IRequest<Result<IEn
     public GetExpiringSMSUserRolesQuery(int daysFromNow)
     {
         DaysFromNow = daysFromNow;
-        CutoffDate = DateTime.UtcNow.AddDays(daysFromNow);
+        CutoffDate = DateTime.Now.AddDays(daysFromNow);
     }
 
     /// <summary>
@@ -374,4 +374,5 @@ public class GetSMSUserRoleStatisticsQuery : BaseQueryBundle, IRequest<Result<Us
 //}
 
 #endregion
+
 

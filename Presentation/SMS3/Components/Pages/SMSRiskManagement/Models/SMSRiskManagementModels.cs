@@ -15,9 +15,9 @@ public class HazardReportForm
     public string? HazardType { get; set; }
     public string? Location { get; set; }
 
-    public DateTime IncidentDateTime { get; set; } = DateTime.UtcNow;
+    public DateTime IncidentDateTime { get; set; } = DateTime.Now;
     public string? SubmittedBy { get; set; }
-    public DateTime SubmittedDate { get; set; } = DateTime.UtcNow;
+    public DateTime SubmittedDate { get; set; } = DateTime.Now;
     public string? SubmittingDepartment { get; set; }
     public string? SubmittingDepartmentJobFunction { get; set; }
     public string? ReportContactName { get; set; }
@@ -57,4 +57,5 @@ public class AttachedFile
 
 
 #endregion
+
 

@@ -135,7 +135,7 @@ public partial class HazardFileListing : ComponentBase
             fileToUpdate.Description = string.IsNullOrWhiteSpace(_editDescription) ? null : _editDescription.Trim();
             fileToUpdate.Category = string.IsNullOrWhiteSpace(_editCategory) ? null : _editCategory.Trim();
             fileToUpdate.IsConfidential = _editIsConfidential;
-            fileToUpdate.UpdatedDate = DateTime.UtcNow;
+            fileToUpdate.UpdatedDate = DateTime.Now;
 
             var updateResult = await _mediator.SendAsync(new UpdateHazardFileCommand(fileToUpdate), CancellationToken.None);
             if (updateResult.IsFailure || updateResult.Value is null)
@@ -282,9 +282,9 @@ public partial class HazardFileListing : ComponentBase
                 FileData = _newFileData,
                 Description = _newDescription.Trim(),
                 UploadedBy = currentUserCode,
-                UploadedDate = DateTime.UtcNow,
+                UploadedDate = DateTime.Now,
                 CreatedBy = currentUserCode,
-                CreatedDate = DateTime.UtcNow,
+                CreatedDate = DateTime.Now,
                 IsActive = true
             };
 
@@ -992,3 +992,4 @@ public partial class HazardFileListing : ComponentBase
     }
     #endregion
 }
+

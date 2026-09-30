@@ -204,7 +204,7 @@ else
                     <RadzenStack Gap="0.5rem">
                         @if (SPI.NextReviewDate.HasValue)
                         {
-                            var isOverdue = SPI.NextReviewDate.Value < DateTime.UtcNow;
+                            var isOverdue = SPI.NextReviewDate.Value < DateTime.Now;
                             <div class="@(isOverdue ? "text-danger" : "")">
                                 <strong>Next Review:</strong> @SPI.NextReviewDate.Value.ToString("MMM dd, yyyy")
                                 @if (isOverdue)

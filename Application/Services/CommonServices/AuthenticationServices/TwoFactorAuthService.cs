@@ -24,7 +24,7 @@ public class TwoFactorAuthService
     private readonly TwoFactorAuthConfiguration _config;
     
     // Base32 encoding characters (RFC 4648)
-    private const string Base32Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+    private const string _base32Chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
 
     public TwoFactorAuthService(
         ILogger<TwoFactorAuthService> logger,
@@ -88,7 +88,7 @@ public class TwoFactorAuthService
         try
         {
             var keyBytes = FromBase32String(secretKey);
-            var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            var currentTime = DateTimeOffset.Now.ToUnixTimeSeconds();
             var timeWindow = currentTime / _config.TimeWindowSeconds;
 
             // Check current time window and tolerance windows for clock drift
@@ -202,7 +202,7 @@ public class TwoFactorAuthService
     /// </summary>
     public int GetTimeRemainingInWindow()
     {
-        var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var currentTime = DateTimeOffset.Now.ToUnixTimeSeconds();
         var timeInWindow = currentTime % _config.TimeWindowSeconds;
         return _config.TimeWindowSeconds - (int)timeInWindow;
     }
@@ -263,7 +263,7 @@ public class TwoFactorAuthService
             }
 
             int val = (buffer >> (bitsLeft - 5)) & 0x1F;
-            sb.Append(Base32Chars[val]);
+            sb.Append(_base32Chars[val]);
             bitsLeft -= 5;
         }
 
@@ -285,7 +285,7 @@ public class TwoFactorAuthService
 
         foreach (char c in cleanInput)
         {
-            int val = Base32Chars.IndexOf(c);
+            int val = _base32Chars.IndexOf(c);
             if (val < 0) throw new ArgumentException($"Invalid Base32 character: {c}");
 
             buffer = (buffer << 5) | val;
@@ -306,9 +306,10 @@ public class TwoFactorAuthService
     /// </summary>
     private long GetCurrentTimeWindow()
     {
-        var currentTime = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+        var currentTime = DateTimeOffset.Now.ToUnixTimeSeconds();
         return currentTime / _config.TimeWindowSeconds;
     }
 
     #endregion
 }
+

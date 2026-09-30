@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditChecklistItem.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -17,7 +17,7 @@ namespace SMS_Domain.Entities;
 public class SMSAuditChecklistItem : BaseAuditableEntity
 {
     #region Constructor
-    public SMSAuditChecklistItem(SMSAuditChecklistItemID id, string createdBy) : base(id, createdBy, DateTime.UtcNow)
+    public SMSAuditChecklistItem(SMSAuditChecklistItemID id, string createdBy) : base(id, createdBy, DateTime.Now)
     {
     }
     #endregion
@@ -110,7 +110,7 @@ public class SMSAuditChecklistItem : BaseAuditableEntity
         Status = "In Progress";
         Notes = notes;
         UpdatedBy = updatedBy;
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
 
         return Result.Success();
     }
@@ -124,12 +124,12 @@ public class SMSAuditChecklistItem : BaseAuditableEntity
             return Result.Failure(DomainErrors.SMSAuditChecklistItemError.Skipped);
 
         Status = "Completed";
-        CompletedDate = DateTime.UtcNow;
+        CompletedDate = DateTime.Now;
         CompletedBy = completedBy;
         Notes = notes;
         Evidence = evidence;
         UpdatedBy = completedBy;
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
 
         return Result.Success();
     }
@@ -148,7 +148,7 @@ public class SMSAuditChecklistItem : BaseAuditableEntity
         Status = "N/A";
         Notes = reason;
         UpdatedBy = updatedBy;
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
 
         return Result.Success();
     }
@@ -167,7 +167,7 @@ public class SMSAuditChecklistItem : BaseAuditableEntity
         Status = "Skipped";
         Notes = reason;
         UpdatedBy = updatedBy;
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
 
         return Result.Success();
     }
@@ -177,12 +177,12 @@ public class SMSAuditChecklistItem : BaseAuditableEntity
         if (Status != "Completed")
             return Result.Failure(DomainErrors.SMSAuditChecklistItemError.NotCompleted);
 
-        ReviewedDate = DateTime.UtcNow;
+        ReviewedDate = DateTime.Now;
         ReviewedBy = reviewedBy;
         ReviewNotes = reviewNotes;
         IsAcceptable = isAcceptable;
         UpdatedBy = reviewedBy;
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
 
         return Result.Success();
     }
@@ -216,7 +216,7 @@ public class SMSAuditChecklistItem : BaseAuditableEntity
         ProcessArea = processArea;
         ResponsiblePerson = responsiblePerson;
         UpdatedBy = updatedBy;
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
 
         return Result.Success();
     }
@@ -242,7 +242,7 @@ public class SMSAuditChecklistItem : BaseAuditableEntity
         }
 
         UpdatedBy = updatedBy;
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
 
         return Result.Success();
     }
@@ -302,3 +302,4 @@ public class SMSAuditChecklistItem : BaseAuditableEntity
     }
     #endregion
 }
+

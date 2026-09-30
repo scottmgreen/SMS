@@ -149,7 +149,7 @@ public class MitigationDatabaseIntegrationTests : DatabaseTestBase
             // Modify the mitigation
             createdMitigation.HazardCode = "UPDATED" + createdMitigation.HazardCode;
             createdMitigation.UpdatedBy = "INTEGRATION_TEST_REPO_UPDATE";
-            createdMitigation.UpdatedDate = DateTime.UtcNow;
+            createdMitigation.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _mitigationRepository.UpdateMitigationAsync(createdMitigation);
@@ -292,7 +292,7 @@ public class MitigationDatabaseIntegrationTests : DatabaseTestBase
             // Modify the mitigation
             createdMitigation.HazardCode = "DS_UPDATED" + createdMitigation.HazardCode;
             createdMitigation.UpdatedBy = "INTEGRATION_TEST_DS_UPDATE";
-            createdMitigation.UpdatedDate = DateTime.UtcNow;
+            createdMitigation.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _mitigationDataService.UpdateMitigationAsync(createdMitigation);
@@ -507,7 +507,7 @@ public class MitigationDatabaseIntegrationTests : DatabaseTestBase
         // Modify the mitigation
         testMitigation.Description = "Updated Description";
         testMitigation.UpdatedBy = "UPDATED_USER";
-        testMitigation.UpdatedDate = DateTime.UtcNow;
+        testMitigation.UpdatedDate = DateTime.Now;
 
         // Act
         var updateResult = await _mitigationRepository.UpdateMitigationAsync(testMitigation);

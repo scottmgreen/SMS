@@ -49,7 +49,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventData, queuedEvent.EventData));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueReportCode, string.IsNullOrWhiteSpace(queuedEvent.ReportId) ? DBNull.Value : queuedEvent.ReportId));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmTargetSystem, queuedEvent.TargetSystem ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventPriority, (int)queuedEvent.Priority));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventPriority, queuedEvent.Priority.Id));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMaxAttempts, 5));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmQueuedBy, queuedEvent.QueuedBy ?? string.Empty));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEventQueueCreatedBy, createdBy));
@@ -620,7 +620,7 @@ public sealed class EventQueueRepository : BaseRepository<EventQueueRepository, 
                         continue;
                     }
 
-                    var priority = (EventPriority)reader.GetValue<int>(FieldNames.fEventQueuePriority);
+                    var priority = EventPriority.FromId(reader.GetValue<int>(FieldNames.fEventQueuePriority));
                     byPriority[priority] = ReadIntOrDefault(reader, FieldNames.fEventQueueCount);
                 }
             }

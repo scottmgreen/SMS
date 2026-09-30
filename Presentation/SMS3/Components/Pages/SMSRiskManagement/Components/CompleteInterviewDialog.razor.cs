@@ -116,7 +116,7 @@ public partial class CompleteInterviewDialog : ComponentBase
         notes.Add($"- Interviewee Cooperation: {(model.IntervieweeCooperative ? "Cooperative" : "Uncooperative or resistant")}");
         notes.Add($"- Information Reliability: {(model.InformationReliable ? "Reliable and accurate" : "Questionable or inconsistent")}");
         notes.Add($"- Follow-up Required: {(model.RequiresFollowUp ? "Yes" : "No")}");
-        notes.Add($"- Completed: {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC");
+        notes.Add($"- Completed: {DateTime.Now:yyyy-MM-dd HH:mm} UTC");
 
         return string.Join("\n", notes);
     }

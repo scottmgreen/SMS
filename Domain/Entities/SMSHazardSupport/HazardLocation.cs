@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardLocation.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -18,10 +18,10 @@ namespace SMS_Domain.Entities;
 public sealed class HazardLocation : BaseAuditableEntity
 {
     // Public constructor for Entity Framework and Model Binding
-    public HazardLocation() : base(new HazardLocationID(Guid.NewGuid().ToString()), string.Empty, DateTime.UtcNow) { }
+    public HazardLocation() : base(new HazardLocationID(Guid.NewGuid().ToString()), string.Empty, DateTime.Now) { }
 
     // Public constructor for domain usage
-    public HazardLocation(HazardLocationID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public HazardLocation(HazardLocationID id) : base(id, string.Empty, DateTime.Now) { }
 
     
     #region Core Properties
@@ -39,7 +39,7 @@ public sealed class HazardLocation : BaseAuditableEntity
     public string? Description { get; set; }        // Location description
 
 
-    public DateTime DateSelected { get; set; } = DateTime.UtcNow;
+    public DateTime DateSelected { get; set; } = DateTime.Now;
 
     #endregion
 
@@ -73,3 +73,4 @@ public enum HazardLocationStatus
     Inactive,
     Pending
 }
+

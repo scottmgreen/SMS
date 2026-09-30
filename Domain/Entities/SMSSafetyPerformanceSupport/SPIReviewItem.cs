@@ -36,7 +36,7 @@ public class SPIReviewItem
         if (!NextReviewDate.HasValue)
             return false;
 
-        return DateTime.UtcNow.Date > NextReviewDate.Value.Date;
+        return DateTime.Now.Date > NextReviewDate.Value.Date;
     }
 
     /// <summary>
@@ -47,7 +47,7 @@ public class SPIReviewItem
         if (!NextReviewDate.HasValue || !CalculateIsOverdue())
             return 0;
 
-        return (DateTime.UtcNow.Date - NextReviewDate.Value.Date).Days;
+        return (DateTime.Now.Date - NextReviewDate.Value.Date).Days;
     }
 
     /// <summary>
@@ -95,7 +95,7 @@ public class SPIReviewItem
         if (!NextReviewDate.HasValue)
             return int.MaxValue;
 
-        return (NextReviewDate.Value.Date - DateTime.UtcNow.Date).Days;
+        return (NextReviewDate.Value.Date - DateTime.Now.Date).Days;
     }
     #endregion
 

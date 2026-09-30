@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="BaseUser.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -36,7 +36,7 @@ public abstract class BaseUser : BaseAuditableEntity
     public string Title { get; set; } = string.Empty;
     public string JobFunction { get; set; } = string.Empty;
 
-    // 🔐 Two-Factor Authentication Properties
+    // ?? Two-Factor Authentication Properties
     public string? TwoFactorSecretKey { get; set; }
     public bool TwoFactorEnabled { get; set; } = false;
     public string? BackupCodes { get; set; } // JSON array of backup codes
@@ -72,7 +72,7 @@ public abstract class BaseUser : BaseAuditableEntity
     {
         if (IsActive)
         {
-            LastLoginDate = DateTime.UtcNow;
+            LastLoginDate = DateTime.Now;
         }
     }
 
@@ -130,7 +130,7 @@ public abstract class BaseUser : BaseAuditableEntity
         get
         {
             if (LastLoginDate == null) return null;
-            return (int)(DateTime.UtcNow - LastLoginDate.Value).TotalDays;
+            return (int)(DateTime.Now - LastLoginDate.Value).TotalDays;
         }
     }
 
@@ -143,6 +143,7 @@ public abstract class BaseUser : BaseAuditableEntity
     }
 
 }
+
 
 
 

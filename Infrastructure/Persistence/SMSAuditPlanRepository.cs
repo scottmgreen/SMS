@@ -219,7 +219,7 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanExpectedDurationHours, auditPlan.ExpectedDurationHours));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditPlanNotes, auditPlan.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, auditPlan.UpdatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, auditPlan.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, auditPlan.UpdatedDate ?? DateTime.Now));
 
             // DEBUG: Log the actual parameter value being sent
             foreach (SqlParameter param in cmd.Parameters)
@@ -316,4 +316,5 @@ public sealed class SMSAuditPlanRepository : BaseRepository<SMSAuditPlanReposito
 
     #endregion
 }
+
 

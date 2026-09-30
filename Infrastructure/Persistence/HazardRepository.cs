@@ -115,7 +115,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
 
             // ?? DEBUG: Log what we're about to send to the stored proc
             var createdByParam = DataAccess.Parameter(ParameterNames.pmCreatedBy, hazard.CreatedBy);
-            var createdDateParam = DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow);
+            var createdDateParam = DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now);
 
             
             cmd.Parameters.Add(createdByParam);
@@ -338,7 +338,7 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardResidualRiskMatrixCode, hazard.ResidualRiskMatrixCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardResidualAverageScore, hazard.ResidualAverageScore));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazard.UpdatedBy ?? hazard.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -387,5 +387,6 @@ public sealed class HazardRepository : BaseRepository<HazardRepository, Hazard>,
 
     #endregion
 }
+
 
 

@@ -1,4 +1,4 @@
-﻿using SMS_Domain.Enums;
+using SMS_Domain.Enums;
 using SMS_Domain.Events;
 using SMS_Application.Services;
 using SMS_Domain.Errors;
@@ -323,7 +323,7 @@ public partial class ReportValidation : ComponentBase
             Code = assessmentId.Value,
             Status = initialStatus,
             CurrentStep = initialStep,
-            CreatedDate = DateTime.UtcNow,
+            CreatedDate = DateTime.Now,
             CreatedBy = _currentUserService?.UserCode,
         };
     }
@@ -367,10 +367,10 @@ public partial class ReportValidation : ComponentBase
                 ExistingValidation.ValidatedBy = validatedByUserCode;
                 ExistingValidation.Status = ReportValidationStatus.Revised;
                 ExistingValidation.Stage = "COMPLETE";
-                ExistingValidation.ValidatedDate = DateTime.UtcNow;
+                ExistingValidation.ValidatedDate = DateTime.Now;
 
                 ExistingValidation.UpdatedBy = _currentUserService?.UserCode; 
-                ExistingValidation.UpdatedDate = DateTime.UtcNow;
+                ExistingValidation.UpdatedDate = DateTime.Now;
 
                 var updateCommand = new UpdateReportValidationCommand(ExistingValidation);
                 var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -410,9 +410,9 @@ public partial class ReportValidation : ComponentBase
                     ValidationType = _currentValidationType,
                     Status = ReportValidationStatus.ValidationComplete,
                     Stage = "NEW",
-                    ValidatedDate = DateTime.UtcNow,
+                    ValidatedDate = DateTime.Now,
                     CreatedBy = _currentUserService?.UserCode,
-                    CreatedDate = DateTime.UtcNow
+                    CreatedDate = DateTime.Now
                 };
 
                 var createCommand = new CreateReportValidationCommand(validation);
@@ -771,7 +771,7 @@ public partial class ReportValidation : ComponentBase
             }
 
             existingAssessment.UpdatedBy = _currentUserService.UserCode;
-            existingAssessment.UpdatedDate = DateTime.UtcNow;
+            existingAssessment.UpdatedDate = DateTime.Now;
 
             var updateCmd = new UpdateRiskAssessmentCommand(existingAssessment);
             var updateResult = await _mediator.SendAsync(updateCmd, CancellationToken.None);
@@ -806,7 +806,7 @@ public partial class ReportValidation : ComponentBase
             }
 
             existingAssessment.UpdatedBy = _currentUserService.UserCode;
-            existingAssessment.UpdatedDate = DateTime.UtcNow;
+            existingAssessment.UpdatedDate = DateTime.Now;
 
             var updateCmd = new UpdateRiskAssessmentCommand(existingAssessment);
             var updateResult = await _mediator.SendAsync(updateCmd, CancellationToken.None);
@@ -924,5 +924,6 @@ public partial class ReportValidation : ComponentBase
         _navigation.NavigateToSecure(url); // Use secure navigation consistently
     }
 }
+
 
 

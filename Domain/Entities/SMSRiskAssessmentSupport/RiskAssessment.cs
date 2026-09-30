@@ -49,7 +49,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
 
 
     
-    public RiskAssessment(RiskAssessmentID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public RiskAssessment(RiskAssessmentID id) : base(id, string.Empty, DateTime.Now) { }
 
        
 
@@ -141,7 +141,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
     {
         // This method is kept for backward compatibility but no longer maintains a separate collection
         // Stakeholder selection is now handled through the Step1Model persistence
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
     }
 
     /// <summary>
@@ -152,7 +152,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
         if (!string.IsNullOrWhiteSpace(hazardId) && !_identifiedHazardIds.Contains(hazardId))
         {
             _identifiedHazardIds.Add(hazardId);
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
         }
     }
 
@@ -162,7 +162,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
     public void ClearIdentifiedHazards()
     {
         _identifiedHazardIds.Clear();
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
     }
 
     /// <summary>
@@ -188,7 +188,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
             if (stepNumber == 5)
             {
                 Status = RiskAssessmentStatus.AssessmentComplete;
-                CompletedDate = DateTime.UtcNow;
+                CompletedDate = DateTime.Now;
             }
            
             else
@@ -219,5 +219,6 @@ public sealed class RiskAssessment : BaseAuditableEntity
         };
     }
 }
+
 
 

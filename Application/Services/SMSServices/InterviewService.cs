@@ -170,7 +170,7 @@ public sealed class InterviewService : IInterviewService
             var interview = interviewResult.Value;
             interview.InterviewDate = scheduledDateTime;
             interview.UpdatedBy = scheduledBy;
-            interview.UpdatedDate = DateTime.UtcNow;
+            interview.UpdatedDate = DateTime.Now;
 
             var result = await _dataService.UpdateInterviewAsync(interview, ct);
             if (result.IsSuccess)
@@ -202,8 +202,8 @@ public sealed class InterviewService : IInterviewService
             var interview = interviewResult.Value;
             interview.InvestigatorNotes = notes;
             interview.UpdatedBy = completedBy;
-            interview.UpdatedDate = DateTime.UtcNow;
-            interview.CompletedDate = DateTime.UtcNow;
+            interview.UpdatedDate = DateTime.Now;
+            interview.CompletedDate = DateTime.Now;
 
             var result = await _dataService.UpdateInterviewAsync(interview, ct);
             if (result.IsSuccess)
@@ -222,4 +222,5 @@ public sealed class InterviewService : IInterviewService
 
     #endregion
 }
+
 

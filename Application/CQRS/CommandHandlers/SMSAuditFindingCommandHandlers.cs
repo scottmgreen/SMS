@@ -72,8 +72,8 @@ public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
                 RequirementReference = request.RequirementReference,
                 EvidenceDescription = request.EvidenceDescription,
                 Status = "Open",
-                DiscoveredDate = DateTime.UtcNow,
-                FoundDate = DateTime.UtcNow,
+                DiscoveredDate = DateTime.Now,
+                FoundDate = DateTime.Now,
                 FoundBy = request.CreatedBy
             };
 
@@ -114,7 +114,7 @@ public class CreateSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
             _ => "F"
         };
 
-        var timestamp = DateTime.UtcNow.ToString("yyyyMMddHHmmss");
+        var timestamp = DateTime.Now.ToString("yyyyMMddHHmmss");
         return $"FND-{severityPrefix}-{auditCode}-{timestamp}";
     }
 }
@@ -163,7 +163,7 @@ public class UpdateSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
             finding.EvidenceDescription = request.EvidenceDescription;
             finding.RootCause = request.RootCause;
             finding.UpdatedBy = request.UpdatedBy;
-            finding.UpdatedDate = DateTime.UtcNow;
+            finding.UpdatedDate = DateTime.Now;
 
             // Save updated finding
             var result = await _auditFindingDataService.UpdateAuditFindingAsync(finding, cancellationToken);
@@ -474,4 +474,5 @@ public class DeleteSMSAuditFindingCommandHandler : BaseCommandBundle, IBaseReque
         }
     }
 }
+
 

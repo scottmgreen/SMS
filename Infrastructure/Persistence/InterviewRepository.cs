@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="InterviewRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -410,7 +410,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewAdditionalWitnesses, interview.AdditionalWitnesses ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCompletedDate, interview.CompletedDate ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, interview.UpdatedBy ?? interview.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, interview.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, interview.UpdatedDate ?? DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -478,7 +478,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCode, interviewCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, status.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -517,7 +517,7 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewDurationMinutes, durationMinutes ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, InterviewStatus.InterviewScheduled.ToString()));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -555,9 +555,9 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewInvestigatorNotes, investigatorNotes ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewKeyFindings, keyFindings ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewStatus, InterviewStatus.InterviewComplete.ToString()));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCompletedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmInterviewCompletedDate, DateTime.Now));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -572,3 +572,4 @@ public sealed class InterviewRepository : BaseRepository<InterviewRepository, In
         }
     }
 }
+

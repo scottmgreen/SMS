@@ -584,7 +584,7 @@ public partial class MitigationListing : ComponentBase
         try
         {
             mitigation.Status = MitigationStatus.Approved;
-            mitigation.UpdatedDate = DateTime.UtcNow;
+            mitigation.UpdatedDate = DateTime.Now;
             mitigation.UpdatedBy = _currentUserService.UserCode;
             mitigation.ApprovedBy = _currentUserService.UserCode;  // ? FIXED: Set ApprovedBy property
 
@@ -659,7 +659,7 @@ public partial class MitigationListing : ComponentBase
                 try
                 {
                     mitigation.Status = MitigationStatus.Approved;
-                    mitigation.UpdatedDate = DateTime.UtcNow;
+                    mitigation.UpdatedDate = DateTime.Now;
                     mitigation.UpdatedBy = _currentUserService.UserCode;
                     mitigation.ApprovedBy = _currentUserService.UserCode;  // ? FIXED: Set ApprovedBy property
 
@@ -767,3 +767,4 @@ public partial class MitigationListing : ComponentBase
     }
     #endregion
 }
+

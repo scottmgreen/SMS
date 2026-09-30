@@ -1,4 +1,4 @@
-﻿@using Radzen
+@using Radzen
 @using Radzen.Blazor
 @using SMS3.Components.Pages.SMSRiskManagement
 @using SMS3.Components.Pages.SMSRiskManagement.Models
@@ -54,7 +54,7 @@
             <RadzenColumn Size="4">
                 <RadzenStack AlignItems="AlignItems.End" Gap="0.25rem">
                     <RadzenButton Text="Add Strategy" Icon="build" ButtonStyle="ButtonStyle.Success" Size="ButtonSize.Medium"
-                                  Click="@AddMitigationStrategy" Style="float: right;" Disabled="@IsLoading" />
+                                  Click="@AddMitigationStrategy" Style="float: right;" Disabled="@(IsLoading || DisableAddMitigation)" />
                 </RadzenStack>
             </RadzenColumn>
         </RadzenRow>
@@ -88,9 +88,9 @@
                                 <RadzenColumn Size="9">
                                     <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.25rem">
                                         <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Base" Size="ButtonSize.Small"
-                                                      Click="@(() => EditMitigation(mitigation))" Disabled="@IsLoading" />
+                                                      Click="@(() => EditMitigation(mitigation))" Disabled="@(IsLoading || DisableAddMitigation)" />
                                         <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
-                                                      Click="@(() => DeleteMitigation(mitigation))" Disabled="@IsLoading" />
+                                                      Click="@(() => DeleteMitigation(mitigation))" Disabled="@(IsLoading || DisableAddMitigation)" />
                                     </RadzenStack>
                                 </RadzenColumn>
                                
@@ -102,10 +102,12 @@
                                             <RadzenStack Gap="0.25rem">
                                                 <RadzenText TextStyle="TextStyle.Subtitle2" Text="@($"{mitigation.Name}")" Style="margin: 0; color: #212e61;" />
                                                 <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
-                                                    @if (mitigation.Progress > 0)
-                                                    {
-                                                        <RadzenBadge Text="@($"{mitigation.Progress}% Complete")" BadgeStyle="BadgeStyle.Info" />
-                                                    }
+                                                    <RadzenBadge Text="@($"Status: {mitigation.Status?.Name ?? mitigation.Status?.Value ?? "Unknown"}")"
+                                                                 BadgeStyle="BadgeStyle.Primary" />
+                                                    
+                                                   
+                                                    <RadzenBadge Text="@($"{mitigation.Progress}% Complete")" BadgeStyle="BadgeStyle.Base" />
+                                                    
                                                 </RadzenStack>
                                             </RadzenStack>
                                         </RadzenColumn>
@@ -126,7 +128,7 @@
                                             @if (!string.IsNullOrEmpty(mitigation.AssignedDepartment))
                                             {
                                                 <RadzenColumn Size="6">
-                                                    <RadzenText TextStyle="TextStyle.Caption" Text="@($"Department: {mitigation.AssignedDepartment}")" />
+                                                    <RadzenText TextStyle="TextStyle.Caption" Text="@($"Assigned Organization: {mitigation.AssignedDepartment}")" />
                                                 </RadzenColumn>
                                             }
                                         </RadzenRow>
@@ -194,7 +196,7 @@
 @if (ShowMitigationDialog)
 {
     <div style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
-        <RadzenCard Style="width: 900px; max-width: 90vw; max-height: 90vh; overflow-y: auto;">
+        <RadzenCard Style="width: 1250px; max-width: 96vw; max-height: 92vh; overflow-y: auto;">
             <RadzenStack Gap="1rem">
                 <RadzenRow AlignItems="AlignItems.Center" Style="background-color: #212e61 !important; color: white; padding: 1rem 1.25rem; margin: -1rem -1rem 0 -1rem; border-radius: 8px 8px 0 0;">
                     <RadzenColumn Size="10">
@@ -205,95 +207,26 @@
                     </RadzenColumn>
                 </RadzenRow>
 
-                <RadzenFieldset Text="Basic Information">
-                    <RadzenStack Gap="1rem">
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="6" SizeMD="6">
-                                <RadzenFormField Text="Mitigation Name" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenTextBox @bind-Value="@CurrentMitigation.Name" Placeholder="Enter mitigation name..." Style="width: 100%;min-width:100%" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                            <RadzenColumn Size="6" SizeMD="6">
-                                <RadzenFormField Text="Type" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenDropDown @bind-Value="@CurrentMitigation.Type" Data="@ControlTypes"
-                                                    Placeholder="Select type..." Style="width: 100%;min-width:100%" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                        </RadzenRow>
-
-                        <RadzenFormField Text="Description" Variant="Variant.Outlined">
-                            <RadzenTextArea @bind-Value="@CurrentMitigation.Description" Rows="3"
-                                            Placeholder="Describe the mitigation strategy in detail..." Style="width: 100%;" />
-                        </RadzenFormField>
-                    </RadzenStack>
-                </RadzenFieldset>
-
-                <RadzenFieldset Text="Timeline">
-                    <RadzenStack Gap="1rem">
-                        <RadzenRow Gap="1rem">
-                            
-                            <RadzenColumn Size="4" SizeMD="4">
-                                <RadzenFormField Text="Status" Variant="Variant.Outlined">
-                                    <RadzenDropDown @bind-Value="@CurrentMitigation.Status" Data="@StatusLevels"
-                                                    Placeholder="Select status..." Style="width: 100%;" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                            <RadzenColumn Size="4" SizeMD="4">
-                                <RadzenFormField Text="Progress %" Variant="Variant.Outlined">
-                                    <RadzenNumeric @bind-Value="@CurrentMitigation.Progress" Min="0" Max="100" Style="width: 100%;" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                            <RadzenColumn Size="4" SizeMD="4">
-                                <RadzenFormField Text="Target Date" Variant="Variant.Outlined">
-                                    <RadzenDatePicker @bind-Value="@CurrentMitigation.TargetDate" DateFormat="yyyy-MM-dd" Style="width: 100%;" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                        </RadzenRow>
-
-                        
-                    </RadzenStack>
-                </RadzenFieldset>
-
-                <RadzenFieldset Text="Assignment & Resources">
-                    <RadzenStack Gap="1rem">
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="7" SizeMD="7">
-                                <RadzenFormField Text="Assigned Department" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenDropDown @bind-Value="@CurrentMitigation.AssignedDepartment" Data="@Departments"
-                                                    Placeholder="Select department..." Style="width: 100%; min-width: 100%;" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                            <RadzenColumn Size="5" SizeMD="5">
-                                <RadzenFormField Text="Assigned To" AllowFloatingLabel="false" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenTextBox @bind-Value="@CurrentMitigation.AssignedTo" Placeholder="Person responsible..." Style="width: 100%;min-width:100%" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                        </RadzenRow>
-
-                        <RadzenRow Gap="1rem">
-                            <RadzenColumn Size="2" SizeMD="2">
-                                <RadzenFormField AllowFloatingLabel="false" Text="Estimated Cost" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenNumeric @bind-Value="@CurrentMitigation.EstimatedCost" Format="c" Style="width: 100%;min-width: 100%;" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                            <RadzenColumn Size="2" SizeMD="2">
-                                <RadzenFormField AllowFloatingLabel="false" Text="Estimated Hours" Variant="Variant.Outlined" Style="width: 100%;">
-                                    <RadzenNumeric @bind-Value="@CurrentMitigation.EstimatedHours" Style="width: 100%;min-width: 100%;" />
-                                </RadzenFormField>
-                            </RadzenColumn>
-                        </RadzenRow>
-
-                        <RadzenFormField AllowFloatingLabel="false" Text="Resource Requirements" Variant="Variant.Outlined">
-                            <RadzenTextArea @bind-Value="@CurrentMitigation.ResourceRequirements" Rows="2"
-                                            Placeholder="Describe required resources..." Style="width: 100%;" />
-                        </RadzenFormField>
-                    </RadzenStack>
-                </RadzenFieldset>
+                <RadzenRow Gap="0.5rem" Style="width: 100%; margin: 0;">
+                    <RadzenColumn Size="9" SizeMD="9" Style="padding-right: 0.25rem;">
+                        <MitigationEditorFields Model="@CurrentMitigation"
+                                                DisableInputs="@DisableAddMitigation"
+                                                EnableStatusEdit="true"
+                                                ControlTypeOptions="@ControlTypes"
+                                                StatusOptions="@StatusLevels"
+                                                DepartmentOptions="@Departments" />
+                    </RadzenColumn>
+                    <RadzenColumn Size="3" SizeMD="3" Style="padding-left: 0.25rem; min-width: 260px;">
+                        <div style="max-height: 74vh; overflow-y: auto;">
+                            <MitigationGuidance />
+                        </div>
+                    </RadzenColumn>
+                </RadzenRow>
 
                 <RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="0.5rem">
                     <RadzenButton Text="Cancel" ButtonStyle="ButtonStyle.Light" Click="@CloseMitigationDialog" />
                     <RadzenButton Text="@(IsEditMode ? "Update" : "Create")" Icon="@(IsEditMode ? "save" : "add")" 
-                                  ButtonStyle="ButtonStyle.Primary" Click="@SaveMitigation" Disabled="@IsSaving" />
+                                  ButtonStyle="ButtonStyle.Primary" Click="@SaveMitigation" Disabled="@(IsSaving || DisableAddMitigation)" />
                 </RadzenStack>
             </RadzenStack>
         </RadzenCard>
@@ -353,9 +286,11 @@
     [Parameter] public bool NeedsMitigation { get; set; }
     [Parameter] public List<SMSStakeholderUser> AvailableStakeholders { get; set; } = new();
     [Parameter] public List<SMSApplicationUser> AvailableAssessors { get; set; } = new();
-    [Parameter] public RiskAssessment? CurrentRiskAssessment { get; set; }   // ✅ SINGLE risk assessment parameter
+    [Parameter] public RiskAssessment? CurrentRiskAssessment { get; set; }   // ? SINGLE risk assessment parameter
+    [Parameter] public bool DisableAddMitigation { get; set; } = false;
+    [Parameter] public int MitigationRefreshVersion { get; set; }
     [Parameter] public EventCallback<string> OnMitigationUpdated { get; set; }
-    [Parameter] public EventCallback<string> OnResidualHazardScored { get; set; } // ✅ NEW: For residual scoring callbacks
+    [Parameter] public EventCallback<string> OnResidualHazardScored { get; set; } // ? NEW: For residual scoring callbacks
 
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private INotificationHelper NotificationHelper { get; set; } = default!;
@@ -377,7 +312,7 @@
     private string MonitoringDepartment { get; set; } = string.Empty;
     private string ReviewTrigger { get; set; } = string.Empty;
 
-    // ✅ NEW: Collapsible state for residual risk analysis section
+    // ? NEW: Collapsible state for residual risk analysis section
     private bool IsAnalysisSectionCollapsed { get; set; } = false;
 
     private List<string> ControlTypes = new()
@@ -390,12 +325,9 @@
         "Critical", "High", "Medium", "Low"
     };
 
-    private List<string> StatusLevels = new()
-    {
-        "Proposed", "Approved", "InProgress", "Completed", "Cancelled", "OnHold"
-    };
+    private List<MitigationStatus> StatusLevels => MitigationStatus.GetAllValues().ToList();
 
-    // ✅ UPDATED: Replace hardcoded department list with SMSDepartment enum
+    // ? UPDATED: Replace hardcoded department list with SMSDepartment enum
     private List<string> Departments => SMSOrganization.GetAllDepartments()
         .Select(d => d.Name)
         .OrderBy(name => name)
@@ -410,6 +342,11 @@
     {
         await LoadMitigationsForHazard();
         InitializeResidualStakeholderSelection();
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await LoadMitigationsForHazard();
     }
 
     /// <summary>
@@ -456,6 +393,12 @@
     /// </summary>
     private async Task AddMitigationStrategy()
     {
+        if (DisableAddMitigation)
+        {
+            ShowErrorAsyncNotification("Hazard is marked as eliminated. Mitigation controls are read-only.");
+            return;
+        }
+
         try
         {
             // Create new mitigation entity with proper HazardCode and RiskAssessmentCode
@@ -493,6 +436,12 @@
     /// </summary>
     private void EditMitigation(Mitigation mitigation)
     {
+        if (DisableAddMitigation)
+        {
+            ShowErrorAsyncNotification("Hazard is marked as eliminated. Mitigation controls are read-only.");
+            return;
+        }
+
         CurrentMitigation = mitigation;
         IsEditMode = true;
         ShowMitigationDialog = true;
@@ -504,6 +453,12 @@
     /// </summary>
     private async Task SaveMitigation()
     {
+        if (DisableAddMitigation)
+        {
+            ShowErrorAsyncNotification("Hazard is marked as eliminated. Mitigation controls are read-only.");
+            return;
+        }
+
         try
         {
             IsSaving = true;
@@ -564,7 +519,7 @@
 
             if (result.IsSuccess)
             {
-                // ✅ NEW: Update Hazard status to ResidualRiskMitigation using CQRS pattern
+                // ? NEW: Update Hazard status to ResidualRiskMitigation using CQRS pattern
                 await UpdateHazardStatusToResidualMitigation();
                 
                 CloseMitigationDialog();
@@ -594,6 +549,12 @@
     /// </summary>
     private async Task DeleteMitigation(Mitigation mitigation)
     {
+        if (DisableAddMitigation)
+        {
+            ShowErrorAsyncNotification("Hazard is marked as eliminated. Mitigation controls are read-only.");
+            return;
+        }
+
         try
         {
             var deleteCommand = new DeleteMitigationCommand(new MitigationID(mitigation.Id.Value));
@@ -741,7 +702,7 @@
     }
 
     /// <summary>
-    /// ✅ NEW: Handle residual analysis field changes
+    /// ? NEW: Handle residual analysis field changes
     /// </summary>
     // private async Task OnResidualAnalysisFieldChangedHandler(string fieldName, string value)
     // {
@@ -783,7 +744,7 @@
     // }
 
     // /// <summary>
-    // /// ✅ NEW: Toggle the analysis section collapsed state
+    // /// ? NEW: Toggle the analysis section collapsed state
     // /// </summary>
     // private void ToggleAnalysisSectionAsync()
     // {
@@ -856,7 +817,7 @@
                 currentHazard.Status = HazardStatus.ResidualRiskMitigation;
                 
                 // Update audit fields
-                currentHazard.UpdatedDate = DateTime.UtcNow;
+                currentHazard.UpdatedDate = DateTime.Now;
                 currentHazard.UpdatedBy = _currentUserService.UserCode;  // You might want to get the current user
 
                 // Save hazard using CQRS UpdateHazardCommand
@@ -909,7 +870,7 @@
     }
 
     /// <summary>
-    /// ✅ Helper class for residual stakeholder selection within HazardMitigationPanel
+    /// ? Helper class for residual stakeholder selection within HazardMitigationPanel
     /// </summary>
     public class ResidualStakeholderSelectionItem
     {

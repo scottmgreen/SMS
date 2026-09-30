@@ -376,7 +376,7 @@ public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IB
             // Record the login
             user.RecordLogin();
             user.UpdatedBy = request.UserId;
-            user.UpdatedDate = DateTime.UtcNow;
+            user.UpdatedDate = DateTime.Now;
 
             // Update the user via the service
             var updateResult = await _applicationUserService.UpdateSMSApplicationUserAsync(user, cancellationToken);
@@ -405,4 +405,5 @@ public class RecordSMSApplicationUserLoginCommandHandler : BaseCommandBundle, IB
         }
     }
 }
+
 

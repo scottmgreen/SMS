@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardFile.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -18,7 +18,7 @@ public class HazardFile : BaseAuditableEntity
     // Private constructor for Entity Framework
     
 
-    public HazardFile(HazardFileID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public HazardFile(HazardFileID id) : base(id, string.Empty, DateTime.Now) { }
 
     #region Properties
 
@@ -79,7 +79,7 @@ public class HazardFile : BaseAuditableEntity
             FileSize = fileSize,
             FileType = fileType ?? GetFileTypeFromName(fileName),
             UploadedBy = uploadedBy,
-            UploadedDate = DateTime.UtcNow,
+            UploadedDate = DateTime.Now,
             IsActive = true
         };
 
@@ -114,4 +114,5 @@ public class HazardFile : BaseAuditableEntity
 
     #endregion
 }
+
 

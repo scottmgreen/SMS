@@ -219,7 +219,7 @@ public partial class ReportListing : ComponentBase
             reportToUpdate.UpdatedBy = string.IsNullOrWhiteSpace(_currentUserService?.UserCode)
                 ? SystemConstants.FlyPdxApiSource
                 : _currentUserService.UserCode;
-            reportToUpdate.UpdatedDate = DateTime.UtcNow;
+            reportToUpdate.UpdatedDate = DateTime.Now;
 
             var updateResult = await _mediator.SendAsync(new UpdateReportCommand(reportToUpdate), CancellationToken.None);
 
@@ -406,7 +406,7 @@ public partial class ReportListing : ComponentBase
 
             var zipBytes = await BuildExportPackagePdfAsync(exportableReports);
             var base64 = Convert.ToBase64String(zipBytes);
-            var fileName = $"reports-export-package-pdf-{DateTime.UtcNow:yyyyMMdd-HHmmss}.zip";
+            var fileName = $"reports-export-package-pdf-{DateTime.Now:yyyyMMdd-HHmmss}.zip";
 
             await _jsRuntime.InvokeVoidAsync("downloadFile", fileName, "application/zip", base64);
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Exported {exportableReports.Count} report package(s) in PDF format"));
@@ -765,7 +765,7 @@ public partial class ReportListing : ComponentBase
 
             var zipBytes = await BuildExportPackageAsync(exportableReports);
             var base64 = Convert.ToBase64String(zipBytes);
-            var fileName = $"reports-export-package-{DateTime.UtcNow:yyyyMMdd-HHmmss}.zip";
+            var fileName = $"reports-export-package-{DateTime.Now:yyyyMMdd-HHmmss}.zip";
 
             await _jsRuntime.InvokeVoidAsync("downloadFile", fileName, "application/zip", base64);
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Success("Success", $"Exported {exportableReports.Count} report package(s)"));
@@ -1404,7 +1404,7 @@ public partial class ReportListing : ComponentBase
                 {
                     column.Item().Background("#111111").Padding(12).Text("PDX SMS Export").FontSize(16).Bold().FontColor("#FFFFFF");
                     column.Item().Background("#003F40").PaddingHorizontal(12).PaddingVertical(8).Text(title).FontSize(11).Bold().FontColor("#FFFFFF");
-                    column.Item().PaddingTop(6).Text($"Generated UTC: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}").FontSize(8).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                    column.Item().PaddingTop(6).Text($"Generated UTC: {DateTime.Now:yyyy-MM-dd HH:mm:ss}").FontSize(8).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
                 });
 
                 page.Content().PaddingTop(10).Table(table =>
@@ -1817,7 +1817,7 @@ public partial class ReportListing : ComponentBase
     {
         var sb = new StringBuilder();
         sb.AppendLine("PDXSMS Comprehensive Report Export Package");
-        sb.AppendLine($"Generated UTC: {DateTime.UtcNow:O}");
+        sb.AppendLine($"Generated UTC: {DateTime.Now:O}");
         sb.AppendLine($"Report Code: {report.Code}");
         sb.AppendLine($"Report Name: {report.Name}");
         sb.AppendLine($"Report Status: {report.Status}");
@@ -2212,7 +2212,7 @@ public partial class ReportListing : ComponentBase
 
                 if (cmdReset.IsSuccess)
                 {
-                    var flowControl = await UpdateReportStatus(reportCode, ReportStatus.NeedsValidation);
+                    var flowControl = await UpdateReportStatus(reportCode, ReportStatus.ReadyForProcessing);
                     if (!flowControl)
                     {
                         throw new Exception($"Failed to Update Report Status during Create new Risk Assessment: {DomainErrors.ReportValidationError.CreateFailed.Message}");
@@ -2267,7 +2267,7 @@ public partial class ReportListing : ComponentBase
                     string.IsNullOrWhiteSpace(_currentUserService?.UserCode)
                         ? SystemConstants.FlyPdxApiSource
                         : _currentUserService.UserCode);
-                validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
+                validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.Now:yyyy-MM-dd HH:mm}";
 
                 var createCommand = new CreateReportValidationCommand(validation);
                 var createResult = await _mediator.SendAsync(createCommand, CancellationToken.None);
@@ -2710,4 +2710,5 @@ public async Task OnResetReportAsync(Report report)
 
     #endregion
 }
+
 

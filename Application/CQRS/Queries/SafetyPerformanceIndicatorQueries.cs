@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SafetyPerformanceIndicatorQueries.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -185,7 +185,7 @@ public class GetSPITrendAnalysisQuery : BaseEventBundle, IRequest<Result<List<SP
     {
         SPIIds = spiIds;
         Periods = periods;
-        EndDate = endDate ?? DateTime.UtcNow;
+        EndDate = endDate ?? DateTime.Now;
     }
 
     // IReadQuery implementation
@@ -365,7 +365,7 @@ public class GetSPIComplianceStatusQuery : BaseEventBundle, IRequest<Result<List
     public GetSPIComplianceStatusQuery(List<string>? spiIds = null, DateTime? asOfDate = null)
     {
         SPIIds = spiIds;
-        AsOfDate = asOfDate ?? DateTime.UtcNow;
+        AsOfDate = asOfDate ?? DateTime.Now;
     }
 
     // IReadQuery implementation
@@ -429,3 +429,4 @@ public class GetSPIReviewScheduleQuery : BaseEventBundle, IRequest<Result<List<S
 // Domain\Entities\SPIManagementSupport\ following Domain-Driven Design principles
 // These are domain entities, not DTOs, and belong in the domain layer
 //
+

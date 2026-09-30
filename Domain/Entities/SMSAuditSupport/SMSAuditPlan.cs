@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class SMSAuditPlan : BaseAuditableEntity
 {
-    public SMSAuditPlan(SMSAuditPlanID id, string createdBy) : base(id, createdBy, DateTime.UtcNow)
+    public SMSAuditPlan(SMSAuditPlanID id, string createdBy) : base(id, createdBy, DateTime.Now)
     {
         Code = id.Value;
         AuditCalendarEntries = new List<SMSAudit>();
@@ -74,11 +74,11 @@ public class SMSAuditPlan : BaseAuditableEntity
             if (Status != "Approved")
                 return Result.Failure(new Error("AUDIT_PLAN_NOT_APPROVED", "Audit plan must be approved before scheduling"));
 
-            if (scheduledDate < DateTime.UtcNow.Date)
+            if (scheduledDate < DateTime.Now.Date)
                 return Result.Failure(new Error("INVALID_SCHEDULE_DATE", "Cannot schedule audit in the past"));
 
             var audit = new SMSAudit(
-                new SMSAuditID($"AUD-{DateTime.UtcNow:yyyyMMddHHmmss}"),
+                new SMSAuditID($"AUD-{DateTime.Now:yyyyMMddHHmmss}"),
                 scheduledBy)
             {
                 AuditPlanCode = Code,
@@ -111,7 +111,7 @@ public class SMSAuditPlan : BaseAuditableEntity
 
             Status = "Approved";
             ApprovedBy = approvedBy;
-            ApprovedDate = DateTime.UtcNow;
+            ApprovedDate = DateTime.Now;
             ApprovalNotes = approvalNotes;
 
             return Result.Success();
@@ -156,4 +156,5 @@ public class SMSAuditPlan : BaseAuditableEntity
         return Status != "Completed";
     }
 }
+
 

@@ -114,7 +114,7 @@ public class SPIInitializationService
             ResponsibleDepartment = "Safety Management",
             DataOwner = "SMS Administrator",
             ReviewAuthority = "Safety Manager",
-            NextReviewDate = DateTime.UtcNow.AddMonths(6),
+            NextReviewDate = DateTime.Now.AddMonths(6),
             AlertsEnabled = true,
             AlertRecipients = "sms@airport.com"
         });
@@ -140,7 +140,7 @@ public class SPIInitializationService
             ResponsibleDepartment = "Risk Assessment",
             DataOwner = "Risk Assessment Manager",
             ReviewAuthority = "SMS Manager",
-            NextReviewDate = DateTime.UtcNow.AddMonths(3),
+            NextReviewDate = DateTime.Now.AddMonths(3),
             AlertsEnabled = true,
             AlertRecipients = "risk@airport.com"
         });
@@ -166,7 +166,7 @@ public class SPIInitializationService
             ResponsibleDepartment = "Safety Management",
             DataOwner = "Mitigation Coordinator",
             ReviewAuthority = "Safety Manager",
-            NextReviewDate = DateTime.UtcNow.AddMonths(3),
+            NextReviewDate = DateTime.Now.AddMonths(3),
             AlertsEnabled = true,
             AlertRecipients = "mitigations@airport.com"
         });
@@ -192,7 +192,7 @@ public class SPIInitializationService
             ResponsibleDepartment = "Safety Management",
             DataOwner = "Action Coordinator",
             ReviewAuthority = "SMS Manager",
-            NextReviewDate = DateTime.UtcNow.AddMonths(3),
+            NextReviewDate = DateTime.Now.AddMonths(3),
             AlertsEnabled = true,
             AlertRecipients = "actions@airport.com"
         });
@@ -218,7 +218,7 @@ public class SPIInitializationService
             ResponsibleDepartment = "Risk Assessment",
             DataOwner = "Risk Manager",
             ReviewAuthority = "SMS Manager",
-            NextReviewDate = DateTime.UtcNow.AddMonths(3),
+            NextReviewDate = DateTime.Now.AddMonths(3),
             AlertsEnabled = true,
             AlertRecipients = "risk@airport.com"
         });
@@ -244,7 +244,7 @@ public class SPIInitializationService
             ResponsibleDepartment = "Safety Management",
             DataOwner = "Hazard Coordinator",
             ReviewAuthority = "Safety Manager",
-            NextReviewDate = DateTime.UtcNow.AddMonths(3),
+            NextReviewDate = DateTime.Now.AddMonths(3),
             AlertsEnabled = true,
             AlertRecipients = "hazards@airport.com"
         });
@@ -252,4 +252,5 @@ public class SPIInitializationService
         return spis;
     }
 }
+
 

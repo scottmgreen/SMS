@@ -235,13 +235,13 @@ public class UserInstantiationService : IUserInstantiationService
                 ["SMS_FirstName"] = user.FirstName.Value,
                 ["SMS_LastName"] = user.LastName.Value,
                 ["IsAuthenticated"] = "true",
-                ["SMS_LoginTime"] = DateTime.UtcNow.ToString("O"),
+                ["SMS_LoginTime"] = DateTime.Now.ToString("O"),
                 ["SMS_TwoFactorEnabled"] = user.TwoFactorEnabled.ToString(),
                 ["SMS_TwoFactorSecretKey"] = user.TwoFactorSecretKey ?? string.Empty,
                 ["SMS_FailedTwoFactorAttempts"] = user.FailedTwoFactorAttempts.ToString(),
                 ["SMS_LastLoginDate"] = user.LastLoginDate?.ToString("O") ?? string.Empty,
                 ["SMS_IsActive"] = user.IsActive.ToString(),
-                ["SMS_SerializedAt"] = DateTime.UtcNow.ToString("O"),
+                ["SMS_SerializedAt"] = DateTime.Now.ToString("O"),
                 ["SMS_CompletenessScore"] = _completenessValidator.GetCompletenessScore(user, userType).ToString()
             };
 
@@ -687,4 +687,5 @@ public class UserInstantiationService : IUserInstantiationService
         public string? Code { get; set; }
     }
 }
+
 

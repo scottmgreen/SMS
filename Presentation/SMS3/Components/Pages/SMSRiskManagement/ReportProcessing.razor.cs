@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components.Rendering;
+using Microsoft.AspNetCore.Components.Rendering;
 using Microsoft.AspNetCore.Components.Web;
 
 using SMS_Application.Interfaces;
@@ -420,6 +420,12 @@ public partial class ReportProcessing : ComponentBase
         {
             try
             {
+                if (IsClosedReport(report))
+                {
+                    _logger.LogInformation("Skipping closed report {ReportCode} from ReportProcessing listing", report.Code);
+                    continue;
+                }
+
                 // Find ALL hazards for this report
                 var reportHazards = hazards.Where(h => h.ReportCode?.Trim() == report.Code?.Trim()).ToList();
 
@@ -507,7 +513,7 @@ public partial class ReportProcessing : ComponentBase
                             ReportStatus = report.Status ?? ReportStatus.Created,
                             ReportStage = report.Stage ?? "NEW",
                             CreatedBy = report.CreatedBy ?? "Unknown",
-                            CreatedDate = report.CreatedDate ?? DateTime.UtcNow,
+                            CreatedDate = report.CreatedDate ?? DateTime.Now,
 
                             // Use PRIMARY hazard info for display
                             HazardId = primaryHazard.Code,
@@ -584,7 +590,7 @@ public partial class ReportProcessing : ComponentBase
                         ReportStatus = report.Status ?? ReportStatus.Created,
                         ReportStage = report.Stage ?? "New",
                         CreatedBy = report.CreatedBy ?? "Unknown",
-                        CreatedDate = report.CreatedDate ?? DateTime.UtcNow,
+                        CreatedDate = report.CreatedDate ?? DateTime.Now,
 
                         HazardId = primaryHazard.Code,
                         HazardType = primaryHazard.HazardType ?? "Unknown",
@@ -808,6 +814,20 @@ public partial class ReportProcessing : ComponentBase
                || string.Equals(normalizedStatus, "RISK_REGISTRY_ONLY", StringComparison.OrdinalIgnoreCase);
     }
 
+    private static bool IsClosedReport(Report report)
+    {
+        if (string.IsNullOrWhiteSpace(report.Status))
+        {
+            return false;
+        }
+
+        var normalizedStatus = report.Status.Trim();
+
+        return string.Equals(normalizedStatus, ReportStatus.ReportCloserNonSMSRisk.Value, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(normalizedStatus, ReportStatus.ReportCloserHazardEliminated.Value, StringComparison.OrdinalIgnoreCase)
+               || string.Equals(normalizedStatus, ReportStatus.MitigationComplete.Value, StringComparison.OrdinalIgnoreCase);
+    }
+
     
 
     private int CalculateDaysInStage(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation)
@@ -816,8 +836,8 @@ public partial class ReportProcessing : ComponentBase
         var referenceDate = riskAssessment?.UpdatedDate ??
                            reportValidation?.UpdatedDate ??
                            hazard?.UpdatedDate ?? hazard?.CreatedDate ??
-                           report.UpdatedDate ?? report.CreatedDate ?? DateTime.UtcNow;
-        return (DateTime.UtcNow - referenceDate).Days;
+                           report.UpdatedDate ?? report.CreatedDate ?? DateTime.Now;
+        return (DateTime.Now - referenceDate).Days;
     }
 
     private string? DetermineAssignedTo(Report report, Hazard? hazard, RiskAssessment? riskAssessment, SMS_Domain.Entities.ReportValidation? reportValidation, Investigation? investigation)
@@ -1311,7 +1331,7 @@ public partial class ReportProcessing : ComponentBase
                 var fullMitigation = mitigationResult.Value;
                 fullMitigation.Status = MitigationStatus.Approved;
                 fullMitigation.ApprovedBy = mitigation.ApprovedBy;
-                fullMitigation.UpdatedDate = DateTime.UtcNow;
+                fullMitigation.UpdatedDate = DateTime.Now;
                 fullMitigation.UpdatedBy = _currentUserService.UserCode; // You might want to get the current user
 
                 var updateCommand = new UpdateMitigationCommand(fullMitigation);
@@ -2014,7 +2034,7 @@ public partial class ReportProcessing : ComponentBase
                                 
                                 // ? Update mitigation status using enum value
                                 mitigation.Status = MitigationStatus.Approved; 
-                                mitigation.UpdatedDate = DateTime.UtcNow;
+                                mitigation.UpdatedDate = DateTime.Now;
                                 mitigation.UpdatedBy = _currentUserService?.UserCode;
                                 mitigation.ApprovedBy = approverCode;
                                 var updateCommand = new UpdateMitigationCommand(mitigation);
@@ -2344,5 +2364,6 @@ public partial class ReportProcessing : ComponentBase
 
     
 }
+
 
 

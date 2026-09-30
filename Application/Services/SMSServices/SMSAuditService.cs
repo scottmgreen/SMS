@@ -128,8 +128,8 @@ public class SMSAuditService
             _logger.LogApplicationInformation("Getting SMS audit execution dashboard data");
 
             var result = await _auditDataService.GetAuditExecutionDashboardAsync(
-                startDate ?? DateTime.UtcNow.AddMonths(-12),
-                endDate ?? DateTime.UtcNow,
+                startDate ?? DateTime.Now.AddMonths(-12),
+                endDate ?? DateTime.Now,
                 departmentFilter,
                 auditorFilter,
                 ct);
@@ -231,7 +231,7 @@ public class SMSAuditService
                 var prioritizedAudits = audits
                     .OrderByDescending(a => a.CriticalFindings)
                     .ThenBy(a => GetAuditTypePriority(a.AuditType))
-                    .ThenByDescending(a => (DateTime.UtcNow - a.ScheduledEndDate).TotalDays)
+                    .ThenByDescending(a => (DateTime.Now - a.ScheduledEndDate).TotalDays)
                     .ToList();
 
                 return Result<List<SMSAudit>>.Success(prioritizedAudits);
@@ -289,7 +289,7 @@ public class SMSAuditService
             if (audit.ScheduledStartDate >= audit.ScheduledEndDate)
                 return Result.Failure(DomainErrors.SMSAuditError.InvalidScheduledDates);
 
-            if (audit.ScheduledStartDate < DateTime.UtcNow.Date)
+            if (audit.ScheduledStartDate < DateTime.Now.Date)
                 return Result.Failure(DomainErrors.SMSAuditError.CannotStartNonScheduled);
 
             return Result.Success();
@@ -310,14 +310,14 @@ public class SMSAuditService
         {
             var typeCode = GetAuditTypeCode(auditType);
             var yearMonth = scheduledStartDate.ToString("yyyyMM");
-            var sequence = DateTime.UtcNow.ToString("HHmmss");
+            var sequence = DateTime.Now.ToString("HHmmss");
 
             return $"AUD-{typeCode}-{yearMonth}-{sequence}";
         }
         catch (Exception ex)
         {
             _logger.LogApplicationError(ex, "Error generating audit code for type: {AuditType}", auditType);
-            return $"AUD-GEN-{DateTime.UtcNow:yyyyMMddHHmmss}";
+            return $"AUD-GEN-{DateTime.Now:yyyyMMddHHmmss}";
         }
     }
 
@@ -405,4 +405,5 @@ public class SMSAuditService
 
     #endregion
 }
+
 

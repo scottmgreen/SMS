@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SafetyPerformanceIndicatorRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -80,7 +80,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIAlertsEnabled, spi.AlertsEnabled));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIAlertRecipients, spi.AlertRecipients));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, spi.CreatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewSPICode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -144,7 +144,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIAlertsEnabled, spi.AlertsEnabled));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIAlertRecipients, spi.AlertRecipients));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, spi.UpdatedBy ?? spi.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -560,7 +560,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointPeriod, dataPoint.Period));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointDataSource, dataPoint.DataSource));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, dataPoint.UpdatedBy ?? dataPoint.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointNotes, dataPoint.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointIsVerified, dataPoint.IsVerified));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIDataPointVerifiedBy, dataPoint.VerifiedBy));
@@ -608,3 +608,4 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
 
     #endregion
 }
+

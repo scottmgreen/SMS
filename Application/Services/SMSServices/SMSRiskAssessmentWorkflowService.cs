@@ -125,7 +125,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
             var assessmentCategory = category ?? RiskAssessmentCategory.Technical;
 
             // Create risk assessment ID
-            var assessmentId = new RiskAssessmentID($"RA-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
+            var assessmentId = new RiskAssessmentID($"RA-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
             // Create new initial risk assessment
             var riskAssessment = RiskAssessment.CreateInitial(
                 assessmentId,
@@ -171,7 +171,7 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
             }
 
             // Create residual risk assessment ID
-            var assessmentId = new RiskAssessmentID($"RRA-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
+            var assessmentId = new RiskAssessmentID($"RRA-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
 
             // Create new residual risk assessment
             var residualAssessment = RiskAssessment.CreateResidual(
@@ -607,4 +607,5 @@ public class SMSRiskAssessmentWorkflowService : ISMSRiskAssessmentWorkflowServic
         }
     }
 }
+
 

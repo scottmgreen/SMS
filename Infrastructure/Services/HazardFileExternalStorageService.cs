@@ -92,7 +92,7 @@ public sealed class HazardFileExternalStorageService
         var uploadSessionFolder = Guid.NewGuid().ToString("D");
 
         hazardFile.FileName = guidFileName;
-        hazardFile.FilePath = $"{configuredBaseUri.TrimEnd('/')}/{DateTime.UtcNow:yyyy/MM/dd}/{uploadSessionFolder}/{guidFileName}";
+        hazardFile.FilePath = $"{configuredBaseUri.TrimEnd('/')}/{DateTime.Now:yyyy/MM/dd}/{uploadSessionFolder}/{guidFileName}";
         hazardFile.StorageType = "Cloud";
         hazardFile.FileData = null;
     }
@@ -287,3 +287,4 @@ public sealed class HazardFileExternalStorageService
         return null;
     }
 }
+

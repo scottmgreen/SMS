@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskScore.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -28,7 +28,7 @@ public sealed class RiskScore
         PanelMemberId = panelMemberId;
         SeverityScore = severityScore;
         LikelihoodScore = likelihoodScore;
-        ScoredDate = DateTime.UtcNow;
+        ScoredDate = DateTime.Now;
     }
 
     public static Result<RiskScore> Create(string panelMemberId, int severityScore, int likelihoodScore)
@@ -51,3 +51,4 @@ public sealed class RiskScore
         return Result<RiskScore>.Success(new RiskScore(panelMemberId, severityScore, likelihoodScore));
     }
 }
+

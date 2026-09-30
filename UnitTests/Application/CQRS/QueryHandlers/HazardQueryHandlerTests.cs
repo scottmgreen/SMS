@@ -250,13 +250,13 @@ public class ApplicationEntityTests : ApplicationTestBase
     private void ValidateAuditFields(dynamic entity)
     {
         entity.CreatedBy.Should().Be("TEST_USER");
-        entity.CreatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(2));
+        entity.CreatedDate.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(2));
         
         // Check for updated fields if they exist
         if (entity.GetType().GetProperty("UpdatedBy") != null)
         {
             entity.UpdatedBy.Should().Be("TEST_USER");
-            entity.UpdatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(2));
+            entity.UpdatedDate.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(2));
         }
     }
 

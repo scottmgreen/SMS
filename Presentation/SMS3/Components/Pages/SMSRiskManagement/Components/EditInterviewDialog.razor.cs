@@ -207,7 +207,7 @@ public partial class EditInterviewDialog : ComponentBase
             if (result.IsSuccess)
             {
                 Model.Status = InterviewStatus.InterviewComplete;
-                Model.CompletedDate = DateTime.UtcNow;
+                Model.CompletedDate = DateTime.Now;
                 await UpdateInterview();
                 await ShowSuccessAsyncNotification("Interview completed successfully!");
                 StateHasChanged();
@@ -336,7 +336,7 @@ public partial class EditInterviewDialog : ComponentBase
 
             // Set audit fields
             Interview.UpdatedBy = _currentUserService.UserCode;
-            Interview.UpdatedDate = DateTime.UtcNow;
+            Interview.UpdatedDate = DateTime.Now;
 
             // Save interview using CQRS command
             var updateCommand = new UpdateInterviewCommand(Interview);

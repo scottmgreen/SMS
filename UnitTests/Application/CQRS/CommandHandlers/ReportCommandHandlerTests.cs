@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ApplicationUtilityTests.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -248,7 +248,7 @@ public class ApplicationUtilityTests : ApplicationTestBase
         entity.Should().NotBeNull();
         ((string)entity.Code).Should().StartWith(prefix);
         ((string)entity.CreatedBy).Should().Be("TEST_USER");
-        ((DateTime)entity.CreatedDate).Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(2));
+        ((DateTime)entity.CreatedDate).Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(2));
     }
 
     #endregion

@@ -1226,14 +1226,27 @@ public partial class EventBusQueueManager
 
     private static BadgeStyle GetPriorityBadgeStyle(EventPriority priority)
     {
-        return priority switch
+        if (priority == EventPriority.Critical)
         {
-            EventPriority.Critical => BadgeStyle.Danger,
-            EventPriority.High => BadgeStyle.Warning,
-            EventPriority.Normal => BadgeStyle.Primary,
-            EventPriority.Low => BadgeStyle.Secondary,
-            _ => BadgeStyle.Light
-        };
+            return BadgeStyle.Danger;
+        }
+
+        if (priority == EventPriority.High)
+        {
+            return BadgeStyle.Warning;
+        }
+
+        if (priority == EventPriority.Normal)
+        {
+            return BadgeStyle.Primary;
+        }
+
+        if (priority == EventPriority.Low)
+        {
+            return BadgeStyle.Secondary;
+        }
+
+        return BadgeStyle.Light;
     }
 
     #endregion

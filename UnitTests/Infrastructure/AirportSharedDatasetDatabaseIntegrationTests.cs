@@ -153,7 +153,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
             createdDataset.PrivateNarrative = "UPDATED - " + createdDataset.PrivateNarrative;
             createdDataset.SharedNarrative = "UPDATED - " + createdDataset.SharedNarrative;
             createdDataset.UpdatedBy = "INTEGRATION_TEST_REPO_UPDATE";
-            createdDataset.UpdatedDate = DateTime.UtcNow;
+            createdDataset.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _airportSharedDatasetRepository.UpdateAirportSharedDatasetAsync(createdDataset);
@@ -299,7 +299,7 @@ public class AirportSharedDatasetDatabaseIntegrationTests : DatabaseTestBase
             createdDataset.PrivateNarrative = "UPDATED" + createdDataset.PrivateNarrative;
             createdDataset.SharedNarrative = "UPDATED" + createdDataset.SharedNarrative;
             createdDataset.UpdatedBy = "INTEGRATION_TEST_DS_UPDATE";
-            createdDataset.UpdatedDate = DateTime.UtcNow;
+            createdDataset.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _airportSharedDatasetDataService.UpdateAirportSharedDatasetAsync(createdDataset);

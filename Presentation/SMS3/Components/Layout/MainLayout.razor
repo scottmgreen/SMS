@@ -1,4 +1,4 @@
-﻿@inherits LayoutComponentBase
+@inherits LayoutComponentBase
 @implements IEventReceiver
 @implements IDisposable
 @using Radzen
@@ -39,7 +39,7 @@
         <i class="fas fa-exclamation-triangle me-2"></i>
         An unhandled error has occurred.
         <a href="" class="reload sms-error-reload">Reload</a>
-        <a class="dismiss sms-error-dismiss">🗙</a>
+        <a class="dismiss sms-error-dismiss">??</a>
     </div>
 </div>
 
@@ -91,7 +91,7 @@
     /// </summary>
     private async Task OnLogoutRequested()
     {
-        var logoutStartTime = DateTime.UtcNow;
+        var logoutStartTime = DateTime.Now;
         string currentUserName = "Unknown";
         SMSUserType userType = SMSUserType.Application;
         string sessionId = "Unknown";
@@ -112,7 +112,7 @@
                 }
                 
                 // Generate a session ID for audit purposes
-                sessionId = $"SESSION_{DateTime.UtcNow:yyyyMMddHHmmss}";
+                sessionId = $"SESSION_{DateTime.Now:yyyyMMddHHmmss}";
                 
                 // Calculate session duration based on login time
                 if (_currentUserService.LoginTime.HasValue)
@@ -127,7 +127,7 @@
 
             _logger.LogInformation("Starting logout process for user: {UserName}", currentUserName);
 
-            // 🔐 Record logout audit BEFORE clearing authentication (and wait for it)
+            // ?? Record logout audit BEFORE clearing authentication (and wait for it)
             try
             {
                 var logoutCommand = new RecordAuthenticationLogoutCommand(
@@ -148,13 +148,13 @@
                 // Continue with logout even if audit fails
             }
 
-            // **🔐 CLEAR SESSION-BASED AUTHENTICATION - Replaces static authentication**
+            // **?? CLEAR SESSION-BASED AUTHENTICATION - Replaces static authentication**
             await _currentUserService.ClearAuthentication();
             await _sessionService.ClearSMSSessionAsync();
             
             _logger.LogInformation("Session authentication cleared for user: {UserName}", currentUserName);
             
-            // 🔐 SECURE NAVIGATION - Navigate to HOME PAGE with encrypted URL
+            // ?? SECURE NAVIGATION - Navigate to HOME PAGE with encrypted URL
             _navigation.NavigateToSecure("/", forceLoad: true);
         }
         catch (Exception ex)
@@ -166,13 +166,13 @@
             {
                 await _currentUserService.ClearAuthentication();
                 await _sessionService.ClearSMSSessionAsync();
-                // 🔐 SECURE NAVIGATION - Force navigation to home page
+                // ?? SECURE NAVIGATION - Force navigation to home page
                 _navigation.NavigateToSecure("/", forceLoad: true);
             }
             catch (Exception clearEx)
             {
                 _logger.LogError(clearEx, "Critical: Failed to clear session authentication during logout");
-                // 🔐 SECURE NAVIGATION - Force navigation even on clear error
+                // ?? SECURE NAVIGATION - Force navigation even on clear error
                 _navigation.NavigateToSecure("/", forceLoad: true);
             }
         }

@@ -82,7 +82,7 @@ public class DatabaseCleanupUtility
                 await cmd.ExecuteNonQueryAsync();
             }
 
-            _logger.LogInformation("Database cleanup completed successfully at {Timestamp}", DateTime.UtcNow);
+            _logger.LogInformation("Database cleanup completed successfully at {Timestamp}", DateTime.Now);
             return true;
         }
         catch (Exception ex)

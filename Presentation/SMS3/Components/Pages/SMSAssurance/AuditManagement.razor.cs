@@ -1,4 +1,4 @@
-﻿using SMS_Domain.Entities;
+using SMS_Domain.Entities;
 
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
@@ -376,7 +376,7 @@ public partial class AuditManagement : ComponentBase
                 // Step 1: Update the audit plan status to "Scheduled"
                 plan.Status = "Scheduled";
                 plan.UpdatedBy = _currentUserService.UserCode;
-                plan.UpdatedDate = DateTime.UtcNow;
+                plan.UpdatedDate = DateTime.Now;
 
                 var updatePlanCommand = new UpdateSMSAuditPlanCommand(plan);
                 var updateResult = await _mediator.SendAsync(updatePlanCommand, CancellationToken.None);
@@ -794,4 +794,5 @@ public partial class AuditManagement : ComponentBase
     }
     #endregion
 }
+
 

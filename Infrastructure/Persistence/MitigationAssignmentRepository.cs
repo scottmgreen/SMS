@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="MitigationAssignmentRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -52,7 +52,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentMitigationCode, mitigationAssignment.MitigationCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentDepartmentCode, mitigationAssignment.DepartmentCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, mitigationAssignment.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewMitigationAssignmentCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -179,7 +179,7 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentMitigationCode, mitigationAssignment.MitigationCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmMitigationAssignmentDepartmentCode, mitigationAssignment.DepartmentCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, mitigationAssignment.UpdatedBy ?? mitigationAssignment.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -226,3 +226,4 @@ public sealed class MitigationAssignmentRepository : BaseRepository<MitigationAs
         }
     }
 }
+

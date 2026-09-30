@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditQueries.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -174,8 +174,8 @@ public class GetSMSAuditExecutionDashboardQuery : BaseQueryBundle, IRequest<Resu
     public GetSMSAuditExecutionDashboardQuery(DateTime? startDate = null, DateTime? endDate = null,
         string? departmentFilter = null, string? auditorFilter = null)
     {
-        StartDate = startDate ?? DateTime.UtcNow.AddMonths(-12);
-        EndDate = endDate ?? DateTime.UtcNow;
+        StartDate = startDate ?? DateTime.Now.AddMonths(-12);
+        EndDate = endDate ?? DateTime.Now;
         DepartmentFilter = departmentFilter;
         AuditorFilter = auditorFilter;
     }
@@ -286,3 +286,4 @@ public class GetSMSAuditEvidenceByFindingCodeQuery : BaseQueryBundle, IRequest<R
         IncludeArchived = includeArchived;
     }
 }
+

@@ -259,7 +259,7 @@ public partial class UploadFileDialog : ComponentBase
                         FileData = file.Data,
                         UploadedBy = currentUser,
                         CreatedBy = currentUser,
-                        UploadedDate = DateTime.UtcNow,
+                        UploadedDate = DateTime.Now,
                         IsActive = true,
                         Description = file.Description?.Trim(),
                         Category = "Evidence"
@@ -489,3 +489,4 @@ public partial class UploadFileDialog : ComponentBase
 
     #endregion
 }
+

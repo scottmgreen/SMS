@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ReportValidationRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -247,7 +247,7 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationValidatedBy, reportValidation.ValidatedBy));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmReportValidationValidatedDate, reportValidation.ValidatedDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, reportValidation.UpdatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, reportValidation.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, reportValidation.UpdatedDate ?? DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -299,3 +299,4 @@ public sealed class ReportValidationRepository : BaseRepository<ReportValidation
         }
     }
 }
+

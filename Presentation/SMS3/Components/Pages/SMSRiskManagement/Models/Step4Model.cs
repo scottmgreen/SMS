@@ -182,7 +182,7 @@ public class Step4Model
                $"Highest risk: {highestRiskHazardCode} ({highestRiskMatrixCode}, Risk Level: {GetRiskLevelDisplayText(highestRiskHazardCode)}). " +
                $"Average risk score: {avgScore:F2}. " +
                $"Matrix codes assessed: {string.Join(", ", HazardMatrixCodes.Select(kvp => $"{kvp.Key}:{kvp.Value}"))}. " +
-               $"Assessment completed on {DateTime.UtcNow:yyyy-MM-dd HH:mm}.";
+               $"Assessment completed on {DateTime.Now:yyyy-MM-dd HH:mm}.";
 
 
         return (severity, likelihood, finalRiskLevel);
@@ -273,7 +273,7 @@ public class Step4Model
                             {
                                 existingScore.SeverityScore = severity.Value;
                                 existingScore.LikelihoodScore = likelihood.Value;
-                                existingScore.SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.UtcNow;
+                                existingScore.SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.Now;
                             }
                             else
                             {
@@ -284,7 +284,7 @@ public class Step4Model
                                     MemberName = panel.SMSUserCode ?? string.Empty,
                                     SeverityScore = severity.Value,
                                     LikelihoodScore = likelihood.Value,
-                                    SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.UtcNow
+                                    SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.Now
                                 });
                             }
                         }
@@ -340,7 +340,7 @@ public class Step4Model
         public int LikelihoodScore { get; set; }
         public double CalculatedScore => SeverityScore * LikelihoodScore;
         public RiskLevel RiskLevel { get; set; } = RiskLevel.Unkonwn;
-        public DateTime SubmittedDate { get; set; } = DateTime.UtcNow;
+        public DateTime SubmittedDate { get; set; } = DateTime.Now;
         public bool IsComplete => SeverityScore > 0 && LikelihoodScore > 0;
 
         public PanelMemberScoreData()
@@ -349,3 +349,4 @@ public class Step4Model
         }
     }
 }
+

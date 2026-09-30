@@ -1,4 +1,4 @@
-﻿//--------------------------------------------------------------
+//--------------------------------------------------------------
 // <copyright file="SMSApplicationUser.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -17,7 +17,7 @@ public sealed class SMSApplicationUser : BaseUser
 {
     // Simple constructors
 
-    public SMSApplicationUser(SMSApplicationUserID id) : base(id, string.Empty, DateTime.UtcNow)
+    public SMSApplicationUser(SMSApplicationUserID id) : base(id, string.Empty, DateTime.Now)
     {
         ApplicationUserId = id;
     }
@@ -26,3 +26,4 @@ public sealed class SMSApplicationUser : BaseUser
     public SMSApplicationUserID ApplicationUserId { get; set; }
    
 }
+

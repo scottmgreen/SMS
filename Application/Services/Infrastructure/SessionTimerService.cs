@@ -72,7 +72,7 @@ public class SessionTimerService : IDisposable
             return;
         }
 
-        _lastActivity = DateTime.UtcNow;
+        _lastActivity = DateTime.Now;
         _isActive = true;
 
         // Create timer that checks every 30 seconds
@@ -93,7 +93,7 @@ public class SessionTimerService : IDisposable
 
         if (_isActive && _currentUserService.IsAuthenticated)
         {
-            _lastActivity = DateTime.UtcNow;
+            _lastActivity = DateTime.Now;
             _logger.LogApplicationTrace("Session activity updated", ApplicationEventIds.Trace);
         }
     }
@@ -120,7 +120,7 @@ public class SessionTimerService : IDisposable
         if (!_isActive || !_currentUserService.IsAuthenticated)
             return TimeSpan.Zero;
 
-        var elapsed = DateTime.UtcNow - _lastActivity;
+        var elapsed = DateTime.Now - _lastActivity;
         var remaining = _sessionConfig.IdleTimeout - elapsed;
         
         return remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero;

@@ -265,7 +265,7 @@ namespace SMS3.Api.Models;
     {
         public string Error { get; init; } = string.Empty;
         public List<string> Details { get; init; } = new();
-        public DateTime Timestamp { get; init; } = DateTime.UtcNow;
+        public DateTime Timestamp { get; init; } = DateTime.Now;
         public string RequestId { get; init; } = string.Empty;
     }
 
@@ -318,3 +318,4 @@ namespace SMS3.Api.Models;
             JsonSerializer.Serialize(writer, value, options);
         }
     }
+

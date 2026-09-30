@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SafetyPerformanceIndicator.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -17,7 +17,7 @@ public class SafetyPerformanceIndicator : BaseAuditableEntity
 {
     public SafetyPerformanceIndicator(SafetyPerformanceIndicatorID id, string name, string description,
         SMSSafetyPerformanceIndicatorType indicatorType, string createdBy)
-        : base(id, createdBy, DateTime.UtcNow)
+        : base(id, createdBy, DateTime.Now)
     {
         Name = name ?? throw new ArgumentNullException(nameof(name));
         Description = description ?? throw new ArgumentNullException(nameof(description));
@@ -82,7 +82,7 @@ public class SafetyPerformanceIndicator : BaseAuditableEntity
             MeasurementUnit = measurementUnit;
             MeasurementFrequency = frequency;
             UpdatedBy = updatedBy;
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -102,7 +102,7 @@ public class SafetyPerformanceIndicator : BaseAuditableEntity
             WarningThreshold = warningThreshold;
             CriticalThreshold = criticalThreshold;
             UpdatedBy = updatedBy;
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -127,7 +127,7 @@ public class SafetyPerformanceIndicator : BaseAuditableEntity
 
     //        DataPoints.Add(dataPoint);
     //        UpdatedBy = enteredBy;
-    //        UpdatedDate = DateTime.UtcNow;
+    //        UpdatedDate = DateTime.Now;
 
     //        return Result.Success();
     //    }
@@ -146,7 +146,7 @@ public class SafetyPerformanceIndicator : BaseAuditableEntity
 
             Status = newStatus;
             UpdatedBy = updatedBy;
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -160,12 +160,12 @@ public class SafetyPerformanceIndicator : BaseAuditableEntity
     {
         try
         {
-            if (reviewDate <= DateTime.UtcNow)
+            if (reviewDate <= DateTime.Now)
                 return Result.Failure(DomainErrors.SPIError.InvalidReviewDate);
 
             NextReviewDate = reviewDate;
             UpdatedBy = scheduledBy;
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -179,11 +179,11 @@ public class SafetyPerformanceIndicator : BaseAuditableEntity
     {
         try
         {
-            LastReviewDate = DateTime.UtcNow;
+            LastReviewDate = DateTime.Now;
             LastReviewNotes = reviewNotes;
             NextReviewDate = nextReviewDate;
             UpdatedBy = reviewedBy;
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -252,7 +252,7 @@ public class SafetyPerformanceIndicator : BaseAuditableEntity
 
     public bool RequiresReview()
     {
-        return NextReviewDate.HasValue && NextReviewDate.Value <= DateTime.UtcNow;
+        return NextReviewDate.HasValue && NextReviewDate.Value <= DateTime.Now;
     }
 
     public List<SPIDataPoint> GetDataPointsForPeriod(DateTime startDate, DateTime endDate)
@@ -291,4 +291,5 @@ public class SafetyPerformanceIndicator : BaseAuditableEntity
         return (date.Month - 1) / 3 + 1;
     }
 }
+
 

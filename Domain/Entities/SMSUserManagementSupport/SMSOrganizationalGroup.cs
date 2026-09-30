@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSOrganizationalGroup.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -45,7 +45,7 @@ public sealed class SMSOrganizationalGroup : BaseUserGroup
     /// <summary>
     /// Parameterless constructor for Entity Framework
     /// </summary>
-    private SMSOrganizationalGroup() : base(new SMSOrganizationalGroupID(string.Empty), string.Empty, DateTime.UtcNow)
+    private SMSOrganizationalGroup() : base(new SMSOrganizationalGroupID(string.Empty), string.Empty, DateTime.Now)
     {
         Id = new SMSOrganizationalGroupID(string.Empty);
     }
@@ -54,11 +54,11 @@ public sealed class SMSOrganizationalGroup : BaseUserGroup
     /// Creates a new organizational group with the specified ID
     /// </summary>
     /// <param name="id">The unique identifier for the organizational group</param>
-    public SMSOrganizationalGroup(SMSOrganizationalGroupID id) : base(id, DefaultActor, DateTime.UtcNow)
+    public SMSOrganizationalGroup(SMSOrganizationalGroupID id) : base(id, DefaultActor, DateTime.Now)
     {
         Id = id ?? throw new ArgumentNullException(nameof(id));
         Code = id.Value;
-        CreatedDate = DateTime.UtcNow;
+        CreatedDate = DateTime.Now;
         CreatedBy = DefaultActor;
     }
 
@@ -102,7 +102,7 @@ public sealed class SMSOrganizationalGroup : BaseUserGroup
         GroupType = groupType;
         AuthorityLevel = authorityLevel;
         UpdatedBy = updatedBy;
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
     }
 
     /// <summary>
@@ -113,7 +113,7 @@ public sealed class SMSOrganizationalGroup : BaseUserGroup
     {
         IsActive = true;
         UpdatedBy = activatedBy;
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
     }
 
     /// <summary>
@@ -124,7 +124,7 @@ public sealed class SMSOrganizationalGroup : BaseUserGroup
     {
         IsActive = false;
         UpdatedBy = deactivatedBy;
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
     }
 
     /// <summary>
@@ -164,3 +164,4 @@ public sealed class SMSOrganizationalGroup : BaseUserGroup
                                   || level.Name.Equals(authorityLevel, StringComparison.OrdinalIgnoreCase));
     }
 }
+

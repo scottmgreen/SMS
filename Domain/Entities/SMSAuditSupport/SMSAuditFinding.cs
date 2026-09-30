@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditFinding.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class SMSAuditFinding : BaseAuditableEntity
 {
-    public SMSAuditFinding(SMSAuditFindingID id, string createdBy) : base(id, createdBy, DateTime.UtcNow)
+    public SMSAuditFinding(SMSAuditFindingID id, string createdBy) : base(id, createdBy, DateTime.Now)
     {
         Code = id.Value;
     }
@@ -29,7 +29,7 @@ public class SMSAuditFinding : BaseAuditableEntity
     public string Title { get; set; } = string.Empty; // Added for repository compatibility
     public string Description { get; set; } = string.Empty; // Added for repository compatibility
     public string Category { get; set; } = string.Empty; // Added for repository compatibility
-    public DateTime DiscoveredDate { get; set; } = DateTime.UtcNow; // Added for repository compatibility
+    public DateTime DiscoveredDate { get; set; } = DateTime.Now; // Added for repository compatibility
     public DateTime? TargetResolutionDate { get; set; } // Added for repository compatibility
     public DateTime? ActualResolutionDate { get; set; } // Added for repository compatibility
     public string RootCauseAnalysis { get; set; } = string.Empty; // Added for repository compatibility
@@ -104,7 +104,7 @@ public class SMSAuditFinding : BaseAuditableEntity
             TargetCompletionDate = targetDate;
             Status = "In Progress";
             UpdatedBy = assignedBy;
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -127,7 +127,7 @@ public class SMSAuditFinding : BaseAuditableEntity
 
             Status = "Closed";
             UpdatedBy = completedBy;
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -147,10 +147,10 @@ public class SMSAuditFinding : BaseAuditableEntity
             VerifiedBy = verifiedBy;
             VerificationMethod = verificationMethod;
             VerificationEvidence = evidence;
-            VerificationDate = DateTime.UtcNow;
+            VerificationDate = DateTime.Now;
             Status = "Verified";
             UpdatedBy = verifiedBy;
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
 
             return Result.Success();
         }
@@ -160,3 +160,4 @@ public class SMSAuditFinding : BaseAuditableEntity
         }
     }
 }
+

@@ -297,7 +297,7 @@ public partial class ApplicationUsers : ComponentBase
             // ? FIXED: Only set business fields - let pipeline handle audit fields
             user.UserRole = selectedRole;
             // ? REMOVED: user.UpdatedBy = _currentUserService?.UserDisplayName;
-            // ? REMOVED: user.UpdatedDate = DateTime.UtcNow;
+            // ? REMOVED: user.UpdatedDate = DateTime.Now;
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSApplicationUserCommand(user);
@@ -356,7 +356,7 @@ public partial class ApplicationUsers : ComponentBase
             // ? FIXED: Only set business fields - let pipeline handle audit fields
             user.UserRole = null!; // Explicitly assign null with null-forgiving operator
             // ? REMOVED: user.UpdatedBy = _currentUserService?.UserDisplayName;
-            // ? REMOVED: user.UpdatedDate = DateTime.UtcNow;
+            // ? REMOVED: user.UpdatedDate = DateTime.Now;
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSApplicationUserCommand(user);
@@ -447,7 +447,7 @@ public partial class ApplicationUsers : ComponentBase
                 SMSUserType = SMSUserType.Application
                 // ? FIXED: Removed manual audit field assignments
                 // ? REMOVED: CreatedBy = _currentUserService?.UserDisplayName,
-                // ? REMOVED: CreatedDate = DateTime.UtcNow
+                // ? REMOVED: CreatedDate = DateTime.Now
             };
 
             // Create user - pipeline will automatically set CreatedBy/CreatedDate
@@ -551,7 +551,7 @@ public partial class ApplicationUsers : ComponentBase
             
             // ? REMOVED: Manual audit field assignments
             // CurrentUser.UpdatedBy = _currentUserService?.UserDisplayName;
-            // CurrentUser.UpdatedDate = DateTime.UtcNow;
+            // CurrentUser.UpdatedDate = DateTime.Now;
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSApplicationUserCommand(_currentUser);
@@ -1058,3 +1058,4 @@ public partial class ApplicationUsers : ComponentBase
 
     #endregion
 }
+

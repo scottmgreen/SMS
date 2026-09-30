@@ -403,7 +403,7 @@ public class RecalculateSPIDashboardCommandHandler : BaseCommandBundle, IBaseReq
                 return Result<bool>.Failure<bool>(DomainErrors.SPIError.NullOrEmpty);
             }
 
-            var calculationDate = request.CalculationDate ?? DateTime.UtcNow;
+            var calculationDate = request.CalculationDate ?? DateTime.Now;
             var query = new GetSPIDashboardDataQuery(
                 startDate: calculationDate.AddMonths(-12),
                 endDate: calculationDate,
@@ -558,7 +558,7 @@ public class UpdateSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
             existingSpi.AlertsEnabled = request.AlertsEnabled;
             existingSpi.AlertRecipients = request.AlertRecipients;
             existingSpi.UpdatedBy = request.UpdatedBy;
-            existingSpi.UpdatedDate = DateTime.UtcNow;
+            existingSpi.UpdatedDate = DateTime.Now;
 
             // Update the SPI through the service
             var result = await _spiService.UpdateSafetyPerformanceIndicatorAsync(existingSpi, cancellationToken);
@@ -653,7 +653,7 @@ public class UpdateSPIDataPointCommandHandler : BaseCommandBundle, IBaseRequestH
             dataPointToUpdate.VerifiedBy = request.DataPoint.VerifiedBy;
             dataPointToUpdate.VerifiedDate = request.DataPoint.VerifiedDate;
             dataPointToUpdate.UpdatedBy = request.DataPoint.UpdatedBy ?? request.DataPoint.VerifiedBy ?? string.Empty;
-            dataPointToUpdate.UpdatedDate = DateTime.UtcNow;
+            dataPointToUpdate.UpdatedDate = DateTime.Now;
 
             // Save the updated SPI
             var updateResult = await _spiService.UpdateSafetyPerformanceIndicatorAsync(spi, cancellationToken);
@@ -829,7 +829,7 @@ internal static class SPIDataPointEventPublisher
                 complianceThreshold: complianceThreshold,
                 complianceStandard: "TARGET_ALIGNMENT",
                 reportingPeriod: currentDataPoint.Period,
-                complianceCheckDate: DateTime.UtcNow,
+                complianceCheckDate: DateTime.Now,
                 requiresRegulatoryReporting: newStatus is SMS_Domain.Events.SPIComplianceStatus.NonCompliant or SMS_Domain.Events.SPIComplianceStatus.AtRisk,
                 regulatoryBody: "FAA");
 
@@ -970,5 +970,6 @@ public class DeleteSafetyPerformanceIndicatorCommandHandler : BaseCommandBundle,
         }
     }
 }
+
 
 

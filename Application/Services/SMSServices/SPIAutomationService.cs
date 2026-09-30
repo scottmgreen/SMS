@@ -74,7 +74,7 @@ public class SPIAutomationService : ISPIAutomationService
                     Notes = $"Daily hazard submissions: {todaysHazardCount} (raw hazard creation count)",
                     IsVerified = true,
                     VerifiedBy = "SPI_AUTOMATION",
-                    VerifiedDate = DateTime.UtcNow,
+                    VerifiedDate = DateTime.Now,
                     CreatedBy = "SPI_AUTOMATION"
                 };
 
@@ -135,7 +135,7 @@ public class SPIAutomationService : ISPIAutomationService
                     Notes = $"Hazard {hazardId} closed in {daysToClose:F1} days",
                     IsVerified = true,
                     VerifiedBy = "SPI_AUTOMATION",
-                    VerifiedDate = DateTime.UtcNow,
+                    VerifiedDate = DateTime.Now,
                     CreatedBy = "SPI_AUTOMATION"
                 };
 
@@ -202,7 +202,7 @@ public class SPIAutomationService : ISPIAutomationService
                     Notes = $"Assessment {assessmentId} completed in {daysToComplete:F1} days - {(isOnTime ? "On Time" : "Late")}",
                     IsVerified = true,
                     VerifiedBy = "SPI_AUTOMATION",
-                    VerifiedDate = DateTime.UtcNow,
+                    VerifiedDate = DateTime.Now,
                     CreatedBy = "SPI_AUTOMATION"
                 };
 
@@ -271,7 +271,7 @@ public class SPIAutomationService : ISPIAutomationService
                     Notes = $"High risk exposure count: {highRiskCount} (Latest: {riskLevel})",
                     IsVerified = true,
                     VerifiedBy = "SPI_AUTOMATION",
-                    VerifiedDate = DateTime.UtcNow,
+                    VerifiedDate = DateTime.Now,
                     CreatedBy = "SPI_AUTOMATION"
                 };
 
@@ -341,7 +341,7 @@ public class SPIAutomationService : ISPIAutomationService
                     Notes = $"Mitigation {mitigationId} completed {daysFromTarget:F1} days from target - Score: {implementationScore}%",
                     IsVerified = true,
                     VerifiedBy = "SPI_AUTOMATION",
-                    VerifiedDate = DateTime.UtcNow,
+                    VerifiedDate = DateTime.Now,
                     CreatedBy = "SPI_AUTOMATION"
                 };
 
@@ -444,7 +444,7 @@ public class SPIAutomationService : ISPIAutomationService
                     Notes = $"Closure rate: {closureRate:F1}% ({totalActiveCount - overdueCount}/{totalActiveCount} on time)",
                     IsVerified = true,
                     VerifiedBy = "SPI_AUTOMATION",
-                    VerifiedDate = DateTime.UtcNow,
+                    VerifiedDate = DateTime.Now,
                     CreatedBy = "SPI_AUTOMATION"
                 };
 
@@ -525,7 +525,7 @@ public class SPIAutomationService : ISPIAutomationService
                     Notes = $"Risk identification effectiveness: {effectivenessRate:F1}% (Decision: {validationDecision})",
                     IsVerified = true,
                     VerifiedBy = "SPI_AUTOMATION",
-                    VerifiedDate = DateTime.UtcNow,
+                    VerifiedDate = DateTime.Now,
                     CreatedBy = "SPI_AUTOMATION"
                 };
 
@@ -799,4 +799,5 @@ public class SPIAutomationService : ISPIAutomationService
 
     #endregion
 }
+
 

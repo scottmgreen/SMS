@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardReportTracking.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -16,7 +16,7 @@ namespace SMS_Domain.Entities;
 public class HazardReportTracking : BaseAuditableEntity
 {
     // Public constructor for domain usage
-    public HazardReportTracking(HazardReportTrackingID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public HazardReportTracking(HazardReportTrackingID id) : base(id, string.Empty, DateTime.Now) { }
 
 
 
@@ -30,4 +30,5 @@ public class HazardReportTracking : BaseAuditableEntity
     #endregion Core Properties
 
 }
+
 

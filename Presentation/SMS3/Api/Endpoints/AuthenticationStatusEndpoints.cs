@@ -77,7 +77,7 @@ public static class AuthenticationStatusEndpoints
 
             var result = new
             {
-                Timestamp = DateTime.UtcNow,
+                Timestamp = DateTime.Now,
                 IsAuthenticated = isAuthenticated,
                 CurrentUserId = currentUserId,
                 CurrentUserName = currentUserName,
@@ -180,7 +180,7 @@ public static class AuthenticationStatusEndpoints
 
             var result = new
             {
-                Timestamp = DateTime.UtcNow,
+                Timestamp = DateTime.Now,
                 TotalStrategies = strategies.Count,
                 AvailableStrategies = strategies.Where(s => s.IsAvailable).Count(),
                 StrategyDetails = strategies.Select(s => new
@@ -206,3 +206,4 @@ public static class AuthenticationStatusEndpoints
         }
     }
 }
+

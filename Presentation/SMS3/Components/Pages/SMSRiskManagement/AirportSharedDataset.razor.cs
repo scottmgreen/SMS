@@ -250,7 +250,7 @@ public partial class AirportSharedDataset : ComponentBase
             }
 
             // Create AirportSharedDataset entity
-            var datasetId = new AirportSharedDatasetID($"ADAM-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
+            var datasetId = new AirportSharedDatasetID($"ADAM-{DateTime.Now:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}");
             var dataset = new SMS_Domain.Entities.AirportSharedDataset(datasetId)
             {
                 Code = datasetId.Value,

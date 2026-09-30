@@ -213,7 +213,7 @@ public sealed class ReportValidationService : IReportValidationService
             // CRITICAL: Reset the validation to make it appear in Validation tab again
             validation.Status = ReportValidationStatus.ValidationNeeded;
             validation.Stage = "INITIAL";
-            validation.UpdatedDate = DateTime.UtcNow;
+            validation.UpdatedDate = DateTime.Now;
 
             // IMPORTANT: Clear these key fields so the validation appears as needing re-validation
             validation.ValidationType = null;        // Clear validation type - this is key!
@@ -222,7 +222,7 @@ public sealed class ReportValidationService : IReportValidationService
             validation.ValidatedBy = null;          // Clear who validated it
 
             // Add a comment about the reset
-            validation.ValidationComments = $"Reset on {DateTime.UtcNow:yyyy-MM-dd HH:mm} - Returned for re-validation";
+            validation.ValidationComments = $"Reset on {DateTime.Now:yyyy-MM-dd HH:mm} - Returned for re-validation";
 
             var updateResult = await _dataService.UpdateReportValidationAsync(validation, ct);
             
@@ -259,10 +259,10 @@ public sealed class ReportValidationService : IReportValidationService
             var validation = validationResult.Value;
             validation.ValidationDecision = decision.Value;
             validation.ValidatedBy = validatedBy;
-            validation.ValidatedDate = DateTime.UtcNow;
+            validation.ValidatedDate = DateTime.Now;
             validation.ValidationComments = comments;
             validation.Status = ReportValidationStatus.ValidationComplete;
-            validation.UpdatedDate = DateTime.UtcNow;
+            validation.UpdatedDate = DateTime.Now;
 
             var result = await _dataService.UpdateReportValidationAsync(validation, ct);
             
@@ -406,7 +406,7 @@ public sealed class ReportValidationService : IReportValidationService
                         initialAssessment.Status = RiskAssessmentStatus.AssessmentCreate;
                         initialAssessment.CompletedDate = null;
                         initialAssessment.CompletedBy = null;
-                        initialAssessment.UpdatedDate = DateTime.UtcNow;
+                        initialAssessment.UpdatedDate = DateTime.Now;
                         var updateAssessmentResult = await _riskAssessmentService.UpdateRiskAssessmentAsync(initialAssessment, ct);
                         if (updateAssessmentResult.IsSuccess && updateAssessmentResult.Value is not null)
                         {
@@ -436,7 +436,7 @@ public sealed class ReportValidationService : IReportValidationService
                         initialAssessment.Status = RiskAssessmentStatus.AssessmentUnderway;
                         initialAssessment.CompletedDate = null;
                         initialAssessment.CompletedBy = null;
-                        initialAssessment.UpdatedDate = DateTime.UtcNow;
+                        initialAssessment.UpdatedDate = DateTime.Now;
 
                         var updateAssessmentResult = await _riskAssessmentService.UpdateRiskAssessmentAsync(initialAssessment, ct);
                         if (updateAssessmentResult.IsSuccess && updateAssessmentResult.Value is not null)
@@ -550,5 +550,6 @@ public sealed class ReportValidationService : IReportValidationService
 
     #endregion
 }
+
 
 

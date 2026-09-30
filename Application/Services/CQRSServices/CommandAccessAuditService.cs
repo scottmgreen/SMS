@@ -57,7 +57,7 @@ public class CommandAccessAuditService : ICommandAccessAuditService
             var auditEntry = new AuditLogEntry(new AuditLogEntryID(Guid.NewGuid().ToString()))
             {
                 UserID = userId,
-                EventDateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                EventDateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 MessageType = AuditMessageType.DetermineFromCommandType(commandType), // ?? SMART ENUM: Type-safe, intelligent categorization
                 Severity = "INFORMATION",
                 Module = moduleName, // Shows entity name like "HazardLocation" instead of generic "SMS_CommandAudit"
@@ -153,3 +153,4 @@ public class CommandAccessAuditService : ICommandAccessAuditService
         }
     }
 }
+

@@ -80,7 +80,7 @@ public class SMS_CircuitHandler : BaseCircuitHandler
             Email = user.UserName.Value,
             FirstName = user.FirstName.Value,
             LastName = user.LastName.Value,
-            LoginTime = DateTime.UtcNow,
+            LoginTime = DateTime.Now,
             IsAuthenticated = true
         };
 
@@ -128,5 +128,6 @@ public class CircuitAuthState
     public DateTime LoginTime { get; set; }
     public bool IsAuthenticated { get; set; }
 }
+
 
 

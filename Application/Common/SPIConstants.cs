@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SPIConstants.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -257,7 +257,7 @@ public static class SPIConstants
             if (parameterType == typeof(string))
                 return "Test";
             if (parameterType == typeof(DateTime))
-                return DateTime.UtcNow;
+                return DateTime.Now;
             if (parameterType == typeof(bool))
                 return false;
             if (parameterType.IsEnum)
@@ -313,4 +313,5 @@ public static class SPIConstants
         public const string MeasurementDateRequired = "Measurement date is required";
         public const string VerifiedByRequired = "Verified by is required when marking as verified";
     }
+
 

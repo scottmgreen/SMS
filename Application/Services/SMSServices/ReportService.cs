@@ -47,7 +47,7 @@ public sealed class ReportService : IReportService
                 //        id: new SMSEventID("EV-0000"),
                 //        reportId: result.Value.Code,
                 //        createdBy: result.Value.CreatedBy ?? "SYSTEM",
-                //        createdDate: result.Value.CreatedDate ?? DateTime.UtcNow);
+                //        createdDate: result.Value.CreatedDate ?? DateTime.Now);
 
                 //    var eventResult = await _eventBus.PublishDomainEventAsync(reportCreatedEvent, EventExecutionMode.Immediate, ct).ConfigureAwait(false);
                 //    if (eventResult.IsFailure)
@@ -192,7 +192,7 @@ public sealed class ReportService : IReportService
             var report = reportResult.Value;
             report.Status = status;
             report.UpdatedBy = updatedBy;
-            report.UpdatedDate = DateTime.UtcNow;
+            report.UpdatedDate = DateTime.Now;
 
             var updateResult = await _dataService.UpdateReportAsync(report, ct);
             
@@ -229,7 +229,7 @@ public sealed class ReportService : IReportService
             var report = reportResult.Value;
             report.Status = ReportStatus.Created;
             report.UpdatedBy = submittedBy;
-            report.UpdatedDate = DateTime.UtcNow;
+            report.UpdatedDate = DateTime.Now;
 
             var result = await _dataService.UpdateReportAsync(report, ct);
             if (result.IsSuccess)
@@ -246,4 +246,5 @@ public sealed class ReportService : IReportService
         }
     }
 }
+
 

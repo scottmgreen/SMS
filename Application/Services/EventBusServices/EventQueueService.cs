@@ -37,7 +37,7 @@ public class EventQueueService : IEventQueueService
     private readonly IBaseMediator _mediator;
     private readonly IEventQueueDataService _eventQueueDataService;
     private readonly QueuedEventTypeRegistry _queuedEventTypeRegistry;
-    private static readonly JsonSerializerOptions EventJsonOptions = new()
+    private static readonly JsonSerializerOptions _eventJsonOptions = new()
     {
         PropertyNameCaseInsensitive = true
     };
@@ -212,7 +212,7 @@ public class EventQueueService : IEventQueueService
                 events = allEvents
                     .GroupBy(e => e.Id)
                     .Select(g => g.First())
-                    .OrderByDescending(e => (int)e.Priority)
+                    .OrderByDescending(e => e.Priority.Id)
                     .ThenBy(e => e.QueuedAt)
                     .Take(max)
                     .ToList();
@@ -355,7 +355,7 @@ public class EventQueueService : IEventQueueService
 
             var pendingEvents = pendingResult.Value
                 .Where(e => e.Status == QueuedEventStatus.Pending)
-                .OrderByDescending(e => (int)e.Priority)
+                .OrderByDescending(e => e.Priority.Id)
                 .ThenBy(e => e.QueuedAt)
                 .ToList();
 
@@ -457,7 +457,7 @@ public class EventQueueService : IEventQueueService
                 return Result.Failure<string>(new Error("QUEUE_REBUILD_INVALID_STATUS", $"Event {queueCode} cannot be rebuilt from status {queuedEvent.Status}."));
             }
 
-            var emailEvent = JsonSerializer.Deserialize<EmailNotificationEvent>(queuedEvent.EventData, EventJsonOptions);
+                var emailEvent = JsonSerializer.Deserialize<EmailNotificationEvent>(queuedEvent.EventData, _eventJsonOptions);
             if (emailEvent is null)
             {
                 return Result.Failure<string>(new Error("QUEUE_REBUILD_DESERIALIZE_FAILED", "Unable to deserialize queued EmailNotificationEvent."));
@@ -784,7 +784,7 @@ public class EventQueueService : IEventQueueService
 
         try
         {
-            return JsonSerializer.Deserialize(eventData, eventType, EventJsonOptions);
+            return JsonSerializer.Deserialize(eventData, eventType, _eventJsonOptions);
         }
         catch (Exception ex)
         {
@@ -945,7 +945,7 @@ public class EventQueueService : IEventQueueService
                 return true;
             }
 
-            value = DateTime.UtcNow;
+            value = DateTime.Now;
             return true;
         }
 
@@ -1019,7 +1019,7 @@ public class EventQueueService : IEventQueueService
 
         try
         {
-            value = jsonProperty.Deserialize(propertyType, EventJsonOptions);
+                        value = jsonProperty.Deserialize(propertyType, _eventJsonOptions);
             return true;
         }
         catch
@@ -1183,7 +1183,7 @@ public class EventQueueService : IEventQueueService
                 return Result.Failure(new Error("UNKNOWN_UI_EVENT_TYPE", $"Unknown UI event type: {queuedEvent.EventType}"));
             }
 
-            var uiEvent = (IBaseUIEvent?)JsonSerializer.Deserialize(queuedEvent.EventData, eventType, EventJsonOptions);
+                var uiEvent = (IBaseUIEvent?)JsonSerializer.Deserialize(queuedEvent.EventData, eventType, _eventJsonOptions);
             if (uiEvent == null)
             {
                 return Result.Failure(new Error("DESERIALIZATION_FAILED", $"Could not deserialize UI event: {queuedEvent.EventType}"));
@@ -1239,4 +1239,5 @@ public class EventQueueService : IEventQueueService
 
     #endregion
 }
+
 

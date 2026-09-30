@@ -165,7 +165,7 @@ public sealed class SMSOrganizationRepository : BaseRepository<SMSOrganizationRe
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationName, organization.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationDescription, organization.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, string.IsNullOrWhiteSpace(createdBy) ? "SYSTEM" : createdBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
             var newID = new SqlParameter(ParameterNames.pmNewID, SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newOrganizationCode = new SqlParameter(ParameterNames.pmNewOrganizationCode, SqlDbType.VarChar, 50) { Direction = ParameterDirection.Output };
@@ -208,7 +208,7 @@ public sealed class SMSOrganizationRepository : BaseRepository<SMSOrganizationRe
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationName, organization.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationDescription, organization.Description ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, string.IsNullOrWhiteSpace(updatedBy) ? "SYSTEM" : updatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -256,3 +256,4 @@ public sealed class SMSOrganizationRepository : BaseRepository<SMSOrganizationRe
         }
     }
 }
+

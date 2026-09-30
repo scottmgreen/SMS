@@ -234,13 +234,13 @@ public sealed class QueuedEventTypeRegistry
 
         if (type == typeof(DateTime))
         {
-            value = DateTime.UtcNow;
+            value = DateTime.Now;
             return true;
         }
 
         if (type == typeof(DateTimeOffset))
         {
-            value = DateTimeOffset.UtcNow;
+            value = DateTimeOffset.Now;
             return true;
         }
 
@@ -363,3 +363,5 @@ public sealed class QueuedEventTypeRegistry
                assemblyName.StartsWith("Windows", StringComparison.OrdinalIgnoreCase);
     }
 }
+
+

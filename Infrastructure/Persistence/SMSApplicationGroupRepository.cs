@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSApplicationGroupRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -163,7 +163,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
         assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompanyCode, companyCode));
         assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmGroupCode, groupCode));
         assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedBy, updatedBy ?? string.Empty));
-        assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.UtcNow));
+        assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.Now));
 
         var newID = new SqlParameter(ParameterNames.pmNewID, SqlDbType.Int)
         {
@@ -246,7 +246,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupContactEmail, applicationGroup.ContactEmail ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupIsActive, applicationGroup.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, applicationGroup.UpdatedBy ?? applicationGroup.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, applicationGroup.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, applicationGroup.UpdatedDate ?? DateTime.Now));
             cmd.Parameters.Add(DataAccess.Parameter("@pRowsAffected", 0, null));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
@@ -457,7 +457,7 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupUserCode, userCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationGroupCode, groupCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedBy, assignedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.Now));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(newID);
@@ -719,3 +719,4 @@ public sealed class SMSApplicationGroupRepository : BaseRepository<SMSApplicatio
         }
     }
 }
+

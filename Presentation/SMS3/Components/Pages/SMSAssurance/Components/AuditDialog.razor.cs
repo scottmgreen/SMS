@@ -1,4 +1,4 @@
-﻿using SMS_Domain.Enums;
+using SMS_Domain.Enums;
 using SMS3.Components.Shared.UIHelpers;
 using Radzen;
 using SMS_Domain.Entities;
@@ -242,7 +242,7 @@ public partial class AuditDialog : ComponentBase
                 Audit.ExecutiveSummary = _executiveSummary ?? string.Empty;
                 Audit.Notes = _notes ?? string.Empty;
                 Audit.UpdatedBy = "CURRENT_USER";
-                Audit.UpdatedDate = DateTime.UtcNow;
+                Audit.UpdatedDate = DateTime.Now;
 
                 var command = new UpdateSMSAuditCommand(Audit);
                 var result = await _mediator.SendAsync(command, CancellationToken.None);
@@ -355,4 +355,5 @@ public partial class AuditDialog : ComponentBase
     private bool _showActualDates => _status == "In Progress" || _status == "Completed";
     #endregion
 }
+
 

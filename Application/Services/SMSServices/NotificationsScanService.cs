@@ -207,7 +207,7 @@ public sealed class NotificationsScanService : INotificationsScanService
         }
 
         var executionMode = ResolveReportExecutionMode();
-        var nowUtc = DateTime.UtcNow;
+        var nowUtc = DateTime.Now;
         var queuedCount = 0;
 
         foreach (var report in reportsResult.Value)
@@ -347,7 +347,7 @@ public sealed class NotificationsScanService : INotificationsScanService
             return MitigationTimingState.None;
         }
 
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var timeUntilTarget = targetDate - now;
 
         if (timeUntilTarget.TotalHours < 0)
@@ -357,12 +357,12 @@ public sealed class NotificationsScanService : INotificationsScanService
 
         if (timeUntilTarget.TotalHours <= hoursBefore)
         {
-            return MitigationTimingState.Due24Hours;
+            return MitigationTimingState.DueInFinalWindow;
         }
 
         if (timeUntilTarget.TotalDays <= daysInAdvance)
         {
-            return MitigationTimingState.Due14Days;
+            return MitigationTimingState.DueInAdvanceWindow;
         }
 
         return MitigationTimingState.None;
@@ -390,13 +390,19 @@ public sealed class NotificationsScanService : INotificationsScanService
 
     private static string BuildMitigationAlertSubject(string mitigationCode, MitigationTimingState timingState)
     {
-        var title = timingState switch
+        var title = "Mitigation Target Date Alert";
+        if (timingState == MitigationTimingState.DueInAdvanceWindow)
         {
-            MitigationTimingState.Due14Days => "Mitigation 14 Day Target Date Alert",
-            MitigationTimingState.Due24Hours => "Mitigation 24 Hour Target Date Alert",
-            MitigationTimingState.Overdue => "Mitigation Past Target Date Alert",
-            _ => "Mitigation Target Date Alert"
-        };
+            title = "Mitigation 14 Day Target Date Alert";
+        }
+        else if (timingState == MitigationTimingState.DueInFinalWindow)
+        {
+            title = "Mitigation 24 Hour Target Date Alert";
+        }
+        else if (timingState == MitigationTimingState.Overdue)
+        {
+            title = "Mitigation Past Target Date Alert";
+        }
 
         return $"{title} - {mitigationCode}";
     }
@@ -404,13 +410,19 @@ public sealed class NotificationsScanService : INotificationsScanService
     private static string BuildMitigationTargetDateNotificationEmailHtml(Mitigation mitigation, MitigationTimingState timingState, int daysInAdvance, int hoursBefore)
     {
         var targetDate = mitigation.TargetDate?.ToString("MMMM dd, yyyy h:mm tt") ?? "Not set";
-        var alertText = timingState switch
+        var alertText = "Mitigation target-date alert.";
+        if (timingState == MitigationTimingState.DueInAdvanceWindow)
         {
-            MitigationTimingState.Due14Days => $"This mitigation reaches its target date in approximately {daysInAdvance} days.",
-            MitigationTimingState.Due24Hours => $"This mitigation reaches its target date in approximately {hoursBefore} hours.",
-            MitigationTimingState.Overdue => "This mitigation is now overdue and requires immediate attention.",
-            _ => "Mitigation target-date alert."
-        };
+            alertText = $"This mitigation reaches its target date in approximately {daysInAdvance} days.";
+        }
+        else if (timingState == MitigationTimingState.DueInFinalWindow)
+        {
+            alertText = $"This mitigation reaches its target date in approximately {hoursBefore} hours.";
+        }
+        else if (timingState == MitigationTimingState.Overdue)
+        {
+            alertText = "This mitigation is now overdue and requires immediate attention.";
+        }
 
         return SMSEmailTemplateBuilder.BuildStandardEmail(
             title: "Mitigation Target Date Notification",
@@ -526,11 +538,5 @@ public sealed class NotificationsScanService : INotificationsScanService
             });
     }
 
-    private enum MitigationTimingState
-    {
-        None,
-        Due14Days,
-        Due24Hours,
-        Overdue
-    }
 }
+

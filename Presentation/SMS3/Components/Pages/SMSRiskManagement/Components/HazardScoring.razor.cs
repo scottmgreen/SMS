@@ -169,7 +169,7 @@ public partial class HazardScoring : ComponentBase
                     MemberName = GetMemberName(p.SMSUserCode),
                     SeverityScore = severity,
                     LikelihoodScore = likelihood,
-                    SubmittedDate = (p.UpdatedDate ?? p.CreatedDate) ?? DateTime.UtcNow
+                    SubmittedDate = (p.UpdatedDate ?? p.CreatedDate) ?? DateTime.Now
                 };
             })
             .GroupBy(p => p.MemberId, StringComparer.OrdinalIgnoreCase)
@@ -201,7 +201,7 @@ public partial class HazardScoring : ComponentBase
                 MemberName = GetMemberName(p.SMSUserCode),
                 SeverityScore = p.ResidualSeverity ?? p.Severity ?? 0,
                 LikelihoodScore = p.ResidualLikelihood ?? p.Likelihood ?? 0,
-                SubmittedDate = (p.UpdatedDate ?? p.CreatedDate) ?? DateTime.UtcNow
+                SubmittedDate = (p.UpdatedDate ?? p.CreatedDate) ?? DateTime.Now
             })
             .GroupBy(p => p.MemberId, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.OrderByDescending(x => x.SubmittedDate).First())
@@ -592,7 +592,7 @@ public partial class HazardScoring : ComponentBase
                         panel.ResidualLikelihood = null;
                         panel.ResidualScore = null;
                         panel.ResidualRationale = Step5ExcludedMarker;
-                        panel.UpdatedDate = DateTime.UtcNow;
+                        panel.UpdatedDate = DateTime.Now;
                         panel.UpdatedBy = _currentUserService.UserCode;
 
                         Logger.LogInformation("Marking panel {PanelCode} as excluded from Step 5 for stakeholder {StakeholderCode}", panel.Code, panel.SMSUserCode);
@@ -608,7 +608,7 @@ public partial class HazardScoring : ComponentBase
                         panel.InitialLikelihood = null;
                         panel.InitialScore = null;
                         panel.InitialRationale = Step5OnlyMarker;
-                        panel.UpdatedDate = DateTime.UtcNow;
+                        panel.UpdatedDate = DateTime.Now;
                         panel.UpdatedBy = _currentUserService.UserCode;
 
                         Logger.LogInformation("Step 4 removal kept Step 5 independent: marking panel {PanelCode} as Step 5-only for stakeholder {StakeholderCode}",
@@ -632,7 +632,7 @@ public partial class HazardScoring : ComponentBase
                         panel.InitialLikelihood = null;
                         panel.InitialScore = null;
                         panel.InitialRationale = Step5OnlyMarker;
-                        panel.UpdatedDate = DateTime.UtcNow;
+                        panel.UpdatedDate = DateTime.Now;
                         panel.UpdatedBy = _currentUserService.UserCode;
 
                         Logger.LogInformation("Marking panel {PanelCode} as Step 5-only while removing from Step 4 for stakeholder {StakeholderCode}", panel.Code, panel.SMSUserCode);
@@ -668,7 +668,7 @@ public partial class HazardScoring : ComponentBase
                 {
                     // Reactivate hidden Step 5-only member back into Step 4 without creating duplicates.
                     existingAssessmentPanel.InitialRationale = null;
-                    existingAssessmentPanel.UpdatedDate = DateTime.UtcNow;
+                    existingAssessmentPanel.UpdatedDate = DateTime.Now;
                     existingAssessmentPanel.UpdatedBy = _currentUserService.UserCode;
 
                     Logger.LogInformation("Reactivated existing panel {PanelCode} for Step 4 stakeholder {StakeholderCode}",
@@ -686,7 +686,7 @@ public partial class HazardScoring : ComponentBase
                     if (existingStep4Panel is not null)
                     {
                         existingStep4Panel.ResidualRationale = null;
-                        existingStep4Panel.UpdatedDate = DateTime.UtcNow;
+                        existingStep4Panel.UpdatedDate = DateTime.Now;
                         existingStep4Panel.UpdatedBy = _currentUserService.UserCode;
 
                         Logger.LogInformation("Reactivated existing panel {PanelCode} for Step 5 stakeholder {StakeholderCode}",
@@ -740,7 +740,7 @@ public partial class HazardScoring : ComponentBase
                     if (!string.Equals(createdPanel.InitialRationale, Step5OnlyMarker, StringComparison.Ordinal))
                     {
                         createdPanel.InitialRationale = Step5OnlyMarker;
-                        createdPanel.UpdatedDate = DateTime.UtcNow;
+                        createdPanel.UpdatedDate = DateTime.Now;
                         createdPanel.UpdatedBy = _currentUserService.UserCode;
 
                         Logger.LogInformation("Post-create marker sync: setting Step 5-only marker on panel {PanelCode} for stakeholder {StakeholderCode}",
@@ -756,7 +756,7 @@ public partial class HazardScoring : ComponentBase
                     if (!string.Equals(createdPanel.ResidualRationale, Step5ExcludedMarker, StringComparison.Ordinal))
                     {
                         createdPanel.ResidualRationale = Step5ExcludedMarker;
-                        createdPanel.UpdatedDate = DateTime.UtcNow;
+                        createdPanel.UpdatedDate = DateTime.Now;
                         createdPanel.UpdatedBy = _currentUserService.UserCode;
 
                         Logger.LogInformation("Post-create marker sync: setting Step 5-excluded marker on panel {PanelCode} for stakeholder {StakeholderCode}",
@@ -1121,7 +1121,7 @@ public partial class HazardScoring : ComponentBase
                 // }
             }
 
-            Hazard.UpdatedDate = DateTime.UtcNow;
+            Hazard.UpdatedDate = DateTime.Now;
             Hazard.UpdatedBy = _currentUserService.UserCode;
 
             Logger.LogInformation("Calculated scoring data for hazard {HazardCode}: Step={Step}, IsValid={IsValid}, CalculatedRiskLevel={CalculatedRiskLevel}, MatrixCode={MatrixCode}, AverageScore={AverageScore}",
@@ -1328,4 +1328,5 @@ public partial class HazardScoring : ComponentBase
         return $"{category.ToUpper()} - {type.ToUpper()}";
     }
 }
+
 

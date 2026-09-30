@@ -55,7 +55,7 @@ public class QueryAccessAuditService : IQueryAccessAuditService
             var auditEntry = new AuditLogEntry(new AuditLogEntryID(Guid.NewGuid().ToString()))
             {
                 UserID = userId,
-                EventDateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+                EventDateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
                 MessageType = AuditMessageType.CrudRead, // ?? SMART ENUM: Type-safe, all queries are read operations
                 Severity = "INFORMATION",
                 Module = moduleName, // Now shows entity name like "HazardLocation" instead of generic "SMS_QueryAudit"
@@ -136,3 +136,4 @@ public class QueryAccessAuditService : IQueryAccessAuditService
         }
     }
 }
+

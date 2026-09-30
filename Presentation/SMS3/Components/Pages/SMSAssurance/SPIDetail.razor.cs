@@ -133,7 +133,7 @@ public partial class SPIDetail : ComponentBase
             MeasurementDate = DateTime.Today,
             DataSource = SPI.DataSource,
             CreatedBy = _currentUserService.UserCode,
-            CreatedDate = DateTime.UtcNow,
+            CreatedDate = DateTime.Now,
             IsVerified = true,
             Period = string.Empty
         };

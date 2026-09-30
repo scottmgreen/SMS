@@ -179,7 +179,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                             mitigationId: (updatedMitigation.Code ?? updatedMitigation.Id.Value ?? string.Empty).Trim(),
                             status: currentStatusValue,
                             changedBy: updatedMitigation.UpdatedBy ?? updatedMitigation.CreatedBy ?? string.Empty,
-                            changedDate: updatedMitigation.UpdatedDate ?? DateTime.UtcNow)
+                            changedDate: updatedMitigation.UpdatedDate ?? DateTime.Now)
                         {
                             ReportId = reportId
                         };
@@ -196,7 +196,7 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                         if (string.Equals(currentStatusValue, MitigationStatus.MitigationImplemented.Value, StringComparison.OrdinalIgnoreCase))
                         {
                             var mitigationCode = (updatedMitigation.Code ?? updatedMitigation.Id.Value ?? string.Empty).Trim();
-                            var completedDate = updatedMitigation.UpdatedDate ?? DateTime.UtcNow;
+                            var completedDate = updatedMitigation.UpdatedDate ?? DateTime.Now;
                             var completedBy = updatedMitigation.ApprovedBy ?? updatedMitigation.UpdatedBy ?? updatedMitigation.CreatedBy ?? string.Empty;
 
                             var mitigationCompletedEvent = new MitigationCompletedEvent(
@@ -307,4 +307,5 @@ public class DeleteMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
         }
     }
 }
+
 

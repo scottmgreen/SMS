@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="MitigationAssignment.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -15,10 +15,11 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class MitigationAssignment : BaseAuditableEntity
 {
-    public MitigationAssignment(MitigationAssignmentID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public MitigationAssignment(MitigationAssignmentID id) : base(id, string.Empty, DateTime.Now) { }
 
     public string? Code { get; set; }
     public string? MitigationCode { get; set; }
     public string? DepartmentCode { get; set; }
 }
+
 

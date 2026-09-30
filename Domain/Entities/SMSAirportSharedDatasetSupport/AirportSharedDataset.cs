@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="AirportSharedDataset.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -23,7 +23,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class AirportSharedDataset : BaseAuditableEntity
 {
-    public AirportSharedDataset(AirportSharedDatasetID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public AirportSharedDataset(AirportSharedDatasetID id) : base(id, string.Empty, DateTime.Now) { }
 
     #region Required References
 
@@ -189,3 +189,4 @@ public sealed class AirportSharedDataset : BaseAuditableEntity
 
     #endregion
 }
+

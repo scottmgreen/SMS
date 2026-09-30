@@ -1,4 +1,4 @@
-﻿using SMS3.Components.Shared.UIHelpers;
+using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration.Extensions;
 using SMS_Domain.Entities; // Add explicit domain entities
 
@@ -259,7 +259,7 @@ public partial class SPIDashboard : ComponentBase, SMS3.Components.Shared.ISPIDa
     #region Filter Methods
     private (DateTime? StartDate, DateTime? EndDate) GetDateRange()
     {
-        var endDate = DateTime.UtcNow;
+        var endDate = DateTime.Now;
         var startDate = SelectedTimePeriod switch
         {
             "Last 3 Months" => endDate.AddMonths(-3),
@@ -474,7 +474,7 @@ public partial class SPIDashboard : ComponentBase, SMS3.Components.Shared.ISPIDa
     {
         if (!spiCard.LastMeasurementDate.HasValue) return "No data";
 
-        var timeAgo = DateTime.UtcNow - spiCard.LastMeasurementDate.Value;
+        var timeAgo = DateTime.Now - spiCard.LastMeasurementDate.Value;
 
         if (timeAgo.TotalDays < 1)
             return "Today";
@@ -501,3 +501,4 @@ public partial class SPIDashboard : ComponentBase, SMS3.Components.Shared.ISPIDa
     }
     #endregion
 }
+

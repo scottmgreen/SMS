@@ -155,7 +155,7 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
                     { "Priority", domainEvent.Priority.ToString() },
                     { "CreatedBy", domainEvent.CreatedBy },
                     { "NotificationType", "popup" },
-                    { "AutoDismiss", domainEvent.Priority <= SMS_Domain.Enums.HazardPriority.Medium }
+                    { "AutoDismiss", domainEvent.Priority?.Rank <= SMS_Domain.Enums.HazardPriority.Medium.Rank }
                 });
 
             var uiResult = await _eventBus.PublishUIEventAsync(uiNotificationEvent, EventExecutionMode.Manual, cancellationToken);
@@ -234,43 +234,66 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
 
     private UIEventPriority GetUINotificationPriority(SMS_Domain.Enums.HazardPriority hazardPriority)
     {
-        return hazardPriority switch
+        if (hazardPriority == SMS_Domain.Enums.HazardPriority.Critical)
         {
-            SMS_Domain.Enums.HazardPriority.Critical => UIEventPriority.Critical,
-            SMS_Domain.Enums.HazardPriority.High => UIEventPriority.High,
-            SMS_Domain.Enums.HazardPriority.Medium => UIEventPriority.Normal,
-            _ => UIEventPriority.Low
-        };
+            return UIEventPriority.Critical;
+        }
+
+        if (hazardPriority == SMS_Domain.Enums.HazardPriority.High)
+        {
+            return UIEventPriority.High;
+        }
+
+        if (hazardPriority == SMS_Domain.Enums.HazardPriority.Medium)
+        {
+            return UIEventPriority.Normal;
+        }
+
+        return UIEventPriority.Low;
     }
 
     private List<string> GetEmailRecipientsByPriority(SMS_Domain.Enums.HazardPriority priority)
     {
-        return priority switch
+        if (priority == SMS_Domain.Enums.HazardPriority.Critical)
         {
-            SMS_Domain.Enums.HazardPriority.Critical => new List<string>
+            return new List<string>
             {
                 "safety.manager@pdxairport.com",
                 "operations.director@pdxairport.com",
                 "sms.coordinator@pdxairport.com"
-            },
-            SMS_Domain.Enums.HazardPriority.High => new List<string>
+            };
+        }
+
+        if (priority == SMS_Domain.Enums.HazardPriority.High)
+        {
+            return new List<string>
             {
                 "safety.manager@pdxairport.com",
                 "sms.coordinator@pdxairport.com"
-            },
-            _ => new List<string> { "safety.team@pdxairport.com" }
-        };
+            };
+        }
+
+        return new List<string> { "safety.team@pdxairport.com" };
     }
 
     private EmailPriority GetEmailPriorityFromHazardPriority(SMS_Domain.Enums.HazardPriority hazardPriority)
     {
-        return hazardPriority switch
+        if (hazardPriority == SMS_Domain.Enums.HazardPriority.Critical)
         {
-            SMS_Domain.Enums.HazardPriority.Critical => EmailPriority.Urgent,
-            SMS_Domain.Enums.HazardPriority.High => EmailPriority.High,
-            SMS_Domain.Enums.HazardPriority.Medium => EmailPriority.Normal,
-            _ => EmailPriority.Low
-        };
+            return EmailPriority.Urgent;
+        }
+
+        if (hazardPriority == SMS_Domain.Enums.HazardPriority.High)
+        {
+            return EmailPriority.High;
+        }
+
+        if (hazardPriority == SMS_Domain.Enums.HazardPriority.Medium)
+        {
+            return EmailPriority.Normal;
+        }
+
+        return EmailPriority.Low;
     }
 
     private string CreateHazardNotificationEmailBody(SMS_Domain.Events.HazardCreatedEvent domainEvent)
@@ -318,7 +341,7 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
 
         <div class='footer'>
             <p><strong>SMS Safety Management System</strong> - Automated Notification<br/>
-            Event ID: {domainEvent.EventId} | Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm} UTC</p>
+            Event ID: {domainEvent.EventId} | Generated: {DateTime.Now:yyyy-MM-dd HH:mm} UTC</p>
         </div>
     </div>
 </body>
@@ -327,13 +350,22 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
 
     private string GetPriorityColor(SMS_Domain.Enums.HazardPriority priority)
     {
-        return priority switch
+        if (priority == SMS_Domain.Enums.HazardPriority.Critical)
         {
-            SMS_Domain.Enums.HazardPriority.Critical => "#dc3545",
-            SMS_Domain.Enums.HazardPriority.High => "#fd7e14",
-            SMS_Domain.Enums.HazardPriority.Medium => "#ffc107",
-            _ => "#28a745"
-        };
+            return "#dc3545";
+        }
+
+        if (priority == SMS_Domain.Enums.HazardPriority.High)
+        {
+            return "#fd7e14";
+        }
+
+        if (priority == SMS_Domain.Enums.HazardPriority.Medium)
+        {
+            return "#ffc107";
+        }
+
+        return "#28a745";
     }
 }
 /// <summary>
@@ -396,7 +428,7 @@ public sealed class HazardStatusChangedEventHandler : BaseDomainEventHandler<Haz
             return Result.Success();
         }
 
-        var closureDate = domainEvent.StatusChangeDate == default ? DateTime.UtcNow : domainEvent.StatusChangeDate;
+        var closureDate = domainEvent.StatusChangeDate == default ? DateTime.Now : domainEvent.StatusChangeDate;
         var submittedDate = domainEvent.TimeInCurrentStatus.HasValue
             ? closureDate.Subtract(domainEvent.TimeInCurrentStatus.Value)
             : closureDate;
@@ -781,7 +813,7 @@ public sealed class MitigationOverdueEventHandler : BaseDomainEventHandler<Mitig
 
     protected override async Task<Result> HandleDomainEventAsync(MitigationOverdueEvent domainEvent, CancellationToken cancellationToken)
     {
-        var calculationDate = domainEvent.DueDate == default ? DateTime.UtcNow : domainEvent.DueDate;
+        var calculationDate = domainEvent.DueDate == default ? DateTime.Now : domainEvent.DueDate;
 
         var result = await _spiAutomationService.UpdateCorrectiveActionClosureAsync(calculationDate, cancellationToken);
         if (result.IsFailure)
@@ -1436,3 +1468,4 @@ public class SPIThresholdEventHandler : BaseDomainEventHandler<SPIThresholdExcee
 
 
 }
+

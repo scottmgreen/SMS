@@ -64,7 +64,7 @@ public class SMSDatabaseBenchmarks
                 
                 // UPDATE
                 var updatedHazard = readResult.Value;
-                updatedHazard.Description = $"Updated at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}";
+                updatedHazard.Description = $"Updated at {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
                 var updateCommand = new UpdateHazardCommand(updatedHazard);
                 var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
                 
@@ -114,7 +114,7 @@ public class SMSDatabaseBenchmarks
                 
                 // UPDATE
                 var updatedReport = readResult.Value;
-                updatedReport.Description = $"Updated at {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}";
+                updatedReport.Description = $"Updated at {DateTime.Now:yyyy-MM-dd HH:mm:ss}";
                 var updateCommand = new UpdateReportCommand(updatedReport);
                 var updateResult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
                 
@@ -454,7 +454,7 @@ public class SMSCachingBenchmarks
                 cache.Remove(lruKey);
             }
             
-            cache[key] = (value, DateTime.UtcNow);
+            cache[key] = (value, DateTime.Now);
         }
     }
 }

@@ -80,7 +80,7 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
             // Add strategy-specific data
             userData["SMS_AuthMethod"] = "Context";
             userData["SMS_AuthStrategy"] = StrategyName;
-            userData["SMS_StoredAt"] = DateTime.UtcNow.ToString("O");
+            userData["SMS_StoredAt"] = DateTime.Now.ToString("O");
             userData["SMS_RequestId"] = context.TraceIdentifier ?? Guid.NewGuid().ToString();
 
             // ?? CRITICAL: Add any additional data (like 2FA markers)
@@ -342,4 +342,5 @@ public class ContextBasedAuthenticationStrategy : IAuthenticationStrategy
         }
     }
 }
+
 

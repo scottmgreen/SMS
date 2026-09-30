@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -216,7 +216,7 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditExecutiveSummary, audit.ExecutiveSummary));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditNotes, audit.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, audit.UpdatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, audit.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, audit.UpdatedDate ?? DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -308,7 +308,7 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
             audit.ActualStartDate = actualStartDate;
             audit.Status = "InProgress";
             audit.UpdatedBy = startedBy;
-            audit.UpdatedDate = DateTime.UtcNow;
+            audit.UpdatedDate = DateTime.Now;
 
             return await UpdateSMSAuditAsync(audit, ct).ConfigureAwait(false);
         }
@@ -333,9 +333,9 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
             audit.ActualEndDate = actualEndDate;
             audit.Status = "Completed";
             audit.ExecutiveSummary = executiveSummary;
-            audit.ReportSubmittedDate = DateTime.UtcNow;
+            audit.ReportSubmittedDate = DateTime.Now;
             audit.UpdatedBy = completedBy;
-            audit.UpdatedDate = DateTime.UtcNow;
+            audit.UpdatedDate = DateTime.Now;
 
             // Update findings summary before completing
             await UpdateSMSAuditFindingsSummaryAsync(auditCode, ct).ConfigureAwait(false);
@@ -353,3 +353,4 @@ public sealed class SMSAuditRepository : BaseRepository<SMSAuditRepository, SMSA
 
     #endregion
 }
+

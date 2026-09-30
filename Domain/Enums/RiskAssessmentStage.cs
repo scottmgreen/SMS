@@ -49,38 +49,38 @@ public abstract class RiskAssessmentStage : BaseEnum<RiskAssessmentStage>
 
     private sealed class DescribeSystemStage : RiskAssessmentStage
     {
-        public DescribeSystemStage() : base("DESCRIBING_SYSTEM", "Describing System", "System is being described")
+        public DescribeSystemStage() : base("DESCRIBING_SYSTEM", "Describing System", "Hazard has been validated and the risk assessment process is underway")
         {
         }
     }
     private sealed class IdentifyingHazardsStage : RiskAssessmentStage
     {
-        public IdentifyingHazardsStage() : base("IDENTIFYING_HAZARDS", "Identifying Hazards", "Hazards are being identified")
+        public IdentifyingHazardsStage() : base("IDENTIFYING_HAZARDS", "Identifying Hazards", "Hazard has been validated and the risk assessment process is underway")
         {
         }
     }
     private sealed class AnalyizingRiskStage : RiskAssessmentStage
     {
-        public AnalyizingRiskStage() : base("ANALYIZING_RISK", "Analyzing Risk", "Risk is being analyzed")
+        public AnalyizingRiskStage() : base("ANALYIZING_RISK", "Analyzing Risk", "Hazard has been validated and the risk assessment process is underway")
         {
         }
     }
     private sealed class AssessingRiskStage : RiskAssessmentStage
     {
-        public AssessingRiskStage() : base("ASSESSING_RISK", "Assessing Risk", "Risk is being assessed")
+        public AssessingRiskStage() : base("ASSESSING_RISK", "Assessing Risk", "Hazard has been validated and the risk assessment process is underway")
         {
         }
     }
     private sealed class MitigatingRiskStage : RiskAssessmentStage
     {
-        public MitigatingRiskStage() : base("MITIGATING_RISK", "Mitigating Risk", "Risk mitigation is in progress")
+        public MitigatingRiskStage() : base("MITIGATING_RISK", "Mitigating Risk", "Hazard has been validated and the risk assessment process is underway")
         {
         }
     }
 
     private sealed class CompletedStage : RiskAssessmentStage
     {
-        public CompletedStage() : base("COMPLETED", "Completed", "Risk assessment workflow is completed")
+        public CompletedStage() : base("COMPLETED", "Completed", "Risk assessment is complete")
         {
         }
     }

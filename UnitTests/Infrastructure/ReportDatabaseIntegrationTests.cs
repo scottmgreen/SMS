@@ -151,7 +151,7 @@ public class ReportDatabaseIntegrationTests : DatabaseTestBase
             createdReport.Name = "REPO_UPDATED - " + createdReport.Name;
             createdReport.Description = "REPO_UPDATED - " + createdReport.Description;
             createdReport.UpdatedBy = "INTEGRATION_TEST_REPO_UPDATE";
-            createdReport.UpdatedDate = DateTime.UtcNow;
+            createdReport.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _reportRepository.UpdateReportAsync(createdReport);
@@ -296,7 +296,7 @@ public class ReportDatabaseIntegrationTests : DatabaseTestBase
             createdReport.Name = "DS_UPDATED" + createdReport.Name;
             createdReport.Description = "DS_UPDATED" + createdReport.Description;
             createdReport.UpdatedBy = "INTEGRATION_TEST_DS_UPDATE";
-            createdReport.UpdatedDate = DateTime.UtcNow;
+            createdReport.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _reportDataService.UpdateReportAsync(createdReport);

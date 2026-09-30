@@ -73,7 +73,7 @@ public class SPIThresholdExceededEvent : BaseDomainEvent, IEventSource
         Severity = severity;
         StakeholderGroups = stakeholderGroups ?? new List<string>();
         ReportingPeriod = reportingPeriod ?? string.Empty;
-        DetectedAt = DateTime.UtcNow;
+        DetectedAt = DateTime.Now;
         
     }
 }

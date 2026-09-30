@@ -31,7 +31,7 @@ public class RecordAuthenticationSuccessCommand : BaseCommandBundle, IRequest<Re
         IPAddress = ipAddress ?? "Unknown";
         UserAgent = userAgent ?? "Unknown";
         SessionId = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
-        AuthenticationTime = DateTime.UtcNow;
+        AuthenticationTime = DateTime.Now;
     }
 
     public void SetCreatedBy(string userId, DateTime timestamp)
@@ -71,7 +71,7 @@ public class RecordAuthenticationFailureCommand : BaseCommandBundle, IRequest<Re
         FailureReason = failureReason ?? throw new ArgumentNullException(nameof(failureReason));
         IPAddress = ipAddress ?? "Unknown";
         UserAgent = userAgent ?? "Unknown";
-        AttemptTime = DateTime.UtcNow;
+        AttemptTime = DateTime.Now;
         AttemptCount = attemptCount;
     }
 
@@ -113,7 +113,7 @@ public class RecordAuthenticationLogoutCommand : BaseCommandBundle, IRequest<Res
         SessionId = sessionId ?? throw new ArgumentNullException(nameof(sessionId));
         LogoutType = logoutType ?? "Manual";
         SessionDuration = sessionDuration;
-        LogoutTime = DateTime.UtcNow;
+        LogoutTime = DateTime.Now;
     }
 
     public void SetCreatedBy(string userId, DateTime timestamp)

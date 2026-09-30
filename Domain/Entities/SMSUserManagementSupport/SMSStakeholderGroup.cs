@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSStakeholderGroup.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -17,8 +17,9 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class SMSStakeholderGroup : BaseUserGroup
 {
-    public SMSStakeholderGroup(SMSStakeholderGroupID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public SMSStakeholderGroup(SMSStakeholderGroupID id) : base(id, string.Empty, DateTime.Now) { }
 
     public List<SMSStakeholderUser> GroupMembers { get; set; }
 }
+
 

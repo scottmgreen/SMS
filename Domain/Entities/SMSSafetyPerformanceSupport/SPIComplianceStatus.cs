@@ -47,7 +47,7 @@ public class SPIComplianceStatus
         if (!LastMeasurementDate.HasValue)
             return int.MaxValue;
 
-        return (DateTime.UtcNow - LastMeasurementDate.Value).Days;
+        return (DateTime.Now - LastMeasurementDate.Value).Days;
     }
 
     /// <summary>

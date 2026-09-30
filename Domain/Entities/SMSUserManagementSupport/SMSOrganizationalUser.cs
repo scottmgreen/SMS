@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSOrganizationalUser.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class SMSOrganizationalUser : BaseUser
 {
-    public SMSOrganizationalUser(SMSOrganizationalUserID id) : base(id, string.Empty, DateTime.UtcNow)
+    public SMSOrganizationalUser(SMSOrganizationalUserID id) : base(id, string.Empty, DateTime.Now)
     {
         OrganizationalUserId = id;
     }
@@ -57,3 +57,4 @@ public sealed class SMSOrganizationalUser : BaseUser
         RiskApprovalAuthority = OrganizationLevel?.Value;
     }
 }
+

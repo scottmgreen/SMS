@@ -1,4 +1,4 @@
-﻿using SMS_Domain.Services;
+using SMS_Domain.Services;
 
 using SMS3.Components.Pages.SMSAssurance.Components;
 using SMS3.Components.Shared;
@@ -420,7 +420,7 @@ public partial class RiskRegistry : ComponentBase
             MitigationCount = mitigation is null ? 0 : 1,
             TargetDate = mitigation?.TargetDate,
             AssignedTo = ResolveOwnerDisplayName(mitigation?.AssignedTo ?? assessment?.LeadAssessorId, usersByCode),
-            LastUpdated = assessment?.UpdatedDate ?? hazard.UpdatedDate ?? hazard.CreatedDate ?? DateTime.UtcNow,
+            LastUpdated = assessment?.UpdatedDate ?? hazard.UpdatedDate ?? hazard.CreatedDate ?? DateTime.Now,
 
             // Additional context for navigation and details
             HazardCategory = hazard.HazardCategory,
@@ -755,3 +755,4 @@ public partial class RiskRegistry : ComponentBase
         StateHasChanged();
     }
 }
+

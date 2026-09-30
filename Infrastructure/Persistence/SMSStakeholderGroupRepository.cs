@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSStakeholderGroupRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -143,7 +143,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
                 assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCompanyCode, companyCode));
                 assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmGroupCode, groupCode));
                 assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedBy, updatedBy ?? string.Empty));
-                assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.UtcNow));
+                assignCmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.Now));
 
                 var newID = new SqlParameter(ParameterNames.pmNewID, SqlDbType.Int)
                 {
@@ -237,7 +237,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupContactEmail, stakeholderGroup.ContactEmail ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderGroupIsActive, stakeholderGroup.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, stakeholderGroup.UpdatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, stakeholderGroup.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, stakeholderGroup.UpdatedDate ?? DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -444,7 +444,7 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSStakeholderUserCodeForAssignment, userCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, groupCode));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedBy, assignedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmAssignedDate, DateTime.Now));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             cmd.Parameters.Add(newID);
@@ -580,3 +580,4 @@ public sealed class SMSStakeholderGroupRepository : BaseRepository<SMSStakeholde
         }
     }
 }
+

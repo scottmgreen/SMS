@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuditFindingRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -213,7 +213,7 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingVerificationDate, finding.VerificationDate));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSAuditFindingNotes, finding.Notes));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, finding.UpdatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, finding.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, finding.UpdatedDate ?? DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             var rowsAffected = await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -336,3 +336,4 @@ public sealed class SMSAuditFindingRepository : BaseRepository<SMSAuditFindingRe
     }
     #endregion
 }
+

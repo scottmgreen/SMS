@@ -145,7 +145,7 @@ public class StaticCurrentUserService : ICurrentUserService
         _currentFirstName = user.FirstName.Value;
         _currentLastName = user.LastName.Value;
         _currentEmail = user.UserName.Value;
-        _loginTime = DateTime.UtcNow;
+        _loginTime = DateTime.Now;
         _isAuthenticated = true;
 
         if (user.UserRole != null)

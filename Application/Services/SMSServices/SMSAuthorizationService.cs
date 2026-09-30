@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSAuthorizationService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -524,7 +524,7 @@ public class SMSAuthorizationService : ISMSAuthorizationService
                 Department = user.GetDepartmentInfo(),
                 MaxAuthorityLevel = maxAuthority,
                 AssignedRoles = userRoles.Select(r => r.RoleValue).ToArray(),
-                LastUpdated = DateTime.UtcNow
+                LastUpdated = DateTime.Now
             };
 
             // Add user-specific details
@@ -743,3 +743,4 @@ public class SMSAuthorizationService : ISMSAuthorizationService
         return areas.ToArray();
     }
 }
+

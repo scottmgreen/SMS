@@ -50,8 +50,8 @@ public class GetSPIDashboardDataQueryHandler : IBaseRequestHandler<GetSPIDashboa
             {
                 TotalSPIs = allSPIs.Count,
                 ActiveSPIs = allSPIs.Count(spi => spi.Status == SPIStatus.Active),
-                SPICards = await BuildSPICards(filteredSPIs, query.StartDate ?? DateTime.UtcNow.AddMonths(-12), query.EndDate ?? DateTime.UtcNow, cancellationToken),
-                LastUpdated = DateTime.UtcNow
+                SPICards = await BuildSPICards(filteredSPIs, query.StartDate ?? DateTime.Now.AddMonths(-12), query.EndDate ?? DateTime.Now, cancellationToken),
+                LastUpdated = DateTime.Now
             };
 
             // Build performance summary
@@ -60,7 +60,7 @@ public class GetSPIDashboardDataQueryHandler : IBaseRequestHandler<GetSPIDashboa
             // Build trend analysis if requested
             if (query.IncludeTrends)
             {
-                dashboardData.TrendAnalysis = await BuildTrendAnalysis(filteredSPIs, query.StartDate ?? DateTime.UtcNow.AddMonths(-12), query.EndDate ?? DateTime.UtcNow, cancellationToken);
+                dashboardData.TrendAnalysis = await BuildTrendAnalysis(filteredSPIs, query.StartDate ?? DateTime.Now.AddMonths(-12), query.EndDate ?? DateTime.Now, cancellationToken);
             }
 
             // Build alerts if requested
@@ -332,7 +332,7 @@ public class GetSPIDashboardDataQueryHandler : IBaseRequestHandler<GetSPIDashboa
                     SPIName = card.Name,
                     AlertType = "Critical Threshold Exceeded",
                     AlertMessage = $"{card.Name} has exceeded critical threshold",
-                    AlertDate = card.LastMeasurementDate ?? DateTime.UtcNow,
+                    AlertDate = card.LastMeasurementDate ?? DateTime.Now,
                     CurrentValue = card.CurrentValue.Value,
                     ThresholdValue = card.CriticalThreshold ?? 0,
                     Severity = "Critical",
@@ -347,7 +347,7 @@ public class GetSPIDashboardDataQueryHandler : IBaseRequestHandler<GetSPIDashboa
                     SPIName = card.Name,
                     AlertType = "Warning Threshold Exceeded",
                     AlertMessage = $"{card.Name} has exceeded warning threshold",
-                    AlertDate = card.LastMeasurementDate ?? DateTime.UtcNow,
+                    AlertDate = card.LastMeasurementDate ?? DateTime.Now,
                     CurrentValue = card.CurrentValue.Value,
                     ThresholdValue = card.WarningThreshold ?? 0,
                     Severity = "Medium",
@@ -361,4 +361,5 @@ public class GetSPIDashboardDataQueryHandler : IBaseRequestHandler<GetSPIDashboa
 
     #endregion
 }
+
 

@@ -589,7 +589,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                         Latitude = primaryHazard.HazardLocation.Latitude ?? 0,
                         Longitude = primaryHazard.HazardLocation.Longitude ?? 0,
                         Description = primaryHazard.HazardLocation.Description ?? string.Empty,
-                        DateSelected = DateTime.UtcNow,
+                        DateSelected = DateTime.Now,
                         IsValidated = primaryHazard.HazardLocation.IsValidated,
                         IsValid = (primaryHazard.HazardLocation.Latitude ?? 0) != 0 && (primaryHazard.HazardLocation.Longitude ?? 0) != 0
                     };
@@ -791,7 +791,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                     Latitude = EditingHazard.HazardLocation.Latitude ?? 0,
                     Longitude = EditingHazard.HazardLocation.Longitude ?? 0,
                     Description = EditingHazard.HazardLocation.Description ?? string.Empty,
-                    DateSelected = DateTime.UtcNow,
+                    DateSelected = DateTime.Now,
                     IsValidated = EditingHazard.HazardLocation.IsValidated,
                     IsValid = (EditingHazard.HazardLocation.Latitude ?? 0) != 0 && (EditingHazard.HazardLocation.Longitude ?? 0) != 0
                 };
@@ -1134,7 +1134,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             Description = SelectedGeoLocation?.Description,
             IsValidated = SelectedGeoLocation?.IsValidated ?? false,
             IsValid = SelectedGeoLocation?.IsValid ?? false,
-            DateSelected = SelectedGeoLocation?.DateSelected ?? DateTime.UtcNow
+            DateSelected = SelectedGeoLocation?.DateSelected ?? DateTime.Now
         };
         _mapSelectionConfirmed = false;
         _mapSelectionCleared = false;
@@ -1262,7 +1262,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             Longitude = SelectedLongitude,
             Description = SelectedLocationDescription,// string.IsNullOrEmpty(SelectedLocationDescription) ? 
                                               //$"Map Location ({SelectedLatitude:F6}, {SelectedLongitude:F6})" : SelectedLocationDescription,
-            DateSelected = DateTime.UtcNow,
+            DateSelected = DateTime.Now,
             IsValidated = locationWasModified ? false : SelectedGeoLocation.IsValidated,
             IsValid = true
         };
@@ -1648,7 +1648,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         // STEP 1: Update the existing Report
         // ===============================
         EditingReport!.Name = $"{HazardReport.HazardCategory} - {HazardReport.HazardType}";
-        EditingReport.Description = HazardReport.Description;
+        // EditingReport.Description = HazardReport.Description;
         EditingReport.IncidentDateTime = HazardReport.IncidentDateTime;
         EditingReport.SubmittedBy = HazardReport.SubmittedBy;
         EditingReport.SubmittedDate = HazardReport.SubmittedDate;
@@ -1660,7 +1660,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingReport.ReportContactCompany = HazardReport.ReportContactCompany;
         EditingReport.IsAnonymous = HazardReport.IsAnonymous;
         EditingReport.Status = ReportStatus.ReadyForProcessing;
-        EditingReport.UpdatedDate = DateTime.UtcNow;
+        EditingReport.UpdatedDate = DateTime.Now;
         EditingReport.UpdatedBy = _currentUserService.UserCode;
 
         var updateReportCommand = new UpdateReportCommand(EditingReport);
@@ -1682,7 +1682,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
         EditingHazard.HazardCategory = HazardReport.HazardCategory ?? string.Empty;
         EditingHazard.HazardType = HazardReport.HazardType; // This is the actual selected hazard type, not "Technical"
         
-        EditingHazard.UpdatedDate = DateTime.UtcNow;
+        EditingHazard.UpdatedDate = DateTime.Now;
         EditingHazard.UpdatedBy = _currentUserService.UserCode;
 
         // Handle location updates
@@ -1798,11 +1798,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
             ReportContactCell = HazardReport.ReportContactCell,
             ReportContactEmail = HazardReport.ReportContactEmail,
             ReportContactCompany = HazardReport.ReportContactCompany,
-            Description = HazardReport.Description,
+            // Description = HazardReport.Description,
             Stage = "INITIAL",
             Status = ReportStatus.ReadyForProcessing, //needs validation
             CreatedBy = _currentUserService.UserCode,
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
 
         var reportResult = await _mediator.SendAsync(new CreateReportCommand(report), CancellationToken.None);
@@ -1830,7 +1830,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             ReportCode = actualReportCode,
             IsInitialHazard = true ,
             CreatedBy = _currentUserService.UserCode,
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
 
         var createHazardCommand = new CreateHazardCommand(hazard);
@@ -1914,6 +1914,11 @@ public partial class HazardReporting : ComponentBase, IDisposable
         }
 
         var autoSend = _configuration.GetValue<bool>("HazardReportNotifications:AutoSendHazardReportNotifications");
+        if (!autoSend)
+        {
+            _logger.LogInformation("Hazard submission notification skipped because AutoSendHazardReportNotifications is disabled.");
+            return;
+        }
 
         var geoLocation = SelectedGeoLocation is not null && SelectedGeoLocation.Latitude.HasValue && SelectedGeoLocation.Longitude.HasValue
             ? $"{SelectedGeoLocation.Latitude.Value:F6}, {SelectedGeoLocation.Longitude.Value:F6}"
@@ -1944,8 +1949,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 { "LocationDescription", locationDescription ?? string.Empty }
             });
 
-        var executionMode = autoSend ? EventExecutionMode.Immediate : EventExecutionMode.Manual;
-        var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, executionMode);
+        var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Immediate);
         if (publishResult.IsFailure)
         {
             _logger.LogWarning("Failed to queue hazard submission notification for report {ReportCode}: {Error}",
@@ -2119,7 +2123,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 ReportCode = createdHazard.ReportCode,
                 TrackingCode = "HT-0000", // This will be replaced by database
                 CreatedBy = _currentUserService?.UserCode,
-                CreatedDate = DateTime.UtcNow
+                CreatedDate = DateTime.Now
             };
 
             var trackingCommand = new CreateHazardReportTrackingCommand(hazardReportTracking);
@@ -2175,7 +2179,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                         Description = SelectedGeoLocation.Description ?? "Map selected location",
                         IsValidated = SelectedGeoLocation.IsValidated,
                         UpdatedBy = _currentUserService?.UserCode,
-                        UpdatedDate = DateTime.UtcNow,
+                        UpdatedDate = DateTime.Now,
                         IsValid = true
                     };
                 }
@@ -2199,7 +2203,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             Description = SelectedGeoLocation.Description ?? "Map selected location",
                             IsValidated = SelectedGeoLocation.IsValidated,
                             UpdatedBy = _currentUserService?.UserCode,
-                            UpdatedDate = DateTime.UtcNow,
+                            UpdatedDate = DateTime.Now,
                             IsValid = true
                         };
                     }
@@ -2232,7 +2236,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                         Description = SelectedGeoLocation.Description ?? "Map selected location",
                         IsValidated = SelectedGeoLocation.IsValidated,
                         CreatedBy = _currentUserService?.UserCode,
-                        CreatedDate = DateTime.UtcNow,
+                        CreatedDate = DateTime.Now,
                         IsValid = true
                     };
 
@@ -2308,7 +2312,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                             FilePath = null,
                             FileData = attachedFile.Data,
                             UploadedBy = HazardReport.SubmittedBy ?? _currentUserService.UserCode,
-                            UploadedDate = DateTime.UtcNow,
+                            UploadedDate = DateTime.Now,
                             IsActive = true,
                             IsConfidential = HazardReport.IsAnonymous
                         };
@@ -2375,7 +2379,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 var fileToUpdate = fileResult.Value;
                 fileToUpdate.Description = existingFile.Description?.Trim();
                 fileToUpdate.UpdatedBy = _currentUserService.UserCode;
-                fileToUpdate.UpdatedDate = DateTime.UtcNow;
+                fileToUpdate.UpdatedDate = DateTime.Now;
 
                 var updateResult = await _mediator.SendAsync(new UpdateHazardFileCommand(fileToUpdate), CancellationToken.None);
                 if (updateResult.IsFailure)
@@ -2526,7 +2530,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
             Latitude = 0,
             Longitude = 0,
             Description = "Not set",
-            DateSelected = DateTime.UtcNow
+            DateSelected = DateTime.Now
         };
 
         // Initialize empty file collections
@@ -2746,3 +2750,4 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
     #endregion
 }
+

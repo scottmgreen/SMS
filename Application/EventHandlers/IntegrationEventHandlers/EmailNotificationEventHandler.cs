@@ -156,7 +156,7 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
             _logger.LogApplicationInformation("[EMAIL SIM] Using simulation directory: {Directory}", simulationDir);
 
             // Generate unique filename with timestamp in .eml format (email message format)
-            var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss");
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
             var safeSubject = string.Join("_", emailEvent.Subject.Split(Path.GetInvalidFileNameChars()));
             // Limit subject length for filename safety
             if (safeSubject.Length > 50)
@@ -197,7 +197,7 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
         var content = new System.Text.StringBuilder();
 
         // RFC 5322 Email Headers
-        content.AppendLine("From: SMS Safety Management System <noreply@pdxairport.com>");
+        content.AppendLine("From: SMS Safety Management System <noreply@flypdx.com>");
         content.AppendLine($"To: {string.Join(", ", emailEvent.ToRecipients)}");
 
         if (emailEvent.CcRecipients?.Any() == true)
@@ -278,7 +278,7 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
         content.AppendLine();
         content.AppendLine("---");
         content.AppendLine("SMS EMAIL SIMULATION");
-        content.AppendLine($"Generated: {DateTime.UtcNow:yyyy-MM-dd HH:mm:ss} UTC");
+        content.AppendLine($"Generated: {DateTime.Now:yyyy-MM-dd HH:mm:ss}");
         content.AppendLine($"Event ID: {emailEvent.EventId}");
         content.AppendLine($"Delivery Mode: {emailEvent.DeliveryMode}");
         if (emailEvent.EmailMetadata?.Any() == true)
@@ -411,7 +411,7 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
             return;
         }
 
-        var userAuthorityLevel = ResolveAuthorityLevelName(organizationalUser.AuthorityLevel);
+        var userAuthorityLevel = ResolveAuthorityLevelValue(organizationalUser.AuthorityLevel ?? 0);
 
         var matchingAuthorityEmails = groupsResult.Value
             .Where(g => g.IsActive)
@@ -471,22 +471,17 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
         return null;
     }
 
-    private static string ResolveAuthorityLevelName(int? authorityLevel)
+    private static string ResolveAuthorityLevelValue(int authorityLevel)
     {
-        if (!authorityLevel.HasValue)
+        if (authorityLevel <= 0)
         {
-            return "Standard";
+            return SMSOrganizationalLevel.UnassignedLevel.Value;
         }
 
-        return authorityLevel.Value switch
-        {
-            >= 9 => "Executive",
-            >= 7 => "Strategic",
-            >= 5 => "Operational",
-            >= 3 => "Process",
-            >= 1 => "Support",
-            _ => "Standard"
-        };
+        var resolvedLevel = SMSOrganizationalLevel.GetAllValues()
+            .FirstOrDefault(level => level.AuthorityLevel == authorityLevel);
+
+        return resolvedLevel?.Value ?? SMSOrganizationalLevel.UnassignedLevel.Value;
     }
 
     private async Task<List<string>> ResolveGroupContactEmailsForRecipientAsync(string recipient, CancellationToken cancellationToken)

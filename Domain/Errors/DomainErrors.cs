@@ -685,6 +685,16 @@ public static class DomainErrors
     }
 
     /// <summary>
+    /// Contains event dispatch-related errors.
+    /// </summary>
+    public static class EventDispatchError
+    {
+        public static Error FailedSendManualResend => new Error(
+            "EventDispatch.FailedSendManualResend",
+            "FAILED SEND - READY FOR MANUAL RESEND");
+    }
+
+    /// <summary>
     /// Contains the name errors.
     /// </summary>
     public static class NameError

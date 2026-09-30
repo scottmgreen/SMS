@@ -46,7 +46,7 @@ public class AuditLogPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResu
 
         var commandName = request.GetType().Name;
         var currentUserId = _currentUserService.UserDisplayName;
-        var timestamp = DateTime.UtcNow;
+        var timestamp = DateTime.Now;
 
         // Check if business audit logging is enabled via feature flag
         var isBusinessAuditEnabled = await _featureManager.IsEnabledAsync("EnableBusinessAuditLog").ConfigureAwait(false);
@@ -197,6 +197,7 @@ public class AuditLogPipeline<TRequest, TResult> : IBasePipeline<TRequest, TResu
         return $"User {action.ToLower().Replace('_', ' ')} {status} via {request.GetType().Name}. Entity: {entityInfo}";
     }
 }
+
 
 
 

@@ -253,9 +253,9 @@ public partial class Investigations : ComponentBase
 
             if(InvestigationEntity.Status == InvestigationStatus.InvestigationComplete)
             {
-                InvestigationEntity.CompletedDate = DateTime.UtcNow;
+                InvestigationEntity.CompletedDate = DateTime.Now;
                 InvestigationEntity.UpdatedBy = _currentUserService?.UserCode;
-                InvestigationEntity.UpdatedDate = DateTime.UtcNow;  
+                InvestigationEntity.UpdatedDate = DateTime.Now;  
             }
 
             var updateCommand = new UpdateInvestigationCommand(InvestigationEntity);
@@ -367,7 +367,7 @@ public partial class Investigations : ComponentBase
 
         try
         {
-            InvestigationEntity.DecisionDate = DateTime.UtcNow;
+            InvestigationEntity.DecisionDate = DateTime.Now;
             if (string.IsNullOrWhiteSpace(InvestigationEntity.DecisionType) )
             {
                 await _eventBus.PublishUIEventAsync(UINotificationEvent.Error("Error", "Decision type, rationale, and decision maker are required"));
@@ -558,7 +558,7 @@ public partial class Investigations : ComponentBase
 
                 if (cmdResult.IsSuccess)
                 {
-                    bool flowControl = await UpdateReportStatus(reportCode, ReportStatus.NeedsValidation);
+                    bool flowControl = await UpdateReportStatus(reportCode, ReportStatus.ReadyForProcessing);
                     if (!flowControl)
                     {
                         throw new Exception($"Failed to Update Report Status during Create new Risk Assessment: {DomainErrors.ReportValidationError.CreateFailed.Message}");
@@ -602,7 +602,7 @@ public partial class Investigations : ComponentBase
 
                 // Create new ReportValidation using the static factory method
                 var validation = SMS_Domain.Entities.ReportValidation.Create(reportCode, _currentUserService.UserCode);
-                validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.UtcNow:yyyy-MM-dd HH:mm}";
+                validation.ValidationComments = $"Created from Investigation return to validation workflow on {DateTime.Now:yyyy-MM-dd HH:mm}";
 
                 var createCommand = new CreateReportValidationCommand(validation);
                 var createResult = await _mediator.SendAsync(createCommand, CancellationToken.None);
@@ -902,3 +902,4 @@ public partial class Investigations : ComponentBase
     }
     #endregion
 }
+

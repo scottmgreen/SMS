@@ -315,7 +315,7 @@ public class ValidateSMSApplicationUserCredentialsQueryHandler : BaseQueryBundle
             var isValid = user.IsActive && user.Authenticate(request.Password);
 
             user.UpdatedBy = request.AccessedBy;
-            user.LastLoginDate = DateTime.UtcNow;
+            user.LastLoginDate = DateTime.Now;
             await _dataService.UpdateSMSApplicationUserAsync(user, ct);
 
 
@@ -389,7 +389,7 @@ public class GetStaleSMSApplicationUsersQueryHandler : BaseQueryBundle, IBaseReq
             var allUsersResult = await _dataService.GetAllSMSApplicationUsersAsync(ct);
             if (allUsersResult.IsSuccess)
             {
-                var cutoffDate = DateTime.UtcNow.AddDays(-request.StaleDays);
+                var cutoffDate = DateTime.Now.AddDays(-request.StaleDays);
                 var staleUsers = allUsersResult.Value?.Where(u =>
                     !u.LastLoginDate.HasValue || u.LastLoginDate < cutoffDate) ?? new List<SMSApplicationUser>();
 
@@ -457,4 +457,5 @@ public class GetSMSApplicationUserStatisticsQueryHandler : BaseQueryBundle, IBas
         }
     }
 }
+
 

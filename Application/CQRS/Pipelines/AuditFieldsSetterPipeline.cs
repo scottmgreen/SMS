@@ -61,7 +61,7 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
     /// </summary>
     private void SetAuditFields(TRequest request, string currentUserId)
     {
-        var timestamp = DateTime.UtcNow;
+        var timestamp = DateTime.Now;
         var requestType = request.GetType().Name;
 
         try
@@ -207,4 +207,5 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
         return true;
     }
 }
+
 

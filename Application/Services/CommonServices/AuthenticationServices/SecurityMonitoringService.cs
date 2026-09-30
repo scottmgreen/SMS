@@ -45,7 +45,7 @@ public class SecurityMonitoringService
             AttackPattern = attackPattern,
             FieldName = fieldName,
             RequestPath = requestPath,
-            Timestamp = DateTime.UtcNow,
+            Timestamp = DateTime.Now,
             Severity = DetermineAttackSeverity(attackPattern)
         };
 
@@ -54,7 +54,7 @@ public class SecurityMonitoringService
         _attackAttempts.AddOrUpdate(key, attemptInfo, (k, existing) => 
         {
             existing.AttemptCount++;
-            existing.LastAttempt = DateTime.UtcNow;
+            existing.LastAttempt = DateTime.Now;
             return existing;
         });
 
@@ -80,7 +80,7 @@ public class SecurityMonitoringService
             AttackPattern = attackPattern,
             FieldName = fieldName,
             RequestPath = requestPath,
-            Timestamp = DateTime.UtcNow,
+            Timestamp = DateTime.Now,
             Severity = DetermineXssSeverity(attackPattern)
         };
 
@@ -88,7 +88,7 @@ public class SecurityMonitoringService
         _attackAttempts.AddOrUpdate(key, attemptInfo, (k, existing) => 
         {
             existing.AttemptCount++;
-            existing.LastAttempt = DateTime.UtcNow;
+            existing.LastAttempt = DateTime.Now;
             return existing;
         });
 
@@ -104,7 +104,7 @@ public class SecurityMonitoringService
     /// </summary>
     public SecurityStats GetSecurityStats()
     {
-        var now = DateTime.UtcNow;
+        var now = DateTime.Now;
         var last24Hours = now.AddHours(-24);
         var lastWeek = now.AddDays(-7);
 

@@ -1,4 +1,4 @@
-﻿using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations;
 
 using SMS_Domain.Entities;
 
@@ -195,7 +195,7 @@ public partial class Login : ComponentBase
 
         try
         {
-            var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
+            var todayUtc = DateOnly.FromDateTime(DateTime.Now);
             if (_lastReportStatusScanUtcDate == todayUtc)
             {
                 return;
@@ -229,7 +229,7 @@ public partial class Login : ComponentBase
 
         try
         {
-            var todayUtc = DateOnly.FromDateTime(DateTime.UtcNow);
+            var todayUtc = DateOnly.FromDateTime(DateTime.Now);
             if (_lastMitigationScanUtcDate == todayUtc)
             {
                 return;
@@ -294,4 +294,5 @@ public partial class Login : ComponentBase
     }
 
 }
+
 

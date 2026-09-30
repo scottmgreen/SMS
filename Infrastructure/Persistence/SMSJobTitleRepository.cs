@@ -124,7 +124,7 @@ public sealed class SMSJobTitleRepository : BaseRepository<SMSJobTitleRepository
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSJobTitleCode, title.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSJobTitleName, title.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, string.IsNullOrWhiteSpace(createdBy) ? string.Empty : createdBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
             var newID = new SqlParameter(ParameterNames.pmNewID, SqlDbType.Int)
             {
@@ -171,7 +171,7 @@ public sealed class SMSJobTitleRepository : BaseRepository<SMSJobTitleRepository
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSJobTitleCode, code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSJobTitleName, title.Name));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, string.IsNullOrWhiteSpace(updatedBy) ? string.Empty : updatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);

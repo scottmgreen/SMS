@@ -144,7 +144,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                         id: new SMSEventID("EV-0000"),
                         riskAssessmentId: assessment.Id.Value,
                         updatedBy: assessment.UpdatedBy ?? assessment.CreatedBy ?? string.Empty,
-                        updatedDate: assessment.UpdatedDate ?? DateTime.UtcNow)
+                        updatedDate: assessment.UpdatedDate ?? DateTime.Now)
                     {
                         ReportId = assessment.ReportCode ?? string.Empty
                     };
@@ -170,7 +170,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                                 previousStatus: previousStatus,
                                 newStatus: assessment.Status,
                                 changedBy: assessment.UpdatedBy ?? assessment.CreatedBy ?? string.Empty,
-                                changedDate: assessment.UpdatedDate ?? DateTime.UtcNow),
+                                changedDate: assessment.UpdatedDate ?? DateTime.Now),
                             ct).ConfigureAwait(false);
                     }
 
@@ -187,7 +187,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                                 previousStage: previousStage,
                                 newStage: assessment.Stage,
                                 changedBy: assessment.UpdatedBy ?? assessment.CreatedBy ?? string.Empty,
-                                changedDate: assessment.UpdatedDate ?? DateTime.UtcNow),
+                                changedDate: assessment.UpdatedDate ?? DateTime.Now),
                             ct).ConfigureAwait(false);
                     }
                 }
@@ -197,7 +197,7 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                     previousStatus != RiskAssessmentStatus.AssessmentComplete &&
                     assessment.Status == RiskAssessmentStatus.AssessmentComplete)
                 {
-                    var completedDate = assessment.CompletedDate ?? assessment.UpdatedDate ?? DateTime.UtcNow;
+                    var completedDate = assessment.CompletedDate ?? assessment.UpdatedDate ?? DateTime.Now;
                     var assessmentStartDate = assessment.CreatedDate ?? completedDate.AddDays(-7);
                     var targetCompletionDate = assessmentStartDate.AddDays(14);
 
@@ -549,7 +549,7 @@ public class SaveStep1CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
             assessment.FiveMPhysicalEnvironment = request.FiveMPhysicalEnvironment;
             assessment.FiveMOperationalEnvironment = request.FiveMOperationalEnvironment;
             assessment.UpdatedBy = request.UpdatedBy;
-            assessment.UpdatedDate = DateTime.UtcNow;
+            assessment.UpdatedDate = DateTime.Now;
 
             var result = await _riskAssessmentService.UpdateRiskAssessmentAsync(assessment, ct);
 
@@ -616,7 +616,7 @@ public class SaveStep4CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
             assessment.FinalRiskLevel = request.FinalRiskLevel;
             assessment.AdditionalComments = request.AdditionalComments;
             assessment.UpdatedBy = request.UpdatedBy;
-            assessment.UpdatedDate = DateTime.UtcNow;
+            assessment.UpdatedDate = DateTime.Now;
 
             var result = await _riskAssessmentService.UpdateRiskAssessmentAsync(assessment, ct);
 
@@ -679,7 +679,7 @@ public class SaveStep5CommandHandler : BaseCommandBundle, IBaseRequestHandler<Sa
 
             // Update the assessment with Step 5 data
             assessment.UpdatedBy = request.UpdatedBy;
-            assessment.UpdatedDate = DateTime.UtcNow;
+            assessment.UpdatedDate = DateTime.Now;
 
             var result = await _riskAssessmentService.UpdateRiskAssessmentAsync(assessment, ct);
 
@@ -764,7 +764,7 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IBaseRequestHandl
             assessment.CompleteStep(request.CurrentStep);
 
             assessment.UpdatedBy = request.UpdatedBy;
-            assessment.UpdatedDate = DateTime.UtcNow;
+            assessment.UpdatedDate = DateTime.Now;
 
             var result = await _riskAssessmentService.UpdateRiskAssessmentAsync(assessment, ct);
 
@@ -792,4 +792,5 @@ public class UpdateProgressCommandHandler : BaseCommandBundle, IBaseRequestHandl
         }
     }
 }
+
 

@@ -43,6 +43,7 @@
 - Resetting/revalidating reports must preserve existing investigations, interviews, assessments, mitigations, and hazard scoring sessions across validation decisions (including NOT_SMS_RISK and NEEDS_INVESTIGATION).
 - Use `VALIDATION_DECISION_MADE` as a datasource and trigger metric updates when validation decision is `SMS_RISK` (hazard reported, evaluated, processing decision made).
 - RiskRegistry should display one row per ReportID/HazardID, with an overall mitigation status computed as the lowest-precedence status across all mitigations for that hazard (e.g., Pending Approval overrides In Progress).
+- Do not hardcode mitigation status options; populate UI status lists from MitigationStatus SmartEnum values.
 
 ## UI Rendering
 - When rendering HazardDescription in modals or static display areas, treat it as HTML markup (e.g., via MarkupString) so RadzenHtmlEditor formatting is preserved.
@@ -66,7 +67,7 @@
 - In NotificationsScanService escalation email fields, keep labels exactly as: "Report Status Threshold" and "Report Status Checkpoint (UTC)"; do not revert to prior SLA label text.
 
 ## Code Style
-- Private variables in SMS3 code-behind files must consistently follow the _variableName naming convention (e.g., _memberName). 
+- Private variables in SMS3 code-behind files must consistently follow the _variableName naming convention (e.g., _memberName).
 - Cleanup should continue in targeted batches with build validation.
 - Use enums only for display styles; do not use hard-coded strings for event source display naming.
 - Standardize data-reader string mapping to `GetValue<string>` with trimming handled in the extension method rather than direct `GetString` calls.
@@ -92,6 +93,7 @@
 
 ## Domain Enums
 - When adding Company in Domain, model it as a data-driven enum in Domain/Enums (SMSCompany pattern), not as a Domain entity.
+- Use only Domain\Enums\ReportStatus values for report status handling; do not introduce ad-hoc status literals.
 
 ## Dashboard Module
 - Treat the Dashboard Module as inactive and ignore it in future system/module abstractions for this codebase.
@@ -101,3 +103,6 @@
 
 ## Status Synchronization
 - Centralize status synchronization logic outside SMS3 Presentation; prefer consistent and reliable status orchestration in Application/Domain layers.
+
+## Report Management
+- Only edit Report.Description in ReportListing flow; do not set Report.Description from HazardReport.Description in HazardReporting.

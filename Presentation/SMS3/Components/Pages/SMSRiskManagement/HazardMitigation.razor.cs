@@ -57,12 +57,7 @@ public partial class HazardMitigation : ComponentBase
         "Eliminate", "Engineering Control", "Administrative Control", "Personal Protective Equipment"
     };
 
-    private readonly List<string> _mitigationStatusOptions = MitigationStatus.GetAllValues()
-        .Select(status => status.Value)
-        .OrderBy(value => value)
-        .ToList();
-
-    private string? _selectedMitigationStatus;
+    private List<MitigationStatus> StatusOptions => MitigationStatus.GetAllValues().ToList();
 
 
     // ? UPDATED: Replace hardcoded department list with SMSOrganization enum
@@ -103,11 +98,9 @@ public partial class HazardMitigation : ComponentBase
                     TargetDate = DateTime.Now.AddMonths(3)
                 };
 
-                _selectedMitigationStatus = CurrentMitigation.Status.Value;
-
                 // ?? AUDIT: Set creation audit fields
                 CurrentMitigation.CreatedBy = GetCurrentUserId();
-                CurrentMitigation.CreatedDate = DateTime.UtcNow;
+                CurrentMitigation.CreatedDate = DateTime.Now;
             }
 
             _logger.LogInformation("Loaded hazard mitigation {Mode} page for Code: {Code} by user: {UserId}",
@@ -140,7 +133,6 @@ public partial class HazardMitigation : ComponentBase
             if (mitigationResult.IsSuccess && mitigationResult.Value is not null)
             {
                 CurrentMitigation = mitigationResult.Value;
-                _selectedMitigationStatus = CurrentMitigation.Status?.Value;
                 _selectedHazardCode = CurrentMitigation.HazardCode ?? string.Empty;
                 await LoadRelatedHazardAsync(CurrentMitigation.HazardCode);
                 _logger.LogInformation("Successfully loaded existing hazard mitigation: {Code}", MitigationCode);
@@ -237,7 +229,7 @@ public partial class HazardMitigation : ComponentBase
 
         // ?? AUDIT: Set creation audit fields with current user
         CurrentMitigation.CreatedBy = GetCurrentUserId();
-        CurrentMitigation.CreatedDate = DateTime.UtcNow;
+        CurrentMitigation.CreatedDate = DateTime.Now;
 
         // Save using CREATE command
         var createCommand = new CreateMitigationCommand(CurrentMitigation);
@@ -260,20 +252,9 @@ public partial class HazardMitigation : ComponentBase
 
     private async Task UpdateExistingMitigation()
     {
-        if (!string.IsNullOrWhiteSpace(_selectedMitigationStatus))
-        {
-            var selectedStatus = MitigationStatus.GetAllValues()
-                .FirstOrDefault(status => string.Equals(status.Value, _selectedMitigationStatus, StringComparison.OrdinalIgnoreCase));
-
-            if (selectedStatus is not null)
-            {
-                CurrentMitigation.Status = selectedStatus;
-            }
-        }
-
         // ?? AUDIT: Set update audit fields with current user
         CurrentMitigation.UpdatedBy = GetCurrentUserId();
-        CurrentMitigation.UpdatedDate = DateTime.UtcNow;
+        CurrentMitigation.UpdatedDate = DateTime.Now;
 
         // Save using UPDATE command
         var updateCommand = new UpdateMitigationCommand(CurrentMitigation);

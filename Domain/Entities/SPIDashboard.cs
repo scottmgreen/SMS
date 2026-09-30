@@ -22,7 +22,7 @@ public class SPIDashboard
     public SPIPerformanceSummary PerformanceSummary { get; set; } = new();
     public List<SPIAlert> ActiveAlerts { get; set; } = new();
     public List<SPITrendAnalysis> TrendAnalysis { get; set; } = new();
-    public DateTime LastUpdated { get; set; } = DateTime.UtcNow;
+    public DateTime LastUpdated { get; set; } = DateTime.Now;
 
     // UI Compatibility Properties
     public int SPIsRequiringReview => SPICards.Count(c => c.RequiresReview);
@@ -138,7 +138,7 @@ public class SPIDashboardCard
     public int GetDaysSinceLastMeasurement()
     {
         if (!LastMeasurementDate.HasValue) return int.MaxValue;
-        return (DateTime.UtcNow - LastMeasurementDate.Value).Days;
+        return (DateTime.Now - LastMeasurementDate.Value).Days;
     }
 }
 
@@ -207,7 +207,7 @@ public class SPIAlert
     {
         IsAcknowledged = true;
         AcknowledgedBy = acknowledgedBy;
-        AcknowledgedDate = DateTime.UtcNow;
+        AcknowledgedDate = DateTime.Now;
     }
 
     /// <summary>
@@ -217,7 +217,7 @@ public class SPIAlert
     {
         if (IsAcknowledged) return false;
 
-        var hoursOld = (DateTime.UtcNow - AlertDate).TotalHours;
+        var hoursOld = (DateTime.Now - AlertDate).TotalHours;
 
         return Severity.ToUpper() switch
         {

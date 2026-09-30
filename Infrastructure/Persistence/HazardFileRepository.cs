@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardFileRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -168,7 +168,7 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileCategory, hazardFile.Category ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardFileIsConfidential, hazardFile.IsConfidential));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, hazardFile.UpdatedBy ?? hazardFile.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, hazardFile.UpdatedDate ?? DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, hazardFile.UpdatedDate ?? DateTime.Now));
 
             await sql.OpenAsync(cancellationToken).ConfigureAwait(false);
             using var reader = await cmd.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
@@ -546,3 +546,4 @@ public sealed class HazardFileRepository : BaseRepository<HazardFileRepository, 
 
     
 }
+

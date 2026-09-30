@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAnalysis.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class RiskAnalysis : BaseAuditableEntity
 {
-    public RiskAnalysis(RiskAnalysisID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public RiskAnalysis(RiskAnalysisID id) : base(id, string.Empty, DateTime.Now) { }
 
     public string? Code { get; set; }
     public RiskAnalysisType AssessmentType { get; set; } = RiskAnalysisType.Initial;
@@ -29,4 +29,5 @@ public class RiskAnalysis : BaseAuditableEntity
     public string? ResidualRootCause { get; set; }
     public string? ResidualAdditionalComments { get; set; }
 }
+
 

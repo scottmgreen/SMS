@@ -376,7 +376,7 @@ public class GetSMSOrganizationalUserStatisticsQueryHandler : BaseQueryBundle, I
                 ["ActiveUsers"] = users.Count(u => u.IsActive),
                 ["InactiveUsers"] = users.Count(u => !u.IsActive),
                 ["UsersRequiringPasswordChange"] = users.Count(u => u.RequiresPasswordChange),
-                ["StaleUsers"] = users.Count(u => !u.LastLoginDate.HasValue || u.LastLoginDate < DateTime.UtcNow.AddDays(-90)),
+                ["StaleUsers"] = users.Count(u => !u.LastLoginDate.HasValue || u.LastLoginDate < DateTime.Now.AddDays(-90)),
                 ["LastLoginDate"] = users.Where(u => u.LastLoginDate.HasValue).Max(u => u.LastLoginDate)
             };
 
@@ -424,3 +424,4 @@ public class ValidateSMSOrganizationalUserCredentialsQueryHandler : BaseQueryBun
         }
     }
 }
+

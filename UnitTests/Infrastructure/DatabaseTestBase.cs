@@ -159,7 +159,7 @@ public abstract class DatabaseTestBase : IDisposable
             Description = $"Test hazard created for integration testing - {testId}",
             ReportCode = reportCode ?? $"RP-TEST-{testId}",
             CreatedBy = "INTEGRATION_TEST",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
 
         return hazard;
@@ -182,7 +182,7 @@ public abstract class DatabaseTestBase : IDisposable
             PersonInterviewedNotes = $"Test person interview notes - {testId}",
             InvestigatorNotes = $"Test investigator notes - {testId}",
             CreatedBy = "INTEGRATION_TEST",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
 
         return interview;
@@ -203,7 +203,7 @@ public abstract class DatabaseTestBase : IDisposable
             PrivateNarrative = $"Test airport shared dataset - {testId}",
             SharedNarrative = $"Test shared narrative - {testId}",
             CreatedBy = "INTEGRATION_TEST",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
 
         return dataset;
@@ -225,7 +225,7 @@ public abstract class DatabaseTestBase : IDisposable
             Status = "Active",
             Stage = "Draft",
             CreatedBy = "INTEGRATION_TEST",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
 
         return report;
@@ -248,7 +248,7 @@ public abstract class DatabaseTestBase : IDisposable
             Severity = 3,
             Score = 3,
             CreatedBy = "INTEGRATION_TEST",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
 
         return scoringPanel;
@@ -267,7 +267,7 @@ public abstract class DatabaseTestBase : IDisposable
             Code = testId,
             HazardCode = GenerateTestId("HZ"),
             CreatedBy = "INTEGRATION_TEST",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
 
         return mitigation;
@@ -293,7 +293,7 @@ public abstract class DatabaseTestBase : IDisposable
             ResidualRootCause = "Process improvement",
             ResidualAdditionalComments = "Post-mitigation analysis notes",
             CreatedBy = "INTEGRATION_TEST",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
     }
 
@@ -312,7 +312,7 @@ public abstract class DatabaseTestBase : IDisposable
             Status = RiskAssessmentStatus.AssessmentComplete, // Use actual enum value
             Stage = RiskAssessmentStage.DescribingSystem, // Use actual enum value
             CreatedBy = "INTEGRATION_TEST",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
     }
 
@@ -329,7 +329,7 @@ public abstract class DatabaseTestBase : IDisposable
             ReportCode = GenerateTestId("RP"),
             Status = ReportValidationStatus.ValidationNeeded, // Use actual enum value
             CreatedBy = "INTEGRATION_TEST",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
     }
 
@@ -347,7 +347,7 @@ public abstract class DatabaseTestBase : IDisposable
             MitigationCode = $"MIT-{testId}",
             DepartmentCode = $"DEPT-{testId}",
             CreatedBy = "INTEGRATION_TEST",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
 
         return mitigationAssignment;
@@ -367,7 +367,7 @@ public abstract class DatabaseTestBase : IDisposable
             ReportCode = $"RPT-{testId}",
             InvestigationNotes = $"Test investigation notes - {testId}",
             CreatedBy = "INTEGRATION_TEST",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
 
         return investigation;
@@ -383,7 +383,7 @@ public abstract class DatabaseTestBase : IDisposable
         {
             UserID = $"TEST_USER_{testId}",
             Workstation = "TEST_WORKSTATION",
-            EventDateTime = DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"),
+            EventDateTime = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
             MessageType = "Info",
             Severity = "Medium",
             Module = "TestModule",

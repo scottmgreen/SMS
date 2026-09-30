@@ -174,7 +174,7 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
                 RiskLevel = riskLevel,
                 RiskScore = riskScore,
                 Recommendations = recommendations,
-                AnalyzedDate = DateTime.UtcNow
+                AnalyzedDate = DateTime.Now
             };
 
             _logger.LogApplicationInformation("Completed risk analysis for hazard {HazardCode} with level {RiskLevel}", 
@@ -239,4 +239,5 @@ public sealed class RiskAnalysisService : IRiskAnalysisService
 
     #endregion
 }
+
 

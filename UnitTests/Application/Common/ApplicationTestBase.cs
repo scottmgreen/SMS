@@ -129,9 +129,9 @@ public abstract class ApplicationTestBase : IDisposable
             HazardCategory = "Safety",
             HazardType = "Operational",
             CreatedBy = "TEST_USER",
-            CreatedDate = DateTime.UtcNow,
+            CreatedDate = DateTime.Now,
             UpdatedBy = "TEST_USER", 
-            UpdatedDate = DateTime.UtcNow
+            UpdatedDate = DateTime.Now
         };
     }
 
@@ -150,11 +150,11 @@ public abstract class ApplicationTestBase : IDisposable
             Status = "Active", // Report.Status is string, not enum
             Stage = "Investigation",
             SubmittedBy = "TEST_USER",
-            SubmittedDate = DateTime.UtcNow,
+            SubmittedDate = DateTime.Now,
             CreatedBy = "TEST_USER",
-            CreatedDate = DateTime.UtcNow,
+            CreatedDate = DateTime.Now,
             UpdatedBy = "TEST_USER",
-            UpdatedDate = DateTime.UtcNow
+            UpdatedDate = DateTime.Now
         };
     }
 
@@ -171,7 +171,7 @@ public abstract class ApplicationTestBase : IDisposable
             ReportCode = GenerateUniqueCode("RP"),
             Status = InvestigationStatus.InvestigatorAssigned, // Use actual enum value
             CreatedBy = "TEST_USER",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
     }
 
@@ -188,7 +188,7 @@ public abstract class ApplicationTestBase : IDisposable
             InvestigationCode = GenerateUniqueCode("INV"),
             Status = InterviewStatus.InterviewComplete, // Use actual enum value
             CreatedBy = "TEST_USER",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
     }
 
@@ -206,7 +206,7 @@ public abstract class ApplicationTestBase : IDisposable
             Description = $"Unit test mitigation - {mitigationCode}",
             Status = MitigationStatus.PendingApproval, // Use actual enum value
             CreatedBy = "TEST_USER",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
     }
 
@@ -222,7 +222,7 @@ public abstract class ApplicationTestBase : IDisposable
             Code = assignmentCode,
             MitigationCode = GenerateUniqueCode("MIT"),
             CreatedBy = "TEST_USER",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
     }
 
@@ -246,7 +246,7 @@ public abstract class ApplicationTestBase : IDisposable
             ResidualRootCause = "Process improvement",
             ResidualAdditionalComments = "Post-mitigation analysis",
             CreatedBy = "TEST_USER",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
     }
 
@@ -263,7 +263,7 @@ public abstract class ApplicationTestBase : IDisposable
             HazardCode = GenerateUniqueCode("HZ"),
             Status = RiskAssessmentStatus.AssessmentUnderway, // Use actual enum value
             CreatedBy = "TEST_USER",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
     }
 
@@ -278,7 +278,7 @@ public abstract class ApplicationTestBase : IDisposable
         {
             Code = panelCode,
             CreatedBy = "TEST_USER",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
     }
 
@@ -293,7 +293,7 @@ public abstract class ApplicationTestBase : IDisposable
         {
             Code = datasetCode,
             CreatedBy = "TEST_USER",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
     }
 
@@ -310,7 +310,7 @@ public abstract class ApplicationTestBase : IDisposable
             ReportCode = GenerateUniqueCode("RP"),
             Status = ReportValidationStatus.ValidationNeeded, // Use actual enum value
             CreatedBy = "TEST_USER",
-            CreatedDate = DateTime.UtcNow
+            CreatedDate = DateTime.Now
         };
     }
 

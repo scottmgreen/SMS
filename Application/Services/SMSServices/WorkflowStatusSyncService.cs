@@ -102,9 +102,9 @@ public sealed class WorkflowStatusSyncService
                 foreach (var investigation in investigations.Where(i => i.Status != InvestigationStatus.InvestigationComplete))
                 {
                     investigation.Status = InvestigationStatus.InvestigationComplete;
-                    investigation.CompletedDate ??= DateTime.UtcNow;
+                    investigation.CompletedDate ??= DateTime.Now;
                     investigation.UpdatedBy = ResolveActor(updatedBy, investigation.UpdatedBy, investigation.CreatedBy);
-                    investigation.UpdatedDate = DateTime.UtcNow;
+                    investigation.UpdatedDate = DateTime.Now;
 
                     var updateInvestigationResult = await _investigationService
                         .UpdateInvestigationAsync(investigation, ct)
@@ -129,7 +129,7 @@ public sealed class WorkflowStatusSyncService
                         }
 
                         i.Status = InvestigationStatus.InvestigationComplete;
-                        i.CompletedDate ??= DateTime.UtcNow;
+                        i.CompletedDate ??= DateTime.Now;
                         return i;
                     })
                     .ToList();
@@ -182,7 +182,7 @@ public sealed class WorkflowStatusSyncService
             {
                 initialHazard.Status = targetStatuses.HazardStatus;
                 initialHazard.UpdatedBy = actor;
-                initialHazard.UpdatedDate = DateTime.UtcNow;
+                initialHazard.UpdatedDate = DateTime.Now;
 
                 var hazardUpdateResult = await _hazardService.UpdateHazardAsync(initialHazard, ct).ConfigureAwait(false);
                 if (hazardUpdateResult.IsFailure)
@@ -241,6 +241,11 @@ public sealed class WorkflowStatusSyncService
 
             if (latestAssessment.Status == RiskAssessmentStatus.AssessmentComplete)
             {
+                if (latestAssessment.AssessmentType == RiskAssessmentType.RiskRegistryOnly)
+                {
+                    return (ReportStatus.RiskRegistryOnly, hazardStatus);
+                }
+
                 return (ReportStatus.RiskAssessmentSubmitted, hazardStatus);
             }
 
@@ -300,3 +305,4 @@ public sealed class WorkflowStatusSyncService
         return string.Empty;
     }
 }
+

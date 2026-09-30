@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="Investigation.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -17,7 +17,7 @@ namespace SMS_Domain.Entities;
 public sealed class Investigation : BaseAuditableEntity
 {
     // Public constructor for instantiation
-    public Investigation(InvestigationID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public Investigation(InvestigationID id) : base(id, string.Empty, DateTime.Now) { }
 
       
 
@@ -69,4 +69,5 @@ public sealed class Investigation : BaseAuditableEntity
 
     #endregion
 }
+
 

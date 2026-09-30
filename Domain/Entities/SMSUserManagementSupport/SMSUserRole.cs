@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSUserRole.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -13,7 +13,7 @@ namespace SMS_Domain.Entities;
 public sealed class SMSUserRole : BaseAuditableEntity
 {
 
-    public SMSUserRole(SMSUserRoleID id) : base(id, string.Empty, DateTime.UtcNow)
+    public SMSUserRole(SMSUserRoleID id) : base(id, string.Empty, DateTime.Now)
     {
         Code = id.Value;
         Permissions = new List<SMSUserRolePermission>();
@@ -23,3 +23,4 @@ public sealed class SMSUserRole : BaseAuditableEntity
     public string? Name { get; set; }
     public List<SMSUserRolePermission> Permissions { get; set; }
 }
+

@@ -151,7 +151,7 @@ public class HazardDatabaseIntegrationTests : DatabaseTestBase
             createdHazard.Name = "REPO_UPDATED - " + createdHazard.Name;
             createdHazard.Description = "REPO_UPDATED - " + createdHazard.Description;
             createdHazard.UpdatedBy = "INTEGRATION_TEST_REPO_UPDATE";
-            createdHazard.UpdatedDate = DateTime.UtcNow;
+            createdHazard.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _hazardRepository.UpdateHazardAsync(createdHazard);
@@ -296,7 +296,7 @@ public class HazardDatabaseIntegrationTests : DatabaseTestBase
             createdHazard.Name = "DS_UPDATED - " + createdHazard.Name;
             createdHazard.Description = "DS_UPDATED - " + createdHazard.Description;
             createdHazard.UpdatedBy = "INTEGRATION_TEST_DS_UPDATE";
-            createdHazard.UpdatedDate = DateTime.UtcNow;
+            createdHazard.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _hazardDataService.UpdateHazardAsync(createdHazard);

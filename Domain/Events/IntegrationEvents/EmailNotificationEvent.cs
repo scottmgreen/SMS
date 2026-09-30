@@ -68,7 +68,7 @@ public class EmailNotificationEvent : IBaseIntegrationEvent
         int maxRetryAttempts = 3)
     {
         EventId = Guid.NewGuid();
-        OccurredOn = DateTime.UtcNow;
+        OccurredOn = DateTime.Now;
         ReportId = ResolveReportId(reportId, relatedEntityType, relatedEntityId);
         TargetSystem = "EmailService";
 

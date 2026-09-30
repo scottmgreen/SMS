@@ -97,7 +97,7 @@ public class AuditFieldsPipelineBehavior<TRequest, TResponse> : IPipelineBehavio
         var currentUser = string.IsNullOrWhiteSpace(_currentUserService.UserCode)
             ? SystemActorConstants.FlyPdxApiSource
             : _currentUserService.UserCode;
-        var currentTime = DateTime.UtcNow;
+        var currentTime = DateTime.Now;
 
         // Use the interface methods that already exist
         if (request is ICreateCommand createCommand)
@@ -161,4 +161,5 @@ public class AuditFieldsPipelineBehavior<TRequest, TResponse> : IPipelineBehavio
         return true;
     }
 }
+
 

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSApplicationGroup.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -17,8 +17,9 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public sealed class SMSApplicationGroup : BaseUserGroup
 {
-    public SMSApplicationGroup(SMSApplicationGroupID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public SMSApplicationGroup(SMSApplicationGroupID id) : base(id, string.Empty, DateTime.Now) { }
 
     public List<SMSApplicationUser> GroupMembers { get; set; }
 }
+
 

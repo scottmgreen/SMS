@@ -1,4 +1,4 @@
-﻿namespace SMS3.Components.Pages.SMSRiskManagement.Models;
+namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 public class ReportProcessingSummary
 {
@@ -47,7 +47,7 @@ public class ReportProcessingSummary
     public DateTime? InvestigationStartDate { get; set; }
     public bool HasInvestigation => !string.IsNullOrEmpty(InvestigationId);
     public int DaysInInvestigation => InvestigationStartDate.HasValue 
-        ? (DateTime.UtcNow - InvestigationStartDate.Value).Days 
+        ? (DateTime.Now - InvestigationStartDate.Value).Days 
         : 0;
 
     // ? NEW: All Mitigations for All Hazards in Report
@@ -210,5 +210,6 @@ public class ReportProcessingSummary
         }
     }
 }
+
 
 

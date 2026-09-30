@@ -70,7 +70,7 @@ public class ApplicationBasicTests : ApplicationTestBase
         hazard.Name.Should().NotBeEmpty();
         hazard.Description.Should().NotBeEmpty();
         hazard.CreatedBy.Should().Be("TEST_USER");
-        hazard.CreatedDate.Should().BeCloseTo(DateTime.UtcNow, TimeSpan.FromSeconds(1));
+        hazard.CreatedDate.Should().BeCloseTo(DateTime.Now, TimeSpan.FromSeconds(1));
     }
 
     [Fact]

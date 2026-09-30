@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="Hazard.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -16,7 +16,7 @@ namespace SMS_Domain.Entities;
 public sealed class Hazard : BaseAuditableEntity
 {
     // Public constructor for domain usage
-    public Hazard(HazardID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public Hazard(HazardID id) : base(id, string.Empty, DateTime.Now) { }
 
     
     #region Core Properties
@@ -99,7 +99,7 @@ public sealed class Hazard : BaseAuditableEntity
         if (hazardFileId != null && !_hazardFileIds.Contains(hazardFileId))
         {
             _hazardFileIds.Add(hazardFileId);
-            UpdatedDate = DateTime.UtcNow;
+            UpdatedDate = DateTime.Now;
         }
     }
 
@@ -111,4 +111,5 @@ public sealed class Hazard : BaseAuditableEntity
 
 
 }
+
 

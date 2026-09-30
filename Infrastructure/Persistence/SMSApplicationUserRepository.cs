@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSApplicationUserRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -465,7 +465,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserRole, user.UserRole?.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastLoginDate, user.LastLoginDate));
-            // 🔐 NEW: Add 2FA parameters to AddAsync  
+            // ?? NEW: Add 2FA parameters to AddAsync  
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSecretKey, user.TwoFactorSecretKey));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorEnabled, user.TwoFactorEnabled));
             
@@ -475,7 +475,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorLockedUntil, user.TwoFactorLockedUntil));
                         
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, user.CreatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewSMSApplicationUserCode", SqlDbType.VarChar, 60) { Direction = ParameterDirection.Output };
@@ -527,8 +527,8 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserRole, user.UserRole?.Code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserIsActive, user.IsActive));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserLastLoginDate, user.LastLoginDate));
-            // 🔐 NEW: Add 2FA parameters to UpdateAsync
-            // 🔐 NEW: Add 2FA parameters to AddAsync  
+            // ?? NEW: Add 2FA parameters to UpdateAsync
+            // ?? NEW: Add 2FA parameters to AddAsync  
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSecretKey, user.TwoFactorSecretKey));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorEnabled, user.TwoFactorEnabled));
 
@@ -539,7 +539,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
 
             
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, user.UpdatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -574,7 +574,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSApplicationUserPassword, hashedPassword));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, code.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -622,7 +622,7 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
         }
     }
 
-    // 🔐 Two-Factor Authentication Repository Methods
+    // ?? Two-Factor Authentication Repository Methods
 
     /// <summary>
     /// Setup 2FA for a user (first-time setup)
@@ -961,3 +961,4 @@ public sealed class SMSApplicationUserRepository : BaseRepository<SMSApplication
     //    return await GetByIdAsync(id.Value);
     //}
 }
+

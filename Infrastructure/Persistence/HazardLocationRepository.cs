@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="HazardLocationRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -103,7 +103,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
             //cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationDateSelected, hazardLocation.DateSelected));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy,
                 string.IsNullOrWhiteSpace(hazardLocation.CreatedBy) ? "UNKNOWN" : hazardLocation.CreatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewHazardLocationCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -274,7 +274,7 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmHazardLocationIsValidated, hazardLocation.IsValidated));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy,
                 string.IsNullOrWhiteSpace(hazardLocation.UpdatedBy) ? "UNKNOWN" : hazardLocation.UpdatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -323,3 +323,4 @@ public sealed class HazardLocationRepository : BaseRepository<HazardLocationRepo
 
     #endregion
 }
+

@@ -85,7 +85,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
                     .ToDictionary(g => g.Key, g => g.Count());
 
                 // Group by month (last 12 months)
-                var twelveMonthsAgo = DateTime.UtcNow.AddMonths(-12);
+                var twelveMonthsAgo = DateTime.Now.AddMonths(-12);
                 response.ReportsByMonth = reports
                     .Where(r => r.CreatedDate >= twelveMonthsAgo)
                     .GroupBy(r => r.CreatedDate?.ToString("yyyy-MM") ?? "Unknown")
@@ -257,7 +257,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
         try
         {
             var recentActivities = new List<DashboardActivityItem>();
-            var cutoffDate = DateTime.UtcNow.AddDays(-7); // Last 7 days
+            var cutoffDate = DateTime.Now.AddDays(-7); // Last 7 days
 
             // Load recent reports
             var reportsQuery = new GetAllReportsQuery();
@@ -278,7 +278,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
                         Action = "Submitted",
                         Title = $"New Report: {report.Code}",
                         Description = report.Description ?? "Report submitted",
-                        Timestamp = report.CreatedDate ?? DateTime.UtcNow,
+                        Timestamp = report.CreatedDate ?? DateTime.Now,
                         Icon = "assignment",
                         Color = "var(--rz-info)",
                         NavigationUrl = $"/SMSRiskManagement/ReportValidation/{report.Code}"
@@ -305,7 +305,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
                         Action = "Identified",
                         Title = $"New Hazard: {hazard.Code}",
                         Description = hazard.Description ?? "Hazard identified",
-                        Timestamp = hazard.CreatedDate ?? DateTime.UtcNow,
+                        Timestamp = hazard.CreatedDate ?? DateTime.Now,
                         Icon = "warning",
                         Color = "var(--rz-warning)",
                         NavigationUrl = $"/SMSRiskManagement/HazardReporting?hazardId={hazard.Code}"
@@ -332,7 +332,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
                         Action = "Completed",
                         Title = $"Assessment: {assessment.Code}",
                         Description = assessment.Name ?? "Risk assessment completed",
-                        Timestamp = assessment.UpdatedDate ?? assessment.CreatedDate ?? DateTime.UtcNow,
+                        Timestamp = assessment.UpdatedDate ?? assessment.CreatedDate ?? DateTime.Now,
                         Icon = "analytics",
                         Color = "var(--rz-success)",
                         NavigationUrl = $"/SMSRiskManagement/TechnicalAssessment/{assessment.Code}"
@@ -359,7 +359,7 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
         try
         {
             // Calculate items completed this month
-            var thisMonth = DateTime.UtcNow.ToString("yyyy-MM");
+            var thisMonth = DateTime.Now.ToString("yyyy-MM");
             response.ItemsCompletedThisMonth =
                 (response.ReportsByStatus.GetValueOrDefault("Completed", 0) +
                  response.ReportsByStatus.GetValueOrDefault("Closed", 0) +
@@ -399,4 +399,5 @@ public class DashboardStatisticsQueryHandler : BaseQueryBundle, IBaseRequestHand
         return yearMonth;
     }
 }
+
 

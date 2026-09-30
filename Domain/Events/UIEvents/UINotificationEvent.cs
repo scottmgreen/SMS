@@ -47,7 +47,7 @@ public class UINotificationEvent : IBaseUIEvent
         Dictionary<string, object>? metadata = null)
     {
         EventId = Guid.NewGuid();
-        OccurredOn = DateTime.UtcNow;
+        OccurredOn = DateTime.Now;
 
         Severity = severity;
         Title = title ?? throw new ArgumentNullException(nameof(title));

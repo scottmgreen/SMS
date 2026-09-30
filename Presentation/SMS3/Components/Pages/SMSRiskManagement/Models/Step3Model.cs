@@ -257,9 +257,9 @@ public class Step3Model
                         ResidualWorstCredibleOutcome = string.Empty,
                         ResidualRootCause = string.Empty,
                         ResidualAdditionalComments = string.Empty,
-                        CreatedDate = DateTime.UtcNow,
+                        CreatedDate = DateTime.Now,
                         CreatedBy = actor,
-                        UpdatedDate = DateTime.UtcNow,
+                        UpdatedDate = DateTime.Now,
                         UpdatedBy = actor
                     };
 
@@ -326,7 +326,7 @@ public class Step3Model
                 {
                     analysis.RiskAssessmentCode = assessment.Code;
                     analysis.UpdatedBy = _currentUserService?.UserCode;
-                    analysis.UpdatedDate = DateTime.UtcNow;
+                    analysis.UpdatedDate = DateTime.Now;
                 }
 
                                
@@ -355,4 +355,5 @@ public class Step3Model
 
     
 }
+
 

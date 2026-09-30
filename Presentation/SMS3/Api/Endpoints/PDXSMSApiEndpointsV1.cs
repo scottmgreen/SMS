@@ -203,7 +203,7 @@ namespace SMS3.Api.Endpoints
             return Results.Ok(new
             {
                 message = "Complete reference data for confidential reporting API",
-                lastUpdated = DateTime.UtcNow,
+                lastUpdated = DateTime.Now,
                 categories = categories,
                 totalCategories = categories.Count,
                 totalHazardTypes = categories.Sum(c => c.hazardTypes.Count),

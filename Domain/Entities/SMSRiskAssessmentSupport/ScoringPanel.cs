@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ScoringPanel.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -15,7 +15,7 @@ namespace SMS_Domain.Entities;
 /// </summary>
 public class ScoringPanel : BaseAuditableEntity
 {
-    public ScoringPanel(ScoringPanelID id) : base(id, string.Empty, DateTime.UtcNow) { }
+    public ScoringPanel(ScoringPanelID id) : base(id, string.Empty, DateTime.Now) { }
 
     public string? Code { get; set; }
     public string? HazardCode { get; set; }
@@ -47,3 +47,4 @@ public class ScoringPanel : BaseAuditableEntity
     [System.ComponentModel.DataAnnotations.Schema.NotMapped]
     public string? Rationale { get; set; }
 }
+

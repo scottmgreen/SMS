@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="AirportSharedDatasetRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -93,7 +93,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmContributingFactors, airportSharedDataset.ContributingFactors));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFactorsOtherDescription, airportSharedDataset.FactorsOtherDescription));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, airportSharedDataset.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewAirportSharedDatasetCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -257,7 +257,7 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmContributingFactors, airportSharedDataset.ContributingFactors));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmFactorsOtherDescription, airportSharedDataset.FactorsOtherDescription));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, airportSharedDataset.UpdatedBy ?? airportSharedDataset.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -304,3 +304,4 @@ public sealed class AirportSharedDatasetRepository : BaseRepository<AirportShare
         }
     }
 }
+

@@ -44,7 +44,7 @@ public class DomainEventHandlersBatch4Tests
             LocationArea = "Area A",
             ReportCode = "RP-001",
             CreatedBy = "tester",
-            CreatedDate = DateTime.UtcNow,
+            CreatedDate = DateTime.Now,
             Priority = HazardPriority.High
         };
 
@@ -72,7 +72,7 @@ public class DomainEventHandlersBatch4Tests
         var domainEvent = new HazardCreatedEvent(new SMSEventID("evt-hazard-created-fail"))
         {
             HazardCode = "HZ-002",
-            CreatedDate = DateTime.UtcNow,
+            CreatedDate = DateTime.Now,
             Priority = HazardPriority.Medium
         };
 
@@ -101,7 +101,7 @@ public class DomainEventHandlersBatch4Tests
             "MIT-001",
             "MIT-CODE-001",
             "HZ-001",
-            DateTime.UtcNow.Date,
+            DateTime.Now.Date,
             4);
 
         var result = await handler.HandleAsync(domainEvent, CancellationToken.None);
@@ -132,7 +132,7 @@ public class DomainEventHandlersBatch4Tests
             90m,
             "Part-139",
             "2026-Q2",
-            DateTime.UtcNow,
+            DateTime.Now,
             requiresRegulatoryReporting: true,
             regulatoryBody: "FAA");
 
@@ -158,7 +158,7 @@ public class DomainEventHandlersBatch4Tests
             .ReturnsAsync(Result.Success());
 
         var handler = new ReportClosedEventHandler(logger.Object, eventBus.Object);
-        var domainEvent = new ReportClosedEvent(new SMSEventID("evt-report-closed"), "RP-100", "tester", DateTime.UtcNow);
+        var domainEvent = new ReportClosedEvent(new SMSEventID("evt-report-closed"), "RP-100", "tester", DateTime.Now);
 
         var result = await handler.HandleAsync(domainEvent, CancellationToken.None);
 
@@ -177,7 +177,7 @@ public class DomainEventHandlersBatch4Tests
             .ReturnsAsync(Result.Success());
 
         var handler = new ReportUpdatedEventHandler(logger.Object, eventBus.Object);
-        var domainEvent = new ReportUpdatedEvent(new SMSEventID("evt-report-updated"), "RP-101", "tester", DateTime.UtcNow);
+        var domainEvent = new ReportUpdatedEvent(new SMSEventID("evt-report-updated"), "RP-101", "tester", DateTime.Now);
 
         var result = await handler.HandleAsync(domainEvent, CancellationToken.None);
 
@@ -210,7 +210,7 @@ public class DomainEventHandlersBatch4Tests
             Code = "DP-0001",
             SPIId = "SPI-001",
             Value = 96m,
-            MeasurementDate = DateTime.UtcNow,
+            MeasurementDate = DateTime.Now,
             Period = "2026-Q3",
             DataSource = "UnitTest"
         };
@@ -308,3 +308,4 @@ public class DomainEventHandlersBatch4Tests
         eventBus.Verify(x => x.PublishUIEventAsync(It.IsAny<SPIDashboardRefreshEvent>(), EventExecutionMode.Manual, It.IsAny<CancellationToken>()), Times.Once);
     }
 }
+

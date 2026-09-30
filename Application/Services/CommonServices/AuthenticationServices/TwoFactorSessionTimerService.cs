@@ -52,7 +52,7 @@ public class TwoFactorSessionTimerService : IDisposable
             return;
         }
 
-        _startTime = DateTime.UtcNow;
+        _startTime = DateTime.Now;
         _isActive = true;
 
         // Create timer that checks every 10 seconds during 2FA
@@ -82,7 +82,7 @@ public class TwoFactorSessionTimerService : IDisposable
         if (!_isActive)
             return TimeSpan.Zero;
 
-        var elapsed = DateTime.UtcNow - _startTime;
+        var elapsed = DateTime.Now - _startTime;
         var remaining = _twoFactorConfig.TwoFASessionTimeout - elapsed;
         
         return remaining > TimeSpan.Zero ? remaining : TimeSpan.Zero;
@@ -188,3 +188,4 @@ public class TwoFactorSessionTimerService : IDisposable
         StopTimer();
     }
 }
+

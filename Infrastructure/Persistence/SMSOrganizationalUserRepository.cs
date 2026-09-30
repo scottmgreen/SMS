@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSOrganizationalUserRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -226,7 +226,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserOrganizationLevel, user.OrganizationLevel.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserIsActive, user.IsActive));
                         
-            // 🔐 Add 2FA parameters to AddAsync - uses same parameter names as Application and Stakeholder users
+            // ?? Add 2FA parameters to AddAsync - uses same parameter names as Application and Stakeholder users
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSecretKey, user.TwoFactorSecretKey));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorEnabled, user.TwoFactorEnabled));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserBackupCodes, user.BackupCodes));
@@ -241,7 +241,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
 
 
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, user.CreatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewUserCode", SqlDbType.VarChar, 60) { Direction = ParameterDirection.Output };
@@ -295,7 +295,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserRiskApprovalAuthority, user.OrganizationLevel.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserIsActive, user.IsActive));
             
-            // 🔐 NEW: Add 2FA parameters to UpdateAsync - uses same parameter names as Application and Stakeholder users
+            // ?? NEW: Add 2FA parameters to UpdateAsync - uses same parameter names as Application and Stakeholder users
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorSecretKey, user.TwoFactorSecretKey));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorEnabled, user.TwoFactorEnabled));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserBackupCodes, user.BackupCodes));
@@ -304,7 +304,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserTwoFactorLockedUntil, user.TwoFactorLockedUntil));
             
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, user.UpdatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -345,7 +345,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCode, code));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserPassword, hashedPassword));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, code));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync().ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
@@ -647,7 +647,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
     }
 
 
-    // 🔐 Two-Factor Authentication Repository Methods
+    // ?? Two-Factor Authentication Repository Methods
 
     /// <summary>
     /// Setup 2FA for an organizational user (first-time setup)
@@ -797,3 +797,4 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 }
+

@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="RiskAnalysisRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -57,7 +57,7 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualRootCause, riskAnalysis.ResidualRootCause));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualAdditionalComments, riskAnalysis.ResidualAdditionalComments));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, riskAnalysis.CreatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewRiskAnalysisCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -238,7 +238,7 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualRootCause, riskAnalysis.ResidualRootCause));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmRiskAnalysisResidualAdditionalComments, riskAnalysis.ResidualAdditionalComments));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, riskAnalysis.UpdatedBy ?? riskAnalysis.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -285,3 +285,4 @@ public sealed class RiskAnalysisRepository : BaseRepository<RiskAnalysisReposito
         }
     }
 }
+

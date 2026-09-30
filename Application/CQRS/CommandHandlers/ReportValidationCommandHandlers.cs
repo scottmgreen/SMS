@@ -106,7 +106,7 @@ public class ResetReportValidationCommandHandler : BaseCommandBundle, IBaseReque
                     new SMSEventID("EV-0000"),
                     result.Value?.ReportCode ?? request.ReportValidation.ReportCode,
                     result.Value?.ValidationDecision ?? request.ReportValidation.ValidationDecision,
-                    result.Value?.ValidatedDate ?? request.ReportValidation.ValidatedDate ?? DateTime.UtcNow)
+                    result.Value?.ValidatedDate ?? request.ReportValidation.ValidatedDate ?? DateTime.Now)
                 {
                     ValidatedBy = result.Value?.ValidatedBy ?? request.ReportValidation.ValidatedBy ?? string.Empty,
                     ValidationComments = result.Value?.ValidationComments ?? request.ReportValidation.ValidationComments ?? string.Empty
@@ -176,7 +176,7 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
                     new SMSEventID("EV-0000"),
                     result.Value?.ReportCode ?? request.ReportValidation.ReportCode,
                     result.Value?.ValidationDecision ?? request.ReportValidation.ValidationDecision,
-                    result.Value?.ValidatedDate ?? request.ReportValidation.ValidatedDate ?? DateTime.UtcNow)
+                    result.Value?.ValidatedDate ?? request.ReportValidation.ValidatedDate ?? DateTime.Now)
                 {
                     ValidatedBy = result.Value?.ValidatedBy ?? request.ReportValidation.ValidatedBy ?? string.Empty,
                     ValidationComments = result.Value?.ValidationComments ?? request.ReportValidation.ValidationComments ?? string.Empty
@@ -260,4 +260,5 @@ public class DeleteReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
         }
     }
 }
+
 

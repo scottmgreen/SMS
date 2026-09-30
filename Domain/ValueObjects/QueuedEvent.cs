@@ -69,7 +69,7 @@ public sealed class QueuedEvent : BaseEntity
     /// <summary>
     /// When the event was queued
     /// </summary>
-    public DateTime QueuedAt { get; set; } = DateTime.UtcNow;
+    public DateTime QueuedAt { get; set; } = DateTime.Now;
 
     /// <summary>
     /// When the event was processed (if processed)
@@ -180,7 +180,7 @@ public sealed class QueuedEvent : BaseEntity
     public QueuedEvent MarkAsProcessed()
     {
         Status = QueuedEventStatus.Processed;
-        ProcessedAt = DateTime.UtcNow;
+        ProcessedAt = DateTime.Now;
         AttemptCount += 1;
         return this;
     }
@@ -230,3 +230,4 @@ public record EventTypeStatistics
     public int Cancelled { get; init; }
     public int Total => Pending + Processed + Failed + Cancelled;
 }
+

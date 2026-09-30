@@ -150,7 +150,7 @@ public class ScoringPanelDatabaseIntegrationTests : DatabaseTestBase
             createdScoringPanel.Likelihood = 99; // Use numeric value instead of string
             createdScoringPanel.Severity = 88; // Use numeric value instead of string
             createdScoringPanel.UpdatedBy = "INTEGRATION_TEST_REPO_UPDATE";
-            createdScoringPanel.UpdatedDate = DateTime.UtcNow;
+            createdScoringPanel.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _scoringPanelRepository.UpdateScoringPanelAsync(createdScoringPanel);
@@ -295,7 +295,7 @@ public class ScoringPanelDatabaseIntegrationTests : DatabaseTestBase
             //createdScoringPanel.Name = "DS_UPDATED - " + createdScoringPanel.Name;
             //createdScoringPanel.Description = "DS_UPDATED - " + createdScoringPanel.Description;
             createdScoringPanel.UpdatedBy = "INTEGRATION_TEST_DS_UPDATE";
-            createdScoringPanel.UpdatedDate = DateTime.UtcNow;
+            createdScoringPanel.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _scoringPanelDataService.UpdateScoringPanelAsync(createdScoringPanel);

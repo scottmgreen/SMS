@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSWorkflowService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -101,7 +101,7 @@ public class SMSWorkflowService : ISMSWorkflowService
             );
 
             // Set appropriate due date based on risk level
-            var dueDate = DateTime.UtcNow.Add(DecisionAuthority.GetAuthorityForRiskLevel(riskLevel).GetTypicalApprovalTimeframe());
+            var dueDate = DateTime.Now.Add(DecisionAuthority.GetAuthorityForRiskLevel(riskLevel).GetTypicalApprovalTimeframe());
             riskApproval.SetDueDate(dueDate, requestedBy);
 
             // In real implementation, would save to repository
@@ -195,7 +195,7 @@ public class SMSWorkflowService : ISMSWorkflowService
             var meeting = new CommitteeMeeting(
                 new MeetingID(Guid.NewGuid().ToString()),
                 committeeId,
-                DateTime.UtcNow.AddDays(GetMeetingScheduleOffset(meetingType)),
+                DateTime.Now.AddDays(GetMeetingScheduleOffset(meetingType)),
                 meetingType,
                 "system-scheduler", // Would determine appropriate facilitator
                 scheduledBy
@@ -346,3 +346,4 @@ public class SMSWorkflowService : ISMSWorkflowService
         };
     }
 }
+

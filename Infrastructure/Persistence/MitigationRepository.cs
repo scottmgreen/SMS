@@ -1,4 +1,4 @@
-﻿//---------------------------------------------------------------------------
+//---------------------------------------------------------------------------
 // <copyright file="MitigationRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -102,7 +102,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
            
             // Audit Fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, mitigation.CreatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
             var newID = new SqlParameter(ParameterNames.pmNewID, SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter(ParameterNames.pmNewMitigationCode, SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -284,7 +284,7 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
 
             // Audit Fields
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, mitigation.UpdatedBy));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -375,3 +375,4 @@ public sealed class MitigationRepository : BaseRepository<MitigationRepository, 
         }
     }
 }
+

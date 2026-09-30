@@ -17,17 +17,17 @@ public class Interview : BaseAuditableEntity
 {
 
     // Public constructor for domain usage
-    public Interview(InterviewID id) : base(id, string.Empty, DateTime.UtcNow)
+    public Interview(InterviewID id) : base(id, string.Empty, DateTime.Now)
     {
         Status = InterviewStatus.IntervieweeIdentified; // UPDATED: Default to IntervieweeIdentified (first step in new workflow)
         Type = InterviewType.Witness;
-        CreatedDate = DateTime.UtcNow;
-        UpdatedDate = DateTime.UtcNow;
+        CreatedDate = DateTime.Now;
+        UpdatedDate = DateTime.Now;
     }
 
     // Private constructor for creation with validation
     private Interview(InterviewID id, string code, string investigationCode, string personInterviewed, string investigatorCode)
-        : base(id, string.Empty, DateTime.UtcNow)
+        : base(id, string.Empty, DateTime.Now)
     {
         Code = code;
         InvestigationCode = investigationCode;
@@ -35,8 +35,8 @@ public class Interview : BaseAuditableEntity
         SMSInvestigatorCode = investigatorCode;
         Status = InterviewStatus.IntervieweeIdentified; // UPDATED: Default to IntervieweeIdentified (first step in new workflow)
         Type = InterviewType.Witness;
-        CreatedDate = DateTime.UtcNow;
-        UpdatedDate = DateTime.UtcNow;
+        CreatedDate = DateTime.Now;
+        UpdatedDate = DateTime.Now;
     }
 
     #region Core Properties
@@ -158,7 +158,7 @@ public class Interview : BaseAuditableEntity
         //    return Result<bool>.Failure<bool>(DomainErrors.InterviewError.CannotModifyCompleted);
         //}
 
-        if (interviewDate <= DateTime.UtcNow)
+        if (interviewDate <= DateTime.Now)
         {
             return Result.Failure<bool>(DomainErrors.InterviewError.InterviewDateMustBeFuture);
         }
@@ -167,7 +167,7 @@ public class Interview : BaseAuditableEntity
         InterviewLocation = location;
         DurationMinutes = estimatedDurationMinutes ?? Type.GetRecommendedMinimumDurationMinutes();
         Status = InterviewStatus.InterviewScheduled; // UPDATED: Set to InterviewScheduled
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
 
         return Result.Success(true);
     }
@@ -183,7 +183,7 @@ public class Interview : BaseAuditableEntity
         //}
 
         // Allow past dates for rescheduling if already scheduled
-        if (newInterviewDate <= DateTime.UtcNow && !Status.Equals(InterviewStatus.InterviewScheduled)) // UPDATED: Use InterviewScheduled
+        if (newInterviewDate <= DateTime.Now && !Status.Equals(InterviewStatus.InterviewScheduled)) // UPDATED: Use InterviewScheduled
         {
             return Result.Failure<bool>(DomainErrors.InterviewError.InterviewDateMustBeFuture);
         }
@@ -195,7 +195,7 @@ public class Interview : BaseAuditableEntity
             DurationMinutes = newDurationMinutes.Value;
         }
 
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
 
         return Result.Success(true);
     }
@@ -213,7 +213,7 @@ public class Interview : BaseAuditableEntity
 
         // NOTE: In the new workflow, there's no "InProgress" status - interview goes directly from Scheduled to Complete
         // So we'll keep the interview as InterviewScheduled until completion
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
 
         return Result.Success(true);
     }
@@ -236,8 +236,8 @@ public class Interview : BaseAuditableEntity
         AdditionalWitnesses = additionalWitnesses;
 
         Status = InterviewStatus.InterviewComplete; // UPDATED: Use InterviewComplete
-        CompletedDate = DateTime.UtcNow;
-        UpdatedDate = DateTime.UtcNow;
+        CompletedDate = DateTime.Now;
+        UpdatedDate = DateTime.Now;
 
         return Result.Success(true);
     }
@@ -259,7 +259,7 @@ public class Interview : BaseAuditableEntity
 
         Status = InterviewStatus.UnableToConduct; // UPDATED: Use UnableToConduct instead of Cancelled
         InvestigatorNotes = $"{InvestigatorNotes}\n\n[UNABLE TO CONDUCT]: {reason}"; // UPDATED: Change message text
-        UpdatedDate = DateTime.UtcNow;
+        UpdatedDate = DateTime.Now;
 
         return Result.Success(true);
     }
@@ -306,11 +306,12 @@ public class Interview : BaseAuditableEntity
     {
         // Extract investigation ID portion for linking
         var investigationId = investigationCode.Replace("INV-", "");
-        var timestamp = DateTime.UtcNow.ToString("HHmmss");
+        var timestamp = DateTime.Now.ToString("HHmmss");
         return $"INT-{investigationId}-{timestamp}";
     }
 
     #endregion
 }
+
 
 

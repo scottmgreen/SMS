@@ -127,7 +127,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             }
 
             // Also store under user code for fallback retrieval
-            var userCircuitKey = $"circuit_{user.Code}_{DateTime.UtcNow.Ticks}";
+            var userCircuitKey = $"circuit_{user.Code}_{DateTime.Now.Ticks}";
             userData["SMS_UserCircuitKey"] = userCircuitKey;
             _circuitAuthStorage.SetAuthData(userCircuitKey, userData);
 
@@ -393,7 +393,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
     /// </summary>
     private string GenerateCircuitId(string userCode)
     {
-        var timestamp = DateTime.UtcNow.Ticks;
+        var timestamp = DateTime.Now.Ticks;
         var context = _httpContextAccessor.HttpContext;
         
         // Try connection ID first
@@ -447,7 +447,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
     private string GetCachedOrGenerateCircuitId()
     {
         // Check if cached circuit ID is still valid (use shorter cache for better responsiveness)
-        if (!string.IsNullOrEmpty(_cachedCircuitId) && DateTime.UtcNow < _cacheExpiry)
+        if (!string.IsNullOrEmpty(_cachedCircuitId) && DateTime.Now < _cacheExpiry)
         {
             return _cachedCircuitId;
         }
@@ -455,7 +455,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
         // Generate new circuit ID and cache it for a shorter time
         var newCircuitId = GetOrGenerateCircuitId();
         _cachedCircuitId = newCircuitId;
-        _cacheExpiry = DateTime.UtcNow.Add(TimeSpan.FromSeconds(30)); // Shorter cache for circuit IDs
+        _cacheExpiry = DateTime.Now.Add(TimeSpan.FromSeconds(30)); // Shorter cache for circuit IDs
         
         _logger.LogApplicationDebug("Generated and cached new circuit ID: {CircuitId}", newCircuitId);
         return newCircuitId;
@@ -520,19 +520,19 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
         {
             if (context == null)
             {
-                return $"no_context_{DateTime.UtcNow:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}";
+                return $"no_context_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}";
             }
 
             // Create deterministic ID based on connection characteristics
             var remoteIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip";
             var userAgent = context.Request.Headers["User-Agent"].FirstOrDefault() ?? "unknown_ua";
-            var timestamp = DateTime.UtcNow.ToString("yyyyMMdd_HHmm"); // 1-minute granularity
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmm"); // 1-minute granularity
             
             // Create hash of characteristics for consistency
             var combined = $"{remoteIp}_{userAgent}_{timestamp}";
             var hash = combined.GetHashCode().ToString("X8");
             
-            var fallbackId = $"fallback_{hash}_{DateTime.UtcNow:ss}";
+            var fallbackId = $"fallback_{hash}_{DateTime.Now:ss}";
             _logger.LogApplicationDebug("Generated fallback circuit ID for IP {RemoteIp}: {FallbackId}", remoteIp, fallbackId);
             
             return fallbackId;
@@ -544,4 +544,5 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
         }
     }
 }
+
 

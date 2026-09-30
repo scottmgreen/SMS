@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="Mappers.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -88,7 +88,7 @@ public static partial class Mappers
                 reader.GetDateTime(FieldNames.fSMSApplicationUserTwoFactorLockedUntil);
             
             applicationUser.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-            applicationUser.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+            applicationUser.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
             applicationUser.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
             applicationUser.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fUpdatedDate);
 
@@ -121,7 +121,7 @@ public static partial class Mappers
             ProcessedAt = reader.GetValue<DateTime?>(FieldNames.fEventQueueProcessedDate),
             AttemptCount = reader.GetValue<int>(FieldNames.fEventQueueAttemptCount),
             LastError = reader.GetValue<string>(FieldNames.fEventQueueLastError),
-            Priority = (EventPriority)reader.GetValue<int>(FieldNames.fEventQueuePriority),
+            Priority = EventPriority.FromId(reader.GetValue<int>(FieldNames.fEventQueuePriority)),
             TargetSystem = reader.GetValue<string>(FieldNames.fEventQueueTargetSystem),
             QueuedBy = reader.GetValue<string>(FieldNames.fEventQueueQueuedBy)
         };
@@ -848,7 +848,7 @@ public static partial class Mappers
 
         // Audit Properties (inherited from BaseAuditableEntity)
         mitigation.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-        mitigation.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        mitigation.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
         mitigation.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
         mitigation.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
 
@@ -898,7 +898,7 @@ public static partial class Mappers
             // Set audit properties using reflection since they have private setters
             
             reportValidation.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-            reportValidation.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+            reportValidation.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
             reportValidation.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
             reportValidation.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fUpdatedDate);
 
@@ -933,7 +933,7 @@ public static partial class Mappers
         scoringPanel.ResidualRationale = reader.GetValue<string>(FieldNames.fScoringPanelResidualRationale);
         
         scoringPanel.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-        scoringPanel.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        scoringPanel.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
         scoringPanel.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
         scoringPanel.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fUpdatedDate);
 
@@ -963,7 +963,7 @@ public static partial class Mappers
             stakeholderGroup.IsActive = reader.IsDBNull(FieldNames.fSMSStakeholderGroupIsActive) ? true : reader.GetBoolean(FieldNames.fSMSStakeholderGroupIsActive);
             
             stakeholderGroup.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-            stakeholderGroup.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+            stakeholderGroup.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
             stakeholderGroup.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
             stakeholderGroup.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fUpdatedDate);
 
@@ -992,7 +992,7 @@ public static partial class Mappers
             applicationGroup.IsActive = reader.IsDBNull(FieldNames.fSMSApplicationGroupIsActive) ? true : reader.GetBoolean(FieldNames.fSMSApplicationGroupIsActive);
             
             applicationGroup.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-            applicationGroup.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+            applicationGroup.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
             applicationGroup.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
             applicationGroup.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fUpdatedDate);
 
@@ -1026,7 +1026,7 @@ public static partial class Mappers
             organizationalGroup.IsActive = reader.IsDBNull(FieldNames.fSMSOrganizationalGroupIsActive) ? true : reader.GetBoolean(FieldNames.fSMSOrganizationalGroupIsActive);
             
             organizationalGroup.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-            organizationalGroup.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+            organizationalGroup.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
             organizationalGroup.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
             organizationalGroup.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fUpdatedDate);
 
@@ -1068,7 +1068,7 @@ public static partial class Mappers
         hazardFile.IsConfidential = reader.IsDBNull(FieldNames.fHazardFileIsConfidential) ? false : reader.GetBoolean(FieldNames.fHazardFileIsConfidential);
         hazardFile.IsActive = reader.IsDBNull(FieldNames.fHazardFileIsActive) ? true : reader.GetBoolean(FieldNames.fHazardFileIsActive);
         hazardFile.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-        hazardFile.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        hazardFile.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
         hazardFile.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
         hazardFile.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
         return hazardFile;
@@ -1112,7 +1112,7 @@ public static partial class Mappers
 
         // Set audit properties
         spi.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-        spi.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        spi.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
         spi.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
         spi.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
 
@@ -1138,9 +1138,9 @@ public static partial class Mappers
         dataPoint.VerifiedDate = reader.IsDBNull(FieldNames.fSPIDataPointVerifiedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSPIDataPointVerifiedDate);
         
         dataPoint.CreatedBy = reader.GetValue<string>(FieldNames.fSPIDataPointCreatedBy) ?? string.Empty;
-        dataPoint.CreatedDate = reader.IsDBNull(FieldNames.fSPIDataPointCreatedDate) ? DateTime.UtcNow : reader.GetValue<DateTime>(FieldNames.fSPIDataPointCreatedDate);
+        dataPoint.CreatedDate = reader.IsDBNull(FieldNames.fSPIDataPointCreatedDate) ? DateTime.Now : reader.GetValue<DateTime>(FieldNames.fSPIDataPointCreatedDate);
         dataPoint.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy) ?? string.Empty;
-        dataPoint.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? DateTime.UtcNow : reader.GetValue<DateTime>(FieldNames.fUpdatedDate);
+        dataPoint.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? DateTime.Now : reader.GetValue<DateTime>(FieldNames.fUpdatedDate);
         
 
         return dataPoint;
@@ -1165,8 +1165,8 @@ public static partial class Mappers
         auditPlan.AuditType = reader.GetValue<string>(FieldNames.fSMSAuditPlanAuditType) ?? string.Empty;
         auditPlan.Scope = reader.GetValue<string>(FieldNames.fSMSAuditPlanScope) ?? string.Empty;
         auditPlan.Objectives = reader.GetValue<string>(FieldNames.fSMSAuditPlanObjectives) ?? string.Empty;
-        auditPlan.PlannedStartDate = reader.IsDBNull(FieldNames.fSMSAuditPlanPlannedStartDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fSMSAuditPlanPlannedStartDate);
-        auditPlan.PlannedEndDate = reader.IsDBNull(FieldNames.fSMSAuditPlanPlannedEndDate) ? DateTime.UtcNow.AddHours(1) : reader.GetDateTime(FieldNames.fSMSAuditPlanPlannedEndDate);
+        auditPlan.PlannedStartDate = reader.IsDBNull(FieldNames.fSMSAuditPlanPlannedStartDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fSMSAuditPlanPlannedStartDate);
+        auditPlan.PlannedEndDate = reader.IsDBNull(FieldNames.fSMSAuditPlanPlannedEndDate) ? DateTime.Now.AddHours(1) : reader.GetDateTime(FieldNames.fSMSAuditPlanPlannedEndDate);
         auditPlan.LeadAuditor = reader.GetValue<string>(FieldNames.fSMSAuditPlanLeadAuditor) ?? string.Empty;
         auditPlan.AuditorTeam = reader.GetValue<string>(FieldNames.fSMSAuditPlanAuditorTeam) ?? string.Empty;
         auditPlan.ResponsibleDepartment = reader.GetValue<string>(FieldNames.fSMSAuditPlanResponsibleDepartment) ?? string.Empty;
@@ -1181,7 +1181,7 @@ public static partial class Mappers
 
         // Audit properties
         auditPlan.CreatedBy = createdBy;
-        auditPlan.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        auditPlan.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
         auditPlan.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
         auditPlan.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
 
@@ -1205,8 +1205,8 @@ public static partial class Mappers
         audit.AuditType = reader.GetValue<string>(FieldNames.fSMSAuditAuditType) ?? string.Empty;
         audit.Scope = reader.GetValue<string>(FieldNames.fSMSAuditScope) ?? string.Empty;
         audit.Objectives = reader.GetValue<string>(FieldNames.fSMSAuditObjectives) ?? string.Empty;
-        audit.ScheduledStartDate = reader.IsDBNull(FieldNames.fSMSAuditScheduledStartDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fSMSAuditScheduledStartDate);
-        audit.ScheduledEndDate = reader.IsDBNull(FieldNames.fSMSAuditScheduledEndDate) ? DateTime.UtcNow.AddHours(1) : reader.GetDateTime(FieldNames.fSMSAuditScheduledEndDate);
+        audit.ScheduledStartDate = reader.IsDBNull(FieldNames.fSMSAuditScheduledStartDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fSMSAuditScheduledStartDate);
+        audit.ScheduledEndDate = reader.IsDBNull(FieldNames.fSMSAuditScheduledEndDate) ? DateTime.Now.AddHours(1) : reader.GetDateTime(FieldNames.fSMSAuditScheduledEndDate);
         audit.ActualStartDate = reader.IsDBNull(FieldNames.fSMSAuditActualStartDate) ? null : reader.GetDateTime(FieldNames.fSMSAuditActualStartDate);
         audit.ActualEndDate = reader.IsDBNull(FieldNames.fSMSAuditActualEndDate) ? null : reader.GetDateTime(FieldNames.fSMSAuditActualEndDate);
         audit.LeadAuditor = reader.GetValue<string>(FieldNames.fSMSAuditLeadAuditor) ?? string.Empty;
@@ -1227,7 +1227,7 @@ public static partial class Mappers
 
         // Audit properties
         audit.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-        audit.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        audit.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
         audit.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
         audit.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
 
@@ -1251,7 +1251,7 @@ public static partial class Mappers
         finding.Severity = reader.GetValue<string>(FieldNames.fSMSAuditFindingSeverity) ?? string.Empty;
         finding.Category = reader.GetValue<string>(FieldNames.fSMSAuditFindingCategory) ?? string.Empty;
         finding.Status = reader.GetValue<string>(FieldNames.fSMSAuditFindingStatus) ?? string.Empty;
-        finding.DiscoveredDate = reader.IsDBNull(FieldNames.fSMSAuditFindingDiscoveredDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fSMSAuditFindingDiscoveredDate);
+        finding.DiscoveredDate = reader.IsDBNull(FieldNames.fSMSAuditFindingDiscoveredDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fSMSAuditFindingDiscoveredDate);
         finding.ResponsiblePerson = reader.GetValue<string>(FieldNames.fSMSAuditFindingResponsiblePerson) ?? string.Empty;
         finding.TargetResolutionDate = reader.IsDBNull(FieldNames.fSMSAuditFindingTargetResolutionDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSMSAuditFindingTargetResolutionDate);
         finding.ActualResolutionDate = reader.IsDBNull(FieldNames.fSMSAuditFindingActualResolutionDate) ? null : reader.GetValue<DateTime?>(FieldNames.fSMSAuditFindingActualResolutionDate);
@@ -1264,7 +1264,7 @@ public static partial class Mappers
 
         // Audit properties
         finding.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-        finding.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        finding.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
         finding.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
         finding.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
 
@@ -1289,7 +1289,7 @@ public static partial class Mappers
         evidence.EvidenceType = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceType) ?? string.Empty;
         evidence.Source = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceSource) ?? string.Empty;
         evidence.CollectedBy = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceCollectedBy) ?? string.Empty;
-        evidence.CollectionDate = reader.IsDBNull(FieldNames.fSMSAuditEvidenceCollectionDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fSMSAuditEvidenceCollectionDate);
+        evidence.CollectionDate = reader.IsDBNull(FieldNames.fSMSAuditEvidenceCollectionDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fSMSAuditEvidenceCollectionDate);
         evidence.FilePath = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceFilePath);
         evidence.FileSize = reader.IsDBNull(FieldNames.fSMSAuditEvidenceFileSize) ? 0 : reader.GetInt64(FieldNames.fSMSAuditEvidenceFileSize);
         evidence.ContentType = reader.GetValue<string>(FieldNames.fSMSAuditEvidenceContentType);
@@ -1306,7 +1306,7 @@ public static partial class Mappers
 
         // Audit properties
         evidence.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-        evidence.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        evidence.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
         evidence.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
         evidence.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
 
@@ -1328,7 +1328,7 @@ public static partial class Mappers
 
         // Audit properties
         hazardReportTracking.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
-        hazardReportTracking.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.UtcNow : reader.GetDateTime(FieldNames.fCreatedDate);
+        hazardReportTracking.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
         hazardReportTracking.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
         hazardReportTracking.UpdatedDate = reader.IsDBNull(FieldNames.fUpdatedDate) ? null : reader.GetValue<DateTime?>(FieldNames.fUpdatedDate);
 
@@ -1337,5 +1337,6 @@ public static partial class Mappers
 
     #endregion
 }
+
 
 

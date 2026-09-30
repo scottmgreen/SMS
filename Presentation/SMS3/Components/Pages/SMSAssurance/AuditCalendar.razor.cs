@@ -361,7 +361,7 @@ public partial class AuditCalendar : ComponentBase
 
                 // Update metadata
                 auditPlan.UpdatedBy = "CURRENT_USER";
-                auditPlan.UpdatedDate = DateTime.UtcNow;
+                auditPlan.UpdatedDate = DateTime.Now;
 
                 // Save via CQRS
                 var updateCommand = new UpdateSMSAuditPlanCommand(auditPlan);

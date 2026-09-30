@@ -1,4 +1,4 @@
-﻿namespace SMS3.Components.Pages.SMSRiskManagement.Models;
+namespace SMS3.Components.Pages.SMSRiskManagement.Models;
 
 /// <summary>
 /// ? NEW: Summary information for a mitigation within a report context
@@ -18,7 +18,8 @@ public class MitigationSummary
     public string AssignedDepartment { get; set; } = string.Empty;
     public DateTime? TargetDate { get; set; }
     
-    public bool IsOverdue => TargetDate.HasValue && TargetDate.Value < DateTime.UtcNow && Status != MitigationStatus.MitigationImplemented;
+    public bool IsOverdue => TargetDate.HasValue && TargetDate.Value < DateTime.Now && Status != MitigationStatus.MitigationImplemented;
 }
+
 
 

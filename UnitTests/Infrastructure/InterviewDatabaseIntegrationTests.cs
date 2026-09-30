@@ -154,7 +154,7 @@ public class InterviewDatabaseIntegrationTests : DatabaseTestBase
             //createdInterview.PersonInterviewed = "REPO_UPDATED - " + createdInterview.PersonInterviewed;
             //createdInterview.InvestigatorNotes = "REPO_UPDATED - " + createdInterview.InvestigatorNotes;
             createdInterview.UpdatedBy = "INTEGRATION_TEST_REPO_UPDATE";
-            createdInterview.UpdatedDate = DateTime.UtcNow;
+            createdInterview.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _interviewRepository.UpdateInterviewAsync(createdInterview);
@@ -230,7 +230,7 @@ public class InterviewDatabaseIntegrationTests : DatabaseTestBase
 
         // Modify the interview
         testInterview.UpdatedBy = "UPDATED_USER";
-        testInterview.UpdatedDate = DateTime.UtcNow;
+        testInterview.UpdatedDate = DateTime.Now;
 
         // Act
         var updateResult = await _interviewRepository.UpdateInterviewAsync(testInterview);
@@ -416,7 +416,7 @@ public class InterviewDatabaseIntegrationTests : DatabaseTestBase
             createdInterview.PersonInterviewed = "DS_UPDATED - " + createdInterview.PersonInterviewed;
             createdInterview.InvestigatorNotes = "DS_UPDATED - " + createdInterview.InvestigatorNotes;
             createdInterview.UpdatedBy = "INTEGRATION_TEST_DS_UPDATE";
-            createdInterview.UpdatedDate = DateTime.UtcNow;
+            createdInterview.UpdatedDate = DateTime.Now;
 
             // Act
             var updateResult = await _interviewDataService.UpdateInterviewAsync(createdInterview);

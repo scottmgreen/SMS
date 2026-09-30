@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="ScoringPanelRepository.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -62,7 +62,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelResidualSeverity, scoringPanel.ResidualSeverity ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelResidualScore, scoringPanel.ResidualScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedBy, scoringPanel.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmCreatedDate, DateTime.Now));
 
             var newID = new SqlParameter("@pNewID", SqlDbType.Int) { Direction = ParameterDirection.Output };
             var newCode = new SqlParameter("@pNewScoringPanelCode", SqlDbType.NVarChar, 50) { Direction = ParameterDirection.Output };
@@ -238,7 +238,7 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelResidualScore, scoringPanel.ResidualScore ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmScoringPanelResidualRationale, scoringPanel.ResidualRationale));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, scoringPanel.UpdatedBy ?? scoringPanel.CreatedBy ?? string.Empty));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.UtcNow));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedDate, DateTime.Now));
 
             await sql.OpenAsync(ct).ConfigureAwait(false);
             await cmd.ExecuteNonQueryAsync(ct).ConfigureAwait(false);
@@ -285,3 +285,4 @@ public sealed class ScoringPanelRepository : BaseRepository<ScoringPanelReposito
         }
     }
 }
+

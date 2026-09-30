@@ -1,4 +1,4 @@
-﻿
+
 
 using SMS_Application.Interfaces;
 using SMS_Domain.Enums;
@@ -271,7 +271,7 @@ public partial class AuditPlanDialog : ComponentBase
 
             // Set audit metadata
             auditPlan.UpdatedBy = "CURRENT_USER";
-            auditPlan.UpdatedDate = DateTime.UtcNow;
+            auditPlan.UpdatedDate = DateTime.Now;
 
             // DEBUG: Log entity values after mapping
             _logger.LogInformation("DEBUG Entity: _status = {_status}", auditPlan.Status);
@@ -404,7 +404,7 @@ public partial class AuditPlanDialog : ComponentBase
                 if (string.IsNullOrEmpty(_approvedBy))
                 {
                     _approvedBy = "CURRENT_USER"; // Replace with actual current user
-                    _approvedDate = DateTime.UtcNow;
+                    _approvedDate = DateTime.Now;
                 }
             }
             else if (value != "Approved")
@@ -493,4 +493,5 @@ public partial class AuditPlanDialog : ComponentBase
     }
     #endregion
 }
+
 

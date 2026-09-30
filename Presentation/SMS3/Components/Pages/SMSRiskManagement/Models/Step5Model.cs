@@ -74,9 +74,9 @@ public class Step5Model
             ResidualWorstCredibleOutcome = string.Empty,
             ResidualRootCause = string.Empty,
             ResidualAdditionalComments = string.Empty,
-            CreatedDate = DateTime.UtcNow,
+            CreatedDate = DateTime.Now,
             CreatedBy = CurrentActor,
-            UpdatedDate = DateTime.UtcNow,
+            UpdatedDate = DateTime.Now,
             UpdatedBy = CurrentActor
         };
     }
@@ -281,7 +281,7 @@ public class Step5Model
                         {
                             existingScore.SeverityScore = severity.Value;
                             existingScore.LikelihoodScore = likelihood.Value;
-                            existingScore.SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.UtcNow;
+                            existingScore.SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.Now;
                         }
                         else
                         {
@@ -292,7 +292,7 @@ public class Step5Model
                                 MemberName = panel.SMSUserCode ?? string.Empty,
                                 SeverityScore = severity.Value,
                                 LikelihoodScore = likelihood.Value,
-                                SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.UtcNow
+                                SubmittedDate = (panel.UpdatedDate ?? panel.CreatedDate) ?? DateTime.Now
                             });
                         }
                     }
@@ -328,7 +328,7 @@ public class Step5Model
         public string HazardId { get; set; } = string.Empty;
         public int SeverityScore { get; set; }
         public int LikelihoodScore { get; set; }
-        public DateTime SubmittedDate { get; set; } = DateTime.UtcNow;
+        public DateTime SubmittedDate { get; set; } = DateTime.Now;
         public bool IsComplete => SeverityScore > 0 && LikelihoodScore > 0;
     }
 
@@ -372,7 +372,7 @@ public class Step5Model
                     existingAnalysis.ResidualWorstCredibleOutcome = analysis.ResidualWorstCredibleOutcome;
                     existingAnalysis.ResidualRootCause = analysis.ResidualRootCause;
                     existingAnalysis.ResidualAdditionalComments = analysis.ResidualAdditionalComments;
-                    existingAnalysis.UpdatedDate = DateTime.UtcNow;
+                    existingAnalysis.UpdatedDate = DateTime.Now;
                     existingAnalysis.UpdatedBy = CurrentActor;
 
                     // Ensure RiskAssessmentCode is properly set
@@ -402,12 +402,12 @@ public class Step5Model
                     // Create new RiskAnalysis when one doesn't exist yet
                     analysis.HazardCode = hazardCode;
                     analysis.RiskAssessmentCode = assessment.Code;
-                    analysis.UpdatedDate = DateTime.UtcNow;
+                    analysis.UpdatedDate = DateTime.Now;
                     analysis.UpdatedBy = CurrentActor;
 
                     if (analysis.CreatedDate == default)
                     {
-                        analysis.CreatedDate = DateTime.UtcNow;
+                        analysis.CreatedDate = DateTime.Now;
                     }
 
                     if (string.IsNullOrWhiteSpace(analysis.CreatedBy))
@@ -475,3 +475,4 @@ public class Step5Model
     
     
 }
+

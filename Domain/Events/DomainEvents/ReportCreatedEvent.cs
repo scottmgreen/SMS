@@ -19,7 +19,7 @@ public class ReportCreatedEvent : BaseDomainEvent
 
     // Example properties (expand as needed)
     public string CreatedBy { get; set; } = string.Empty;
-    public DateTime CreatedDate { get; set; } = DateTime.UtcNow;
+    public DateTime CreatedDate { get; set; } = DateTime.Now;
 
     public ReportCreatedEvent(SMSEventID id) : base(id)
     {
@@ -32,3 +32,4 @@ public class ReportCreatedEvent : BaseDomainEvent
         CreatedDate = createdDate;
     }
 }
+

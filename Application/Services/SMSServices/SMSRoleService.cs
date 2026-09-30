@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SMSRoleService.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -141,7 +141,7 @@ public class SMSRoleService : ISMSRoleService
 
     public async Task<IEnumerable<SMSApplicationUserRole>> GetExpiringRoleAssignmentsAsync(int daysFromNow)
     {
-        var cutoffDate = DateTime.UtcNow.AddDays(daysFromNow);
+        var cutoffDate = DateTime.Now.AddDays(daysFromNow);
         var result = await _userRoleRepository.GetExpiringRolesAsync(cutoffDate);
         return result.IsSuccess ? result.Value : Enumerable.Empty<SMSApplicationUserRole>();
     }
@@ -212,3 +212,4 @@ public class SMSRoleService : ISMSRoleService
         return stats;
     }
 }
+

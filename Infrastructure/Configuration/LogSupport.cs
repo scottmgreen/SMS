@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="LogSupport.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -58,9 +58,10 @@ public class LogSupport : ILogSupport
     {
         string currentUser = _userDetails.GetRemoteHostName();
         string currentUserIp = _userDetails.GetRemoteIpAddress();
-        string timestamp = DateTime.UtcNow.ToString("o"); // ISO 8601 format for logs
+        string timestamp = DateTime.Now.ToString("o"); // ISO 8601 format for logs
 
         return $"{timestamp} {currentUser} {currentUserIp} =>";
     }
 }
+
 

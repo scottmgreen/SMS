@@ -66,5 +66,5 @@ public class RiskAnalysisResult
     public string RiskLevel { get; set; } = string.Empty;
     public decimal RiskScore { get; set; }
     public string Recommendations { get; set; } = string.Empty;
-    public DateTime AnalyzedDate { get; set; } = DateTime.UtcNow;
+    public DateTime AnalyzedDate { get; set; } = DateTime.Now;
 }

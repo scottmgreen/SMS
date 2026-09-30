@@ -1,4 +1,4 @@
-﻿//-----------------------------------------------------------------------
+//-----------------------------------------------------------------------
 // <copyright file="SafetyPerformanceIndicatorCommands.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
@@ -302,7 +302,7 @@ public class RecalculateSPIDashboardCommand : BaseCommandBundle, IRequest<Result
     public RecalculateSPIDashboardCommand(string requestedBy, DateTime? calculationDate = null, List<string>? spiIds = null)
     {
         RequestedBy = requestedBy ?? throw new ArgumentNullException(nameof(requestedBy));
-        CalculationDate = calculationDate ?? DateTime.UtcNow;
+        CalculationDate = calculationDate ?? DateTime.Now;
         SPIIds = spiIds;
     }
 }
@@ -317,7 +317,7 @@ public class GenerateSPIAlertsCommand : BaseCommandBundle, IRequest<Result<List<
     {
         RequestedBy = requestedBy ?? throw new ArgumentNullException(nameof(requestedBy));
         SPIIds = spiIds;
-        CheckDate = checkDate ?? DateTime.UtcNow;
+        CheckDate = checkDate ?? DateTime.Now;
     }
 }
 
@@ -352,3 +352,4 @@ public class ArchiveOldSPIDataCommand : BaseCommandBundle, IRequest<Result<int>>
         SPIIds = spiIds;
     }
 }
+

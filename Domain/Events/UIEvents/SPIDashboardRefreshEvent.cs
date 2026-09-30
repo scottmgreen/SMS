@@ -48,7 +48,7 @@ public class SPIDashboardRefreshEvent : IBaseUIEvent
         Dictionary<string, object>? refreshMetadata = null)
     {
         EventId = Guid.NewGuid();
-        OccurredOn = DateTime.UtcNow;
+        OccurredOn = DateTime.Now;
         ReportId = reportId ?? string.Empty;
         TargetComponent = "SPIDashboard";
         Priority = priority;

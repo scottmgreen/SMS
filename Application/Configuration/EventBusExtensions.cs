@@ -128,7 +128,7 @@ public static class EventBusExtensions
                 { "SubscriptionCount", subscriptions.Count },
                 { "RegisteredEventTypes", subscriptions.Keys.ToList() },
                 { "TotalHandlers", subscriptions.Values.SelectMany(h => h).Count() },
-                { "LastChecked", DateTime.UtcNow }
+                { "LastChecked", DateTime.Now }
             };
         }
         catch (Exception ex)
@@ -137,8 +137,9 @@ public static class EventBusExtensions
             {
                 { "Status", "Unhealthy" },
                 { "Error", ex.Message },
-                { "LastChecked", DateTime.UtcNow }
+                { "LastChecked", DateTime.Now }
             };
         }
     }
 }
+
