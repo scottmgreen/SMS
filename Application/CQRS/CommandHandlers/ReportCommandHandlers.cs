@@ -11,6 +11,7 @@
 using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Events;
+using SMS_Application.Interfaces;
 
 using Microsoft.Extensions.Logging;
 
@@ -92,12 +93,18 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
 {
     private readonly ReportService _reportService;
     private readonly IBaseEventBus _eventBus;
+    private readonly INotificationsScanService _notificationsScanService;
     private readonly ILogger<UpdateReportCommandHandler> _logger;
 
-    public UpdateReportCommandHandler(ReportService reportService, IBaseEventBus eventBus, ILogger<UpdateReportCommandHandler> logger)
+    public UpdateReportCommandHandler(
+        ReportService reportService,
+        IBaseEventBus eventBus,
+        INotificationsScanService notificationsScanService,
+        ILogger<UpdateReportCommandHandler> logger)
     {
         _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+        _notificationsScanService = notificationsScanService ?? throw new ArgumentNullException(nameof(notificationsScanService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -138,6 +145,20 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                     ReportStatus.TryFromValue(updatedReport.Status, out var currentStatus) &&
                     !previousStatus.Equals(currentStatus))
                 {
+                    if (IsNeedsValidation(previousStatus) && !IsNeedsValidation(currentStatus))
+                    {
+                        var cancelResult = await _notificationsScanService
+                            .CancelPendingReportStatusEscalationsAsync(updatedReport.Code, "UpdateReportCommand", cancellationToken)
+                            .ConfigureAwait(false);
+
+                        if (cancelResult.IsFailure)
+                        {
+                            _logger.LogApplicationWarning("Failed to cancel pending report status escalation notifications for report {ReportCode}: {Error}",
+                                updatedReport.Code,
+                                cancelResult.Error?.Message ?? "Unknown cancellation error");
+                        }
+                    }
+
                     await TransitionEventPublisher.PublishIfChangedAsync(
                         _eventBus,
                         previousStatus,
@@ -192,6 +213,10 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
             return Result<Report>.Failure<Report>(DomainErrors.ReportError.UpdateFailed);
         }
     }
+
+    private static bool IsNeedsValidation(ReportStatus status)
+        => string.Equals(status.Value, ReportStatus.NeedsValidation.Value, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status.Name, ReportStatus.NeedsValidation.Name, StringComparison.OrdinalIgnoreCase);
 }
 
 public class DeleteReportCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteReportCommand, Result<bool>>
@@ -247,11 +272,16 @@ public class DeleteReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
 public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateReportStatusCommand, Result<bool>>
 {
     private readonly ReportService _reportService;
+    private readonly INotificationsScanService _notificationsScanService;
     private readonly ILogger<UpdateReportStatusCommandHandler> _logger;
 
-    public UpdateReportStatusCommandHandler(ReportService reportService, ILogger<UpdateReportStatusCommandHandler> logger)
+    public UpdateReportStatusCommandHandler(
+        ReportService reportService,
+        INotificationsScanService notificationsScanService,
+        ILogger<UpdateReportStatusCommandHandler> logger)
     {
         _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
+        _notificationsScanService = notificationsScanService ?? throw new ArgumentNullException(nameof(notificationsScanService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -268,12 +298,36 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestH
             _logger.LogApplicationInformation(" Processing UpdateReportStatusCommand for ReportCode: {ReportCode}, Status: {Status}",
                 request.ReportCode, request.ReportStatus);
 
+            ReportStatus? previousStatus = null;
+            var existingReportResult = await _reportService.GetReportByCodeAsync(new ReportID(request.ReportCode), cancellationToken);
+            if (existingReportResult.IsSuccess && existingReportResult.Value is not null)
+            {
+                if (ReportStatus.TryFromValue(existingReportResult.Value.Status, out var existingStatus))
+                {
+                    previousStatus = existingStatus;
+                }
+            }
+
             var result = await _reportService.UpdateReportStatusAsync(request.ReportCode, request.ReportStatus, request.UpdatedBy, cancellationToken);
 
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation(" Successfully updated Report status for Code: {ReportCode} to {Status}",
                     request.ReportCode, request.ReportStatus);
+
+                if (previousStatus is not null && IsNeedsValidation(previousStatus) && !IsNeedsValidation(request.ReportStatus))
+                {
+                    var cancelResult = await _notificationsScanService
+                        .CancelPendingReportStatusEscalationsAsync(request.ReportCode, "UpdateReportStatusCommand", cancellationToken)
+                        .ConfigureAwait(false);
+
+                    if (cancelResult.IsFailure)
+                    {
+                        _logger.LogApplicationWarning("Failed to cancel pending report status escalation notifications for report {ReportCode}: {Error}",
+                            request.ReportCode,
+                            cancelResult.Error?.Message ?? "Unknown cancellation error");
+                    }
+                }
             }
             else
             {
@@ -294,6 +348,10 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestH
             return Result<bool>.Failure<bool>(DomainErrors.ReportError.UpdateFailed);
         }
     }
+
+    private static bool IsNeedsValidation(ReportStatus status)
+        => string.Equals(status.Value, ReportStatus.NeedsValidation.Value, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status.Name, ReportStatus.NeedsValidation.Name, StringComparison.OrdinalIgnoreCase);
 }
 
 

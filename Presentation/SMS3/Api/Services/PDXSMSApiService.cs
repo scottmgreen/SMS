@@ -156,6 +156,7 @@ namespace SMS3.Api.Services
                     HazardDescription = hazard?.Description ?? string.Empty,
                     ReportDescription = report?.Description ?? string.Empty,
                     ReportStatus = reportStatusDisplay,
+                    ReportUpdatedDate = report?.UpdatedDate,
                     // HazardStatus = hazardStatusDisplay,
                     ContactName = report?.ReportContactName ?? string.Empty,
                     ContactCell = report?.ReportContactCell ?? string.Empty,

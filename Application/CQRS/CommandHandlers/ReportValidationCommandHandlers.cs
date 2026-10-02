@@ -23,12 +23,14 @@ namespace SMS_Application.CommandHandlers;
 public class CreateReportValidationCommandHandler : BaseCommandBundle, IBaseRequestHandler<CreateReportValidationCommand, Result<ReportValidation>>
 {
     private readonly ReportValidationService _reportValidationService;
+    private readonly ReportService _reportService;
     private readonly IBaseEventBus _eventBus;
     private readonly ILogger<CreateReportValidationCommandHandler> _logger;
 
-    public CreateReportValidationCommandHandler(ReportValidationService reportValidationService, IBaseEventBus eventBus, ILogger<CreateReportValidationCommandHandler> logger)
+    public CreateReportValidationCommandHandler(ReportValidationService reportValidationService, ReportService reportService, IBaseEventBus eventBus, ILogger<CreateReportValidationCommandHandler> logger)
     {
         _reportValidationService = reportValidationService ?? throw new ArgumentNullException(nameof(reportValidationService));
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -119,6 +121,11 @@ public class ResetReportValidationCommandHandler : BaseCommandBundle, IBaseReque
                         result.Value?.Code ?? request.ReportValidation.Code,
                         publishResult.Error?.Message ?? "Unknown publish error");
                 }
+
+                await StampParentReportUpdatedDateAsync(
+                    result.Value?.ReportCode ?? request.ReportValidation.ReportCode,
+                    result.Value?.UpdatedBy ?? result.Value?.ValidatedBy ?? request.ReportValidation.ValidatedBy ?? request.ReportValidation.CreatedBy,
+                    cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -139,17 +146,47 @@ public class ResetReportValidationCommandHandler : BaseCommandBundle, IBaseReque
             return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.CreateFailed);
         }
     }
+
+    private async Task StampParentReportUpdatedDateAsync(string? reportCode, string? updatedBy, CancellationToken cancellationToken)
+    {
+        var normalizedReportCode = reportCode?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedReportCode))
+        {
+            return;
+        }
+
+        var reportResult = await _reportService.GetReportByCodeAsync(new ReportID(normalizedReportCode), cancellationToken).ConfigureAwait(false);
+        if (reportResult.IsFailure || reportResult.Value is null)
+        {
+            _logger.LogApplicationWarning("Failed loading parent report {ReportCode} for ReportValidation create stamp.", normalizedReportCode);
+            return;
+        }
+
+        var report = reportResult.Value;
+        report.UpdatedBy = !string.IsNullOrWhiteSpace(updatedBy)
+            ? updatedBy.Trim()
+            : (report.UpdatedBy ?? report.CreatedBy ?? string.Empty);
+        report.UpdatedDate = DateTime.Now;
+
+        var updateResult = await _reportService.UpdateReportAsync(report, cancellationToken).ConfigureAwait(false);
+        if (updateResult.IsFailure)
+        {
+            _logger.LogApplicationWarning("Failed updating parent report timestamp for report {ReportCode} after ReportValidation create.", normalizedReportCode);
+        }
+    }
 }
 
 public class UpdateReportValidationCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateReportValidationCommand, Result<ReportValidation>>
 {
     private readonly ReportValidationService _reportValidationService;
+    private readonly ReportService _reportService;
     private readonly IBaseEventBus _eventBus;
     private readonly ILogger<UpdateReportValidationCommandHandler> _logger;
 
-    public UpdateReportValidationCommandHandler(ReportValidationService reportValidationService, IBaseEventBus eventBus, ILogger<UpdateReportValidationCommandHandler> logger)
+    public UpdateReportValidationCommandHandler(ReportValidationService reportValidationService, ReportService reportService, IBaseEventBus eventBus, ILogger<UpdateReportValidationCommandHandler> logger)
     {
         _reportValidationService = reportValidationService ?? throw new ArgumentNullException(nameof(reportValidationService));
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
         _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
@@ -189,6 +226,11 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
                         result.Value?.Code ?? request.ReportValidation.Code,
                         publishResult.Error?.Message ?? "Unknown publish error");
                 }
+
+                await StampParentReportUpdatedDateAsync(
+                    result.Value?.ReportCode ?? request.ReportValidation.ReportCode,
+                    result.Value?.UpdatedBy ?? result.Value?.ValidatedBy ?? request.ReportValidation.ValidatedBy ?? request.ReportValidation.UpdatedBy,
+                    cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -209,16 +251,46 @@ public class UpdateReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
             return Result<ReportValidation>.Failure<ReportValidation>(DomainErrors.ReportValidationError.UpdateFailed);
         }
     }
+
+    private async Task StampParentReportUpdatedDateAsync(string? reportCode, string? updatedBy, CancellationToken cancellationToken)
+    {
+        var normalizedReportCode = reportCode?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedReportCode))
+        {
+            return;
+        }
+
+        var reportResult = await _reportService.GetReportByCodeAsync(new ReportID(normalizedReportCode), cancellationToken).ConfigureAwait(false);
+        if (reportResult.IsFailure || reportResult.Value is null)
+        {
+            _logger.LogApplicationWarning("Failed loading parent report {ReportCode} for ReportValidation update stamp.", normalizedReportCode);
+            return;
+        }
+
+        var report = reportResult.Value;
+        report.UpdatedBy = !string.IsNullOrWhiteSpace(updatedBy)
+            ? updatedBy.Trim()
+            : (report.UpdatedBy ?? report.CreatedBy ?? string.Empty);
+        report.UpdatedDate = DateTime.Now;
+
+        var updateResult = await _reportService.UpdateReportAsync(report, cancellationToken).ConfigureAwait(false);
+        if (updateResult.IsFailure)
+        {
+            _logger.LogApplicationWarning("Failed updating parent report timestamp for report {ReportCode} after ReportValidation update.", normalizedReportCode);
+        }
+    }
 }
 
 public class DeleteReportValidationCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteReportValidationCommand, Result<bool>>
 {
     private readonly ReportValidationService _reportValidationService;
+    private readonly ReportService _reportService;
     private readonly ILogger<DeleteReportValidationCommandHandler> _logger;
 
-    public DeleteReportValidationCommandHandler(ReportValidationService reportValidationService, ILogger<DeleteReportValidationCommandHandler> logger)
+    public DeleteReportValidationCommandHandler(ReportValidationService reportValidationService, ReportService reportService, ILogger<DeleteReportValidationCommandHandler> logger)
     {
         _reportValidationService = reportValidationService ?? throw new ArgumentNullException(nameof(reportValidationService));
+        _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -234,11 +306,24 @@ public class DeleteReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
 
             _logger.LogApplicationInformation(" Processing DeleteReportValidationCommand for ID: {Id}", request.ReportValidationId);
 
+            var existingValidationResult = await _reportValidationService
+                .GetReportValidationByIdAsync(request.ReportValidationId, cancellationToken)
+                .ConfigureAwait(false);
+
+            var parentReportCode = existingValidationResult.IsSuccess && existingValidationResult.Value is not null
+                ? existingValidationResult.Value.ReportCode
+                : string.Empty;
+            var actor = existingValidationResult.IsSuccess && existingValidationResult.Value is not null
+                ? existingValidationResult.Value.UpdatedBy ?? existingValidationResult.Value.ValidatedBy ?? existingValidationResult.Value.CreatedBy
+                : string.Empty;
+
             var result = await _reportValidationService.DeleteReportValidationAsync(request.ReportValidationId, cancellationToken);
 
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation(" Successfully deleted Report Validation with ID: {Id}", request.ReportValidationId);
+
+                await StampParentReportUpdatedDateAsync(parentReportCode, actor, cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -257,6 +342,34 @@ public class DeleteReportValidationCommandHandler : BaseCommandBundle, IBaseRequ
         {
             _logger.LogApplicationError("Unexpected error occurred while deleting Report Validation with ID: {Id}", ApplicationEventIds.Error, ex);
             return Result<bool>.Failure<bool>(DomainErrors.ReportValidationError.DeleteFailed);
+        }
+    }
+
+    private async Task StampParentReportUpdatedDateAsync(string? reportCode, string? updatedBy, CancellationToken cancellationToken)
+    {
+        var normalizedReportCode = reportCode?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedReportCode))
+        {
+            return;
+        }
+
+        var reportResult = await _reportService.GetReportByCodeAsync(new ReportID(normalizedReportCode), cancellationToken).ConfigureAwait(false);
+        if (reportResult.IsFailure || reportResult.Value is null)
+        {
+            _logger.LogApplicationWarning("Failed loading parent report {ReportCode} for ReportValidation delete stamp.", normalizedReportCode);
+            return;
+        }
+
+        var report = reportResult.Value;
+        report.UpdatedBy = !string.IsNullOrWhiteSpace(updatedBy)
+            ? updatedBy.Trim()
+            : (report.UpdatedBy ?? report.CreatedBy ?? string.Empty);
+        report.UpdatedDate = DateTime.Now;
+
+        var updateResult = await _reportService.UpdateReportAsync(report, cancellationToken).ConfigureAwait(false);
+        if (updateResult.IsFailure)
+        {
+            _logger.LogApplicationWarning("Failed updating parent report timestamp for report {ReportCode} after ReportValidation delete.", normalizedReportCode);
         }
     }
 }

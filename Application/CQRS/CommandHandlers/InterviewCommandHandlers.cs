@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Entities;
+using SMS_Application.Queries;
 
 using Microsoft.Extensions.Logging;
 
@@ -72,11 +73,19 @@ public class CreateInterviewCommandHandler : BaseCommandBundle, IBaseRequestHand
 public class UpdateInterviewCommandHandler : BaseCommandBundle, IBaseRequestHandler<UpdateInterviewCommand, Result<Interview>>
 {
     private readonly IInterviewService _interviewService;
+    private readonly IBaseMediator _mediator;
+    private readonly WorkflowStatusSyncService _workflowStatusSyncService;
     private readonly ILogger<UpdateInterviewCommandHandler> _logger;
 
-    public UpdateInterviewCommandHandler(IInterviewService interviewService, ILogger<UpdateInterviewCommandHandler> logger)
+    public UpdateInterviewCommandHandler(
+        IInterviewService interviewService,
+        IBaseMediator mediator,
+        WorkflowStatusSyncService workflowStatusSyncService,
+        ILogger<UpdateInterviewCommandHandler> logger)
     {
         _interviewService = interviewService ?? throw new ArgumentNullException(nameof(interviewService));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
+        _workflowStatusSyncService = workflowStatusSyncService ?? throw new ArgumentNullException(nameof(workflowStatusSyncService));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -97,6 +106,30 @@ public class UpdateInterviewCommandHandler : BaseCommandBundle, IBaseRequestHand
             if (result.IsSuccess)
             {
                 _logger.LogApplicationInformation(" Successfully updated Interview with ID: {Id}", request.Interview.Id);
+
+                var updatedInterview = result.Value;
+                var investigationCode = updatedInterview?.InvestigationCode?.Trim() ?? string.Empty;
+                if (!string.IsNullOrWhiteSpace(investigationCode))
+                {
+                    var investigationResult = await _mediator
+                        .SendAsync(new GetInvestigationByCodeQuery(new InvestigationID(investigationCode)), cancellationToken)
+                        .ConfigureAwait(false);
+
+                    if (investigationResult.IsSuccess && investigationResult.Value is not null && !string.IsNullOrWhiteSpace(investigationResult.Value.HazardCode))
+                    {
+                        var reportStampResult = await _workflowStatusSyncService
+                            .UpdateReportUpdatedDateByHazardCode(investigationResult.Value.HazardCode, updatedInterview?.UpdatedBy ?? updatedInterview?.CreatedBy, cancellationToken)
+                            .ConfigureAwait(false);
+
+                        if (reportStampResult.IsFailure)
+                        {
+                            _logger.LogApplicationWarning(
+                                "Failed to update parent report UpdatedDate after interview update for {InterviewCode}: {Error}",
+                                updatedInterview?.Code,
+                                reportStampResult.Error?.Message ?? "Unknown error");
+                        }
+                    }
+                }
             }
             else
             {

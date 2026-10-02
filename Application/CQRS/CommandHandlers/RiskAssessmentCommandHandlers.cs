@@ -127,6 +127,18 @@ public class UpdateRiskAssessmentCommandHandler : BaseCommandBundle, IBaseReques
                 {
                     if (!string.IsNullOrWhiteSpace(assessment.HazardCode))
                     {
+                        var reportStampResult = await _workflowStatusSyncService
+                            .UpdateReportUpdatedDateByHazardCode(assessment.HazardCode, assessment.UpdatedBy ?? assessment.CreatedBy, ct)
+                            .ConfigureAwait(false);
+
+                        if (reportStampResult.IsFailure)
+                        {
+                            _logger.LogApplicationWarning(
+                                "Failed to update parent report UpdatedDate after risk assessment update for {AssessmentCode}: {Error}",
+                                assessment.Code,
+                                reportStampResult.Error?.Message ?? "Unknown error");
+                        }
+
                         var workflowSyncResult = await _workflowStatusSyncService
                             .SyncForHazardAsync(assessment.HazardCode, assessment.UpdatedBy ?? assessment.CreatedBy, ct)
                             .ConfigureAwait(false);

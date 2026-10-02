@@ -68,6 +68,17 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
     {
         try
         {
+            var shouldSkipEscalationResult = await ShouldSkipReportStatusEscalationAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
+            if (shouldSkipEscalationResult.IsFailure)
+            {
+                return shouldSkipEscalationResult;
+            }
+
+            if (shouldSkipEscalationResult.Value)
+            {
+                return Result.Success();
+            }
+
             await ResolveGroupContactRecipientsAsync(integrationEvent, cancellationToken);
 
             _logger.LogApplicationInformation("[EMAIL HANDLER] Processing email notification: '{Subject}' to {RecipientCount} recipients (Priority: {Priority}) - UseSimulation: {UseSimulation}",
@@ -297,6 +308,46 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
     {
         return !string.IsNullOrEmpty(emailEvent.Subject) && emailEvent.ToRecipients.Any();
     }
+
+    private async Task<Result<bool>> ShouldSkipReportStatusEscalationAsync(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
+    {
+        if (!string.Equals(emailEvent.WorkflowType, "HazardSubmissionStatusEscalation", StringComparison.OrdinalIgnoreCase))
+        {
+            return Result.Success(false);
+        }
+
+        var reportCode = emailEvent.ReportId?.Trim();
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            _logger.LogApplicationWarning("[EMAIL HANDLER] Skipping report status escalation email '{Subject}' because ReportId is missing.", emailEvent.Subject);
+            return Result.Success(true);
+        }
+
+        var reportResult = await _mediator.SendAsync(new GetReportByCodeQuery(new ReportID(reportCode)), cancellationToken).ConfigureAwait(false);
+        if (reportResult.IsFailure || reportResult.Value is null)
+        {
+            _logger.LogApplicationWarning("[EMAIL HANDLER] Skipping report status escalation email '{Subject}' because report {ReportCode} could not be loaded.",
+                emailEvent.Subject,
+                reportCode);
+            return Result.Success(true);
+        }
+
+        if (IsNeedsValidation(reportResult.Value.Status))
+        {
+            return Result.Success(false);
+        }
+
+        _logger.LogApplicationInformation("[EMAIL HANDLER] Skipping stale report status escalation email '{Subject}' for report {ReportCode} because current status is {CurrentStatus}.",
+            emailEvent.Subject,
+            reportCode,
+            reportResult.Value.Status ?? string.Empty);
+
+        return Result.Success(true);
+    }
+
+    private static bool IsNeedsValidation(string? status)
+        => string.Equals(status, ReportStatus.NeedsValidation.Value, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status, ReportStatus.NeedsValidation.Name, StringComparison.OrdinalIgnoreCase);
 
     private async Task ResolveGroupContactRecipientsAsync(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
     {

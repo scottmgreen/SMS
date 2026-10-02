@@ -127,6 +127,18 @@ public class UpdateInvestigationCommandHandler : BaseCommandBundle, IBaseRequest
                 {
                     if (!string.IsNullOrWhiteSpace(updatedInvestigation.HazardCode))
                     {
+                        var reportStampResult = await _workflowStatusSyncService
+                            .UpdateReportUpdatedDateByHazardCode(updatedInvestigation.HazardCode, updatedInvestigation.UpdatedBy ?? updatedInvestigation.CreatedBy, ct)
+                            .ConfigureAwait(false);
+
+                        if (reportStampResult.IsFailure)
+                        {
+                            _logger.LogApplicationWarning(
+                                "Failed to update parent report UpdatedDate after investigation update for {InvestigationCode}: {Error}",
+                                updatedInvestigation.Code,
+                                reportStampResult.Error?.Message ?? "Unknown error");
+                        }
+
                         var workflowSyncResult = await _workflowStatusSyncService
                             .SyncForHazardAsync(updatedInvestigation.HazardCode, updatedInvestigation.UpdatedBy ?? updatedInvestigation.CreatedBy, ct)
                             .ConfigureAwait(false);

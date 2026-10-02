@@ -200,6 +200,62 @@ public sealed class WorkflowStatusSyncService
         }
     }
 
+    public async Task<Result> UpdateReportUpdatedDateByHazardCode(string hazardCode, string? updatedBy, CancellationToken ct = default)
+    {
+        try
+        {
+            if (string.IsNullOrWhiteSpace(hazardCode))
+            {
+                return Result.Failure(new Error("WORKFLOW_SYNC_INVALID_HAZARD", "Hazard code is required to update report UpdatedDate."));
+            }
+
+            var normalizedHazardCode = hazardCode.Trim();
+            var hazardResult = await _mediator
+                .SendAsync(new GetHazardByCodeQuery(new HazardID(normalizedHazardCode)), ct)
+                .ConfigureAwait(false);
+
+            if (hazardResult.IsFailure || hazardResult.Value is null)
+            {
+                return Result.Failure(hazardResult.Error ?? new Error("WORKFLOW_SYNC_HAZARD_NOT_FOUND", $"Hazard {normalizedHazardCode} not found."));
+            }
+
+            var reportCode = hazardResult.Value.ReportCode?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(reportCode))
+            {
+                return Result.Success();
+            }
+
+            var reportResult = await _reportService
+                .GetReportByCodeAsync(new ReportID(reportCode), ct)
+                .ConfigureAwait(false);
+
+            if (reportResult.IsFailure || reportResult.Value is null)
+            {
+                return Result.Failure(reportResult.Error ?? new Error("WORKFLOW_SYNC_REPORT_NOT_FOUND", $"Report {reportCode} not found."));
+            }
+
+            var report = reportResult.Value;
+            report.UpdatedBy = ResolveActor(updatedBy, report.UpdatedBy, report.CreatedBy);
+            report.UpdatedDate = DateTime.Now;
+
+            var updateResult = await _reportService
+                .UpdateReportAsync(report, ct)
+                .ConfigureAwait(false);
+
+            if (updateResult.IsFailure)
+            {
+                return Result.Failure(updateResult.Error ?? new Error("WORKFLOW_SYNC_REPORT_UPDATE_FAILED", $"Failed updating report {reportCode}."));
+            }
+
+            return Result.Success();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationError(ex, "Unexpected error updating report UpdatedDate by hazard {HazardCode}", hazardCode);
+            return Result.Failure(new Error("WORKFLOW_SYNC_REPORT_TOUCH_FAILED", $"Failed updating report UpdatedDate: {ex.Message}"));
+        }
+    }
+
     private static (ReportStatus ReportStatus, HazardStatus HazardStatus) ResolveTargetStatuses(
         IReadOnlyCollection<RiskAssessment> riskAssessments,
         IReadOnlyCollection<Investigation> investigations,
@@ -239,13 +295,13 @@ public sealed class WorkflowStatusSyncService
 
             var hazardStatus = MapRiskAssessmentStageToHazardStatus(latestAssessment.Stage);
 
-            if (latestAssessment.Status == RiskAssessmentStatus.AssessmentComplete)
-            {
                 if (latestAssessment.AssessmentType == RiskAssessmentType.RiskRegistryOnly)
                 {
                     return (ReportStatus.RiskRegistryOnly, hazardStatus);
                 }
 
+            if (latestAssessment.Status == RiskAssessmentStatus.AssessmentComplete)
+            {
                 return (ReportStatus.RiskAssessmentSubmitted, hazardStatus);
             }
 

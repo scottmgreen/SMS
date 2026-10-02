@@ -194,6 +194,7 @@ namespace SMS3.Api.Models;
         public string HazardDescription { get; init; } = string.Empty;
         public string ReportDescription { get; init; } = string.Empty;
         public string ReportStatus { get; init; } = string.Empty;
+        public DateTime? ReportUpdatedDate { get; init; }
         // public string HazardStatus { get; init; } = string.Empty;
 
         public string ContactName { get; init; } = string.Empty;

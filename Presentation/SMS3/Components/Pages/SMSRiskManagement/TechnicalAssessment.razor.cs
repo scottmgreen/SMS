@@ -1172,24 +1172,31 @@ public partial class TechnicalAssessment : ComponentBase
             var initalresult = await _mediator.SendAsync(updateCommand, CancellationToken.None);
             
             //This may change but atleast it's a start//
-            ReportStatus status = CurrentStep switch
-            {
-                1 => ReportStatus.RiskAssessmentInProgress,
-                2 => ReportStatus.RiskAssessmentInProgress,
-                3 => ReportStatus.RiskAssessmentInProgress,
-                4 => ReportStatus.RiskAssessmentInProgress,
-                5 => ReportStatus.RiskAssessmentSubmitted,
-                _ => ReportStatus.RiskAssessmentInProgress
-            };
-
-            if (isExplicitSaveOnFinalStep)
-            {
-                status = ReportStatus.RiskAssessmentInProgress;
-            }
-
+            ReportStatus status;
             if (shouldCloseReportForHazardEliminated)
             {
                 status = ReportStatus.ReportCloserHazardEliminated;
+            }
+            else if (IsRiskRegistryOnly)
+            {
+                status = ReportStatus.RiskRegistryOnly;
+            }
+            else
+            {
+                status = CurrentStep switch
+                {
+                    1 => ReportStatus.RiskAssessmentInProgress,
+                    2 => ReportStatus.RiskAssessmentInProgress,
+                    3 => ReportStatus.RiskAssessmentInProgress,
+                    4 => ReportStatus.RiskAssessmentInProgress,
+                    5 => ReportStatus.RiskAssessmentSubmitted,
+                    _ => ReportStatus.RiskAssessmentInProgress
+                };
+
+                if (isExplicitSaveOnFinalStep)
+                {
+                    status = ReportStatus.RiskAssessmentInProgress;
+                }
             }
 
             var cmd = new UpdateReportStatusCommand(ReportId ?? "", status, _currentUserService.UserCode);

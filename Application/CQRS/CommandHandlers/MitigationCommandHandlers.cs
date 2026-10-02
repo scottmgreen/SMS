@@ -154,6 +154,18 @@ public class UpdateMitigationCommandHandler : BaseCommandBundle, IBaseRequestHan
                 {
                     if (!string.IsNullOrWhiteSpace(updatedMitigation.HazardCode))
                     {
+                        var reportStampResult = await _workflowStatusSyncService
+                            .UpdateReportUpdatedDateByHazardCode(updatedMitigation.HazardCode, updatedMitigation.UpdatedBy ?? updatedMitigation.CreatedBy, cancellationToken)
+                            .ConfigureAwait(false);
+
+                        if (reportStampResult.IsFailure)
+                        {
+                            _logger.LogApplicationWarning(
+                                "Failed to update parent report UpdatedDate after mitigation update for {MitigationCode}: {Error}",
+                                updatedMitigation.Code,
+                                reportStampResult.Error?.Message ?? "Unknown error");
+                        }
+
                         var workflowSyncResult = await _workflowStatusSyncService
                             .SyncForHazardAsync(updatedMitigation.HazardCode, updatedMitigation.UpdatedBy ?? updatedMitigation.CreatedBy, cancellationToken)
                             .ConfigureAwait(false);

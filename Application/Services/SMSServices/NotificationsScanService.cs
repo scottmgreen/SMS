@@ -109,6 +109,59 @@ public sealed class NotificationsScanService : INotificationsScanService
         return Result.Success(queuedCount);
     }
 
+    public async Task<Result<int>> CancelPendingReportStatusEscalationsAsync(string reportCode, string cancelledBy, CancellationToken cancellationToken = default)
+    {
+        var normalizedReportCode = reportCode?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedReportCode))
+        {
+            return Result.Success(0);
+        }
+
+        var pendingEventsResult = await _eventQueueService.GetQueuedEventsAsync(
+            status: QueuedEventStatus.Pending,
+            eventType: EventCategory.IntegrationEvent,
+            maxResults: 5000).ConfigureAwait(false);
+
+        if (pendingEventsResult.IsFailure || pendingEventsResult.Value is null)
+        {
+            return pendingEventsResult.IsFailure
+                ? Result.Failure<int>(pendingEventsResult.Error ?? new Error("REPORT_STATUS_ESCALATION_PENDING_LOAD_FAILED", "Failed to load pending report status escalation notifications."))
+                : Result.Success(0);
+        }
+
+        var pendingEscalations = pendingEventsResult.Value
+            .Where(qe => IsPendingReportStatusEscalation(qe.EventData, normalizedReportCode))
+            .ToList();
+
+        if (pendingEscalations.Count == 0)
+        {
+            return Result.Success(0);
+        }
+
+        var cancelledCount = 0;
+        var cancelledByValue = string.IsNullOrWhiteSpace(cancelledBy) ? "ReportStatusTransition" : cancelledBy.Trim();
+
+        foreach (var pendingEscalation in pendingEscalations)
+        {
+            var cancelResult = await _eventQueueService.CancelQueuedEventAsync(
+                pendingEscalation.QueueCode,
+                cancelledByValue).ConfigureAwait(false);
+
+            if (cancelResult.IsSuccess)
+            {
+                cancelledCount++;
+            }
+            else
+            {
+                _logger.LogApplicationWarning("Failed to cancel pending report status escalation notification {QueueCode} for report {ReportCode}.",
+                    pendingEscalation.QueueCode,
+                    normalizedReportCode);
+            }
+        }
+
+        return Result.Success(cancelledCount);
+    }
+
     public async Task<Result> ProcessMitigationUpdateAsync(Mitigation mitigation, string reportId, CancellationToken cancellationToken = default)
     {
         var mitigationCode = GetMitigationCode(mitigation);

@@ -106,3 +106,6 @@
 
 ## Report Management
 - Only edit Report.Description in ReportListing flow; do not set Report.Description from HazardReport.Description in HazardReporting.
+
+## Time Handling
+- Use local time only in this codebase; do not use UTC for DateTime stamping.

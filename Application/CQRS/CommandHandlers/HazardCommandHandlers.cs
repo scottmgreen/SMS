@@ -162,6 +162,7 @@ namespace SMS_Application.CommandHandlers
         private readonly HazardService _hazardService;
         private readonly IBaseMediator _mediator;
         private readonly IBaseEventBus _eventBus;
+        private readonly WorkflowStatusSyncService _workflowStatusSyncService;
         private readonly ILogger<UpdateHazardCommandHandler> _logger;
         private readonly ILogSupport _logsupport;
         private readonly string _logheader = string.Empty;
@@ -170,12 +171,14 @@ namespace SMS_Application.CommandHandlers
         public UpdateHazardCommandHandler(HazardService hazardService,
             IBaseMediator mediator,  //IBaseMediator injection
             IBaseEventBus eventBus,  //EventBus injection
+            WorkflowStatusSyncService workflowStatusSyncService,
             ILogSupport logsupport,
             ILogger<UpdateHazardCommandHandler> logger)
         {
             _hazardService = hazardService ?? throw new ArgumentNullException(nameof(hazardService));
             _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
             _eventBus = eventBus ?? throw new ArgumentNullException(nameof(eventBus));
+            _workflowStatusSyncService = workflowStatusSyncService ?? throw new ArgumentNullException(nameof(workflowStatusSyncService));
             _logsupport = logsupport;
             _logheader = _logsupport.GenerateLogHeader();
             _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -213,6 +216,20 @@ namespace SMS_Application.CommandHandlers
                 }
 
                 hazard = hazardResult.Value;
+
+                if (!string.IsNullOrWhiteSpace(hazard.Code))
+                {
+                    var reportStampResult = await _workflowStatusSyncService
+                        .UpdateReportUpdatedDateByHazardCode(hazard.Code, hazard.UpdatedBy ?? hazard.CreatedBy, ct)
+                        .ConfigureAwait(false);
+
+                    if (reportStampResult.IsFailure)
+                    {
+                        _logger.LogApplicationWarning("Failed to update parent report UpdatedDate after hazard update for {HazardCode}: {Error}",
+                            hazard.Code,
+                            reportStampResult.Error?.Message ?? "Unknown error");
+                    }
+                }
 
                 // =============================================
                 // Event Bus
