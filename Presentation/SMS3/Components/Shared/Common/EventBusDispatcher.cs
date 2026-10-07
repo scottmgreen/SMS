@@ -17,18 +17,19 @@ namespace SMS3.Components.Shared;
 /// </summary>
 public static class EventBusDispatcher
 {
-    private static readonly List<IEventReceiver> _receivers = new();
+    private static readonly List<(IEventReceiver Receiver, string UserCode, string SessionKey)> _receivers = new();
     private static readonly List<ISPIDashboardRefreshReceiver> _spiDashboardRefreshReceivers = new();
     private static readonly object _lock = new();
 
     /// <summary>
     /// Register a component to receive notifications
     /// </summary>
-    public static void Register(IEventReceiver receiver)
+    public static void Register(IEventReceiver receiver, string userCode, string sessionKey)
     {
         lock (_lock)
         {
-            _receivers.Add(receiver);
+            _receivers.RemoveAll(x => ReferenceEquals(x.Receiver, receiver));
+            _receivers.Add((receiver, userCode ?? string.Empty, sessionKey ?? string.Empty));
         }
     }
 
@@ -39,7 +40,7 @@ public static class EventBusDispatcher
     {
         lock (_lock)
         {
-            _receivers.Remove(receiver);
+            _receivers.RemoveAll(x => ReferenceEquals(x.Receiver, receiver));
         }
     }
 
@@ -69,17 +70,27 @@ public static class EventBusDispatcher
     /// Dispatch notification to all registered components
     /// This can be called from any thread (including EventBus background threads)
     /// </summary>
-    public static async Task DispatchNotificationAsync(NotificationSeverity severity, string title, string message, int duration = 5000)
+    public static async Task DispatchNotificationAsync(
+        NotificationSeverity severity,
+        string title,
+        string message,
+        int duration = 5000,
+        string? targetUserCode = null,
+        string? targetSessionKey = null)
     {
-        List<IEventReceiver> currentReceivers;
+        List<(IEventReceiver Receiver, string UserCode, string SessionKey)> currentReceivers;
 
         lock (_lock)
         {
-            currentReceivers = new List<IEventReceiver>(_receivers);
+            currentReceivers = new List<(IEventReceiver Receiver, string UserCode, string SessionKey)>(_receivers);
         }
 
-        var tasks = currentReceivers.Select(receiver => 
-            receiver.HandleEventAsync(severity, title, message, duration));
+        var tasks = currentReceivers
+            .Where(x =>
+                !string.IsNullOrWhiteSpace(targetSessionKey)
+                    ? string.Equals(x.SessionKey, targetSessionKey, StringComparison.Ordinal)
+                    : string.Equals(x.UserCode, targetUserCode, StringComparison.OrdinalIgnoreCase))
+            .Select(x => x.Receiver.HandleEventAsync(severity, title, message, duration));
 
         await Task.WhenAll(tasks);
     }

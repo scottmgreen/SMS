@@ -1,0 +1,286 @@
+SMS3 SYSTEM DESIGN (PDXSMS_V2)
+Baseline: .NET 10, Blazor-based presentation, layered clean architecture with CQRS and event-driven workflows.
+
+1) SOLUTION OVERVIEW
+The solution is organized into five main projects:
+- Presentation/SMS3: Blazor UI, API endpoints, page workflows, and UI event handling.
+- Application: Use-case orchestration, CQRS commands/queries/handlers, mediator and pipelines, application services, event handlers.
+- Domain: Core business entities, enums, value objects, domain errors, and domain/integration/UI events.
+- Infrastructure: Data access, repositories, stored-procedure integration, security middleware, and external integrations.
+- Shared: Cross-cutting shared constants/logging utility items used by multiple layers.
+
+The dominant architectural style is clean/layered architecture:
+- Domain is at the center and holds business truth.
+- Application depends on Domain and orchestrates business workflows.
+- Infrastructure depends on Application/Domain abstractions to implement persistence/integration concerns.
+- Presentation depends on Application for use cases and on Infrastructure wiring at composition root.
+
+
+2) PROJECT-BY-PROJECT INNER WORKINGS
+
+2.1 Presentation (SMS3)
+Primary responsibilities:
+- Render Blazor UI (.razor and .razor.cs code-behind files).
+- Provide module pages for SMS Risk Management, Assurance, Listings, Policy, and System administration.
+- Host Minimal API endpoints (PDXSMSApiEndpointsV1 and PDXSMSApiEndpointsV2).
+- Configure runtime behavior in Program.cs and presentation dependency injection.
+- Handle UI-level events and page refresh triggers (for example SPIDashboard refresh handling).
+
+Design characteristics:
+- Code-behind pattern is used extensively: page markup in .razor and behavior in .razor.cs.
+- UI components call Application services/interfaces rather than direct SQL/database code.
+- Security and request-validation middleware exist at the presentation host layer.
+- Static assets and JS interop are isolated under wwwroot.
+
+Generic code sample (Blazor page + service call):
+-------------------------------------------------
+@page "/example"
+@inject IReportService ReportService
+
+<button @onclick="Load">Load Reports</button>
+
+@code {
+	private IReadOnlyList<Report> _items = [];
+
+	private async Task Load()
+	{
+		_items = await ReportService.GetAllAsync();
+	}
+}
+
+
+2.2 Application
+Primary responsibilities:
+- Define CQRS requests (Commands/Queries) and handlers.
+- Execute requests through a custom mediator (not NuGet MediatR dependency).
+- Apply cross-cutting pipelines (validation, logging, audit).
+- Expose use-case-focused services used by the Presentation layer.
+- Route and handle domain/integration/UI events.
+- Coordinate event queue processing via EventBus services.
+
+Key structure:
+- CQRS/Commands + CQRS/CommandHandlers
+- CQRS/Queries + CQRS/QueryHandlers
+- CQRS/Pipelines (validation, audit, logging)
+- Services/SMSServices and Services/CommonServices
+- EventHandlers (DomainEventHandlers, IntegrationEventHandlers, UIEventHandlers)
+
+Design characteristics:
+- Command side updates system state.
+- Query side reads and returns shape needed by features.
+- Pipelines centralize repeated behavior so handlers stay focused.
+- Application logging is standardized through ApplicationLogMessages + ApplicationEventIds.
+
+Generic code sample (command + handler):
+----------------------------------------
+public sealed record CreateHazardCommand(string Title) : IRequest<Result<int>>;
+
+public sealed class CreateHazardCommandHandler : IRequestHandler<CreateHazardCommand, Result<int>>
+{
+	private readonly IHazardRepository _repository;
+
+	public CreateHazardCommandHandler(IHazardRepository repository)
+	{
+		_repository = repository;
+	}
+
+	public async Task<Result<int>> Handle(CreateHazardCommand request, CancellationToken ct)
+	{
+		var hazard = Hazard.Create(request.Title);
+		var id = await _repository.AddAsync(hazard, ct);
+		return Result.Success(id);
+	}
+}
+
+Generic code sample (pipeline behavior):
+----------------------------------------
+public sealed class ValidationPipeline<TRequest, TResponse> : IBasePipeline<TRequest, TResponse>
+{
+	public async Task<TResponse> Handle(TRequest request, CancellationToken ct, RequestHandlerDelegate<TResponse> next)
+	{
+		// validate request
+		return await next();
+	}
+}
+
+
+2.3 Domain
+Primary responsibilities:
+- Model business entities and business invariants.
+- Define smart/data-driven enums for controlled business vocabularies.
+- Define value objects for strongly-typed concepts.
+- Publish domain-level event contracts.
+- Provide standardized error contracts via DomainErrors.
+
+Key structure:
+- Entities grouped by subdomains: hazard, report, risk, assurance, user-management, etc.
+- Enums for status, severity, risk categories, user types, company, organization, titles.
+- ValueObjects for domain primitives (names, risk score, URLs, queued event content).
+- Events split into DomainEvents, IntegrationEvents, and UIEvents.
+
+Design characteristics:
+- Domain holds business meaning; no UI or persistence concerns.
+- Domain events represent meaningful business transitions.
+- Strong typing reduces incorrect state usage.
+
+Generic code sample (entity + domain event):
+--------------------------------------------
+public sealed class Report : BaseAggregateRoot
+{
+	public string Description { get; private set; } = string.Empty;
+
+	public void UpdateDescription(string description)
+	{
+		Description = description.Trim();
+		AddDomainEvent(new ReportUpdatedEvent(Id));
+	}
+}
+
+
+2.4 Infrastructure
+Primary responsibilities:
+- Implement repositories and data services.
+- Execute stored procedures and map database results to domain entities.
+- Provide database connection abstractions and helpers.
+- Provide middleware/utilities for operational and security concerns.
+- Support external storage/integration services (such as hazard file storage patterns).
+
+Key structure:
+- Persistence/*Repository.cs for repository implementations.
+- Services/*DataService.cs for data operations.
+- DataAccess folder for stored procedure names, field names, parameter constants.
+- Configuration/Middleware for headers, logging, request/circuit metadata.
+
+Design characteristics:
+- No inline SQL policy; access is routed through stored procedures.
+- Parameter names/constants are centralized in DataAccess constants classes.
+- Infrastructure logging is standardized through InfrastructureLogMessages + InfrastructureEventIds.
+
+Generic code sample (repository pattern over stored proc):
+----------------------------------------------------------
+public sealed class ReportRepository : IReportRepository
+{
+	private readonly IDataAccess _dataAccess;
+
+	public ReportRepository(IDataAccess dataAccess)
+	{
+		_dataAccess = dataAccess;
+	}
+
+	public Task<IReadOnlyList<Report>> GetAllAsync(CancellationToken ct)
+		=> _dataAccess.QueryAsync<Report>(StoredProcs.ReportGetAll, ct);
+}
+
+
+2.5 Shared
+Primary responsibilities:
+- Host cross-project constants and logging identifier resources.
+- Provide common artifacts used by multiple layers.
+
+Design characteristics:
+- Minimal project intended to avoid duplication.
+- Non-domain-specific shared concerns only.
+
+
+3) CORE DESIGN PATTERNS USED
+
+3.1 Layered Clean Architecture
+Intent:
+- Separate business logic from UI and persistence.
+Benefits:
+- Lower coupling, easier testing, safer maintenance.
+
+3.2 CQRS (Command Query Responsibility Segregation)
+Intent:
+- Separate write operations (commands) from read operations (queries).
+Benefits:
+- Clear intent, focused handlers, predictable behavior.
+
+3.3 Mediator Pattern (Custom IMediator)
+Intent:
+- Decouple callers from handler implementations.
+Benefits:
+- Single entry point for use-case execution and pipeline traversal.
+
+3.4 Pipeline/Behavior Pattern
+Intent:
+- Centralize cross-cutting concerns: validation, auditing, logging, audit-field stamping.
+Benefits:
+- Keeps request handlers concise and business-focused.
+
+3.5 Repository Pattern
+Intent:
+- Abstract data persistence behind interfaces.
+Benefits:
+- Swappable storage strategies and easier test doubles.
+
+3.6 Domain Event Pattern
+Intent:
+- Publish significant business transitions as events.
+Benefits:
+- Better modularity and asynchronous/extensible side-effect processing.
+
+3.7 Strategy Pattern (Authentication and current-user resolution)
+Intent:
+- Select runtime behavior based on context (circuit/session/context).
+Benefits:
+- Flexible authentication handling across hosting/runtime paths.
+
+
+4) REQUEST-TO-DATA FLOW (TYPICAL)
+1. User action in Blazor page triggers Application service call.
+2. Service sends command/query through mediator.
+3. Pipelines run (validation, logging, auditing).
+4. Handler executes use-case logic.
+5. Handler uses repository interface.
+6. Infrastructure repository executes stored procedure and maps results.
+7. Response returns to page for rendering.
+8. If domain events are raised, event handlers process additional actions.
+
+
+5) EVENTING MODEL
+Event categories used:
+- Domain events: core business transitions (e.g., report/hazard/risk changes).
+- Integration events: cross-boundary integration actions (e.g., email notification events).
+- UI events: presentation refresh/update coordination (e.g., SPI dashboard refresh).
+
+EventBus and queueing:
+- Application EventBus services dispatch or queue events.
+- Queued event registry organizes supported queued event types.
+- UI and integration handlers consume events by responsibility.
+
+
+6) SECURITY AND RUNTIME CONCERNS
+- HTTPS-focused hosting and request security middleware are part of runtime configuration.
+- Security headers and request validation middleware are integrated in infrastructure/presentation configuration.
+- Authentication/authorization orchestration lives in Application services with pluggable strategies.
+- Session and two-factor related services support secure user workflows.
+
+
+7) CONFIGURATION APPROACH
+- Central appsettings-based configuration is used for runtime features and integration settings.
+- Presentation and Infrastructure each have explicit configuration extension/wiring points.
+- System constants and options objects are used to reduce magic strings and drift.
+
+
+8) DATA ACCESS APPROACH
+- Stored procedures are the primary mechanism for persistence operations.
+- Parameter and field constants are centralized for consistency.
+- Reader-mapping helpers are used to standardize data conversion and null handling.
+
+
+9) MAINTAINABILITY CHARACTERISTICS
+Strengths:
+- Clear separation of concerns across layers.
+- Strong domain language via entities/enums/value objects.
+- Event-driven extension points for asynchronous workflows.
+- Centralized logging and auditing patterns.
+
+Watch areas:
+- High module breadth requires disciplined naming and dependency boundaries.
+- Event contract consistency is important as EventBus usage grows.
+- Large solution benefits from incremental batch refactors with build/test checkpoints.
+
+
+10) SUMMARY
+SMS3 is implemented as a .NET 10 Blazor system using layered clean architecture with CQRS, a custom mediator pipeline, repository-based stored-procedure data access, and event-driven coordination. The design balances enterprise governance needs (audit/security/logging) with modular feature delivery across hazard, risk, assurance, reporting, and administration domains.

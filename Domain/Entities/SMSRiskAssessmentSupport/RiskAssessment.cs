@@ -212,7 +212,7 @@ public sealed class RiskAssessment : BaseAuditableEntity
         {
             1 => RiskAssessmentStage.DescribingSystem,// System description
             2 => RiskAssessmentStage.IdentifyingHazards, // Hazard identification
-            3 => RiskAssessmentStage.AnalyizingRisk, // Risk analysis
+            3 => RiskAssessmentStage.AnalyzingRisk, // Risk analysis
             4 => RiskAssessmentStage.AssessingRisk, // Risk assessment
             5 => RiskAssessmentStage.MitigatingRisk, // Risk mitigation
             _ => RiskAssessmentStage.DescribingSystem

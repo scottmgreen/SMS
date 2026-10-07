@@ -51,10 +51,23 @@
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ILogger<MainLayout> _logger { get; set; } = default!;
     [Inject] private NotificationService _notificationService { get; set; } = default!;
+    [Inject] private IHttpContextAccessor _httpContextAccessor { get; set; } = default!;
+    [Inject] private IActiveUserSessionRegistry _activeUserSessionRegistry { get; set; } = default!;
 
     protected override async Task OnInitializedAsync()
     {
-        EventBusDispatcher.Register(this);
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
+        await Task.CompletedTask;
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (_currentUserService?.IsFullyAuthenticated == true)
+        {
+            _activeUserSessionRegistry.RefreshActivity(BuildCurrentSessionKey());
+        }
+
+        EventBusDispatcher.Register(this, _currentUserService?.UserCode ?? string.Empty, BuildCurrentSessionKey());
         await Task.CompletedTask;
     }
 
@@ -83,6 +96,10 @@
     public void Dispose()
     {
         EventBusDispatcher.Unregister(this);
+        if (_currentUserService?.IsFullyAuthenticated == true)
+        {
+            _activeUserSessionRegistry.RemoveSession(BuildCurrentSessionKey());
+        }
     }
     
 
@@ -149,13 +166,17 @@
             }
 
             // **?? CLEAR SESSION-BASED AUTHENTICATION - Replaces static authentication**
+            var sessionKey = BuildCurrentSessionKey();
+            _activeUserSessionRegistry.RemoveSession(sessionKey);
+            _activeUserSessionRegistry.RemoveSessionsForUser(_currentUserService?.UserCode ?? string.Empty);
+
             await _currentUserService.ClearAuthentication();
             await _sessionService.ClearSMSSessionAsync();
             
             _logger.LogInformation("Session authentication cleared for user: {UserName}", currentUserName);
             
             // Navigate to login after logout
-            _navigation.NavigateTo("/login", forceLoad: true);
+            _navigation.NavigateTo("/pdx", forceLoad: true);
         }
         catch (Exception ex)
         {
@@ -164,6 +185,7 @@
             // Still try to clear authentication and redirect even if audit fails
             try
             {
+                _activeUserSessionRegistry.RemoveSessionsForUser(_currentUserService?.UserCode ?? string.Empty);
                 await _currentUserService.ClearAuthentication();
                 await _sessionService.ClearSMSSessionAsync();
                 // Force navigation to login page
@@ -176,6 +198,23 @@
                 _navigation.NavigateTo("/login", forceLoad: true);
             }
         }
+
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        var context = _httpContextAccessor.HttpContext;
+        var sessionId = context?.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>()?.Session?.Id;
+        if (!string.IsNullOrWhiteSpace(sessionId))
+        {
+            return $"session:{sessionId}";
+        }
+
+        var userCode = _currentUserService?.UserCode ?? "unknown";
+        var remoteIp = context?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
+        var userAgent = context?.Request?.Headers["User-Agent"].FirstOrDefault() ?? "unknown";
+        return $"fallback:{userCode}:{remoteIp}:{userAgent.GetHashCode()}";
+    }
     }
 }
 

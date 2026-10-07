@@ -2,9 +2,9 @@ using System.Threading;
 using System.Threading.Tasks;
 
 using SMS_Application.Interfaces;
+using SMS_Domain.Entities;
 using SMS_Domain.Enums;
 using SMS_Domain.Events;
-using SMS3.Components.Pages.SMSSystem.Models;
 
 namespace SMS3.Components.Pages.SMSSystem.Services
 {
@@ -17,17 +17,17 @@ namespace SMS3.Components.Pages.SMSSystem.Services
             _eventBus = eventBus;
         }
 
-        public async Task SendAsync(MailRequest request)
+        public async Task SendAsync(EmailNotification notification)
         {
             var emailEvent = new EmailNotificationEvent(
-                toRecipients: request.To,
-                subject: request.Subject,
-                body: request.BodyHtml,
+                toRecipients: notification.To,
+                subject: notification.Subject ?? string.Empty,
+                body: notification.BodyHtml ?? string.Empty,
                 isHtmlContent: true,
                 priority: EmailPriority.Normal,
                 workflowType: "ManualComposeDialog",
                 relatedEntityType: "EmailComposeDialog",
-                attachments: request.Attachments?.Select(a => new EmailAttachment
+                attachments: notification.Attachments?.Select(a => new EmailAttachment
                 {
                     FileName = a.FileName,
                     Content = a.Content,

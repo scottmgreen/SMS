@@ -38,7 +38,7 @@ public class Program
         builder.Services.AddRadzenComponents();
         builder.Services.AddHttpClient();
         // Register mock email sender for development/testing
-        builder.Services.AddScoped<SMS3.Components.Pages.SMSSystem.Models.IEmailSender, SMS3.Components.Pages.SMSSystem.Services.MockEmailSender>();
+        builder.Services.AddScoped<IEmailSender, SMS3.Components.Pages.SMSSystem.Services.MockEmailSender>();
         
         // 🚀 FEATURE MANAGEMENT - Must be registered early**
         builder.Services.AddSharedServices(builder.Configuration);

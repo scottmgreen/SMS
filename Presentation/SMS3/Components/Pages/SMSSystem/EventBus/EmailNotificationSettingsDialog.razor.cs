@@ -3,8 +3,8 @@ using Radzen;
 using SMS_Application.Commands;
 using SMS_Application.Interfaces;
 using SMS_Application.Queries;
+using SMS_Domain.Entities;
 using SMS_Domain.Enums;
-using SMS3.Components.Pages.SMSSystem.Models;
 using SMS3.Components.Pages.SMSSystem.Services;
 using System.Text.Json;
 
@@ -17,37 +17,39 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
     [Inject] protected IEmailNotificationSettingsService EmailNotificationSettingsService { get; set; } = default!;
     [Inject] protected IBaseMediator Mediator { get; set; } = default!;
 
-    protected List<EmailNotificationSetting> _settings = [];
-    protected List<EmailNotificationSetting> _originalSettings = [];
+    protected List<NotificationSetting> _settings = [];
+    protected List<NotificationSetting> _originalSettings = [];
     protected bool _isSaving;
 
-    protected readonly EventExecutionMode[] _allowedModes =
+    protected readonly NotificationExecutionMode[] _allowedModes =
     [
-        EventExecutionMode.Immediate,
-        EventExecutionMode.Manual
+        NotificationExecutionMode.Immediate,
+        NotificationExecutionMode.Manual
     ];
 
     protected override void OnInitialized()
     {
         _settings = EmailNotificationSettingsService
             .GetAllNotificationSettings()
-            .Select(x => new EmailNotificationSetting
+            .Select(x => new NotificationSetting
             {
                 NotificationType = x.NotificationType,
                 Enabled = x.Enabled,
                 TriggerDomainEvent = x.TriggerDomainEvent,
                 AppSettingsSection = x.AppSettingsSection,
+                ChannelName = x.ChannelName,
                 ExecutionMode = x.ExecutionMode
             })
             .ToList();
 
         _originalSettings = _settings
-            .Select(x => new EmailNotificationSetting
+            .Select(x => new NotificationSetting
             {
                 NotificationType = x.NotificationType,
                 Enabled = x.Enabled,
                 TriggerDomainEvent = x.TriggerDomainEvent,
                 AppSettingsSection = x.AppSettingsSection,
+                ChannelName = x.ChannelName,
                 ExecutionMode = x.ExecutionMode
             })
             .ToList();
@@ -141,8 +143,8 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
         }
 
         if (domainChange is not null
-            && domainChange.Value.Original.ExecutionMode == EventExecutionMode.Immediate
-            && domainChange.Value.Updated.ExecutionMode == EventExecutionMode.Manual)
+            && domainChange.Value.Original.ExecutionMode == NotificationExecutionMode.Immediate
+            && domainChange.Value.Updated.ExecutionMode == NotificationExecutionMode.Manual)
         {
             var domainConfirm = await DialogService.Confirm(
                 "Switching DomainEventPublishing from Immediate to Manual will stop immediate domain handler execution and can delay downstream integration/UI triggers for newly published domain events. Continue?",
@@ -181,8 +183,8 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
                 continue;
             }
 
-            if (change.Value.Original.ExecutionMode != EventExecutionMode.Manual
-                || change.Value.Updated.ExecutionMode != EventExecutionMode.Immediate)
+            if (change.Value.Original.ExecutionMode != NotificationExecutionMode.Manual
+                || change.Value.Updated.ExecutionMode != NotificationExecutionMode.Immediate)
             {
                 continue;
             }
@@ -261,7 +263,7 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
         }
     }
 
-    private (EmailNotificationSetting Original, EmailNotificationSetting Updated)? GetSettingChange(string notificationType)
+    private (NotificationSetting Original, NotificationSetting Updated)? GetSettingChange(string notificationType)
     {
         var original = _originalSettings.FirstOrDefault(x =>
             string.Equals(x.NotificationType, notificationType, StringComparison.OrdinalIgnoreCase));
@@ -278,7 +280,7 @@ public class EmailNotificationSettingsDialogBase : ComponentBase
         return changed ? (original, updated) : null;
     }
 
-    private static bool IsEmailIntegrationSetting(EmailNotificationSetting setting)
+    private static bool IsEmailIntegrationSetting(NotificationSetting setting)
     {
         return setting.AppSettingsSection.Contains(":Channels:Email", StringComparison.OrdinalIgnoreCase);
     }

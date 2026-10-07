@@ -2,7 +2,7 @@
 @using Radzen.Blazor
 @using Microsoft.AspNetCore.Components.Forms
 @using System.Linq
-@using SMS3.Components.Pages.SMSSystem.Models
+@using SMS_Domain.Entities
 
 
 @inject DialogService DialogService
@@ -11,7 +11,8 @@
 
 @inherits EmailComposeDialogBase
 
-<RadzenTemplateForm Data="@Model" Submit="@SendAsync" TItem="EmailComposeModel" class="compose-root">
+<RadzenTemplateForm Data="@Model" Submit="@SendAsync" TItem="EmailNotification" class="compose-root">
+
 
     <!-- Title bar -->
     @* <div class="compose-titlebar">

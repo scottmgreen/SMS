@@ -230,7 +230,7 @@
 
                 <RadzenRow Gap=".5rem">
                     <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="Organization *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                        <RadzenFormField Text="Organization" Variant="Variant.Outlined" AllowFloatingLabel="false">
                             <RadzenDropDown TValue="string" @bind-Value="@_newUser.Organization"
                                             Data="@OrganizationOptions"
                                             ValueProperty="Value" TextProperty="Text"
@@ -242,7 +242,7 @@
 
                 <RadzenRow Gap=".5rem">
                     <RadzenColumn Size="12" SizeMD="6">
-                        <RadzenFormField Text="Title *" Variant="Variant.Outlined" AllowFloatingLabel="false">
+                        <RadzenFormField Text="Title" Variant="Variant.Outlined" AllowFloatingLabel="false">
                             <RadzenDropDown TValue="string" @bind-Value="@_newUser.Title" Data="@StakeholderTypesForDropdown"
                                             ValueProperty="Value" TextProperty="Text"
                                             Change="@(args => { _newUser.Title = args?.ToString(); OnNewTitleChanged(_newUser.Title); })"

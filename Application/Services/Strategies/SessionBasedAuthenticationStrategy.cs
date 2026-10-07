@@ -10,6 +10,7 @@
 using SMS_Domain.Entities;
 
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Logging;
 using SMS_Application.Configuration;
 using SMS_Application.Interfaces;
@@ -44,7 +45,7 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
     public string StrategyName => "Session-Based Authentication";
     public AuthenticationMethod Method => AuthenticationMethod.SessionBased;
 
-    public bool IsAvailable => _httpContextAccessor.HttpContext?.Session != null &&
+    public bool IsAvailable => TryGetSession() != null &&
                               _protocolDetectionService.CanUseSessionAuth();
 
     /// <summary>
@@ -55,7 +56,8 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
         try
         {
             var context = _httpContextAccessor.HttpContext;
-            if (context?.Session == null)
+            var session = TryGetSession(context);
+            if (session == null)
             {
                 _logger.LogApplicationWarning("Session not available for SessionBasedAuthenticationStrategy");
                 return Result.Failure<bool>(DomainErrors.GeneralError.UnProcessableRequest);
@@ -69,7 +71,7 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
 
             _logger.LogApplicationInformation("Storing user {UserCode} ({UserType}) in session", user.Code, userType.Value);
 
-            await context.Session.LoadAsync(cancellationToken);
+            await session.LoadAsync(cancellationToken);
 
             // Get serialized user data with all roles/permissions
             var userData = _userInstantiationService.SerializeCompleteUser(user, userType);
@@ -77,14 +79,14 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
             // Store all data in session
             foreach (var kvp in userData)
             {
-                context.Session.SetString(kvp.Key, kvp.Value);
+                session.SetString(kvp.Key, kvp.Value);
             }
 
             // Add strategy identifier
-            context.Session.SetString("SMS_AuthMethod", "Session");
-            context.Session.SetString("SMS_AuthStrategy", StrategyName);
+            session.SetString("SMS_AuthMethod", "Session");
+            session.SetString("SMS_AuthStrategy", StrategyName);
 
-            await context.Session.CommitAsync(cancellationToken);
+            await session.CommitAsync(cancellationToken);
 
             _logger.LogApplicationInformation("User {UserCode} ({UserType}) stored successfully in session with {FieldCount} fields", 
                 user.Code, userType.Value, userData.Count);
@@ -106,21 +108,22 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
         try
         {
             var context = _httpContextAccessor.HttpContext;
-            if (context?.Session == null)
+            var session = TryGetSession(context);
+            if (session == null)
             {
                 _logger.LogApplicationDebug("Session not available for user retrieval");
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
-            var isAuthenticated = context.Session.GetString("IsAuthenticated");
+            var isAuthenticated = session.GetString("IsAuthenticated");
             if (isAuthenticated != "true")
             {
                 _logger.LogApplicationDebug("No authenticated user in session");
                 return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
-            var userCode = context.Session.GetString("SMS_UserCode");
-            var userTypeValue = context.Session.GetString("SMS_UserType");
+            var userCode = session.GetString("SMS_UserCode");
+            var userTypeValue = session.GetString("SMS_UserType");
 
             if (string.IsNullOrEmpty(userCode) || string.IsNullOrEmpty(userTypeValue))
             {
@@ -146,7 +149,7 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
 
             foreach (var key in sessionKeys)
             {
-                var value = context.Session.GetString(key);
+                var value = session.GetString(key);
                 if (!string.IsNullOrEmpty(value))
                 {
                     userData[key] = value;
@@ -184,16 +187,17 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
         try
         {
             var context = _httpContextAccessor.HttpContext;
-            if (context?.Session == null)
+            var session = TryGetSession(context);
+            if (session == null)
             {
                 _logger.LogApplicationDebug("Session not available for clearing");
                 return Result.Success(true);
             }
 
-            var userCode = context.Session.GetString("SMS_UserCode");
+            var userCode = session.GetString("SMS_UserCode");
             _logger.LogApplicationInformation("??? Clearing user {UserCode} from session", userCode ?? "Unknown");
 
-            context.Session.Clear();
+            session.Clear();
             
             _logger.LogApplicationInformation("Session cleared successfully for user {UserCode}", userCode ?? "Unknown");
             return Result.Success(true);
@@ -213,9 +217,10 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
         try
         {
             var context = _httpContextAccessor.HttpContext;
-            if (context?.Session == null) return false;
+            var session = TryGetSession(context);
+            if (session == null) return false;
 
-            var isAuthenticated = context.Session.GetString("IsAuthenticated");
+            var isAuthenticated = session.GetString("IsAuthenticated");
             return isAuthenticated == "true";
         }
         catch
@@ -232,7 +237,8 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
         try
         {
             var context = _httpContextAccessor.HttpContext;
-            return context?.Session?.GetString("SMS_UserCode");
+            var session = TryGetSession(context);
+            return session?.GetString("SMS_UserCode");
         }
         catch
         {
@@ -248,7 +254,8 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
         try
         {
             var context = _httpContextAccessor.HttpContext;
-            return context?.Session?.GetString("SMS_DisplayName");
+            var session = TryGetSession(context);
+            return session?.GetString("SMS_DisplayName");
         }
         catch
         {
@@ -263,8 +270,26 @@ public class SessionBasedAuthenticationStrategy : IAuthenticationStrategy
     {
         var context = _httpContextAccessor.HttpContext;
         var protocolInfo = _protocolDetectionService.GetProtocolInfo();
-        var sessionId = context?.Session?.Id ?? "Unknown";
+        var sessionId = TryGetSession(context)?.Id ?? "Unknown";
         return $"Session Storage - {protocolInfo}, SessionId: {sessionId[..Math.Min(8, sessionId.Length)]}...";
+    }
+
+    private ISession? TryGetSession(HttpContext? context = null)
+    {
+        context ??= _httpContextAccessor.HttpContext;
+        if (context == null)
+        {
+            return null;
+        }
+
+        try
+        {
+            return context.Features.Get<ISessionFeature>()?.Session;
+        }
+        catch (InvalidOperationException)
+        {
+            return null;
+        }
     }
 
     /// <summary>

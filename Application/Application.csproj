@@ -38,7 +38,6 @@
   <ItemGroup>
     <Compile Remove="Services\SMSAuthorizationService.cs" />
     <Compile Remove="Services\SMSRiskAssessmentWorkflowService.cs" />
-    <Compile Remove="Services\SMSRoleService.cs" />
     <Compile Remove="Services\SMSServices\SMSAuthorizationService.cs" />
     <Compile Remove="Services\SMSServices\SMSRiskAssessmentWorkflowService.cs" />
     <Compile Remove="Services\SMSServices\SMSRoleService.cs" />

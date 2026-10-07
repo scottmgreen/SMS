@@ -37,7 +37,7 @@ public class AuthenticationService : IAuthenticationService
     {
         if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(password))
         {
-            return AuthenticationResult.Failure("Email and password are required");
+            return AuthenticationResult.Failure("User name and password are required");
         }
 
         _logger.LogApplicationInformation("Attempting smart authentication for user: {Email}",
@@ -78,7 +78,7 @@ public class AuthenticationService : IAuthenticationService
         _logger.LogApplicationWarning("Authentication failed - user not found or invalid credentials: {Email}",
             ApplicationEventIds.Warning,
             email);
-        return AuthenticationResult.Failure("Invalid email or password");
+        return AuthenticationResult.Failure("Invalid user name or password");
     }
 
     /// <summary>

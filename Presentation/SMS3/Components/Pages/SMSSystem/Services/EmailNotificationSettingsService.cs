@@ -3,7 +3,8 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using SMS_Application.Interfaces;
 using SMS_Domain.Common;
-using SMS3.Components.Pages.SMSSystem.Models;
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 
 namespace SMS3.Components.Pages.SMSSystem.Services;
 
@@ -16,55 +17,55 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
             "MitigationApproval",
             "MitigationApprovalRequestedEvent",
             "NotificationEvents:MitigationApproval:Channels:Email",
-            EventExecutionMode.Manual,
+            NotificationExecutionMode.Manual,
             "Email"),
         new(
             "MitigationApproved",
             "MitigationStatusChangedEvent",
             "NotificationEvents:MitigationApproved:Channels:Email",
-            EventExecutionMode.Manual,
+            NotificationExecutionMode.Manual,
             "Email"),
         new(
             "MitigationTargetDateNotification",
             "Mitigation target-date scan trigger",
             "NotificationEvents:MitigationTargetDateNotification:Channels:Email",
-            EventExecutionMode.Manual,
+            NotificationExecutionMode.Manual,
             "Email"),
         new(
             "HazardSubmissionStatusEscalation",
             "Report status escalation scan + API escalation",
             "NotificationEvents:HazardSubmissionStatusEscalation:Channels:Email",
-            EventExecutionMode.Manual,
+            NotificationExecutionMode.Manual,
             "Email"),
         new(
             "UINotificationError",
             "UINotificationEvent severity Error",
             "NotificationEvents:UINotificationError:Channels:UI",
-            EventExecutionMode.Immediate,
+            NotificationExecutionMode.Immediate,
             "UI"),
         new(
             "UINotificationSuccess",
             "UINotificationEvent severity Success",
             "NotificationEvents:UINotificationSuccess:Channels:UI",
-            EventExecutionMode.Immediate,
+            NotificationExecutionMode.Immediate,
             "UI"),
         new(
             "UINotificationWarning",
             "UINotificationEvent severity Warning",
             "NotificationEvents:UINotificationWarning:Channels:UI",
-            EventExecutionMode.Immediate,
+            NotificationExecutionMode.Immediate,
             "UI"),
         new(
             "UINotificationInfo",
             "UINotificationEvent severity Info",
             "NotificationEvents:UINotificationInfo:Channels:UI",
-            EventExecutionMode.Immediate,
+            NotificationExecutionMode.Immediate,
             "UI"),
         new(
             "DomainEventPublishing",
             "Domain EventBus publish control",
             "NotificationEvents:DomainEventPublishing:Channels:Domain",
-            EventExecutionMode.Immediate,
+            NotificationExecutionMode.Immediate,
             "Domain")
     ];
 
@@ -82,15 +83,16 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public IReadOnlyList<EmailNotificationSetting> GetAllNotificationSettings()
+    public IReadOnlyList<NotificationSetting> GetAllNotificationSettings()
     {
         return NotificationDefinitions
-            .Select(definition => new EmailNotificationSetting
+            .Select(definition => new NotificationSetting
             {
                 NotificationType = definition.NotificationType,
                 Enabled = ReadEnabled(definition),
                 TriggerDomainEvent = definition.TriggerDomainEvent,
                 AppSettingsSection = definition.SectionPath,
+                ChannelName = definition.ChannelName,
                 ExecutionMode = ReadExecutionMode(definition)
             })
             .ToList();
@@ -115,7 +117,7 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
         return ReadEnabled(definition);
     }
 
-    public EventExecutionMode ResolveExecutionMode(string? notificationType, EventExecutionMode fallbackMode)
+    public NotificationExecutionMode ResolveExecutionMode(string? notificationType, NotificationExecutionMode fallbackMode)
     {
         var normalizedNotificationType = notificationType?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(normalizedNotificationType))
@@ -135,7 +137,7 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
         return ParseAllowedMode(configured, definition.DefaultMode);
     }
 
-    public async Task<Result> SaveNotificationSettingsAsync(IEnumerable<EmailNotificationSetting> settings, CancellationToken cancellationToken = default)
+    public async Task<Result> SaveNotificationSettingsAsync(IEnumerable<NotificationSetting> settings, CancellationToken cancellationToken = default)
     {
         var requestedSettings = settings?.ToList() ?? [];
         if (requestedSettings.Count == 0)
@@ -280,7 +282,7 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
         return new ReplacementResult(updatedText, replacementCount);
     }
 
-    private EventExecutionMode ReadExecutionMode(NotificationDefinition definition)
+    private NotificationExecutionMode ReadExecutionMode(NotificationDefinition definition)
     {
         var configured = _configuration.GetValue<string>($"{definition.SectionPath}:ExecutionMode");
         return ParseAllowedMode(configured, definition.DefaultMode);
@@ -291,14 +293,14 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
         return _configuration.GetValue<bool?>(definition.EnabledSectionPath) ?? definition.DefaultEnabled;
     }
 
-    private static EventExecutionMode ParseAllowedMode(string? configured, EventExecutionMode defaultMode)
+    private static NotificationExecutionMode ParseAllowedMode(string? configured, NotificationExecutionMode defaultMode)
     {
-        if (!Enum.TryParse<EventExecutionMode>(configured, true, out var parsedMode))
+        if (!Enum.TryParse<NotificationExecutionMode>(configured, true, out var parsedMode))
         {
             return defaultMode;
         }
 
-        return parsedMode is EventExecutionMode.Immediate or EventExecutionMode.Manual
+        return parsedMode is NotificationExecutionMode.Immediate or NotificationExecutionMode.Manual
             ? parsedMode
             : defaultMode;
     }
@@ -307,7 +309,7 @@ public sealed class EmailNotificationSettingsService : IEmailNotificationSetting
         string NotificationType,
         string TriggerDomainEvent,
         string SectionPath,
-        EventExecutionMode DefaultMode,
+        NotificationExecutionMode DefaultMode,
         string ChannelName,
         bool DefaultEnabled = true)
     {

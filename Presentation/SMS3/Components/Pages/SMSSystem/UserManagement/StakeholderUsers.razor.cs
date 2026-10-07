@@ -241,9 +241,7 @@ public partial class StakeholderUsers : ComponentBase
 
     private bool _isCreateFormValid =>
         !string.IsNullOrWhiteSpace(_newFirstName) &&
-        !string.IsNullOrWhiteSpace(_newLastName) &&
-        !string.IsNullOrWhiteSpace(_newUser.Title) &&
-        !string.IsNullOrWhiteSpace(_newUser.Organization);
+        !string.IsNullOrWhiteSpace(_newLastName);
 
     // Transform stakeholder types for dropdown
     private List<LookupOption> StakeholderTypesForDropdown => StakeholderTypes

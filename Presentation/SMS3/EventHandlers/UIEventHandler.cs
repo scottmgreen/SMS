@@ -5,6 +5,7 @@ using SMS_Application.Interfaces;
 using SMS_Domain.Common;
 using SMS_Domain.Events;
 using SMS3.Components.Shared;
+using SMS_Application.Interfaces;
 
 namespace SMS3.EventHandlers;
 
@@ -16,12 +17,14 @@ public class UIEventHandler : BaseUIEventHandler<UINotificationEvent>
 {
     private readonly ILogger<UIEventHandler> _logger;
     private readonly IConfiguration _configuration;
+    private readonly ICurrentUserService _currentUserService;
 
-    public UIEventHandler(ILogger<UIEventHandler> logger, IConfiguration configuration)
+    public UIEventHandler(ILogger<UIEventHandler> logger, IConfiguration configuration, ICurrentUserService currentUserService)
         : base(logger)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
+        _currentUserService = currentUserService ?? throw new ArgumentNullException(nameof(currentUserService));
     }
 
     protected override async Task<Result> ProcessUIEventAsync(UINotificationEvent uiEvent, CancellationToken cancellationToken)
@@ -47,12 +50,37 @@ public class UIEventHandler : BaseUIEventHandler<UINotificationEvent>
                 _ => NotificationSeverity.Info
             };
 
-            // Use BlazorNotificationDispatcher to properly marshal to UI thread
+            var targetUserCode = uiEvent.Metadata is not null
+                && uiEvent.Metadata.TryGetValue("TargetUserCode", out var targetUserValue)
+                ? targetUserValue?.ToString()
+                : null;
+
+            var targetSessionKey = uiEvent.Metadata is not null
+                && uiEvent.Metadata.TryGetValue("TargetSessionKey", out var targetSessionValue)
+                ? targetSessionValue?.ToString()
+                : null;
+
+            // Enforce user-specific toasts when target user is supplied.
+            // If no target is supplied, default to the publishing user's session identity.
+            if (string.IsNullOrWhiteSpace(targetUserCode) && string.IsNullOrWhiteSpace(targetSessionKey))
+            {
+                targetUserCode = _currentUserService?.UserCode;
+            }
+
+            if (string.IsNullOrWhiteSpace(targetUserCode) && string.IsNullOrWhiteSpace(targetSessionKey))
+            {
+                _logger.LogWarning("UINotificationHandler: Dropping notification {EventId} because TargetUserCode could not be resolved.", uiEvent.EventId);
+                return Result.Success();
+            }
+
+            // Use dispatcher to marshal to UI thread and limit toast to target user session(s)
             await EventBusDispatcher.DispatchNotificationAsync(
                 severity, 
                 uiEvent.Title, 
                 uiEvent.Message, 
-                uiEvent.Duration
+                uiEvent.Duration,
+                targetUserCode,
+                targetSessionKey
             );
 
             _logger.LogInformation("UINotificationHandler: Notification dispatched to Blazor components via InvokeAsync pattern");

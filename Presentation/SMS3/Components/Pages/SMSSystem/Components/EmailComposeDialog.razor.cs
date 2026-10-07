@@ -7,7 +7,7 @@ using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Components.Web;
 using SMS_Application.Interfaces;
-using SMS3.Components.Pages.SMSSystem.Models;
+using SMS_Domain.Entities;
 
 
 public class EmailComposeDialogBase : ComponentBase
@@ -17,19 +17,19 @@ public class EmailComposeDialogBase : ComponentBase
     [Inject] protected IEmailSender EmailSender { get; set; } = default!;
     [Inject] protected ICurrentUserService CurrentUserService { get; set; } = default!;
 
-    [Parameter] public EmailComposeModel? InitialModel { get; set; }
+    [Parameter] public EmailNotification? InitialModel { get; set; }
     [Parameter] public bool PreviewOnly { get; set; }
     [Parameter] public bool DeferSendToQueueExecution { get; set; }
     [Parameter] public string? DialogTitleOverride { get; set; }
 
-    protected EmailComposeModel Model { get; private set; } = new();
+    protected EmailNotification Model { get; private set; } = new();
     protected bool ShowCc { get; set; }
     protected bool ShowBcc { get; set; }
     protected bool IsSending { get; set; }
     protected string? SelectedAttachmentName { get; set; }
     protected string DialogTitle { get; set; } = "New message";
     protected string CcEntryText { get; set; } = string.Empty;
-    private EmailComposeModel? _lastInitialModelReference;
+    private EmailNotification? _lastInitialModelReference;
 
     
 
@@ -53,7 +53,7 @@ public class EmailComposeDialogBase : ComponentBase
         {
             if (InitialModel != null)
             {
-                Model = new EmailComposeModel
+                Model = new EmailNotification
                 {
                     To = InitialModel.To?.Distinct().ToList() ?? new(),
                     Cc = InitialModel.Cc?.Distinct().ToList() ?? new(),
@@ -70,7 +70,7 @@ public class EmailComposeDialogBase : ComponentBase
             }
             else
             {
-                Model = new EmailComposeModel();
+                Model = new EmailNotification();
             }
 
             ShowCc = (Model.Cc?.Count ?? 0) > 0;
@@ -208,17 +208,9 @@ public class EmailComposeDialogBase : ComponentBase
             IsSending = true;
 
             // Build the lightweight mail request (backend-independent)
-            var request = new MailRequest
-            {
-                To = Model.To,
-                Cc = Model.Cc,
-                Bcc = Model.Bcc,
-                Subject = Model.Subject?.Trim() ?? string.Empty,
-                BodyHtml = Model.BodyHtml ?? string.Empty,
-                Attachments = Model.Attachments
-            };
-
-            await EmailSender.SendAsync(request);
+            Model.Subject = Model.Subject?.Trim() ?? string.Empty;
+            Model.BodyHtml ??= string.Empty;
+            await EmailSender.SendAsync(Model);
 
             NotificationService.Notify(new Radzen.NotificationMessage
             {
@@ -298,7 +290,7 @@ public class EmailComposeDialogBase : ComponentBase
         Model.Attachments.Remove(attachment);
     }
 
-    private static System.Collections.Generic.List<string> ValidateModel(EmailComposeModel m)
+    private static System.Collections.Generic.List<string> ValidateModel(EmailNotification m)
     {
         var errors = new System.Collections.Generic.List<string>();
 

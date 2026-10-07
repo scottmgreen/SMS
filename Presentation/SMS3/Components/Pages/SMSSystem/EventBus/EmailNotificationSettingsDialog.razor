@@ -1,5 +1,6 @@
 @using SMS_Application.Interfaces
-@using SMS3.Components.Pages.SMSSystem.Models
+@using SMS_Domain.Entities
+@using SMS_Domain.Enums
 
 @inherits EmailNotificationSettingsDialogBase
 
@@ -11,19 +12,19 @@
         </RadzenColumn>
     </RadzenRow>
 
-    <RadzenDataGrid Data="@_settings" TItem="EmailNotificationSetting" AllowPaging="false" AllowSorting="true">
+    <RadzenDataGrid Data="@_settings" TItem="NotificationSetting" AllowPaging="false" AllowSorting="true">
         <Columns>
-            <RadzenDataGridColumn TItem="EmailNotificationSetting" Property="NotificationType" Title="Notification" Width="220px" />
-            <RadzenDataGridColumn TItem="EmailNotificationSetting" Title="Enabled" Width="110px">
+            <RadzenDataGridColumn TItem="NotificationSetting" Property="NotificationType" Title="Notification" Width="220px" />
+            <RadzenDataGridColumn TItem="NotificationSetting" Title="Enabled" Width="110px">
                 <Template Context="item">
                     <RadzenCheckBox @bind-Value="item.Enabled" Disabled="@_isSaving" />
                 </Template>
             </RadzenDataGridColumn>
-            <RadzenDataGridColumn TItem="EmailNotificationSetting" Property="TriggerDomainEvent" Title="Trigger Domain Event" Width="320px" />
-            <RadzenDataGridColumn TItem="EmailNotificationSetting" Property="AppSettingsSection" Title="AppSettings Section" Width="320px" />
-            <RadzenDataGridColumn TItem="EmailNotificationSetting" Title="Execution Mode" Width="180px">
+            <RadzenDataGridColumn TItem="NotificationSetting" Property="TriggerDomainEvent" Title="Trigger Domain Event" Width="320px" />
+            <RadzenDataGridColumn TItem="NotificationSetting" Property="AppSettingsSection" Title="AppSettings Section" Width="320px" />
+            <RadzenDataGridColumn TItem="NotificationSetting" Title="Execution Mode" Width="180px">
                 <Template Context="item">
-                    <RadzenDropDown TValue="EventExecutionMode"
+                    <RadzenDropDown TValue="NotificationExecutionMode"
                                     Data="@_allowedModes"
                                     @bind-Value="item.ExecutionMode"
                                     Style="width: 160px;"

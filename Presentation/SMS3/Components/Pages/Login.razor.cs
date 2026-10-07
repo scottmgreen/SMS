@@ -22,6 +22,7 @@ public partial class Login : ComponentBase
     [Inject] private TwoFactorAuthService TwoFactorAuthService { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private INotificationsScanService _notificationsScanService { get; set; } = default!;
+    [Inject] private IActiveUserSessionRegistry _activeUserSessionRegistry { get; set; } = default!;
 
     private static readonly SemaphoreSlim _dailyMitigationScanLock = new(1, 1);
     private static DateOnly? _lastMitigationScanUtcDate;
@@ -178,6 +179,17 @@ public partial class Login : ComponentBase
     {
         // ?? CREATE SESSION-BASED AUTHENTICATION - Replaces static authentication
         await SessionService.CreateSMSSessionAsync(user, userType);
+
+        var sessionKey = BuildCurrentSessionKey();
+        _activeUserSessionRegistry.UpsertSession(new ActiveUserSessionInfo
+        {
+            SessionKey = sessionKey,
+            UserCode = user.Code,
+            DisplayName = user.DisplayName,
+            UserType = userType.Value,
+            LoginTimeUtc = DateTime.UtcNow,
+            LastSeenUtc = DateTime.UtcNow
+        });
         
         // ?? START SESSION TIMER - Begin countdown for automatic logout
         SessionTimerService.StartTimer();
@@ -187,6 +199,27 @@ public partial class Login : ComponentBase
 
         // Navigate to default page /SMSRiskManagement/ReportProcessing
         Navigation.NavigateTo("/SMSRiskManagement/ReportProcessing", forceLoad: false);
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        var httpContext = HttpContextAccessor.HttpContext;
+        var sessionId = httpContext?.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>()?.Session?.Id;
+
+        if (!string.IsNullOrWhiteSpace(sessionId))
+        {
+            return $"session:{sessionId}";
+        }
+
+        var userCode = _currentUserService?.UserCode;
+        if (string.IsNullOrWhiteSpace(userCode))
+        {
+            userCode = LoginModel?.Username;
+        }
+
+        var remoteIp = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
+        var userAgent = httpContext?.Request?.Headers["User-Agent"].FirstOrDefault() ?? "unknown";
+        return $"fallback:{userCode ?? "unknown"}:{remoteIp}:{userAgent.GetHashCode()}";
     }
 
     private async Task TryRunDailyReportStatusEscalationScanAsync()

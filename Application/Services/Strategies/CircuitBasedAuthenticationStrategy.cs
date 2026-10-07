@@ -24,7 +24,7 @@ namespace SMS_Application.Strategies;
 /// </summary>
 public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
 {
-    private const string StableNoContextCircuitKey = "no_context_stable";
+    private readonly string _instanceFallbackCircuitId = $"no_context_{Guid.NewGuid():N}";
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<CircuitBasedAuthenticationStrategy> _logger;
     private readonly IUserInstantiationService _userInstantiationService;
@@ -213,22 +213,26 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                 }
             }
 
-            // Try stable no-context fallback key
-            if (userData == null)
-            {
-                userData = _circuitAuthStorage.GetAuthData(StableNoContextCircuitKey);
-                if (userData != null)
-                {
-                    foundCircuitId = StableNoContextCircuitKey;
-                    _logger.LogApplicationDebug("Found user data using stable no-context key");
-                }
-            }
-
             // Try user-specific fallback key when available
             if (userData == null)
             {
-                var contextUserCode = _httpContextAccessor.HttpContext?.Items["SMS_UserCode"]?.ToString()
-                    ?? _httpContextAccessor.HttpContext?.Session?.GetString("SMS_UserCode");
+                var context = _httpContextAccessor.HttpContext;
+                string? contextUserCode = context?.Items["SMS_UserCode"]?.ToString();
+
+                if (string.IsNullOrWhiteSpace(contextUserCode) && context is not null)
+                {
+                    try
+                    {
+                        if (context.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>()?.Session is not null)
+                        {
+                            contextUserCode = context.Session.GetString("SMS_UserCode");
+                        }
+                    }
+                    catch (InvalidOperationException)
+                    {
+                        // Session not configured/available for this request path; ignore and continue.
+                    }
+                }
 
                 if (!string.IsNullOrWhiteSpace(contextUserCode))
                 {
@@ -559,19 +563,31 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
         {
             if (context == null)
             {
-                return StableNoContextCircuitKey;
+                return _instanceFallbackCircuitId;
             }
 
-            // Create deterministic ID based on connection characteristics
+            // Create deterministic ID based on request/client characteristics
             var remoteIp = context.Connection.RemoteIpAddress?.ToString() ?? "unknown_ip";
             var userAgent = context.Request.Headers["User-Agent"].FirstOrDefault() ?? "unknown_ua";
-            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmm"); // 1-minute granularity
+            var connectionId = context.Connection.Id ?? string.Empty;
+
+            // Prefer per-browser/session cookie identifiers when present.
+            context.Request.Cookies.TryGetValue("SMS_Auth", out var authCookieValue);
+            var sessionCookieValue = context.Request.Cookies
+                .FirstOrDefault(kvp => kvp.Key.Contains("Session", StringComparison.OrdinalIgnoreCase))
+                .Value;
+
+            var cookieFingerprint = !string.IsNullOrWhiteSpace(authCookieValue)
+                ? authCookieValue
+                : !string.IsNullOrWhiteSpace(sessionCookieValue)
+                    ? sessionCookieValue
+                    : string.Empty;
             
             // Create hash of characteristics for consistency
-            var combined = $"{remoteIp}_{userAgent}_{timestamp}";
+            var combined = $"{remoteIp}|{userAgent}|{connectionId}|{cookieFingerprint}";
             var hash = combined.GetHashCode().ToString("X8");
             
-            var fallbackId = $"fallback_{hash}_{DateTime.Now:ss}";
+            var fallbackId = $"fallback_{hash}";
             _logger.LogApplicationDebug("Generated fallback circuit ID for IP {RemoteIp}: {FallbackId}", remoteIp, fallbackId);
             
             return fallbackId;

@@ -89,6 +89,7 @@ namespace SMS_Application.Configuration
             // Authentication and Authorization Services - Clean Architecture Pattern
             services.AddScoped<IAuthenticationService, AuthenticationService>();
             services.AddScoped<IAuthorizationService, AuthorizationService>();
+            services.AddSingleton<IActiveUserSessionRegistry, ActiveUserSessionRegistry>();
 
             // Application Services - Clean Architecture Pattern
             services.AddScoped<HazardService>();

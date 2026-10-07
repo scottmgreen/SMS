@@ -1,14 +1,15 @@
 using SMS_Application.Interfaces;
 using SMS_Domain.Common;
-using SMS3.Components.Pages.SMSSystem.Models;
+using SMS_Domain.Entities;
+using SMS_Domain.Enums;
 
 namespace SMS3.Components.Pages.SMSSystem.Services;
 
 public interface IEmailNotificationSettingsService
 {
-    IReadOnlyList<EmailNotificationSetting> GetAllNotificationSettings();
+    IReadOnlyList<NotificationSetting> GetAllNotificationSettings();
 
-    EventExecutionMode ResolveExecutionMode(string? notificationType, EventExecutionMode fallbackMode);
+    NotificationExecutionMode ResolveExecutionMode(string? notificationType, NotificationExecutionMode fallbackMode);
 
-    Task<Result> SaveNotificationSettingsAsync(IEnumerable<EmailNotificationSetting> settings, CancellationToken cancellationToken = default);
+    Task<Result> SaveNotificationSettingsAsync(IEnumerable<NotificationSetting> settings, CancellationToken cancellationToken = default);
 }

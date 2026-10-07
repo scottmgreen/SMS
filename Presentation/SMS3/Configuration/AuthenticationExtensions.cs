@@ -218,6 +218,8 @@ public static class AuthenticationExtensions
                 options.Cookie.HttpOnly = sessionConfig.HttpOnly;
                 options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
                 options.Cookie.SameSite = sessionConfig.SameSiteMode;
+                options.Cookie.IsEssential = true;
+                options.Cookie.Path = "/";
             });
 
         // **?? AUTHORIZATION**

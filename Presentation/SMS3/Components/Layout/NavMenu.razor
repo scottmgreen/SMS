@@ -49,7 +49,7 @@
                                     <RadzenMenuItem Text="Create Hazard Report" Path="@CreateHazardReportMenuValue" Target="_blank" Icon="add_circle"></RadzenMenuItem>
                                     @* <RadzenMenuItem Text="Create Hazard Report" Value='"/SMSRiskManagement/HazardReporting"' Icon="add_circle"></RadzenMenuItem> *@
                                     <RadzenMenuItem Text="Report Processing" Value='"/SMSRiskManagement/ReportProcessing"' Icon="settings"></RadzenMenuItem>
-                                    <RadzenMenuItem Text="Search Reports" Value='"/SMSRiskManagement/HazardReportSearch"' Icon="search"></RadzenMenuItem>
+                                    <RadzenMenuItem Text="Report Tracking" Value='"/SMSRiskManagement/HazardReportSearch"' Icon="search"></RadzenMenuItem>
                                     <!-- Investigations -->
                                     @if (_currentUserService.CanRead("SMS_Listings_Investigations"))
                                     {
@@ -281,6 +281,22 @@
                     <div class="nav-item">
                         <RadzenMenu Click="OnMenuClick" class="sms-radzen-menu">
                             <RadzenMenuItem Text="@_currentUserService?.UserDisplayName" Icon="person" class="sms-menu-item">
+                                @if (CanViewActiveUsers)
+                                {
+                                    <RadzenMenuItem Text="Currently Logged In Users" Icon="groups">
+                                        @if (_activeUserSessions.Any())
+                                        {
+                                            @foreach (var activeSession in _activeUserSessions)
+                                            {
+                                                <RadzenMenuItem Text="@($"{activeSession.DisplayName} ({activeSession.UserCode})")" Icon="person" />
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <RadzenMenuItem Text="No active users detected" Icon="info" />
+                                        }
+                                    </RadzenMenuItem>
+                                }
                                 <RadzenMenuItem Text="Logout" Icon="logout" Click="@OnLogoutClick" />
                             </RadzenMenuItem>
                         </RadzenMenu>
@@ -340,6 +356,8 @@
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
     [Inject] private SessionTimerService _sessionTimerService { get; set; } = default!;
     [Inject] private IEventQueueService _eventQueueService { get; set; } = default!;
+    [Inject] private IActiveUserSessionRegistry _activeUserSessionRegistry { get; set; } = default!;
+    [Inject] private IHttpContextAccessor _httpContextAccessor { get; set; } = default!;
 
     [Parameter]
     public EventCallback OnLogoutRequested { get; set; }
@@ -348,6 +366,7 @@
     private CancellationTokenSource _cancellationTokenSource = new();
     private int _pendingIntegrationEventCount;
     private Task? _notificationPollingTask;
+    private List<ActiveUserSessionInfo> _activeUserSessions = new();
 
     // Environment Detection - Always production appearance
     private string BrandCssClass => "";
@@ -359,6 +378,7 @@
     private string DevelopmentDisplayVersion => BuildDevelopmentDisplayVersion();
 
     private string EnvironmentSuffix => _environment.IsDevelopment() ? $"Development {DevelopmentDisplayVersion}" : string.Empty;
+    private bool CanViewActiveUsers => _currentUserService?.CanRead("SMS_System") == true;
 
     private string BuildDevelopmentDisplayVersion()
     {
@@ -416,9 +436,12 @@
             if (_currentUserService?.IsFullyAuthenticated == true)
             {
                 _sessionTimerService.StartTimer();
+                RefreshActiveUserSessions();
                 await LoadPendingIntegrationEventCountAsync();
                 _logger.LogDebug("NavMenu initialized with session timer for user: {UserCode}", _currentUserService.UserCode);
             }
+
+            _notificationPollingTask ??= PollPendingIntegrationEventCountAsync(_cancellationTokenSource.Token);
         }
         catch (Exception ex)
         {
@@ -429,10 +452,15 @@
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         // Only check on first render to avoid constant polling
-        if (firstRender && _currentUserService?.IsFullyAuthenticated == true)
+        if (firstRender)
         {
-            _sessionTimerService.StartTimer();
-            await LoadPendingIntegrationEventCountAsync();
+            if (_currentUserService?.IsFullyAuthenticated == true)
+            {
+                _sessionTimerService.StartTimer();
+                RefreshActiveUserSessions();
+                await LoadPendingIntegrationEventCountAsync();
+            }
+
             _notificationPollingTask ??= PollPendingIntegrationEventCountAsync(_cancellationTokenSource.Token);
         }
     }
@@ -441,6 +469,7 @@
     {
         _ = InvokeAsync(() =>
         {
+            RefreshActiveUserSessions();
             _ = LoadPendingIntegrationEventCountAsync();
             StateHasChanged();
         });
@@ -452,6 +481,8 @@
         if (_currentUserService.IsFullyAuthenticated)
         {
             _sessionTimerService.UpdateActivity();
+            RegisterCurrentUserActivity();
+            RefreshActiveUserSessions();
                 await LoadPendingIntegrationEventCountAsync();
         }
     }
@@ -488,11 +519,18 @@
     {
         try
         {
-            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(60));
+            using var timer = new PeriodicTimer(TimeSpan.FromSeconds(15));
 
             while (await timer.WaitForNextTickAsync(cancellationToken))
             {
-                await LoadPendingIntegrationEventCountAsync();
+                RefreshActiveUserSessions();
+                if (_currentUserService?.IsFullyAuthenticated == true)
+                {
+                    RegisterCurrentUserActivity();
+                    await LoadPendingIntegrationEventCountAsync();
+                }
+
+                await InvokeAsync(StateHasChanged);
             }
         }
         catch (OperationCanceledException)
@@ -535,7 +573,7 @@
             _logger.LogError(ex, "Error handling session timer expiry");
             
             // Force navigation to login as fallback
-            _navigation.NavigateTo("/login", forceLoad: true);
+            _navigation.NavigateTo("/pdx", forceLoad: true);
         }
     }
 
@@ -629,9 +667,72 @@
     {
         // Stop session timer before logout
         _sessionTimerService.StopTimer();
+        RemoveCurrentUserSession();
         
         await OnLogoutRequested.InvokeAsync();
         _cancellationTokenSource?.Cancel();
+    }
+
+    private void RegisterCurrentUserActivity()
+    {
+        if (_currentUserService?.IsFullyAuthenticated != true)
+        {
+            return;
+        }
+
+        var sessionKey = BuildCurrentSessionKey();
+        _activeUserSessionRegistry.UpsertSession(new ActiveUserSessionInfo
+        {
+            SessionKey = sessionKey,
+            UserCode = _currentUserService.UserCode,
+            DisplayName = _currentUserService.UserDisplayName,
+            UserType = _currentUserService.UserType ?? string.Empty,
+            LoginTimeUtc = _currentUserService.LoginTime?.ToUniversalTime() ?? DateTime.UtcNow,
+            LastSeenUtc = DateTime.UtcNow
+        });
+
+        _activeUserSessionRegistry.RefreshActivity(sessionKey);
+    }
+
+    private void RemoveCurrentUserSession()
+    {
+        if (_currentUserService?.IsFullyAuthenticated != true)
+        {
+            return;
+        }
+
+        _activeUserSessionRegistry.RemoveSession(BuildCurrentSessionKey());
+    }
+
+    private void RefreshActiveUserSessions()
+    {
+        if (!CanViewActiveUsers)
+        {
+            _activeUserSessions = [];
+            return;
+        }
+
+        _activeUserSessions = _activeUserSessionRegistry
+            .GetActiveSessions()
+            .OrderBy(x => x.DisplayName)
+            .ThenBy(x => x.UserCode)
+            .Take(50)
+            .ToList();
+    }
+
+    private string BuildCurrentSessionKey()
+    {
+        var context = _httpContextAccessor.HttpContext;
+        var sessionId = context?.Features.Get<Microsoft.AspNetCore.Http.Features.ISessionFeature>()?.Session?.Id;
+        if (!string.IsNullOrWhiteSpace(sessionId))
+        {
+            return $"session:{sessionId}";
+        }
+
+        var userCode = _currentUserService?.UserCode ?? "unknown";
+        var remoteIp = context?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
+        var userAgent = context?.Request?.Headers["User-Agent"].FirstOrDefault() ?? "unknown";
+        return $"fallback:{userCode}:{remoteIp}:{userAgent.GetHashCode()}";
     }
 
     /// <summary>

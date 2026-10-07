@@ -32,7 +32,7 @@ public abstract class RiskAssessmentStage : BaseEnum<RiskAssessmentStage>
     public static readonly RiskAssessmentStage IdentifyingHazards = new IdentifyingHazardsStage();
 
     /// <summary>Assessment is currently underway with active evaluation</summary>
-    public static readonly RiskAssessmentStage AnalyizingRisk = new AnalyizingRiskStage();
+    public static readonly RiskAssessmentStage AnalyzingRisk = new AnalyzingRiskStage();
 
     /// <summary>Assessment has been completed with final results</summary>
     public static readonly RiskAssessmentStage AssessingRisk = new AssessingRiskStage();
@@ -59,9 +59,9 @@ public abstract class RiskAssessmentStage : BaseEnum<RiskAssessmentStage>
         {
         }
     }
-    private sealed class AnalyizingRiskStage : RiskAssessmentStage
+    private sealed class AnalyzingRiskStage : RiskAssessmentStage
     {
-        public AnalyizingRiskStage() : base("ANALYIZING_RISK", "Analyzing Risk", "Hazard has been validated and the risk assessment process is underway")
+        public AnalyzingRiskStage() : base("ANALYZING_RISK", "Analyzing Risk", "Hazard has been validated and the risk assessment process is underway")
         {
         }
     }

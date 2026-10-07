@@ -6,10 +6,10 @@ using SMS_Application.Common;
 
 using SMS_Domain.Errors;
 using SMS_Domain.Events;
+using SMS_Domain.Entities;
 
 using SMS3.Components.Pages.SMSRiskManagement.Models;
 using SMS3.Components.Pages.SMSSystem.Components;
-using SMS3.Components.Pages.SMSSystem.Models;
 using SMS3.Components.Shared.UIHelpers;
 using SMS3.Configuration;
 using SMS3.Configuration.Extensions;

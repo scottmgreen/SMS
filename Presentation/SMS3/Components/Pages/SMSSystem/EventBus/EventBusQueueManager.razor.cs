@@ -468,7 +468,7 @@ public partial class EventBusQueueManager
                         var previewCcRecipients = await ResolvePreviewRecipientsAsync(emailEvent.CcRecipients, enforceGroupContactOnly: false);
                         var previewBccRecipients = await ResolvePreviewRecipientsAsync(emailEvent.BccRecipients, enforceGroupContactOnly: false);
 
-                        var model = new SMS3.Components.Pages.SMSSystem.Models.EmailComposeModel
+                        var model = new EmailNotification
                         {
                             To = previewToRecipients,
                             Cc = previewCcRecipients,

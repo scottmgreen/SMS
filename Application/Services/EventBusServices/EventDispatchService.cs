@@ -9,6 +9,8 @@
 //-----------------------------------------------------------------------
 
 using SMS_Domain.Events;
+using SMS_Domain.Enums;
+using Microsoft.AspNetCore.Http;
 
 using SMS_Infrastructure.Interfaces;
 
@@ -342,6 +344,8 @@ public sealed class EventDispatchService : IBaseEventBus
             _logger.LogApplicationInformation("Publishing UI event {EventType} for {TargetComponent} with mode {ExecutionMode}", 
                 uiEvent.EventType, uiEvent.TargetComponent, mode);
 
+            EnsureUINotificationTargetUser(uiEvent);
+
             var resolvedMode = ResolveUIExecutionMode(uiEvent, mode);
             if (!IsUIEventEnabled(uiEvent))
             {
@@ -375,6 +379,70 @@ public sealed class EventDispatchService : IBaseEventBus
             _logger.LogApplicationError(ex, "Failed to publish UI event {EventType} for {TargetComponent}", 
                 uiEvent.EventType, uiEvent.TargetComponent);
             return Result.Failure(new Error("EVENTBUS_UI_PUBLISH_FAILED", $"UI event publishing failed: {ex.Message}"));
+        }
+    }
+
+    private void EnsureUINotificationTargetUser<T>(T uiEvent) where T : IBaseUIEvent
+    {
+        if (uiEvent is not UINotificationEvent notificationEvent)
+        {
+            return;
+        }
+
+        try
+        {
+            if (notificationEvent.Metadata is null)
+            {
+                return;
+            }
+
+            var hasTargetUser = notificationEvent.Metadata.TryGetValue("TargetUserCode", out var existingTarget)
+                && !string.IsNullOrWhiteSpace(existingTarget?.ToString());
+
+            var hasTargetSession = notificationEvent.Metadata.TryGetValue("TargetSessionKey", out var existingSession)
+                && !string.IsNullOrWhiteSpace(existingSession?.ToString());
+
+            if (hasTargetUser || hasTargetSession)
+            {
+                return;
+            }
+
+            using var scope = _serviceProvider.CreateScope();
+            var currentUserService = scope.ServiceProvider.GetService<ICurrentUserService>();
+            var targetUserCode = currentUserService?.UserCode?.Trim();
+
+            var httpContextAccessor = scope.ServiceProvider.GetService<IHttpContextAccessor>();
+            var httpContext = httpContextAccessor?.HttpContext;
+
+            var sessionId = httpContext?.Session?.Id;
+            string targetSessionKey;
+
+            if (!string.IsNullOrWhiteSpace(sessionId))
+            {
+                targetSessionKey = $"session:{sessionId}";
+            }
+            else
+            {
+                var remoteIp = httpContext?.Connection?.RemoteIpAddress?.ToString() ?? "unknown";
+                var userAgent = httpContext?.Request?.Headers["User-Agent"].FirstOrDefault() ?? "unknown";
+                targetSessionKey = $"fallback:{targetUserCode ?? "unknown"}:{remoteIp}:{userAgent.GetHashCode()}";
+            }
+
+            if (!string.IsNullOrWhiteSpace(targetUserCode))
+            {
+                notificationEvent.Metadata["TargetUserCode"] = targetUserCode;
+            }
+
+            if (!string.IsNullOrWhiteSpace(targetSessionKey))
+            {
+                notificationEvent.Metadata["TargetSessionKey"] = targetSessionKey;
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex,
+                "Failed to resolve TargetUserCode for UI notification event {EventId}",
+                notificationEvent.EventId);
         }
     }
     #endregion
@@ -502,7 +570,11 @@ public sealed class EventDispatchService : IBaseEventBus
                 return fallbackMode;
             }
 
-            return resolver.ResolveExecutionMode(emailEvent.WorkflowType, fallbackMode);
+            var resolvedMode = resolver.ResolveExecutionMode(
+                emailEvent.WorkflowType,
+                ToNotificationExecutionMode(fallbackMode));
+
+            return ToEventExecutionMode(resolvedMode, fallbackMode);
         }
         catch (Exception ex)
         {
@@ -568,7 +640,11 @@ public sealed class EventDispatchService : IBaseEventBus
                 return fallbackMode;
             }
 
-            return resolver.ResolveExecutionMode("DomainEventPublishing", fallbackMode);
+            var resolvedMode = resolver.ResolveExecutionMode(
+                "DomainEventPublishing",
+                ToNotificationExecutionMode(fallbackMode));
+
+            return ToEventExecutionMode(resolvedMode, fallbackMode);
         }
         catch (Exception ex)
         {
@@ -609,7 +685,11 @@ public sealed class EventDispatchService : IBaseEventBus
                 return fallbackMode;
             }
 
-            return resolver.ResolveExecutionMode(notificationType, fallbackMode);
+            var resolvedMode = resolver.ResolveExecutionMode(
+                notificationType,
+                ToNotificationExecutionMode(fallbackMode));
+
+            return ToEventExecutionMode(resolvedMode, fallbackMode);
         }
         catch (Exception ex)
         {
@@ -619,6 +699,23 @@ public sealed class EventDispatchService : IBaseEventBus
                 fallbackMode);
             return fallbackMode;
         }
+    }
+
+    private static NotificationExecutionMode ToNotificationExecutionMode(EventExecutionMode executionMode)
+    {
+        return executionMode == EventExecutionMode.Immediate
+            ? NotificationExecutionMode.Immediate
+            : NotificationExecutionMode.Manual;
+    }
+
+    private static EventExecutionMode ToEventExecutionMode(NotificationExecutionMode executionMode, EventExecutionMode fallbackMode)
+    {
+        return executionMode switch
+        {
+            NotificationExecutionMode.Immediate => EventExecutionMode.Immediate,
+            NotificationExecutionMode.Manual => EventExecutionMode.Manual,
+            _ => fallbackMode
+        };
     }
 
     private bool IsUIEventEnabled<T>(T uiEvent) where T : IBaseUIEvent

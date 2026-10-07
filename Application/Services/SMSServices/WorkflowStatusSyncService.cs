@@ -323,7 +323,7 @@ public sealed class WorkflowStatusSyncService
 
     private static HazardStatus MapRiskAssessmentStageToHazardStatus(RiskAssessmentStage stage)
     {
-        if (stage == RiskAssessmentStage.AnalyizingRisk)
+        if (stage == RiskAssessmentStage.AnalyzingRisk)
         {
             return HazardStatus.InitialRiskAnalysis;
         }
