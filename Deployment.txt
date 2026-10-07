@@ -169,3 +169,18 @@ Check Application Logs
 •	[ ] API endpoints responding (test with /api/confidential-reports/reference-data)
 •	[ ] Database connectivity verified
 
+# 1) Ensure you're in the repo
+cd C:\Projects\PDXSMS_V2
+
+# 2) Confirm current branch/status
+git branch --show-current
+git status
+
+# 3) Stage and commit your work
+git add -A
+git commit -m "Backup: WIP snapshot"
+
+# 4) Push current branch (Phase1_Build) to remotes
+git push -u origin Phase1_Build
+git push -u pop Phase1_Build
+git push -u SMSOrigin Phase1_Build
