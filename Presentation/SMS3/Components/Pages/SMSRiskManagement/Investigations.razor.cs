@@ -30,6 +30,8 @@ public partial class Investigations : ComponentBase
     #region Parameters
     [Parameter] public string InvestigationId { get; set; } = default!;
     [Parameter] public string? HazardId { get; set; }
+    [SupplyParameterFromQuery(Name = "returnTo")]
+    public string? ReturnTo { get; set; }
     #endregion
 
     #region State Properties
@@ -41,6 +43,7 @@ public partial class Investigations : ComponentBase
     // Custom confirmation modal properties for Return to Validation
     private bool _showReturnToValidationModal = false;
     private string _returnToValidationMessage = string.Empty;
+    private InvestigationEditableState? _originalInvestigationState;
 
     private string InvestigationStatusId { get; set; } = string.Empty;
 
@@ -126,6 +129,7 @@ public partial class Investigations : ComponentBase
                 }
 
                 _logger.LogInformation("Successfully loaded investigation: {Code} with Status: {Status}",InvestigationEntity.Code, InvestigationEntity.Status);
+                _originalInvestigationState = CaptureCurrentInvestigationState();
             }
             else
             {
@@ -364,6 +368,11 @@ public partial class Investigations : ComponentBase
     private async Task HandleSave()
     {
         if (InvestigationEntity is null) return;
+
+        if (!IsInvestigationDirty())
+        {
+            return;
+        }
 
         try
         {
@@ -667,26 +676,19 @@ public partial class Investigations : ComponentBase
         var hazardCount = 1; // Since this is tied to a single hazard
         var reportCode = InvestigationEntity?.ReportCode ?? "Unknown";
         
+        var assignedInvestigatorName = ResolveInvestigatorDisplayName(InvestigationEntity?.AssignedInvestigatorId);
+
         var message = $"Are you sure you want to return investigation '{InvestigationEntity?.Code}' to the validation workflow?\n\n" +
                        $"Investigation Details:\n" +
-                       $"Code: {InvestigationEntity?.Code}\n" +
+                       $"Code: {InvestigationEntity.Code} Status: {InvestigationEntity.Status ?? "Unknown"}\n" +
+                       $"Created: {InvestigationEntity.CreatedDate:yyyy-MM-dd}\n" +
+                       $"Last Updated: {InvestigationEntity.UpdatedDate:yyyy-MM-dd}\n" +
                        $"Hazard Code: {InvestigationEntity?.HazardCode}\n" +
                        $"Report Code: {reportCode}\n" +
-                       $"Status: {InvestigationEntity?.Status?.Name ?? "Unknown"}\n" +
-                       $"Assigned To: {InvestigationEntity?.AssignedInvestigatorId ?? "Unassigned"}\n\n";
+                       
+                       $"Assigned To: {assignedInvestigatorName}\n\n";
 
-        if (!string.IsNullOrEmpty(InvestigationEntity?.HazardCode))
-        {
-            message += "WARNING: This will affect the associated hazard and require re-validation.\n\n";
-        }
-
-        message += "This action will:\n" +
-                   "Complete and close this investigation\n" +
-                   "Reset the report validation status\n" +
-                   "Clear any validation history\n" +
-                   "Return the report to the validation workflow\n" +
-                   "Require re-validation of the entire report";
-
+       
         return message;
     }
 
@@ -892,14 +894,91 @@ public partial class Investigations : ComponentBase
         return EvidenceFiles.Count.ToString();
     }
 
+    private string ResolveInvestigatorDisplayName(string? investigatorCode)
+    {
+        if (string.IsNullOrWhiteSpace(investigatorCode))
+        {
+            return "Unassigned";
+        }
+
+        var investigator = AvailableInvestigators.FirstOrDefault(i =>
+            string.Equals(i.Code, investigatorCode, StringComparison.OrdinalIgnoreCase));
+
+        if (!string.IsNullOrWhiteSpace(investigator?.DisplayName))
+        {
+            return investigator.DisplayName;
+        }
+
+        return investigatorCode;
+    }
+
     /// <summary>
     /// Navigate back to investigations listings
     /// </summary>
     private void NavigateToListings()
     {
-        // ?? SECURE NAVIGATION - Navigate to Investigations listing with encrypted URL
-        _navigation.NavigateToSecure("/Listings/Investigations");
+        var returnTarget = ReturnTo;
+
+        if (string.Equals(returnTarget, "report-processing", StringComparison.OrdinalIgnoreCase))
+        {
+            _navigation.NavigateToSecure("/SMSRiskManagement/ReportProcessing");
+            return;
+        }
+
+        if (string.Equals(returnTarget, "risk-registry", StringComparison.OrdinalIgnoreCase))
+        {
+            _navigation.NavigateToSecure("/SMSAssurance/RiskRegistry");
+            return;
+        }
+
+        if (string.Equals(returnTarget, "report-validation", StringComparison.OrdinalIgnoreCase) && !string.IsNullOrWhiteSpace(InvestigationEntity?.ReportCode))
+        {
+            _navigation.NavigateToSecure($"/SMSRiskManagement/ReportValidation/{InvestigationEntity.ReportCode}");
+            return;
+        }
+
+        _navigation.NavigateToSecure("/SMSListings/Investigations");
     }
+
+    private bool IsInvestigationDirty()
+    {
+        var current = CaptureCurrentInvestigationState();
+        if (current is null)
+        {
+            return false;
+        }
+
+        if (_originalInvestigationState is null)
+        {
+            return true;
+        }
+
+        return !_originalInvestigationState.Equals(current);
+    }
+
+    private InvestigationEditableState? CaptureCurrentInvestigationState()
+    {
+        if (InvestigationEntity is null)
+        {
+            return null;
+        }
+
+        return new InvestigationEditableState(
+            InvestigationEntity.AssignedInvestigatorId,
+            InvestigationStatusId,
+            InvestigationEntity.DecisionType,
+            InvestigationEntity.InvestigationObjectives,
+            InvestigationEntity.InvestigationPlan,
+            InvestigationEntity.InvestigationNotes);
+    }
+
+    private sealed record InvestigationEditableState(
+        string? AssignedInvestigatorId,
+        string? InvestigationStatusId,
+        string? DecisionType,
+        string? InvestigationObjectives,
+        string? InvestigationPlan,
+        string? InvestigationNotes);
     #endregion
 }
 

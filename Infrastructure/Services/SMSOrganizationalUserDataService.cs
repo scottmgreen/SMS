@@ -147,18 +147,18 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
     }
 
     /// <summary>
-    /// Gets SMS Organizational Users by department
+    /// Gets SMS Organizational Users by organization
     /// </summary>
-    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetSMSOrganizationalUsersByDepartmentAsync(string department, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetSMSOrganizationalUsersByDepartmentAsync(string organization, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInfrastructureInformation("Retrieving SMS Organizational Users by department: {Department}", department);
-            return await _repository.GetByDepartmentAsync(department);
+            _logger.LogInfrastructureInformation("Retrieving SMS Organizational Users by organization: {Organization}", organization);
+            return await _repository.GetByOrganizationAsync(organization);
         }
         catch (Exception ex)
         {
-            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Organizational Users by department: {Department}", department);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS Organizational Users by organization: {Organization}", organization);
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
     }
@@ -181,18 +181,18 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
     //}
 
     /// <summary>
-    /// Gets department supervisors
+    /// Gets organization supervisors
     /// </summary>
-    //public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetDepartmentSupervisorsAsync(string department, CancellationToken ct = default)
+    //public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetOrganizationSupervisorsAsync(string organization, CancellationToken ct = default)
     //{
     //    try
     //    {
-    //        _logger.LogInfrastructureInformation("Retrieving supervisors for department: {Department}", department);
-    //        return await _repository.GetDepartmentSupervisorsAsync(department);
+    //        _logger.LogInfrastructureInformation("Retrieving supervisors for organization: {Organization}", organization);
+    //        return await _repository.GetOrganizationSupervisorsAsync(organization);
     //    }
     //    catch (Exception ex)
     //    {
-    //        _logger.LogInfrastructureError(ex, "Unexpected error retrieving supervisors for department: {Department}", department);
+    //        _logger.LogInfrastructureError(ex, "Unexpected error retrieving supervisors for organization: {Organization}", organization);
     //        return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
     //    }
     //}
@@ -296,18 +296,18 @@ public sealed class SMSOrganizationalUserDataService : BaseDataService<SMSOrgani
     }
 
     /// <summary>
-    /// Gets department statistics
+    /// Gets organization statistics
     /// </summary>
-    //public async Task<Result<Dictionary<string, int>>> GetDepartmentStatisticsAsync(CancellationToken ct = default)
+    //public async Task<Result<Dictionary<string, int>>> GetOrganizationStatisticsAsync(CancellationToken ct = default)
     //{
     //    try
     //    {
-    //        _logger.LogInfrastructureInformation("Retrieving department statistics");
-    //        return await _repository.GetDepartmentStatisticsAsync();
+    //        _logger.LogInfrastructureInformation("Retrieving organization statistics");
+    //        return await _repository.GetOrganizationStatisticsAsync();
     //    }
     //    catch (Exception ex)
     //    {
-    //        _logger.LogInfrastructureError(ex, "Unexpected error retrieving department statistics");
+    //        _logger.LogInfrastructureError(ex, "Unexpected error retrieving organization statistics");
     //        return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
     //    }
     //}

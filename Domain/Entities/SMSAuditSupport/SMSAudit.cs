@@ -40,6 +40,11 @@ public class SMSAudit : BaseAuditableEntity
     public string LeadAuditor { get; set; } = string.Empty;
     public string AuditorTeam { get; set; } = string.Empty; // JSON array of auditor names/IDs
     public string ResponsibleDepartment { get; set; } = string.Empty;
+    public string ResponsibleOrganization
+    {
+        get => ResponsibleDepartment;
+        set => ResponsibleDepartment = value;
+    }
     public string ContactPerson { get; set; } = string.Empty;
 
     // Execution Details - ADDED MISSING PROPERTIES

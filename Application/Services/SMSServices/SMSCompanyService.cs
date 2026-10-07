@@ -53,7 +53,7 @@ public sealed class SMSCompanyService
             if (company is null)
             {
                 _logger.LogApplicationWarning("CreateSMSCompanyAsync received null company", ApplicationEventIds.Warning);
-                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSDepartmentError.NullOrEmpty);
+                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSOrganizationError.NullOrEmpty);
             }
 
             _logger.LogApplicationInformation("Creating SMS company with code: {Code}", ApplicationEventIds.Information, company.Value);
@@ -73,7 +73,7 @@ public sealed class SMSCompanyService
             if (company is null || string.IsNullOrWhiteSpace(company.Value))
             {
                 _logger.LogApplicationWarning("UpdateSMSCompanyAsync received invalid company", ApplicationEventIds.Warning);
-                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSDepartmentError.InvalidDepartment);
+                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSOrganizationError.InvalidOrganization);
             }
 
             _logger.LogApplicationInformation("Updating SMS company with code: {Code}", ApplicationEventIds.Information, company.Value);
@@ -93,7 +93,7 @@ public sealed class SMSCompanyService
             if (string.IsNullOrWhiteSpace(code))
             {
                 _logger.LogApplicationWarning("DeleteSMSCompanyAsync received empty code", ApplicationEventIds.Warning);
-                return Result<bool>.Failure<bool>(DomainErrors.SMSDepartmentError.InvalidDepartment);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationError.InvalidOrganization);
             }
 
             _logger.LogApplicationInformation("Deleting SMS company with code: {Code}", ApplicationEventIds.Information, code);

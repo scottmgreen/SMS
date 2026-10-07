@@ -102,7 +102,7 @@ public partial class OrganizationalStructure : ComponentBase
     private List<SMSOrganizationalUser> GetEligibleUsersForLevel(SMSOrganizationalLevel level)
     {
         // For now, return all unassigned users. 
-        // You could add business logic here to filter based on department, position, etc.
+        // You could add business logic here to filter based on organization, position, etc.
         return UnassignedUsers.ToList();
     }
 
@@ -601,7 +601,7 @@ public partial class OrganizationalStructure : ComponentBase
     //{
     //    public string Code { get; set; } = "";
     //    public string DisplayName { get; set; } = "";
-    //    public string Department { get; set; } = "";
+    //    public string Organization { get; set; } = "";
     //    public string Position { get; set; } = "";
     //}
 

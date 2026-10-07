@@ -25,7 +25,7 @@ public class CreateSMSJobTitleCommandHandler : BaseCommandBundle, IBaseRequestHa
             if (request?.JobTitle is null)
             {
                 _logger.LogApplicationWarning("CreateSMSJobTitleCommand received null title", ApplicationEventIds.Warning);
-                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSDepartmentError.NullOrEmpty);
+                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSOrganizationError.NullOrEmpty);
             }
 
             return await _jobTitleService.CreateSMSJobTitleAsync(request.JobTitle, request.CreatedBy, ct).ConfigureAwait(false);
@@ -65,7 +65,7 @@ public class UpdateSMSJobTitleCommandHandler : BaseCommandBundle, IBaseRequestHa
             if (request?.JobTitle is null)
             {
                 _logger.LogApplicationWarning("UpdateSMSJobTitleCommand received null title", ApplicationEventIds.Warning);
-                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSDepartmentError.NullOrEmpty);
+                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSOrganizationError.NullOrEmpty);
             }
 
             return await _jobTitleService.UpdateSMSJobTitleAsync(request.OriginalCode, request.JobTitle, request.UpdatedBy, ct).ConfigureAwait(false);

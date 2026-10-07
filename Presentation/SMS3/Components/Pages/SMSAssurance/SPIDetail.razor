@@ -57,7 +57,7 @@ else
 {
     <!-- Page Header -->
     <PageHeader Title="@($"SPI Detail - {SPI.Name}")"
-               Subtitle="@($"Code: {SPI.Code} | Type: {SPI.IndicatorType.Name} | Department: {SPI.ResponsibleDepartment}")"
+               Subtitle="@($"Code: {SPI.Code} | Type: {SPI.IndicatorType.Name} | Organization: {SPI.ResponsibleDepartment}")"
                Icon="fas fa-chart-line">
         <AdditionalContent>
             <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem">
@@ -187,7 +187,7 @@ else
                 </RadzenText>
                 
                 <RadzenStack Gap="0.5rem">
-                    <div><strong>Department:</strong> @SPI.ResponsibleDepartment</div>
+                    <div><strong>Organization:</strong> @SPI.ResponsibleDepartment</div>
                     <div><strong>Data Owner:</strong> @SPI.DataOwner</div>
                     <div><strong>Review Authority:</strong> @SPI.ReviewAuthority</div>
                 </RadzenStack>

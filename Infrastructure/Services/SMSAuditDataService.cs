@@ -202,7 +202,7 @@ public class SMSAuditDataService : BaseDataService<SMSAuditDataService>
     /// Gets SMS Audit execution dashboard data
     /// </summary>
     public async Task<Result<SMSAuditExecutionDashboard>> GetAuditExecutionDashboardAsync(DateTime? startDate = null, DateTime? endDate = null,
-        string? departmentFilter = null, string? auditorFilter = null, CancellationToken ct = default)
+        string? organizationFilter = null, string? auditorFilter = null, CancellationToken ct = default)
     {
         // Get all audits and calculate dashboard metrics
         var allAuditsResult = await _repo.GetAllSMSAuditsAsync(ct);
@@ -223,10 +223,10 @@ public class SMSAuditDataService : BaseDataService<SMSAuditDataService>
             audits = audits.Where(a => a.ScheduledStartDate <= endDate.Value).ToList();
         }
 
-        // Filter by department if specified
-        if (!string.IsNullOrEmpty(departmentFilter))
+        // Filter by organization if specified
+        if (!string.IsNullOrEmpty(organizationFilter))
         {
-            audits = audits.Where(a => a.ResponsibleDepartment.Equals(departmentFilter, StringComparison.OrdinalIgnoreCase)).ToList();
+            audits = audits.Where(a => a.ResponsibleDepartment.Equals(organizationFilter, StringComparison.OrdinalIgnoreCase)).ToList();
         }
 
         // Filter by auditor if specified

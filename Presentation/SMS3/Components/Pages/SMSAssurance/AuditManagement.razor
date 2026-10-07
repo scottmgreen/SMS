@@ -273,7 +273,7 @@
                                     </RadzenStack>
                                     
                                     <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" AlignItems="AlignItems.Center">
-                                        <RadzenText TextStyle="TextStyle.Body2">Department:</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2">Organization:</RadzenText>
                                         <RadzenDropDown @bind-Value="@_selectedDepartment" 
                                                       Data="@DepartmentOptions" 
                                                       Change="@OnDepartmentFilterChanged"
@@ -333,7 +333,7 @@
                                                         <RadzenBadge Text="@data.AuditType" BadgeStyle="BadgeStyle.Info" />
                                                     </Template>
                                                 </RadzenDataGridColumn>
-                                                <RadzenDataGridColumn TItem="SMSAuditPlan" Property="ResponsibleDepartment" Title="Department" Width="150px" />
+                                                <RadzenDataGridColumn TItem="SMSAuditPlan" Property="ResponsibleDepartment" Title="Organization" Width="150px" />
                                                 <RadzenDataGridColumn TItem="SMSAuditPlan" Property="PlannedStartDate" Title="Planned Start" Width="120px" FormatString="{0:MM/dd/yyyy}" />
                                                 <RadzenDataGridColumn TItem="SMSAuditPlan" Property="PlannedEndDate" Title="Planned End" Width="120px" FormatString="{0:MM/dd/yyyy}" />
                                                 <RadzenDataGridColumn TItem="SMSAuditPlan" Property="Status" Title="Status" Width="100px">

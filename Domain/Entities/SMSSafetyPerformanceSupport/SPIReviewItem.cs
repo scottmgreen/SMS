@@ -19,6 +19,11 @@ public class SPIReviewItem
     public string SPIId { get; set; } = string.Empty;
     public string SPIName { get; set; } = string.Empty;
     public string ResponsibleDepartment { get; set; } = string.Empty;
+    public string ResponsibleOrganization
+    {
+        get => ResponsibleDepartment;
+        set => ResponsibleDepartment = value;
+    }
     public string ReviewAuthority { get; set; } = string.Empty;
     public DateTime? NextReviewDate { get; set; }
     public DateTime? LastReviewDate { get; set; }
@@ -102,11 +107,11 @@ public class SPIReviewItem
     #region Constructors
     public SPIReviewItem() { }
 
-    public SPIReviewItem(string spiId, string spiName, string responsibleDepartment)
+    public SPIReviewItem(string spiId, string spiName, string responsibleOrganization)
     {
         SPIId = spiId ?? throw new ArgumentNullException(nameof(spiId));
         SPIName = spiName ?? throw new ArgumentNullException(nameof(spiName));
-        ResponsibleDepartment = responsibleDepartment ?? throw new ArgumentNullException(nameof(responsibleDepartment));
+        ResponsibleOrganization = responsibleOrganization ?? throw new ArgumentNullException(nameof(responsibleOrganization));
         Priority = "Low";
     }
     #endregion

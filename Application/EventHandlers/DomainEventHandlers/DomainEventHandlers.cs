@@ -124,7 +124,9 @@ public sealed class HazardCreatedEventHandler : BaseDomainEventHandler<SMS_Domai
 
     private async Task<Result> HandleIntegrationEventAsync(SMS_Domain.Events.HazardCreatedEvent domainEvent, CancellationToken cancellationToken)
     {
-        await PublishEmailNotification(domainEvent, cancellationToken);
+        _logger.LogApplicationInformation(
+            "[INTEGRATION EVENT] HazardCreatedEvent email notification skipped for {HazardCode}; submission/internal notification emails are handled externally.",
+            domainEvent.HazardCode);
         return Result.Success();
     }
 
@@ -1150,24 +1152,10 @@ public sealed class ReportCreatedEventHandler : BaseDomainEventHandler<ReportCre
 
     protected override async Task<Result> HandleIntegrationEventAsync(ReportCreatedEvent domainEvent, CancellationToken cancellationToken)
     {
-        var emailEvent = new EmailNotificationEvent(
-            toRecipients: new List<string> { "safety.team@pdxairport.com" },
-            subject: $"New Report Created: {domainEvent.ReportId}",
-            body: $"Report {domainEvent.ReportId} was created by {domainEvent.CreatedBy} on {domainEvent.CreatedDate:yyyy-MM-dd HH:mm} UTC.",
-            isHtmlContent: false,
-            priority: EmailPriority.Normal,
-            deliveryMode: IntegrationDeliveryMode.BestEffort,
-            reportId: domainEvent.ReportId,
-            workflowType: "ReportCreated",
-            relatedEntityType: "Report",
-            relatedEntityId: domainEvent.ReportId,
-            emailMetadata: new Dictionary<string, object>
-            {
-                { "Source", nameof(ReportCreatedEventHandler) },
-                { "CreatedBy", domainEvent.CreatedBy }
-            });
-
-        return await EventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Queued, cancellationToken);
+        _logger.LogApplicationInformation(
+            "[INTEGRATION EVENT] ReportCreatedEvent email notification skipped for {ReportId}; submission/internal notification emails are handled externally.",
+            domainEvent.ReportId);
+        return Result.Success();
     }
 
     protected override async Task<Result> HandleUIEventAsync(ReportCreatedEvent domainEvent, CancellationToken cancellationToken)

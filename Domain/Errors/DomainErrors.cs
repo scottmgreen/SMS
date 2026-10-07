@@ -255,36 +255,23 @@ public static class DomainErrors
     public static class SMSUserRoleError
     {
         public static Error NullOrEmpty => new Error("SMSUserRole.NullOrEmpty", "The SMS User Role assignment is required.");
-        public static Error UserIDRequired => new Error("SMSUserRole.UserIDRequired", "The User ID is required.");
-        public static Error UserTypeRequired => new Error("SMSUserRole.UserTypeRequired", "The User Type is required.");
-        public static Error DepartmentRequired => new Error("SMSUserRole.DepartmentRequired", "The Department is required.");
-        public static Error AssignedByRequired => new Error("SMSUserRole.AssignedByRequired", "The AssignedBy field is required.");
-        public static Error InvalidUserType => new Error("SMSUserRole.InvalidUserType", "The User Type is invalid.");
-        public static Error InvalidDepartment => new Error("SMSUserRole.InvalidDepartment", "The Department is invalid.");
-        public static Error InvalidEffectiveDate => new Error("SMSUserRole.InvalidEffectiveDate", "The Effective Date is invalid.");
-        public static Error InvalidExpirationDate => new Error("SMSUserRole.InvalidExpirationDate", "The Expiration Date is invalid.");
+
         public static Error NotFound => new Error("SMSUserRole.NotFound", "The SMS User Role assignment was not found.");
         public static Error CreateFailed => new Error("SMSUserRole.CreateFailed", "Failed to create the SMS User Role assignment.");
         public static Error UpdateFailed => new Error("SMSUserRole.UpdateFailed", "Failed to update the SMS User Role assignment.");
-        public static Error DeactivationFailed => new Error("SMSUserRole.DeactivationFailed", "Failed to deactivate the SMS User Role assignment.");
-        public static Error ReactivationFailed => new Error("SMSUserRole.ReactivationFailed", "Failed to reactivate the SMS User Role assignment.");
-        public static Error ExtensionFailed => new Error("SMSUserRole.ExtensionFailed", "Failed to extend the SMS User Role assignment.");
-        public static Error AlreadyDeactivated => new Error("SMSUserRole.AlreadyDeactivated", "The SMS User Role assignment is already deactivated.");
-        public static Error AlreadyActive => new Error("SMSUserRole.AlreadyActive", "The SMS User Role assignment is already active.");
-        public static readonly Error DeleteFailed = new Error(
-            "SMSUserRole.DeleteFailed",
-            "Failed to delete SMS user role.");
+        public static Error DeleteFailed => new Error("SMSUserRole.DeleteFailed", "Failed to delete the SMS User Role assignment.");
+
     }
 
     /// <summary>
-    /// Contains SMS department-related errors.
+    /// Contains SMS organization-related errors.
     /// </summary>
-    public static class SMSDepartmentError
+    public static class SMSOrganizationError
     {
-        public static Error NullOrEmpty => new Error("SMSOrganization.NullOrEmpty", "The SMS Department is required.");
-        public static Error InvalidDepartment => new Error("SMSOrganization.InvalidDepartment", "The SMS Department is not valid.");
-        public static Error DepartmentNotFound => new Error("SMSOrganization.DepartmentNotFound", "The specified SMS Department was not found.");
-        public static Error ResponsibilityNotFound => new Error("SMSOrganization.ResponsibilityNotFound", "The specified responsibility is not assigned to this department.");
+        public static Error NullOrEmpty => new Error("SMSOrganization.NullOrEmpty", "The SMS Organization is required.");
+        public static Error InvalidOrganization => new Error("SMSOrganization.InvalidOrganization", "The SMS Organization is not valid.");
+        public static Error OrganizationNotFound => new Error("SMSOrganization.OrganizationNotFound", "The specified SMS Organization was not found.");
+        public static Error ResponsibilityNotFound => new Error("SMSOrganization.ResponsibilityNotFound", "The specified responsibility is not assigned to this organization.");
     }
 
     /// <summary>

@@ -180,7 +180,7 @@ public partial class HazardReportSearchResult : ComponentBase
                 ReportDetails.Description = hazard.Description ?? "";
                 //ReportDetails.SubmittedBy = hazard.SubmittedBy ?? "Unknown";
                 //ReportDetails.SubmittedDate = hazard.SubmittedDate;
-                //ReportDetails.Department = hazard.ReportingDepartment ?? "";
+                //ReportDetails.Organization = hazard.ReportingDepartment ?? "";
                 ReportDetails.CurrentStatus = hazard.Status ?? "Unknown";
                 //ReportDetails.IsAnonymous = hazard.IsAnonymous;
                 
@@ -227,9 +227,9 @@ public partial class HazardReportSearchResult : ComponentBase
                 {
                     ReportDetails.SubmittedDate = report.SubmittedDate;
                 }
-                if (string.IsNullOrEmpty(ReportDetails.SubmittingDepartment))
+                if (string.IsNullOrEmpty(ReportDetails.SubmittingOrganization))
                 {
-                    ReportDetails.SubmittingDepartment = report.SubmittingDepartment ?? "";
+                    ReportDetails.SubmittingOrganization = report.SubmittingDepartment ?? "";
                 }
                 if (string.IsNullOrEmpty(ReportDetails.JobFunction))
                 {
@@ -667,7 +667,7 @@ public partial class HazardReportSearchResult : ComponentBase
         public string HazardCategory { get; set; } = string.Empty;
         public string SubmittedBy { get; set; } = string.Empty;
         public DateTime? SubmittedDate { get; set; }
-        public string SubmittingDepartment { get; set; } = string.Empty;
+        public string SubmittingOrganization { get; set; } = string.Empty;
 
         public string JobFunction { get; set; } = string.Empty;
 

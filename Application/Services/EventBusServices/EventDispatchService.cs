@@ -8,15 +8,9 @@
 // </copyright>
 //-----------------------------------------------------------------------
 
-using SMS_Application.Interfaces;
-using SMS_Application.Interfaces;
-using SMS_Domain.Common;
-using SMS_Domain.Errors;
 using SMS_Domain.Events;
-using SMS_Domain.Interfaces;
+
 using SMS_Infrastructure.Interfaces;
-using Microsoft.Extensions.Logging;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace SMS_Application.Services;
 
@@ -268,7 +262,7 @@ public sealed class EventDispatchService : IBaseEventBus
     /// </summary>
     public async Task<Result> PublishDomainEventAsync<T>(T domainEvent, CancellationToken cancellationToken = default) where T : IBaseDomainEvent
     {
-        return await PublishDomainEventAsync(domainEvent, EventExecutionMode.Immediate, cancellationToken);
+        return await PublishDomainEventAsync(domainEvent, EventExecutionMode.Immediate, cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>
@@ -277,6 +271,14 @@ public sealed class EventDispatchService : IBaseEventBus
     /// </summary>
     public async Task<Result> PublishDomainEventAsync<T>(T domainEvent, EventExecutionMode mode, CancellationToken cancellationToken = default) where T : IBaseDomainEvent
     {
+        if (!IsDomainEventPublishingEnabled())
+        {
+            _logger.LogApplicationInformation(
+                "Domain event publishing is disabled by configuration. Skipping domain event {EventType}.",
+                typeof(T).FullName ?? typeof(T).Name);
+            return Result.Success();
+        }
+
         // Route to existing domain event implementation
         _logger.LogApplicationDebug("PublishDomainEventAsync called for {EventType} with mode {Mode}", typeof(T).FullName, mode);
 
@@ -289,12 +291,12 @@ public sealed class EventDispatchService : IBaseEventBus
         };
 
         string? auditQueueCode = null;
-            if (!_suppressDomainAuditPersistence.Value && mode == EventExecutionMode.Immediate)
+        if (!_suppressDomainAuditPersistence.Value && mode == EventExecutionMode.Immediate)
         {
             auditQueueCode = await PersistDomainAuditEventAsync(domainEvent, queuedBy).ConfigureAwait(false);
         }
 
-        var result = await PublishAsync(domainEvent, mode, cancellationToken);
+        var result = await PublishAsync(domainEvent, mode, cancellationToken).ConfigureAwait(false);
 
         if (mode == EventExecutionMode.Immediate && !string.IsNullOrWhiteSpace(auditQueueCode))
         {
@@ -340,7 +342,19 @@ public sealed class EventDispatchService : IBaseEventBus
             _logger.LogApplicationInformation("Publishing UI event {EventType} for {TargetComponent} with mode {ExecutionMode}", 
                 uiEvent.EventType, uiEvent.TargetComponent, mode);
 
-            switch (mode)
+            var resolvedMode = ResolveUIExecutionMode(uiEvent, mode);
+            if (!IsUIEventEnabled(uiEvent))
+            {
+                _logger.LogApplicationInformation(
+                    "UI event publishing is disabled by configuration. Skipping UI event {EventType}.",
+                    uiEvent.EventType);
+                return Result.Success();
+            }
+
+            _logger.LogApplicationInformation("Publishing UI event {EventType} for {TargetComponent} with resolved mode {ExecutionMode}",
+                uiEvent.EventType, uiEvent.TargetComponent, resolvedMode);
+
+            switch (resolvedMode)
             {
                 case EventExecutionMode.Immediate:
                     return await ExecuteUIHandlersImmediately(uiEvent, cancellationToken);
@@ -352,8 +366,8 @@ public sealed class EventDispatchService : IBaseEventBus
                     return await StoreUIEventForManualExecution(uiEvent, cancellationToken);
 
                 default:
-                    _logger.LogApplicationWarning("Unknown execution mode {ExecutionMode} for UI event {EventType}", mode, uiEvent.EventType);
-                    return Result.Failure(new Error("EVENTBUS_UNKNOWN_UI_MODE", $"Unknown execution mode for UI event: {mode}"));
+                    _logger.LogApplicationWarning("Unknown execution mode {ExecutionMode} for UI event {EventType}", resolvedMode, uiEvent.EventType);
+                    return Result.Failure(new Error("EVENTBUS_UNKNOWN_UI_MODE", $"Unknown execution mode for UI event: {resolvedMode}"));
             }
         }
         catch (Exception ex)
@@ -390,8 +404,19 @@ public sealed class EventDispatchService : IBaseEventBus
                 return Result.Failure(new Error("EVENTBUS_NULL_INTEGRATION_EVENT", "Integration event cannot be null"));
             }
 
+            if (integrationEvent is EmailNotificationEvent emailNotificationEvent && !IsEmailNotificationEnabled(emailNotificationEvent))
+            {
+                _logger.LogApplicationInformation(
+                    "Email notification {NotificationType} is disabled by configuration. Skipping publish for event {EventId}.",
+                    emailNotificationEvent.WorkflowType,
+                    emailNotificationEvent.EventId);
+                return Result.Success();
+            }
+
             _logger.LogApplicationInformation("Publishing integration event {EventType} for {TargetSystem} with mode {ExecutionMode} (Delivery: {DeliveryMode})", 
                 integrationEvent.EventType, integrationEvent.TargetSystem, mode, integrationEvent.DeliveryMode);
+
+            mode = ResolveEmailExecutionMode(integrationEvent, mode);
 
             var queuedBy = mode switch
             {
@@ -458,6 +483,182 @@ public sealed class EventDispatchService : IBaseEventBus
             _logger.LogApplicationError(ex, "Failed to publish integration event {EventType} for {TargetSystem}", 
                 integrationEvent.EventType, integrationEvent.TargetSystem);
             return Result.Failure(new Error("EVENTBUS_INTEGRATION_PUBLISH_FAILED", $"Integration event publishing failed: {ex.Message}"));
+        }
+    }
+
+    private EventExecutionMode ResolveEmailExecutionMode<T>(T integrationEvent, EventExecutionMode fallbackMode) where T : IBaseIntegrationEvent
+    {
+        if (integrationEvent is not EmailNotificationEvent emailEvent)
+        {
+            return fallbackMode;
+        }
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var resolver = scope.ServiceProvider.GetService<IEmailNotificationExecutionModeResolver>();
+            if (resolver is null)
+            {
+                return fallbackMode;
+            }
+
+            return resolver.ResolveExecutionMode(emailEvent.WorkflowType, fallbackMode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex,
+                "Failed to resolve configured execution mode for email notification {NotificationType}; using fallback mode {FallbackMode}.",
+                emailEvent.WorkflowType,
+                fallbackMode);
+            return fallbackMode;
+        }
+    }
+
+    private bool IsEmailNotificationEnabled(EmailNotificationEvent emailEvent)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var resolver = scope.ServiceProvider.GetService<IEmailNotificationExecutionModeResolver>();
+            if (resolver is null)
+            {
+                return true;
+            }
+
+            return resolver.IsEnabled(emailEvent.WorkflowType, defaultValue: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex,
+                "Failed to resolve enabled setting for email notification {NotificationType}; defaulting to enabled.",
+                emailEvent.WorkflowType);
+            return true;
+        }
+    }
+
+    private bool IsDomainEventPublishingEnabled()
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var resolver = scope.ServiceProvider.GetService<IEmailNotificationExecutionModeResolver>();
+            if (resolver is null)
+            {
+                return true;
+            }
+
+            return resolver.IsEnabled("DomainEventPublishing", defaultValue: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex,
+                "Failed to resolve domain event publishing enabled setting; defaulting to enabled.");
+            return true;
+        }
+    }
+
+    private EventExecutionMode ResolveDomainExecutionMode(EventExecutionMode fallbackMode)
+    {
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var resolver = scope.ServiceProvider.GetService<IEmailNotificationExecutionModeResolver>();
+            if (resolver is null)
+            {
+                return fallbackMode;
+            }
+
+            return resolver.ResolveExecutionMode("DomainEventPublishing", fallbackMode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex,
+                "Failed to resolve domain event publishing execution mode; using fallback mode {FallbackMode}.",
+                fallbackMode);
+            return fallbackMode;
+        }
+    }
+
+    private EventExecutionMode ResolveUIExecutionMode<T>(T uiEvent, EventExecutionMode fallbackMode) where T : IBaseUIEvent
+    {
+        if (uiEvent is not UINotificationEvent notificationEvent)
+        {
+            return fallbackMode;
+        }
+
+        var notificationType = notificationEvent.Severity switch
+        {
+            UINotificationSeverity.Error => "UINotificationError",
+            UINotificationSeverity.Success => "UINotificationSuccess",
+            UINotificationSeverity.Warning => "UINotificationWarning",
+            UINotificationSeverity.Info => "UINotificationInfo",
+            _ => string.Empty
+        };
+
+        if (string.IsNullOrWhiteSpace(notificationType))
+        {
+            return fallbackMode;
+        }
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var resolver = scope.ServiceProvider.GetService<IEmailNotificationExecutionModeResolver>();
+            if (resolver is null)
+            {
+                return fallbackMode;
+            }
+
+            return resolver.ResolveExecutionMode(notificationType, fallbackMode);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex,
+                "Failed to resolve UI execution mode for {NotificationType}; using fallback mode {FallbackMode}.",
+                notificationType,
+                fallbackMode);
+            return fallbackMode;
+        }
+    }
+
+    private bool IsUIEventEnabled<T>(T uiEvent) where T : IBaseUIEvent
+    {
+        if (uiEvent is not UINotificationEvent notificationEvent)
+        {
+            return true;
+        }
+
+        var notificationType = notificationEvent.Severity switch
+        {
+            UINotificationSeverity.Error => "UINotificationError",
+            UINotificationSeverity.Success => "UINotificationSuccess",
+            UINotificationSeverity.Warning => "UINotificationWarning",
+            UINotificationSeverity.Info => "UINotificationInfo",
+            _ => string.Empty
+        };
+
+        if (string.IsNullOrWhiteSpace(notificationType))
+        {
+            return true;
+        }
+
+        try
+        {
+            using var scope = _serviceProvider.CreateScope();
+            var resolver = scope.ServiceProvider.GetService<IEmailNotificationExecutionModeResolver>();
+            if (resolver is null)
+            {
+                return true;
+            }
+
+            return resolver.IsEnabled(notificationType, defaultValue: true);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogApplicationWarning(ex,
+                "Failed to resolve enabled setting for UI notification {NotificationType}; defaulting to enabled.",
+                notificationType);
+            return true;
         }
     }
     #endregion

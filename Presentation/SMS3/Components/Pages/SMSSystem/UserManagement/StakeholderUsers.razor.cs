@@ -40,9 +40,15 @@ public partial class StakeholderUsers : ComponentBase
     //private static readonly string[] StakeholderTypes = { "SUT-0001", "SUT-0002", "SUT-0003" };
     private string[] StakeholderTypes { get; set; } = Array.Empty<string>();
 
-    // Form Models
-    private EditStakeholderUserModel _editUser = new();
-    private CreateStakeholderUserModel _newUser = new();
+    // Form State (entity-backed)
+    private SMSStakeholderUser _editUser = CreateEmptyStakeholderUser();
+    private SMSStakeholderUser _newUser = CreateEmptyStakeholderUser();
+    private string _editFirstName = string.Empty;
+    private string _editLastName = string.Empty;
+    private string _newFirstName = string.Empty;
+    private string _newLastName = string.Empty;
+    private string _editUserRoleCode = string.Empty;
+    private string _newUserRoleCode = string.Empty;
 
     // Create Modal Properties  
     private bool _showCreateModal { get; set; }
@@ -136,12 +142,10 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task ShowCreateDialog()
     {
-        _newUser = new CreateStakeholderUserModel
-        {
-            IsActive = true,  // ADDED: Set default value
-            IsPOPEmployee = false,
-            TwoFactorEnabled = false
-        };
+        _newUser = CreateEmptyStakeholderUser();
+        _newFirstName = string.Empty;
+        _newLastName = string.Empty;
+        _newUserRoleCode = string.Empty;
         _showCreateModal = true;
         StateHasChanged();
     }
@@ -162,13 +166,15 @@ public partial class StakeholderUsers : ComponentBase
             // Create user entity
             var userId = new SMSStakeholderUserID($"SU-0000");
             var normalizedTitle = NormalizeTitleSelection(_newUser.Title);
+            var generatedUserName = BuildStakeholderUserName(_newFirstName, _newLastName);
+            var generatedPassword = GenerateTemporaryPassword();
             var user = new SMSStakeholderUser(userId)
             {
                 Code = userId.Value,
-                FirstName = FirstName.Create(_newUser.FirstName).Value,
-                LastName = LastName.Create(_newUser.LastName).Value,
-                UserName = UserName.Create(_newUser.UserName).Value,
-                Password = Password.Create(_newUser.Password).Value,
+                FirstName = FirstName.Create(_newFirstName).Value,
+                LastName = LastName.Create(_newLastName).Value,
+                UserName = UserName.Create(generatedUserName).Value,
+                Password = Password.Create(generatedPassword).Value,
                 StakeholderType = normalizedTitle,
                 Organization = _newUser.Organization,
                 Company = _newUser.Company,
@@ -176,14 +182,14 @@ public partial class StakeholderUsers : ComponentBase
                 JobFunction = _newUser.JobFunction,
                 IsActive = _newUser.IsActive,
                 IsPOPEmployee = _newUser.IsPOPEmployee,
-                TwoFactorEnabled = _newUser.TwoFactorEnabled,
+                TwoFactorEnabled = false,
                 SMSUserType = SMSUserType.Stakeholder
             };
 
             // Assign user role if specified
-            if (!string.IsNullOrWhiteSpace(_newUser.UserRoleCode))
+            if (!string.IsNullOrWhiteSpace(_newUserRoleCode))
             {
-                var roleQuery = new GetSMSUserRoleByIdQuery(_newUser.UserRoleCode);
+                var roleQuery = new GetSMSUserRoleByIdQuery(_newUserRoleCode);
                 var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
                 if (roleResult.IsSuccess && roleResult.Value is not null)
                 {
@@ -202,7 +208,7 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Stakeholder user '{_newUser.FirstName} {_newUser.LastName}' created successfully.");
+                await ShowSuccessAsyncNotification($"Stakeholder user '{_newFirstName} {_newLastName}' created successfully.");
                 CloseCreateModal();
                 await LoadDataAsync();
             }
@@ -226,21 +232,16 @@ public partial class StakeholderUsers : ComponentBase
     private void CloseCreateModal()
     {
         _showCreateModal = false;
-        _newUser = new CreateStakeholderUserModel
-        {
-            IsActive = true,  // ADDED: Set default value
-            IsPOPEmployee = false,
-            TwoFactorEnabled = false
-        };
+        _newUser = CreateEmptyStakeholderUser();
+        _newFirstName = string.Empty;
+        _newLastName = string.Empty;
+        _newUserRoleCode = string.Empty;
         StateHasChanged();
     }
 
     private bool _isCreateFormValid =>
-        !string.IsNullOrWhiteSpace(_newUser.FirstName) &&
-        !string.IsNullOrWhiteSpace(_newUser.LastName) &&
-        !string.IsNullOrWhiteSpace(_newUser.UserName) &&
-        !string.IsNullOrWhiteSpace(_newUser.Password) &&
-        _newUser.Password == _newUser.ConfirmPassword &&
+        !string.IsNullOrWhiteSpace(_newFirstName) &&
+        !string.IsNullOrWhiteSpace(_newLastName) &&
         !string.IsNullOrWhiteSpace(_newUser.Title) &&
         !string.IsNullOrWhiteSpace(_newUser.Organization);
 
@@ -316,37 +317,83 @@ public partial class StakeholderUsers : ComponentBase
 
     private async Task ShowEditDialog(SMSStakeholderUser user)
     {
+        _isSaving = false;
+
         var normalizedTitle = NormalizeTitleSelection(
             string.IsNullOrWhiteSpace(user.StakeholderType) ? user.Title : user.StakeholderType);
 
         _currentEditUser = user;
-        _editUser = new EditStakeholderUserModel
+        _editUser = new SMSStakeholderUser(new SMSStakeholderUserID(user.Code))
         {
-            UserId = user.Code,
-            FirstName = user.FirstName?.Value ?? "",
-            LastName = user.LastName?.Value ?? "",
+            Code = user.Code,
             StakeholderType = ResolveDropdownValue(normalizedTitle, StakeholderTypesForDropdown),
             Organization = ResolveDropdownValue(NormalizeOrganizationSelection(user.Organization), OrganizationOptions),
             Company = ResolveDropdownValue(NormalizeCompanySelection(user.Company), CompanyOptions),
             Title = ResolveDropdownValue(normalizedTitle, StakeholderTypesForDropdown),
             JobFunction = user.JobFunction,
-            UserRoleCode = user.UserRole?.Code ?? "",
+            UserRole = user.UserRole,
             IsActive = user.IsActive,
             IsPOPEmployee = user.IsPOPEmployee,
-            TwoFactorEnabled = user.TwoFactorEnabled
+            TwoFactorEnabled = user.TwoFactorEnabled,
+            SMSUserType = SMSUserType.Stakeholder
         };
+        _editFirstName = user.FirstName?.Value ?? string.Empty;
+        _editLastName = user.LastName?.Value ?? string.Empty;
+        _editUserRoleCode = user.UserRole?.Code ?? string.Empty;
         _showEditModal = true;
+        StateHasChanged();
+    }
+
+    private void OnEditRoleCodeChanged(string? value)
+    {
+        _editUserRoleCode = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnNewCompanyChanged(string? value)
+    {
+        _newUser.Company = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnNewOrganizationChanged(string? value)
+    {
+        _newUser.Organization = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnNewTitleChanged(string? value)
+    {
+        _newUser.Title = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnNewRoleCodeChanged(string? value)
+    {
+        _newUserRoleCode = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnEditCompanyChanged(string? value)
+    {
+        _editUser.Company = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnEditOrganizationChanged(string? value)
+    {
+        _editUser.Organization = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnEditTitleChanged(string? value)
+    {
+        _editUser.Title = value?.Trim() ?? string.Empty;
         StateHasChanged();
     }
 
     private async Task UpdateUser()
     {
-        if (!_isEditFormValid)
-        {
-            await ShowErrorAsyncNotification("Please fill in all required fields.");
-            return;
-        }
-
         try
         {
             _isSaving = true;
@@ -358,12 +405,36 @@ public partial class StakeholderUsers : ComponentBase
                 return;
             }
 
+            var firstName = string.IsNullOrWhiteSpace(_editFirstName)
+                ? _currentEditUser.FirstName?.Value ?? string.Empty
+                : _editFirstName;
+
+            var lastName = string.IsNullOrWhiteSpace(_editLastName)
+                ? _currentEditUser.LastName?.Value ?? string.Empty
+                : _editLastName;
+
+            var title = string.IsNullOrWhiteSpace(_editUser.Title)
+                ? string.Empty
+                : _editUser.Title;
+
+            var organization = string.IsNullOrWhiteSpace(_editUser.Organization)
+                ? string.Empty
+                : _editUser.Organization;
+
+            if (string.IsNullOrWhiteSpace(firstName)
+                || string.IsNullOrWhiteSpace(lastName)
+                )
+            {
+                await ShowErrorAsyncNotification("Please fill in all required fields.");
+                return;
+            }
+
             // ? FIXED: Only set business fields - let pipeline handle audit fields
-            var normalizedTitle = NormalizeTitleSelection(_editUser.Title);
-            _currentEditUser.FirstName = FirstName.Create(_editUser.FirstName).Value;
-            _currentEditUser.LastName = LastName.Create(_editUser.LastName).Value;
+            var normalizedTitle = NormalizeTitleSelection(title);
+            _currentEditUser.FirstName = FirstName.Create(firstName).Value;
+            _currentEditUser.LastName = LastName.Create(lastName).Value;
             _currentEditUser.StakeholderType = normalizedTitle;
-            _currentEditUser.Organization = _editUser.Organization;
+            _currentEditUser.Organization = organization;
             _currentEditUser.Company = _editUser.Company;
             _currentEditUser.Title = normalizedTitle;
             _currentEditUser.JobFunction = _editUser.JobFunction;
@@ -373,21 +444,22 @@ public partial class StakeholderUsers : ComponentBase
             _currentEditUser.SMSUserType = SMSUserType.Stakeholder;
             
                         
-            if (string.IsNullOrWhiteSpace(_editUser.UserRoleCode))
+            if (string.IsNullOrWhiteSpace(_editUserRoleCode))
             {
-                await ShowErrorAsyncNotification("SMS User Role/Permissions is required.");
-                return;
+                _logger.LogDebug("No role selected during stakeholder update for {UserId}; preserving existing role assignment.", _currentEditUser.Code);
             }
-
-            var roleQuery = new GetSMSUserRoleByIdQuery(_editUser.UserRoleCode);
-            var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
-            if (roleResult.IsFailure || roleResult.Value is null)
+            else
             {
-                await ShowErrorAsyncNotification("Selected SMS User Role/Permissions was not found.");
-                return;
-            }
+                var roleQuery = new GetSMSUserRoleByIdQuery(_editUserRoleCode);
+                var roleResult = await _mediator.SendAsync(roleQuery, CancellationToken.None);
+                if (roleResult.IsFailure || roleResult.Value is null)
+                {
+                    await ShowErrorAsyncNotification("Selected SMS User Role/Permissions was not found.");
+                    return;
+                }
 
-            _currentEditUser.UserRole = roleResult.Value;
+                _currentEditUser.UserRole = roleResult.Value;
+            }
 
             // Update user - pipeline will automatically set UpdatedBy/UpdatedDate
             var updateCommand = new UpdateSMSStakeholderUserCommand(_currentEditUser);
@@ -395,7 +467,7 @@ public partial class StakeholderUsers : ComponentBase
 
             if (result.IsSuccess)
             {
-                await ShowSuccessAsyncNotification($"Stakeholder user '{_editUser.FirstName} {_editUser.LastName}' updated successfully.");
+                await ShowSuccessAsyncNotification($"Stakeholder user '{_editFirstName} {_editLastName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
             }
@@ -406,7 +478,7 @@ public partial class StakeholderUsers : ComponentBase
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error updating stakeholder user: {UserId}", _editUser.UserId);
+            _logger.LogError(ex, "Error updating stakeholder user: {UserId}", _currentEditUser?.Code);
             await ShowErrorAsyncNotification("Error updating stakeholder user. Please try again.");
         }
         finally
@@ -420,16 +492,34 @@ public partial class StakeholderUsers : ComponentBase
     {
         _showEditModal = false;
         _currentEditUser = null;
-        _editUser = new EditStakeholderUserModel();
+        _editUser = CreateEmptyStakeholderUser();
+        _editFirstName = string.Empty;
+        _editLastName = string.Empty;
+        _editUserRoleCode = string.Empty;
         StateHasChanged();
     }
 
     private bool _isEditFormValid =>
-        !string.IsNullOrWhiteSpace(_editUser.FirstName) &&
-        !string.IsNullOrWhiteSpace(_editUser.LastName) &&
-        !string.IsNullOrWhiteSpace(_editUser.Title) &&
-        !string.IsNullOrWhiteSpace(_editUser.Organization) &&
-        !string.IsNullOrWhiteSpace(_editUser.UserRoleCode);
+        !string.IsNullOrWhiteSpace(_editFirstName) &&
+        !string.IsNullOrWhiteSpace(_editLastName) &&
+        !string.IsNullOrWhiteSpace(_editUser.Title);
+
+    private static SMSStakeholderUser CreateEmptyStakeholderUser()
+    {
+        return new SMSStakeholderUser(new SMSStakeholderUserID("SU-0000"))
+        {
+            Code = "SU-0000",
+            StakeholderType = string.Empty,
+            Company = string.Empty,
+            Title = string.Empty,
+            JobFunction = string.Empty,
+            Organization = string.Empty,
+            IsPOPEmployee = false,
+            IsActive = true,
+            TwoFactorEnabled = false,
+            SMSUserType = SMSUserType.Stakeholder
+        };
+    }
 
     private static string NormalizeTitleSelection(string? rawValue)
     {
@@ -446,6 +536,37 @@ public partial class StakeholderUsers : ComponentBase
 
         var byName = SMSJobTitle.FromName(rawValue);
         return byName?.Value ?? rawValue;
+    }
+
+    private static string BuildStakeholderUserName(string? firstName, string? lastName)
+    {
+        static string NormalizeNamePart(string? value)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                return string.Empty;
+            }
+
+            return new string(value
+                .Trim()
+                .Where(char.IsLetterOrDigit)
+                .ToArray())
+                .ToLowerInvariant();
+        }
+
+        var first = NormalizeNamePart(firstName);
+        var last = NormalizeNamePart(lastName);
+
+        var baseUserName = $"s_{first}.{last}".Trim('.');
+        var fallbackUserName = $"s_user.{Guid.NewGuid():N}";
+        return string.IsNullOrWhiteSpace(baseUserName) || string.Equals(baseUserName, "s_", StringComparison.OrdinalIgnoreCase)
+            ? fallbackUserName[..Math.Min(20, fallbackUserName.Length)]
+            : baseUserName;
+    }
+
+    private static string GenerateTemporaryPassword()
+    {
+        return $"A1!{Guid.NewGuid():D}a";
     }
 
     private async Task ShowDeleteDialog(string userId, string displayName)
@@ -495,11 +616,6 @@ public partial class StakeholderUsers : ComponentBase
 
     #region Password Management
 
-    // Password Modal Properties for Shared Component
-    private bool _showPasswordModal { get; set; }
-    private string _passwordUserCode { get; set; } = string.Empty;
-    private string _passwordUserDisplayName { get; set; } = string.Empty;
-
     // Group Management Properties
     private bool _showGroupsModal { get; set; } = false;
     private string _groupManagementUserCode { get; set; } = string.Empty;
@@ -508,40 +624,6 @@ public partial class StakeholderUsers : ComponentBase
     private List<SMSStakeholderGroup> UserCurrentGroups { get; set; } = new();
     private List<SMSStakeholderGroup> AvailableGroups { get; set; } = new();
     private Dictionary<string, bool> SelectedGroups { get; set; } = new();
-
-    private void OpenPasswordChangeModal(string userCode, string displayName)
-    {
-        _passwordUserCode = userCode;
-        _passwordUserDisplayName = displayName;
-        _showPasswordModal = true;
-        StateHasChanged();
-    }
-
-    private void ClosePasswordChangeModal()
-    {
-        _showPasswordModal = false;
-        _passwordUserCode = string.Empty;
-        _passwordUserDisplayName = string.Empty;
-        StateHasChanged();
-    }
-
-    private async Task OnPasswordChangedSuccess()
-    {
-        // Password was changed successfully by the modal
-        await ShowSuccessAsyncNotification($"Password updated successfully for {_passwordUserDisplayName}.");
-    }
-
-    // Legacy password methods - kept for compatibility
-    private async Task ShowPasswordDialog(string userId, string displayName)
-    {
-        OpenPasswordChangeModal(userId, displayName);
-    }
-
-    private async Task UpdatePassword(string userId, string newPassword)
-    {
-        // Legacy method - now handled by shared component
-        await ShowInfoAsyncNotification("Please use the password change modal to update passwords.");
-    }
 
     #endregion
 
@@ -973,42 +1055,5 @@ public partial class StakeholderUsers : ComponentBase
 
     #endregion
 
-    #region Models
-
-    public class CreateStakeholderUserModel
-    {
-        public string FirstName { get; set; } = "";
-        public string LastName { get; set; } = "";
-        public string UserName { get; set; } = "";
-        public string Password { get; set; } = "";
-        public string ConfirmPassword { get; set; } = "";
-        public string StakeholderType { get; set; } = "";
-        public string Company { get; set; } = "";
-        public string Title { get; set; } = "";
-        public string JobFunction { get; set; } = "";
-        public string Organization { get; set; } = "";
-        public string UserRoleCode { get; set; } = "";
-        public bool IsPOPEmployee { get; set; } = false;
-        public bool TwoFactorEnabled { get; set; } = false;
-        public bool IsActive { get; set; } = false;
-    }
-
-    public class EditStakeholderUserModel
-    {
-        public string UserId { get; set; } = "";
-        public string FirstName { get; set; } = "";
-        public string LastName { get; set; } = "";
-        public string StakeholderType { get; set; } = "";
-        public string Company { get; set; } = "";
-        public string Title { get; set; } = "";
-        public string JobFunction { get; set; } = "";
-        public string Organization { get; set; } = "";
-        public string UserRoleCode { get; set; } = "";
-        public bool IsActive { get; set; } = true;
-        public bool TwoFactorEnabled { get; set; } = false;
-        public bool IsPOPEmployee { get; set; } = false;
-    }
-
-    #endregion
 }
 

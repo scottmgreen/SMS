@@ -18,18 +18,19 @@ public sealed class MonitoringRequirement
 {
     public string MonitoringFrequency { get; private set; }
     public string ResponsibleDepartment { get; private set; }
+    public string ResponsibleOrganization => ResponsibleDepartment;
     public string ReviewTrigger { get; private set; }
     public DateTime EstablishedDate { get; private set; }
 
-    private MonitoringRequirement(string frequency, string department, string trigger)
+    private MonitoringRequirement(string frequency, string organization, string trigger)
     {
         MonitoringFrequency = frequency;
-        ResponsibleDepartment = department;
+        ResponsibleDepartment = organization;
         ReviewTrigger = trigger;
         EstablishedDate = DateTime.Now;
     }
 
-    public static Result<MonitoringRequirement> Create(string frequency, string department, string trigger)
+    public static Result<MonitoringRequirement> Create(string frequency, string organization, string trigger)
     {
         if (string.IsNullOrWhiteSpace(frequency))
         {
@@ -38,7 +39,7 @@ public sealed class MonitoringRequirement
 
         return Result<MonitoringRequirement>.Success(new MonitoringRequirement(
             frequency,
-            department ?? "Safety Department",
+            organization ?? "Safety Organization",
             trigger ?? "Annual"));
     }
 }

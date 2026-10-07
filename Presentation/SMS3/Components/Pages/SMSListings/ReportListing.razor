@@ -250,7 +250,7 @@
                                     
                                     @if (!string.IsNullOrWhiteSpace(SelectedReport.SubmittingDepartment))
                                     {
-                                        <div><strong>Department:</strong> @SelectedReport.SubmittingDepartment</div>
+                                        <div><strong>Organization:</strong> @SelectedReport.SubmittingDepartment</div>
                                     }
                                     @if (!string.IsNullOrWhiteSpace(SelectedReport.SubmittingDepartmentJobFunction))
                                     {
@@ -426,7 +426,7 @@
     <div class="modal-overlay">
         <div class="sms-modal-dialog" style="max-width: 700px; width: 90%;">
             <div class="sms-modal-content">
-                <div class="sms-modal-header" style="background-color: #dc3545; color: white;">
+                <div class="sms-modal-header" style="background-color: var(--sms-brand-primary); color: white;">
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <h5 class="sms-modal-title mb-0">
                             <i class="fas fa-exclamation-triangle"></i> Confirm Reset Report Validation

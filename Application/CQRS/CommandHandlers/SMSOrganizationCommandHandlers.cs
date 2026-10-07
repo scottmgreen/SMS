@@ -25,7 +25,7 @@ public class CreateSMSOrganizationCommandHandler : BaseCommandBundle, IBaseReque
             if (request?.Organization is null)
             {
                 _logger.LogApplicationWarning("CreateSMSOrganizationCommand received null organization", ApplicationEventIds.Warning);
-                return Result<SMSOrganization>.Failure<SMSOrganization>(DomainErrors.SMSDepartmentError.NullOrEmpty);
+                return Result<SMSOrganization>.Failure<SMSOrganization>(DomainErrors.SMSOrganizationError.NullOrEmpty);
             }
 
             return await _organizationService.CreateSMSOrganizationAsync(request.Organization, request.CreatedBy, ct).ConfigureAwait(false);
@@ -65,7 +65,7 @@ public class UpdateSMSOrganizationCommandHandler : BaseCommandBundle, IBaseReque
             if (request?.Organization is null)
             {
                 _logger.LogApplicationWarning("UpdateSMSOrganizationCommand received null organization", ApplicationEventIds.Warning);
-                return Result<SMSOrganization>.Failure<SMSOrganization>(DomainErrors.SMSDepartmentError.NullOrEmpty);
+                return Result<SMSOrganization>.Failure<SMSOrganization>(DomainErrors.SMSOrganizationError.NullOrEmpty);
             }
 
             return await _organizationService.UpdateSMSOrganizationAsync(request.OriginalCode, request.Organization, request.UpdatedBy, ct).ConfigureAwait(false);

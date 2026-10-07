@@ -153,7 +153,7 @@
                     else
                     {
                         <RadzenAlert AlertStyle="AlertStyle.Info" Icon="info" ShowIcon="true">
-                            <RadzenText TextStyle="TextStyle.Body2" Text="Add mitigation strategies above. Each strategy can include cost estimates, priorities, and department assignments." />
+                            <RadzenText TextStyle="TextStyle.Body2" Text="Add mitigation strategies above. Each strategy can include cost estimates, priorities, and organization assignments." />
                         </RadzenAlert>
                     }
                 </RadzenStack>
@@ -175,9 +175,9 @@
                             </RadzenFormField>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="4">
-                            <RadzenFormField Text="Responsible Department" Variant="Variant.Outlined">
+                            <RadzenFormField Text="Responsible Organization" Variant="Variant.Outlined">
                                 <RadzenDropDown @bind-Value="@MonitoringDepartment" Data="@Departments"
-                                                Placeholder="Select department..." Style="width: 100%;" />
+                                                Placeholder="Select organization..." Style="width: 100%;" />
                             </RadzenFormField>
                         </RadzenColumn>
                         <RadzenColumn Size="12" SizeMD="4">
@@ -327,7 +327,7 @@
 
     private List<MitigationStatus> StatusLevels => MitigationStatus.GetAllValues().ToList();
 
-    // ? UPDATED: Replace hardcoded department list with SMSDepartment enum
+    // ? UPDATED: Replace hardcoded organization list with SMSOrganization enum
     private List<string> Departments => SMSOrganization.GetAllDepartments()
         .Select(d => d.Name)
         .OrderBy(name => name)

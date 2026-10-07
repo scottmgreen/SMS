@@ -14,5 +14,7 @@ public interface INotificationsScanService
 
     Task<Result<int>> CancelPendingReportStatusEscalationsAsync(string reportCode, string cancelledBy, CancellationToken cancellationToken = default);
 
+    Task<Result<int>> CancelPendingNotificationsForReportAsync(string reportCode, string cancelledBy, CancellationToken cancellationToken = default);
+
     Task<Result> ProcessMitigationUpdateAsync(Mitigation mitigation, string reportId, CancellationToken cancellationToken = default);
 }

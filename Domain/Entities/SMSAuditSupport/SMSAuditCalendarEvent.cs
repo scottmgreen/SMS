@@ -71,9 +71,15 @@ public class SMSAuditCalendarEvent
     public string LeadAuditor { get; set; } = string.Empty;
 
     /// <summary>
-    /// Department being audited
+    /// Organization being audited
     /// </summary>
     public string ResponsibleDepartment { get; set; } = string.Empty;
+
+    public string ResponsibleOrganization
+    {
+        get => ResponsibleDepartment;
+        set => ResponsibleDepartment = value;
+    }
 
     /// <summary>
     /// Location where audit will take place

@@ -154,8 +154,8 @@
             
             _logger.LogInformation("Session authentication cleared for user: {UserName}", currentUserName);
             
-            // ?? SECURE NAVIGATION - Navigate to HOME PAGE with encrypted URL
-            _navigation.NavigateToSecure("/", forceLoad: true);
+            // Navigate to login after logout
+            _navigation.NavigateTo("/login", forceLoad: true);
         }
         catch (Exception ex)
         {
@@ -166,14 +166,14 @@
             {
                 await _currentUserService.ClearAuthentication();
                 await _sessionService.ClearSMSSessionAsync();
-                // ?? SECURE NAVIGATION - Force navigation to home page
-                _navigation.NavigateToSecure("/", forceLoad: true);
+                // Force navigation to login page
+                _navigation.NavigateTo("/login", forceLoad: true);
             }
             catch (Exception clearEx)
             {
                 _logger.LogError(clearEx, "Critical: Failed to clear session authentication during logout");
-                // ?? SECURE NAVIGATION - Force navigation even on clear error
-                _navigation.NavigateToSecure("/", forceLoad: true);
+                // Force navigation to login even on clear error
+                _navigation.NavigateTo("/login", forceLoad: true);
             }
         }
     }

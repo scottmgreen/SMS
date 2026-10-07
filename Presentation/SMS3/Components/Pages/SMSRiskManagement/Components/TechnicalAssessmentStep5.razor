@@ -124,12 +124,12 @@
                                                 </RadzenFormField>
                                             </RadzenColumn>
                                             <RadzenColumn Size="12" SizeMD="4">
-                                                <RadzenFormField Text="Responsible Department" Variant="Variant.Outlined">
-                                                    <RadzenDropDown Value="@GetMonitoringDepartment(hazard)"
-                                                                    Data="@Departments"
-                                                                    Placeholder="Select department..."
+                                                <RadzenFormField Text="Responsible Organization" Variant="Variant.Outlined">
+                                                    <RadzenDropDown Value="@GetMonitoringOrganization(hazard)"
+                                                                    Data="@Organizations"
+                                                                    Placeholder="Select organization..."
                                                                     Style="width: 100%;"
-                                                                    ValueChanged="@((string value) => SetMonitoringDepartment(hazard, value))" />
+                                                                    ValueChanged="@((string value) => SetMonitoringOrganization(hazard, value))" />
                                                 </RadzenFormField>
                                             </RadzenColumn>
                                             <RadzenColumn Size="12" SizeMD="4">
@@ -391,7 +391,7 @@
     private Dictionary<string, string> ResidualRootCauses { get; set; } = new();
     private Dictionary<string, string> ResidualAdditionalComments { get; set; } = new();
     private Dictionary<string, string> MonitoringFrequencies { get; set; } = new();
-    private Dictionary<string, string> MonitoringDepartments { get; set; } = new();
+    private Dictionary<string, string> MonitoringOrganizations { get; set; } = new();
     private Dictionary<string, string> ReviewTriggers { get; set; } = new();
 
     // ✅ NEW: Collapsible state tracking per hazard and section
@@ -415,9 +415,9 @@
         "Continuous", "Daily", "Weekly", "Monthly", "Quarterly", "Annually"
     };
 
-    // ✅ UPDATED: Replace hardcoded department list with SMSDepartment enum
-    private List<string> Departments => SMSOrganization.GetAllDepartments()
-        .Select(d => d.Name)
+    // ✅ UPDATED: Replace hardcoded organization list with SMSOrganization enum
+    private List<string> Organizations => SMSOrganization.GetAllOrganizations()
+        .Select(o => o.Name)
         .OrderBy(name => name)
         .ToList();
     private string GetHazardCategoryDisplay(string? categoryValue)
@@ -826,7 +826,7 @@
     #region Monitoring Methods
 
     private string GetMonitoringFrequency(Hazard hazard) => MonitoringFrequencies.GetValueOrDefault(hazard.Code, string.Empty);
-    private string GetMonitoringDepartment(Hazard hazard) => MonitoringDepartments.GetValueOrDefault(hazard.Code, string.Empty);
+    private string GetMonitoringOrganization(Hazard hazard) => MonitoringOrganizations.GetValueOrDefault(hazard.Code, string.Empty);
     private string GetReviewTrigger(Hazard hazard) => ReviewTriggers.GetValueOrDefault(hazard.Code, string.Empty);
 
     private async Task SetMonitoringFrequency(Hazard hazard, string value)
@@ -835,9 +835,9 @@
         await InvokeAsync(StateHasChanged);
     }
 
-    private async Task SetMonitoringDepartment(Hazard hazard, string value)
+    private async Task SetMonitoringOrganization(Hazard hazard, string value)
     {
-        MonitoringDepartments[hazard.Code] = value ?? string.Empty;
+        MonitoringOrganizations[hazard.Code] = value ?? string.Empty;
         await InvokeAsync(StateHasChanged);
     }
 

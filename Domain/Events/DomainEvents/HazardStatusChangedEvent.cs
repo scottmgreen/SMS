@@ -95,33 +95,5 @@ public class HazardStatusChangedEvent : BaseDomainEvent, IEventSource
         TimeInCurrentStatus = timeInCurrentStatus;
         EscalationDeadline = escalationDeadline;
     }
-    //public HazardStatusChangedEvent(
-    //    string hazardId,
-    //    string hazardCode,
-    //    HazardStatus previousStatus,
-    //    HazardStatus newStatus,
-    //    string statusChangeReason,
-    //    string changedBy,
-    //    DateTime statusChangeDate,
-    //    List<string>? notificationRecipients = null,
-    //    Dictionary<string, string>? statusMetadata = null,
-    //    bool requiresEscalation = false,
-    //    TimeSpan? timeInCurrentStatus = null,
-    //    DateTime? escalationDeadline = null,
-    //    string aggregateId = "")
-    //{
-    //    HazardId = hazardId ?? throw new ArgumentNullException(nameof(hazardId));
-    //    HazardCode = hazardCode ?? throw new ArgumentNullException(nameof(hazardCode));
-    //    PreviousStatus = previousStatus;
-    //    NewStatus = newStatus;
-    //    StatusChangeReason = statusChangeReason ?? string.Empty;
-    //    ChangedBy = changedBy ?? throw new ArgumentNullException(nameof(changedBy));
-    //    StatusChangeDate = statusChangeDate;
-    //    NotificationRecipients = notificationRecipients ?? new List<string>();
-    //    StatusMetadata = statusMetadata ?? new Dictionary<string, string>();
-    //    RequiresEscalation = requiresEscalation;
-    //    TimeInCurrentStatus = timeInCurrentStatus;
-    //    EscalationDeadline = escalationDeadline;
-        
-    //}
+    
 }

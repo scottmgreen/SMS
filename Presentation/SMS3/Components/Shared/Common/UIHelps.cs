@@ -113,7 +113,7 @@ public static class DropdownHelper
 {
     public static List<DropdownOption> GroupTypeOptions = new()
     {
-        new() { Text = "Department", Value = "Department" },
+        new() { Text = "Organization", Value = "Organization" },
         new() { Text = "SMS Role", Value = "SMS Role" },
         new() { Text = "Committee", Value = "Committee" },
         new() { Text = "Work Group", Value = "Work Group" },

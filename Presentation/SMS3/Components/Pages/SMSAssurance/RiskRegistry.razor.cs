@@ -713,6 +713,25 @@ public partial class RiskRegistry : ComponentBase
                || string.Equals(entry.ReportStatus, ReportStatus.RiskRegistryOnly.Value, StringComparison.OrdinalIgnoreCase);
     }
 
+    private bool CanNavigateToRiskAssessment(RiskRegistryEntry entry)
+    {
+        return !string.IsNullOrWhiteSpace(entry.RiskAssessmentCode)
+               && !string.IsNullOrWhiteSpace(entry.ReportCode)
+               && !string.IsNullOrWhiteSpace(entry.HazardCode);
+    }
+
+    private string GetRiskAssessmentUrl(RiskRegistryEntry entry)
+    {
+        if (!CanNavigateToRiskAssessment(entry))
+        {
+            return "#";
+        }
+
+        var encodedReportCode = Uri.EscapeDataString(entry.ReportCode.Trim());
+        var encodedHazardCode = Uri.EscapeDataString(entry.HazardCode.Trim());
+        return _navigation.GenerateSecureUrl($"/SMSRiskManagement/TechnicalAssessment/{encodedReportCode}/{encodedHazardCode}/4?returnTo=risk-registry");
+    }
+
     private string GetTechnicalAssessmentStep4Url(RiskRegistryEntry entry)
     {
         if (!CanNavigateToTechnicalAssessmentStep4(entry))

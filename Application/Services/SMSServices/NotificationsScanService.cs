@@ -66,8 +66,8 @@ public sealed class NotificationsScanService : INotificationsScanService
         var pendingEvents = pendingResult.Value?.ToList() ?? new List<QueuedEvent>();
         var queuedCount = 0;
 
-        var daysInAdvance = _configuration.GetValue<int?>("MitigationTargetDateNotifications:DaysInAdvance") ?? 14;
-        var hoursBefore = _configuration.GetValue<int?>("MitigationTargetDateNotifications:HoursBefore") ?? 24;
+        var daysInAdvance = _configuration.GetValue<int?>("NotificationEvents:MitigationTargetDateNotification:Schedule:DaysInAdvance") ?? 14;
+        var hoursBefore = _configuration.GetValue<int?>("NotificationEvents:MitigationTargetDateNotification:Schedule:HoursBefore") ?? 24;
 
         foreach (var mitigation in mitigationResult.Value)
         {
@@ -162,6 +162,59 @@ public sealed class NotificationsScanService : INotificationsScanService
         return Result.Success(cancelledCount);
     }
 
+    public async Task<Result<int>> CancelPendingNotificationsForReportAsync(string reportCode, string cancelledBy, CancellationToken cancellationToken = default)
+    {
+        var normalizedReportCode = reportCode?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(normalizedReportCode))
+        {
+            return Result.Success(0);
+        }
+
+        var pendingEventsResult = await _eventQueueService.GetQueuedEventsAsync(
+            status: QueuedEventStatus.Pending,
+            eventType: EventCategory.IntegrationEvent,
+            maxResults: 5000).ConfigureAwait(false);
+
+        if (pendingEventsResult.IsFailure || pendingEventsResult.Value is null)
+        {
+            return pendingEventsResult.IsFailure
+                ? Result.Failure<int>(pendingEventsResult.Error ?? new Error("REPORT_NOTIFICATION_PENDING_LOAD_FAILED", "Failed to load pending report notifications."))
+                : Result.Success(0);
+        }
+
+        var pendingReportNotifications = pendingEventsResult.Value
+            .Where(qe => IsPendingReportNotification(qe, normalizedReportCode))
+            .ToList();
+
+        if (pendingReportNotifications.Count == 0)
+        {
+            return Result.Success(0);
+        }
+
+        var cancelledCount = 0;
+        var cancelledByValue = string.IsNullOrWhiteSpace(cancelledBy) ? "ReportClosed" : cancelledBy.Trim();
+
+        foreach (var pendingNotification in pendingReportNotifications)
+        {
+            var cancelResult = await _eventQueueService.CancelQueuedEventAsync(
+                pendingNotification.QueueCode,
+                cancelledByValue).ConfigureAwait(false);
+
+            if (cancelResult.IsSuccess)
+            {
+                cancelledCount++;
+            }
+            else
+            {
+                _logger.LogApplicationWarning("Failed to cancel pending report notification {QueueCode} for report {ReportCode}.",
+                    pendingNotification.QueueCode,
+                    normalizedReportCode);
+            }
+        }
+
+        return Result.Success(cancelledCount);
+    }
+
     public async Task<Result> ProcessMitigationUpdateAsync(Mitigation mitigation, string reportId, CancellationToken cancellationToken = default)
     {
         var mitigationCode = GetMitigationCode(mitigation);
@@ -188,8 +241,8 @@ public sealed class NotificationsScanService : INotificationsScanService
             return Result.Success();
         }
 
-        var daysInAdvance = _configuration.GetValue<int?>("MitigationTargetDateNotifications:DaysInAdvance") ?? 14;
-        var hoursBefore = _configuration.GetValue<int?>("MitigationTargetDateNotifications:HoursBefore") ?? 24;
+        var daysInAdvance = _configuration.GetValue<int?>("NotificationEvents:MitigationTargetDateNotification:Schedule:DaysInAdvance") ?? 14;
+        var hoursBefore = _configuration.GetValue<int?>("NotificationEvents:MitigationTargetDateNotification:Schedule:HoursBefore") ?? 24;
 
         var timingState = GetMitigationTimingState(mitigation.TargetDate.Value, mitigation.Status?.Value, daysInAdvance, hoursBefore);
         if (timingState == MitigationTimingState.None)
@@ -222,7 +275,7 @@ public sealed class NotificationsScanService : INotificationsScanService
 
     public async Task<Result<int>> ScanReportsNeedingStatusEscalationAsync(string triggeredBy, CancellationToken cancellationToken = default)
     {
-        var enabled = _configuration.GetValue<bool?>("HazardReportNotifications:EnableStatusEscalationNotification") ?? true;
+        var enabled = _configuration.GetValue<bool?>("NotificationEvents:HazardSubmissionStatusEscalation:Enabled") ?? true;
         if (!enabled)
         {
             _logger.LogApplicationInformation("Report status escalation scan skipped because feature is disabled.");
@@ -253,7 +306,7 @@ public sealed class NotificationsScanService : INotificationsScanService
         }
 
         var pendingEvents = pendingEventsResult.Value?.ToList() ?? new List<QueuedEvent>();
-        var thresholdHours = _configuration.GetValue<int?>("HazardReportNotifications:StatusEscalationThresholdHours") ?? 48;
+        var thresholdHours = _configuration.GetValue<int?>("NotificationEvents:HazardSubmissionStatusEscalation:Schedule:StatusEscalationThresholdHours") ?? 48;
         if (thresholdHours <= 0)
         {
             thresholdHours = 48;
@@ -349,24 +402,19 @@ public sealed class NotificationsScanService : INotificationsScanService
     private List<string> GetMitigationRecipientGroups()
     {
         return _configuration
-            .GetSection("MitigationTargetDateNotifications:RecipientGroups")
+            .GetSection("NotificationEvents:MitigationTargetDateNotification:Recipients:Groups")
             .Get<string[]>()?
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Select(x => x.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList()
-            ?? _configuration.GetSection("HazardReportNotifications:RecipientGroups").Get<string[]>()?
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(x => x.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList()
             ?? new List<string>();
     }
 
     private List<string> GetReportRecipientGroups()
     {
         return _configuration
-            .GetSection("HazardReportNotifications:RecipientGroups")
+            .GetSection("NotificationEvents:HazardSubmissionStatusEscalation:Recipients:Groups")
             .Get<string[]>()?
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Select(x => x.Trim())
@@ -377,7 +425,7 @@ public sealed class NotificationsScanService : INotificationsScanService
 
     private EventExecutionMode ResolveReportExecutionMode()
     {
-        var configured = _configuration.GetValue<string>("HazardReportNotifications:StatusEscalationExecutionMode");
+        var configured = _configuration.GetValue<string>("NotificationEvents:HazardSubmissionStatusEscalation:Channels:Email:ExecutionMode");
         if (Enum.TryParse<EventExecutionMode>(configured, true, out var parsed))
         {
             return parsed;
@@ -440,6 +488,28 @@ public sealed class NotificationsScanService : INotificationsScanService
         => !string.IsNullOrWhiteSpace(eventData)
            && eventData.Contains("HazardSubmissionStatusEscalation", StringComparison.OrdinalIgnoreCase)
            && eventData.Contains(reportCode, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsPendingReportNotification(QueuedEvent queuedEvent, string reportCode)
+    {
+        if (queuedEvent is null)
+        {
+            return false;
+        }
+
+        if (queuedEvent.EventCategory != EventCategory.IntegrationEvent)
+        {
+            return false;
+        }
+
+        var reportId = queuedEvent.ReportId?.Trim() ?? string.Empty;
+        if (string.Equals(reportId, reportCode, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        return !string.IsNullOrWhiteSpace(queuedEvent.EventData)
+            && queuedEvent.EventData.Contains(reportCode, StringComparison.OrdinalIgnoreCase);
+    }
 
     private static string BuildMitigationAlertSubject(string mitigationCode, MitigationTimingState timingState)
     {

@@ -1021,7 +1021,7 @@ public static partial class Mappers
             organizationalGroup.ContactEmail = reader.HasColumn(FieldNames.fSMSOrganizationalGroupContactEmail)
                 ? reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupContactEmail)
                 : string.Empty;
-            organizationalGroup.GroupType = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupGroupType) ?? "Department";
+            organizationalGroup.GroupType = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupGroupType) ?? "Organization";
             organizationalGroup.AuthorityLevel = reader.GetValue<string>(FieldNames.fSMSOrganizationalGroupAuthorityLevel) ?? "Standard";
             organizationalGroup.IsActive = reader.IsDBNull(FieldNames.fSMSOrganizationalGroupIsActive) ? true : reader.GetBoolean(FieldNames.fSMSOrganizationalGroupIsActive);
             

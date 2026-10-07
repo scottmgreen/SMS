@@ -61,8 +61,8 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
         var pendingEvents = pendingResult.Value?.ToList() ?? new List<QueuedEvent>();
         var queuedCount = 0;
 
-        var daysInAdvance = _configuration.GetValue<int?>("MitigationTargetDateNotifications:DaysInAdvance") ?? 14;
-        var hoursBefore = _configuration.GetValue<int?>("MitigationTargetDateNotifications:HoursBefore") ?? 24;
+        var daysInAdvance = _configuration.GetValue<int?>("NotificationEvents:MitigationTargetDateNotification:Schedule:DaysInAdvance") ?? 14;
+        var hoursBefore = _configuration.GetValue<int?>("NotificationEvents:MitigationTargetDateNotification:Schedule:HoursBefore") ?? 24;
 
         foreach (var mitigation in mitigationResult.Value)
         {
@@ -130,8 +130,8 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
             return Result.Success();
         }
 
-        var daysInAdvance = _configuration.GetValue<int?>("MitigationTargetDateNotifications:DaysInAdvance") ?? 14;
-        var hoursBefore = _configuration.GetValue<int?>("MitigationTargetDateNotifications:HoursBefore") ?? 24;
+        var daysInAdvance = _configuration.GetValue<int?>("NotificationEvents:MitigationTargetDateNotification:Schedule:DaysInAdvance") ?? 14;
+        var hoursBefore = _configuration.GetValue<int?>("NotificationEvents:MitigationTargetDateNotification:Schedule:HoursBefore") ?? 24;
 
         var timingState = GetMitigationTimingState(mitigation.TargetDate.Value, mitigation.Status?.Value, daysInAdvance, hoursBefore);
         if (timingState == MitigationTimingState.None)
@@ -199,17 +199,12 @@ public sealed class MitigationTargetDateNotificationService : IMitigationTargetD
     private List<string> GetRecipientGroups()
     {
         return _configuration
-            .GetSection("MitigationTargetDateNotifications:RecipientGroups")
+            .GetSection("NotificationEvents:MitigationTargetDateNotification:Recipients:Groups")
             .Get<string[]>()?
             .Where(x => !string.IsNullOrWhiteSpace(x))
             .Select(x => x.Trim())
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList()
-            ?? _configuration.GetSection("HazardReportNotifications:RecipientGroups").Get<string[]>()?
-                .Where(x => !string.IsNullOrWhiteSpace(x))
-                .Select(x => x.Trim())
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .ToList()
             ?? new List<string>();
     }
 

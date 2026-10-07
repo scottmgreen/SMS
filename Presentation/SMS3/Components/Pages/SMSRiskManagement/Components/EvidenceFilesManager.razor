@@ -63,11 +63,12 @@
                                                 }
                                                 else
                                                 {
-                                                    <RadzenLink Text="@GetEvidenceFileDisplayName(file)"
-                                                              Style="font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--rz-primary);"
-                                                              Path="javascript:void(0);"
-                                                              Click="@(() => ViewFile(file))"
-                                                              title="Click to view file" />
+                                                    <RadzenButton Text="@GetEvidenceFileDisplayName(file)"
+                                                                  ButtonStyle="ButtonStyle.Base"
+                                                                  Variant="Variant.Text"
+                                                                  Click="@(() => ViewFile(file))"
+                                                                  title="Click to view file"
+                                                                  Style="font-size: 1.1rem; font-weight: 600; cursor: pointer; color: var(--rz-primary); padding: 0; text-transform: none;" />
                                                 }
                                                 
                                                 @if (!string.IsNullOrEmpty(file.Description))
@@ -125,6 +126,10 @@
                         {
                             <div style="margin-bottom: 1rem; padding: 1rem; border: 1px solid #ccc; border-radius: 4px;">
                                 <strong>@GetEvidenceFileDisplayName(file)</strong> (PDF)<br/>
+                                @if (!string.IsNullOrWhiteSpace(file.Description))
+                                {
+                                    <span>@file.Description</span><br/>
+                                }
                                 Size: @FormatFileSize(file.FileSizeBytes)
                             </div>
                         }

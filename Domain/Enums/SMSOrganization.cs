@@ -2,7 +2,7 @@
 // <copyright file="SMSOrganization.cs" company="SMS Safety Management System">
 //     Author: SMS Development Team
 //     Copyright (c) 2024 SMS Safety Management System. All rights reserved.
-//     Description: Enumeration defining valid values and classifications for SMS smsdepartment domain concepts.
+//     Description: Enumeration defining valid values and classifications for SMS organization domain concepts.
 //                  Domain enumeration defining valid states and classifications
 //                  for business entities and processes.
 // </copyright>
@@ -14,7 +14,7 @@ public sealed class SMSOrganization : IEquatable<SMSOrganization>
 {
     private static readonly object _syncLock = new();
 
-    private static IReadOnlyDictionary<string, SMSOrganization> _departmentsByCode =
+    private static IReadOnlyDictionary<string, SMSOrganization> _organizationsByCode =
         new Dictionary<string, SMSOrganization>(StringComparer.OrdinalIgnoreCase);
 
     private SMSOrganization(string value, string name, string description, string[] responsibilities)
@@ -35,23 +35,28 @@ public sealed class SMSOrganization : IEquatable<SMSOrganization>
         return new SMSOrganization(value, name, description, responsibilities);
     }
 
-    public static void SetDepartments(IEnumerable<SMSOrganization> departments)
+    public static void SetOrganizations(IEnumerable<SMSOrganization> organizations)
     {
-        if (departments is null)
+        if (organizations is null)
         {
             return;
         }
 
-        var map = departments
-            .Where(d => d is not null && !string.IsNullOrWhiteSpace(d.Value))
-            .GroupBy(d => d.Value, StringComparer.OrdinalIgnoreCase)
+        var map = organizations
+            .Where(o => o is not null && !string.IsNullOrWhiteSpace(o.Value))
+            .GroupBy(o => o.Value, StringComparer.OrdinalIgnoreCase)
             .Select(g => g.First())
             .ToDictionary(d => d.Value, StringComparer.OrdinalIgnoreCase);
 
         lock (_syncLock)
         {
-            _departmentsByCode = map;
+            _organizationsByCode = map;
         }
+    }
+
+    public static void SetDepartments(IEnumerable<SMSOrganization> departments)
+    {
+        SetOrganizations(departments);
     }
 
     public static SMSOrganization? FromValue(string value)
@@ -61,7 +66,7 @@ public sealed class SMSOrganization : IEquatable<SMSOrganization>
             return null;
         }
 
-        return _departmentsByCode.TryGetValue(value.Trim(), out var department) ? department : null;
+        return _organizationsByCode.TryGetValue(value.Trim(), out var organization) ? organization : null;
     }
 
     public static SMSOrganization? FromName(string name)
@@ -71,15 +76,15 @@ public sealed class SMSOrganization : IEquatable<SMSOrganization>
             return null;
         }
 
-        return _departmentsByCode.Values.FirstOrDefault(d => d.Name.Equals(name.Trim(), StringComparison.OrdinalIgnoreCase));
+        return _organizationsByCode.Values.FirstOrDefault(o => o.Name.Equals(name.Trim(), StringComparison.OrdinalIgnoreCase));
     }
 
-    public static IEnumerable<SMSOrganization> GetAllValues() => _departmentsByCode.Values;
+    public static IEnumerable<SMSOrganization> GetAllValues() => _organizationsByCode.Values;
 
-    public static List<SMSOrganization> GetAllValuesList() => _departmentsByCode.Values.ToList();
+    public static List<SMSOrganization> GetAllValuesList() => _organizationsByCode.Values.ToList();
 
     /// <summary>
-    /// Checks if this department has responsibility for a specific area
+    /// Checks if this organization has responsibility for a specific area
     /// </summary>
     public bool HasResponsibility(string responsibility)
     {
@@ -87,19 +92,29 @@ public sealed class SMSOrganization : IEquatable<SMSOrganization>
     }
 
     /// <summary>
-    /// Gets departments by responsibility area
+    /// Gets organizations by responsibility area
     /// </summary>
-    public static IEnumerable<SMSOrganization> GetDepartmentsByResponsibility(string responsibility)
+    public static IEnumerable<SMSOrganization> GetOrganizationsByResponsibility(string responsibility)
     {
-        return GetAllDepartments().Where(dept => dept.HasResponsibility(responsibility));
+        return GetAllOrganizations().Where(org => org.HasResponsibility(responsibility));
     }
 
     /// <summary>
-    /// Gets all available departments
+    /// Gets all available organizations
     /// </summary>
+    public static IEnumerable<SMSOrganization> GetAllOrganizations()
+    {
+        return _organizationsByCode.Values;
+    }
+
+    public static IEnumerable<SMSOrganization> GetDepartmentsByResponsibility(string responsibility)
+    {
+        return GetOrganizationsByResponsibility(responsibility);
+    }
+
     public static IEnumerable<SMSOrganization> GetAllDepartments()
     {
-        return _departmentsByCode.Values;
+        return GetAllOrganizations();
     }
 
     public bool Equals(SMSOrganization? other)

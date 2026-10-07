@@ -400,14 +400,18 @@ public class SessionCurrentUserService : ICurrentUserService
                 }
             }
 
-            // Method 3: Fallback - try to find any recent authentication data by user ID
+            // Method 3: Fallback by current session user when available
             try
             {
-                var userData = _circuitAuthStorage.GetAuthDataByUserId("AU-0001"); // Common admin user
-                if (userData != null)
+                var sessionUserCode = context?.Session?.GetString("SMS_UserCode");
+                if (!string.IsNullOrWhiteSpace(sessionUserCode))
                 {
-                    _logger.LogApplicationDebug("Found authentication data using user ID fallback");
-                    return userData;
+                    var userData = _circuitAuthStorage.GetAuthDataByUserId(sessionUserCode);
+                    if (userData != null)
+                    {
+                        _logger.LogApplicationDebug("Found authentication data using session user fallback: {UserCode}", sessionUserCode);
+                        return userData;
+                    }
                 }
             }
             catch (Exception fallbackEx)

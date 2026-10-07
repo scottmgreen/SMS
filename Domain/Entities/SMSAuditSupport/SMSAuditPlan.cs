@@ -41,6 +41,11 @@ public class SMSAuditPlan : BaseAuditableEntity
     public string LeadAuditor { get; set; } = string.Empty;
     public string AuditorTeam { get; set; } = string.Empty; // JSON array of auditor names/IDs
     public string ResponsibleDepartment { get; set; } = string.Empty;
+    public string ResponsibleOrganization
+    {
+        get => ResponsibleDepartment;
+        set => ResponsibleDepartment = value;
+    }
     public string ContactPerson { get; set; } = string.Empty;
 
     // Approval and Authorization - ADDED MISSING PROPERTIES
@@ -89,7 +94,7 @@ public class SMSAuditPlan : BaseAuditableEntity
                 Status = "Scheduled",
                 LeadAuditor = LeadAuditor,
                 AuditorTeam = AuditorTeam,
-                ResponsibleDepartment = ResponsibleDepartment
+                ResponsibleOrganization = ResponsibleOrganization
             };
 
             AuditCalendarEntries.Add(audit);

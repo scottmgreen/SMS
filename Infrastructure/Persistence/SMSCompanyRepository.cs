@@ -69,7 +69,7 @@ public sealed class SMSCompanyRepository : BaseRepository<SMSCompanyRepository, 
         {
             if (string.IsNullOrWhiteSpace(code))
             {
-                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSDepartmentError.InvalidDepartment);
+                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSOrganizationError.InvalidOrganization);
             }
 
             _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSCompany_GetByCode} Code:{code}", null);
@@ -95,7 +95,7 @@ public sealed class SMSCompanyRepository : BaseRepository<SMSCompanyRepository, 
 
             return company is not null
                 ? Result<SMSCompany>.Success(company)
-                : Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSDepartmentError.DepartmentNotFound);
+                : Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSOrganizationError.OrganizationNotFound);
         }
         catch (Exception ex)
         {
@@ -110,7 +110,7 @@ public sealed class SMSCompanyRepository : BaseRepository<SMSCompanyRepository, 
         {
             if (company is null)
             {
-                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSDepartmentError.NullOrEmpty);
+                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSOrganizationError.NullOrEmpty);
             }
 
             _logger.LogInfrastructurePostItem($"{_logHeader} {StoredProcs.pr_SMSCompany_Insert}", null);
@@ -156,7 +156,7 @@ public sealed class SMSCompanyRepository : BaseRepository<SMSCompanyRepository, 
         {
             if (company is null || string.IsNullOrWhiteSpace(company.Value))
             {
-                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSDepartmentError.InvalidDepartment);
+                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSOrganizationError.InvalidOrganization);
             }
 
             _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSCompany_Update} Code:{company.Value}", null);
@@ -196,7 +196,7 @@ public sealed class SMSCompanyRepository : BaseRepository<SMSCompanyRepository, 
         {
             if (string.IsNullOrWhiteSpace(code))
             {
-                return Result<bool>.Failure<bool>(DomainErrors.SMSDepartmentError.InvalidDepartment);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationError.InvalidOrganization);
             }
 
             _logger.LogInfrastructureDeleteItem($"{_logHeader} {StoredProcs.pr_SMSCompany_Delete} Code:{code}", null);

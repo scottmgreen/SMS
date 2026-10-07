@@ -144,6 +144,24 @@
                                           Click="@(() => ShowDescriptionDialog(registry))" />
                         </Template>
                     </RadzenDataGridColumn>
+                    <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="RiskAssessmentCode" Title="Risk Assessment ID" Width="140px" HeaderCssClass="custom-header-highlight">
+                        <Template Context="registry">
+                            <div style="@_basicTextStyle">
+                                @if (CanNavigateToRiskAssessment(registry))
+                                {
+                                    <a href="@GetRiskAssessmentUrl(registry)">@registry.RiskAssessmentCode</a>
+                                }
+                                else if (!string.IsNullOrWhiteSpace(registry.RiskAssessmentCode))
+                                {
+                                    @registry.RiskAssessmentCode
+                                }
+                                else
+                                {
+                                    <span class="text-muted">N/A</span>
+                                }
+                            </div>
+                        </Template>
+                    </RadzenDataGridColumn>
                     <RadzenDataGridColumn TItem="RiskRegistryEntry" Property="EffectiveRiskMatrixCode" Title="Risk Score (RS)" Width="120px" HeaderCssClass="custom-header-highlight">
                         <Template Context="registry">
                             <div style="@GetAviationMatrixCellStyle(registry.EffectiveRiskMatrixCode?.Trim() ?? string.Empty)" class="text-center fw-bold">

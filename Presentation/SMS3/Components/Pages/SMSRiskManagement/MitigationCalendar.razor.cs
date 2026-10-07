@@ -623,8 +623,8 @@ public partial class MitigationCalendar : ComponentBase
 
     private void LoadMitigationNotificationConfig()
     {
-        _notifyDaysInAdvance = _configuration.GetValue<int?>("MitigationTargetDateNotifications:DaysInAdvance") ?? 14;
-        _notifyHoursBefore = _configuration.GetValue<int?>("MitigationTargetDateNotifications:HoursBefore") ?? 24;
+        _notifyDaysInAdvance = _configuration.GetValue<int?>("NotificationEvents:MitigationTargetDateNotification:Schedule:DaysInAdvance") ?? 14;
+        _notifyHoursBefore = _configuration.GetValue<int?>("NotificationEvents:MitigationTargetDateNotification:Schedule:HoursBefore") ?? 24;
     }
 
     private async Task CheckMitigationTargetDateNotificationsAsync()

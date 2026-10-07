@@ -92,11 +92,11 @@ public class SafetyPerformanceIndicatorDataService : BaseDataService<SafetyPerfo
     }
 
     /// <summary>
-    /// Gets Safety Performance Indicators by department
+    /// Gets Safety Performance Indicators by organization
     /// </summary>
-    public Task<Result<List<SafetyPerformanceIndicator>>> GetSafetyPerformanceIndicatorsByDepartmentAsync(string department, CancellationToken ct = default)
+    public Task<Result<List<SafetyPerformanceIndicator>>> GetSafetyPerformanceIndicatorsByDepartmentAsync(string organization, CancellationToken ct = default)
     {
-        return _repo.GetSafetyPerformanceIndicatorsByDepartmentAsync(department, ct);
+        return _repo.GetSafetyPerformanceIndicatorsByDepartmentAsync(organization, ct);
     }
 
     /// <summary>

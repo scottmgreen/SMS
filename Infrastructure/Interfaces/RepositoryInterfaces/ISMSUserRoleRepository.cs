@@ -54,8 +54,9 @@ public interface ISMSUserRoleRepository
     Task<Result<IEnumerable<SMSUserRole>>> GetExpiringRolesAsync(DateTime cutoffDate);
 
     /// <summary>
-    /// Gets role assignments by department
+    /// Gets role assignments by organization
     /// </summary>
+    Task<Result<IEnumerable<SMSUserRole>>> GetByOrganizationAsync(string organization);
     Task<Result<IEnumerable<SMSUserRole>>> GetByDepartmentAsync(string department);
 
     /// <summary>

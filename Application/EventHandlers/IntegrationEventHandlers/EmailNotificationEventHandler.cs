@@ -68,6 +68,17 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
     {
         try
         {
+            var shouldSkipClosedReportResult = await ShouldSkipClosedReportNotificationAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
+            if (shouldSkipClosedReportResult.IsFailure)
+            {
+                return shouldSkipClosedReportResult;
+            }
+
+            if (shouldSkipClosedReportResult.Value)
+            {
+                return Result.Success();
+            }
+
             var shouldSkipEscalationResult = await ShouldSkipReportStatusEscalationAsync(integrationEvent, cancellationToken).ConfigureAwait(false);
             if (shouldSkipEscalationResult.IsFailure)
             {
@@ -345,9 +356,43 @@ public class EmailNotificationEventHandler : BaseIntegrationEventHandler<EmailNo
         return Result.Success(true);
     }
 
+    private async Task<Result<bool>> ShouldSkipClosedReportNotificationAsync(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
+    {
+        var reportCode = emailEvent.ReportId?.Trim();
+        if (string.IsNullOrWhiteSpace(reportCode))
+        {
+            return Result.Success(false);
+        }
+
+        var reportResult = await _mediator.SendAsync(new GetReportByCodeQuery(new ReportID(reportCode)), cancellationToken).ConfigureAwait(false);
+        if (reportResult.IsFailure || reportResult.Value is null)
+        {
+            return Result.Success(false);
+        }
+
+        if (!IsClosedStatus(reportResult.Value.Status))
+        {
+            return Result.Success(false);
+        }
+
+        _logger.LogApplicationInformation(
+            "[EMAIL HANDLER] Skipping email notification '{Subject}' for closed report {ReportCode} with status {CurrentStatus}.",
+            emailEvent.Subject,
+            reportCode,
+            reportResult.Value.Status ?? string.Empty);
+
+        return Result.Success(true);
+    }
+
     private static bool IsNeedsValidation(string? status)
         => string.Equals(status, ReportStatus.NeedsValidation.Value, StringComparison.OrdinalIgnoreCase)
            || string.Equals(status, ReportStatus.NeedsValidation.Name, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsClosedStatus(string? status)
+        => string.Equals(status, ReportStatus.ReportCloserNonSMSRisk.Value, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status, ReportStatus.ReportCloserNonSMSRisk.Name, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status, ReportStatus.ReportCloserHazardEliminated.Value, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status, ReportStatus.ReportCloserHazardEliminated.Name, StringComparison.OrdinalIgnoreCase);
 
     private async Task ResolveGroupContactRecipientsAsync(EmailNotificationEvent emailEvent, CancellationToken cancellationToken)
     {

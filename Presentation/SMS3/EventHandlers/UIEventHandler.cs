@@ -70,10 +70,10 @@ public class UIEventHandler : BaseUIEventHandler<UINotificationEvent>
     {
         return severity switch
         {
-            UINotificationSeverity.Error => _configuration.GetValue<bool>("FeatureManagement:ErrorNotifications", true),
-            UINotificationSeverity.Success => _configuration.GetValue<bool>("FeatureManagement:SuccessNotifications", true),
-            UINotificationSeverity.Warning => _configuration.GetValue<bool>("FeatureManagement:WarningNotifications", true),
-            UINotificationSeverity.Info => _configuration.GetValue<bool>("FeatureManagement:InfoNotifications", true),
+            UINotificationSeverity.Error => _configuration.GetValue<bool?>("NotificationEvents:UINotificationError:Enabled") ?? true,
+            UINotificationSeverity.Success => _configuration.GetValue<bool?>("NotificationEvents:UINotificationSuccess:Enabled") ?? true,
+            UINotificationSeverity.Warning => _configuration.GetValue<bool?>("NotificationEvents:UINotificationWarning:Enabled") ?? true,
+            UINotificationSeverity.Info => _configuration.GetValue<bool?>("NotificationEvents:UINotificationInfo:Enabled") ?? true,
             _ => true
         };
     }

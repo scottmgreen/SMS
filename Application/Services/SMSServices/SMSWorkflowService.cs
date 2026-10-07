@@ -22,7 +22,7 @@ namespace SMS_Application.Services;
 public interface ISMSWorkflowService
 {
     // Risk Approval Workflow
-    Task<Result<string>> GetRequiredApproverAsync(RiskLevel riskLevel, SMSDepartment department);
+    Task<Result<string>> GetRequiredApproverAsync(RiskLevel riskLevel, SMSOrganization organization);
     Task<Result<RiskApproval>> CreateRiskApprovalAsync(string hazardId, RiskLevel riskLevel, string requestedBy);
     Task<Result> ApproveRiskAsync(string approvalId, string approverId, string? notes = null);
     Task<Result> RejectRiskAsync(string approvalId, string rejectedBy, string rejectionReason);
@@ -46,7 +46,7 @@ public interface ISMSWorkflowService
     // Authority Validation
     Task<Result<bool>> ValidateApprovalAuthorityAsync(string userId, DecisionAuthority requiredAuthority);
     Task<Result<SMSRole>> GetUserHighestRoleAsync(string userId);
-    Task<Result<IEnumerable<string>>> GetUsersWithAuthorityAsync(DecisionAuthority requiredAuthority, SMSDepartment? department = null);
+    Task<Result<IEnumerable<string>>> GetUsersWithAuthorityAsync(DecisionAuthority requiredAuthority, SMSOrganization? organization = null);
 }
 
 /// <summary>
@@ -57,15 +57,15 @@ public class SMSWorkflowService : ISMSWorkflowService
     // Note: In a real implementation, these would be injected repositories
     // For now, showing the interface and key business logic
 
-    public async Task<Result<string>> GetRequiredApproverAsync(RiskLevel riskLevel, SMSDepartment department)
+    public async Task<Result<string>> GetRequiredApproverAsync(RiskLevel riskLevel, SMSOrganization organization)
     {
         try
         {
             // Get the decision authority level for this risk
             var decisionAuthority = DecisionAuthority.GetAuthorityForRiskLevel(riskLevel);
             
-            // Find users with appropriate authority in the relevant department
-            var approversResult = await GetUsersWithAuthorityAsync(decisionAuthority, department);
+            // Find users with appropriate authority in the relevant organization
+            var approversResult = await GetUsersWithAuthorityAsync(decisionAuthority, organization);
             if (approversResult.IsFailure)
                 return Result<string>.Failure<string>(approversResult.Error);
 
@@ -87,7 +87,9 @@ public class SMSWorkflowService : ISMSWorkflowService
         try
         {
             // Determine required approver based on risk level
-            var approverResult = await GetRequiredApproverAsync(riskLevel, SMSDepartment.AirportOperations);
+            var defaultOrganization = SMSOrganization.FromValue("AIRPORT_OPERATIONS")
+                ?? SMSOrganization.Create("AIRPORT_OPERATIONS", "Airport Operations", "Default workflow organization", Array.Empty<string>());
+            var approverResult = await GetRequiredApproverAsync(riskLevel, defaultOrganization);
             if (approverResult.IsFailure)
                 return Result<RiskApproval>.Failure<RiskApproval>(approverResult.Error);
 
@@ -319,12 +321,12 @@ public class SMSWorkflowService : ISMSWorkflowService
         }
     }
 
-    public async Task<Result<IEnumerable<string>>> GetUsersWithAuthorityAsync(DecisionAuthority requiredAuthority, SMSDepartment? department = null)
+    public async Task<Result<IEnumerable<string>>> GetUsersWithAuthorityAsync(DecisionAuthority requiredAuthority, SMSOrganization? organization = null)
     {
         try
         {
             // In real implementation, would query user repository
-            // filtered by role authority level and department
+            // filtered by role authority level and organization
 
             var userIds = new List<string> { "system-admin", "safety-manager", "operations-manager" };
             return Result<IEnumerable<string>>.Success((IEnumerable<string>)userIds);

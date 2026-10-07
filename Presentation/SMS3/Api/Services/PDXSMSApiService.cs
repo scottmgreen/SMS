@@ -705,7 +705,7 @@ namespace SMS3.Api.Services
             string? locationDescription,
             HttpContext httpContext)
         {
-            var recipientGroups = _configuration.GetSection("HazardReportNotifications:RecipientGroups").Get<string[]>()
+            var recipientGroups = _configuration.GetSection("NotificationEvents:HazardSubmissionStatusEscalation:Recipients:Groups").Get<string[]>()
                                  ?? Array.Empty<string>();
 
             var validRecipientGroups = recipientGroups
@@ -720,7 +720,7 @@ namespace SMS3.Api.Services
                 return;
             }
 
-            var autoSend = _configuration.GetValue<bool>("HazardReportNotifications:AutoSendHazardReportNotifications");
+            var autoSend = _configuration.GetValue<bool?>("NotificationEvents:HazardSubmissionStatusEscalation:Enabled") ?? true;
             if (!autoSend)
             {
                 _logger.LogInformation("API hazard submission notification skipped because AutoSendHazardReportNotifications is disabled.");
@@ -761,16 +761,9 @@ namespace SMS3.Api.Services
                     { "LocationDescription", normalizedLocationDescription }
                 });
 
-            if (autoSend)
-            {
-                var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Immediate);
-                if (publishResult.IsFailure)
-                {
-                    _logger.LogWarning("Failed to queue API hazard submission notification for report {ReportCode}: {Error}",
-                        createdHazard.ReportCode,
-                        publishResult.Error?.Message ?? "Unknown publish error");
-                }
-            }
+            _logger.LogInformation(
+                "API hazard submission notification email is skipped for report {ReportCode}; external intake system handles submission notifications.",
+                createdHazard.ReportCode);
 
             await QueueHazardStatusEscalationNotificationAsync(
                 createdHazard,
@@ -789,13 +782,13 @@ namespace SMS3.Api.Services
             string locationDescription,
             List<string> validRecipientGroups)
         {
-            var enabled = _configuration.GetValue<bool?>("HazardReportNotifications:EnableStatusEscalationNotification") ?? true;
+            var enabled = _configuration.GetValue<bool?>("NotificationEvents:HazardSubmissionStatusEscalation:Enabled") ?? true;
             if (!enabled)
             {
                 return;
             }
 
-            var thresholdHours = _configuration.GetValue<int?>("HazardReportNotifications:StatusEscalationThresholdHours") ?? 48;
+            var thresholdHours = _configuration.GetValue<int?>("NotificationEvents:HazardSubmissionStatusEscalation:Schedule:StatusEscalationThresholdHours") ?? 48;
             if (thresholdHours <= 0)
             {
                 thresholdHours = 48;
@@ -803,7 +796,7 @@ namespace SMS3.Api.Services
 
             var dueUtc = DateTime.Now.AddHours(thresholdHours);
 
-            var configuredMode = _configuration.GetValue<string>("HazardReportNotifications:StatusEscalationExecutionMode");
+            var configuredMode = _configuration.GetValue<string>("NotificationEvents:HazardSubmissionStatusEscalation:Channels:Email:ExecutionMode");
             var executionMode = Enum.TryParse<EventExecutionMode>(configuredMode, ignoreCase: true, out var parsedMode)
                 ? parsedMode
                 : EventExecutionMode.Manual;

@@ -56,13 +56,8 @@ public partial class OrganizationalUsers : ComponentBase
     private string _newLastName { get; set; } = string.Empty;
     private string _newUserName { get; set; } = string.Empty;
     private string _newPassword { get; set; } = string.Empty;
-    private string _newDepartmentId { get; set; } = string.Empty;
-    private string _newCompany { get; set; } = string.Empty;
-    private string _newJobFunction { get; set; } = string.Empty;
-    private string _newPosition { get; set; } = string.Empty;
+    private SMSOrganizationalUser _newUser { get; set; } = CreateEmptyOrganizationalUser();
     private string _newOrganizationLevelId { get; set; } =  string.Empty;
-    private bool _newTwoFactorEnabled { get; set; } = false;
-    private bool _newIsActive { get; set; } = true; // ADDED: Missing property
     // Update form fields to use role ID consistently with other user dialogs
     private string _newUserRoleCode { get; set; } = string.Empty;
     private string _editUserRoleCode { get; set; } = string.Empty;
@@ -72,13 +67,8 @@ public partial class OrganizationalUsers : ComponentBase
     
     private string _editFirstName { get; set; } = string.Empty;
     private string _editLastName { get; set; } = string.Empty;
-    private string _editDepartmentId { get; set; } = string.Empty;
-    private string _editCompany { get; set; } = string.Empty;
-    private string _editJobFunction { get; set; } = string.Empty;
-    private string _editPosition { get; set; } = string.Empty;
+    private SMSOrganizationalUser _editUser { get; set; } = CreateEmptyOrganizationalUser();
     private string _editOrganizationLevelId { get; set; }  = string.Empty;
-    private bool _editIsActive { get; set; } = true;
-    private bool _editTwoFactorEnabled { get; set; } = false;
 
     // Password change fields
     private string _passwordUserId { get; set; } = string.Empty;
@@ -126,22 +116,86 @@ public partial class OrganizationalUsers : ComponentBase
 
     private readonly List<StatusOption> _activeInactiveStatusOptions = StatusOptions.ActiveInactiveOptions;
 
-    private List<DropdownOption> DepartmentOptions
+    private List<DropdownOption> OrganizationDropdownOptions
     {
         get
         {
-            return SMSOrganization.GetAllDepartments()
-                .OrderBy(dept => dept.Name)
-                .Select(dept => new DropdownOption
+            return SMSOrganization.GetAllOrganizations()
+                .OrderBy(org => org.Name)
+                .Select(org => new DropdownOption
                 {
-                    Text = dept.Name,
-                    Value = dept.Value
+                    Text = org.Name,
+                    Value = org.Value
                 })
                 .ToList();
         }
     }
 
-    private List<DropdownOption> OrganizationOptions => DepartmentOptions;
+    private void OnEditOrganizationChanged(string? value)
+    {
+        _editUser.Organization = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnNewCompanyChanged(string? value)
+    {
+        _newUser.Company = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnNewOrganizationChanged(string? value)
+    {
+        _newUser.Organization = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnNewPositionChanged(string? value)
+    {
+        var position = value?.Trim() ?? string.Empty;
+        _newUser.Position = position;
+        _newUser.Title = position;
+        StateHasChanged();
+    }
+
+    private void OnNewOrganizationLevelChanged(string? value)
+    {
+        _newOrganizationLevelId = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnNewUserRoleCodeChanged(string? value)
+    {
+        _newUserRoleCode = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnEditCompanyChanged(string? value)
+    {
+        _editUser.Company = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnEditPositionChanged(string? value)
+    {
+        var position = value?.Trim() ?? string.Empty;
+        _editUser.Position = position;
+        _editUser.Title = position;
+        StateHasChanged();
+    }
+
+    private void OnEditOrganizationLevelChanged(string? value)
+    {
+        _editOrganizationLevelId = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private void OnEditUserRoleCodeChanged(string? value)
+    {
+        _editUserRoleCode = value?.Trim() ?? string.Empty;
+        StateHasChanged();
+    }
+
+    private List<DropdownOption> OrganizationOptions => OrganizationDropdownOptions;
 
     private List<DropdownOption> TitleOptions { get; set; } = new();
 
@@ -193,14 +247,14 @@ public partial class OrganizationalUsers : ComponentBase
         !string.IsNullOrWhiteSpace(_newUserName) &&
         !string.IsNullOrWhiteSpace(_newPassword) &&
         _newPassword == _confirmPassword &&
-        IsValidDepartment(_newDepartmentId) &&
+        IsValidOrganization(_newUser.Organization) &&
         IsValidOrganizationLevel(_newOrganizationLevelId) &&
         !string.IsNullOrWhiteSpace(_newUserRoleCode);
 
     private bool _isEditFormValid =>
         !string.IsNullOrWhiteSpace(_editFirstName) &&
         !string.IsNullOrWhiteSpace(_editLastName) &&
-        IsValidDepartment(_editDepartmentId) &&
+        IsValidOrganization(_editUser.Organization) &&
         IsValidOrganizationLevel(_editOrganizationLevelId) &&
         !string.IsNullOrWhiteSpace(_editUserRoleCode);
 
@@ -213,12 +267,12 @@ public partial class OrganizationalUsers : ComponentBase
         return SMSOrganizationalLevel.GetAllValues()
             .Any(level => level.Name.Equals(organizationLevel, StringComparison.OrdinalIgnoreCase));
     }
-    private bool IsValidDepartment(string department)
+    private bool IsValidOrganization(string organization)
     {
-        if (string.IsNullOrWhiteSpace(department)) return true; // Optional field
+        if (string.IsNullOrWhiteSpace(organization)) return true; // Optional field
 
         return SMSOrganization.GetAllValues()
-            .Any(level => level.Value.Equals(department, StringComparison.OrdinalIgnoreCase));
+            .Any(level => level.Value.Equals(organization, StringComparison.OrdinalIgnoreCase));
     }
 
     private static string NormalizeTitleSelection(string? rawValue)
@@ -358,18 +412,13 @@ public partial class OrganizationalUsers : ComponentBase
 
     private void OpenCreateModal()
     {
+        _newUser = CreateEmptyOrganizationalUser();
         _newFirstName = string.Empty;
         _newLastName = string.Empty;
         _newUserName = string.Empty;
         _newPassword = string.Empty;
         _confirmPassword = string.Empty;
-        _newDepartmentId = string.Empty;
-        _newCompany = string.Empty;
-        _newJobFunction = string.Empty;
-        _newPosition = string.Empty;
         _newOrganizationLevelId = string.Empty;
-        _newTwoFactorEnabled = false;
-        _newIsActive = true; // ADDED: Reset new property
         _newUserRoleCode = string.Empty;
         _showCreateModal = true;
     }
@@ -377,18 +426,13 @@ public partial class OrganizationalUsers : ComponentBase
     private void CloseCreateModal()
     {
         _showCreateModal = false;
+        _newUser = CreateEmptyOrganizationalUser();
         _newFirstName = string.Empty;
         _newLastName = string.Empty;
         _newUserName = string.Empty;
         _newPassword = string.Empty;
         _confirmPassword = string.Empty;
-        _newDepartmentId = string.Empty;
-        _newCompany = string.Empty;
-        _newJobFunction = string.Empty;
-        _newPosition = string.Empty;
         _newOrganizationLevelId = string.Empty;
-        _newTwoFactorEnabled = false;
-        _newIsActive = true; // ADDED: Reset new property
         _newUserRoleCode = string.Empty;
     }
 
@@ -430,15 +474,15 @@ public partial class OrganizationalUsers : ComponentBase
                 LastName = LastName.Create(_newLastName).Value,
                 UserName = UserName.Create(_newUserName).Value,
                 Password = Password.Create(_newPassword).Value,
-                Company = _newCompany,
-                Organization = _newDepartmentId,
-                Title = _newPosition,
-                JobFunction = _newJobFunction,
-                Position = _newPosition,
+                Company = _newUser.Company,
+                Organization = _newUser.Organization,
+                Title = _newUser.Title,
+                JobFunction = _newUser.JobFunction,
+                Position = _newUser.Position,
                 OrganizationLevel = SMSOrganizationalLevel.FromName(_newOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel,
                 UserRole = selectedRole,
-                TwoFactorEnabled = _newTwoFactorEnabled,
-                IsActive = _newIsActive, // UPDATED: Use _newIsActive property
+                TwoFactorEnabled = _newUser.TwoFactorEnabled,
+                IsActive = _newUser.IsActive,
                 SMSUserType = SMSUserType.Organizational // ADDED: Set correct user type
             };
             user.SyncAuthorityFromOrganizationLevel();
@@ -496,19 +540,29 @@ public partial class OrganizationalUsers : ComponentBase
             _currentUser = userResult.Value;
 
             // Set edit form values
+            _editUser = new SMSOrganizationalUser(new SMSOrganizationalUserID(_currentUser.Code))
+            {
+                Code = _currentUser.Code,
+                Company = ResolveDropdownValue(_currentUser.Company, CompanyOptions),
+                Organization = ResolveDropdownValue(_currentUser.Organization, OrganizationOptions),
+                JobFunction = _currentUser.JobFunction ?? string.Empty,
+                Title = ResolveDropdownValue(
+                    NormalizeTitleSelection(string.IsNullOrWhiteSpace(_currentUser.Title)
+                        ? (_currentUser.Position ?? string.Empty)
+                        : _currentUser.Title),
+                    TitleOptions),
+                Position = ResolveDropdownValue(
+                    NormalizeTitleSelection(string.IsNullOrWhiteSpace(_currentUser.Title)
+                        ? (_currentUser.Position ?? string.Empty)
+                        : _currentUser.Title),
+                    TitleOptions),
+                IsActive = _currentUser.IsActive,
+                TwoFactorEnabled = _currentUser.TwoFactorEnabled,
+                SMSUserType = SMSUserType.Organizational
+            };
             _editFirstName = _currentUser.FirstName?.Value ?? string.Empty;
             _editLastName = _currentUser.LastName?.Value ?? string.Empty;
-            _editDepartmentId = ResolveDropdownValue(_currentUser.Organization, OrganizationOptions);
-            _editCompany = ResolveDropdownValue(_currentUser.Company, CompanyOptions);
-            _editJobFunction = _currentUser.JobFunction ?? string.Empty;
-            _editPosition = ResolveDropdownValue(
-                NormalizeTitleSelection(string.IsNullOrWhiteSpace(_currentUser.Title)
-                    ? (_currentUser.Position ?? string.Empty)
-                    : _currentUser.Title),
-                TitleOptions);
             _editOrganizationLevelId = _currentUser.OrganizationLevel.Name ?? SMSOrganizationalLevel.UnassignedLevel;
-            _editIsActive = _currentUser.IsActive;
-            _editTwoFactorEnabled = _currentUser.TwoFactorEnabled;
             _editUserRoleCode = _currentUser.UserRole?.Code ?? string.Empty;
             // Open edit modal
             _showEditModal = true;
@@ -524,24 +578,19 @@ public partial class OrganizationalUsers : ComponentBase
     {
         _showEditModal = false;
         _currentUser = null;
+        _editUser = CreateEmptyOrganizationalUser();
         _editFirstName = string.Empty;
         _editLastName = string.Empty;
-        _editDepartmentId = string.Empty;
-        _editCompany = string.Empty;
-        _editJobFunction = string.Empty;
-        _editPosition = string.Empty;
         // FIXED: Reset to empty string instead of enum object
         _editOrganizationLevelId = string.Empty;
         _editUserRoleCode = string.Empty;
-        _editIsActive = true;
-        _editTwoFactorEnabled = false;
     }
 
     private async Task UpdateUser()
     {
-        if (_currentUser is null || !_isEditFormValid)
+        if (_currentUser is null)
         {
-            await ShowErrorAsyncNotification("Please fill in all required fields.");
+            await ShowErrorAsyncNotification("No user selected for update.");
             return;
         }
 
@@ -550,18 +599,34 @@ public partial class OrganizationalUsers : ComponentBase
             _isSaving = true;
             StateHasChanged();
 
+            var title = string.IsNullOrWhiteSpace(_editUser.Title)
+                ? string.Empty
+                : _editUser.Title;
+
+            var organization = string.IsNullOrWhiteSpace(_editUser.Organization)
+                ? string.Empty
+                : _editUser.Organization;
+
+            if (string.IsNullOrWhiteSpace(_editFirstName)
+                || string.IsNullOrWhiteSpace(_editLastName)
+                )
+            {
+                await ShowErrorAsyncNotification("Please fill in all required fields.");
+                return;
+            }
+
             // Update user properties
             _currentUser.FirstName = FirstName.Create(_editFirstName).Value;
             _currentUser.LastName = LastName.Create(_editLastName).Value;
-            _currentUser.Company = _editCompany;
-            _currentUser.Organization = _editDepartmentId;
-            _currentUser.Title = _editPosition;
-            _currentUser.JobFunction = _editJobFunction;
-            _currentUser.Position = _editPosition;
+            _currentUser.Company = _editUser.Company;
+            _currentUser.Organization = organization;
+            _currentUser.Title = title;
+            _currentUser.JobFunction = _editUser.JobFunction;
+            _currentUser.Position = title;
             _currentUser.OrganizationLevel = SMSOrganizationalLevel.FromName(_editOrganizationLevelId) ?? SMSOrganizationalLevel.UnassignedLevel;
             _currentUser.SyncAuthorityFromOrganizationLevel();
-            _currentUser.IsActive = _editIsActive;
-            _currentUser.TwoFactorEnabled = _editTwoFactorEnabled;
+            _currentUser.IsActive = _editUser.IsActive;
+            _currentUser.TwoFactorEnabled = _editUser.TwoFactorEnabled;
             // ADDED: Handle SMS User Role update
             if (!string.IsNullOrEmpty(_editUserRoleCode))
             {
@@ -586,7 +651,7 @@ public partial class OrganizationalUsers : ComponentBase
                 return;
             }
 
-            _currentUser.IsActive = _editIsActive;
+            _currentUser.IsActive = _editUser.IsActive;
             _currentUser.SMSUserType = SMSUserType.Organizational; // FIXED: Should be Organizational, not Stakeholder
             var updateCommand = new UpdateSMSOrganizationalUserCommand(_currentUser);
             var result = await _mediator.SendAsync(updateCommand, CancellationToken.None);
@@ -596,7 +661,7 @@ public partial class OrganizationalUsers : ComponentBase
                 await ShowSuccessAsyncNotification($"Organizational user '{_editFirstName} {_editLastName}' updated successfully.");
                 CloseEditModal();
                 await LoadDataAsync();
-            await (_usersGrid?.Reload() ?? Task.CompletedTask);
+                await (_usersGrid?.Reload() ?? Task.CompletedTask);
             }
             else
             {
@@ -613,6 +678,23 @@ public partial class OrganizationalUsers : ComponentBase
             _isSaving = false;
             StateHasChanged();
         }
+    }
+
+    private static SMSOrganizationalUser CreateEmptyOrganizationalUser()
+    {
+        return new SMSOrganizationalUser(new SMSOrganizationalUserID("OU-0000"))
+        {
+            Code = "OU-0000",
+            Company = string.Empty,
+            Organization = string.Empty,
+            JobFunction = string.Empty,
+            Title = string.Empty,
+            Position = string.Empty,
+            TwoFactorEnabled = false,
+            IsActive = true,
+            SMSUserType = SMSUserType.Organizational,
+            OrganizationLevel = SMSOrganizationalLevel.UnassignedLevel
+        };
     }
 
     #endregion

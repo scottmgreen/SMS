@@ -339,8 +339,8 @@ body.modal-open {
         }
         else
         {
-            // Default action - navigate to root
-            _navigation.NavigateTo("/", forceLoad: true);
+            // Default action - navigate to login
+            _navigation.NavigateTo("/login", forceLoad: true);
         }
     }
 
@@ -356,13 +356,13 @@ body.modal-open {
                 SessionTimerService.StopTimer();
             });
             
-            _navigation.NavigateTo("/", forceLoad: true);
+            _navigation.NavigateTo("/login", forceLoad: true);
         }
         catch (Exception ex)
         {
             Logger.LogError(ex, "Error during force logout");
             // Last resort - reload page
-            _navigation.NavigateTo("/", forceLoad: true);
+            _navigation.NavigateTo("/login", forceLoad: true);
         }
     }
 

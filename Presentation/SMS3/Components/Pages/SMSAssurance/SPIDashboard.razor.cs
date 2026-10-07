@@ -65,7 +65,7 @@ public partial class SPIDashboard : ComponentBase, SMS3.Components.Shared.ISPIDa
             IsLoading = true;
             StateHasChanged();
 
-            _logger.LogInformation("Loading SPI Dashboard data with filters - Type: {Type}, Department: {Department}, Period: {Period}",
+            _logger.LogInformation("Loading SPI Dashboard data with filters - Type: {Type}, Organization: {Organization}, Period: {Period}",
                 SelectedSPIType, SelectedDepartment, SelectedTimePeriod);
 
             var (startDate, endDate) = GetDateRange();

@@ -70,7 +70,7 @@
                                                 </RadzenFormField>
                                             </RadzenColumn>
                                             <RadzenColumn Size="3">
-                                                <RadzenFormField Text="Department *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
+                                                <RadzenFormField Text="Organization *" Variant="Variant.Outlined" AllowFloatingLabel="false" Style="width: 100%;">
 
                                                     <RadzenDropDown @bind-Value="@Model.PersonInterviewedDepartmentId"
                                                                     Data="@DepartmentOptions"
@@ -80,7 +80,7 @@
                                                                     Change="@(async (object value) => await OnDepartmentChanged(value?.ToString()))"
                                                                     Style="width: 100%; min-width: 100%;" />
                                                 </RadzenFormField>
-                                                <RadzenRequiredValidator Component="ReportingDepartment" Text="Reporting Department by is required" />
+                                                <RadzenRequiredValidator Component="ReportingDepartment" Text="Organization is required" />
                                             </RadzenColumn>
 
                                         </RadzenRow>

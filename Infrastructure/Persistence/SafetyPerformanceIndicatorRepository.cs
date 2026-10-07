@@ -396,11 +396,11 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
     }
 
     public async Task<Result<List<SafetyPerformanceIndicator>>> GetSafetyPerformanceIndicatorsByDepartmentAsync(
-        string department, CancellationToken ct = default)
+        string organization, CancellationToken ct = default)
     {
         try
         {
-            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SafetyPerformanceIndicator_GetByDepartment} Department: {department}", null);
+            _logger.LogInfrastructureGetItems($"{_logheader} {StoredProcs.pr_SafetyPerformanceIndicator_GetByDepartment} Organization: {organization}", null);
 
             using SqlConnection sql = new(_connectionString);
             using SqlCommand cmd = new(StoredProcs.pr_SafetyPerformanceIndicator_GetByDepartment, sql)
@@ -408,7 +408,7 @@ public sealed class SafetyPerformanceIndicatorRepository : BaseRepository<Safety
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIResponsibleDepartment, department));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSPIResponsibleDepartment, organization));
 
             List<SafetyPerformanceIndicator> response = new();
 

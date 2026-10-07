@@ -32,7 +32,7 @@ public class SMSRoleService : ISMSRoleService
         string userID,
         string userType,
         SMSUserRole role,
-        string department,
+        string organization,
         string assignedBy,
         DateTime? effectiveDate = null,
         DateTime? expirationDate = null,
@@ -42,7 +42,7 @@ public class SMSRoleService : ISMSRoleService
             userID,
             userType,
             role,
-            department,
+            organization,
             assignedBy,
             effectiveDate,
             expirationDate,
@@ -173,7 +173,7 @@ public class SMSRoleService : ISMSRoleService
         IEnumerable<string> userIDs,
         string userType,
         SMSRole role,
-        string department,
+        string organization,
         string assignedBy)
     {
         var assignments = new List<SMSApplicationUserRole>();
@@ -182,7 +182,7 @@ public class SMSRoleService : ISMSRoleService
         {
             try
             {
-                var assignment = await AssignRoleToUserAsync(userID, userType, role, department, assignedBy);
+                var assignment = await AssignRoleToUserAsync(userID, userType, role, organization, assignedBy);
                 assignments.Add(assignment);
             }
             catch

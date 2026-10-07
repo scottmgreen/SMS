@@ -1,0 +1,42 @@
+@using SMS_Application.Interfaces
+@using SMS3.Components.Pages.SMSSystem.Models
+
+@inherits EmailNotificationSettingsDialogBase
+
+<RadzenCard>
+    <RadzenRow class="mb-3">
+        <RadzenColumn Size="12">
+            <h5>Notification Event Settings</h5>
+            <p class="mb-0">Configure execution mode and enabled state for Integration, UI, and Domain notification controls.</p>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <RadzenDataGrid Data="@_settings" TItem="EmailNotificationSetting" AllowPaging="false" AllowSorting="true">
+        <Columns>
+            <RadzenDataGridColumn TItem="EmailNotificationSetting" Property="NotificationType" Title="Notification" Width="220px" />
+            <RadzenDataGridColumn TItem="EmailNotificationSetting" Title="Enabled" Width="110px">
+                <Template Context="item">
+                    <RadzenCheckBox @bind-Value="item.Enabled" Disabled="@_isSaving" />
+                </Template>
+            </RadzenDataGridColumn>
+            <RadzenDataGridColumn TItem="EmailNotificationSetting" Property="TriggerDomainEvent" Title="Trigger Domain Event" Width="320px" />
+            <RadzenDataGridColumn TItem="EmailNotificationSetting" Property="AppSettingsSection" Title="AppSettings Section" Width="320px" />
+            <RadzenDataGridColumn TItem="EmailNotificationSetting" Title="Execution Mode" Width="180px">
+                <Template Context="item">
+                    <RadzenDropDown TValue="EventExecutionMode"
+                                    Data="@_allowedModes"
+                                    @bind-Value="item.ExecutionMode"
+                                    Style="width: 160px;"
+                                    Disabled="@_isSaving" />
+                </Template>
+            </RadzenDataGridColumn>
+        </Columns>
+    </RadzenDataGrid>
+
+    <RadzenRow class="mt-3">
+        <RadzenColumn Size="12" class="text-end">
+            <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light" Click="@Close" class="me-2" Disabled="@_isSaving" />
+            <RadzenButton Text="Save" Icon="save" ButtonStyle="ButtonStyle.Primary" Click="@SaveAsync" Disabled="@_isSaving" />
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard>

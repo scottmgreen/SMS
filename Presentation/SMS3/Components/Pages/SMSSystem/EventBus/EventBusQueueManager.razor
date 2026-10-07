@@ -107,6 +107,13 @@
                                  ButtonStyle="ButtonStyle.Dark" 
                                  class="me-2" />
 
+                    <RadzenButton Icon="settings"
+                                 Text="Email Notification Settings"
+                                 Click="@OpenEmailNotificationSettingsAsync"
+                                 ButtonStyle="ButtonStyle.Base"
+                                 class="me-2"
+                                 Disabled="@_isProcessing" />
+
                     <RadzenButton Icon="play_arrow" 
                                  Text="Execute All Pending" 
                                  Click="@ExecuteAllPending" 

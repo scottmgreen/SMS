@@ -85,16 +85,16 @@ else if (ReportDetails is not null)
                            
                         </RadzenColumn> *@
                     </RadzenRow>
-                    @if (!string.IsNullOrWhiteSpace(ReportDetails.SubmittingDepartment) || !string.IsNullOrWhiteSpace(ReportDetails.JobFunction))
+                    @if (!string.IsNullOrWhiteSpace(ReportDetails.SubmittingOrganization) || !string.IsNullOrWhiteSpace(ReportDetails.JobFunction))
                     {
                         <RadzenRow Gap="1rem">
-                            @if (!string.IsNullOrWhiteSpace(ReportDetails.SubmittingDepartment))
+                            @if (!string.IsNullOrWhiteSpace(ReportDetails.SubmittingOrganization))
                             {
                                 <RadzenColumn Size="2" SizeMD="2" Style="text-align:end">
-                                    <strong>Submitting Department:</strong>
+                                    <strong>Submitting Organization:</strong>
                                 </RadzenColumn>
                                 <RadzenColumn Size="4" SizeMD="4" Style="text-align:start">
-                                    @ReportDetails.SubmittingDepartment
+                                    @ReportDetails.SubmittingOrganization
                                 </RadzenColumn>
                             }
 
@@ -472,7 +472,7 @@ else if (ReportDetails is not null)
                             <RadzenIcon Icon="email" class="me-2" />
                             <div>
                                 <strong>Email Support</strong><br>
-                                <a href="mailto:sms@pdx.com" class="contact-link">sms@pdx.com</a>
+                                <a href="mailto:sms@flypdx.com" class="contact-link">sms@flypdx.com</a>
                             </div>
                         </div>
                         <div class="contact-method mb-3">

@@ -19,6 +19,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi;
+using SMS3.Components.Pages.SMSSystem.Services;
 
 namespace SMS3.Configuration;
 
@@ -108,6 +109,8 @@ public static class DependencyInjection
         // EventBus UI Event Handlers
         services.AddScoped<UIEventHandler>();
         services.AddScoped<SPIDashboardRefreshEventHandler>();
+        services.AddScoped<IEmailNotificationSettingsService, EmailNotificationSettingsService>();
+        services.AddScoped<IEmailNotificationExecutionModeResolver, EmailNotificationSettingsService>();
 
         // Add any additional UI helper services here
         // services.AddScoped<IDialogService, DialogService>();

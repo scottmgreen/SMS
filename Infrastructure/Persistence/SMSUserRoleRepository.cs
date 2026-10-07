@@ -440,16 +440,16 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
         }
     }
 
-    public async Task<Result<IEnumerable<SMSUserRole>>> GetByDepartmentAsync(string department)
+    public async Task<Result<IEnumerable<SMSUserRole>>> GetByOrganizationAsync(string organization)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(department))
+            if (string.IsNullOrWhiteSpace(organization))
             {
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSUserRole_GetByDepartment} Department:{department}", null);
+            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSUserRole_GetByDepartment} Organization:{organization}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_SMSUserRole_GetByDepartment, sql)
@@ -457,7 +457,7 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleDepartment, department));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSUserRoleDepartment, organization));
 
             var userRoles = new List<SMSUserRole>();
 
@@ -498,6 +498,11 @@ public sealed class SMSUserRoleRepository : BaseRepository<SMSUserRoleRepository
             _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
+    }
+
+    public async Task<Result<IEnumerable<SMSUserRole>>> GetByDepartmentAsync(string department)
+    {
+        return await GetByOrganizationAsync(department).ConfigureAwait(false);
     }
 
     public async Task<Result<IEnumerable<SMSUserRole>>> GetByRoleValueAsync(string roleValue)

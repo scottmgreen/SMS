@@ -107,7 +107,7 @@ public partial class ReportListing : ComponentBase
     private string _selectedDescription = string.Empty;
     private string _selectedReportId = string.Empty;
     private string _selectedDescriptionTitle = "Description";
-    private readonly Dictionary<string, (string HazardCode, string Description)> _initialHazardDescriptionByReport = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Dictionary<string, (string HazardCode, string HazardTitle, string Description)> _initialHazardDescriptionByReport = new(StringComparer.OrdinalIgnoreCase);
     private bool _showEditDescriptionModal = false;
     private Report? _reportForDescriptionEdit;
     private string _editableReportDescription = string.Empty;
@@ -338,7 +338,11 @@ public partial class ReportListing : ComponentBase
             }
 
             _initialHazardDescriptionByReport[hazard.ReportCode] =
-                (hazard.Code, string.IsNullOrWhiteSpace(hazard.Description) ? "No description available" : hazard.Description);
+                (
+                    hazard.Code,
+                    string.IsNullOrWhiteSpace(hazard.HazardTitle) ? hazard.Code : hazard.HazardTitle,
+                    string.IsNullOrWhiteSpace(hazard.Description) ? "No description available" : hazard.Description
+                );
         }
     }
 
@@ -2437,23 +2441,15 @@ public async Task OnResetReportAsync(Report report)
     {
         var message = $"Are you sure you want to reset the validation for report '{report.Code}'?\n\n" +
                        $"Report Details:\n" +
-                       $"Code: {report.Code}\n" +
-                       $"Name: {report.Name ?? "Unnamed Report"}\n" +
-                       $"Status: {report.Status ?? "Unknown"}\n" +
+                       $"Code: {report.Code} Status: {report.Status ?? "Unknown"}\n" +
                        $"Created: {report.CreatedDate:yyyy-MM-dd}\n" +
+                       $"Last Updated: {report.UpdatedDate:yyyy-MM-dd}\n" +
+                       $"Name: {report.Name ?? "Unnamed Report"}\n" +
+                       
+                       
                        $"Associated Hazards: {hazardCount}\n\n";
 
-        if (hazardCount > 0)
-        {
-            message += "WARNING: This report has associated hazards that may also be affected by this reset.\n\n";
-        }
-
-        message += "This action will:\n" +
-                   "Reset the report validation status\n" +
-                   "Clear any validation history\n" +
-                   "Potentially affect associated hazards\n" +
-                   "Require re-validation of the report";
-
+        
         return message;
     }
 
@@ -2678,14 +2674,15 @@ public async Task OnResetReportAsync(Report report)
             {
                 _selectedDescription = "No initial hazard description available";
                 _selectedReportId = report.Code ?? "Unknown";
+                _selectedDescriptionTitle = "Initial Hazard";
             }
             else
             {
                 _selectedDescription = hazardInfo.Description;
                 _selectedReportId = hazardInfo.HazardCode;
+                _selectedDescriptionTitle = $"Initial Hazard {hazardInfo.HazardTitle}";
             }
 
-            _selectedDescriptionTitle = "Initial Hazard Description";
             _showDescriptionModal = true;
             StateHasChanged();
         }

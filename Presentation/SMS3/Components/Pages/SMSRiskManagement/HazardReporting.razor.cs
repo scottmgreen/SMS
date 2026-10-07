@@ -135,12 +135,12 @@ public partial class HazardReporting : ComponentBase, IDisposable
     public List<DropdownOption> HazardTypeOptions { get; set; } = new();
 
 
-    public List<DropdownOption> DepartmentOptions { get; set; } = new();    
+    public List<DropdownOption> OrganizationOptions { get; set; } = new();    
 
     ///<summary>
-    /// Department List
+    /// Organization list
     /// </summary>
-    public string? SelectedDepartment { get; set; } 
+    public string? SelectedOrganization { get; set; } 
 
     /// <summary>
     /// Currently selected hazard category
@@ -638,8 +638,8 @@ public partial class HazardReporting : ComponentBase, IDisposable
                 // Clear category-related fields
                 SelectedHazardCategory = null;
                 HazardTypeOptions.Clear();
-                DepartmentOptions.Clear();
-                SelectedDepartment =null;
+                OrganizationOptions.Clear();
+                SelectedOrganization = null;
             }
             await _eventBus.PublishUIEventAsync(UINotificationEvent.Info("Information", $"Loaded report {reportCode} for editing."));
             
@@ -1863,8 +1863,7 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
         var hasContactEmail = !HazardReport.IsAnonymous && !string.IsNullOrWhiteSpace(HazardReport.ReportContactEmail);
 
-        await SendSubmissionConfirmationEmailIfApplicable(createdHazard, createdTracking.TrackingCode);
-        await QueueHazardSubmissionNotificationAsync(createdHazard);
+        // Submission confirmation/internal notifications are handled by the external intake system.
 
         // ===============================
         // STEP 3: Process files for new hazard
@@ -1884,233 +1883,15 @@ public partial class HazardReporting : ComponentBase, IDisposable
         //This is the point where we can show the email compose dialog if applicable, but only if the user has provided a contact email and is not anonymous
         //additionally, this replicates the workflow when the report is submitted from the FlyPDX website using the API submission.
 
-        await ShowSubmissionEmailComposeDialogIfApplicable(createdHazard, createdTracking.TrackingCode);
+        // Submission email compose/preview is not required in internal SMS flow.
 
         _logger.LogInformation("CREATE mode completed - Report: {ReportCode}, Hazard: {HazardCode} Tracking: { TrackingCode} ", createdHazard.ReportCode, createdHazard.Code, createdTracking.TrackingCode);
 
         await _eventBus.PublishUIEventAsync(UINotificationEvent.Success(
             "Success",
-            hasContactEmail
-                ? $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}. A confirmation email was sent to {HazardReport.ReportContactEmail}."
-                : $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}."));
+            $"Hazard report {createdHazard.Code} has been created and linked to report {createdHazard.ReportCode} with Tracking ID {createdTracking.TrackingCode}."));
 
     }
-
-    private async Task QueueHazardSubmissionNotificationAsync(Hazard createdHazard)
-    {
-        var recipientGroups = _configuration.GetSection("HazardReportNotifications:RecipientGroups").Get<string[]>()
-                             ?? Array.Empty<string>();
-
-        var validRecipientGroups = recipientGroups
-            .Where(r => !string.IsNullOrWhiteSpace(r))
-            .Select(r => r.Trim())
-            .Distinct(StringComparer.OrdinalIgnoreCase)
-            .ToList();
-
-        if (!validRecipientGroups.Any())
-        {
-            _logger.LogWarning("Hazard submission notification skipped because no recipient groups are configured.");
-            return;
-        }
-
-        var autoSend = _configuration.GetValue<bool>("HazardReportNotifications:AutoSendHazardReportNotifications");
-        if (!autoSend)
-        {
-            _logger.LogInformation("Hazard submission notification skipped because AutoSendHazardReportNotifications is disabled.");
-            return;
-        }
-
-        var geoLocation = SelectedGeoLocation is not null && SelectedGeoLocation.Latitude.HasValue && SelectedGeoLocation.Longitude.HasValue
-            ? $"{SelectedGeoLocation.Latitude.Value:F6}, {SelectedGeoLocation.Longitude.Value:F6}"
-            : (HasValidCoordinates ? $"{SelectedLatitude:F6}, {SelectedLongitude:F6}" : "N/A");
-
-        var locationDescription = string.IsNullOrWhiteSpace(SelectedLocationDescription)
-            ? (HazardReport.Location ?? string.Empty)
-            : SelectedLocationDescription;
-
-        var subject = $"SMS Hazard Report Submitted - {createdHazard.ReportCode} / {createdHazard.Code}";
-        var body = BuildHazardSubmissionNotificationEmailHtml(createdHazard, geoLocation, locationDescription);
-
-        var emailEvent = new EmailNotificationEvent(
-            toRecipients: validRecipientGroups,
-            subject: subject,
-            body: body,
-            isHtmlContent: true,
-            priority: EmailPriority.Normal,
-            reportId: createdHazard.ReportCode,
-            workflowType: "HazardSubmissionNotification",
-            relatedEntityType: "Report",
-            relatedEntityId: createdHazard.ReportCode,
-            emailMetadata: new Dictionary<string, object>
-            {
-                { "HazardCode", createdHazard.Code },
-                { "ReportCode", createdHazard.ReportCode ?? string.Empty },
-                { "GeoLocation", geoLocation },
-                { "LocationDescription", locationDescription ?? string.Empty }
-            });
-
-        var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Immediate);
-        if (publishResult.IsFailure)
-        {
-            _logger.LogWarning("Failed to queue hazard submission notification for report {ReportCode}: {Error}",
-                createdHazard.ReportCode,
-                publishResult.Error?.Message ?? "Unknown publish error");
-        }
-    }
-
-    private async Task SendSubmissionConfirmationEmailIfApplicable(Hazard createdHazard, string trackingCode)
-    {
-        if (HazardReport.IsAnonymous || string.IsNullOrWhiteSpace(HazardReport.ReportContactEmail))
-        {
-            return;
-        }
-
-        var subject = $"PDX Hazard Report Submission Confirmation - {createdHazard.ReportCode} / {createdHazard.Code}";
-        var body = BuildHazardSubmissionConfirmationEmailHtml(createdHazard, trackingCode.Trim());
-
-        var emailEvent = new EmailNotificationEvent(
-            toRecipients: new List<string> { HazardReport.ReportContactEmail.Trim() },
-            subject: subject,
-            body: body,
-            isHtmlContent: true,
-            priority: EmailPriority.Normal,
-            reportId: createdHazard.ReportCode,
-            workflowType: "HazardSubmissionConfirmation",
-            relatedEntityType: "Report",
-            relatedEntityId: createdHazard.ReportCode,
-            emailMetadata: new Dictionary<string, object>
-            {
-                { "HazardCode", createdHazard.Code },
-                { "TrackingCode", trackingCode },
-                { "SubmittedBy", HazardReport.ReportContactName ?? string.Empty }
-            });
-
-        var publishResult = await _eventBus.PublishIntegrationEventAsync(emailEvent, EventExecutionMode.Queued);
-        if (publishResult.IsFailure)
-        {
-            _logger.LogWarning("Failed to queue hazard submission confirmation email for report {ReportCode}: {Error}",
-                createdHazard.ReportCode,
-                publishResult.Error?.Message ?? "Unknown publish error");
-        }
-    }
-
-    private async Task ShowSubmissionEmailComposeDialogIfApplicable(Hazard hazard, string trackingCode)
-    {
-        if (HazardReport.IsAnonymous || string.IsNullOrWhiteSpace(HazardReport.ReportContactEmail))
-        {
-            return;
-        }
-
-        IsLoading = false;
-        await InvokeAsync(StateHasChanged);
-
-        var emailModel = new EmailComposeModel
-        {
-            To = new List<string> { HazardReport.ReportContactEmail.Trim() },
-            Subject = $"PDX Hazard Report Submission Confirmation - {hazard.ReportCode} / {hazard.Code}",
-            BodyHtml = BuildHazardSubmissionConfirmationEmailHtml(hazard, trackingCode)
-        };
-
-        var dialogResult = await _dialogService.OpenAsync<EmailComposeDialog>(
-            "",
-            new Dictionary<string, object?>
-            {
-                { "InitialModel", emailModel },
-                { "DialogTitleOverride", "Hazard Submission Email Preview" }
-            },
-            new DialogOptions
-            {
-                Width = "1200px",
-                Height = "760px",
-                Resizable = true,
-                Draggable = true,
-                CloseDialogOnOverlayClick = false,
-                CloseDialogOnEsc = true,
-                ShowClose = true
-            });
-
-        if (dialogResult is bool sent && sent)
-        {
-            CloseFinalConfirmation();
-        }
-    }
-
-    private string BuildHazardSubmissionConfirmationEmailHtml(Hazard createdHazard, string trackingCode)
-    {
-        var trackingUrl = GetTrackingUrl();
-        var logoUrl = $"{_navigation.BaseUri.TrimEnd('/')}/images/PDX_SMSEmailLogo.png";
-
-        return SMSEmailTemplateBuilder.BuildStandardEmail(
-            title: "Hazard Report Confirmation",
-            introHtml: "Thank you for submitting a hazard report. A copy of your report details is included below for your records.",
-            summaryFields:
-            [
-                new SMSEmailField { Label = "Tracking Link", Value = $"<a href='{WebUtility.HtmlEncode(trackingUrl)}'>{WebUtility.HtmlEncode(trackingUrl)}</a>", ValueIsHtml = true },
-                new SMSEmailField { Label = "PIN / Tracking ID", Value = trackingCode },
-                new SMSEmailField { Label = "Report ID", Value = createdHazard.ReportCode },
-                new SMSEmailField { Label = "Hazard ID", Value = createdHazard.Code }
-            ],
-            sections:
-            [
-                new SMSEmailSection
-                {
-                    Title = "Reporter Information",
-                    Fields =
-                    [
-                        new SMSEmailField { Label = "Date Submitted", Value = HazardReport.SubmittedDate.ToString("MMMM dd, yyyy h:mm tt") },
-                        new SMSEmailField { Label = "Name", Value = HazardReport.ReportContactName ?? string.Empty },
-                        new SMSEmailField { Label = "Email", Value = HazardReport.ReportContactEmail ?? string.Empty },
-                        new SMSEmailField { Label = "Phone", Value = HazardReport.ReportContactCell ?? string.Empty },
-                        new SMSEmailField { Label = "Company", Value = HazardReport.ReportContactCompany ?? string.Empty }
-                    ]
-                },
-                new SMSEmailSection
-                {
-                    Title = "Hazard Information",
-                    Fields =
-                    [
-                        new SMSEmailField { Label = "Hazard Title", Value = HazardReport.HazardTitle ?? string.Empty },
-                        new SMSEmailField { Label = "Hazard Category", Value = HazardReport.HazardCategory ?? string.Empty },
-                        new SMSEmailField { Label = "Hazard Type", Value = HazardReport.HazardType ?? string.Empty },
-                        new SMSEmailField { Label = "Date and Time of Event", Value = HazardReport.IncidentDateTime.ToString("MMMM dd, yyyy h:mm tt") },
-                        new SMSEmailField { Label = "Location Description", Value = SelectedLocationDescription ?? HazardReport.Location ?? string.Empty },
-                        new SMSEmailField { Label = "Hazard Description", Value = HazardReport.Description ?? string.Empty, IsFullWidth = true }
-                    ]
-                }
-            ],
-            footerHtml: "If any information is missing or incorrect, please reply to this message or contact <a href='mailto:SMS@flypdx.com'>SMS@flypdx.com</a>.",
-            logoUrl: logoUrl);
-    }
-
-    private string BuildHazardSubmissionNotificationEmailHtml(Hazard createdHazard, string geoLocation, string? locationDescription)
-    {
-        var logoUrl = $"{_navigation.BaseUri.TrimEnd('/')}/images/PDX_SMSEmailLogo.png";
-
-        return SMSEmailTemplateBuilder.BuildStandardEmail(
-            title: "Hazard Report Submission Notification",
-            introHtml: "A new hazard report has been submitted and is ready for review.",
-            summaryFields:
-            [
-                new SMSEmailField { Label = "Report ID", Value = createdHazard.ReportCode ?? string.Empty },
-                new SMSEmailField { Label = "Hazard ID", Value = createdHazard.Code }
-            ],
-            sections:
-            [
-                new SMSEmailSection
-                {
-                    Title = "Hazard Details",
-                    Fields =
-                    [
-                        new SMSEmailField { Label = "Hazard Description", Value = HazardReport.Description ?? string.Empty, IsFullWidth = true },
-                        new SMSEmailField { Label = "Geo Location", Value = geoLocation },
-                        new SMSEmailField { Label = "Location Description", Value = locationDescription ?? string.Empty, IsFullWidth = true }
-                    ]
-                }
-            ],
-            footerHtml: "This notification was generated by SMS3 hazard report submission workflow.",
-            logoUrl: logoUrl);
-    }
-
 
     private async Task<Result<HazardReportTracking>> GenerateTracking(Hazard createdHazard)
     {
@@ -2401,18 +2182,23 @@ public partial class HazardReporting : ComponentBase, IDisposable
 
     private void InitializeDropdownOptions()
     {
-        var (categories, types, departments) = DropdownHelper.InitializeHazardReportingDropdowns();
+        var (categories, types, organizations) = DropdownHelper.InitializeHazardReportingDropdowns();
         HazardCategoryOptions = categories;
         HazardTypeOptions = types;
-        DepartmentOptions = departments;
+        OrganizationOptions = organizations;
+    }
+
+    public async Task OnOrganizationChanged(string? organizationValue)
+    {
+        _logger.LogInformation("Submitting Organization changed to: {Organization}", organizationValue);
+
+        SelectedOrganization = organizationValue;
+
     }
 
     public async Task OnDepartmentChanged(string? departmentValue)
     {
-        _logger.LogInformation("Submitting Department changed to: {Department}", departmentValue);
-
-        SelectedDepartment = departmentValue;
-
+        await OnOrganizationChanged(departmentValue);
     }
 
     
@@ -2598,11 +2384,16 @@ public partial class HazardReporting : ComponentBase, IDisposable
         return category?.Name ?? key;
     }
 
-    private string GetDepartmentDisplay(string? key)
+    private string GetOrganizationDisplay(string? key)
     {
         if (string.IsNullOrEmpty(key)) return "UNKNOWN";
-        var department = SMSOrganization.FromValue(key);
-        return department?.Name ?? key;
+        var organization = SMSOrganization.FromValue(key);
+        return organization?.Name ?? key;
+    }
+
+    private string GetDepartmentDisplay(string? key)
+    {
+        return GetOrganizationDisplay(key);
     }
     #endregion
 

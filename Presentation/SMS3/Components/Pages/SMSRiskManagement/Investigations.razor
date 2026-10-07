@@ -131,10 +131,12 @@ else
                                         <!-- Action Buttons -->
                                         <RadzenStack Orientation="Orientation.Horizontal" Gap="0.5rem" JustifyContent="JustifyContent.End">
                                            <!--NEEDS SMART LABEL-->
+                                            <RadzenButton Text="Cancel" Icon="close" ButtonStyle="ButtonStyle.Light"
+                                                          Click="NavigateToListings" Disabled="@IsSaving" />
                                             @if (_currentUserService.CanUpdate("SMS_Listings_Investigations"))
                                             {
                                                 <RadzenButton Text="Save Changes" Icon="save" ButtonStyle="ButtonStyle.Success"
-                                                              Click="HandleSave" Disabled="@IsSaving" />
+                                                              Click="HandleSave" Disabled="@(IsSaving || !IsInvestigationDirty())" />
                                             }
 
                                         </RadzenStack>
@@ -213,7 +215,7 @@ else
     <div class="modal-overlay">
         <div class="sms-modal-dialog" style="max-width: 700px; width: 90%;">
             <div class="sms-modal-content">
-                <div class="sms-modal-header" style="background-color: #dc3545; color: white;">
+                <div class="sms-modal-header" style="background-color: var(--sms-brand-primary); color: white;">
                     <div class="d-flex justify-content-between align-items-center w-100">
                         <h5 class="sms-modal-title mb-0">
                             <i class="fas fa-exclamation-triangle"></i> Confirm Return to Validation

@@ -25,7 +25,7 @@ public class CreateSMSCompanyCommandHandler : BaseCommandBundle, IBaseRequestHan
             if (request?.Company is null)
             {
                 _logger.LogApplicationWarning("CreateSMSCompanyCommand received null company", ApplicationEventIds.Warning);
-                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSDepartmentError.NullOrEmpty);
+                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSOrganizationError.NullOrEmpty);
             }
 
             return await _companyService.CreateSMSCompanyAsync(request.Company, request.CreatedBy, ct).ConfigureAwait(false);
@@ -65,7 +65,7 @@ public class UpdateSMSCompanyCommandHandler : BaseCommandBundle, IBaseRequestHan
             if (request?.Company is null)
             {
                 _logger.LogApplicationWarning("UpdateSMSCompanyCommand received null company", ApplicationEventIds.Warning);
-                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSDepartmentError.NullOrEmpty);
+                return Result<SMSCompany>.Failure<SMSCompany>(DomainErrors.SMSOrganizationError.NullOrEmpty);
             }
 
             return await _companyService.UpdateSMSCompanyAsync(request.Company, request.UpdatedBy, ct).ConfigureAwait(false);

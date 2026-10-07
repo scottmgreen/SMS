@@ -128,7 +128,7 @@ public partial class SPIConfiguration
             query = query.Where(spi => spi.IndicatorType.Value == _selectedType);
         }
 
-        // Apply department filter
+        // Apply organization filter
         if (!string.IsNullOrWhiteSpace(_selectedDepartment))
         {
             query = query.Where(spi => spi.ResponsibleDepartment == _selectedDepartment);

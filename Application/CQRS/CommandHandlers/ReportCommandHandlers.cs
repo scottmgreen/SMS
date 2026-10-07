@@ -159,6 +159,20 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
                         }
                     }
 
+                    if (IsClosedStatus(currentStatus))
+                    {
+                        var cancelAllResult = await _notificationsScanService
+                            .CancelPendingNotificationsForReportAsync(updatedReport.Code, "UpdateReportCommand-Closed", cancellationToken)
+                            .ConfigureAwait(false);
+
+                        if (cancelAllResult.IsFailure)
+                        {
+                            _logger.LogApplicationWarning("Failed to cancel pending notifications for closed report {ReportCode}: {Error}",
+                                updatedReport.Code,
+                                cancelAllResult.Error?.Message ?? "Unknown cancellation error");
+                        }
+                    }
+
                     await TransitionEventPublisher.PublishIfChangedAsync(
                         _eventBus,
                         previousStatus,
@@ -217,6 +231,12 @@ public class UpdateReportCommandHandler : BaseCommandBundle, IBaseRequestHandler
     private static bool IsNeedsValidation(ReportStatus status)
         => string.Equals(status.Value, ReportStatus.NeedsValidation.Value, StringComparison.OrdinalIgnoreCase)
            || string.Equals(status.Name, ReportStatus.NeedsValidation.Name, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsClosedStatus(ReportStatus status)
+        => string.Equals(status.Value, ReportStatus.ReportCloserNonSMSRisk.Value, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status.Name, ReportStatus.ReportCloserNonSMSRisk.Name, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status.Value, ReportStatus.ReportCloserHazardEliminated.Value, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status.Name, ReportStatus.ReportCloserHazardEliminated.Name, StringComparison.OrdinalIgnoreCase);
 }
 
 public class DeleteReportCommandHandler : BaseCommandBundle, IBaseRequestHandler<DeleteReportCommand, Result<bool>>
@@ -328,6 +348,20 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestH
                             cancelResult.Error?.Message ?? "Unknown cancellation error");
                     }
                 }
+
+                if (IsClosedStatus(request.ReportStatus))
+                {
+                    var cancelAllResult = await _notificationsScanService
+                        .CancelPendingNotificationsForReportAsync(request.ReportCode, "UpdateReportStatusCommand-Closed", cancellationToken)
+                        .ConfigureAwait(false);
+
+                    if (cancelAllResult.IsFailure)
+                    {
+                        _logger.LogApplicationWarning("Failed to cancel pending notifications for closed report {ReportCode}: {Error}",
+                            request.ReportCode,
+                            cancelAllResult.Error?.Message ?? "Unknown cancellation error");
+                    }
+                }
             }
             else
             {
@@ -352,6 +386,12 @@ public class UpdateReportStatusCommandHandler : BaseCommandBundle, IBaseRequestH
     private static bool IsNeedsValidation(ReportStatus status)
         => string.Equals(status.Value, ReportStatus.NeedsValidation.Value, StringComparison.OrdinalIgnoreCase)
            || string.Equals(status.Name, ReportStatus.NeedsValidation.Name, StringComparison.OrdinalIgnoreCase);
+
+    private static bool IsClosedStatus(ReportStatus status)
+        => string.Equals(status.Value, ReportStatus.ReportCloserNonSMSRisk.Value, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status.Name, ReportStatus.ReportCloserNonSMSRisk.Name, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status.Value, ReportStatus.ReportCloserHazardEliminated.Value, StringComparison.OrdinalIgnoreCase)
+           || string.Equals(status.Name, ReportStatus.ReportCloserHazardEliminated.Name, StringComparison.OrdinalIgnoreCase);
 }
 
 

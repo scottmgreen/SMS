@@ -97,6 +97,11 @@ public class SPIDashboardCard
     public string PerformanceStatus { get; set; } = string.Empty; // Meeting, Warning, Critical
     public DateTime? LastMeasurementDate { get; set; }
     public string ResponsibleDepartment { get; set; } = string.Empty;
+    public string ResponsibleOrganization
+    {
+        get => ResponsibleDepartment;
+        set => ResponsibleDepartment = value;
+    }
     public string DataOwner { get; set; } = string.Empty;
 
     // Trend Information

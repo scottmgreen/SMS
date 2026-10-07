@@ -112,9 +112,9 @@ public class SMSAuditPlanDataService : BaseDataService<SMSAuditPlanDataService>
     }
 
     /// <summary>
-    /// Gets SMS Audit Plans by department
+    /// Gets SMS Audit Plans by organization
     /// </summary>
-    public async Task<Result<List<SMSAuditPlan>>> GetAuditPlansByDepartmentAsync(string department, string? statusFilter = null, CancellationToken ct = default)
+    public async Task<Result<List<SMSAuditPlan>>> GetAuditPlansByDepartmentAsync(string organization, string? statusFilter = null, CancellationToken ct = default)
     {
         // For now, get all and filter in memory - could be optimized with specific repository methods
         var allPlansResult = await _repo.GetAllSMSAuditPlansAsync(ct);
@@ -124,7 +124,7 @@ public class SMSAuditPlanDataService : BaseDataService<SMSAuditPlanDataService>
         }
 
         var filteredPlans = allPlansResult.Value
-            .Where(ap => ap.ResponsibleDepartment.Equals(department, StringComparison.OrdinalIgnoreCase));
+            .Where(ap => ap.ResponsibleDepartment.Equals(organization, StringComparison.OrdinalIgnoreCase));
 
         if (!string.IsNullOrEmpty(statusFilter))
         {

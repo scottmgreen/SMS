@@ -8,6 +8,7 @@
 //-----------------------------------------------------------------------
 
 using Microsoft.AspNetCore.Components;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using System.Text;
 using Radzen;
@@ -35,6 +36,7 @@ public partial class EventBusQueueManager
 
     [Inject] private IBaseMediator _mediator { get; set; } = default!;
     [Inject] private ICurrentUserService _currentUserService { get; set; } = default!;
+    [Inject] private IConfiguration _configuration { get; set; } = default!;
 
     private IEnumerable<QueuedEvent> _queuedEvents = new List<QueuedEvent>();
     private QueueStatistics? _statistics;
@@ -95,6 +97,7 @@ public partial class EventBusQueueManager
         var reportIdentifier = GetEventReportIdentifier(queuedEvent);
         var hazardTitle = GetHazardTitleFromEventData(queuedEvent.EventData);
         var emailType = GetEmailTypeFromEventData(queuedEvent.EventData);
+        var channelDisplayName = GetEmailChannelDisplayName();
 
         if (string.IsNullOrWhiteSpace(hazardTitle)
             && !string.IsNullOrWhiteSpace(reportIdentifier)
@@ -129,10 +132,10 @@ public partial class EventBusQueueManager
 
         if (suffixParts.Count == 0)
         {
-            return eventType;
+            return channelDisplayName;
         }
 
-        return $"{eventType} {string.Join(" - ", suffixParts)}";
+        return $"{channelDisplayName} {string.Join(" - ", suffixParts)}";
     }
 
     private static string GetHazardTitleFromEventData(string eventData)
@@ -163,7 +166,7 @@ public partial class EventBusQueueManager
         }
     }
 
-    private static string GetEmailTypeFromEventData(string eventData)
+    private string GetEmailTypeFromEventData(string eventData)
     {
         if (string.IsNullOrWhiteSpace(eventData))
         {
@@ -174,6 +177,16 @@ public partial class EventBusQueueManager
         {
             using var doc = System.Text.Json.JsonDocument.Parse(eventData);
             var root = doc.RootElement;
+
+            var notificationType = FirstString(root, "WorkflowType", "workflowType");
+            if (!string.IsNullOrWhiteSpace(notificationType))
+            {
+                var configuredName = _configuration.GetValue<string>($"NotificationEvents:{notificationType}:Name");
+                if (!string.IsNullOrWhiteSpace(configuredName))
+                {
+                    return configuredName.Trim();
+                }
+            }
 
             var subject = FirstString(root, "Subject", "subject");
             if (string.IsNullOrWhiteSpace(subject))
@@ -194,6 +207,14 @@ public partial class EventBusQueueManager
         {
             return string.Empty;
         }
+    }
+
+    private string GetEmailChannelDisplayName()
+    {
+        var configuredName = _configuration.GetValue<string>("NotificationEvents:ChannelDisplayNames:Email");
+        return string.IsNullOrWhiteSpace(configuredName)
+            ? "Email"
+            : configuredName.Trim();
     }
 
     #region Filter Options
@@ -374,6 +395,31 @@ public partial class EventBusQueueManager
         Logger.LogDebug("Filters changed - Status: {Status}, Type: {Type}", _statusFilter, _eventTypeFilter);
         await LoadQueuedEvents();
         await LoadStatistics();
+    }
+
+    private async Task OpenEmailNotificationSettingsAsync()
+    {
+        if (_isProcessing)
+        {
+            return;
+        }
+
+        var result = await DialogService.OpenAsync<EmailNotificationSettingsDialog>(
+            "Email Notification Settings",
+            null,
+            new DialogOptions
+            {
+                Width = "1280px",
+                Height = "760px",
+                Resizable = true,
+                Draggable = true,
+                ShowClose = true
+            });
+
+        if (result is bool saved && saved)
+        {
+            await InvokeAsync(StateHasChanged);
+        }
     }
 
     private async Task ExecuteQueueEvent(string queueCode)

@@ -209,24 +209,24 @@ public sealed class SMSUserRoleDataService : BaseDataService<SMSUserRoleDataServ
     }
 
     /// <summary>
-    /// Gets SMS User Roles by department
+    /// Gets SMS User Roles by organization
     /// </summary>
-    public async Task<Result<IEnumerable<SMSUserRole>>> GetSMSUserRolesByDepartmentAsync(string department, CancellationToken ct = default)
+    public async Task<Result<IEnumerable<SMSUserRole>>> GetSMSUserRolesByDepartmentAsync(string organization, CancellationToken ct = default)
     {
         try
         {
-            if (string.IsNullOrWhiteSpace(department))
+            if (string.IsNullOrWhiteSpace(organization))
             {
-                _logger.LogInfrastructureError("GetSMSUserRolesByDepartmentAsync received null or empty department");
+                _logger.LogInfrastructureError("GetSMSUserRolesByOrganizationAsync received null or empty organization");
                 return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NullOrEmpty);
             }
 
-            _logger.LogInfrastructureInformation("Retrieving SMS User Roles for department: {Department}", department);
-            return await _repository.GetByDepartmentAsync(department);
+            _logger.LogInfrastructureInformation("Retrieving SMS User Roles for organization: {Organization}", organization);
+            return await _repository.GetByOrganizationAsync(organization);
         }
         catch (Exception ex)
         {
-            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS User Roles for department: {Department}", department);
+            _logger.LogInfrastructureError(ex, "Unexpected error retrieving SMS User Roles for organization: {Organization}", organization);
             return Result<IEnumerable<SMSUserRole>>.Failure<IEnumerable<SMSUserRole>>(DomainErrors.SMSUserRoleError.NotFound);
         }
     }

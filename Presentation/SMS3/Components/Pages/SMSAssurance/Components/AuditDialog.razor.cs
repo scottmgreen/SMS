@@ -132,7 +132,7 @@ public partial class AuditDialog : ComponentBase
             errors.Add("_scope is required");
 
         if (string.IsNullOrWhiteSpace(_responsibleDepartment))
-            errors.Add("Responsible department is required");
+            errors.Add("Responsible organization is required");
 
         if (string.IsNullOrWhiteSpace(_leadAuditor))
             errors.Add("Lead auditor is required");

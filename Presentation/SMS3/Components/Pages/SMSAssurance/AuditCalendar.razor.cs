@@ -296,7 +296,7 @@ public partial class AuditCalendar : ComponentBase
                          $"Status: {auditItem.Status}\\n" +
                          $"Priority: {auditItem.Priority}\\n" +
                          $"Lead Auditor: {auditItem.LeadAuditor}\\n" +
-                         $"Department: {auditItem.ResponsibleDepartment}";
+                         $"Organization: {auditItem.ResponsibleDepartment}";
 
             args.Attributes["title"] = tooltip;
         }

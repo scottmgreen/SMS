@@ -777,7 +777,7 @@ public partial class AuditManagement : ComponentBase
                 filteredPlans = filteredPlans.Where(p => p.AuditType == _selectedType);
             }
 
-            // Apply department filter
+            // Apply organization filter
             if (_selectedDepartment != "All")
             {
                 filteredPlans = filteredPlans.Where(p => p.ResponsibleDepartment == _selectedDepartment);

@@ -77,6 +77,36 @@ public class AuthenticationStrategyManager : IAuthenticationStrategyManager
                 var primaryResult = await primaryStrategy.StoreUserAsync(user, userType, cancellationToken);
                 if (primaryResult.IsSuccess)
                 {
+                    // Keep fallback strategy in sync so Blazor circuit-based requests can
+                    // still resolve authentication/permissions when HttpContext session
+                    // is not available during interactive rendering.
+                    if (_config.EnableFallbackChain && _config.FallbackMethod != _config.PreferredMethod)
+                    {
+                        var fallbackForSync = GetStrategy(_config.FallbackMethod);
+                        if (fallbackForSync?.IsAvailable == true)
+                        {
+                            try
+                            {
+                                var fallbackSyncResult = await fallbackForSync.StoreUserAsync(user, userType, cancellationToken);
+                                if (!fallbackSyncResult.IsSuccess)
+                                {
+                                    _logger.LogApplicationWarning(
+                                        "Fallback sync store failed for user {UserCode} on strategy {Strategy}: {Error}",
+                                        user.Code,
+                                        fallbackForSync.StrategyName,
+                                        fallbackSyncResult.Error?.Message);
+                                }
+                            }
+                            catch (Exception syncEx)
+                            {
+                                _logger.LogApplicationWarning(syncEx,
+                                    "Fallback sync store threw for user {UserCode} on strategy {Strategy}",
+                                    user.Code,
+                                    fallbackForSync.StrategyName);
+                            }
+                        }
+                    }
+
                     if (_config.LogAuthenticationDecisions)
                     {
                         _logger.LogApplicationInformation("User {UserCode} stored successfully using primary strategy: {Strategy}", 

@@ -69,7 +69,7 @@ public sealed class SMSJobTitleRepository : BaseRepository<SMSJobTitleRepository
         {
             if (string.IsNullOrWhiteSpace(code))
             {
-                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSDepartmentError.InvalidDepartment);
+                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSOrganizationError.InvalidOrganization);
             }
 
             _logger.LogInfrastructureGetItem($"{_logHeader} {StoredProcs.pr_SMSTitle_GetByCode} Code:{code}", null);
@@ -95,7 +95,7 @@ public sealed class SMSJobTitleRepository : BaseRepository<SMSJobTitleRepository
 
             return title is not null
                 ? Result<SMSJobTitle>.Success(title)
-                : Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSDepartmentError.DepartmentNotFound);
+                : Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSOrganizationError.OrganizationNotFound);
         }
         catch (Exception ex)
         {
@@ -110,7 +110,7 @@ public sealed class SMSJobTitleRepository : BaseRepository<SMSJobTitleRepository
         {
             if (title is null)
             {
-                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSDepartmentError.NullOrEmpty);
+                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSOrganizationError.NullOrEmpty);
             }
 
             _logger.LogInfrastructurePostItem($"{_logHeader} {StoredProcs.pr_SMSTitle_Insert}", null);
@@ -157,7 +157,7 @@ public sealed class SMSJobTitleRepository : BaseRepository<SMSJobTitleRepository
         {
             if (string.IsNullOrWhiteSpace(code) || title is null)
             {
-                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSDepartmentError.InvalidDepartment);
+                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSOrganizationError.InvalidOrganization);
             }
 
             _logger.LogInfrastructurePutItem($"{_logHeader} {StoredProcs.pr_SMSTitle_Update} Code:{code}", null);
@@ -192,7 +192,7 @@ public sealed class SMSJobTitleRepository : BaseRepository<SMSJobTitleRepository
         {
             if (string.IsNullOrWhiteSpace(code))
             {
-                return Result<bool>.Failure<bool>(DomainErrors.SMSDepartmentError.InvalidDepartment);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationError.InvalidOrganization);
             }
 
             _logger.LogInfrastructureDeleteItem($"{_logHeader} {StoredProcs.pr_SMSTitle_Delete} Code:{code}", null);

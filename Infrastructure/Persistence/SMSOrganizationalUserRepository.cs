@@ -481,11 +481,11 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
         }
     }
 
-    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetByDepartmentAsync(string department)
+    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetByOrganizationAsync(string organization)
     {
         try
         {
-            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSOrganizationalUser_GetByDepartment} Department:{department}", null);
+            _logger.LogInfrastructureGetItems($"{_logHeader} {StoredProcs.pr_SMSOrganizationalUser_GetByDepartment} Organization:{organization}", null);
 
             using var sql = new SqlConnection(_connectionString);
             using var cmd = new SqlCommand(StoredProcs.pr_SMSOrganizationalUser_GetByDepartment, sql)
@@ -493,7 +493,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
                 CommandType = CommandType.StoredProcedure
             };
 
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserDepartment, department));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSMSOrganizationalUserDepartment, organization));
 
             var users = new List<SMSOrganizationalUser>();
 
@@ -515,6 +515,11 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
             return Result<IEnumerable<SMSOrganizationalUser>>.Failure<IEnumerable<SMSOrganizationalUser>>(DomainErrors.SMSOrganizationalUserError.NotFound);
         }
+    }
+
+    public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetByDepartmentAsync(string department)
+    {
+        return await GetByOrganizationAsync(department).ConfigureAwait(false);
     }
 
     public async Task<Result<IEnumerable<SMSOrganizationalUser>>> GetByPositionAsync(string position)
@@ -623,7 +628,7 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
     //    }
     //}
 
-    public async Task<Result<Dictionary<string, int>>> GetDepartmentStatisticsAsync()
+    public async Task<Result<Dictionary<string, int>>> GetOrganizationStatisticsAsync()
     {
         try
         {
@@ -644,6 +649,11 @@ public sealed class SMSOrganizationalUserRepository : BaseRepository<SMSOrganiza
             _logger.LogInfrastructureGetItemsError($"{_logHeader} {ex.Message}", null);
             return Result<Dictionary<string, int>>.Failure<Dictionary<string, int>>(DomainErrors.GeneralError.UnProcessableRequest);
         }
+    }
+
+    public async Task<Result<Dictionary<string, int>>> GetDepartmentStatisticsAsync()
+    {
+        return await GetOrganizationStatisticsAsync().ConfigureAwait(false);
     }
 
 

@@ -24,6 +24,7 @@ namespace SMS_Application.Strategies;
 /// </summary>
 public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
 {
+    private const string StableNoContextCircuitKey = "no_context_stable";
     private readonly IHttpContextAccessor _httpContextAccessor;
     private readonly ILogger<CircuitBasedAuthenticationStrategy> _logger;
     private readonly IUserInstantiationService _userInstantiationService;
@@ -127,7 +128,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             }
 
             // Also store under user code for fallback retrieval
-            var userCircuitKey = $"circuit_{user.Code}_{DateTime.Now.Ticks}";
+            var userCircuitKey = $"user_{user.Code}";
             userData["SMS_UserCircuitKey"] = userCircuitKey;
             _circuitAuthStorage.SetAuthData(userCircuitKey, userData);
 
@@ -156,38 +157,41 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
             Dictionary<string, string>? userData = null;
             string? foundCircuitId = null;
 
-            // Strategy 1: Try to find existing data by scanning stored circuit IDs FIRST
-            // This avoids generating unnecessary circuit IDs when data already exists
-            var allStoredData = _circuitAuthStorage.GetAllAuthData();
-            foreach (var kvp in allStoredData)
+            // SECURITY: Never scan and pick arbitrary user auth data from global storage.
+            // Resolve only against the current request/circuit identifiers.
+            var currentCircuitId = GetCachedOrGenerateCircuitId();
+            _logger.LogApplicationDebug("Trying current circuit ID: {CircuitId}", currentCircuitId ?? "NULL");
+
+            if (!string.IsNullOrEmpty(currentCircuitId))
             {
-                if (kvp.Value.ContainsKey("SMS_StoredCircuitId") && kvp.Value.ContainsKey("IsAuthenticated") && kvp.Value.GetValueOrDefault("IsAuthenticated") == "true")
+                userData = _circuitAuthStorage.GetAuthData(currentCircuitId);
+                if (userData != null)
                 {
-                    userData = kvp.Value;
-                    foundCircuitId = kvp.Key;
-                    _logger.LogApplicationDebug("Found user data by scanning stored circuit IDs: {FoundKey}", kvp.Key);
-                    break;
+                    foundCircuitId = currentCircuitId;
+                    _logger.LogApplicationDebug("Found user data with current circuit ID: {CircuitId}", currentCircuitId);
                 }
             }
 
-            // Strategy 2: Only try current circuit ID if no existing data found
+            // Try explicit circuit ID stored in request context for this request only
             if (userData == null)
             {
-                var currentCircuitId = GetCachedOrGenerateCircuitId(); // Use cached version to reduce generation
-                _logger.LogApplicationDebug("No existing data found, trying current circuit ID: {CircuitId}", currentCircuitId ?? "NULL");
-                
-                if (!string.IsNullOrEmpty(currentCircuitId))
+                var context = _httpContextAccessor.HttpContext;
+                var requestCircuitId = context?.Items.TryGetValue("SMS_CIRCUIT_ID", out var storedCircuitId) == true
+                    ? storedCircuitId?.ToString()
+                    : null;
+
+                if (!string.IsNullOrWhiteSpace(requestCircuitId))
                 {
-                    userData = _circuitAuthStorage.GetAuthData(currentCircuitId);
+                    userData = _circuitAuthStorage.GetAuthData(requestCircuitId);
                     if (userData != null)
                     {
-                        foundCircuitId = currentCircuitId;
-                        _logger.LogApplicationDebug("Found user data with current circuit ID: {CircuitId}", currentCircuitId);
+                        foundCircuitId = requestCircuitId;
+                        _logger.LogApplicationDebug("Found user data with request circuit ID: {CircuitId}", requestCircuitId);
                     }
                 }
             }
 
-            // Strategy 3: Try alternate circuit keys if still not found
+            // Try alternate circuit keys if still not found
             if (userData == null && !string.IsNullOrEmpty(_cachedCircuitId))
             {
                 var circuitKeys = new[]
@@ -207,6 +211,41 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
                         break;
                     }
                 }
+            }
+
+            // Try stable no-context fallback key
+            if (userData == null)
+            {
+                userData = _circuitAuthStorage.GetAuthData(StableNoContextCircuitKey);
+                if (userData != null)
+                {
+                    foundCircuitId = StableNoContextCircuitKey;
+                    _logger.LogApplicationDebug("Found user data using stable no-context key");
+                }
+            }
+
+            // Try user-specific fallback key when available
+            if (userData == null)
+            {
+                var contextUserCode = _httpContextAccessor.HttpContext?.Items["SMS_UserCode"]?.ToString()
+                    ?? _httpContextAccessor.HttpContext?.Session?.GetString("SMS_UserCode");
+
+                if (!string.IsNullOrWhiteSpace(contextUserCode))
+                {
+                    var userKey = $"user_{contextUserCode}";
+                    userData = _circuitAuthStorage.GetAuthData(userKey);
+                    if (userData != null)
+                    {
+                        foundCircuitId = userKey;
+                        _logger.LogApplicationDebug("Found user data using user key: {UserKey}", userKey);
+                    }
+                }
+            }
+
+            if (userData == null)
+            {
+                _logger.LogApplicationDebug("No authenticated user data found for current circuit context");
+                return Result.Success((ValueTuple<BaseUser, SMSUserType>?)null);
             }
 
             if (userData == null)
@@ -520,7 +559,7 @@ public class CircuitBasedAuthenticationStrategy : IAuthenticationStrategy
         {
             if (context == null)
             {
-                return $"no_context_{DateTime.Now:yyyyMMdd_HHmmss}_{Guid.NewGuid():N}";
+                return StableNoContextCircuitKey;
             }
 
             // Create deterministic ID based on connection characteristics

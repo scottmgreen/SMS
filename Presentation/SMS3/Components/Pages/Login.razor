@@ -1,5 +1,5 @@
 @page "/login"
-@layout SMS3.Components.Layout.LoginLayout
+@layout SMS3.Components.Layout.MainLayout
 <div class="home-background">
 <div class="sms-login-card">
     <!-- Login Card Header -->
@@ -19,13 +19,13 @@
     <RadzenTemplateForm TItem="LoginFormModel" Data="@LoginModel" Submit="@HandleLoginAsync">
         <div class="mb-3">
             <label class="form-label sms-form-label">
-                <i class="fas fa-envelope me-2"></i> Email Address
+                <i class="fas fa-user me-2"></i> User Name
             </label>
             <RadzenTextBox @bind-Value="@LoginModel.Username" 
                            Name="Username" 
-                           Placeholder="Enter your email address"
+                           Placeholder="Enter your user name"
                            Class="sms-form-input" />
-            <RadzenRequiredValidator Component="Username" Text="Email is required" Class="sms-validation-error" />
+            <RadzenRequiredValidator Component="Username" Text="User name is required" Class="sms-validation-error" />
         </div>
         
         <div class="mb-3">

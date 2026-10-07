@@ -213,7 +213,7 @@ SMS3 Modules Structure:
   - **Advanced Operations**: Bulk operations, user export
 
 - **OrganizationalUsers.razor**: Internal organizational user management
-  - **Department Integration**: Department-based user organization
+- **Organization Integration**: Organization-based user organization
   - **Hierarchy Management**: Organizational level assignments
 
 - **StakeholderUsers.razor**: External stakeholder user management
@@ -222,7 +222,7 @@ SMS3 Modules Structure:
 
 ##### UI-2.5.2.2 UserGroups Submodule
 - **ApplicationGroups.razor**: Application group management
-- **OrganizationalGroups.razor**: Department-based group management  
+- **OrganizationalGroups.razor**: Organization-based group management  
 - **StakeholderGroups.razor**: External stakeholder group management
 
 ##### UI-2.5.2.3 UserRoles Submodule

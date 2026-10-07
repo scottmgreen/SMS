@@ -124,7 +124,7 @@ else
 
                             
                         </RadzenRow>
-                        <!-- Row 0: Anonymous, Submitted By, Department and Job Function-->
+                        <!-- Row 0: Anonymous, Submitted By, Organization and Job Function-->
                         <RadzenRow Gap="1rem" Class="rz-mb-3">
                             
 
@@ -216,29 +216,29 @@ else
                                 @if (!HazardReport.IsAnonymous)
                                 {
                                     <RadzenColumn Size="3">
-                                        <RadzenFormField Text="Submitting Department" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
+                                        <RadzenFormField Text="Submitting Organization" Variant="Variant.Outlined" Style="width: 100%;" AllowFloatingLabel="false">
 
                                             <RadzenDropDown @bind-Value="@HazardReport.SubmittingDepartment"
-                                            Data="@DepartmentOptions"
+                                            Data="@OrganizationOptions"
                                             TextProperty="Text"
                                             ValueProperty="Value"
-                                            Placeholder="Select submitting department..."
+                                            Placeholder="Select submitting organization..."
                                             Name="SubmittingDepartment"
-                                            Change="@(async (object value) => await OnDepartmentChanged(value?.ToString()))"
+                                            Change="@(async (object value) => await OnOrganizationChanged(value?.ToString()))"
                                             Style="width: 50%; min-width: 50%;" />
                                         </RadzenFormField>
-                                        @* <RadzenRequiredValidator Component="SubmittingDepartment" Text="Reporting Department by is required" /> *@
+                                        @* <RadzenRequiredValidator Component="SubmittingDepartment" Text="Reporting Organization is required" /> *@
                                     </RadzenColumn>
                                     <RadzenColumn Size="5">
                                         <RadzenFormField Text="Job Function" AllowFloatingLabel="false"  Variant="Variant.Outlined" Style="width: 100%;">
                                             <RadzenTextArea @bind-Value="@HazardReport.SubmittingDepartmentJobFunction"
-                                            Placeholder="Enter reporting department or organization..."
+                                            Placeholder="Enter reporting organization..."
                                             Name="SubmittingDepartmentJobFunction"
                                             MaxLength="200"
                                             Style="width: 100%; min-width: 100%;"
                                             Rows="2" Cols="100" />
                                         </RadzenFormField>
-                                        @* <RadzenRequiredValidator Component="SubmittingDepartmentJobFunction" Text="Reporting Department by is required" /> *@
+                                        @* <RadzenRequiredValidator Component="SubmittingDepartmentJobFunction" Text="Reporting Organization is required" /> *@
                                     </RadzenColumn>
                                 }
                             </RadzenCard>
@@ -252,7 +252,7 @@ else
                             
                             <RadzenRow Gap="1rem" Class="rz-mb-3">
                                 <RadzenColumn Size="2">
-                                    <RadzenFormField Text="Incident Date/Time" Variant="Variant.Outlined">
+                                    <RadzenFormField Text="Event or Activity Date/Time" Variant="Variant.Outlined">
                                         <RadzenDatePicker @bind-Value="@HazardReport.IncidentDateTime"
                                                               ShowTime="true"
                                                               DateFormat="MM/dd/yyyy HH:mm"

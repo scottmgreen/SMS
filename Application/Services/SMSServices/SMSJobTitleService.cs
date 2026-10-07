@@ -53,7 +53,7 @@ public sealed class SMSJobTitleService
             if (title is null)
             {
                 _logger.LogApplicationWarning("CreateSMSJobTitleAsync received null title", ApplicationEventIds.Warning);
-                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSDepartmentError.NullOrEmpty);
+                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSOrganizationError.NullOrEmpty);
             }
 
             _logger.LogApplicationInformation("Creating SMS job title with code: {Code}", ApplicationEventIds.Information, title.Value);
@@ -73,7 +73,7 @@ public sealed class SMSJobTitleService
             if (string.IsNullOrWhiteSpace(originalCode) || title is null)
             {
                 _logger.LogApplicationWarning("UpdateSMSJobTitleAsync received invalid input", ApplicationEventIds.Warning);
-                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSDepartmentError.InvalidDepartment);
+                return Result<SMSJobTitle>.Failure<SMSJobTitle>(DomainErrors.SMSOrganizationError.InvalidOrganization);
             }
 
             _logger.LogApplicationInformation("Updating SMS job title with code: {Code}", ApplicationEventIds.Information, originalCode);
@@ -93,7 +93,7 @@ public sealed class SMSJobTitleService
             if (string.IsNullOrWhiteSpace(code))
             {
                 _logger.LogApplicationWarning("DeleteSMSJobTitleAsync received empty code", ApplicationEventIds.Warning);
-                return Result<bool>.Failure<bool>(DomainErrors.SMSDepartmentError.InvalidDepartment);
+                return Result<bool>.Failure<bool>(DomainErrors.SMSOrganizationError.InvalidOrganization);
             }
 
             _logger.LogApplicationInformation("Deleting SMS job title with code: {Code}", ApplicationEventIds.Information, code);

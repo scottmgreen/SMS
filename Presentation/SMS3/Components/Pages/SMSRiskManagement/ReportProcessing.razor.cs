@@ -1232,7 +1232,7 @@ public partial class ReportProcessing : ComponentBase
 
         builder.OpenComponent<RadzenDataGridColumn<MitigationSummary>>(50);
         builder.AddAttribute(51, "Property", "AssignedDepartment");
-        builder.AddAttribute(52, "Title", "Assigned Department");
+        builder.AddAttribute(52, "Title", "Assigned Organization");
         builder.AddAttribute(53, "Width", "250px");
         builder.AddAttribute(54, "Template", (RenderFragment<MitigationSummary>)(mitigation =>
             (templateBuilder =>
@@ -1428,7 +1428,7 @@ public partial class ReportProcessing : ComponentBase
             DisplayName = $"{approver.FirstName?.Value} {approver.LastName?.Value} ({approver.Position})",
             AuthorityLevel = approver.AuthorityLevel?.ToString() ?? "Not specified",
             RiskApprovalAuthority = approver.RiskApprovalAuthority ?? "Not specified",
-            Department = SMSOrganization.FromValue(approver.Organization ?? string.Empty)?.Name
+            Organization = SMSOrganization.FromValue(approver.Organization ?? string.Empty)?.Name
                 ?? approver.Organization
                 ?? "Not specified",
             Position = approver.Position ?? "Not specified"
@@ -2343,7 +2343,7 @@ public partial class ReportProcessing : ComponentBase
         public string DisplayName { get; set; } = string.Empty;
         public string AuthorityLevel { get; set; } = string.Empty;
         public string RiskApprovalAuthority { get; set; } = string.Empty;
-        public string Department { get; set; } = string.Empty;
+        public string Organization { get; set; } = string.Empty;
         public string Position { get; set; } = string.Empty;
 
         public static ApproverOption FromUser(SMSOrganizationalUser user)
@@ -2354,7 +2354,7 @@ public partial class ReportProcessing : ComponentBase
                 DisplayName = $"{user.FirstName?.Value} {user.LastName?.Value} ({user.OrganizationLevel.Value})",
                 AuthorityLevel = user.AuthorityLevel?.ToString() ?? "Not specified",
                 RiskApprovalAuthority = user.RiskApprovalAuthority ?? "Not specified",
-                Department = SMSOrganization.FromValue(user.Organization ?? string.Empty)?.Name
+                Organization = SMSOrganization.FromValue(user.Organization ?? string.Empty)?.Name
                     ?? user.Organization
                     ?? "Not specified",
                 Position = user.Position ?? "Not specified"

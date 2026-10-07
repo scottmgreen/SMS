@@ -64,6 +64,11 @@ public class SMSAuditFinding : BaseAuditableEntity
     public string CorrectiveAction { get; set; } = string.Empty;
     public string ResponsiblePerson { get; set; } = string.Empty;
     public string ResponsibleDepartment { get; set; } = string.Empty;
+    public string ResponsibleOrganization
+    {
+        get => ResponsibleDepartment;
+        set => ResponsibleDepartment = value;
+    }
     public DateTime? TargetCompletionDate { get; set; }
     public DateTime? ActualCompletionDate { get; set; }
 
@@ -91,7 +96,7 @@ public class SMSAuditFinding : BaseAuditableEntity
 
     // Business Methods
     public Result AssignCorrectiveAction(string correctiveAction, string responsiblePerson,
-        string responsibleDepartment, DateTime targetDate, string assignedBy)
+        string responsibleOrganization, DateTime targetDate, string assignedBy)
     {
         try
         {
@@ -100,7 +105,7 @@ public class SMSAuditFinding : BaseAuditableEntity
 
             CorrectiveAction = correctiveAction;
             ResponsiblePerson = responsiblePerson;
-            ResponsibleDepartment = responsibleDepartment;
+            ResponsibleOrganization = responsibleOrganization;
             TargetCompletionDate = targetDate;
             Status = "In Progress";
             UpdatedBy = assignedBy;

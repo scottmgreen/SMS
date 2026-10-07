@@ -48,6 +48,11 @@ public class SafetyPerformanceIndicator : BaseAuditableEntity
 
     // Ownership
     public string ResponsibleDepartment { get; set; } = string.Empty;
+    public string ResponsibleOrganization
+    {
+        get => ResponsibleDepartment;
+        set => ResponsibleDepartment = value;
+    }
     public string DataOwner { get; set; } = string.Empty;
     public string ReviewAuthority { get; set; } = string.Empty;
 

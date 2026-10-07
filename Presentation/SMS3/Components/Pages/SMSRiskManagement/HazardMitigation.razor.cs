@@ -60,9 +60,9 @@ public partial class HazardMitigation : ComponentBase
     private List<MitigationStatus> StatusOptions => MitigationStatus.GetAllValues().ToList();
 
 
-    // ? UPDATED: Replace hardcoded department list with SMSOrganization enum
-    private List<string> Departments => SMSOrganization.GetAllDepartments()
-        .Select(d => d.Name)
+    // ? UPDATED: Replace hardcoded organization list with SMSOrganization enum
+    private List<string> Organizations => SMSOrganization.GetAllOrganizations()
+        .Select(o => o.Name)
         .OrderBy(name => name)
         .ToList();
     #endregion
