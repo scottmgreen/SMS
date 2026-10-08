@@ -9,6 +9,7 @@
 //-----------------------------------------------------------------------
 
 using SMS_Application.Interfaces;
+using SMS_Application.Commands;
 
 using SMS_Domain.Entities;
 using SMS_Domain.Entities;
@@ -27,6 +28,7 @@ public sealed class ReportValidationService : IReportValidationService
     private readonly IRiskAssessmentService _riskAssessmentService;
     private readonly IRiskAnalysisService _riskAnalysisService;
     private readonly ReportService _reportService;
+    private readonly IBaseMediator _mediator;
     private readonly ILogger<ReportValidationService> _logger;
 
     public ReportValidationService(
@@ -35,6 +37,7 @@ public sealed class ReportValidationService : IReportValidationService
         IRiskAssessmentService riskAssessmentService,
         IRiskAnalysisService riskAnalysisService,
         ReportService reportService,
+        IBaseMediator mediator,
         ILogger<ReportValidationService> logger)
     {
         _dataService = dataService ?? throw new ArgumentNullException(nameof(dataService));
@@ -42,6 +45,7 @@ public sealed class ReportValidationService : IReportValidationService
         _riskAssessmentService = riskAssessmentService ?? throw new ArgumentNullException(nameof(riskAssessmentService));
         _riskAnalysisService = riskAnalysisService ?? throw new ArgumentNullException(nameof(riskAnalysisService));
         _reportService = reportService ?? throw new ArgumentNullException(nameof(reportService));
+        _mediator = mediator ?? throw new ArgumentNullException(nameof(mediator));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -496,7 +500,7 @@ public sealed class ReportValidationService : IReportValidationService
             Name = $"{assessmentLabel} Risk Assessment - {hazard.ReportCode}"
         };
 
-        var initialResult = await _riskAssessmentService.CreateRiskAssessmentAsync(initialRiskAssessment, ct);
+        var initialResult = await _mediator.SendAsync(new CreateRiskAssessmentCommand(initialRiskAssessment), ct);
         
         if (initialResult.IsSuccess)
         {

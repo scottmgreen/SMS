@@ -702,8 +702,11 @@ public static class ParameterNames
     private static readonly Lazy<string> _pmResourceFactors = new Lazy<string>(() => "@pResourceFactors");
     public static string pmResourceFactors => _pmResourceFactors.Value;
 
-    private static readonly Lazy<string> _pmEnvironmentFactors = new Lazy<string>(() => "@pEnvironmentFactors");
-    public static string pmEnvironmentFactors => _pmEnvironmentFactors.Value;
+    private static readonly Lazy<string> _pmPhysicalEnvironmentFactors = new Lazy<string>(() => "@pPhysicalEnvironmentFactors");
+    public static string pmPhysicalEnvironmentFactors => _pmPhysicalEnvironmentFactors.Value;
+
+    private static readonly Lazy<string> _pmOperationalEnvironmentFactors = new Lazy<string>(() => "@pOperationalEnvironmentFactors");
+    public static string pmOperationalEnvironmentFactors => _pmOperationalEnvironmentFactors.Value;
 
     private static readonly Lazy<string> _pmSelectedStakeholderGroups = new Lazy<string>(() => "@pSelectedStakeholderGroups");
     public static string pmSelectedStakeholderGroups => _pmSelectedStakeholderGroups.Value;

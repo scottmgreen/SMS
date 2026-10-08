@@ -1678,13 +1678,9 @@ public partial class TechnicalAssessment : ComponentBase
 
     private bool ShowSubmitAssessmentButton()
     {
-        if (IsRiskRegistryOnly)
-        {
-            // RR-only is a single actionable step (Step 4); always keep final action visible.
-            return true;
-        }
-
-        return CurrentStep < MaxAssessmentStep || IsAssessmentReadyForCompletion();
+        // Keep final action visible so submit intent is explicit;
+        // button enablement controls whether workflow can proceed.
+        return true;
     }
 
     private bool IsFinalActionDisabled()
@@ -1700,6 +1696,12 @@ public partial class TechnicalAssessment : ComponentBase
             return !ValidateRiskRegistryOnlyStep4().isValid;
         }
 
+        if (CurrentStep >= MaxAssessmentStep)
+        {
+            // Step 5 submit requires all steps valid before completion.
+            return !IsAssessmentReadyForCompletion();
+        }
+
         return false;
     }
 
@@ -1710,13 +1712,7 @@ public partial class TechnicalAssessment : ComponentBase
             return "Next Step";
         }
 
-        if (IsRiskRegistryOnly)
-        {
-            var rrOnlyStep4Valid = ValidateRiskRegistryOnlyStep4().isValid;
-            return rrOnlyStep4Valid ? "Submit Assessment" : "Save Assessment";
-        }
-
-        return IsAssessmentReadyForCompletion() ? "Submit Assessment" : "Save Assessment";
+        return "Submit Assessment";
     }
 
     private string GetFinalActionButtonIcon()
@@ -1726,7 +1722,7 @@ public partial class TechnicalAssessment : ComponentBase
             return "arrow_forward";
         }
 
-        return IsAssessmentReadyForCompletion() ? "check_circle" : "save";
+        return "check_circle";
     }
 
     private (bool isValid, string message) ValidateCurrentStep()

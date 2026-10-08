@@ -65,7 +65,8 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmProcedureFactors, riskAssessment.FiveMProcedures ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEquipmentFactors, riskAssessment.FiveMEquipment ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmResourceFactors, riskAssessment.FiveMResources ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEnvironmentFactors, riskAssessment.FiveMPhysicalEnvironment ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPhysicalEnvironmentFactors, riskAssessment.FiveMPhysicalEnvironment ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmOperationalEnvironmentFactors, riskAssessment.FiveMOperationalEnvironment ?? (object)DBNull.Value));
 
             // Core fields with proper null handling
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmLeadAssessorId, riskAssessment.LeadAssessorId ?? (object)DBNull.Value));
@@ -259,7 +260,8 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEquipmentFactors, riskAssessment.FiveMEquipment ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmProcedureFactors, riskAssessment.FiveMProcedures ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmResourceFactors, riskAssessment.FiveMResources ?? (object)DBNull.Value));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEnvironmentFactors, riskAssessment.FiveMPhysicalEnvironment ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPhysicalEnvironmentFactors, riskAssessment.FiveMPhysicalEnvironment ?? (object)DBNull.Value));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmOperationalEnvironmentFactors, riskAssessment.FiveMOperationalEnvironment ?? (object)DBNull.Value));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSelectedStakeholderGroups, riskAssessment.SelectedStakeholderGroups));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSelectedIndividualStakeholders, riskAssessment.SelectedIndividualStakeholders));
             // Step 3 - Risk Analysis Fields
@@ -338,7 +340,8 @@ public sealed class RiskAssessmentRepository : BaseRepository<RiskAssessmentRepo
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEquipmentFactors, fiveMEquipment));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmProcedureFactors, fiveMProcedures));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmResourceFactors, fiveMResources));
-            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmEnvironmentFactors, fiveMPhysicalEnvironment ?? fiveMOperationalEnvironment));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmPhysicalEnvironmentFactors, fiveMPhysicalEnvironment));
+            cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmOperationalEnvironmentFactors, fiveMOperationalEnvironment));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSelectedStakeholderGroups, selectedStakeholderGroups));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmSelectedIndividualStakeholders, selectedIndividualStakeholders));
             cmd.Parameters.Add(DataAccess.Parameter(ParameterNames.pmUpdatedBy, updatedBy));

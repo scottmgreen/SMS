@@ -75,8 +75,7 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
                     return;
                 }
 
-                _logger.LogApplicationDebug("Setting CreatedBy='{UserId}' for CREATE command: {RequestType}",
-                    currentUserId, requestType);
+                _logger.LogApplicationDebug("Setting CreatedBy='{UserId}' for CREATE command: {RequestType}", currentUserId, requestType);
                 createCommand.SetCreatedBy(currentUserId, timestamp);
                 return;
             }
@@ -84,8 +83,7 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
             // Handle Update Commands
             if (request is IUpdateCommand updateCommand)
             {
-                _logger.LogApplicationDebug("Setting UpdatedBy='{UserId}' for UPDATE command: {RequestType}",
-                    currentUserId, requestType);
+                _logger.LogApplicationDebug("Setting UpdatedBy='{UserId}' for UPDATE command: {RequestType}", currentUserId, requestType);
                 updateCommand.SetUpdatedBy(currentUserId, timestamp);
                 return;
             }
@@ -93,8 +91,7 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
             // Handle Delete Commands
             if (request is IDeleteCommand deleteCommand)
             {
-                _logger.LogApplicationDebug("Setting DeletedBy='{UserId}' for DELETE command: {RequestType}",
-                    currentUserId, requestType);
+                _logger.LogApplicationDebug("Setting DeletedBy='{UserId}' for DELETE command: {RequestType}", currentUserId, requestType);
                 deleteCommand.SetDeletedBy(currentUserId, timestamp);
                 return;
             }
@@ -102,8 +99,7 @@ public class AuditFieldsSetterPipeline<TRequest, TResult> : IBasePipeline<TReque
             // Handle Read Queries (CQRS Query Pattern)
             if (request is IReadQuery readQuery)
             {
-                _logger.LogApplicationDebug("Setting AccessedBy='{UserId}' for READ query: {RequestType}",
-                    currentUserId, requestType);
+                _logger.LogApplicationDebug("Setting AccessedBy='{UserId}' for READ query: {RequestType}",currentUserId, requestType);
                 readQuery.SetAccessedBy(currentUserId, timestamp);
                 return;
             }

@@ -1137,10 +1137,10 @@ public static class FieldNames
     private static readonly Lazy<string> _fRiskAssessmentFiveMResources = new Lazy<string>(() => "fldv_ResourceFactors");
     public static string fRiskAssessmentFiveMResources => _fRiskAssessmentFiveMResources.Value;
 
-    private static readonly Lazy<string> _fRiskAssessmentFiveMPhysicalEnvironment = new Lazy<string>(() => "fldv_EnvironmentFactors");
+    private static readonly Lazy<string> _fRiskAssessmentFiveMPhysicalEnvironment = new Lazy<string>(() => "fldv_PhysicalEnvironmentFactors");
     public static string fRiskAssessmentFiveMPhysicalEnvironment => _fRiskAssessmentFiveMPhysicalEnvironment.Value;
 
-    private static readonly Lazy<string> _fRiskAssessmentFiveMOperationalEnvironment = new Lazy<string>(() => "fldv_FiveMOperationalEnvironment");
+    private static readonly Lazy<string> _fRiskAssessmentFiveMOperationalEnvironment = new Lazy<string>(() => "fldv_OperationalEnvironmentFactors");
     public static string fRiskAssessmentFiveMOperationalEnvironment => _fRiskAssessmentFiveMOperationalEnvironment.Value;
 
     private static readonly Lazy<string> _fRiskAssessmentSelectedIndividualStakeholders = new Lazy<string>(() => "fldv_SelectedIndividualStakeholders");

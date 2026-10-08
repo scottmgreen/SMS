@@ -81,9 +81,15 @@ public class Step1Model
 
     public (bool isValid, string message) Validate()
     {
-        var step1Fields = new Dictionary<string, string>
+        var invalidFields = new List<string>();
+
+        if (string.IsNullOrWhiteSpace(LeadAssessor))
         {
-            { nameof(LeadAssessor), LeadAssessor },
+            invalidFields.Add(nameof(LeadAssessor));
+        }
+
+        var minimumTenCharFields = new Dictionary<string, string>
+        {
             { nameof(SystemDescription), SystemDescription },
             { nameof(SystemBoundaries), SystemBoundaries },
             { nameof(SystemPurpose), SystemPurpose },
@@ -95,29 +101,21 @@ public class Step1Model
             { nameof(FiveMOperationalEnvironment), FiveMOperationalEnvironment }
         };
 
-        int fieldsWithData = 0;
-        var missingFields = new List<string>();
-
-        foreach (var field in step1Fields)
+        foreach (var field in minimumTenCharFields)
         {
             var value = field.Value?.Trim() ?? string.Empty;
-
-            if (string.IsNullOrEmpty(value))
+            if (value.Length < 10)
             {
-                missingFields.Add(field.Key);
-            }
-            else if (value.Length >= 10)
-            {
-                fieldsWithData++;
+                invalidFields.Add(field.Key);
             }
         }
 
-        if (fieldsWithData < 4)
+        if (invalidFields.Any())
         {
-            return (false, $"Need at least 4 complete fields (found {fieldsWithData}). Missing: {string.Join(", ", missingFields)}");
+            return (false, $"Step 1 incomplete fields: {string.Join(", ", invalidFields)}");
         }
 
-        return (true, $"Step 1 validation passed with {fieldsWithData} complete fields");
+        return (true, "Step 1 validation passed");
     }
 
     public void ApplyToAssessment(RiskAssessment assessment)

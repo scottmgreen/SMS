@@ -11,6 +11,7 @@ public class ReportProcessingSummary
     public DateTime CreatedDate { get; set; }
 
     public string? HazardId { get; set; }
+    public string HazardTitle { get; set; } = string.Empty;
     public string HazardType { get; set; } = string.Empty;
     public string HazardCategory { get; set; } = string.Empty;
     public string HazardDescription { get; set; } = string.Empty;
@@ -26,6 +27,8 @@ public class ReportProcessingSummary
     public string? RiskAssessmentId { get; set; }
     public string? RiskAssessmentCreatedBy { get; set; }
     public DateTime? RiskAssessmentCreatedDate { get; set; }
+    public string? RiskAssessmentUpdatedBy { get; set; }
+    public DateTime? RiskAssessmentUpdatedDate { get; set; }
     public int CurrentAssessmentStep { get; set; } = 0;
     public string RiskAssessmentStatus { get; set; } = string.Empty;
     public string AssessmentStage { get; set; } = string.Empty;
@@ -34,9 +37,31 @@ public class ReportProcessingSummary
 
     // ENHANCED: Report Validation Information
     public string? ReportValidationId { get; set; }
+    public string? ReportValidatedBy { get; set; }
     public string ValidationType { get; set; } = string.Empty; // NEW: Preliminary vs Technical
     public string ValidationDecision { get; set; } = string.Empty;
     public bool HasReportValidation => !string.IsNullOrEmpty(ReportValidationId);
+
+    public string RiskAssessmentProcessingTime
+    {
+        get
+        {
+            if (!RiskAssessmentCreatedDate.HasValue || !RiskAssessmentUpdatedDate.HasValue)
+            {
+                return "Not Specified";
+            }
+
+            var start = RiskAssessmentCreatedDate.Value;
+            var end = RiskAssessmentUpdatedDate.Value;
+            if (end < start)
+            {
+                end = start;
+            }
+
+            var duration = end - start;
+            return $"{duration.Days}d {duration.Hours}h {duration.Minutes}m";
+        }
+    }
 
     // NEW: Investigation Information
     public string? InvestigationId { get; set; }

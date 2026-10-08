@@ -31,7 +31,8 @@ public partial class RiskAssessmentListing : ComponentBase
         public int RequiredSteps { get; init; }
         public int ValidatedSteps { get; init; }
         public int ProgressPercent { get; init; }
-        public bool IsFullyValidated => ValidatedSteps >= RequiredSteps;
+        public bool IsCompletionState { get; init; }
+        public bool IsFullyValidated => ValidatedSteps >= RequiredSteps && IsCompletionState;
         public string Summary { get; init; } = string.Empty;
     }
 
@@ -244,6 +245,7 @@ public partial class RiskAssessmentListing : ComponentBase
                         RequiredSteps = 1,
                         ValidatedSteps = rrOnlyScored ? 1 : 0,
                         ProgressPercent = rrOnlyScored ? 100 : 0,
+                        IsCompletionState = rrOnlyScored,
                         Summary = rrOnlyScored
                             ? "Risk Registry Only: hazard scored (initial + residual)"
                             : "Risk Registry Only: hazard scoring incomplete"
@@ -258,7 +260,7 @@ public partial class RiskAssessmentListing : ComponentBase
                 var step2Valid = IsStep2Valid(assessment);
                 var step3Valid = IsStep3Valid(assessment, allAnalyses);
                 var step4Valid = IsStep4Valid(assessment, allPanels);
-                var step5Valid = requiredSteps == 5 && IsStep5Valid(assessment, allAnalyses, allMitigations);
+                var step5Valid = requiredSteps == 5 && IsStep5Valid(assessment, allAnalyses, allMitigations, allPanels);
 
                 var validatedSteps = 0;
                 if (step1Valid) validatedSteps++;
@@ -271,12 +273,18 @@ public partial class RiskAssessmentListing : ComponentBase
                     ? (int)Math.Round((double)validatedSteps / requiredSteps * 100)
                     : 0;
 
+                var isCompletionState = assessment.Status == RiskAssessmentStatus.AssessmentComplete
+                    || assessment.Stage == RiskAssessmentStage.Completed;
+
                 map[code] = new AssessmentValidationSnapshot
                 {
                     RequiredSteps = requiredSteps,
                     ValidatedSteps = validatedSteps,
                     ProgressPercent = progressPercent,
-                    Summary = $"Validated {validatedSteps}/{requiredSteps} steps"
+                    IsCompletionState = isCompletionState,
+                    Summary = isCompletionState
+                        ? $"Validated {validatedSteps}/{requiredSteps} steps"
+                        : $"Validated {validatedSteps}/{requiredSteps} steps (not completed)"
                 };
             }
 
@@ -346,13 +354,19 @@ public partial class RiskAssessmentListing : ComponentBase
             ? ((assessment.Status == RiskAssessmentStatus.AssessmentComplete || assessment.Stage == RiskAssessmentStage.Completed) ? 1 : 0)
             : Math.Clamp(assessment.CurrentStep, 0, required);
         var fallbackPercent = required > 0 ? (int)Math.Round((double)fallbackValidated / required * 100) : 0;
+        var isCompletionState = isRiskRegistryOnly
+            ? fallbackValidated >= required
+            : assessment.Status == RiskAssessmentStatus.AssessmentComplete || assessment.Stage == RiskAssessmentStage.Completed;
 
         return new AssessmentValidationSnapshot
         {
             RequiredSteps = required,
             ValidatedSteps = fallbackValidated,
             ProgressPercent = fallbackPercent,
-            Summary = $"Estimated {fallbackValidated}/{required} (fallback)"
+            IsCompletionState = isCompletionState,
+            Summary = isCompletionState
+                ? $"Estimated {fallbackValidated}/{required} (fallback)"
+                : $"Estimated {fallbackValidated}/{required} (fallback, not completed)"
         };
     }
 
@@ -409,24 +423,77 @@ public partial class RiskAssessmentListing : ComponentBase
             && p.InitialScore.HasValue && p.InitialScore.Value > 0);
     }
 
-    private static bool IsStep5Valid(RiskAssessment assessment, IEnumerable<RiskAnalysis> allAnalyses, IEnumerable<Mitigation> allMitigations)
+    private static bool IsStep5Valid(
+        RiskAssessment assessment,
+        IEnumerable<RiskAnalysis> allAnalyses,
+        IEnumerable<Mitigation> allMitigations,
+        IEnumerable<ScoringPanel> allPanels)
     {
         var code = assessment.Code?.Trim();
         if (string.IsNullOrWhiteSpace(code)) return false;
 
-        var hasResidualAnalysis = allAnalyses.Any(a =>
-            string.Equals(a.RiskAssessmentCode?.Trim(), code, StringComparison.OrdinalIgnoreCase)
-            && !string.IsNullOrWhiteSpace(a.ResidualWorstCredibleOutcome)
-            && a.ResidualWorstCredibleOutcome.Trim().Length >= 10
-            && !string.IsNullOrWhiteSpace(a.ResidualRootCause)
-            && a.ResidualRootCause.Trim().Length >= 10
-            && !string.IsNullOrWhiteSpace(a.ResidualAdditionalComments)
-            && a.ResidualAdditionalComments.Trim().Length >= 10);
+        var residualAnalysesByHazard = allAnalyses
+            .Where(a =>
+                string.Equals(a.RiskAssessmentCode?.Trim(), code, StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(a.HazardCode)
+                && !string.IsNullOrWhiteSpace(a.ResidualWorstCredibleOutcome)
+                && a.ResidualWorstCredibleOutcome.Trim().Length >= 10
+                && !string.IsNullOrWhiteSpace(a.ResidualRootCause)
+                && a.ResidualRootCause.Trim().Length >= 10
+                && !string.IsNullOrWhiteSpace(a.ResidualAdditionalComments)
+                && a.ResidualAdditionalComments.Trim().Length >= 10)
+            .Select(a => a.HazardCode!.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        var hasMitigations = allMitigations.Any(m =>
-            string.Equals(m.RiskAssessmentCode?.Trim(), code, StringComparison.OrdinalIgnoreCase));
+        var mitigationsByHazard = allMitigations
+            .Where(m =>
+                string.Equals(m.RiskAssessmentCode?.Trim(), code, StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(m.HazardCode))
+            .Select(m => m.HazardCode.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        return hasResidualAnalysis || hasMitigations;
+        var residualScoringByHazard = allPanels
+            .Where(p =>
+                string.Equals(p.RiskAssessmentCode?.Trim(), code, StringComparison.OrdinalIgnoreCase)
+                && !string.IsNullOrWhiteSpace(p.HazardCode)
+                && p.ResidualLikelihood.HasValue && p.ResidualLikelihood.Value > 0
+                && p.ResidualSeverity.HasValue && p.ResidualSeverity.Value > 0
+                && p.ResidualScore.HasValue && p.ResidualScore.Value > 0)
+            .Select(p => p.HazardCode!.Trim())
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        var hazardScope = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        if (!string.IsNullOrWhiteSpace(assessment.HazardCode))
+        {
+            hazardScope.Add(assessment.HazardCode.Trim());
+        }
+
+        foreach (var hazardCode in mitigationsByHazard)
+        {
+            hazardScope.Add(hazardCode);
+        }
+
+        foreach (var hazardCode in residualAnalysesByHazard)
+        {
+            hazardScope.Add(hazardCode);
+        }
+
+        foreach (var hazardCode in residualScoringByHazard)
+        {
+            hazardScope.Add(hazardCode);
+        }
+
+        if (hazardScope.Count == 0)
+        {
+            return false;
+        }
+
+        // PER HAZARD rule: each hazard in the assessment scope must have
+        // mitigation + residual analysis + residual scoring.
+        return hazardScope.All(hazardCode =>
+            mitigationsByHazard.Contains(hazardCode)
+            && residualAnalysesByHazard.Contains(hazardCode)
+            && residualScoringByHazard.Contains(hazardCode));
     }
 
     private static bool IsRiskRegistryOnlyStatus(string? status)

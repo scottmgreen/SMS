@@ -56,6 +56,8 @@ public partial class ReportValidation : ComponentBase
     // State Properties
     private bool _isUpdate => ExistingValidation is not null;
     private string _validationCode => ExistingValidation?.Code ?? "New";
+    private string _validationDescision => ExistingValidation?.ValidationDecision ?? "N/A";
+
     //private string CurrentStatus { get; set;}= string.Empty; // ExistingValidation?.Status ?? "New";
     private bool _isProcessing { get; set; } = false;
 

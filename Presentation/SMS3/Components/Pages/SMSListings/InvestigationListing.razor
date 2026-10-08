@@ -56,15 +56,15 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="Investigation" Property="CreatedBy" Title="Created By" Width="190px">
+        @* <RadzenDataGridColumn TItem="Investigation" Property="CreatedBy" Title="Created By" Width="190px">
             <Template Context="investigation">
                 <div title="@investigation.CreatedBy" style="@_basicTextStyle">
                     @GetUserDisplayName(investigation.CreatedBy)
                 </div>
             </Template>
-        </RadzenDataGridColumn>
+        </RadzenDataGridColumn> *@
 
-        <RadzenDataGridColumn TItem="Investigation" Property="CreatedDate" Title="Created" Width="130px" FormatString="{0:MM/dd/yyyy}" />
+        @* <RadzenDataGridColumn TItem="Investigation" Property="CreatedDate" Title="Created" Width="130px" FormatString="{0:MM/dd/yyyy}" /> *@
         <RadzenDataGridColumn TItem="Investigation" Property="DecisionDate" Title="Decision Date" Width="130px" FormatString="{0:MM/dd/yyyy}" />
         <RadzenDataGridColumn TItem="Investigation" Property="CompletedDate" Title="Completed" Width="130px" FormatString="{0:MM/dd/yyyy}" />
 

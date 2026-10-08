@@ -38,35 +38,42 @@ else
                             <RadzenStack Gap="1rem" Style="padding: 1rem;">
                                 <RadzenStack Orientation="Orientation.Horizontal" AlignItems="AlignItems.Center" Gap="0.5rem" Style="border-bottom: 1px solid var(--rz-border-color); padding-bottom: 0.5rem;">
                                     <RadzenIcon Icon="description" Style="color: var(--rz-info);" />
-                                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Report Details</RadzenText>
+                                    <RadzenText TextStyle="TextStyle.H6" Style="margin: 0;">Report @(ReportId ?? "N/A")</RadzenText>
+                                    @* <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Status:</strong>@(_reportDetails?.Status ?? "N/A")</RadzenText> *@
                                 </RadzenStack>
-                                <br />
-                                <!-- 3-Column Layout -->
+                                <!-- 2-Column Layout -->
                                 <RadzenRow Gap="1rem">
                                     <!-- Column 1: Report Description -->
                                     <RadzenColumn Size="12" SizeLG="6">
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Report Code:</strong>@(ReportId ?? "N/A")</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Hazard Category:</strong>@(_reportHazard?.HazardCategory ?? "N/A")</RadzenText>
-                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Hazard Category:</strong>@(_reportHazard?.HazardType ?? "N/A")</RadzenText>
-                                        <div style="margin: 0; padding: 0.5rem; background: white; border-radius: 4px; border: 1px solid var(--rz-border-color); min-height: 100px; line-height: 1.6;">
-                                            @((MarkupString)(_reportHazard?.Description ?? "Initial Hazard Description Not Available"))
-                                        </div>
+                                        @* <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Report Code:</strong>@(ReportId ?? "N/A")</RadzenText> *@
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Initial Hazard Code:</strong>@(_reportHazard?.Code ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Category:</strong>@(_reportHazard?.HazardCategory ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Type:</strong>@(_reportHazard?.HazardType ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Title:</strong>@(_reportHazard?.HazardTitle ?? "N/A")</RadzenText>
+                                        <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Description:</strong></RadzenText>
                                     </RadzenColumn>
 
                                     <!-- Column 2: Field Labels -->
                                     <RadzenColumn Size="12" SizeLG="6">
                                         <RadzenStack Gap="0.25rem">
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Report Code:</strong>@(ReportId ?? "N/A")</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Status:</strong>@(_reportDetails?.Status ?? "N/A")</RadzenText>
+                                            
                                             <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Event or Activity Date/Time:</strong>@(_reportDetails?.IncidentDateTime.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
-                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Submitted Date/Time:</strong>@(_reportDetails?.SubmittedDate.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
+                                            <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Submitted Date/Time:</strong>@(_reportDetails?.CreatedDate.Value.ToString("MM/dd/yyyy HH:mm") ?? "N/A")</RadzenText>
                                             @* <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Submitted By:</strong>@(_reportDetails?.SubmittedBy ?? "N/A")</RadzenText> *@
                                             @if (_isUpdate)
                                             {
-                                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Validation Code:</strong>@_validationCode</RadzenText>
+                                                <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Previous Validation Code:</strong>@_validationCode</RadzenText>
+                                                @* <RadzenText TextStyle="TextStyle.Body2" Style="font-weight: 600; margin: 0;"><strong>Previous Validation Decision:</strong>@_validationDescision</RadzenText> *@
                                             }
                                         </RadzenStack>
                                     </RadzenColumn>                                  
+                                </RadzenRow>
+                                <RadzenRow Gap="1rem">
+                                    <RadzenColumn Size="12" SizeLG="12">
+                                        <div style="margin: 0; padding: 0.5rem; background: white; border-radius: 4px; border: 1px solid var(--rz-border-color); min-height: 100px; line-height: 1.6;">
+                                            @((MarkupString)(_reportHazard?.Description ?? "Initial Hazard Description Not Available"))
+                                        </div>
+                                    </RadzenColumn>
                                 </RadzenRow>
                             </RadzenStack>
                         </RadzenCard>

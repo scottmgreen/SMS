@@ -1,5 +1,6 @@
 ﻿using SMS_Domain.Entities;
 using SMS_Domain.Events;
+using SMS_Application.Queries;
 
 using SMS3.Components.Shared.UIHelpers;
 
@@ -15,11 +16,53 @@ public partial class ReportValidationListing : ComponentBase
 
     private RadzenDataGrid<ReportValidation>? _validationsGrid;
     private IEnumerable<ReportValidation> _validations = new List<ReportValidation>();
+    private readonly Dictionary<string, string> _userCodeToFullName = new(StringComparer.OrdinalIgnoreCase);
     private int _totalCount;
 
     protected override async Task OnInitializedAsync()
     {
+        await LoadUserDisplayMapAsync();
         await LoadInitialData();
+    }
+
+    private async Task LoadUserDisplayMapAsync()
+    {
+        _userCodeToFullName.Clear();
+
+        var usersResult = await _mediator.SendAsync(new GetAllSMSApplicationUsersQuery(), CancellationToken.None);
+        if (!usersResult.IsSuccess || usersResult.Value is null)
+        {
+            return;
+        }
+
+        foreach (var user in usersResult.Value)
+        {
+            if (string.IsNullOrWhiteSpace(user.Code))
+            {
+                continue;
+            }
+
+            var firstName = user.FirstName?.Value?.Trim() ?? string.Empty;
+            var lastName = user.LastName?.Value?.Trim() ?? string.Empty;
+            var fullName = string.Join(" ", new[] { firstName, lastName }.Where(x => !string.IsNullOrWhiteSpace(x)));
+
+            if (!string.IsNullOrWhiteSpace(fullName))
+            {
+                _userCodeToFullName[user.Code] = fullName;
+            }
+        }
+    }
+
+    private string GetUserDisplayName(string? userCode)
+    {
+        if (string.IsNullOrWhiteSpace(userCode))
+        {
+            return string.Empty;
+        }
+
+        return _userCodeToFullName.TryGetValue(userCode, out var fullName)
+            ? fullName
+            : userCode;
     }
 
     private async Task LoadInitialData()

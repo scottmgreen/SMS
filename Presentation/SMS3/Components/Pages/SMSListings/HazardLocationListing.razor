@@ -80,7 +80,7 @@
                 </div>
             </Template>
         </RadzenDataGridColumn>
-        <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedDate" Title="Created Date" Width="120px" FormatString="{0:MM/dd/yyyy}">
+        @* <RadzenDataGridColumn TItem="HazardLocation" Property="CreatedDate" Title="Created Date" Width="120px" FormatString="{0:MM/dd/yyyy}">
             <Template Context="location">
                                                 <div title="@location.CreatedDate" style="@_basicTextStyle">
                     @if (location.CreatedDate.HasValue)
@@ -89,7 +89,7 @@
                     }
                 </div>
             </Template>
-        </RadzenDataGridColumn>
+        </RadzenDataGridColumn> *@
 
         <RadzenDataGridColumn TItem="HazardLocation" Property="IsValidated" Title="Validated" Width="100px">
             <Template Context="location">

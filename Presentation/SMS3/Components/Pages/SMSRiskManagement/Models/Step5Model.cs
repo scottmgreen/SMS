@@ -168,30 +168,65 @@ public class Step5Model
     
     public (bool isValid, string message) Validate()
     {
-        if (HazardResidualRiskAnalyses is null || !HazardResidualRiskAnalyses.Any())
+        var hazardScope = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        if (HazardResidualRiskAnalyses is not null)
         {
-            return (false, "No residual risk analyses available");
+            foreach (var hazardCode in HazardResidualRiskAnalyses.Keys.Where(k => !string.IsNullOrWhiteSpace(k)))
+            {
+                hazardScope.Add(hazardCode);
+            }
+        }
+
+        foreach (var hazardCode in HazardMitigations.Keys.Where(k => !string.IsNullOrWhiteSpace(k)))
+        {
+            hazardScope.Add(hazardCode);
+        }
+
+        foreach (var hazardCode in HazardResidualPanelMembers.Keys.Where(k => !string.IsNullOrWhiteSpace(k)))
+        {
+            hazardScope.Add(hazardCode);
+        }
+
+        foreach (var hazardCode in ResidualPanelScores.Keys.Where(k => !string.IsNullOrWhiteSpace(k)))
+        {
+            hazardScope.Add(hazardCode);
+        }
+
+        if (hazardScope.Count == 0)
+        {
+            return (false, "No hazards available for Step 5 validation");
         }
 
         var incompleteHazards = new List<string>();
 
-        foreach (var kvp in HazardResidualRiskAnalyses)
+        foreach (var hazardCode in hazardScope)
         {
-            var hazardCode = kvp.Key;
-            var analysis = kvp.Value;
-
-            var worstOutcomeValid = !string.IsNullOrWhiteSpace(analysis.ResidualWorstCredibleOutcome)
+            var hasAnalysis = HazardResidualRiskAnalyses.TryGetValue(hazardCode, out var analysis) && analysis is not null;
+            var worstOutcomeValid = hasAnalysis
+                && !string.IsNullOrWhiteSpace(analysis!.ResidualWorstCredibleOutcome)
                 && analysis.ResidualWorstCredibleOutcome.Trim().Length >= 10;
-            var rootCauseValid = !string.IsNullOrWhiteSpace(analysis.ResidualRootCause)
+            var rootCauseValid = hasAnalysis
+                && !string.IsNullOrWhiteSpace(analysis!.ResidualRootCause)
                 && analysis.ResidualRootCause.Trim().Length >= 10;
-            var commentsValid = !string.IsNullOrWhiteSpace(analysis.ResidualAdditionalComments)
+            var commentsValid = hasAnalysis
+                && !string.IsNullOrWhiteSpace(analysis!.ResidualAdditionalComments)
                 && analysis.ResidualAdditionalComments.Trim().Length >= 10;
 
             var hasMitigation = HazardMitigations.TryGetValue(hazardCode, out var mitigations)
                 && mitigations is not null
                 && mitigations.Any();
 
-            if ((!worstOutcomeValid || !rootCauseValid || !commentsValid) && !hasMitigation)
+            var hasPanelMembers = HazardResidualPanelMembers.TryGetValue(hazardCode, out var panelMembers)
+                && panelMembers is not null
+                && panelMembers.Any();
+
+            var hasCompleteScoresForAllMembers = hasPanelMembers
+                && ResidualPanelScores.TryGetValue(hazardCode, out var scores)
+                && panelMembers!.All(memberId =>
+                    scores.Any(s => s.MemberId == memberId && s.IsComplete));
+
+            if (!worstOutcomeValid || !rootCauseValid || !commentsValid || !hasMitigation || !hasCompleteScoresForAllMembers)
             {
                 incompleteHazards.Add(hazardCode);
             }
@@ -199,21 +234,7 @@ public class Step5Model
 
         if (incompleteHazards.Any())
         {
-            return (false, $"Residual analysis/mitigation incomplete for {incompleteHazards.Count} hazard(s)");
-        }
-
-        var incompleteResidualScoringHazards = HazardResidualPanelMembers
-            .Where(kvp => kvp.Value.Any())
-            .Where(kvp => !ResidualPanelScores.TryGetValue(kvp.Key, out var scores)
-                          || !kvp.Value.All(memberId =>
-                              scores.Any(s => s.MemberId == memberId && s.IsComplete)))
-            .Select(kvp => kvp.Key)
-            .Distinct()
-            .ToList();
-
-        if (incompleteResidualScoringHazards.Any())
-        {
-            return (false, $"Residual scoring incomplete for {incompleteResidualScoringHazards.Count} hazard(s)");
+            return (false, $"Step 5 incomplete for {incompleteHazards.Count} hazard(s)");
         }
 
         return (true, "Step 5 validation passed");

@@ -111,13 +111,13 @@
             </Template>
         </RadzenDataGridColumn>
 
-        <RadzenDataGridColumn TItem="Report" Property="CreatedBy" Title="Created By" Width="150px">
+        @* <RadzenDataGridColumn TItem="Report" Property="CreatedBy" Title="Created By" Width="150px">
             <Template Context="report">
                 <div title="@report.CreatedBy" style="@_basicTextStyle">
                     @GetActorDisplayName(report.CreatedBy)
                 </div>
             </Template>
-        </RadzenDataGridColumn>
+        </RadzenDataGridColumn> *@
         <RadzenDataGridColumn TItem="Report" Property="CreatedDate" Title="Created Date" Width="150px" FormatString="{0:MM/dd/yyyy}">
             <Template Context="report">
                 <div title="@report.CreatedDate" style="@_basicTextStyle">

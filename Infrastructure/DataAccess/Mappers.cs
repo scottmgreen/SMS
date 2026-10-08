@@ -784,7 +784,7 @@ public static partial class Mappers
         riskAssessment.FiveMProcedures = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMProcedures) ?? string.Empty;
         riskAssessment.FiveMResources = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMResources) ?? string.Empty;
         riskAssessment.FiveMPhysicalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMPhysicalEnvironment) ?? string.Empty;
-
+        riskAssessment.FiveMOperationalEnvironment = reader.GetValue<string>(FieldNames.fRiskAssessmentFiveMOperationalEnvironment) ?? string.Empty;
         riskAssessment.SelectedIndividualStakeholders = reader.GetValue<string>(FieldNames.fRiskAssessmentSelectedIndividualStakeholders) ?? string.Empty;
         riskAssessment.SelectedStakeholderGroups = reader.GetValue<string>(FieldNames.fRiskAssessmentSelectedStakeholderGroups) ?? string.Empty;
 
@@ -895,8 +895,9 @@ public static partial class Mappers
             }
             reportValidation.ValidationComments = reader.GetValue<string>(FieldNames.fReportValidationComments);
             reportValidation.ValidatedBy = reader.GetValue<string>(FieldNames.fReportValidationValidatedBy);
+            reportValidation.ValidatedDate = reader.IsDBNull(FieldNames.fReportValidationValidatedDate) ? (DateTime?)null : reader.GetDateTime(FieldNames.fReportValidationValidatedDate);
             // Set audit properties using reflection since they have private setters
-            
+
             reportValidation.CreatedBy = reader.GetValue<string>(FieldNames.fCreatedBy) ?? string.Empty;
             reportValidation.CreatedDate = reader.IsDBNull(FieldNames.fCreatedDate) ? DateTime.Now : reader.GetDateTime(FieldNames.fCreatedDate);
             reportValidation.UpdatedBy = reader.GetValue<string>(FieldNames.fUpdatedBy);
